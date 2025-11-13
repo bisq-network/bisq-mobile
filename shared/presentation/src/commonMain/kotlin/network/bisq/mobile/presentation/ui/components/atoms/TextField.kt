@@ -66,8 +66,6 @@ enum class BisqTextFieldType {
 @Composable
 fun BisqTextField(
     label: String = "",
-    readOnly: Boolean = false,
-    interactionSource: MutableInteractionSource? = null,
     value: String = "",
     onValueChange: ((String, Boolean) -> Unit)? = null,
     placeholder: String = "",
@@ -86,6 +84,8 @@ fun BisqTextField(
     maxLines: Int = if (isTextArea) 4 else 1,
     maxLength: Int = 0,
     disabled: Boolean = false,
+    readOnly: Boolean = false,
+    interactionSource: MutableInteractionSource? = null,
     color: Color = BisqTheme.colors.light_grey20,
     backgroundColor: Color = BisqTheme.colors.secondary,
     showCopy: Boolean = false,
@@ -214,8 +214,6 @@ fun BisqTextField(
 
     BasicTextField(
         value = finalTextValue,
-        readOnly = readOnly,
-        interactionSource = interactionSource,
         visualTransformation = visualTransformation,
         onValueChange = { newTextValue ->
             val processedValue = processText(
@@ -246,12 +244,14 @@ fun BisqTextField(
                 }
             },
         enabled = !disabled,
+        readOnly = readOnly,
         textStyle = finalTextStyle,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
         singleLine = !isTextArea,
         maxLines = maxLines,
         minLines = minLines,
+        interactionSource = interactionSource,
         cursorBrush = SolidColor(BisqTheme.colors.primary),
         decorationBox = { innerTextField ->
             Column(modifier = Modifier.padding(bottom = 2.dp)) {
