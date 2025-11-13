@@ -37,10 +37,12 @@ fun ConfirmationDialog(
     marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
+    dismissOnClickOutside: Boolean = true,
     onConfirm: () -> Unit,
     onDismiss: (Boolean) -> Unit = {}   // true on dismiss button click; false on bg click dismiss
 ) {
     BisqDialog(
+        dismissOnClickOutside = dismissOnClickOutside,
         horizontalAlignment = horizontalAlignment,
         marginTop = marginTop,
         onDismissRequest = { onDismiss(false) }

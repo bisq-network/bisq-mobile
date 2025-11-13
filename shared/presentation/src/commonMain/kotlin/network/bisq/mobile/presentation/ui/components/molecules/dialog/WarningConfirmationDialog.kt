@@ -17,6 +17,7 @@ fun WarningConfirmationDialog(
     marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
+    dismissOnClickOutside: Boolean = true,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -31,6 +32,7 @@ fun WarningConfirmationDialog(
         onDismiss = { onDismiss() },
         marginTop = marginTop,
         horizontalAlignment = horizontalAlignment,
-        verticalButtonPlacement = verticalButtonPlacement
+        verticalButtonPlacement = verticalButtonPlacement,
+        dismissOnClickOutside = dismissOnClickOutside,
     )
 }

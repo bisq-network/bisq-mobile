@@ -79,7 +79,8 @@ fun SplashScreen() {
                     confirmButtonText = "mobile.bootstrap.timeout.continue".i18n(),
                     dismissButtonText = "",
                     onConfirm = { presenter.onTimeoutDialogContinue() },
-                    onDismiss = { }
+                    onDismiss = { },
+                    dismissOnClickOutside = false,
                 )
             } else {
                 WarningConfirmationDialog(
@@ -88,7 +89,8 @@ fun SplashScreen() {
                     confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
                     dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
                     onConfirm = { presenter.onRestartApp() },
-                    onDismiss = { presenter.onTimeoutDialogContinue() }
+                    onDismiss = { presenter.onTimeoutDialogContinue() },
+                    dismissOnClickOutside = false,
                 )
             }
         }
@@ -103,6 +105,7 @@ fun SplashScreen() {
                 onConfirm = presenter::onPurgeRestartTor,
                 onDismiss = presenter::onRestartTor,
                 verticalButtonPlacement = true,
+                dismissOnClickOutside = false,
             )
         }
 
@@ -119,7 +122,8 @@ fun SplashScreen() {
                     confirmButtonText = "",
                     dismissButtonText = "",
                     onConfirm = { },
-                    onDismiss = { }
+                    onDismiss = { },
+                    dismissOnClickOutside = false,
                 )
             } else {
                 WarningConfirmationDialog(
@@ -128,7 +132,8 @@ fun SplashScreen() {
                     confirmButtonText = "mobile.bootstrap.failed.restart".i18n(),
                     dismissButtonText = "mobile.bootstrap.failed.shutdown".i18n(),
                     onConfirm = { presenter.onRestartApp() },
-                    onDismiss = { presenter.onTerminateApp() }
+                    onDismiss = { presenter.onTerminateApp() },
+                    dismissOnClickOutside = false,
                 )
             }
 
