@@ -85,6 +85,7 @@ fun PaymentAccountsScreen() {
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
         shouldBlurBg = showConfirmationDialog,
+        showLoadingDialog = showLoadingDialog,
     ) {
         if (showBottomSheet) {
             BisqBottomSheet(
@@ -231,9 +232,5 @@ fun PaymentAccountsScreen() {
                 showConfirmationDialog = false
             }
         )
-    }
-
-    if (showLoadingDialog) {
-        LoadingDialog()
     }
 }

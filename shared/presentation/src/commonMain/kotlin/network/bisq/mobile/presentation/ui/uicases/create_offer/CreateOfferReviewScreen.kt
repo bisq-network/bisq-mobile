@@ -44,6 +44,7 @@ fun CreateOfferReviewOfferScreen() {
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,
+        showLoadingDialog = showLoadingDialog,
         snackbarHostState = presenter.getSnackState()
     ) {
         BisqGap.V1()
@@ -176,9 +177,5 @@ fun CreateOfferReviewOfferScreen() {
                 subvalue = presenter.feeDetails,
             )
         }
-    }
-
-    if (showLoadingDialog) {
-        LoadingDialog()
     }
 }

@@ -77,6 +77,7 @@ fun OfferbookScreen() {
         },
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog,
+        showLoadingDialog = showLoadingDialog,
         snackbarHostState = presenter.getSnackState()
     ) {
         DirectionToggle(
@@ -190,10 +191,6 @@ fun OfferbookScreen() {
             onConfirm = { presenter.onConfirmedDeleteOffer() },
             onDismiss = { presenter.onDismissDeleteOffer() }
         )
-    }
-
-    if (showLoadingDialog) {
-        LoadingDialog()
     }
 
     if (showNotEnoughReputationDialog) {

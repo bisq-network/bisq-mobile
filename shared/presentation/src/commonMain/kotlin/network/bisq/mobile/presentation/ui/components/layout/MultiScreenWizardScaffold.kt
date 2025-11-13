@@ -44,6 +44,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
  * @param extraActions extra actions to pass to TopBar. If provided, it takes precedence over the built-in close action.
  * @param closeAction when true, shows a default top-bar close action that opens a confirm-close dialog
  * @param onConfirmedClose invoked after the user confirms the close action; ignored if null
+ * @param showLoadingDialog when true, shows a loading dialog overlay
  */
 @Composable
 fun MultiScreenWizardScaffold(
@@ -63,6 +64,7 @@ fun MultiScreenWizardScaffold(
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
     shouldBlurBg: Boolean = false,
+    showLoadingDialog: Boolean = false,
     showUserAvatar: Boolean = true,
     extraActions: @Composable (RowScope.() -> Unit)? = null,
     closeAction: Boolean = false,
@@ -84,9 +86,10 @@ fun MultiScreenWizardScaffold(
         snackbarHostState: SnackbarHostState?,
         jumpToBottom: Boolean,
         shouldBlurBg: Boolean,
+        showLoadingDialog: Boolean,
         content: @Composable ColumnScope.() -> Unit
     ) -> Unit =
-        if (useStaticScaffold) { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
+        if (useStaticScaffold) { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, _showLoadingDialog, innerContent ->
             BisqStaticScaffold(
                 topBar = topBar,
                 bottomBar = bottomBar,
@@ -95,9 +98,10 @@ fun MultiScreenWizardScaffold(
                 snackbarHostState = snackState,
                 isInteractive = isInteractive && !confirmClose.visible,
                 shouldBlurBg = _shouldBlurBg || confirmClose.visible,
+                showLoadingDialog = _showLoadingDialog,
                 content = innerContent
             )
-        } else { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
+        } else { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, _showLoadingDialog, innerContent ->
             BisqScrollScaffold(
                 topBar = topBar,
                 bottomBar = bottomBar,
@@ -107,6 +111,7 @@ fun MultiScreenWizardScaffold(
                 isInteractive = isInteractive && !confirmClose.visible,
                 showJumpToBottom = _showJumpToBottom,
                 shouldBlurBg = _shouldBlurBg || confirmClose.visible,
+                showLoadingDialog = _showLoadingDialog,
                 content = innerContent
             )
         }
@@ -205,6 +210,7 @@ fun MultiScreenWizardScaffold(
         snackbarHostState,
         showJumpToBottom,
         shouldBlurBg,
+        showLoadingDialog,
     ) {
 
         // TODO: Should pass these values to the column deep inside BisqScrollLayout
