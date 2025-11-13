@@ -92,9 +92,6 @@ class OfferbookPresenter(
     private val _showNotEnoughReputationDialog = MutableStateFlow(false)
     val showNotEnoughReputationDialog: StateFlow<Boolean> get() = _showNotEnoughReputationDialog.asStateFlow()
 
-    private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog = _showLoadingDialog.asStateFlow()
-
     val selectedMarket get() = marketPriceServiceFacade.selectedMarketPriceItem
 
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
@@ -375,7 +372,7 @@ class OfferbookPresenter(
             return
         }
         runCatching {
-            _showLoadingDialog.value = true
+            scheduleShowLoading()
             _showDeleteConfirmation.value = false
             require(selectedOffer.isMyOffer)
             launchUI {
@@ -383,7 +380,7 @@ class OfferbookPresenter(
                     val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
                         .getOrDefault(false)
                     log.d { "delete offer success $result" }
-                    _showLoadingDialog.value = false
+                    hideLoading()
                     if (result) {
                         deselectOffer()
                     } else {
@@ -397,7 +394,7 @@ class OfferbookPresenter(
                 }
             }
         }.onFailure {
-            _showLoadingDialog.value = false
+            hideLoading()
             log.e(it) { "Failed to delete offer ${selectedOffer.offerId}" }
             showSnackbar(
                 "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer.offerId),

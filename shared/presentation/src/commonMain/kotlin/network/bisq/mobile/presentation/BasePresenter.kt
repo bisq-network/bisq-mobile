@@ -112,9 +112,9 @@ interface ViewPresenter {
 abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     ViewPresenter, KoinComponent, Logging {
     companion object {
-        const val NAV_GRAPH_MOUNTING_DELAY = 100L
         const val EXIT_WARNING_TIMEOUT = 3000L
         const val SMALLEST_PERCEPTIVE_DELAY = 250L
+        const val LOADING_DIALOG_GRACE_MS = 150L
         var isDemo = false
     }
 
@@ -130,12 +130,21 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
+    /**
+     * override in your presenter if you want to block interactivity on view attached
+     */
+    protected open val blockInteractivityOnAttached = false
+
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> get() = _isInteractive.asStateFlow()
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
 
-    protected open val blockInteractivityOnAttached = false
+
+    // Loading dialog management with grace delay to avoid flicker on fast operations
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog: StateFlow<Boolean> = _showLoadingDialog.asStateFlow()
+    private var loadingJob: Job? = null
 
     override fun getSnackState(): SnackbarHostState {
         return snackbarHostState
@@ -172,15 +181,44 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         rootPresenter?.registerChild(child = this)
     }
 
-    protected fun disableInteractive() {
-        _isInteractive.value = false
-    }
-
+    /**
+     * Enable interactive state with a small delay to avoid flicker.
+     * Link your UI to this state to disable user interactions.
+     */
     protected fun enableInteractive() {
         launchUI {
             delay(SMALLEST_PERCEPTIVE_DELAY)
             _isInteractive.value = true
         }
+    }
+
+    /**
+     * Disable interactive state immediately.
+     * Link your UI to this state to disable user interactions.
+     */
+    protected fun disableInteractive() {
+        _isInteractive.value = false
+    }
+
+    /**
+     * Schedule showing a loading dialog after a grace delay.
+     * If the operation completes before the delay expires, the dialog never appears (avoiding flicker).
+     * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
+     */
+    protected fun scheduleShowLoading() {
+        loadingJob?.cancel()
+        loadingJob = launchUI {
+            delay(LOADING_DIALOG_GRACE_MS)
+            _showLoadingDialog.value = true
+        }
+    }
+
+    /**
+     * Hide the loading dialog and cancel any scheduled show.
+     */
+    protected fun hideLoading() {
+        loadingJob?.cancel()
+        _showLoadingDialog.value = false
     }
 
     override fun isIOS(): Boolean {

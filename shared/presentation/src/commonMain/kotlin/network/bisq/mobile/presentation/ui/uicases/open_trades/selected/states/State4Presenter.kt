@@ -23,8 +23,6 @@ abstract class State4Presenter(
     private val _showCloseTradeDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showCloseTradeDialog: StateFlow<Boolean> get() = _showCloseTradeDialog.asStateFlow()
 
-    private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog = _showLoadingDialog.asStateFlow()
 
     override fun onViewUnattaching() {
         _showCloseTradeDialog.value = false
@@ -46,7 +44,7 @@ abstract class State4Presenter(
                 GenericErrorHandler.handleGenericError("No trade selected for closure")
                 return@launchUI
             }
-            _showLoadingDialog.value = true
+            scheduleShowLoading()
             val result = withContext(Dispatchers.IO) { tradesServiceFacade.closeTrade() }
 
             when {
@@ -63,7 +61,7 @@ abstract class State4Presenter(
                     navigateBack()
                 }
             }
-            _showLoadingDialog.value = false
+            hideLoading()
         }
     }
 

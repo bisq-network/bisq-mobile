@@ -14,18 +14,15 @@ class SellerState2bPresenter(
 ) : BasePresenter(mainPresenter) {
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog = _showLoadingDialog.asStateFlow()
-
     override fun onViewUnattaching() {
         super.onViewUnattaching()
     }
 
     fun onConfirmFiatReceipt() {
         launchIO {
-            _showLoadingDialog.value = true
+            scheduleShowLoading()
             tradesServiceFacade.sellerConfirmFiatReceipt()
-            _showLoadingDialog.value = false
+            hideLoading()
         }
     }
 }

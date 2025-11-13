@@ -40,8 +40,6 @@ class SellerState3aPresenter(
     private val _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLightning: StateFlow<Boolean> get() = _isLightning.asStateFlow()
 
-    private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog = _showLoadingDialog.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -82,11 +80,11 @@ class SellerState3aPresenter(
             return
         }
         launchUI {
-            _showLoadingDialog.value = true
+            scheduleShowLoading()
             withContext(Dispatchers.IO) {
                 tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
             }
-            _showLoadingDialog.value = false
+            hideLoading()
             setShowInvalidAddressDialog(false)
         }
     }

@@ -15,14 +15,11 @@ class BuyerStateLightning3bPresenter(
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog = _showLoadingDialog.asStateFlow()
-
     fun onCompleteTrade() {
         launchIO {
-            _showLoadingDialog.value = true
+            scheduleShowLoading()
             tradesServiceFacade.btcConfirmed()
-            _showLoadingDialog.value = false
+            hideLoading()
         }
     }
 }

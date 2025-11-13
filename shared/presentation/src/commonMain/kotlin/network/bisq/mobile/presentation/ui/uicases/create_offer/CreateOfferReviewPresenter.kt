@@ -38,9 +38,6 @@ class CreateOfferReviewPresenter(
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
-    private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog = _showLoadingDialog.asStateFlow()
-
     override fun onViewAttached() {
         super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
@@ -150,7 +147,7 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        _showLoadingDialog.value = true
+        scheduleShowLoading()
         launchUI {
             createOfferPresenter.createOffer()
                 .onSuccess {
@@ -165,7 +162,7 @@ class CreateOfferReviewPresenter(
                         showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
                     }
                 }
-            _showLoadingDialog.value = false
+            hideLoading()
         }
     }
 }
