@@ -227,7 +227,15 @@ class TakeOfferAmountPresenterTest {
         val settingsService = FakeSettingsServiceFacade()
         val tradeReadStateRepository = FakeTradeReadStateRepository()
         val urlLauncher = FakeUrlLauncher()
-        return MainPresenter(tradesServiceFacade, userProfileServiceFacade, openTradesNotificationService, settingsService, tradeReadStateRepository, urlLauncher)
+        return MainPresenter(
+            tradesServiceFacade,
+            userProfileServiceFacade,
+            openTradesNotificationService,
+            settingsService,
+            tradeReadStateRepository,
+            urlLauncher,
+            network.bisq.mobile.presentation.testutils.TestApplicationLifecycleService()
+        )
     }
 
     private fun makeOfferDto(): OfferItemPresentationDto {

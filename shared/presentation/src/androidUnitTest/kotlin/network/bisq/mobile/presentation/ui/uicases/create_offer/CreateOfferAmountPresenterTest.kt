@@ -238,7 +238,8 @@ class CreateOfferAmountPresenterTest {
             openTradesNotificationService,
             settingsService,
             tradeReadStateRepository,
-            urlLauncher
+            urlLauncher,
+            network.bisq.mobile.presentation.testutils.TestApplicationLifecycleService()
         )
     }
 

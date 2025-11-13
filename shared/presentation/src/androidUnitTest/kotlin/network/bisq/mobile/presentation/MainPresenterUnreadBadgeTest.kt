@@ -161,7 +161,8 @@ class MainPresenterUnreadBadgeTest {
             openTradesNotificationService,
             settingsService,
             tradeReadStateRepository,
-            urlLauncher
+            urlLauncher,
+            network.bisq.mobile.presentation.testutils.TestApplicationLifecycleService()
         )
 
         // Collect the unread messages map
