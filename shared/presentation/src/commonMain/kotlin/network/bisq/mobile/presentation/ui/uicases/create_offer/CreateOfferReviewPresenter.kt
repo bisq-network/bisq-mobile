@@ -147,8 +147,8 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        scheduleShowLoading()
         launchUI {
+            scheduleShowLoading()
             createOfferPresenter.createOffer()
                 .onSuccess {
                     navigateToOfferbookTab()

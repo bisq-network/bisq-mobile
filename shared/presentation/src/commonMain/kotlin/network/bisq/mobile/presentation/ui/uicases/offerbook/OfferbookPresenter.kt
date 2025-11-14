@@ -372,10 +372,10 @@ class OfferbookPresenter(
             return
         }
         runCatching {
-            scheduleShowLoading()
             _showDeleteConfirmation.value = false
             require(selectedOffer.isMyOffer)
             launchUI {
+                scheduleShowLoading()
                 withContext(Dispatchers.IO) {
                     val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
                         .getOrDefault(false)

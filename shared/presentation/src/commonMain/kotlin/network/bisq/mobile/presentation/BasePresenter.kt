@@ -114,7 +114,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     companion object {
         const val EXIT_WARNING_TIMEOUT = 3000L
         const val SMALLEST_PERCEPTIVE_DELAY = 250L
-        const val LOADING_DIALOG_GRACE_MS = 150L
+        const val LOADING_DIALOG_GRACE_MS = 200L
         var isDemo = false
     }
 
@@ -204,6 +204,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
      * Schedule showing a loading dialog after a grace delay.
      * If the operation completes before the delay expires, the dialog never appears (avoiding flicker).
      * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
+     * Nested coroutines calls are fine since job cancellation is handled
      */
     protected fun scheduleShowLoading() {
         loadingJob?.cancel()

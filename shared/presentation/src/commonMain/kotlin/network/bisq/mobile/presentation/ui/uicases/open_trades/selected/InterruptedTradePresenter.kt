@@ -149,28 +149,26 @@ class InterruptedTradePresenter(
         val trade = selectedTrade.value ?: return
         launchUI {
             scheduleShowLoading()
-            try {
-                val result = tradesServiceFacade.closeTrade()
-                if (result.isFailure) {
-                    val msg = result.exceptionOrNull()?.message ?: ""
+            val result = tradesServiceFacade.closeTrade()
+            if (result.isFailure) {
+                val msg = result.exceptionOrNull()?.message ?: ""
+                GenericErrorHandler.handleGenericError(
+                    "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg)
+                )
+                hideLoading()
+                return@launchUI
+            }
+
+            // On success, clear read state. If this fails, report but still navigate back.
+            runCatching { tradeReadStateRepository.clearId(trade.tradeId) }
+                .onFailure { ex ->
                     GenericErrorHandler.handleGenericError(
-                        "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg)
+                        "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: "")
                     )
-                    return@launchUI
                 }
 
-                // On success, clear read state. If this fails, report but still navigate back.
-                runCatching { tradeReadStateRepository.clearId(trade.tradeId) }
-                    .onFailure { ex ->
-                        GenericErrorHandler.handleGenericError(
-                            "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: "")
-                        )
-                    }
-
-                navigateBack()
-            } finally {
-                hideLoading()
-            }
+            hideLoading()
+            navigateBack()
         }
     }
 
