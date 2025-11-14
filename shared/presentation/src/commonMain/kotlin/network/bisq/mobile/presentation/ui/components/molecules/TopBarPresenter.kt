@@ -1,7 +1,5 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
 import kotlinx.coroutines.flow.StateFlow
 
 import network.bisq.mobile.domain.PlatformImage

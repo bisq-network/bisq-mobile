@@ -8,7 +8,7 @@ import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
 
-class SettingsRepositoryImpl(
+open class SettingsRepositoryImpl(
     private val settingsStore: DataStore<Settings>,
 ) : SettingsRepository, Logging {
 

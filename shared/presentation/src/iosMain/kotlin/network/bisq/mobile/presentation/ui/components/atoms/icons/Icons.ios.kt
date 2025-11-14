@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.service.IosImageUtil.toByteArray
+import network.bisq.mobile.presentation.ui.helpers.IosImageUtil.toByteArray
 import org.jetbrains.skia.Image
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation

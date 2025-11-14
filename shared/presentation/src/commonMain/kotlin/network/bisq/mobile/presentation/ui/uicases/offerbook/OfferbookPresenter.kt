@@ -40,7 +40,7 @@ import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 
-class OfferbookPresenter(
+open class OfferbookPresenter(
     private val mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
     private val takeOfferPresenter: TakeOfferPresenter,
@@ -290,7 +290,10 @@ class OfferbookPresenter(
         offers.map { offer -> processOffer(offer, userProfile) }
     }
 
-    private suspend fun processOffer(item: OfferItemPresentationModel, userProfile: UserProfileVO): OfferItemPresentationModel {
+    private suspend fun processOffer(
+        item: OfferItemPresentationModel,
+        userProfile: UserProfileVO
+    ): OfferItemPresentationModel {
         val offer = item.bisqEasyOffer
 
         // todo: Reformatting should ideally only happen with language change
@@ -674,20 +677,6 @@ class OfferbookPresenter(
      * Fast, non-suspending check for ignored users using cached data.
      * This method is safe to call from hot paths like offer filtering.
      */
-    private fun isOfferFromIgnoredUserCached(offer: BisqEasyOfferVO): Boolean {
-        val makerUserProfileId = offer.makerNetworkId.pubKey.id
-        return try {
-            // Use cached check for hot path performance
-            val isIgnored = (userProfileServiceFacade as? network.bisq.mobile.client.service.user_profile.ClientUserProfileServiceFacade)
-                ?.isUserIgnoredCached(makerUserProfileId) ?: false
+    open fun isOfferFromIgnoredUserCached(offer: BisqEasyOfferVO): Boolean = false
 
-            if (isIgnored) {
-                log.v { "Offer ${offer.id} from ignored user $makerUserProfileId (cached)" }
-            }
-            isIgnored
-        } catch (e: Exception) {
-            log.w("isUserIgnoredCached failed for $makerUserProfileId", e)
-            false
-        }
-    }
 }
