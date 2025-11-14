@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.utils
+package network.bisq.mobile.client.common.data
 
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.utils.VersionProvider

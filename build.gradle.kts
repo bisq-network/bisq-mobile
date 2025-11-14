@@ -66,3 +66,26 @@ tasks.register("updatePlist") {
 tasks.matching { it.name.startsWith("link") }.configureEach {
     dependsOn("updatePlist")
 }
+
+// Automatically configure Git hooks on project sync/build
+tasks.register<Exec>("installGitHooks") {
+    description = "Configures Git to use .githooks directory"
+    group = "git"
+
+    commandLine(
+        "sh", "-c", """
+        if [ -d .git ]; then
+            git config core.hooksPath .githooks
+            chmod +x .githooks/*
+            echo "✅ Git hooks configured automatically"
+        fi
+    """.trimIndent()
+    )
+
+    isIgnoreExitValue = true // Don't fail build if git is not available
+}
+
+// Run installGitHooks automatically when project is evaluated
+rootProject.tasks.named("prepareKotlinBuildScriptModel").configure {
+    dependsOn("installGitHooks")
+}

@@ -5,20 +5,15 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.navigation.NavUtils.getDeepLinkBasePath
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionScreen
@@ -49,7 +44,6 @@ import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnboardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
-import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.UserAgreementDisplayScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.UserAgreementScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodScreen
@@ -59,91 +53,82 @@ import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferTradeAmou
 
 const val NAV_ANIM_MS = 300
 
-@Composable
-fun RootNavGraph(rootNavController: NavHostController) {
-    NavHost(
-        modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
-        navController = rootNavController,
-        startDestination = NavRoute.Splash,
-    ) {
-        composable<NavRoute.Splash> { SplashScreen() }
+fun NavGraphBuilder.addCommonAppRoutes() {
+    composable<NavRoute.Splash> { SplashScreen() }
 
-        addScreen<NavRoute.TrustedNodeSetupSettings> { TrustedNodeSetupScreen(false) }
-        addScreen<NavRoute.UserAgreement> { UserAgreementScreen() }
-        addScreen<NavRoute.Onboarding> { OnboardingScreen() }
-        addScreen<NavRoute.CreateProfile> { CreateProfileScreen() }
-        addScreen<NavRoute.TrustedNodeSetup> { TrustedNodeSetupScreen() }
+    addScreen<NavRoute.UserAgreement> { UserAgreementScreen() }
+    addScreen<NavRoute.Onboarding> { OnboardingScreen() }
+    addScreen<NavRoute.CreateProfile> { CreateProfileScreen() }
 
-        addScreen<NavRoute.TabContainer>(
-            deepLinks = listOf(
-                navDeepLink<NavRoute.TabContainer>(
-                    basePath = getDeepLinkBasePath<NavRoute.TabContainer>()
-                ),
+    addScreen<NavRoute.TabContainer>(
+        deepLinks = listOf(
+            navDeepLink<NavRoute.TabContainer>(
+                basePath = getDeepLinkBasePath<NavRoute.TabContainer>()
+            ),
+        )
+    ) { TabContainerScreen() }
+
+    addScreen<NavRoute.OpenTrade>(
+        deepLinks = listOf(
+            navDeepLink<NavRoute.OpenTrade>(
+                basePath = getDeepLinkBasePath<NavRoute.OpenTrade>()
             )
-        ) { TabContainerScreen() }
-
-        addScreen<NavRoute.OpenTrade>(
-            deepLinks = listOf(
-                navDeepLink<NavRoute.OpenTrade>(
-                    basePath = getDeepLinkBasePath<NavRoute.OpenTrade>()
-                )
-            ),
-        ) { backStackEntry ->
-            val openTrade: NavRoute.OpenTrade = backStackEntry.toRoute()
-            OpenTradeScreen(openTrade.tradeId)
-        }
-
-        addScreen<NavRoute.TradeChat>(
-            navAnimation = NavAnimation.FADE_IN,
-            deepLinks = listOf(
-                navDeepLink<NavRoute.TradeChat>(
-                    basePath = getDeepLinkBasePath<NavRoute.TradeChat>()
-                )
-            ),
-        ) { backStackEntry ->
-            val tradeChat: NavRoute.TradeChat = backStackEntry.toRoute()
-            TradeChatScreen(tradeChat.tradeId)
-        }
-
-        // --- Other Screens ---
-        addScreen<NavRoute.Offerbook> { OfferbookScreen() }
-        addScreen<NavRoute.ChatRules> { ChatRulesScreen() }
-        addScreen<NavRoute.Settings> { SettingsScreen() }
-        addScreen<NavRoute.Support> { SupportScreen() }
-        addScreen<NavRoute.Reputation> { ReputationScreen() }
-        addScreen<NavRoute.UserProfile> { UserProfileScreen() }
-        addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
-        addScreen<NavRoute.IgnoredUsers> { IgnoredUsersScreen() }
-        addScreen<NavRoute.Resources> { ResourcesScreen() }
-        addScreen<NavRoute.UserAgreementDisplay> { UserAgreementDisplayScreen() }
-
-        // --- Take Offer Screens ---
-        addScreen<NavRoute.TakeOfferTradeAmount>(wizardTransition = false) { TakeOfferTradeAmountScreen() }
-        addScreen<NavRoute.TakeOfferPaymentMethod>(wizardTransition = true) { TakeOfferPaymentMethodScreen() }
-        addScreen<NavRoute.TakeOfferSettlementMethod>(wizardTransition = true) { TakeOfferSettlementMethodScreen() }
-        addScreen<NavRoute.TakeOfferReviewTrade>(wizardTransition = true) { TakeOfferReviewTradeScreen() }
-
-        // --- Create Offer Screens ---
-        addScreen<NavRoute.CreateOfferDirection>(wizardTransition = false) { CreateOfferDirectionScreen() }
-        addScreen<NavRoute.CreateOfferMarket>(wizardTransition = true) { CreateOfferMarketScreen() }
-        addScreen<NavRoute.CreateOfferAmount>(wizardTransition = true) { CreateOfferAmountScreen() }
-        addScreen<NavRoute.CreateOfferPrice>(wizardTransition = true) { CreateOfferPriceScreen() }
-        addScreen<NavRoute.CreateOfferPaymentMethod>(wizardTransition = true) { CreateOfferPaymentMethodScreen() }
-        addScreen<NavRoute.CreateOfferSettlementMethod>(wizardTransition = true) { CreateOfferSettlementMethodScreen() }
-        addScreen<NavRoute.CreateOfferReviewOffer>(wizardTransition = true) { CreateOfferReviewOfferScreen() }
-
-        // --- Trade Guide Screens ---
-        addScreen<NavRoute.TradeGuideOverview>(wizardTransition = false) { TradeGuideOverview() }
-        addScreen<NavRoute.TradeGuideSecurity>(wizardTransition = true) { TradeGuideSecurity() }
-        addScreen<NavRoute.TradeGuideProcess>(wizardTransition = true) { TradeGuideProcess() }
-        addScreen<NavRoute.TradeGuideTradeRules>(wizardTransition = true) { TradeGuideTradeRules() }
-
-        // --- Wallet Guide Screens ---
-        addScreen<NavRoute.WalletGuideIntro>(wizardTransition = false) { WalletGuideIntro() }
-        addScreen<NavRoute.WalletGuideDownload>(wizardTransition = true) { WalletGuideDownload() }
-        addScreen<NavRoute.WalletGuideNewWallet>(wizardTransition = true) { WalletGuideNewWallet() }
-        addScreen<NavRoute.WalletGuideReceiving>(wizardTransition = true) { WalletGuideReceiving() }
+        ),
+    ) { backStackEntry ->
+        val openTrade: NavRoute.OpenTrade = backStackEntry.toRoute()
+        OpenTradeScreen(openTrade.tradeId)
     }
+
+    addScreen<NavRoute.TradeChat>(
+        navAnimation = NavAnimation.FADE_IN,
+        deepLinks = listOf(
+            navDeepLink<NavRoute.TradeChat>(
+                basePath = getDeepLinkBasePath<NavRoute.TradeChat>()
+            )
+        ),
+    ) { backStackEntry ->
+        val tradeChat: NavRoute.TradeChat = backStackEntry.toRoute()
+        TradeChatScreen(tradeChat.tradeId)
+    }
+
+    // --- Other Screens ---
+    addScreen<NavRoute.Offerbook> { OfferbookScreen() }
+    addScreen<NavRoute.ChatRules> { ChatRulesScreen() }
+    addScreen<NavRoute.Settings> { SettingsScreen() }
+    addScreen<NavRoute.Support> { SupportScreen() }
+    addScreen<NavRoute.Reputation> { ReputationScreen() }
+    addScreen<NavRoute.UserProfile> { UserProfileScreen() }
+    addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
+    addScreen<NavRoute.IgnoredUsers> { IgnoredUsersScreen() }
+    addScreen<NavRoute.Resources> { ResourcesScreen() }
+    addScreen<NavRoute.UserAgreementDisplay> { UserAgreementDisplayScreen() }
+
+    // --- Take Offer Screens ---
+    addScreen<NavRoute.TakeOfferTradeAmount>(wizardTransition = false) { TakeOfferTradeAmountScreen() }
+    addScreen<NavRoute.TakeOfferPaymentMethod>(wizardTransition = true) { TakeOfferPaymentMethodScreen() }
+    addScreen<NavRoute.TakeOfferSettlementMethod>(wizardTransition = true) { TakeOfferSettlementMethodScreen() }
+    addScreen<NavRoute.TakeOfferReviewTrade>(wizardTransition = true) { TakeOfferReviewTradeScreen() }
+
+    // --- Create Offer Screens ---
+    addScreen<NavRoute.CreateOfferDirection>(wizardTransition = false) { CreateOfferDirectionScreen() }
+    addScreen<NavRoute.CreateOfferMarket>(wizardTransition = true) { CreateOfferMarketScreen() }
+    addScreen<NavRoute.CreateOfferAmount>(wizardTransition = true) { CreateOfferAmountScreen() }
+    addScreen<NavRoute.CreateOfferPrice>(wizardTransition = true) { CreateOfferPriceScreen() }
+    addScreen<NavRoute.CreateOfferPaymentMethod>(wizardTransition = true) { CreateOfferPaymentMethodScreen() }
+    addScreen<NavRoute.CreateOfferSettlementMethod>(wizardTransition = true) { CreateOfferSettlementMethodScreen() }
+    addScreen<NavRoute.CreateOfferReviewOffer>(wizardTransition = true) { CreateOfferReviewOfferScreen() }
+
+    // --- Trade Guide Screens ---
+    addScreen<NavRoute.TradeGuideOverview>(wizardTransition = false) { TradeGuideOverview() }
+    addScreen<NavRoute.TradeGuideSecurity>(wizardTransition = true) { TradeGuideSecurity() }
+    addScreen<NavRoute.TradeGuideProcess>(wizardTransition = true) { TradeGuideProcess() }
+    addScreen<NavRoute.TradeGuideTradeRules>(wizardTransition = true) { TradeGuideTradeRules() }
+
+    // --- Wallet Guide Screens ---
+    addScreen<NavRoute.WalletGuideIntro>(wizardTransition = false) { WalletGuideIntro() }
+    addScreen<NavRoute.WalletGuideDownload>(wizardTransition = true) { WalletGuideDownload() }
+    addScreen<NavRoute.WalletGuideNewWallet>(wizardTransition = true) { WalletGuideNewWallet() }
+    addScreen<NavRoute.WalletGuideReceiving>(wizardTransition = true) { WalletGuideReceiving() }
 }
 
 enum class NavAnimation {

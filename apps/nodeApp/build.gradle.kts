@@ -45,6 +45,12 @@ kotlin {
             implementation(libs.junit)
             implementation(libs.robolectric)
         }
+
+        commonMain.dependencies {
+            api(project(sharedPresentationModule))
+            implementation(compose.foundation)
+            implementation(libs.navigation.compose)
+        }
     }
 }
 

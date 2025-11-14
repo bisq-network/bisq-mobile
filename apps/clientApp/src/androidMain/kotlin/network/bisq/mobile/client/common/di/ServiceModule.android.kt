@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.di
+package network.bisq.mobile.client.common.di
 
 import network.bisq.mobile.client.ClientMainActivity
 import network.bisq.mobile.domain.service.AppForegroundController

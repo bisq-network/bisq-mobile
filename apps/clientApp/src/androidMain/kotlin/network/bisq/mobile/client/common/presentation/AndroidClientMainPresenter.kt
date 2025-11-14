@@ -1,5 +1,6 @@
-package network.bisq.mobile.client
+package network.bisq.mobile.client.common.presentation
 
+import network.bisq.mobile.client.ClientMainPresenter
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository

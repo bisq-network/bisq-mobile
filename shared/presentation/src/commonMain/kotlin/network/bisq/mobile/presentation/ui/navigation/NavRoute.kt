@@ -5,7 +5,7 @@ import network.bisq.mobile.presentation.ui.navigation.NavUtils.getDeepLinkBasePa
 
 const val NAV_BASE_PATH = "bisq://"
 
-sealed interface NavRoute {
+interface NavRoute {
 
     @Serializable
     data object HomeScreenGraphKey : NavRoute
