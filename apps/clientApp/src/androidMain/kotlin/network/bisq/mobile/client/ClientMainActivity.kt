@@ -1,6 +1,7 @@
 package network.bisq.mobile.client
 
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import network.bisq.mobile.presentation.MainActivity
 
@@ -13,5 +14,8 @@ class ClientMainActivity : MainActivity() {
         installSplashScreen()
 
         super.onCreate(savedInstanceState)
+        setContent {
+            ClientApp()
+        }
     }
 }

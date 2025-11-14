@@ -1,8 +1,8 @@
 package network.bisq.mobile.client
 
-import network.bisq.mobile.client.di.androidClientModule
+import network.bisq.mobile.client.common.di.androidClientModule
 import network.bisq.mobile.client.di.clientModule
-import network.bisq.mobile.client.di.serviceModule
+import network.bisq.mobile.client.common.di.serviceModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.presentation.MainApplication

@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.service
+package network.bisq.mobile.client.common.data
 
 import android.content.Context
 import android.graphics.Bitmap

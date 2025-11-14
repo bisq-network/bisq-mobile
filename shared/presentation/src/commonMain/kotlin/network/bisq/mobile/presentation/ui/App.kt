@@ -31,7 +31,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
@@ -46,7 +46,6 @@ import network.bisq.mobile.presentation.ui.components.context.LocalAnimationsEna
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
-import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -122,10 +121,12 @@ fun SafeInsetsContainer(
  * Main composable view of the application that platforms use to draw.
  */
 @Composable
-fun App() {
+fun App(
+    rootNavController: NavHostController,
+    navGraphContent: @Composable () -> Unit
+) {
     val presenter: AppPresenter = koinInject()
     val navigationManager: NavigationManager = koinInject()
-    val rootNavController = rememberNavController()
 
     DisposableEffect(rootNavController) {
         navigationManager.setRootNavController(rootNavController)
@@ -162,7 +163,7 @@ fun App() {
                     }
                     Column {
                         NetworkStatusBanner()
-                        RootNavGraph(rootNavController)
+                        navGraphContent()
                     }
                 }
             }
