@@ -27,6 +27,7 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
+import network.bisq.mobile.presentation.ui.GlobalUiManager
 import network.bisq.mobile.presentation.ui.components.organisms.BisqSnackbarVisuals
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
@@ -140,11 +141,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     override val isInteractive: StateFlow<Boolean> get() = _isInteractive.asStateFlow()
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
 
-
-    // Loading dialog management with grace delay to avoid flicker on fast operations
-    private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog: StateFlow<Boolean> = _showLoadingDialog.asStateFlow()
-    private var loadingJob: Job? = null
+    // Global UI manager for app-wide UI state (loading dialogs, etc.)
+    protected val globalUiManager: GlobalUiManager by inject()
 
     override fun getSnackState(): SnackbarHostState {
         return snackbarHostState
@@ -204,22 +202,18 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
      * Schedule showing a loading dialog after a grace delay.
      * If the operation completes before the delay expires, the dialog never appears (avoiding flicker).
      * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
-     * Nested coroutines calls are fine since job cancellation is handled
+     * Delegates to GlobalUiManager for app-level loading dialog management.
      */
     protected fun scheduleShowLoading() {
-        loadingJob?.cancel()
-        loadingJob = launchUI {
-            delay(LOADING_DIALOG_GRACE_MS)
-            _showLoadingDialog.value = true
-        }
+        globalUiManager.scheduleShowLoading()
     }
 
     /**
      * Hide the loading dialog and cancel any scheduled show.
+     * Delegates to GlobalUiManager for app-level loading dialog management.
      */
     protected fun hideLoading() {
-        loadingJob?.cancel()
-        _showLoadingDialog.value = false
+        globalUiManager.hideLoading()
     }
 
     override fun isIOS(): Boolean {

@@ -10,7 +10,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 @Composable
@@ -20,7 +19,6 @@ fun BuyerState2a(
     RememberPresenterLifecycle(presenter)
 
     val selectedTrade by presenter.selectedTrade.collectAsState()
-    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     val trade = selectedTrade ?: return
 
@@ -63,9 +61,5 @@ fun BuyerState2a(
             text = "bisqEasy.tradeState.info.buyer.phase2a.confirmFiatSent".i18n(quoteAmount),
             onClick = { presenter.onConfirmFiatSent() },
         )
-    }
-
-    if (showLoadingDialog) {
-        LoadingDialog()
     }
 }

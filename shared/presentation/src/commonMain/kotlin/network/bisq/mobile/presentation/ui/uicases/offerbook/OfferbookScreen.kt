@@ -57,7 +57,6 @@ fun OfferbookScreen() {
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
-    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     // Show a loading overlay only while data is being fetched for the selected market
     val showLoading by presenter.isLoading.collectAsState()
@@ -77,7 +76,6 @@ fun OfferbookScreen() {
         },
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog,
-        showLoadingDialog = showLoadingDialog,
         snackbarHostState = presenter.getSnackState()
     ) {
         DirectionToggle(

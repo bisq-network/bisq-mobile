@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.organisms.BisqSnackbar
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -31,7 +30,6 @@ fun BisqStaticScaffold(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     isInteractive: Boolean = true,
     shouldBlurBg: Boolean = false,
-    showLoadingDialog: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
@@ -57,8 +55,4 @@ fun BisqStaticScaffold(
             }
         }
     )
-
-    if (showLoadingDialog) {
-        LoadingDialog()
-    }
 }

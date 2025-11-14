@@ -16,7 +16,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
@@ -32,8 +31,6 @@ fun CreateOfferReviewOfferScreen() {
     val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
-
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
         stepIndex = if (createPresenter.skipCurrency) 6 else 7,
@@ -44,7 +41,6 @@ fun CreateOfferReviewOfferScreen() {
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,
-        showLoadingDialog = showLoadingDialog,
         snackbarHostState = presenter.getSnackState()
     ) {
         BisqGap.V1()

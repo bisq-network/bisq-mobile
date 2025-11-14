@@ -4,6 +4,7 @@ import network.bisq.mobile.client.ClientMainPresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.getPlatformCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.GlobalUiManager
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
@@ -78,6 +79,9 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val presentationModule = module {
+    // Global UI state manager - uses its own scope for UI operations
+    single<GlobalUiManager> { GlobalUiManager() }
+
     single<MainPresenter> {
         ClientMainPresenter(
             get(),

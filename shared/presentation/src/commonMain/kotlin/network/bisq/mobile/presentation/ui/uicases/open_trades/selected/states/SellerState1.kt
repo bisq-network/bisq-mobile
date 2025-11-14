@@ -10,7 +10,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqSelect
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 @Composable
@@ -23,7 +22,6 @@ fun SellerState1(
     val paymentAccountData by presenter.paymentAccountData.collectAsState()
     val paymentAccountName by presenter.paymentAccountName.collectAsState()
     val accounts by presenter.accounts.collectAsState()
-    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -76,9 +74,5 @@ fun SellerState1(
             onClick = { presenter.onSendPaymentData() },
             disabled = !paymentAccountDataValid,
         )
-    }
-
-    if (showLoadingDialog) {
-        LoadingDialog()
     }
 }

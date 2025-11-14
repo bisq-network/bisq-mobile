@@ -8,7 +8,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 @Composable
@@ -21,7 +20,6 @@ fun SellerState2b(
     val trade = selectedTrade ?: return
     val shortId = trade.shortTradeId
     val quoteAmountWithCode = trade.quoteAmountWithCode
-    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -41,9 +39,5 @@ fun SellerState2b(
             text = "bisqEasy.tradeState.info.seller.phase2b.fiatReceivedButton".i18n(quoteAmountWithCode),
             onClick = { presenter.onConfirmFiatReceipt() },
         )
-    }
-
-    if (showLoadingDialog) {
-        LoadingDialog()
     }
 }

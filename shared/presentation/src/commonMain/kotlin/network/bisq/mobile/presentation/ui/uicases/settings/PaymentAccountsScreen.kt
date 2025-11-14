@@ -31,7 +31,6 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -56,7 +55,6 @@ fun PaymentAccountsScreen() {
     val presenter: PaymentAccountsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
     val accounts by presenter.accounts.collectAsState()
     val selectedAccount by presenter.selectedAccount.collectAsState()
     val isLoading by presenter.isLoading.collectAsState()
@@ -85,7 +83,6 @@ fun PaymentAccountsScreen() {
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
         shouldBlurBg = showConfirmationDialog,
-        showLoadingDialog = showLoadingDialog,
     ) {
         if (showBottomSheet) {
             BisqBottomSheet(

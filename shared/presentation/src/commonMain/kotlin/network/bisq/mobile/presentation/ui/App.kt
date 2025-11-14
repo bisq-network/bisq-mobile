@@ -43,6 +43,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.context.LocalAnimationsEnabled
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
@@ -125,6 +126,7 @@ fun SafeInsetsContainer(
 fun App() {
     val presenter: AppPresenter = koinInject()
     val navigationManager: NavigationManager = koinInject()
+    val globalUiManager: GlobalUiManager = koinInject()
     val rootNavController = rememberNavController()
 
     DisposableEffect(rootNavController) {
@@ -139,6 +141,7 @@ fun App() {
     val showAnimation by presenter.showAnimation.collectAsState()
     val showAllConnectionsLostDialogue by presenter.showAllConnectionsLostDialogue.collectAsState()
     val showReconnectOverlay by presenter.showReconnectOverlay.collectAsState()
+    val showLoadingDialog by globalUiManager.showLoadingDialog.collectAsState()
 
     LaunchedEffect(languageCode) {
         if (languageCode.isNotBlank()) {
@@ -168,6 +171,11 @@ fun App() {
             }
 
             ErrorOverlay()
+
+            // Global loading dialog - renders on top of everything
+            if (showLoadingDialog) {
+                LoadingDialog()
+            }
 
             if (showAllConnectionsLostDialogue) {
                 WarningConfirmationDialog(
