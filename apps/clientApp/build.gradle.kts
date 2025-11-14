@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // -------------------- Version Configuration --------------------
@@ -62,6 +63,9 @@ kotlin {
         commonMain.dependencies {
             api(project(sharedPresentationModule))
             api(project(sharedDomainModule))
+            implementation(compose.foundation)
+            implementation(libs.navigation.compose)
+            implementation(libs.kotlinx.serialization.core)
             implementation(libs.koin.core)
             implementation(libs.logging.kermit)
         }

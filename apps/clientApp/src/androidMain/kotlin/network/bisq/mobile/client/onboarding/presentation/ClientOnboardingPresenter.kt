@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.presentation
+package network.bisq.mobile.client.onboarding.presentation
 
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
