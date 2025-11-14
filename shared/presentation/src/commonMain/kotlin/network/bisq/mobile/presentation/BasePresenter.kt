@@ -115,7 +115,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     companion object {
         const val EXIT_WARNING_TIMEOUT = 3000L
         const val SMALLEST_PERCEPTIVE_DELAY = 250L
-        const val LOADING_DIALOG_GRACE_MS = 200L
         var isDemo = false
     }
 

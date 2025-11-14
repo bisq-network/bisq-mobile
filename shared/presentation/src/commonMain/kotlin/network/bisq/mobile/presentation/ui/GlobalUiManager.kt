@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,8 +16,10 @@ import kotlinx.coroutines.launch
  * This is injected into presenters to manage global UI state without coupling to BasePresenter.
  * Uses its own coroutine scope for UI operations.
  */
-class GlobalUiManager {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+class GlobalUiManager(
+    dispatcher: CoroutineDispatcher = Dispatchers.Main
+) {
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     companion object {
         private const val LOADING_DIALOG_GRACE_MS = 150L
     }
