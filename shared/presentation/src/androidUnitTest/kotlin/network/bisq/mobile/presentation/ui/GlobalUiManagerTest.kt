@@ -37,7 +37,7 @@ class GlobalUiManagerTest {
     }
 
     @Test
-    fun scheduleShowLoading_doesNotShowImmediately() = runTest {
+    fun scheduleShowLoading_doesNotShowImmediately() = runTest(testDispatcher) {
         // Given
         val globalUiManager = GlobalUiManager(testDispatcher)
 
@@ -68,7 +68,7 @@ class GlobalUiManagerTest {
     }
 
     @Test
-    fun hideLoading_cancelsScheduledShow_beforeGraceDelayExpires() = runTest {
+    fun hideLoading_cancelsScheduledShow_beforeGraceDelayExpires() = runTest(testDispatcher) {
         // Given
         val globalUiManager = GlobalUiManager(testDispatcher)
 
@@ -79,14 +79,14 @@ class GlobalUiManagerTest {
         assertFalse(globalUiManager.showLoadingDialog.value)
 
         // When: Hide before grace delay expires
-        advanceTimeBy(100) // Only 100ms of 150ms
+        testScheduler.advanceTimeBy(100) // Only 100ms of 150ms
         globalUiManager.hideLoading()
 
         // Then: Still false
         assertFalse(globalUiManager.showLoadingDialog.value)
 
         // When: Wait past original grace delay
-        advanceTimeBy(100) // Total 200ms
+        testScheduler.advanceTimeBy(100) // Total 200ms
 
         // Then: Still false (job was cancelled)
         assertFalse(globalUiManager.showLoadingDialog.value)
@@ -140,7 +140,7 @@ class GlobalUiManagerTest {
     }
 
     @Test
-    fun hideLoading_whenNotShowing_doesNothing() = runTest {
+    fun hideLoading_whenNotShowing_doesNothing() = runTest(testDispatcher) {
         // Given
         val globalUiManager = GlobalUiManager(testDispatcher)
 
@@ -152,20 +152,20 @@ class GlobalUiManagerTest {
     }
 
     @Test
-    fun graceDelay_preventsFlickerOnFastOperations() = runTest {
+    fun graceDelay_preventsFlickerOnFastOperations() = runTest(testDispatcher) {
         // Given
         val globalUiManager = GlobalUiManager(testDispatcher)
 
         // When: Simulate fast operation (completes in 50ms)
         globalUiManager.scheduleShowLoading()
-        advanceTimeBy(50)
+        testScheduler.advanceTimeBy(50)
         globalUiManager.hideLoading()
 
         // Then: Dialog never shown (operation completed before grace delay)
         assertFalse(globalUiManager.showLoadingDialog.value)
 
         // When: Wait past grace delay
-        advanceTimeBy(200)
+        testScheduler.advanceTimeBy(200)
 
         // Then: Still not shown (job was cancelled)
         assertFalse(globalUiManager.showLoadingDialog.value)

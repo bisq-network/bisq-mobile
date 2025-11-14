@@ -44,7 +44,9 @@ class InterruptedTradePresenterTest {
     private val mediationServiceFacade: MediationServiceFacade = mockk(relaxed = true)
     private val tradeReadStateRepository: TradeReadStateRepository = mockk(relaxed = true)
     private val navigationManager: NavigationManager = mockk(relaxed = true)
-    private val globalUiManager: GlobalUiManager = GlobalUiManager()
+
+    // Use lazy initialization to inject test dispatcher into GlobalUiManager
+    private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
 
     // Koin module for BasePresenter dependencies
     private val testKoinModule = module {

@@ -354,12 +354,16 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
 
     @CallSuper
     override fun onViewUnattaching() {
+        // Cancel any pending global loading dialog to prevent stuck overlays
+        hideLoading()
         // Presenter level support for auto disposal
         CoroutineScope(Dispatchers.IO).launch { jobsManager.dispose() }
     }
 
     @CallSuper
     override fun onDestroying() {
+        // Cancel any pending global loading dialog to prevent stuck overlays
+        hideLoading()
         // default impl
         log.i { "onDestroying" }
     }

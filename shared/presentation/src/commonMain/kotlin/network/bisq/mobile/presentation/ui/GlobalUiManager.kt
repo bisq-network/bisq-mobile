@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,9 +21,6 @@ class GlobalUiManager(
     dispatcher: CoroutineDispatcher = Dispatchers.Main
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-    companion object {
-        private const val LOADING_DIALOG_GRACE_MS = 150L
-    }
 
     private val _showLoadingDialog = MutableStateFlow(false)
     val showLoadingDialog: StateFlow<Boolean> get() = _showLoadingDialog.asStateFlow()
@@ -48,6 +46,19 @@ class GlobalUiManager(
     fun hideLoading() {
         loadingJob?.cancel()
         _showLoadingDialog.value = false
+    }
+
+    /**
+     * Dispose of the manager and cancel all pending operations.
+     * Useful for testing scenarios where you want to cleanly tear down the manager.
+     */
+    fun dispose() {
+        loadingJob?.cancel()
+        scope.cancel()
+    }
+
+    companion object {
+        private const val LOADING_DIALOG_GRACE_MS = 150L
     }
 }
 

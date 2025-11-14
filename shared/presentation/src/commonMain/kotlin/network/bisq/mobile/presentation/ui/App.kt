@@ -172,11 +172,6 @@ fun App() {
 
             ErrorOverlay()
 
-            // Global loading dialog - renders on top of everything
-            if (showLoadingDialog) {
-                LoadingDialog()
-            }
-
             if (showAllConnectionsLostDialogue) {
                 WarningConfirmationDialog(
                     headline = "mobile.connectivity.disconnected.title".i18n(),
@@ -187,6 +182,11 @@ fun App() {
                 )
             } else if (showReconnectOverlay) {
                 ReconnectingOverlay(onClick = { presenter.onRestartApp() })
+            }
+
+            // Global loading dialog - renders on top of everything (last child = topmost z-order)
+            if (showLoadingDialog) {
+                LoadingDialog()
             }
         }
     }
