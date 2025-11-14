@@ -58,6 +58,7 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
+import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
@@ -133,7 +134,7 @@ val androidNodeModule = module {
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
-    single<ApplicationLifecycleService> {
+    single {
         NodeApplicationLifecycleService(
             get(),
             get(),
@@ -156,7 +157,7 @@ val androidNodeModule = module {
             get(),
             get()
         )
-    }
+    } bind ApplicationLifecycleService::class
 
     single<MainPresenter> {
         NodeMainPresenter(
@@ -215,4 +216,17 @@ val androidNodeModule = module {
             get()
         )
     } bind IOnboardingPresenter::class
+
+    single<OfferbookPresenter> {
+        OfferbookPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
+
 }

@@ -6,11 +6,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.navigation.graph.addScreen
 import network.bisq.mobile.presentation.ui.navigation.graph.addCommonAppRoutes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
 
 @Composable
 fun ClientRootNavGraph(rootNavController: NavHostController) {

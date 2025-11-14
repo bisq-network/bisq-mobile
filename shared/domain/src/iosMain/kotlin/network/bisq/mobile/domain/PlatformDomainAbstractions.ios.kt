@@ -2,10 +2,6 @@
 
 package network.bisq.mobile.domain
 
-import io.ktor.client.HttpClient
-import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.darwin.Darwin
-import io.ktor.client.plugins.websocket.WebSockets
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.MemScope
@@ -18,7 +14,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.client.httpclient.BisqProxyConfig
 import org.koin.core.scope.Scope
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSApplicationSupportDirectory
@@ -382,17 +377,4 @@ actual fun Scope.getStorageDir(): String {
         if (!success) throw IllegalStateException("Failed to create application support subdirectory")
     }
     return url.path ?: appSupport
-}
-
-actual fun createHttpClient(
-    proxyConfig: BisqProxyConfig?,
-    config: HttpClientConfig<*>.() -> Unit
-): HttpClient = HttpClient(Darwin) {
-    config(this)
-    install(WebSockets) {
-        pingIntervalMillis = 15_000 // not supported by okhttp engine
-    }
-    engine {
-        proxy = proxyConfig?.config
-    }
 }

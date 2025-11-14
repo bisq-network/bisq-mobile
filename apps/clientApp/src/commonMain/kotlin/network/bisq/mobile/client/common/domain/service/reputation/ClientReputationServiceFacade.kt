@@ -1,0 +1,79 @@
+package network.bisq.mobile.client.common.domain.service.reputation
+
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+
+class ClientReputationServiceFacade(
+    val apiGateway: ReputationApiGateway,
+    private val json: Json,
+) : ServiceFacade(), ReputationServiceFacade {
+
+    // MutableStateFlow is only used as there is no kmp compatible concurrent map. The ConcurrentMap from ktor is not recommended to be
+    // used as its only an internal implementation.
+    // reputationByUserProfileId is used only as local cache to avoid frequent API calls.
+    private val reputationByUserProfileId = MutableStateFlow<Map<String, ReputationScoreVO>>(emptyMap())
+
+    // Properties
+    override val scoreByUserProfileId: Map<String, Long> get() = reputationByUserProfileId.value.mapValues { (_, v) -> v.totalScore }
+
+    // Life cycle
+    override suspend fun activate() {
+        super<ServiceFacade>.activate()
+        serviceScope.launch {
+            runCatching {
+                subscribeReputation()
+            }.onFailure {
+                log.w { "Failed to activate client reputation service" }
+            }
+        }
+    }
+
+    override suspend fun deactivate() {
+        super<ServiceFacade>.deactivate()
+    }
+
+    override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
+        return try {
+            apiGateway.getProfileAge(userProfileId)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to get profile age for userId=$userProfileId" }
+            Result.failure(e)
+        }
+    }
+
+    // API
+    override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
+        // We do not have access to the config data, thus we check with BuildConfig.IS_DEBUG if we are in dev mode and if so,
+        // we request the reputation score from the API instead of looking up the MutableStateFlow field which would contain only
+        // scores of profiles which have real reputation. By calling the getReputationScore on the backend we will get the
+        // devModeReputationScore in case the user has set that at the backend apps config and is in devMode.
+        if (BuildConfig.IS_DEBUG) {
+            return apiGateway.getReputationScore(userProfileId)
+        }
+        return reputationByUserProfileId.value[userProfileId]?.let { Result.success(it) }
+            ?: Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not found"))
+    }
+
+    // Private
+    private suspend fun subscribeReputation() {
+        val observer = apiGateway.subscribeUserReputation()
+        observer.webSocketEvent.collect { webSocketEvent ->
+            if (webSocketEvent?.deferredPayload == null) {
+                return@collect
+            }
+            runCatching {
+                WebSocketEventPayload.from<Map<String, ReputationScoreVO>>(json, webSocketEvent).payload
+            }.onSuccess { payload ->
+                reputationByUserProfileId.value = payload
+            }.onFailure { t ->
+                log.e(t) { "Failed to deserialize reputation payload; event ignored." }
+            }
+        }
+    }
+}

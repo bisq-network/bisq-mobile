@@ -23,6 +23,10 @@ val clientAppModuleName = "clientApp"
 val sharedPresentationModule = ":shared:presentation"
 val sharedDomainModule = ":shared:domain"
 
+dependencies {
+    debugImplementation(compose.uiTooling)
+}
+
 // -------------------- Kotlin Multiplatform Configuration --------------------
 kotlin {
     androidTarget {
@@ -63,11 +67,35 @@ kotlin {
         commonMain.dependencies {
             api(project(sharedPresentationModule))
             api(project(sharedDomainModule))
+            implementation(compose.ui)
             implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.components.uiToolingPreview)
+
             implementation(libs.navigation.compose)
-            implementation(libs.kotlinx.serialization.core)
-            implementation(libs.koin.core)
             implementation(libs.logging.kermit)
+            implementation(libs.androidx.datastore.okio)
+            implementation(libs.atomicfu)
+            implementation(libs.bignum)
+
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+
+            implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
+
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.network)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.websockets)
+        }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.koin.test)
         }
 
         androidMain.dependencies {
@@ -80,6 +108,7 @@ kotlin {
 
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.mockk)
         }
     }
 }

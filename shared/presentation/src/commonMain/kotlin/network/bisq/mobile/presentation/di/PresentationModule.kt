@@ -1,13 +1,7 @@
 package network.bisq.mobile.presentation.di
 
-import network.bisq.mobile.client.ClientMainPresenter
-import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.getPlatformCurrentTimeProvider
-import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.GlobalUiManager
-import network.bisq.mobile.presentation.ui.components.molecules.ClientTopBarPresenter
-import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
-import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManagerImpl
@@ -31,7 +25,6 @@ import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideIntroPresent
 import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideNewPresenter
 import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideReceivingPresenter
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketPresenter
-import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.OpenTradeListPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.InterruptedTradePresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTradePresenter
@@ -66,11 +59,8 @@ import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SupportPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfilePresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.ClientSplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IAgreementPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.UserAgreementPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodPresenter
@@ -83,34 +73,7 @@ val presentationModule = module {
     // Global UI state manager - uses its own scope for UI operations
     single<GlobalUiManager> { GlobalUiManager() }
 
-    single<MainPresenter> {
-        ClientMainPresenter(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-        )
-    } bind AppPresenter::class
-
     single<NetworkStatusBannerPresenter> { NetworkStatusBannerPresenter(get(), get()) }
-
-    single<SplashPresenter> {
-        ClientSplashPresenter(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-
-    single<TopBarPresenter> { ClientTopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
 
     factory<UserAgreementPresenter> { UserAgreementPresenter(get(), get()) } bind IAgreementPresenter::class
 
@@ -122,7 +85,7 @@ val presentationModule = module {
 
     single<SupportPresenter> { SupportPresenter(get(), get(), get()) }
 
-    single<ResourcesPresenter> { ResourcesPresenter(get(), get(), get()) }
+    factory<ResourcesPresenter> { ResourcesPresenter(get(), get(), get()) }
 
     single<UserProfilePresenter> {
         UserProfilePresenter(
@@ -141,8 +104,6 @@ val presentationModule = module {
         )
     }
 
-    single<TrustedNodeSetupPresenter> { TrustedNodeSetupPresenter(get(), get(), get(), get(), get()) }
-
     factory { SettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
     factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
@@ -151,7 +112,6 @@ val presentationModule = module {
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get()) }
-    single<OfferbookPresenter> { OfferbookPresenter(get(), get(), get(), get(), get(), get(), get()) }
 
     // Take offer
     single { TakeOfferPresenter(get(), get(), get()) }
