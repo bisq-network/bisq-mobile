@@ -111,7 +111,7 @@ class BuyerState1aPresenter(
         if (bitcoinPaymentData.isEmpty()) return
         setShowInvalidAddressDialog(false)
         launchUI {
-            scheduleShowLoading()
+            showLoading()
             withContext(Dispatchers.IO) {
                 tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData)
             }

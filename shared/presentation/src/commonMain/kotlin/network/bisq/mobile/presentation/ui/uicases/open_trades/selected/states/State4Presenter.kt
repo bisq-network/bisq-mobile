@@ -44,7 +44,7 @@ abstract class State4Presenter(
                 GenericErrorHandler.handleGenericError("No trade selected for closure")
                 return@launchUI
             }
-            scheduleShowLoading()
+            showLoading()
             val result = withContext(Dispatchers.IO) { tradesServiceFacade.closeTrade() }
 
             when {

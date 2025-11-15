@@ -16,7 +16,7 @@ class BuyerState2aPresenter(
 
     fun onConfirmFiatSent() {
         launchIO {
-            scheduleShowLoading()
+            showLoading()
             tradesServiceFacade.buyerConfirmFiatSent()
             hideLoading()
         }

@@ -203,7 +203,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
      * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
      * Delegates to GlobalUiManager for app-level loading dialog management.
      */
-    protected fun scheduleShowLoading() {
+    protected fun showLoading() {
         globalUiManager.scheduleShowLoading()
     }
 

@@ -80,7 +80,7 @@ class SellerState3aPresenter(
             return
         }
         launchUI {
-            scheduleShowLoading()
+            showLoading()
             withContext(Dispatchers.IO) {
                 tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
             }

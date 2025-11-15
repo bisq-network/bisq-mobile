@@ -63,7 +63,7 @@ class SellerState1Presenter(
         val paymentAccountData = paymentAccountData.value
         if (paymentAccountData.isEmpty()) return
         launchIO {
-            scheduleShowLoading()
+            showLoading()
             tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData)
             hideLoading()
         }

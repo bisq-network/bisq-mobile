@@ -126,7 +126,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
 
     private fun completeTrade() {
         launchIO {
-            scheduleShowLoading()
+            showLoading()
             tradesServiceFacade.btcConfirmed()
             hideLoading()
         }

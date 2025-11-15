@@ -56,7 +56,7 @@ open class PaymentAccountsPresenter(
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             return
         }
-        scheduleShowLoading()
+        showLoading()
         launchIO {
             try {
                 val newAccount = UserDefinedFiatAccountVO(
@@ -78,7 +78,7 @@ open class PaymentAccountsPresenter(
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             return
         }
-        scheduleShowLoading()
+        showLoading()
         if (selectedAccount.value != null) {
             launchIO {
                 try {
@@ -101,7 +101,7 @@ open class PaymentAccountsPresenter(
 
     override fun deleteCurrentAccount() {
         if (selectedAccount.value != null) {
-            scheduleShowLoading()
+            showLoading()
             launchIO {
                 try {
                     accountsServiceFacade.removeAccount(selectedAccount.value!!)

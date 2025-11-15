@@ -148,7 +148,7 @@ class InterruptedTradePresenter(
     fun onCloseTrade() {
         val trade = selectedTrade.value ?: return
         launchUI {
-            scheduleShowLoading()
+            showLoading()
             val result = tradesServiceFacade.closeTrade()
             if (result.isFailure) {
                 val msg = result.exceptionOrNull()?.message ?: ""
@@ -176,7 +176,7 @@ class InterruptedTradePresenter(
         val trade = selectedTrade.value
         if (trade == null) return
         launchIO {
-            scheduleShowLoading()
+            showLoading()
             mediationServiceFacade.reportToMediator(trade)
             hideLoading()
         }

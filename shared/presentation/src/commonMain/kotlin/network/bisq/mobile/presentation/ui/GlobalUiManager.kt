@@ -23,7 +23,7 @@ class GlobalUiManager(
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     private val _showLoadingDialog = MutableStateFlow(false)
-    val showLoadingDialog: StateFlow<Boolean> get() = _showLoadingDialog.asStateFlow()
+    val showLoadingDialog: StateFlow<Boolean> = _showLoadingDialog.asStateFlow()
 
     private var loadingJob: Job? = null
 

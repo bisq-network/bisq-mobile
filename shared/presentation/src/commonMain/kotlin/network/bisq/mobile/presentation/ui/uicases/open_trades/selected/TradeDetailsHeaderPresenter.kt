@@ -262,7 +262,7 @@ class TradeDetailsHeaderPresenter(
             return
         }
         launchUI {
-            scheduleShowLoading()
+            showLoading()
             withContext(Dispatchers.IO) {
                 when (tradeCloseType.value) {
                     TradeCloseType.REJECT -> {
@@ -297,7 +297,7 @@ class TradeDetailsHeaderPresenter(
         }
         _showMediationConfirmationDialog.value = false
         launchIO {
-            scheduleShowLoading()
+            showLoading()
             mediationServiceFacade.reportToMediator(trade)
                 .onFailure { exception ->
                     when (exception) {

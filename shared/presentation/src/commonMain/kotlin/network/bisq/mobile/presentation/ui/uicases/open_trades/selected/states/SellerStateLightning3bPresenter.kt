@@ -48,7 +48,7 @@ class SellerStateLightning3bPresenter(
 
     fun skipWaiting() {
         launchIO {
-            scheduleShowLoading()
+            showLoading()
             tradesServiceFacade.btcConfirmed()
             hideLoading()
         }
