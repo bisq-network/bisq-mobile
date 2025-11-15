@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 7,
-      "versionName": "0.0.41",
-      "outputFile": "Bisq Connect-0.0.41.apk"
+      "versionCode": 8,
+      "versionName": "0.0.50",
+      "outputFile": "Bisq_Connect-0.0.50.apk"
     }
   ],
   "elementType": "File",
@@ -22,14 +22,14 @@
       "minApi": 28,
       "maxApi": 30,
       "baselineProfiles": [
-        "baselineProfiles/1/Bisq Connect-0.0.41.dm"
+        "baselineProfiles/1/Bisq_Connect-0.0.50.dm"
       ]
     },
     {
       "minApi": 31,
       "maxApi": 2147483647,
       "baselineProfiles": [
-        "baselineProfiles/0/Bisq Connect-0.0.41.dm"
+        "baselineProfiles/0/Bisq_Connect-0.0.50.dm"
       ]
     }
   ],
