@@ -112,10 +112,15 @@ class BuyerState1aPresenter(
         setShowInvalidAddressDialog(false)
         launchUI {
             showLoading()
-            withContext(Dispatchers.IO) {
+            val result = withContext(Dispatchers.IO) {
                 tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData)
             }
             hideLoading()
+
+            if (result.isFailure) {
+                log.e(result.exceptionOrNull()) { "Failed to send bitcoin payment data" }
+                showSnackbar("mobile.bisqEasy.tradeState.error.sendPaymentData".i18n(), true)
+            }
         }
     }
 
