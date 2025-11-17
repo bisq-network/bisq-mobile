@@ -33,10 +33,13 @@ class OpenTradeListPresenter(
 
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading = _isLoading.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         tradesServiceFacade.resetSelectedTradeToNull()
-
+        _isLoading.value = true
         launchUI {
             combine(
                 mainPresenter.tradesWithUnreadMessages, tradesServiceFacade.openTradeItems, mainPresenter.languageCode
@@ -44,6 +47,7 @@ class OpenTradeListPresenter(
                 Pair(unreadMessages, openTrades)
             }.collect { (unreadMessages, openTrades) ->
                 _sortedOpenTradeItems.value = openTrades.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
+                _isLoading.value = false
             }
         }
     }

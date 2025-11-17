@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -53,6 +55,7 @@ fun OpenTradeListScreen() {
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val sortedOpenTradeItems by presenter.sortedOpenTradeItems.collectAsState()
+    val isLoading by presenter.isLoading.collectAsState()
 
     if (tradeGuideVisible) {
         InformationConfirmationDialog(
@@ -71,62 +74,78 @@ fun OpenTradeListScreen() {
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
         isInteractive = isInteractive,
     ) {
-
-        if (sortedOpenTradeItems.isEmpty()) {
-            NoTradesSection(presenter)
-        } else if (!tradeRulesConfirmed) {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = if (tradeGuideVisible) Modifier.fillMaxSize()
-                    .blur(8.dp) else Modifier.fillMaxSize()
-            ) {
-                item {
-                    Column(
-                        modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))
-                            .background(color = BisqTheme.colors.dark_grey30)
-                            .padding(12.dp),
-                    ) {
-                        WelcomeToFirstTradePane(presenter)
-                    }
-                }
-                item {
-                    Column(
-                        modifier = Modifier.clip(shape = RoundedCornerShape(8.dp))
-                            // .background(color = BisqTheme.colors.dark3)
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        BisqText.h5Light("bisqEasy.openTrades.table.headline".i18n()) // My open trades
-                        HorizontalDivider(
-                            modifier = Modifier,
-                            thickness = 0.5.dp,
-                            color = BisqTheme.colors.mid_grey30
-                        )
-                    }
-                }
-                items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
-                    OpenTradeListItem(
-                        trade,
-                        unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
-                        userProfileIconProvider = presenter.userProfileIconProvider,
-                        onSelect = { presenter.onSelect(trade) }
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = BisqTheme.colors.primary,
+                        strokeWidth = 2.dp
                     )
                 }
             }
-        } else {
-            LazyColumn(
-                // modifier = Modifier.padding(top = 48.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
-                    OpenTradeListItem(
-                        trade,
-                        unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
-                        userProfileIconProvider = presenter.userProfileIconProvider,
-                        onSelect = { presenter.onSelect(trade) }
-                    )
+
+            else -> {
+                if (sortedOpenTradeItems.isEmpty()) {
+                    NoTradesSection(presenter)
+                } else if (!tradeRulesConfirmed) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = if (tradeGuideVisible) Modifier.fillMaxSize()
+                            .blur(8.dp) else Modifier.fillMaxSize()
+                    ) {
+                        item {
+                            Column(
+                                modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))
+                                    .background(color = BisqTheme.colors.dark_grey30)
+                                    .padding(12.dp),
+                            ) {
+                                WelcomeToFirstTradePane(presenter)
+                            }
+                        }
+                        item {
+                            Column(
+                                modifier = Modifier.clip(shape = RoundedCornerShape(8.dp))
+                                    // .background(color = BisqTheme.colors.dark3)
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                BisqText.h5Light("bisqEasy.openTrades.table.headline".i18n()) // My open trades
+                                HorizontalDivider(
+                                    modifier = Modifier,
+                                    thickness = 0.5.dp,
+                                    color = BisqTheme.colors.mid_grey30
+                                )
+                            }
+                        }
+                        items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
+                            OpenTradeListItem(
+                                trade,
+                                unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
+                                userProfileIconProvider = presenter.userProfileIconProvider,
+                                onSelect = { presenter.onSelect(trade) }
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        // modifier = Modifier.padding(top = 48.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
+                            OpenTradeListItem(
+                                trade,
+                                unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
+                                userProfileIconProvider = presenter.userProfileIconProvider,
+                                onSelect = { presenter.onSelect(trade) }
+                            )
+                        }
+                    }
                 }
             }
         }

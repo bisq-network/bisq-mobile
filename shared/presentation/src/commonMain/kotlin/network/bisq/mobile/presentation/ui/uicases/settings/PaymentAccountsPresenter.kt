@@ -23,7 +23,7 @@ open class PaymentAccountsPresenter(
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = accountsServiceFacade.selectedAccount
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
+    val isLoading = _isLoading.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
