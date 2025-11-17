@@ -20,13 +20,18 @@ class TradeGuideTradeRulesPresenter(
     }
 
     fun tradeRulesNextClick() {
+        showLoading()
         launchUI {
-            val isConfirmed = tradeRulesConfirmed.first()
-            if (!isConfirmed) {
-                settingsServiceFacade.confirmTradeRules(true)
+            try {
+                val isConfirmed = tradeRulesConfirmed.first()
+                if (!isConfirmed) {
+                    settingsServiceFacade.confirmTradeRules(true)
+                }
+                navigateBackTo(NavRoute.TradeGuideSecurity, true, false)
+                navigateBack()
+            } finally {
+                hideLoading()
             }
-            navigateBackTo(NavRoute.TradeGuideSecurity, true, false)
-            navigateBack()
         }
     }
 

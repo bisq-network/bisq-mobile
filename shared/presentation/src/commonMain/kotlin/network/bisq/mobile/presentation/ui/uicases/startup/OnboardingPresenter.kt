@@ -54,14 +54,19 @@ abstract class OnboardingPresenter(
     override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
         launchIO {
             if (pagerState.currentPage == filteredPages.lastIndex) {
-                settingsRepository.setFirstLaunch(false)
-                val hasProfile: Boolean = userProfileService.hasUserProfile()
-                launchUI {
-                    if (!hasProfile) {
-                        navigateToCreateProfile()
-                    } else {
-                        navigateToHome()
+                showLoading()
+                try {
+                    settingsRepository.setFirstLaunch(false)
+                    val hasProfile: Boolean = userProfileService.hasUserProfile()
+                    launchUI {
+                        if (!hasProfile) {
+                            navigateToCreateProfile()
+                        } else {
+                            navigateToHome()
+                        }
                     }
+                } finally {
+                    hideLoading()
                 }
             } else {
                 // Let the UI handle the animation in the composable

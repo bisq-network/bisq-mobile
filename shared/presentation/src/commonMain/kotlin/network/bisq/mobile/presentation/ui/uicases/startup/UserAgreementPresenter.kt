@@ -23,15 +23,17 @@ open class UserAgreementPresenter(
     }
 
     override fun onAcceptTerms() {
+        showLoading()
         launchUI {
             try {
                 settingsServiceFacade.confirmTacAccepted(true)
                 navigateToOnboarding()
+                showSnackbar("mobile.startup.agreement.welcome".i18n())
             } catch (e: Exception) {
                 log.e(e) { "Failed to save user agreement acceptance" }
+            } finally {
+                hideLoading()
             }
-
-            showSnackbar("mobile.startup.agreement.welcome".i18n())
         }
     }
 
