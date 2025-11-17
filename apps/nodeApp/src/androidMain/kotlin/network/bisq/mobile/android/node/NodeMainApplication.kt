@@ -45,6 +45,7 @@ class NodeMainApplication : MainApplication() {
         }
 
         maybeRestoreDataDirectory()
+        maybeCleanupCorruptedChatData()
 
         // We start here the initialisation (non blocking) of the core services and tor.
         // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
@@ -54,6 +55,44 @@ class NodeMainApplication : MainApplication() {
         nodeApplicationLifecycleService.initialize()
 
         log.i { "Bisq Easy Node Application Created" }
+    }
+
+    /**
+     * Cleans up corrupted chat data from old bisq2 versions.
+     *
+     * This fixes crashes caused by deprecated SubDomain enum values (e.g., EVENTS_*)
+     * that were removed in bisq2 2.1.7 but may still exist in persisted data.
+     *
+     * The crash occurs during ChatService initialization when it tries to deserialize
+     * old CommonPublicChatChannel data containing deprecated enum values.
+     */
+    private fun maybeCleanupCorruptedChatData() {
+        try {
+            val dbDir = File(filesDir, "Bisq2_mobile/db")
+            val cacheDir = File(dbDir, "cache")
+
+            // Delete chat-related persistence files that may contain deprecated SubDomain values
+            val chatFiles = listOf(
+                "CommonPublicChatChannelStore",
+                "DiscussionChannelStore",
+                "EventsChannelStore",  // This domain was removed
+                "SupportChannelStore"
+            )
+
+            chatFiles.forEach { fileName ->
+                val file = File(cacheDir, fileName)
+                if (file.exists()) {
+                    val deleted = file.delete()
+                    if (deleted) {
+                        log.i { "Deleted corrupted chat data file: $fileName" }
+                    } else {
+                        log.w { "Failed to delete chat data file: $fileName" }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            log.w(e) { "Error during chat data cleanup - will attempt to continue" }
+        }
     }
 
     private fun maybeRestoreDataDirectory() {
