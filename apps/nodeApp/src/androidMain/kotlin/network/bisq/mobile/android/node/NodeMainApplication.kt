@@ -65,28 +65,58 @@ class NodeMainApplication : MainApplication() {
      *
      * The crash occurs during ChatService initialization when it tries to deserialize
      * old CommonPublicChatChannel data containing deprecated enum values.
+     *
+     * Only deletes files that actually contain the problematic enum values to minimize data loss.
      */
     private fun maybeCleanupCorruptedChatData() {
         try {
             val dbDir = File(filesDir, "Bisq2_mobile/db")
             val cacheDir = File(dbDir, "cache")
 
-            // Delete chat-related persistence files that may contain deprecated SubDomain values
-            val chatFiles = listOf(
+            if (!cacheDir.exists()) {
+                log.i { "Cache directory does not exist, skipping chat data cleanup" }
+                return
+            }
+
+            // Deprecated SubDomain enum values that cause crashes
+            val deprecatedEnumValues = listOf(
+                "EVENTS_CONFERENCES",
+                "EVENTS_MEETUPS",
+                "EVENTS_PODCASTS",
+                "EVENTS_TRADE_EVENTS",
+                "ChatChannelDomain.EVENTS"  // The domain itself
+            )
+
+            // Only check public chat channel files (not private trade chats)
+            val publicChatFiles = listOf(
                 "CommonPublicChatChannelStore",
                 "DiscussionChannelStore",
-                "EventsChannelStore",  // This domain was removed
+                "EventsChannelStore",
                 "SupportChannelStore"
             )
 
-            chatFiles.forEach { fileName ->
+            publicChatFiles.forEach { fileName ->
                 val file = File(cacheDir, fileName)
-                if (file.exists()) {
-                    val deleted = file.delete()
-                    if (deleted) {
-                        log.i { "Deleted corrupted chat data file: $fileName" }
-                    } else {
-                        log.w { "Failed to delete chat data file: $fileName" }
+                if (file.exists() && file.isFile) {
+                    try {
+                        // Check if file contains any deprecated enum values
+                        val containsDeprecatedValue = file.readText(Charsets.ISO_8859_1).let { content ->
+                            deprecatedEnumValues.any { deprecated -> content.contains(deprecated) }
+                        }
+
+                        if (containsDeprecatedValue) {
+                            val deleted = file.delete()
+                            if (deleted) {
+                                log.i { "Deleted corrupted chat data file: $fileName (contained deprecated SubDomain values)" }
+                            } else {
+                                log.w { "Failed to delete corrupted chat data file: $fileName" }
+                            }
+                        } else {
+                            log.i { "Chat data file $fileName is clean, keeping it" }
+                        }
+                    } catch (e: Exception) {
+                        log.w(e) { "Error checking file $fileName, deleting it to be safe" }
+                        file.delete()
                     }
                 }
             }
