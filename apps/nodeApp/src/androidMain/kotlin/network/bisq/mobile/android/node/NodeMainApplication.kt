@@ -100,7 +100,7 @@ class NodeMainApplication : MainApplication() {
                 if (file.exists() && file.isFile) {
                     try {
                         // Check if file contains any deprecated enum values
-                        val containsDeprecatedValue = file.readText(Charsets.ISO_8859_1).let { content ->
+                        val containsDeprecatedValue = file.readText(Charsets.UTF_8).let { content ->
                             deprecatedEnumValues.any { deprecated -> content.contains(deprecated) }
                         }
 
@@ -111,12 +111,15 @@ class NodeMainApplication : MainApplication() {
                             } else {
                                 log.w { "Failed to delete corrupted chat data file: $fileName" }
                             }
-                        } else {
-                            log.i { "Chat data file $fileName is clean, keeping it" }
                         }
                     } catch (e: Exception) {
                         log.w(e) { "Error checking file $fileName, deleting it to be safe" }
-                        file.delete()
+                        val deleted = file.delete()
+                        if (deleted) {
+                            log.i { "Deleted unreadable chat data file: $fileName" }
+                        } else {
+                            log.w { "Failed to delete unreadable chat data file: $fileName" }
+                        }
                     }
                 }
             }
