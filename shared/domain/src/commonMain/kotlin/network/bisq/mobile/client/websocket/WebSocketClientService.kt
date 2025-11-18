@@ -50,7 +50,6 @@ class WebSocketClientService(
         const val TOR_CONNECT_TIMEOUT = 60_000L
         // Initial subscriptions tracked for network banner:
         private val initialSubscriptionTypes = setOf(
-            SubscriptionType(Topic.OFFERS, null),
             SubscriptionType(Topic.MARKET_PRICE, null),
             SubscriptionType(Topic.NUM_USER_PROFILES, null),
             SubscriptionType(Topic.NUM_OFFERS, null),
