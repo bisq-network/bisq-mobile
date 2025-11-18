@@ -13,7 +13,7 @@ import network.bisq.mobile.domain.utils.Logging
 class WebSocketEventObserver : Logging {
     private val _webSocketEvent = MutableStateFlow<WebSocketEvent?>(null)
     val webSocketEvent: StateFlow<WebSocketEvent?> = _webSocketEvent.asStateFlow()
-    private var sequenceNumber = MutableStateFlow(-1)
+    private val sequenceNumber = MutableStateFlow(-1)
     private val sequenceMutex = Mutex()
 
     val hasReceivedData: Flow<Boolean> = sequenceNumber.map { it != -1 }
