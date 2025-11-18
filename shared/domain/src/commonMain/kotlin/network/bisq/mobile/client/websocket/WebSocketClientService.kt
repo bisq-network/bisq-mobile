@@ -111,6 +111,9 @@ class WebSocketClientService(
             httpClientService.disposeClient()
             currentClient.value?.dispose()
             currentClient.value = null
+            requestedSubscriptions.forEach {
+                it.value.resetSequence()
+            }
         }
     }
 
