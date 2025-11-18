@@ -248,11 +248,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             horizontalArrangement = Arrangement.Center,
         ) {
             BisqButton(
-                text = "mobile.trustedNodeSetup.testAndSave".i18n(),
-                color = if (!isApiUrlValid || !isProxyUrlValid) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                disabled = !isWorkflow || isLoading || !isApiUrlValid || !isProxyUrlValid,
+                text = if (isLoading) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
+                color = if (!isLoading && (!isApiUrlValid || !isProxyUrlValid)) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
+                disabled = if (isLoading) false else (!isWorkflow || !isApiUrlValid || !isProxyUrlValid),
                 onClick = {
-                    if (isNewApiUrl) {
+                    if (isLoading) {
+                        presenter.onCancelPressed()
+                    } else if (isNewApiUrl) {
                         showConfirmDialog = true
                     } else {
                         presenter.onTestAndSavePressed(isWorkflow)

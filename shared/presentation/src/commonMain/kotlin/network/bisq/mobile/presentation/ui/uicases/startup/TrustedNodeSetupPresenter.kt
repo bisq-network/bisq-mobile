@@ -143,6 +143,10 @@ class TrustedNodeSetupPresenter(
     private val _timeoutCounter = MutableStateFlow(0L)
     val timeoutCounter = _timeoutCounter.asStateFlow()
 
+    // Track ongoing connect attempt and countdown to support cancellation
+    private var connectJob: Job? = null
+    private var countdownJob: Job? = null
+
     override fun onViewAttached() {
         super.onViewAttached()
         initialize()
@@ -206,6 +210,8 @@ class TrustedNodeSetupPresenter(
     }
 
     fun onTestAndSavePressed(isWorkflow: Boolean) {
+        if (connectJob != null) return // already connecting
+
         if (!isWorkflow) {
             // TODO implement feature to allow changing from settings
             // this is not trivial from UI perspective, its making NavGraph related code to crash when
@@ -218,22 +224,20 @@ class TrustedNodeSetupPresenter(
         if (!isApiUrlValid.value || !isProxyUrlValid.value) return
 
         _isLoading.value = true
-
         _status.value = "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
 
         val newApiUrlString = apiUrl.value
         log.d { "Test: $newApiUrlString isWorkflow $isWorkflow" }
-        val newApiUrl =
-            parseAndNormalizeUrl(newApiUrlString)
+        val newApiUrl = parseAndNormalizeUrl(newApiUrlString)
 
-        var countdownJob: Job? = null
-        launchUI {
+        connectJob = launchUI {
             if (newApiUrl == null) {
                 onConnectionError(
                     IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
                     newApiUrlString
                 )
                 _isLoading.value = false
+                connectJob = null
                 return@launchUI
             }
             try {
@@ -299,7 +303,7 @@ class TrustedNodeSetupPresenter(
                         newProxyIsTor,
                         password,
                     )
-                    countdownJob.cancel()
+                    countdownJob?.cancel()
                     result
                 }
 
@@ -315,7 +319,6 @@ class TrustedNodeSetupPresenter(
                         externalProxyUrl = when (newProxyOption) {
                             BisqProxyOption.EXTERNAL_TOR,
                             BisqProxyOption.SOCKS_PROXY -> "$newProxyHost:$newProxyPort"
-
                             else -> ""
                         },
                         selectedProxyOption = newProxyOption,
@@ -334,8 +337,7 @@ class TrustedNodeSetupPresenter(
                     // wait till connectionState is changed to a final state
                     wsClientService.connectionState.filter { it !is ConnectionState.Connecting }
                         .first()
-                    _wsClientConnectionState.value =
-                        ConnectionState.Connected // this is a successful test regardless of final state
+                    _wsClientConnectionState.value = ConnectionState.Connected // successful test regardless of final state
                     _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
                     if (currentSettings.bisqApiUrl != updatedSettings.bisqApiUrl) {
                         log.d { "user setup a new trusted node $newApiUrl" }
@@ -355,14 +357,43 @@ class TrustedNodeSetupPresenter(
                     applicationBootstrapFacade.setProgress(1.0f)
                     navigateToSplashScreen() // to trigger navigateToNextScreen again
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // user cancelled: do not show error, just reset state
+                _wsClientConnectionState.value = ConnectionState.Disconnected()
+                _status.value = ""
             } catch (e: Throwable) {
                 onConnectionError(e, newApiUrl.toNormalizedString())
                 currentCoroutineContext().ensureActive()
             } finally {
                 countdownJob?.cancel()
+                countdownJob = null
                 _isLoading.value = false
+                connectJob = null
             }
         }
+    }
+
+    fun onCancelPressed() {
+        // cancel ongoing connect attempt and revert to idle state
+        countdownJob?.cancel()
+        connectJob?.cancel()
+
+        // If using INTERNAL_TOR and Tor is still bootstrapping, stop it to avoid inconsistent state on next attempt
+        if (selectedProxyOption.value == BisqProxyOption.INTERNAL_TOR && kmpTorService.state.value is KmpTorService.TorState.Starting) {
+            launchIO {
+                try {
+                    kmpTorService.stopTor()
+                } catch (e: Exception) {
+                    log.w(e) { "Failed to stop Tor on cancel" }
+                }
+            }
+        }
+
+        _wsClientConnectionState.value = ConnectionState.Disconnected()
+        _status.value = ""
+        _isLoading.value = false
+        _timeoutCounter.value = 0
+        connectJob = null
     }
 
     private fun Url.toNormalizedString(): String {
