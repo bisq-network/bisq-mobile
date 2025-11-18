@@ -455,15 +455,19 @@ class TrustedNodeSetupPresenter(
     }
 
     private fun parseAndNormalizeUrl(value: String): Url? {
-        return parseUrl(
-            if (value.contains("://")) {
-                value
-            } else {
-                "http://$value"
-            }
-        )?.let {
-            parseUrl(it.toNormalizedString())!!
-        }
+        val raw = value.trim()
+        val withScheme = if (raw.contains("://")) raw else "http://$raw"
+        val first = parseUrl(withScheme) ?: return null
+        // Detect if user explicitly provided a port in input
+        val hasExplicitPort = Regex("^https?://[^/]+:\\d+").containsMatchIn(withScheme)
+        val host = first.host
+        val needsDefaultPort = !hasExplicitPort && (
+            host == LOCALHOST || host.isValidIpv4() || host.endsWith(".onion", ignoreCase = true)
+        )
+        val port = if (needsDefaultPort) 8090 else first.port
+        // Normalize to protocol://host:port (drop any path/query as before)
+        val normalized = "${first.protocol.name}://$host:$port"
+        return parseUrl(normalized)
     }
 
     fun validateApiUrl(value: String, proxyOption: BisqProxyOption): String? {
