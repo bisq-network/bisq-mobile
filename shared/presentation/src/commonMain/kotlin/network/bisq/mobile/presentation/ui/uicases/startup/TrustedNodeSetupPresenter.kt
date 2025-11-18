@@ -357,6 +357,10 @@ class TrustedNodeSetupPresenter(
                     applicationBootstrapFacade.setProgress(1.0f)
                     navigateToSplashScreen() // to trigger navigateToNextScreen again
                 }
+            } catch (e: TimeoutCancellationException) {
+                // timeout should be handled as an error (not a user cancellation)
+                onConnectionError(e, newApiUrl.toNormalizedString())
+                currentCoroutineContext().ensureActive()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // user cancelled: do not show error, just reset state
                 _wsClientConnectionState.value = ConnectionState.Disconnected()
