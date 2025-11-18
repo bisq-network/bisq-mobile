@@ -48,10 +48,13 @@ class WebSocketClientService(
     companion object {
         const val CLEARNET_CONNECT_TIMEOUT = 15_000L
         const val TOR_CONNECT_TIMEOUT = 60_000L
-        // Initial subscriptions tracked for network banner (first 8 from map):
-        // 1. MARKET_PRICE, 2. TRADES, 3. TRADE_PROPERTIES, 4. TRADE_CHATS,
-        // 5. CHAT_REACTIONS, 6. USER_REPUTATION, 7. NUM_USER_PROFILES, 8.NUM_OFFERS
-        private const val INITIAL_SUBSCRIPTION_COUNT = 8
+        // Initial subscriptions tracked for network banner:
+        private val initialSubscriptionTypes = setOf(
+            SubscriptionType(Topic.OFFERS, null),
+            SubscriptionType(Topic.MARKET_PRICE, null),
+            SubscriptionType(Topic.NUM_USER_PROFILES, null),
+            SubscriptionType(Topic.NUM_OFFERS, null),
+        )
     }
 
     private val clientUpdateMutex = Mutex()
@@ -73,8 +76,8 @@ class WebSocketClientService(
     val initialSubscriptionsReceivedData: Flow<Boolean> =
         requestedSubscriptions.flatMapLatest { subsMap ->
             // Only the first seven subscriptions contribute to the initial data banner
-            val trackedObservers = subsMap.values.take(INITIAL_SUBSCRIPTION_COUNT)
-            if (trackedObservers.size < INITIAL_SUBSCRIPTION_COUNT) {
+            val trackedObservers = initialSubscriptionTypes.mapNotNull { subsMap[it] }
+            if (trackedObservers.size < initialSubscriptionTypes.size) {
                 flowOf(false)
             } else {
                 val hasReceivedDataFlows = trackedObservers.map { it.hasReceivedData }
