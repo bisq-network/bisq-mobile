@@ -48,7 +48,10 @@ class WebSocketClientService(
     companion object {
         const val CLEARNET_CONNECT_TIMEOUT = 15_000L
         const val TOR_CONNECT_TIMEOUT = 60_000L
-        private const val INITIAL_SUBSCRIPTION_COUNT = 7
+        // Initial subscriptions tracked for network banner (first 8 from map):
+        // 1. MARKET_PRICE, 2. TRADES, 3. TRADE_PROPERTIES, 4. TRADE_CHATS,
+        // 5. CHAT_REACTIONS, 6. USER_REPUTATION, 7. NUM_USER_PROFILES, 8.NUM_OFFERS
+        private const val INITIAL_SUBSCRIPTION_COUNT = 8
     }
 
     private val clientUpdateMutex = Mutex()
