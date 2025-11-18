@@ -1,0 +1,17 @@
+Bisq vir Android is 'n gedesentraliseerde eweknie-tot-eweknie (P2P) kommunikasie-instrument wat ontwerp is om veilige verbindings tussen gebruikers te fasiliteer, wat hulle in staat stel om inligting direk uit te ruil sonder om op gesentraliseerde bedieners staat te maak. Hierdie toepassing dien as 'n brug vir individue wat oor die Bisq-netwerk wil kommunikeer, wat privaatheid en outonomie in hul kommunikasie verseker.
+
+<b>Belangrike kenmerke:</b>
+
+• <b>Gedesentraliseerde kommunikasie:</b> Werk binne 'n volledig gedesentraliseerde netwerk, wat die behoefte aan sentrale owerhede uitskakel en enkele punte van mislukking verminder.
+
+• <b>Privaatheidsgerig:</b> Jou data bly op jou toestel; Bisq vir Android stoor of spoor geen gebruikersinligting op nie, wat volledige privaatheid verseker.
+
+• <b>Veilige eweknieverbindings:</b> Gebruik robuuste enkripsieprotokolle om veilige kanale tussen eweknieë te vestig, wat jou interaksies beskerm.
+
+• <b>Fasiliteer inligtinguitruiling:</b> Alhoewel die toepassing nie finansiële transaksies hanteer of bates stoor nie, stel dit gebruikers in staat om effektief te koördineer en te kommunikeer vir aktiwiteite soos die reël van transaksies of die deel van data.
+
+• <b>Gebruikersvriendelike koppelvlak:</b> Ontwerp met eenvoud in gedagte, wat beide beginner- en ervare gebruikers toelaat om die toepassing met gemak te navigeer en te gebruik.
+
+Bisq vir Android is 'n noodsaaklike hulpmiddel vir diegene wat 'n gedesentraliseerde platform soek om hul eweknie-kommunikasie veilig te bestuur. Deur gebruikersprivaatheid te prioritiseer en die behoefte aan sentrale tussengangers uit te skakel, bemagtig dit individue om beheer oor hul interaksies in die digitale realm te behou.
+
+<b>Let wel:</b> Hierdie toepassing sluit nie beursie-funksionaliteite vir kriptogeldeenhede of fiat-geldeenhede in nie en fasiliteer nie direkte handel of finansiële transaksies nie. Dit dien slegs as 'n kommunikasiefasiliteerder binne die Bisq-netwerk.

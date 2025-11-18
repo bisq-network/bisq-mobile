@@ -1,0 +1,1 @@
+Ferramenta de comunicação descentralizada para conectar-se com segurança (P2P).

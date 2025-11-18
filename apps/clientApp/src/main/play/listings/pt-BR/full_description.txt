@@ -1,0 +1,16 @@
+O Bisq para Android é uma ferramenta de comunicação ponto a ponto (P2P) descentralizada, projetada para facilitar conexões seguras entre usuários, permitindo a troca direta de informações sem depender de servidores centralizados. Este aplicativo serve como uma ponte para indivíduos que desejam interagir na rede Bisq, garantindo privacidade e autonomia em suas comunicações.
+
+<b>Principais Recursos:</b>
+
+• <b>Comunicação Descentralizada:</b> Opere em uma rede totalmente descentralizada, eliminando a necessidade de autoridades centrais e reduzindo pontos únicos de falha.
+
+• <b>Focado na Privacidade:</b> Seus dados permanecem em seu dispositivo; o Bisq para Android não armazena nem rastreia nenhuma informação do usuário, garantindo total privacidade.
+
+• <b>Conexões Seguras entre Pares:</b> Utilize protocolos de criptografia robustos para estabelecer canais seguros entre os pares, protegendo suas interações.
+
+• <b>Facilita a troca de informações:</b> Embora o aplicativo não processe transações financeiras nem armazene ativos, ele permite que os usuários se coordenem e se comuniquem de forma eficaz para atividades como organizar negociações ou compartilhar dados.
+• <b>Interface amigável:</b> Projetado com simplicidade em mente, permitindo que usuários iniciantes e experientes naveguem e utilizem o aplicativo com facilidade.
+
+O Bisq para Android é uma ferramenta essencial para quem busca uma plataforma descentralizada para gerenciar suas comunicações ponto a ponto com segurança. Ao priorizar a privacidade do usuário e eliminar a necessidade de intermediários centrais, ele capacita os indivíduos a manter o controle sobre suas interações no ambiente digital.
+
+<b>Observação:</b> Este aplicativo não inclui funcionalidades de carteira para criptomoedas ou moedas fiduciárias e não facilita negociações diretas ou transações financeiras. Ele serve exclusivamente como um facilitador de comunicação dentro da rede Bisq.

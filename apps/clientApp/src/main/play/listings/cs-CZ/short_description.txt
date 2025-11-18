@@ -1,0 +1,1 @@
+Decentralizovaný komunikační nástroj pro bezpečné připojení pomocí P2P protokolu
