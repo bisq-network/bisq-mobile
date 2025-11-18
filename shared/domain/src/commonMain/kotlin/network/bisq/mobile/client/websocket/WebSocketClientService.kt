@@ -147,6 +147,9 @@ class WebSocketClientService(
                         subscriptionMutex.withLock {
                             // connection is lost, we need to apply subscriptions again
                             subscriptionsAreApplied = false
+                            requestedSubscriptions.value.forEach { entry ->
+                                entry.value.resetSequence()
+                            }
                         }
                         if (state.error != null) {
                             if (shouldAttemptReconnect(state.error)) {
