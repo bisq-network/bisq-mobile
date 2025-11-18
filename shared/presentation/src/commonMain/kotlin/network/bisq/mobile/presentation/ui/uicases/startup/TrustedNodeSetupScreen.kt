@@ -94,7 +94,29 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         topBar = if (!isWorkflow) {
             { TopBar(title = "mobile.trustedNodeSetup.title".i18n()) }
         } else null,
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
+        bottomBar = {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = BisqUIConstants.ScreenPadding, horizontal = BisqUIConstants.ScreenPadding)
+            ) {
+                BisqButton(
+                    text = if (isLoading) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
+                    color = if (!isLoading && (!isApiUrlValid || !isProxyUrlValid)) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
+                    disabled = if (isLoading) false else (!isWorkflow || !isApiUrlValid || !isProxyUrlValid),
+                    onClick = {
+                        if (isLoading) {
+                            presenter.onCancelPressed()
+                        } else if (isNewApiUrl) {
+                            showConfirmDialog = true
+                        } else {
+                            presenter.onTestAndSavePressed(isWorkflow)
+                        }
+                    },
+                    padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
+                )
+            }
+        }
     ) {
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
@@ -244,27 +266,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
         BisqGap.V2()
 
-        Row(
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            BisqButton(
-                text = if (isLoading) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
-                color = if (!isLoading && (!isApiUrlValid || !isProxyUrlValid)) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                disabled = if (isLoading) false else (!isWorkflow || !isApiUrlValid || !isProxyUrlValid),
-                onClick = {
-                    if (isLoading) {
-                        presenter.onCancelPressed()
-                    } else if (isNewApiUrl) {
-                        showConfirmDialog = true
-                    } else {
-                        presenter.onTestAndSavePressed(isWorkflow)
-                    }
-                },
-                padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
-            )
-        }
 
-        BisqGap.V1()
     }
 
     // Add dialog component
