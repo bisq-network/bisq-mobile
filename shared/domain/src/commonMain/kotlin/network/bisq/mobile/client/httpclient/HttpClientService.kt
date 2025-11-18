@@ -6,7 +6,6 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -169,7 +168,6 @@ class HttpClientService(
         log.d { "HttpClient baseUrl set to $baseUrl" }
         val password = clientSettings.password
         return createHttpClient(proxy) {
-            install(WebSockets)
             install(ContentNegotiation) {
                 json(jsonConfig)
             }
