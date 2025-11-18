@@ -1,10 +1,12 @@
 package network.bisq.mobile.client.service.network
 
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.httpclient.HttpClientService
+import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.service.network.KmpTorService
@@ -17,12 +19,20 @@ class ClientNetworkServiceFacade(
     kmpTorService: KmpTorService,
 ) : NetworkServiceFacade(kmpTorService) {
 
-    // While tor starts up we use -1 to flag as network not available yet
-    private val _numConnections = MutableStateFlow(-1)
-    override val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
+    override val numConnections: StateFlow<Int> =
+        webSocketClientService.connectionState.map { if (it is ConnectionState.Connected) 1 else -1 }
+            .stateIn(
+                serviceScope,
+                SharingStarted.Lazily,
+                -1,
+            )
 
-    private val _allDataReceived = MutableStateFlow(false)
-    override val allDataReceived: StateFlow<Boolean> get() = _allDataReceived.asStateFlow()
+    override val allDataReceived: StateFlow<Boolean> =
+        webSocketClientService.allSubscriptionsReceivedData.stateIn(
+            serviceScope,
+            SharingStarted.Lazily,
+            false,
+        )
 
     override suspend fun isTorEnabled(): Boolean {
         return sensitiveSettingsRepository.fetch().selectedProxyOption == BisqProxyOption.INTERNAL_TOR

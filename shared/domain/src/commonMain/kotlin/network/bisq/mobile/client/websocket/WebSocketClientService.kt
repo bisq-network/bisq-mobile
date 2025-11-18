@@ -6,10 +6,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.httpclient.HttpClientService
@@ -53,10 +57,20 @@ class WebSocketClientService(
 
     private var currentClient = MutableStateFlow<WebSocketClient?>(null)
     private val subscriptionMutex = Mutex()
-    private val requestedSubscriptions = mutableMapOf<SubscriptionType, WebSocketEventObserver>()
+    private val requestedSubscriptions = MutableStateFlow(
+        emptyMap<SubscriptionType, WebSocketEventObserver>()
+    )
     private var subscriptionsAreApplied = false
 
     private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allSubscriptionsReceivedData: Flow<Boolean> =
+        requestedSubscriptions.flatMapLatest { subsMap ->
+            combine(subsMap.map { it.value.hasReceivedData }) {
+                it.all { hasReceivedData -> hasReceivedData }
+            }
+        }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun activate() {
@@ -138,7 +152,8 @@ class WebSocketClientService(
             is MaximumRetryReachedException,
             is CancellationException,
             is WebSocketIsReconnecting -> false
-            else ->  {
+
+            else -> {
                 // we dont want to retry if message contains "refused"
                 error.message?.contains("refused", ignoreCase = true) != true
             }
@@ -171,7 +186,10 @@ class WebSocketClientService(
         // Connected status, otherwise it will be immediately subscribed
         val (socketObserver, applyNow) = subscriptionMutex.withLock {
             val type = SubscriptionType(topic, parameter)
-            val observer = requestedSubscriptions.getOrPut(type) { WebSocketEventObserver() }
+            val observer =
+                requestedSubscriptions.value[type] ?: WebSocketEventObserver().also { newObserver ->
+                    requestedSubscriptions.update { it + (type to newObserver) }
+                }
             observer to subscriptionsAreApplied
         }
         if (applyNow) {
@@ -185,20 +203,22 @@ class WebSocketClientService(
 
     private suspend fun applySubscriptions(client: WebSocketClient) {
         subscriptionMutex.withLock {
-            if (subscriptionsAreApplied) {
-                log.d { "skipping applySubscriptions as we already have subscribed our list" }
-            } else {
-                log.d { "applying subscriptions on WS client, entry count: ${requestedSubscriptions.size}" }
+            requestedSubscriptions.value.let { subs ->
+                if (subscriptionsAreApplied) {
+                    log.d { "skipping applySubscriptions as we already have subscribed our list" }
+                } else {
+                    log.d { "applying subscriptions on WS client, entry count: ${subs.size}" }
+                }
+                subs.forEach { entry ->
+                    entry.value.resetSequence()
+                    client.subscribe(
+                        entry.key.topic,
+                        entry.key.parameter,
+                        entry.value,
+                    )
+                }
+                subscriptionsAreApplied = true
             }
-            requestedSubscriptions.forEach { entry ->
-                entry.value.resetSequence()
-                client.subscribe(
-                    entry.key.topic,
-                    entry.key.parameter,
-                    entry.value,
-                )
-            }
-            subscriptionsAreApplied = true
         }
     }
 
