@@ -28,7 +28,7 @@ class ClientNetworkServiceFacade(
             )
 
     override val allDataReceived: StateFlow<Boolean> =
-        webSocketClientService.allSubscriptionsReceivedData.stateIn(
+        webSocketClientService.initialSubscriptionsReceivedData.stateIn(
             serviceScope,
             SharingStarted.Lazily,
             false,

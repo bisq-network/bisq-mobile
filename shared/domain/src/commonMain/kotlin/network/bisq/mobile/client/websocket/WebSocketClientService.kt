@@ -67,7 +67,7 @@ class WebSocketClientService(
     private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val allSubscriptionsReceivedData: Flow<Boolean> =
+    val initialSubscriptionsReceivedData: Flow<Boolean> =
         requestedSubscriptions.flatMapLatest { subsMap ->
             // Only the first seven subscriptions contribute to the initial data banner
             val trackedObservers = subsMap.values.take(INITIAL_SUBSCRIPTION_COUNT)
