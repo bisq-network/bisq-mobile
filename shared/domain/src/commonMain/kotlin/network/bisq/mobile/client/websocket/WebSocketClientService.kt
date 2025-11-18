@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,6 +48,7 @@ class WebSocketClientService(
     companion object {
         const val CLEARNET_CONNECT_TIMEOUT = 15_000L
         const val TOR_CONNECT_TIMEOUT = 60_000L
+        private const val INITIAL_SUBSCRIPTION_COUNT = 7
     }
 
     private val clientUpdateMutex = Mutex()
@@ -57,8 +59,8 @@ class WebSocketClientService(
 
     private var currentClient = MutableStateFlow<WebSocketClient?>(null)
     private val subscriptionMutex = Mutex()
-    private val requestedSubscriptions = MutableStateFlow(
-        emptyMap<SubscriptionType, WebSocketEventObserver>()
+    private val requestedSubscriptions = MutableStateFlow<Map<SubscriptionType, WebSocketEventObserver>>(
+        LinkedHashMap()
     )
     private var subscriptionsAreApplied = false
 
@@ -67,8 +69,15 @@ class WebSocketClientService(
     @OptIn(ExperimentalCoroutinesApi::class)
     val allSubscriptionsReceivedData: Flow<Boolean> =
         requestedSubscriptions.flatMapLatest { subsMap ->
-            combine(subsMap.map { it.value.hasReceivedData }) {
-                it.all { hasReceivedData -> hasReceivedData }
+            // Only the first seven subscriptions contribute to the initial data banner
+            val trackedObservers = subsMap.values.take(INITIAL_SUBSCRIPTION_COUNT)
+            if (trackedObservers.size < INITIAL_SUBSCRIPTION_COUNT) {
+                flowOf(false)
+            } else {
+                val hasReceivedDataFlows = trackedObservers.map { it.hasReceivedData }
+                combine(hasReceivedDataFlows) { hasReceivedDataArray ->
+                    hasReceivedDataArray.all { hasReceivedData -> hasReceivedData }
+                }
             }
         }
 
@@ -186,10 +195,13 @@ class WebSocketClientService(
         // Connected status, otherwise it will be immediately subscribed
         val (socketObserver, applyNow) = subscriptionMutex.withLock {
             val type = SubscriptionType(topic, parameter)
-            val observer =
-                requestedSubscriptions.value[type] ?: WebSocketEventObserver().also { newObserver ->
-                    requestedSubscriptions.update { it + (type to newObserver) }
+            var observer = requestedSubscriptions.value[type]
+            if (observer == null) {
+                observer = WebSocketEventObserver()
+                requestedSubscriptions.update { current ->
+                    LinkedHashMap(current).apply { put(type, observer) }
                 }
+            }
             observer to subscriptionsAreApplied
         }
         if (applyNow) {
