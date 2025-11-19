@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.components.molecules
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import kotlinx.coroutines.flow.StateFlow
+
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.network.ConnectivityService
@@ -16,7 +17,7 @@ import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
 open class TopBarPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val connectivityService: ConnectivityService,
+    protected val connectivityService: ConnectivityService,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter), ITopBarPresenter {
 
@@ -25,7 +26,8 @@ open class TopBarPresenter(
 
     override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
 
-    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> get() = connectivityService.status
+    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
+        get() = connectivityService.status
 
     override fun avatarEnabled(currentTab: TabNavRoute?): Boolean {
         val hasTabMiscItemsRoute = currentTab == NavRoute.TabMiscItems
