@@ -29,6 +29,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialo
 import network.bisq.mobile.presentation.ui.helpers.toClipEntry
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @Composable
@@ -40,6 +41,31 @@ fun ReportBugPanel(
     val presenter: AppPresenter = koinInject()
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
+
+    ReportBugPanelContent(
+        errorMessage = errorMessage,
+        isUncaughtException = isUncaughtException,
+        isIOS = presenter.isIOS(),
+        onClose = onClose,
+        onShutdown = { presenter.onTerminateApp() },
+        onReport = {
+            scope.launch {
+                clipboard.setClipEntry(AnnotatedString(errorMessage).toClipEntry())
+            }
+            presenter.navigateToReportError()
+        }
+    )
+}
+
+@Composable
+private fun ReportBugPanelContent(
+    errorMessage: String,
+    isUncaughtException: Boolean,
+    isIOS: Boolean,
+    onClose: () -> Unit,
+    onShutdown: () -> Unit,
+    onReport: () -> Unit,
+) {
     val scrollState = rememberScrollState()
 
     BisqDialog(
@@ -82,14 +108,14 @@ fun ReportBugPanel(
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
             // IOS does not support shutdown
-            val useShutdownButton = isUncaughtException && !presenter.isIOS()
+            val useShutdownButton = isUncaughtException && !isIOS
             BisqButton(
                 text = if (useShutdownButton) "action.shutDown".i18n() else "action.close".i18n(),
                 onClick = {
                     if (useShutdownButton) {
-                        presenter.onTerminateApp()
+                        onShutdown()
                     } else {
-                        onClose.invoke()
+                        onClose()
                     }
                 },
                 type = BisqButtonType.Grey,
@@ -99,16 +125,88 @@ fun ReportBugPanel(
             BisqButton(
                 text = "support.reports.title".i18n(),
                 onClick = {
-                    scope.launch {
-                        clipboard.setClipEntry(AnnotatedString(errorMessage).toClipEntry())
-                    }
-                    presenter.navigateToReportError()
+                    onReport()
                     if (!isUncaughtException)
-                        onClose.invoke()
+                        onClose()
                 },
                 modifier = Modifier.weight(1.0f).fillMaxHeight(),
                 padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ReportBugPanelPreview_Default() {
+    BisqTheme.Preview {
+        ReportBugPanelContent(
+            errorMessage = "java.lang.NullPointerException: Attempt to invoke virtual method 'int java.lang.String.length()' on a null object reference\n\tat com.example.MyClass.doSomething(MyClass.java:42)\n\tat com.example.MainActivity.onCreate(MainActivity.java:18)",
+            isUncaughtException = false,
+            isIOS = false,
+            onClose = {},
+            onShutdown = {},
+            onReport = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ReportBugPanelPreview_UncaughtException_Android() {
+    BisqTheme.Preview {
+        ReportBugPanelContent(
+            errorMessage = "Fatal error: OutOfMemoryError\nUnable to allocate memory for critical system operation.",
+            isUncaughtException = true,
+            isIOS = false,
+            onClose = {},
+            onShutdown = {},
+            onReport = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ReportBugPanelPreview_UncaughtException_iOS() {
+    BisqTheme.Preview {
+        ReportBugPanelContent(
+            errorMessage = "Fatal error: Thread 1: signal SIGABRT\nApplication terminated unexpectedly.",
+            isUncaughtException = true,
+            isIOS = true,
+            onClose = {},
+            onShutdown = {},
+            onReport = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ReportBugPanelPreview_LongError() {
+    BisqTheme.Preview {
+        ReportBugPanelContent(
+            errorMessage = """
+                Error: Network connection failed
+                
+                Stack trace:
+                at network.bisq.mobile.NetworkManager.connect(NetworkManager.kt:123)
+                at network.bisq.mobile.AppPresenter.initialize(AppPresenter.kt:45)
+                at network.bisq.mobile.MainActivity.onCreate(MainActivity.kt:67)
+                at android.app.Activity.performCreate(Activity.java:8000)
+                at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:3571)
+                
+                Caused by: java.net.SocketTimeoutException: timeout
+                at java.net.PlainSocketImpl.socketConnect(PlainSocketImpl.java:142)
+                at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:390)
+                at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:230)
+                at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:212)
+            """.trimIndent(),
+            isUncaughtException = false,
+            isIOS = false,
+            onClose = {},
+            onShutdown = {},
+            onReport = {}
+        )
     }
 }

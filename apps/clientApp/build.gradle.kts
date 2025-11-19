@@ -71,6 +71,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.components.uiToolingPreview)
+            implementation(compose.components.resources)
 
             implementation(libs.navigation.compose)
             implementation(libs.logging.kermit)

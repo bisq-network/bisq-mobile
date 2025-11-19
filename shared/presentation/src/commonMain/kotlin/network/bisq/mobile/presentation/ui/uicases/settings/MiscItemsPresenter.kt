@@ -7,7 +7,6 @@ import bisqapps.shared.presentation.generated.resources.nav_reputation
 import bisqapps.shared.presentation.generated.resources.nav_resources
 import bisqapps.shared.presentation.generated.resources.nav_settings
 import bisqapps.shared.presentation.generated.resources.nav_support
-import bisqapps.shared.presentation.generated.resources.nav_trusted_node
 import bisqapps.shared.presentation.generated.resources.nav_user
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +21,7 @@ import org.jetbrains.compose.resources.DrawableResource
 /**
  * SettingsPresenter with default implementation
  */
-open class MiscItemsPresenter(
+abstract class MiscItemsPresenter(
     private val userProfileService: UserProfileServiceFacade,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter) {
@@ -90,18 +89,6 @@ open class MiscItemsPresenter(
             label = "Bisq", children = addCustomSettings(defaultList)
         )
     }
-
-    protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(
-            menuItems.size - 2, MenuItem.Leaf(
-                "mobile.more.trustedNode".i18n(),
-                icon = Res.drawable.nav_trusted_node,
-                NavRoute.TrustedNodeSetupSettings
-            )
-        )
-        return menuItems.toList()
-    }
-
     private fun loadIgnoredUsers() {
         launchIO {
             try {
@@ -120,4 +107,6 @@ open class MiscItemsPresenter(
     fun onNavigateTo(route: NavRoute) {
         navigateTo(route)
     }
+
+    abstract fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem>
 }

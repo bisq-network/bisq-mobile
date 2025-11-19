@@ -29,7 +29,6 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 /**
  * Main Presenter as an example of implementation for now.
@@ -143,10 +142,6 @@ open class MainPresenter(
 
     override fun setIsMainContentVisible(value: Boolean) {
         _isMainContentVisible.value = value
-    }
-
-    override fun navigateToTrustedNode() {
-        navigateTo(NavRoute.TrustedNodeSetupSettings)
     }
 
     final override fun navigateToUrl(url: String) {

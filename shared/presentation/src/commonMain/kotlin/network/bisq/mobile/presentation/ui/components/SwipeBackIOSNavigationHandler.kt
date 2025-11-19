@@ -14,7 +14,7 @@ import org.koin.compose.koinInject
 // Ref links:
 // - https://github.com/adrielcafe/voyager/issues/144
 // - https://trycatchdebug.net/news/1426361/native-ios-swipe-back-gesture-in-compose
-// This swipe navigation is iOS style (left -> right) and should'nt be used for Android
+// This swipe navigation is iOS style (left -> right) and shouldn't be used for Android
 @Composable
 fun SwipeBackIOSNavigationHandler(
     navController: NavController,

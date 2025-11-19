@@ -2,6 +2,7 @@ package network.bisq.mobile.client.splash
 
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -39,7 +40,7 @@ class ClientSplashPresenter(
     }
 
     private fun navigateToTrustedNodeSetup() {
-        navigateTo(NavRoute.TrustedNodeSetup) {
+        navigateTo(TrustedNodeSetup) {
             it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }

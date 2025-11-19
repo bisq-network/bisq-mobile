@@ -25,6 +25,6 @@ fun ClientRootNavGraph(rootNavController: NavHostController) {
 }
 
 fun NavGraphBuilder.addClientAppRoutes() {
-    addScreen<NavRoute.TrustedNodeSetupSettings> { TrustedNodeSetupScreen(false) }
-    addScreen<NavRoute.TrustedNodeSetup> { TrustedNodeSetupScreen() }
+    addScreen<TrustedNodeSetupSettings> { TrustedNodeSetupScreen(false) }
+    addScreen<TrustedNodeSetup> { TrustedNodeSetupScreen() }
 }
