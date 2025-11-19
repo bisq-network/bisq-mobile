@@ -8,6 +8,19 @@ import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 
 interface WebSocketClient {
+    companion object {
+        const val CLEARNET_CONNECT_TIMEOUT = 15_000L
+        const val TOR_CONNECT_TIMEOUT = 60_000L
+
+        fun determineTimeout(host: String): Long {
+            return if (host.endsWith(".onion")) {
+                TOR_CONNECT_TIMEOUT
+            } else {
+                CLEARNET_CONNECT_TIMEOUT
+            }
+        }
+    }
+
     val apiUrl: Url
     val webSocketClientStatus: StateFlow<ConnectionState>
 

@@ -24,6 +24,7 @@ import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.ConnectionState
+import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
@@ -287,7 +288,7 @@ class TrustedNodeSetupPresenter(
                 val error = if (isExternalProxy && newProxyPort == null) {
                     IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
                 } else {
-                    val timeoutSecs = wsClientService.determineTimeout(newApiUrl.host) / 1000
+                    val timeoutSecs = WebSocketClient.determineTimeout(newApiUrl.host) / 1000
                     countdownJob = launchUI {
                         for (i in timeoutSecs downTo 0) {
                             _timeoutCounter.value = i

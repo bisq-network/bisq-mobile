@@ -1,7 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -11,6 +16,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.websocket.ConnectionState
+import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.model.SensitiveSettings
 import network.bisq.mobile.domain.data.model.User
@@ -18,7 +24,6 @@ import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.di.presentationTestModule
 import org.junit.After
@@ -30,11 +35,6 @@ import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 class TrustedNodeSetupPresenterCancelTest {
 
@@ -76,7 +76,7 @@ class TrustedNodeSetupPresenterCancelTest {
         }
         // Mock timeout and connection: delay long so we can cancel
         every { wsClientService.connectionState } returns MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
-        every { wsClientService.determineTimeout(any()) } returns 60_000L
+        every { WebSocketClient.determineTimeout(any()) } returns 60_000L
         coEvery { wsClientService.testConnection(any(), any(), any(), any(), any()) } coAnswers {
             delay(10_000)
             null

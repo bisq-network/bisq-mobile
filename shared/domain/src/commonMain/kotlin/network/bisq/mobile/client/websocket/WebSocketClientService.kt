@@ -46,8 +46,6 @@ class WebSocketClientService(
 ) : ServiceFacade(), Logging {
 
     companion object {
-        const val CLEARNET_CONNECT_TIMEOUT = 15_000L
-        const val TOR_CONNECT_TIMEOUT = 60_000L
         // Initial subscriptions tracked for network banner:
         private val initialSubscriptionTypes = setOf(
             SubscriptionType(Topic.MARKET_PRICE, null),
@@ -182,7 +180,7 @@ class WebSocketClientService(
 
     suspend fun connect(): Throwable? {
         val client = getWsClient()
-        val timeout = determineTimeout(client.apiUrl.host)
+        val timeout = WebSocketClient.determineTimeout(client.apiUrl.host)
         return client.connect(timeout)
     }
 
@@ -248,14 +246,6 @@ class WebSocketClientService(
         return getWsClient().sendRequestAndAwaitResponse(webSocketRequest)
     }
 
-    fun determineTimeout(host: String): Long {
-        return if (host.endsWith(".onion")) {
-            TOR_CONNECT_TIMEOUT
-        } else {
-            CLEARNET_CONNECT_TIMEOUT
-        }
-    }
-
     /**
      * Tests websocket connection to the provided websocket server and proxy
      *
@@ -283,7 +273,7 @@ class WebSocketClientService(
             password,
         )
         try {
-            val timeout = determineTimeout(apiUrl.host)
+            val timeout = WebSocketClient.determineTimeout(apiUrl.host)
             val error = wsClient.connect(timeout)
             if (error == null) {
                 // Wait 500ms to ensure connection is stable
