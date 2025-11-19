@@ -4,6 +4,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +26,8 @@ import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.presentation.testutils.TestDoubles
+
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.di.presentationTestModule
 import org.junit.After
@@ -75,6 +79,8 @@ class TrustedNodeSetupPresenterCancelTest {
             override suspend fun clear() { _data.value = User() }
         }
         // Mock timeout and connection: delay long so we can cancel
+        // IMPORTANT: mock object before stubbing to avoid global leakage across tests
+        mockkObject(WebSocketClient)
         every { wsClientService.connectionState } returns MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
         every { WebSocketClient.determineTimeout(any()) } returns 60_000L
         coEvery { wsClientService.testConnection(any(), any(), any(), any(), any()) } coAnswers {
@@ -107,6 +113,8 @@ class TrustedNodeSetupPresenterCancelTest {
     @After
     fun tearDown() {
         stopKoin()
+        // Cleanup global mock to avoid leakage across tests
+        TestDoubles.cleanupWebSocketClientMock()
     }
 
     @Test

@@ -31,8 +31,10 @@ import network.bisq.mobile.i18n.I18nSupport
  */
 class TakeOfferReviewInteractivityTest {
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val testDispatcher = UnconfinedTestDispatcher()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -51,6 +53,7 @@ class TakeOfferReviewInteractivityTest {
         I18nSupport.initialize("en")
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @AfterTest
     fun tearDown() {
         stopKoin()

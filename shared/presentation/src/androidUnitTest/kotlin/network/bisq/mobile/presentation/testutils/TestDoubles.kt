@@ -5,6 +5,8 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.unmockkObject
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.client.websocket.ConnectionState
@@ -17,11 +19,12 @@ object TestDoubles {
         testConnectionDelayMs: Long = 0L,
         connectError: Throwable? = null,
         testConnectionError: Throwable? = null,
-    ): WebSocketClientService {
+        timeoutMs: Long = 60_000L,
+    ): Pair<WebSocketClientService, () -> Unit> {
         val service = mockk<WebSocketClientService>(relaxed = true)
         every { service.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
         mockkObject(WebSocketClient)
-        every { WebSocketClient.determineTimeout(any()) } returns 60_000L
+        every { WebSocketClient.determineTimeout(any()) } returns timeoutMs
         coEvery { service.connect() } coAnswers {
             if (connectDelayMs > 0) delay(connectDelayMs)
             connectError
@@ -38,7 +41,12 @@ object TestDoubles {
             if (testConnectionDelayMs > 0) delay(testConnectionDelayMs)
             testConnectionError
         }
-        return service
+        // Return service and a cleanup function to avoid global MockK leakage
+        return service to { cleanupWebSocketClientMock() }
+    }
+
+    fun cleanupWebSocketClientMock() {
+        unmockkObject(WebSocketClient)
     }
 }
 

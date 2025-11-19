@@ -3,6 +3,8 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -23,6 +25,8 @@ import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.presentation.testutils.TestDoubles
+
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.di.presentationTestModule
@@ -75,6 +79,9 @@ class TrustedNodeSetupPresenterTimeoutTest {
             override suspend fun clear() { _data.value = User() }
         }
 
+        // IMPORTANT: mock object before stubbing to avoid global leakage across tests
+        mockkObject(WebSocketClient)
+
         // Mock timeout behavior
         every { wsClientService.connectionState } returns MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
         every { WebSocketClient.determineTimeout(any()) } returns 3_000L
@@ -100,6 +107,8 @@ class TrustedNodeSetupPresenterTimeoutTest {
     fun tearDown() {
         Dispatchers.resetMain()
         stopKoin()
+        // Cleanup global mock to avoid leakage across tests
+        TestDoubles.cleanupWebSocketClientMock()
     }
 
     @Ignore("Flaky under current test jobs manager; will enable after injecting test jobs manager here")

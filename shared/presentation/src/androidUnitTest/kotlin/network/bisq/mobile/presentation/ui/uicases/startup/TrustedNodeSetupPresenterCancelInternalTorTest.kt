@@ -48,12 +48,16 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
     private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
     private lateinit var userRepository: UserRepository
 
+    private lateinit var wsCleanup: () -> Unit
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
         // Mocks / fakes
-        wsClientService = TestDoubles.wsService(testConnectionDelayMs = 10_000)
+        val (service, cleanup) = TestDoubles.wsService(testConnectionDelayMs = 10_000)
+        wsClientService = service
+        wsCleanup = cleanup
         kmpTorService = mockk(relaxed = true)
         appBootstrap = mockk(relaxed = true)
 
@@ -108,6 +112,8 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
     fun tearDown() {
         Dispatchers.resetMain()
         stopKoin()
+        // Ensure MockK global object mock is cleaned up to avoid leakage across tests
+        wsCleanup()
     }
 
     @Test
