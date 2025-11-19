@@ -107,7 +107,7 @@ class WebSocketClientImpl(
                     return null
                 }
                 doDisconnect() // clean up state
-                log.d { "WS connecting.." }
+                log.d { "WS connecting to $apiUrl ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val startTime = DateUtils.now()
                 val newSession = withContext(Dispatchers.IO) {
