@@ -55,6 +55,8 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.node.BuildConfig
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsPresenter
@@ -193,6 +195,8 @@ val androidNodeModule = module {
             get(),
         )
     }
+
+    single<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
 
     factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
 
