@@ -5,8 +5,9 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.getPlatformCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.GlobalUiManager
-import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ClientTopBarPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManagerImpl
@@ -109,7 +110,7 @@ val presentationModule = module {
         )
     }
 
-    single<ClientTopBarPresenter> { ClientTopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
+    single<TopBarPresenter> { ClientTopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
 
     factory<UserAgreementPresenter> { UserAgreementPresenter(get(), get()) } bind IAgreementPresenter::class
 
