@@ -1,13 +1,13 @@
 package network.bisq.mobile.presentation.testutils
 
-import io.ktor.http.URLProtocol
 import io.ktor.http.Url
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.client.websocket.ConnectionState
+import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.WebSocketClientService
 
 object TestDoubles {
@@ -19,7 +19,7 @@ object TestDoubles {
     ): WebSocketClientService {
         val service = mockk<WebSocketClientService>(relaxed = true)
         every { service.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
-        every { service.determineTimeout(any()) } returns 60_000L
+        every { WebSocketClient.determineTimeout(any()) } returns 60_000L
         coEvery { service.connect() } coAnswers {
             if (connectDelayMs > 0) delay(connectDelayMs)
             connectError
