@@ -4,6 +4,7 @@ import io.ktor.http.Url
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.client.websocket.ConnectionState
@@ -19,6 +20,7 @@ object TestDoubles {
     ): WebSocketClientService {
         val service = mockk<WebSocketClientService>(relaxed = true)
         every { service.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
+        mockkObject(WebSocketClient)
         every { WebSocketClient.determineTimeout(any()) } returns 60_000L
         coEvery { service.connect() } coAnswers {
             if (connectDelayMs > 0) delay(connectDelayMs)
