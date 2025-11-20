@@ -141,7 +141,7 @@ class TrustedNodeSetupPresenterCancelTest {
         presenter.onTestAndSavePressed(isWorkflow = true)
         // Let things start
         delay(100)
-        assertTrue(presenter.isLoading.value)
+        assertTrue(presenter.isNodeSetupInProgress.value)
         assertTrue(presenter.wsClientConnectionState.value is ConnectionState.Connecting)
 
         // Cancel
@@ -151,7 +151,7 @@ class TrustedNodeSetupPresenterCancelTest {
         collectorJob.cancel()
 
         // Assert state reset
-        assertFalse(presenter.isLoading.value)
+        assertFalse(presenter.isNodeSetupInProgress.value)
         assertEquals("", presenter.status.value)
         val state = presenter.wsClientConnectionState.value
         assertTrue(state is ConnectionState.Disconnected && state.error == null)

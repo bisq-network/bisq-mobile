@@ -55,7 +55,7 @@ fun OpenTradeListScreen() {
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val sortedOpenTradeItems by presenter.sortedOpenTradeItems.collectAsState()
-    val isLoading by presenter.isLoading.collectAsState()
+    val isLoadingTrades by presenter.isLoadingTrades.collectAsState()
 
     if (tradeGuideVisible) {
         InformationConfirmationDialog(
@@ -75,7 +75,7 @@ fun OpenTradeListScreen() {
         isInteractive = isInteractive,
     ) {
         when {
-            isLoading -> {
+            isLoadingTrades -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize(),

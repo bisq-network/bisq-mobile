@@ -151,14 +151,14 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
             delay(10)
             tries++
         }
-        assertTrue(presenter.isLoading.value)
+        assertTrue(presenter.isNodeSetupInProgress.value)
 
         // Cancel while Tor is Starting
         presenter.onCancelPressed()
         delay(50)
 
         // Presenter state reset
-        assertFalse(presenter.isLoading.value)
+        assertFalse(presenter.isNodeSetupInProgress.value)
         assertEquals("", presenter.status.value)
         assertTrue(presenter.wsClientConnectionState.value is ConnectionState.Disconnected &&
                 (presenter.wsClientConnectionState.value as ConnectionState.Disconnected).error == null)
@@ -197,7 +197,7 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
         validators.cancel()
 
         // Presenter state reset
-        assertFalse(presenter.isLoading.value)
+        assertFalse(presenter.isNodeSetupInProgress.value)
         assertEquals("", presenter.status.value)
 
         // Tor should not be stopped if it was already Started

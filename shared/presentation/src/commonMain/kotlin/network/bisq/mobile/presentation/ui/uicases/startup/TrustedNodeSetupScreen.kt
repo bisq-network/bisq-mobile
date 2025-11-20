@@ -70,7 +70,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     RememberPresenterLifecycle(presenter)
 
     val connectionState by presenter.wsClientConnectionState.collectAsState()
-    val isLoading by presenter.isLoading.collectAsState()
+    val isNodeSetupInProgress by presenter.isNodeSetupInProgress.collectAsState()
     val selectedProxyOption by presenter.selectedProxyOption.collectAsState()
     val apiUrl by presenter.apiUrl.collectAsState()
     val apiUrlPrompt by presenter.apiUrlPrompt.collectAsState()
@@ -109,7 +109,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 ) {
                     BisqText.largeRegular(
                         status,
-                        color = if (isLoading) BisqTheme.colors.warning
+                        color = if (isNodeSetupInProgress) BisqTheme.colors.warning
                         else if (connectionState is ConnectionState.Connected) BisqTheme.colors.primary
                         else BisqTheme.colors.danger,
                     )
@@ -128,11 +128,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     BisqButton(
-                        text = if (isLoading) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
-                        color = if (!isLoading && (!isApiUrlValid || !isProxyUrlValid)) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                        disabled = if (isLoading) false else (!isWorkflow || !isApiUrlValid || !isProxyUrlValid),
+                        text = if (isNodeSetupInProgress) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
+                        color = if (!isNodeSetupInProgress && (!isApiUrlValid || !isProxyUrlValid)) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
+                        disabled = if (isNodeSetupInProgress) false else (!isWorkflow || !isApiUrlValid || !isProxyUrlValid),
                         onClick = {
-                            if (isLoading) {
+                            if (isNodeSetupInProgress) {
                                 presenter.onCancelPressed()
                             } else if (isNewApiUrl) {
                                 showConfirmDialog = true
@@ -171,7 +171,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     onValueChange = { apiUrl, _ -> if (isWorkflow) presenter.onApiUrlChanged(apiUrl) },
                     value = apiUrl,
                     placeholder = apiUrlPrompt,
-                    disabled = isLoading,
+                    disabled = isNodeSetupInProgress,
                     showPaste = true,
                     validation = {
                         presenter.validateApiUrl(
@@ -196,7 +196,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                             presenter.onProxyOptionChanged(it)
                             blurTriggerSetup.triggerBlur()
                         },
-                        disabled = isLoading || !isWorkflow,
+                        disabled = isNodeSetupInProgress || !isWorkflow,
                     )
 
                     BisqTextField(
@@ -205,7 +205,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         onValueChange = {value, _ -> presenter.onPasswordChanged(value)},
                         keyboardType = KeyboardType.Password,
                         isPasswordField = true,
-                        disabled = isLoading || !isWorkflow,
+                        disabled = isNodeSetupInProgress || !isWorkflow,
                     )
                 }
             }
@@ -235,7 +235,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         value = proxyHost,
                         placeholder = "127.0.0.1",
                         keyboardType = KeyboardType.Decimal,
-                        disabled = isLoading || !isWorkflow,
+                        disabled = isNodeSetupInProgress || !isWorkflow,
                         validation = presenter::validateProxyHost,
                     )
                     BisqTextField(
@@ -245,7 +245,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         value = proxyPort,
                         placeholder = "9050",
                         keyboardType = KeyboardType.Decimal,
-                        disabled = isLoading || !isWorkflow,
+                        disabled = isNodeSetupInProgress || !isWorkflow,
                         validation = presenter::validatePort,
                     )
                 }

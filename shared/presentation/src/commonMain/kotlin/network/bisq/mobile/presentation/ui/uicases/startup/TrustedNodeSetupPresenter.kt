@@ -90,8 +90,8 @@ class TrustedNodeSetupPresenter(
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> = _status.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    private val _isNodeSetupInProgress = MutableStateFlow(true)
+    val isNodeSetupInProgress: StateFlow<Boolean> = _isNodeSetupInProgress.asStateFlow()
 
     private val _selectedProxyOption = MutableStateFlow(BisqProxyOption.NONE)
     val selectedProxyOption = _selectedProxyOption.asStateFlow()
@@ -184,7 +184,7 @@ class TrustedNodeSetupPresenter(
             } catch (e: Exception) {
                 log.e("Failed to load from repository", e)
             } finally {
-                _isLoading.value = false
+                _isNodeSetupInProgress.value = false
             }
         }
     }
@@ -224,7 +224,7 @@ class TrustedNodeSetupPresenter(
 
         if (!isApiUrlValid.value || !isProxyUrlValid.value) return
 
-        _isLoading.value = true
+        _isNodeSetupInProgress.value = true
         _status.value = "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
 
         val newApiUrlString = apiUrl.value
@@ -237,7 +237,7 @@ class TrustedNodeSetupPresenter(
                     IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
                     newApiUrlString
                 )
-                _isLoading.value = false
+                _isNodeSetupInProgress.value = false
                 connectJob = null
                 return@launchUI
             }
@@ -372,7 +372,7 @@ class TrustedNodeSetupPresenter(
             } finally {
                 countdownJob?.cancel()
                 countdownJob = null
-                _isLoading.value = false
+                _isNodeSetupInProgress.value = false
                 connectJob = null
             }
         }
@@ -396,7 +396,7 @@ class TrustedNodeSetupPresenter(
 
         _wsClientConnectionState.value = ConnectionState.Disconnected()
         _status.value = ""
-        _isLoading.value = false
+        _isNodeSetupInProgress.value = false
         _timeoutCounter.value = 0
         connectJob = null
     }

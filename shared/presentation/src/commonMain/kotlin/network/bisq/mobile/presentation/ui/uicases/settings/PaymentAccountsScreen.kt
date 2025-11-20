@@ -57,7 +57,7 @@ fun PaymentAccountsScreen() {
 
     val accounts by presenter.accounts.collectAsState()
     val selectedAccount by presenter.selectedAccount.collectAsState()
-    val isLoading by presenter.isLoading.collectAsState()
+    val isLoadingAccounts by presenter.isLoadingAccounts.collectAsState()
 
     var accountName by remember { mutableStateOf(selectedAccount?.accountName ?: "") }
     var accountNameValid by remember { mutableStateOf(true) }
@@ -100,7 +100,7 @@ fun PaymentAccountsScreen() {
         }
 
         when {
-            isLoading -> {
+            isLoadingAccounts -> {
                 CircularProgressIndicator(
                     color = BisqTheme.colors.primary,
                     strokeWidth = 2.dp,
