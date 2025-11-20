@@ -1,5 +1,0 @@
-{
-    "xcodebuild.credentials.provider": "Xcode",
-    "run.destination.stop.already.running": "Always",
-    "backend.maxHeapSizeMb": 9216
-}

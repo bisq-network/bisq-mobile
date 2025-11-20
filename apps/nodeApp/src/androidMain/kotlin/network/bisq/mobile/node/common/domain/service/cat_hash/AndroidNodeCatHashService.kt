@@ -1,5 +1,5 @@
 /*
- * This iconFilePath is part of Bisq.
+ * This file is part of Bisq.
  *
  * Bisq is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by
@@ -14,46 +14,58 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.client.common.domain.utils
+package network.bisq.mobile.node.common.domain.service.cat_hash
 
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import network.bisq.mobile.client.common.presentation.cat_hash.BaseClientCatHashService
+import bisq.user.cathash.CatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.utils.AndroidImageUtil
 import network.bisq.mobile.utils.AndroidImageUtil.PATH_TO_DRAWABLE
 import java.io.File
+import java.nio.file.Path
 
+/**
+ * Cat Hash implementation for Android node
+ */
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
-class AndroidClientCatHashService(private val context: Context, filesDir: String) :
-    BaseClientCatHashService("$filesDir/Bisq2_mobile"), Logging {
-    override fun composeImage(paths: Array<String>, size: Int): PlatformImage {
-        if (size > 300) {
-            log.w { "The image size is limited to 300 px, as the png files used for the composition are 300 px." }
-        }
-        val imageSize = minOf(300, size)
-        val profileIcon = AndroidImageUtil.composeImage(
-            context,
-            CAT_HASH_PATH,
-            paths,
-            imageSize,
-            imageSize
-        )
-        return PlatformImage(profileIcon)
+class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
+    CatHashService<PlatformImage>(baseDir) {
+    companion object {
+        // We use 40.dp at offers, to get a 3x resolution we use 120
+        const val DEFAULT_SIZE = 120.0
     }
 
-    override fun writeRawImage(image: PlatformImage, iconFilePath: String) {
+    override fun composeImage(paths: Array<String>, size: Double): PlatformImage {
+        return PlatformImage(
+            AndroidImageUtil.composeImage(
+                context,
+                CAT_HASH_PATH,
+                paths,
+                size.toInt(),
+                size.toInt()
+            )
+        )
+    }
+
+    override fun getSizeOfCachedIcons(): Double {
+        return DEFAULT_SIZE * 2
+    }
+
+    override fun getMaxCacheSize(): Int {
+        // One 60 px image has about 3-4 kb. With 500 we get about 1.5-2 MB on total cache file size
+        return 500
+    }
+
+    override fun writeRawImage(image: PlatformImage, file: File) {
         val bitmap: Bitmap = image.bitmap.asAndroidBitmap()
-        val file = File(iconFilePath)
         AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
     }
 
-    override fun readRawImage(iconFilePath: String): PlatformImage? {
-        val file = File(iconFilePath)
+    override fun readRawImage(file: File): PlatformImage? {
         val bitmap: Bitmap? = AndroidImageUtil.readByteArrayAsBitmap(file)
         return if (bitmap == null) null else PlatformImage(bitmap.asImageBitmap())
     }

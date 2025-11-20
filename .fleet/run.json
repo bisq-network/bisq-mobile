@@ -1,9 +1,0 @@
-{
-    "configurations": [
-        {
-            "type": "command",
-            "name": "androidClient debug",
-            "program": "$PROJECT_DIR$/debugAndroid.sh",
-        },
-    ]
-}

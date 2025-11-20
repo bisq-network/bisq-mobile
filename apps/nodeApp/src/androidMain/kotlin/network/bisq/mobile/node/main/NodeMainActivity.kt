@@ -1,0 +1,31 @@
+package network.bisq.mobile.node.main
+
+import android.os.Bundle
+import android.view.WindowManager
+import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import network.bisq.mobile.node.NodeApp
+import network.bisq.mobile.presentation.MainActivity
+
+/**
+ * Bisq Android Node Main Activity
+ */
+class NodeMainActivity : MainActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        // Install splash screen before super.onCreate to prevent UI blocking
+        installSplashScreen()
+
+        super.onCreate(savedInstanceState)
+
+        // Enforce enable hardware acceleration for better graphics performance
+        // tested with better results than manifest flag
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        )
+        setContent {
+            NodeApp()
+        }
+    }
+}
