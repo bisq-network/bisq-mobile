@@ -4,7 +4,46 @@
 
 # Bisq Mobile
 
-## Index
+## Releases
+
+- **GitHub Releases (all APKs & changelogs):**
+  https://github.com/bisq-network/bisq-mobile/releases
+
+- **Bisq Easy Node for Android (full Bisq2 node):**
+
+<p align="center">
+  <!-- Bisq Easy Node (Android) -->
+  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.node">
+    <img
+      alt="Get Bisq Easy on Google Play"
+      src="docs/listings/node/ic_playstore.png"
+      height="60" />
+  </a>
+  <br/>
+  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.node"><strong>Bisq Easy on Google Play</strong></a>
+</p>
+
+- **Bisq Connect for Android (trusted node client):**
+  - Learn how to use Bisq Connect: https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)
+
+<p align="center">
+  <!-- Bisq Connect (Android) - enable link when Play listing is live -->
+  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.client">
+    <img
+      alt="Get Bisq Connect on Google Play"
+      src="docs/listings/connect/android/ic_playstore.png"
+      height="60" />
+  </a>
+  <br/>
+  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.client"><strong>Bisq Connect on Google Play</strong></a>
+</p>
+
+- **Bisq Connect for iOS:**
+  Planned for the end of this year (out-of-store distribution). See the wiki:
+  https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)
+
+
+## Docs Index
 
 1. [Bisq Mobile](#bisq-mobile)
    - [Goal](#goal)
@@ -39,19 +78,19 @@ easier for both, experienced and newcomers, to trade Bitcoin in a decentralized 
 
 To achieve this goal, we are building a total of 3 mobile apps that can be divided in 2 categories:
 
-### Run a Bisq (Easy) Node in Mobile
+### Run a Bisq (Easy) Node on Mobile
 
- - An Android app (called `androidNode`) that runs bisq core in its veins aiming to bring a fully featured trading version of `Bisq2` (also referred to as its main protocol - `Bisq Easy`) to Mobile for full privacy & security.
+ - **Bisq Easy Node for Android** (Gradle module `:apps:nodeApp`), an Android app that runs Bisq2 core and aims to bring a fully featured trading version of `Bisq2` (also referred to by its main protocol - `Bisq Easy`) to mobile for full privacy & security.
 
 ### Share a trusted Bisq Node
 
- - A thin Bisq App `Client` (coming in `android` & `iOS` flavours) able to be configured to connect to a trusted Bisq node (over clearnet) to cater for people willing to try Bisq from somebody they really trust (popularily described as "Uncle Jim") who is willing to share his Bisq node with them.
+ - **Bisq Connect** (Gradle module `:apps:clientApp` for Android and the `iosClient` Xcode project for iOS), a thin Bisq client app that can be configured to connect to a trusted Bisq2 node (over Tor or clearnet) to cater for people willing to try Bisq from somebody they really trust (popularily described as "Uncle Jim") who is willing to share their Bisq node with them.
 
 ## How to contribute
 
 We follow Bisq standard guidelines for contributions, fork + PR, etc. Please refer to [Contributor Checklist](https://bisq.wiki/Contributor_checklist)
 
-We are currently working in the project definition and Github issues will soon be available for contributors to pick what would they like to help with. Stay tuned for updates.
+We track work via GitHub issues at https://github.com/bisq-network/bisq-mobile/issues. Pick something that interests you or open a new issue for discussion.
 
 For Jetpack Compose best practices in this project, see the [Compose guidelines](./docs/compose-guidelines/README.md).
 
@@ -60,9 +99,9 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
 ### Project dev requirements
 
- - Java: 17.0.12.fx-zulu JDK (sdkman env file is avail in project root)
+ - Java: 21.0.6.fx-zulu JDK (sdkman env file is avail in project root)
  - Ruby: v3+ (for iOS Cocoapods 1.15+)
- - IDE: We recommend using Android Studio with the Kotlin Multiplatform Mobile (KMP) plugin. For iOS testing you will need XCode.
+ - IDE: We recommend using Android Studio with the Kotlin Multiplatform Mobile (KMP) plugin. For iOS testing you will need XCode installed and updated.
 
 ### Getting started
 
@@ -70,7 +109,7 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
  2. Open Android Studio with the Kotlin Multiplatform Mobile plugin installed and open the project root folder.
  3. Wait for the Gradle sync to complete and download the dependencies. This will let you know what's missing in your machine to run the project. 
     1. If you are on a MacOS computer building the iOS app you can go ahead and run `setup_ios.sh` script and build the project and run it in your device or emulator.
-    2. For Android it can run on any machine, just run the preconfigured configurations `androidClient` and/or `androidNode`
+    2. For Android it can run on any machine, just run the preconfigured run configurations `clientApp` and/or `nodeApp` in Android Studio
 
 Alternatively, you could run `./gradlew clean build` first from terminal and then open with Android Studio.
 
@@ -86,7 +125,10 @@ Check the current codebase bisq-core dependency version in the [toml file](https
 4. Follow Bisq2 root `README.md` steps to build the project.
 5. Run `./gradlew publishAll` // this will install all the jars you need in your local m2 repo
 
-**NOTE** For bisq-mobile release the `bisq-core-commit` should point to the exact commit the apps were design to work with
+
+**NOTE #1** For bisq-mobile release the `bisq-core-commit` should point to the exact commit the apps were design to work with
+
+**NOTE #2** if you have troubles publishing the jars try `./gradlew cleanAll buildAll publishAll publishAll -- info` it's known to always update properly
 
 #### Option 2: For CI (using remote Maven repository)
 
@@ -142,8 +184,8 @@ Though this can evolve, this is the initial structure of this KMP project:
  - **shared:domain**: Domain module has models (KOJOs) and components that provide them.
  - **shared:presentation**: Contains UI shared code using Kotlin MultiPlatform Compose Implementation forr all the apps, its Presenter's behaviour contracts (interfaces) and default presenter implementations that connects UI with domain.
  - **iosClient**: Xcode project that generates the thin iOS client from sharedUI
- - **androidClient**: Kotlin Compose Android thin app. This app as well should have most if not all of the code shared with the iosClient.
- - **androidNode**: Bisq2 Implementation in Android, will contain the dependencies to Java 17 Bisq2 core jars.
+ - **androidClient**: (now found in `apps:clientApp`) Kotlin Compose Android thin app. This app as well should have most if not all of the code shared with the iosClient.
+ - **androidNode**: (now found in `apps:nodeApp`) Bisq2 Implementation in Android, will contain the dependencies to Java 17 Bisq2 core jars.
 
 ## App Architecture Design Choice
 
