@@ -59,6 +59,8 @@ import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.Bis
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
 
 
@@ -538,10 +540,17 @@ private fun FilterIcon(
             )
         }
         if (isMissingPayment && overlayLetter != null) {
-            network.bisq.mobile.presentation.ui.components.atoms.BisqText.baseBold(
+            val letterSizeSp = if (size < 16.dp) 11f else 12f
+            // Use tighter lineHeight and no font padding to keep the letter visually centered in small boxes
+            BisqText.styledText(
                 text = overlayLetter,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                color = network.bisq.mobile.presentation.ui.theme.BisqTheme.colors.dark_grey20,
+                style = BisqTheme.typography.baseBold.copy(
+                    fontSize = TextUnit(letterSizeSp, androidx.compose.ui.unit.TextUnitType.Sp),
+                    lineHeight = TextUnit(letterSizeSp, androidx.compose.ui.unit.TextUnitType.Sp),
+                    platformStyle = platformTextStyleNoFontPadding()
+                ),
+                textAlign = TextAlign.Center,
+                color = BisqTheme.colors.dark_grey20,
             )
         }
     }
