@@ -26,6 +26,8 @@ import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
+import network.bisq.mobile.domain.PlatformType
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -168,8 +170,14 @@ class WebSocketClientService(
         return when (error) {
             is PasswordIncorrectOrMissingException,
             is MaximumRetryReachedException,
-            is CancellationException,
             is WebSocketIsReconnecting -> false
+
+            is CancellationException -> {
+                if (getPlatformInfo().type == PlatformType.IOS) {
+                    return error.cause?.message?.contains("Socket is not connected") == true
+                }
+                return false
+            }
 
             else -> {
                 // we dont want to retry if message contains "refused"
