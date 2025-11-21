@@ -137,7 +137,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
 
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)
-    override val isInteractive: StateFlow<Boolean> get() = _isInteractive.asStateFlow()
+    override val isInteractive: StateFlow<Boolean> = _isInteractive.asStateFlow()
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
 
     // Global UI manager for app-wide UI state (loading dialogs, etc.)
