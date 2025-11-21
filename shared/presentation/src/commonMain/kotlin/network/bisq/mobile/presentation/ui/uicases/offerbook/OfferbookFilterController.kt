@@ -52,7 +52,6 @@ import androidx.compose.ui.graphics.Color
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 
-import network.bisq.mobile.presentation.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ExpandAllIcon
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
@@ -322,8 +321,11 @@ private fun FilterIconsRow(
     val rowHeight = if (compact) 18.dp else 32.dp
     val rowModifier = if (compact) Modifier.height(rowHeight) else Modifier.fillMaxWidth().height(rowHeight)
 
+    // In compact mode, mirror the collapsed header semantics and only show selected methods.
+    val visibleItems = if (compact) items.filter { it.selected } else items
+
     Box(modifier = rowModifier) {
-        if (items.isEmpty()) {
+        if (visibleItems.isEmpty()) {
             // Stable empty state: no layout jump, subtle hint
             BisqText.baseLight(
                 text = if (isPaymentRow)
@@ -356,9 +358,9 @@ private fun FilterIconsRow(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().height(rowHeight)
             ) {
-                items(items, key = { it.id }) { item ->
+                items(visibleItems, key = { it.id }) { item ->
                     if (compact) {
-                        // Collapsed header: keep icon-only
+                        // Collapsed header style: keep icon-only
                         FilterIcon(item = item, size = 18.dp, compact = true, onToggle = {}, isPayment = isPaymentRow)
                     } else {
                         MethodChip(item = item, isPaymentRow = isPaymentRow, onToggle = onToggle, height = rowHeight)
@@ -406,27 +408,32 @@ private fun CollapsedHeaderBar(
     val iconSize = 18.dp
     val spacing = 10.dp
 
+    // In the collapsed header, show only the currently selected methods;
+    // the tinted background already indicates that filters are active.
+    val paymentSelected = payment.filter { it.selected }
+    val settlementSelected = settlement.filter { it.selected }
+
     androidx.compose.ui.layout.Layout(
         content = {
-            // Left icons (all payment methods)
+            // Left icons (selected payment methods)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(spacing),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clipToBounds()
             ) {
-                payment.forEach { item ->
+                paymentSelected.forEach { item ->
                     FilterIcon(item = item, size = iconSize, compact = true, onToggle = {}, isPayment = true)
                 }
             }
             // Center arrow
             BisqText.baseLight("\u2194", singleLine = true)
-            // Right icons (settlement, cap at 2 for compact header)
+            // Right icons (selected settlement, cap at 2 for compact header)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(spacing),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clipToBounds()
             ) {
-                settlement.take(2).forEach { item ->
+                settlementSelected.take(2).forEach { item ->
                     FilterIcon(item = item, size = iconSize, compact = true, onToggle = {}, isPayment = false)
                 }
             }
@@ -440,8 +447,8 @@ private fun CollapsedHeaderBar(
         // Compute full widths based on counts, icon size and spacing
         val iconSizePx = iconSize.roundToPx()
         val spacingPx = spacing.roundToPx()
-        val leftCount = payment.size
-        val rightCount = kotlin.math.min(2, settlement.size)
+        val leftCount = paymentSelected.size
+        val rightCount = kotlin.math.min(2, settlementSelected.size)
 
         val leftFullWidth = if (leftCount > 0) leftCount * iconSizePx + (leftCount - 1) * spacingPx else 0
         val rightFullWidth = if (rightCount > 0) rightCount * iconSizePx + (rightCount - 1) * spacingPx else 0
