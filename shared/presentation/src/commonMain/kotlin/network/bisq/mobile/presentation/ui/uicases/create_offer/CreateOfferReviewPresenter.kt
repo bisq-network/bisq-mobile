@@ -145,22 +145,35 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
+        // TODO we need to have a general BasePresenter helper fun so every network blocking call trigggered
+        // by the user gets handled consistently and uses all the guards we have in place.
+        // these interactivity guards were here before and go erased and now restored
+        if (!isInteractive.value) return
+
+        disableInteractive()
         launchUI {
-            showLoading()
-            createOfferPresenter.createOffer()
-                .onSuccess {
-                    navigateToOfferbookTab()
-                }
-                .onFailure { exception ->
-                    if (exception is TimeoutCancellationException) {
-                        log.e(exception) { "Create offer timed out: ${exception.message}" }
-                        showSnackbar("mobile.bisqEasy.createOffer.timedOut".i18n())
-                    } else {
-                        log.e(exception) { "Failed to create offer: ${exception.message}" }
-                        showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
+            try {
+                showLoading()
+                createOfferPresenter.createOffer()
+                    .onSuccess {
+                        navigateToOfferbookTab()
                     }
-                }
-            hideLoading()
+                    .onFailure { exception ->
+                        if (exception is TimeoutCancellationException) {
+                            log.e(exception) { "Create offer timed out: ${exception.message}" }
+                            showSnackbar("mobile.bisqEasy.createOffer.timedOut".i18n())
+                        } else {
+                            log.e(exception) { "Failed to create offer: ${exception.message}" }
+                            showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
+                        }
+                    }
+            } finally {
+                hideLoading()
+                // Re-enable interactivity with the standard perceptible delay
+                // so upstream UI (wizard scaffold) can unlock controls.
+                enableInteractive()
+            }
         }
     }
 }
+
