@@ -166,20 +166,34 @@ class ClientTradesServiceFacade(
 
     // Private
     private fun handleTradeItemPresentationChange(payload: List<TradeItemPresentationDto>, modificationType: ModificationType) {
-        if (modificationType == ModificationType.REPLACE ||
-            modificationType == ModificationType.ADDED
-        ) {
-            payload.forEach { item ->
-                val tradeModel = TradeItemPresentationModel.from(item)
-                _openTradeItems.update { it + tradeModel }
-
-                applyPendingTradeProperties(tradeModel)
+        when (modificationType) {
+            ModificationType.REPLACE -> {
+                // Server is sending a full snapshot; replace our current list to avoid duplicates.
+                val newTrades = payload.map { TradeItemPresentationModel.from(it) }
+                newTrades.forEach { tradeModel ->
+                    applyPendingTradeProperties(tradeModel)
+                }
+                _openTradeItems.value = newTrades
             }
-        } else if (modificationType == ModificationType.REMOVED) {
-            payload.forEach { item ->
-                val toRemove: TradeItemPresentationModel? = findOpenTradeItemModel(item.trade.id)
-                if (toRemove != null) {
-                    _openTradeItems.update { it - toRemove }
+
+            ModificationType.ADDED -> {
+                payload.forEach { item ->
+                    val tradeModel = TradeItemPresentationModel.from(item)
+                    _openTradeItems.update { current ->
+                        // Remove any existing trade with the same ID to avoid duplicate keys in the UI.
+                        val withoutExisting = current.filterNot { it.tradeId == tradeModel.tradeId }
+                        withoutExisting + tradeModel
+                    }
+                    applyPendingTradeProperties(tradeModel)
+                }
+            }
+
+            ModificationType.REMOVED -> {
+                payload.forEach { item ->
+                    val toRemove: TradeItemPresentationModel? = findOpenTradeItemModel(item.trade.id)
+                    if (toRemove != null) {
+                        _openTradeItems.update { it - toRemove }
+                    }
                 }
             }
         }
