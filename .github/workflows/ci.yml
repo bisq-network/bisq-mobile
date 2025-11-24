@@ -36,7 +36,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: macos-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/settings.gradle*', '**/build.gradle*', 'gradle/libs.versions.toml') }}
+          key: macos-gradle-v1
           restore-keys: |
             macos-gradle-
 
@@ -46,7 +46,7 @@ jobs:
         with:
           path: |
             ~/.konan
-          key: macos-konan-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/settings.gradle*', '**/build.gradle*', 'gradle/libs.versions.toml') }}
+          key: macos-konan-v1
           restore-keys: |
             macos-konan-
 
