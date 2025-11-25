@@ -2,6 +2,7 @@ package network.bisq.mobile.client.main
 
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetupSettings
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -61,4 +62,8 @@ open class ClientMainPresenter(
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo
+
+    fun navigateToTrustedNode() {
+        navigateTo(TrustedNodeSetupSettings)
+    }
 }

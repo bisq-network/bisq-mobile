@@ -26,12 +26,6 @@ interface NavRoute {
     data object CreateProfile : NavRoute
 
     @Serializable
-    data object TrustedNodeSetup : NavRoute
-
-    @Serializable
-    data object TrustedNodeSetupSettings : NavRoute
-
-    @Serializable
     data object TabContainer : NavRoute, DeepLinkableRoute {
         override fun toUriString(): String {
             return getDeepLinkBasePath(this)

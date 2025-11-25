@@ -73,8 +73,6 @@ interface AppPresenter : ViewPresenter {
     // Actions
     fun setIsMainContentVisible(value: Boolean)
 
-    fun navigateToTrustedNode()
-
     fun onCloseConnectionLostDialogue()
 
     fun onRestartApp()
@@ -127,16 +125,9 @@ fun App(
     navGraphContent: @Composable () -> Unit
 ) {
     val presenter: AppPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
     val navigationManager: NavigationManager = koinInject()
     val globalUiManager: GlobalUiManager = koinInject()
-
-    DisposableEffect(rootNavController) {
-        navigationManager.setRootNavController(rootNavController)
-        onDispose {
-            navigationManager.setRootNavController(null)
-        }
-    }
-    RememberPresenterLifecycle(presenter)
 
     val languageCode by presenter.languageCode.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
@@ -152,18 +143,26 @@ fun App(
         }
     }
 
+    DisposableEffect(rootNavController) {
+        navigationManager.setRootNavController(rootNavController)
+        onDispose {
+            navigationManager.setRootNavController(null)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        ExternalUriHandler.listener = { uri ->
+            navigationManager.navigateFromUri(uri)
+        }
+        onDispose {
+            ExternalUriHandler.listener = null
+        }
+    }
+
     BisqTheme {
         SafeInsetsContainer {
             SwipeBackIOSNavigationHandler(rootNavController) {
                 CompositionLocalProvider(LocalAnimationsEnabled provides showAnimation) {
-                    DisposableEffect(Unit) {
-                        ExternalUriHandler.listener = { uri ->
-                            navigationManager.navigateFromUri(uri)
-                        }
-                        onDispose {
-                            ExternalUriHandler.listener = null
-                        }
-                    }
                     Column {
                         NetworkStatusBanner()
                         navGraphContent()

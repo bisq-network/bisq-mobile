@@ -79,8 +79,6 @@ val presentationModule = module {
 
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
-    single<MiscItemsPresenter> { MiscItemsPresenter(get(), get()) }
-
     factory<ReputationPresenter> { ReputationPresenter(get(), get()) }
 
     single<SupportPresenter> { SupportPresenter(get(), get(), get()) }

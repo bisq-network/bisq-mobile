@@ -4,16 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ExclamationRedIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun TrustedNodeAPIIncompatiblePopup(
@@ -22,19 +23,19 @@ fun TrustedNodeAPIIncompatiblePopup(
 ) {
     BisqDialog {
 
-        Row(horizontalArrangement = Arrangement.Start) {
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             ExclamationRedIcon()
-            BisqGap.HQuarter()
-            BisqText.baseRegular("mobile.error.warning".i18n())
+            BisqGap.HHalf()
+            BisqText.h4Regular("mobile.error.warning".i18n())
         }
 
         BisqGap.V1()
 
-        BisqTextField(
-            value = errorMessage,
-            indicatorColor = BisqTheme.colors.backgroundColor,
-            isTextArea = true,
-            minLines = 2,
+        BisqText.baseRegular(
+            text = errorMessage,
         )
 
         BisqGap.V1()
@@ -45,6 +46,35 @@ fun TrustedNodeAPIIncompatiblePopup(
             type = BisqButtonType.Grey,
             fullWidth = true,
             padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TrustedNodeAPIIncompatiblePopupPreview_Default() {
+    BisqTheme.Preview {
+        TrustedNodeAPIIncompatiblePopup(
+            errorMessage = "API version mismatch: Server is running v2.1.0 but client requires v2.0.0",
+            onFix = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TrustedNodeAPIIncompatiblePopupPreview_LongError() {
+    BisqTheme.Preview {
+        TrustedNodeAPIIncompatiblePopup(
+            errorMessage = """
+                Trusted node API compatibility error:
+                
+                Expected API version: v2.0.0
+                Received API version: v2.1.0
+                
+                The trusted node you are connecting to is using an incompatible API version. Please update your trusted node configuration to use a compatible node.
+            """.trimIndent(),
+            onFix = {}
         )
     }
 }

@@ -1,9 +1,10 @@
 package network.bisq.mobile.client.common.presentation.navigation
 
-//TODO: This will be uncommited in a future PR, if I do this the refactor will be bigger.
+import kotlinx.serialization.Serializable
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
-//@Serializable
-//data object TrustedNodeSetup : NavRoute
-//
-//@Serializable
-//data object TrustedNodeSetupSettings : NavRoute
+@Serializable
+data object TrustedNodeSetup : NavRoute
+
+@Serializable
+data object TrustedNodeSetupSettings : NavRoute
