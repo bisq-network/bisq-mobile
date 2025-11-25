@@ -134,7 +134,7 @@ val androidNodeModule = module {
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
-    single {
+    single<NodeApplicationLifecycleService> {
         NodeApplicationLifecycleService(
             get(),
             get(),
