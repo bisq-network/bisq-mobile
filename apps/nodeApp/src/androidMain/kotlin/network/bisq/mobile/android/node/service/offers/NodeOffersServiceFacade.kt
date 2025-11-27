@@ -31,7 +31,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -178,15 +180,19 @@ class NodeOffersServiceFacade(
         supportedLanguageCodes: Set<String>
     ): Result<String> {
         return try {
-            val offerId = createOffer(
-                Mappings.DirectionMapping.toBisq2Model(direction),
-                Mappings.MarketMapping.toBisq2Model(market),
-                bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
-                fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
-                Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
-                Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
-                ArrayList<String>(supportedLanguageCodes)
-            )
+            // significant CPU work and possibly blocking action, otherwise Default dispatcher
+            // would be a better choice
+            val offerId = withContext(Dispatchers.IO) {
+                createOffer(
+                    Mappings.DirectionMapping.toBisq2Model(direction),
+                    Mappings.MarketMapping.toBisq2Model(market),
+                    bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
+                    fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
+                    Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
+                    Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
+                    ArrayList<String>(supportedLanguageCodes)
+                )
+            }
             Result.success(offerId)
         } catch (e: Exception) {
             log.e(e) { "Failed to create offer: ${e.message}" }
@@ -195,7 +201,7 @@ class NodeOffersServiceFacade(
     }
 
     // Private
-    private fun createOffer(
+    private suspend fun createOffer(
         direction: Direction,
         market: Market,
         bitcoinPaymentMethods: List<BitcoinPaymentMethod>,
@@ -242,8 +248,7 @@ class NodeOffersServiceFacade(
             false
         )
 
-        // blocking call
-        bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).join()
+        bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).await()
         return bisqEasyOffer.id
     }
 

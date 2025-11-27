@@ -1,14 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -516,13 +513,11 @@ class CreateOfferAmountPresenter(
     private fun updateSellerAmountLimitInfo(firstLoad: Boolean = false) {
         val range = maxAmount - minAmount
         launchUI {
-            val userProfile: UserProfileVO = withContext(Dispatchers.IO) {
-                userProfileServiceFacade.getSelectedUserProfile()
-            } ?: return@launchUI
+            val userProfile: UserProfileVO =
+                userProfileServiceFacade.getSelectedUserProfile() ?: return@launchUI
 
-            val reputationScore: ReputationScoreVO = withContext(Dispatchers.IO) {
-                reputationServiceFacade.getReputation(userProfile.id).getOrNull()
-            } ?: return@launchUI
+            val reputationScore: ReputationScoreVO =
+                reputationServiceFacade.getReputation(userProfile.id).getOrNull() ?: return@launchUI
 
             _requiredReputation.value = reputationScore.totalScore
             val market = createOfferModel.market ?: return@launchUI
