@@ -20,27 +20,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.common.domain.httpclient.AuthUtils
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
@@ -59,11 +58,13 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRest
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.crypto.getSha256
 import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SemanticVersion
+import network.bisq.mobile.domain.utils.awaitOrCancel
 import network.bisq.mobile.domain.utils.createUuid
 
 class WebSocketClientImpl(
@@ -71,6 +72,7 @@ class WebSocketClientImpl(
     private val json: Json,
     override val apiUrl: Url,
     private val password: String? = null,
+    private val clientScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : WebSocketClient, Logging {
 
     companion object {
@@ -88,7 +90,8 @@ class WebSocketClientImpl(
     private val connectionMutex = Mutex()
     private val requestResponseHandlersMutex = Mutex()
 
-    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    // signal to cancel waiters
+    private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val _webSocketClientStatus =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
@@ -110,17 +113,15 @@ class WebSocketClientImpl(
                 log.d { "WS connecting to $apiUrl ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val startTime = DateUtils.now()
-                val newSession = withContext(Dispatchers.IO) {
-                    withTimeout(timeout) {
-                        httpClient.webSocketSession {
-                            url {
-                                // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
-                                protocol =
-                                    if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
-                                host = apiUrl.host
-                                port = apiUrl.port
-                                path("/websocket")
-                            }
+                val newSession = withTimeout(timeout) {
+                    httpClient.webSocketSession {
+                        url {
+                            // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
+                            protocol =
+                                if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
+                            host = apiUrl.host
+                            port = apiUrl.port
+                            path("/websocket")
                         }
                     }
                 }
@@ -129,16 +130,14 @@ class WebSocketClientImpl(
                 session = newSession
                 if (newSession.isActive) {
                     log.d { "WS connected successfully" }
-                    listenerJob = ioScope.launch { startListening(newSession) }
+                    listenerJob = clientScope.launch { startListening(newSession) }
 
-                    withContext(Dispatchers.IO) {
-                        withTimeout(remainingTime) {
-                            val nodeApiVersion = getApiVersion()
-                            if (!isApiCompatible(nodeApiVersion)) {
-                                doDisconnect()
-                                awaitDisconnection() // so that we update the disconnect reason correctly
-                                throw IncompatibleHttpApiVersionException(nodeApiVersion.version)
-                            }
+                    withTimeout(remainingTime) {
+                        val nodeApiVersion = getApiVersion()
+                        if (!isApiCompatible(nodeApiVersion)) {
+                            doDisconnect()
+                            awaitDisconnection() // so that we update the disconnect reason correctly
+                            throw IncompatibleHttpApiVersionException(nodeApiVersion.version)
                         }
                     }
 
@@ -186,7 +185,7 @@ class WebSocketClientImpl(
         }
         reconnectJob?.cancel()
 
-        val newReconnectJob: Deferred<Throwable?> = ioScope.async {
+        val newReconnectJob: Deferred<Throwable?> = clientScope.async {
             log.d { "Launching reconnect attempt #${reconnectAttempts + 1}" }
             doDisconnect() // clean up state
 
@@ -274,15 +273,17 @@ class WebSocketClientImpl(
     }
 
     private suspend fun awaitConnection() {
-        withContext(ioScope.coroutineContext) {
-            webSocketClientStatus.first { it is ConnectionState.Connected }
-        }
+        awaitOrCancel(
+            webSocketClientStatus.filter { it is ConnectionState.Connected },
+            stopFlow,
+        )
     }
 
     private suspend fun awaitDisconnection() {
-        withContext(ioScope.coroutineContext) {
-            webSocketClientStatus.first { it is ConnectionState.Disconnected }
-        }
+        awaitOrCancel(
+            webSocketClientStatus.filter { it is ConnectionState.Disconnected },
+            stopFlow,
+        )
     }
 
     override suspend fun subscribe(
@@ -416,6 +417,7 @@ class WebSocketClientImpl(
 
     override suspend fun dispose() {
         disconnect()
-        ioScope.cancel(CancellationException("WebSocket client disposed"))
+        stopFlow.tryEmit(Unit)
+        clientScope.cancel(CancellationException("WebSocket client disposed"))
     }
 }
