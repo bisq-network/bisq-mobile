@@ -89,6 +89,8 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
     private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
 
+    private val selectorManager: SelectorManager by lazy { SelectorManager(Dispatchers.IO) }
+
     suspend fun startTor(timeoutMs: Long = 60_000): Boolean {
         when (_state.value) {
             is TorState.Started -> return true
@@ -415,7 +417,6 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
-        val selectorManager = SelectorManager(Dispatchers.IO)
         try {
             delay(500)
             repeat(3) { attempt ->
@@ -533,7 +534,6 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
-        val selectorManager = SelectorManager(Dispatchers.IO)
         try {
             val start = Clock.System.now().toEpochMilliseconds()
             while (true) {
