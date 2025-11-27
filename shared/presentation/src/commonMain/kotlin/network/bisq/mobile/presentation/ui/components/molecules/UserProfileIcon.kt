@@ -23,7 +23,6 @@ fun UserProfileIcon(
     size: Dp = 50.dp
 ) {
     val userProfileIcon by produceState<PlatformImage?>(initialValue = null, key1 = userProfile) {
-        // The UserProfileServiceFacade will run with Dispatchers.IO context, thus no need to wrap it here as well
         value = userProfileIconProvider.invoke(userProfile)
     }
 
