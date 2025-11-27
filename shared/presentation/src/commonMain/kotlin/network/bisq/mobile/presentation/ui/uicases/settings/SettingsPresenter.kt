@@ -1,14 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -206,9 +203,7 @@ open class SettingsPresenter(
             disableInteractive()
             try {
                 fetchMutex.withLock {
-                    withContext(Dispatchers.IO) {
-                        fetchSettings()
-                    }
+                    fetchSettings()
                 }
             } catch (e: Exception) {
                 log.e(e) { "Failed to fetch settings" }
