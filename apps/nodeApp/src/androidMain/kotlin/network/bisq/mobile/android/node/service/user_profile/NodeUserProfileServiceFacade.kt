@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
@@ -137,9 +138,11 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     ): Result<UserProfileVO> {
         try {
             val selectedUserIdentity = userService.userIdentityService.selectedUserIdentity
-            userService.userIdentityService.editUserProfile(
-                selectedUserIdentity, terms ?: "", statement ?: ""
-            ).join()
+            withContext(Dispatchers.IO) {
+                userService.userIdentityService.editUserProfile(
+                    selectedUserIdentity, terms ?: "", statement ?: ""
+                ).await()
+            }
 
             pubKeyHash = null
             keyPair = null

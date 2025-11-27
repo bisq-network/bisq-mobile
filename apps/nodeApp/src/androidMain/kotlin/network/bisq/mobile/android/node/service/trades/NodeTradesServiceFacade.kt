@@ -170,15 +170,17 @@ class NodeTradesServiceFacade(
         takeOfferErrorMessage: MutableStateFlow<String?>
     ): Result<String> {
         try {
-            val tradeId = doTakeOffer(
-                Mappings.BisqEasyOfferMapping.toBisq2Model(bisqEasyOffer),
-                Mappings.MonetaryMapping.toBisq2Model(takersBaseSideAmount),
-                Mappings.MonetaryMapping.toBisq2Model(takersQuoteSideAmount),
-                BitcoinPaymentMethodSpec(PaymentMethodSpecUtil.getBitcoinPaymentMethod(bitcoinPaymentMethod)),
-                FiatPaymentMethodSpec(PaymentMethodSpecUtil.getFiatPaymentMethod(fiatPaymentMethod)),
-                takeOfferStatus,
-                takeOfferErrorMessage
-            )
+            val tradeId = withContext(Dispatchers.IO) {
+                doTakeOffer(
+                    Mappings.BisqEasyOfferMapping.toBisq2Model(bisqEasyOffer),
+                    Mappings.MonetaryMapping.toBisq2Model(takersBaseSideAmount),
+                    Mappings.MonetaryMapping.toBisq2Model(takersQuoteSideAmount),
+                    BitcoinPaymentMethodSpec(PaymentMethodSpecUtil.getBitcoinPaymentMethod(bitcoinPaymentMethod)),
+                    FiatPaymentMethodSpec(PaymentMethodSpecUtil.getFiatPaymentMethod(fiatPaymentMethod)),
+                    takeOfferStatus,
+                    takeOfferErrorMessage
+                )
+            }
             return Result.success(tradeId)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -436,7 +438,7 @@ class NodeTradesServiceFacade(
                                 this@NodeTradesServiceFacade.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                             }
                     }
-                    .get()
+                    .await()
             }
             return tradeId
         } catch (e: Exception) {
