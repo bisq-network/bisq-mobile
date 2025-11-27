@@ -2,6 +2,8 @@ package network.bisq.mobile.android.node.service.reputation
 
 import bisq.user.reputation.ReputationScore
 import bisq.user.reputation.ReputationService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
@@ -25,7 +27,9 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        val score: ReputationScore = reputationService.getReputationScore(userProfileId)
+        val score: ReputationScore = withContext(Dispatchers.IO) {
+            reputationService.getReputationScore(userProfileId)
+        }
         val scoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(score)
         return Result.success(scoreVO)
     }
