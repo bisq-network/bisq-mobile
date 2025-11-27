@@ -28,10 +28,13 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
@@ -188,26 +191,31 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun rejectTrade(): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
-            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).join()
-            bisqEasyTradeService.rejectTrade(trade)
-            return Result.success(Unit)
+        return try {
+            withContext(Dispatchers.IO) {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val encoded: String =
+                    Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
+                bisqEasyTradeService.rejectTrade(trade)
+                Result.success(Unit)
+            }
         } catch (e: Exception) {
-            return Result.failure(e)
+            Result.failure(e)
         }
     }
 
     override suspend fun cancelTrade(): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
-            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).join()
-            bisqEasyTradeService.cancelTrade(trade)
-            return Result.success(Unit)
+        return try {
+            withContext(Dispatchers.IO) {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
+                bisqEasyTradeService.cancelTrade(trade)
+                Result.success(Unit)
+            }
         } catch (e: Exception) {
-            return Result.failure(e)
+            Result.failure(e)
         }
     }
 
