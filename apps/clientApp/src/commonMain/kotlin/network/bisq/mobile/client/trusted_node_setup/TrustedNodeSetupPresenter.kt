@@ -3,8 +3,6 @@ package network.bisq.mobile.client.trusted_node_setup
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
@@ -19,15 +17,14 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
-import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
+import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
@@ -162,9 +159,7 @@ class TrustedNodeSetupPresenter(
 
         launchUI {
             try {
-                val settings = withContext(Dispatchers.IO) {
-                    sensitiveSettingsRepository.fetch()
-                }
+                val settings = sensitiveSettingsRepository.fetch()
                 _password.value = settings.bisqApiPassword
                 _selectedProxyOption.value = settings.selectedProxyOption
                 if (settings.bisqApiUrl.isBlank()) {
