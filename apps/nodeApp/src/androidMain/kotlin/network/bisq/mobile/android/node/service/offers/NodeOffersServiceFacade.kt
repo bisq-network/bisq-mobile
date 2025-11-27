@@ -146,25 +146,27 @@ class NodeOffersServiceFacade(
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {
-            val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> =
-                bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
-            check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
-            val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
-            val authorUserProfileId: String = offerbookMessage.authorUserProfileId
-            val optionalUserIdentity = userIdentityService.findUserIdentity(authorUserProfileId)
-            check(optionalUserIdentity.isPresent) { "UserIdentity for authorUserProfileId $authorUserProfileId not found" }
-            val userIdentity = optionalUserIdentity.get()
-            check(userIdentity == userIdentityService.selectedUserIdentity) { "Selected selectedUserIdentity does not match the offers authorUserIdentity" }
-            val broadcastResult: BroadcastResult =
-                bisqEasyOfferbookChannelService.deleteChatMessage(
-                    offerbookMessage,
-                    userIdentity.networkIdWithKeyPair
-                ).join()
-            val broadcastResultNotEmpty = broadcastResult.isNotEmpty()
-            if (!broadcastResultNotEmpty) {
-                log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
+            return withContext(Dispatchers.IO) {
+                val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> =
+                    bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
+                check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
+                val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
+                val authorUserProfileId: String = offerbookMessage.authorUserProfileId
+                val optionalUserIdentity = userIdentityService.findUserIdentity(authorUserProfileId)
+                check(optionalUserIdentity.isPresent) { "UserIdentity for authorUserProfileId $authorUserProfileId not found" }
+                val userIdentity = optionalUserIdentity.get()
+                check(userIdentity == userIdentityService.selectedUserIdentity) { "Selected selectedUserIdentity does not match the offers authorUserIdentity" }
+                val broadcastResult: BroadcastResult =
+                    bisqEasyOfferbookChannelService.deleteChatMessage(
+                        offerbookMessage,
+                        userIdentity.networkIdWithKeyPair
+                    ).await()
+                val broadcastResultNotEmpty = broadcastResult.isNotEmpty()
+                if (!broadcastResultNotEmpty) {
+                    log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
+                }
+                Result.success(broadcastResultNotEmpty)
             }
-            return Result.success(broadcastResultNotEmpty)
         } catch (e: Exception) {
             return Result.failure(e)
         }

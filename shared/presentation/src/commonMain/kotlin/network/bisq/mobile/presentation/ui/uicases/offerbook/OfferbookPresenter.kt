@@ -6,8 +6,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
@@ -386,21 +386,19 @@ open class OfferbookPresenter(
             require(selectedOffer.isMyOffer)
             launchUI {
                 showLoading()
-                withContext(Dispatchers.IO) {
-                    val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
-                        .getOrDefault(false)
-                    log.d { "delete offer success $result" }
-                    hideLoading()
-                    if (result) {
-                        deselectOffer()
-                    } else {
-                        log.w { "Failed to delete offer ${selectedOffer.offerId}" }
-                        showSnackbar(
-                            "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
-                                selectedOffer.offerId
-                            ), true
-                        )
-                    }
+                val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
+                    .getOrDefault(false)
+                log.d { "delete offer success $result" }
+                hideLoading()
+                if (result) {
+                    deselectOffer()
+                } else {
+                    log.w { "Failed to delete offer ${selectedOffer.offerId}" }
+                    showSnackbar(
+                        "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
+                            selectedOffer.offerId
+                        ), true
+                    )
                 }
             }
         }.onFailure {
@@ -488,9 +486,7 @@ open class OfferbookPresenter(
             userProfile.id // I am seller (taker selling to maker who wants to buy)
         }
 
-        val reputationResult: Result<ReputationScoreVO> = withContext(Dispatchers.IO) {
-            reputationServiceFacade.getReputation(userProfileId)
-        }
+        val reputationResult: Result<ReputationScoreVO> = reputationServiceFacade.getReputation(userProfileId)
 
         val sellersScore: Long = reputationResult.getOrNull()?.totalScore ?: 0
         val isReputationNotCached = reputationResult.exceptionOrNull()?.message?.contains("not cached yet") == true
