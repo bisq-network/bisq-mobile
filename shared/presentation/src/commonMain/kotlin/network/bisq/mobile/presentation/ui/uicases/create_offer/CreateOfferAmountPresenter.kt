@@ -479,9 +479,7 @@ class CreateOfferAmountPresenter(
         _requiredReputation.value = requiredReputation
 
         launchUI {
-            val peersScoreByUserProfileId = withContext(Dispatchers.IO) {
-                getPeersScoreByUserProfileId()
-            }
+            val peersScoreByUserProfileId = getPeersScoreByUserProfileId()
             val numPotentialTakers =
                 peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value) >= requiredReputation }.count()
             _shouldShowWarningIcon.value = numPotentialTakers == 0
