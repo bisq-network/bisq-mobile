@@ -2,7 +2,6 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -15,14 +14,11 @@ class Subscription<T>(
     private val topic: Topic,
     private val resultHandler: (List<T>, ModificationType) -> Unit
 ) : Logging {
-
-    // Misc
-    private val ioScope = CoroutineScope(Dispatchers.IO)
     private var job: Job? = null
 
     fun subscribe() {
         require(job == null)
-        job = ioScope.launch {
+        job = CoroutineScope(Dispatchers.Default).launch {
             // subscribe blocks until we get a response
             val observer = webSocketClientService.subscribe(topic)
             observer.webSocketEvent.collect { webSocketEvent ->
