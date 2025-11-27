@@ -2,11 +2,9 @@ package network.bisq.mobile.android.node.service.accounts
 
 import bisq.account.AccountService
 import bisq.account.accounts.UserDefinedFiatAccount
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.UserDefinedFiatAccountMapping
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
@@ -31,14 +29,12 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
     }
 
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
-        return withContext(Dispatchers.Default) {
-            accountService
-                .accountByNameMap
-                .values
-                .map { UserDefinedFiatAccountMapping.fromBisq2Model(it as UserDefinedFiatAccount) }
-                .sortedBy { it.accountName }
-                .also { _accounts.value = it }
-        }
+        return accountService
+            .accountByNameMap
+            .values
+            .map { UserDefinedFiatAccountMapping.fromBisq2Model(it as UserDefinedFiatAccount) }
+            .sortedBy { it.accountName }
+            .also { _accounts.value = it }
     }
 
     override suspend fun addAccount(account: UserDefinedFiatAccountVO) {
