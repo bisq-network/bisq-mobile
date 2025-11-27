@@ -111,11 +111,9 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                         val newStartDefer = serviceScope.async {
                             val runtime = getTorRuntime()
                             val startTime = Clock.System.now().toEpochMilliseconds()
-                            withContext(Dispatchers.IO) {
-                                withTimeout(timeoutMs) {
-                                    runtime.startDaemonAsync()
-                                    configTor()
-                                }
+                            withTimeout(timeoutMs) {
+                                runtime.startDaemonAsync()
+                                configTor()
                             }
                             val durationMs = Clock.System.now().toEpochMilliseconds() - startTime
                             remainingTime = (timeoutMs - durationMs).coerceAtLeast(0)
@@ -183,9 +181,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                     _state.value = TorState.Stopping
                     try {
                         val runtime = getTorRuntime()
-                        withContext(Dispatchers.IO) {
-                            runtime.stopDaemonAsync()
-                        }
+                        runtime.stopDaemonAsync()
                         log.i { "Tor daemon stopped successfully" }
                         _state.value = TorState.Stopped(reason)
                     } catch (e: Exception) {
