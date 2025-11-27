@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,7 +9,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
@@ -205,7 +203,7 @@ open class OfferbookPresenter(
                     _availableSettlementMethodIds.value = availableSettlements
 
                     log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, OnlyMy: $onlyMyFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
-                    val processed = processAllOffers(filtered, selectedProfile)
+                    val processed = filtered.map { offer -> processOffer(offer, selectedProfile) }
                     val sorted = processed.sortedWith(
                         compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
                     sorted
@@ -290,13 +288,6 @@ open class OfferbookPresenter(
             }
         }
 
-    }
-
-    private suspend fun processAllOffers(
-        offers: List<OfferItemPresentationModel>,
-        userProfile: UserProfileVO,
-    ): List<OfferItemPresentationModel> = withContext(Dispatchers.IO) {
-        offers.map { offer -> processOffer(offer, userProfile) }
     }
 
     private suspend fun processOffer(
