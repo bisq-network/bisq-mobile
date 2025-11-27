@@ -146,6 +146,7 @@ class NodeOffersServiceFacade(
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {
+            // significant CPU work and possibly blocking action
             return withContext(Dispatchers.IO) {
                 val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> =
                     bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
