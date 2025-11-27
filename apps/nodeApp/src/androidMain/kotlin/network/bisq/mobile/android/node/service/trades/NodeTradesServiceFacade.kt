@@ -248,20 +248,22 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val paymentMethod = selectedTrade.value!!.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
-            val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentMethod"
-            val encoded = Res.encode(
-                key,
-                userName,
-                bitcoinPaymentData
-            )
-            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
-            bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, bitcoinPaymentData)
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            return Result.failure(e)
+        return withContext(Dispatchers.IO) {
+            try {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val paymentMethod = selectedTrade.value!!.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
+                val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentMethod"
+                val encoded = Res.encode(
+                    key,
+                    userName,
+                    bitcoinPaymentData
+                )
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, bitcoinPaymentData)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 
