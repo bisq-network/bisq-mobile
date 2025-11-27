@@ -1,12 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -145,9 +142,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
 
         _blockExplorer.value = EMPTY_STRING
         launchUI {
-            val result = withContext(Dispatchers.IO) {
-                explorerServiceFacade.getSelectedBlockExplorer()
-            }
+            val result = explorerServiceFacade.getSelectedBlockExplorer()
             if (result.isSuccess) {
                 _blockExplorer.value = result.getOrThrow()
             } else {
