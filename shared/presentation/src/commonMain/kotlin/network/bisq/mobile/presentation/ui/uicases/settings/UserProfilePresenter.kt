@@ -193,7 +193,7 @@ class UserProfilePresenter(
     private fun initEditableFields() {
         launchUI {
             runCatching {
-                withContext(Dispatchers.IO) { userProfileServiceFacade.getSelectedUserProfile() }
+                userProfileServiceFacade.getSelectedUserProfile()
             }.onSuccess { profile ->
                 profile?.let {
                     _statement.value = it.statement
