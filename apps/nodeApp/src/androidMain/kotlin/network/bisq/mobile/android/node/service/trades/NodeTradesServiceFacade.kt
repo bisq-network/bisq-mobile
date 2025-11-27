@@ -170,7 +170,7 @@ class NodeTradesServiceFacade(
         takeOfferErrorMessage: MutableStateFlow<String?>
     ): Result<String> {
         try {
-            val tradeId = withContext(Dispatchers.IO) {
+            val tradeId = withContext(Dispatchers.Default) {
                 doTakeOffer(
                     Mappings.BisqEasyOfferMapping.toBisq2Model(bisqEasyOffer),
                     Mappings.MonetaryMapping.toBisq2Model(takersBaseSideAmount),
@@ -193,36 +193,36 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun rejectTrade(): Result<Unit> {
-        return try {
-            withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
+            try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String =
                     Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
                 bisqEasyTradeService.rejectTrade(trade)
                 Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
     override suspend fun cancelTrade(): Result<Unit> {
-        return try {
-            withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
+            try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
                 bisqEasyTradeService.cancelTrade(trade)
                 Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
     override suspend fun closeTrade(): Result<Unit> {
-        return withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 bisqEasyTradeService.removeTrade(trade)
@@ -236,23 +236,25 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val encoded = Res.encode(
-                "bisqEasy.tradeState.info.seller.phase1.tradeLogMessage",
-                channel.myUserIdentity.userName,
-                paymentAccountData
-            )
-            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
-            bisqEasyTradeService.sellerSendsPaymentAccount(trade, paymentAccountData)
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            return Result.failure(e)
+        return withContext(Dispatchers.Default) {
+            try {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val encoded = Res.encode(
+                    "bisqEasy.tradeState.info.seller.phase1.tradeLogMessage",
+                    channel.myUserIdentity.userName,
+                    paymentAccountData
+                )
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                bisqEasyTradeService.sellerSendsPaymentAccount(trade, paymentAccountData)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 
     override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> {
-        return withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val paymentMethod = selectedTrade.value!!.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
@@ -304,7 +306,7 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
-        return withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String
