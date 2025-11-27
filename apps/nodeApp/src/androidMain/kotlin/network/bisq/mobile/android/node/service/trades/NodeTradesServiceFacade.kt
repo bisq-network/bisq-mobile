@@ -300,31 +300,33 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val encoded: String
-            val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
-            val paymentRailName = paymentMethod.paymentRail.name
-            val proofType = Res.get("bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.paymentProof.$paymentRailName")
-            encoded = if (paymentProof == null) {
-                Res.encode(
-                    "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.noProofProvided",
-                    userName
-                )
-            } else {
-                Res.encode(
-                    "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage",
-                    userName,
-                    proofType,
-                    paymentProof
-                )
-            }
+        return withContext(Dispatchers.IO) {
+            try {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val encoded: String
+                val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
+                val paymentRailName = paymentMethod.paymentRail.name
+                val proofType = Res.get("bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.paymentProof.$paymentRailName")
+                encoded = if (paymentProof == null) {
+                    Res.encode(
+                        "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.noProofProvided",
+                        userName
+                    )
+                } else {
+                    Res.encode(
+                        "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage",
+                        userName,
+                        proofType,
+                        paymentProof
+                    )
+                }
 
-            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
-            bisqEasyTradeService.sellerConfirmBtcSent(trade, Optional.ofNullable(paymentProof))
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            return Result.failure(e)
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                bisqEasyTradeService.sellerConfirmBtcSent(trade, Optional.ofNullable(paymentProof))
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 
