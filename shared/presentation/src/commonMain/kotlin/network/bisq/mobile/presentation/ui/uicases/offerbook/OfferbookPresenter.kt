@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
@@ -146,7 +147,7 @@ open class OfferbookPresenter(
                     log.d { "OfferbookPresenter filtering - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir: $direction, In: ${offers.size}, paySel=${payments.size}, setSel=${settlements.size}, onlyMine=$onlyMine" }
 
                     val filtered = mutableListOf<OfferItemPresentationModel>()
-                    if (selectedProfile == null) return@mapLatest filtered to selectedProfile
+                    if (selectedProfile == null) return@mapLatest null
                     var directionFilteredCount = 0
                     var ignoredUserFilteredCount = 0
                     var methodFilteredCount = 0
@@ -204,13 +205,14 @@ open class OfferbookPresenter(
                     _availableSettlementMethodIds.value = availableSettlements
 
                     log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, OnlyMy: $onlyMyFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
-                    filtered to selectedProfile
+                    val processed = processAllOffers(filtered, selectedProfile)
+                    val sorted = processed.sortedWith(
+                        compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                    sorted
                 }
-                .collectLatest { (filtered, selectedProfile) ->
-                    if (selectedProfile != null) {
-                        val processed = processAllOffers(filtered, selectedProfile)
-                        val sorted = processed.sortedWith(
-                            compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                .flowOn(Dispatchers.Default)
+                .collectLatest { sorted ->
+                    if (sorted != null) {
                         _sortedFilteredOffers.value = sorted
                         log.d { "OfferbookPresenter final result - ${sorted.size} offers displayed for market" }
                     }
@@ -337,11 +339,9 @@ open class OfferbookPresenter(
         // Not doing copyWith of item to assign these properties.
         // Because `OfferItemPresentationModel` class has StateFlow props
         // and so creating a new object of it, breaks the flow listeners
-        withContext(Dispatchers.Main) {
-            item.formattedQuoteAmount = formattedQuoteAmount
-            item.formattedPriceSpec = formattedPrice
-            item.isInvalidDueToReputation = isInvalid
-        }
+        item.formattedQuoteAmount = formattedQuoteAmount
+        item.formattedPriceSpec = formattedPrice
+        item.isInvalidDueToReputation = isInvalid
 
         return item
     }
