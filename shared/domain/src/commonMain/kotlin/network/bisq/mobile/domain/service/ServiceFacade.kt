@@ -4,7 +4,6 @@ import androidx.annotation.CallSuper
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.LifeCycleAware
 
@@ -41,7 +40,7 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
             log.i { "Deactivating service ${this::class.simpleName}" }
 
             // Clean up all jobs managed by the jobsManager in a new scope because this will be killed
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.Default).launch {
                 jobsManager.dispose()
             }
         }

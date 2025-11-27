@@ -6,7 +6,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -357,7 +356,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         // Cancel any pending global loading dialog to prevent stuck overlays
         hideLoading()
         // Presenter level support for auto disposal
-        CoroutineScope(Dispatchers.IO).launch { jobsManager.dispose() }
+        CoroutineScope(Dispatchers.Default).launch { jobsManager.dispose() }
     }
 
     @CallSuper
