@@ -1,20 +1,16 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -57,7 +53,6 @@ class UserProfilePresenter(
                     .getOrNull()?.totalScore?.toString()
             }
         }
-        .flowOn(Dispatchers.IO)
         .catch { emit(null) }
         .map { it ?: getLocalizedNA() }.stateIn(
             presenterScope,
@@ -88,7 +83,6 @@ class UserProfilePresenter(
                     .getOrNull()
             }
         }
-        .flowOn(Dispatchers.IO)
         .catch { emit(null) }
         .map { age ->
             if (age != null) {
@@ -158,12 +152,10 @@ class UserProfilePresenter(
                 val na = getLocalizedNA()
                 val safeStatement = statement.value.takeUnless { it == na } ?: ""
                 val safeTerms = tradeTerms.value.takeUnless { it == na } ?: ""
-                val result = withContext(Dispatchers.IO) {
-                    userProfileServiceFacade.updateAndPublishUserProfile(
-                        safeStatement,
-                        safeTerms
-                    )
-                }
+                val result = userProfileServiceFacade.updateAndPublishUserProfile(
+                    safeStatement,
+                    safeTerms
+                )
                 if (result.isSuccess) {
                     showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
                 } else {

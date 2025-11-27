@@ -35,27 +35,28 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     }
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
-        return try {
-            val userService = applicationService.userService.get()
-            val userProfile = userService.userProfileService.findUserProfile(userProfileId)
+        return withContext(Dispatchers.Default) {
+            try {
+                val userService = applicationService.userService.get()
+                val userProfile = userService.userProfileService.findUserProfile(userProfileId)
+                if (userProfile.isPresent) {
+                    val profile = userProfile.get()
+                    val profileAge = reputationService.profileAgeService.getProfileAge(profile)
 
-            if (userProfile.isPresent) {
-                val profile = userProfile.get()
-                val profileAge = reputationService.profileAgeService.getProfileAge(profile)
-
-                if (profileAge.isPresent) {
-                    log.d { "Profile age from ProfileAgeService: ${profileAge.get()} for userId=$userProfileId" }
-                    Result.success(profileAge.get())
+                    if (profileAge.isPresent) {
+                        log.d { "Profile age from ProfileAgeService: ${profileAge.get()} for userId=$userProfileId" }
+                        Result.success(profileAge.get())
+                    } else {
+                        log.d { "No profile age data available from ProfileAgeService for userId=$userProfileId" }
+                        Result.success(null)
+                    }
                 } else {
-                    log.d { "No profile age data available from ProfileAgeService for userId=$userProfileId" }
-                    Result.success(null)
+                    Result.failure(NoSuchElementException("UserProfile for userId=$userProfileId not found"))
                 }
-            } else {
-                Result.failure(NoSuchElementException("UserProfile for userId=$userProfileId not found"))
+            } catch (e: Exception) {
+                log.e(e) { "Failed to get profile age for userId=$userProfileId" }
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to get profile age for userId=$userProfileId" }
-            Result.failure(e)
         }
     }
 }
