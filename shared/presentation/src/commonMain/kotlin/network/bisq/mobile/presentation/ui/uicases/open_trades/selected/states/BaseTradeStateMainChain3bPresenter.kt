@@ -168,9 +168,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
         _errorMessage.value = null
         _balanceFromTx.value = EMPTY_STRING
         launchUI {
-            val explorerResult = withContext(Dispatchers.IO) {
-                explorerServiceFacade.requestTx(txId, address)
-            }
+            val explorerResult = explorerServiceFacade.requestTx(txId, address)
 
             if (explorerResult.isSuccess) {
                 if (explorerResult.isConfirmed) {
