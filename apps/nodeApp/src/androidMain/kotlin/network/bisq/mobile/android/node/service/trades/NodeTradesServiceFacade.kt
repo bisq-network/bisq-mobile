@@ -220,14 +220,16 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun closeTrade(): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            bisqEasyTradeService.removeTrade(trade)
-            leavePrivateChatManager.leaveChannel(channel)
-            _selectedTrade.value = null
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            return Result.failure(e)
+        return withContext(Dispatchers.IO) {
+            try {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                bisqEasyTradeService.removeTrade(trade)
+                leavePrivateChatManager.leaveChannel(channel)
+                _selectedTrade.value = null
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 
