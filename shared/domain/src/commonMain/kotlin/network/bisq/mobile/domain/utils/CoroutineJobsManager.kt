@@ -7,6 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Interface for managing coroutine jobs with lifecycle awareness.
@@ -50,11 +51,9 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     // TODO we might need to make the whole manager platform-specific to cater for iOS properly
     // Platform-aware scope creation
     private val isIOS = getPlatformInfo().type == PlatformType.IOS
-    private var scope = if (isIOS) {
-        CoroutineScope(Dispatchers.Main + SupervisorJob())
-    } else {
-        CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
-    }
+
+
+    private var scope: CoroutineScope = createScope()
 
     // Callback for handling coroutine exceptions
     private var onCoroutineException: ((Throwable) -> Unit)? = null
@@ -88,10 +87,33 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     }
 
     private fun recreateScopes() {
-        scope = if (isIOS) {
-            CoroutineScope(Dispatchers.Main + SupervisorJob())
+        scope = createScope()
+    }
+
+    private fun createScope(): CoroutineScope {
+        // this is how viewModelScope dispatcher is selected:
+        // https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/viewmodel/internal/CloseableCoroutineScope.kt;l=52-69
+        val dispatcher =
+            try {
+                // In platforms where `Dispatchers.Main` is not available, Kotlin Multiplatform will
+                // throw
+                // an exception (the specific exception type may depend on the platform). Since there's
+                // no
+                // direct functional alternative, we use `EmptyCoroutineContext` to ensure that a
+                // coroutine
+                // launched within this scope will run in the same context as the caller.
+                Dispatchers.Main.immediate
+            } catch (_: NotImplementedError) {
+                // In Native environments where `Dispatchers.Main` might not exist (e.g., Linux):
+                EmptyCoroutineContext
+            } catch (_: IllegalStateException) {
+                // In JVM Desktop environments where `Dispatchers.Main` might not exist (e.g., Swing):
+                EmptyCoroutineContext
+            }
+        return if (isIOS) {
+            CoroutineScope(dispatcher + SupervisorJob())
         } else {
-            CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
+            CoroutineScope(dispatcher + SupervisorJob() + exceptionHandler)
         }
     }
 }
