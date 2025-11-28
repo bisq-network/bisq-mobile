@@ -1,8 +1,13 @@
 package network.bisq.mobile.domain.service.market_price
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -23,9 +28,12 @@ class MarketPriceServiceFacadeTest : KoinTest {
 
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var testMarketPriceServiceFacade: TestMarketPriceServiceFacade
+    private val testDispatcher = StandardTestDispatcher()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         startKoin {
             modules(testModule)
         }
@@ -33,12 +41,14 @@ class MarketPriceServiceFacadeTest : KoinTest {
         testMarketPriceServiceFacade = TestMarketPriceServiceFacade(settingsRepository)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @AfterTest
     fun teardown() {
         runBlocking {
             settingsRepository.clear()
         }
         stopKoin()
+        Dispatchers.resetMain()
     }
 
     @Test

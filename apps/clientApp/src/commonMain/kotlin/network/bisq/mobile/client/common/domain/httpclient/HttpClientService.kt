@@ -18,6 +18,7 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.readRemaining
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -27,13 +28,14 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.utils.createHttpClient
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
-import network.bisq.mobile.crypto.getSha256
+import network.bisq.mobile.client.common.domain.utils.createHttpClient
 import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
+import network.bisq.mobile.crypto.getSha256
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.awaitOrCancel
@@ -71,12 +73,14 @@ class HttpClientService(
 
         stopFlow.resetReplayCache()
 
-        collectIO(getHttpClientSettingsFlow()) { newConfig ->
-            if (lastConfig != newConfig) {
-                lastConfig = newConfig
-                _httpClient.value?.close()
-                _httpClient.value = createNewInstance(newConfig)
-                _httpClientChangedFlow.emit(newConfig)
+        serviceScope.launch(Dispatchers.Default) {
+            getHttpClientSettingsFlow().collect { newConfig ->
+                if (lastConfig != newConfig) {
+                    lastConfig = newConfig
+                    _httpClient.value?.close()
+                    _httpClient.value = createNewInstance(newConfig)
+                    _httpClientChangedFlow.emit(newConfig)
+                }
             }
         }
     }

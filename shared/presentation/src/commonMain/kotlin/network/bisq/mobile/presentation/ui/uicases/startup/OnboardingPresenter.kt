@@ -52,13 +52,13 @@ abstract class OnboardingPresenter(
     }
 
     override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
-        launchIO {
+        presenterScope.launch {
             if (pagerState.currentPage == filteredPages.lastIndex) {
                 showLoading()
                 try {
                     settingsRepository.setFirstLaunch(false)
                     val hasProfile: Boolean = userProfileService.hasUserProfile()
-                    launchUI {
+                    presenterScope.launch {
                         if (!hasProfile) {
                             navigateToCreateProfile()
                         } else {

@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -101,11 +101,9 @@ class CreateProfilePresenter(
         if (toSubmit.isNotEmpty()) {
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
-            job = launchIO {
-                withContext(Dispatchers.Main) {
-                    disableInteractive()
-                    _createAndPublishInProgress.value = true
-                }
+            job = presenterScope.launch {
+                disableInteractive()
+                _createAndPublishInProgress.value = true
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 runCatching {
                     userProfileService.createAndPublishNewUserProfile(toSubmit)
@@ -116,9 +114,7 @@ class CreateProfilePresenter(
                     }
 
                     log.i { "Hide busy animation for createAndPublishInProgress" }
-                    withContext(Dispatchers.Main) {
-                        _createAndPublishInProgress.value = false
-                    }
+                    _createAndPublishInProgress.value = false
                     enableInteractive()
                 }.onFailure { e ->
                     GenericErrorHandler.handleGenericError(
@@ -140,29 +136,22 @@ class CreateProfilePresenter(
         _generateKeyPairInProgress.value = true
         log.i { "Show busy animation for generateKeyPair" }
 
-        runCatching {
-            job = launchUI {
-                withContext(Dispatchers.Default) {
-                    // takes 200 -1000 ms
-                    runCatching {
-                        userProfileService.generateKeyPair(
-                            IMAGE_SIZE_IN_PX
-                        ) { id, nym, profileIcon ->
-                            setId(id)
-                            setNym(nym)
-                            setProfileIcon(profileIcon)
-                        }
-                    }.onFailure {
-                        disableInteractive()
-                        showSnackbar("mobile.profile.generatingKeyPairFailed".i18n())
-                    }
+        job = presenterScope.launch(Dispatchers.Default) {
+            // takes 200 -1000 ms
+            runCatching {
+                userProfileService.generateKeyPair(
+                    IMAGE_SIZE_IN_PX
+                ) { id, nym, profileIcon ->
+                    setId(id)
+                    setNym(nym)
+                    setProfileIcon(profileIcon)
                 }
-                _generateKeyPairInProgress.value = false
-                log.i { "Hide busy animation for generateKeyPair" }
+            }.onFailure {
+                disableInteractive()
+                showSnackbar("mobile.profile.generatingKeyPairFailed".i18n())
             }
-        }.onFailure { e ->
-            GenericErrorHandler.handleGenericError("Generating the key pair failed.", e)
             _generateKeyPairInProgress.value = false
+            log.i { "Hide busy animation for generateKeyPair" }
         }
     }
 

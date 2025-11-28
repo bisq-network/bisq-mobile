@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
@@ -93,8 +94,10 @@ class WebSocketClientService(
 
         stopFlow.resetReplayCache()
 
-        collectIO(httpClientService.httpClientChangedFlow) {
-            updateWebSocketClient(it)
+        serviceScope.launch {
+            httpClientService.httpClientChangedFlow.collect {
+                updateWebSocketClient(it)
+            }
         }
     }
 
@@ -141,7 +144,7 @@ class WebSocketClientService(
             currentClient.value = newClient
             ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
             stateCollectionJob?.cancel()
-            stateCollectionJob = launchIO {
+            stateCollectionJob = serviceScope.launch {
                 newClient.webSocketClientStatus.collect { state ->
                     _connectionState.value = state
                     if (state is ConnectionState.Disconnected) {
@@ -290,7 +293,7 @@ class WebSocketClientService(
             }
             return error
         } finally {
-            launchIO {
+            serviceScope.launch {
                 wsClient.dispose()
                 httpClient.close()
             }

@@ -4,6 +4,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -122,7 +123,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun completeTrade() {
-        launchIO {
+        presenterScope.launch {
             showLoading()
             tradesServiceFacade.btcConfirmed()
             hideLoading()
@@ -141,7 +142,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
         }
 
         _blockExplorer.value = EMPTY_STRING
-        launchUI {
+        presenterScope.launch {
             val result = explorerServiceFacade.getSelectedBlockExplorer()
             if (result.isSuccess) {
                 _blockExplorer.value = result.getOrThrow()
@@ -162,7 +163,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
         _txConfirmationState.value = REQUEST_STARTED
         _errorMessage.value = null
         _balanceFromTx.value = EMPTY_STRING
-        launchUI {
+        presenterScope.launch {
             val explorerResult = explorerServiceFacade.requestTx(txId, address)
 
             if (explorerResult.isSuccess) {
@@ -174,7 +175,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
 
                     // We request again after 20 seconds.
                     // As its presenterScope it will get canceled when presenter is deactivated.
-                    launchUI {
+                    presenterScope.launch {
                         delay(20_000)
                         requestTx()
                     }

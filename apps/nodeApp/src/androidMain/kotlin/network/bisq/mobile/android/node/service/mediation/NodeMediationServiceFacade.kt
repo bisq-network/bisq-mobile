@@ -4,6 +4,9 @@ import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
 import bisq.contract.bisq_easy.BisqEasyContract
 import bisq.i18n.Res
 import bisq.support.mediation.MediationRequestService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -25,23 +28,29 @@ class NodeMediationServiceFacade(applicationService: AndroidApplicationService.P
     }
 
     override suspend fun reportToMediator(value: TradeItemPresentationModel): Result<Unit> {
-        val tradeId = value.tradeId
-        val optionalChannel = channelService.findChannelByTradeId(tradeId)
-        if (optionalChannel.isPresent) {
-            val channel = optionalChannel.get()
-            val mediator = channel.mediator
-            if (mediator != null) {
-                val encoded = Res.encode("bisqEasy.mediation.requester.tradeLogMessage", channel.myUserIdentity.userName)
-                channelService.sendTradeLogMessage(encoded, channel).join()
-                channel.setIsInMediation(true)
-                val contract: BisqEasyContract = Mappings.BisqEasyContractMapping.toBisq2Model(value.bisqEasyTradeModel.contract)
-                mediationRequestService.requestMediation(channel, contract)
-                return Result.success(Unit)
+        return withContext(Dispatchers.Default) {
+            val tradeId = value.tradeId
+            val optionalChannel = channelService.findChannelByTradeId(tradeId)
+            if (optionalChannel.isPresent) {
+                val channel = optionalChannel.get()
+                val mediator = channel.mediator
+                if (mediator != null) {
+                    val encoded = Res.encode(
+                        "bisqEasy.mediation.requester.tradeLogMessage",
+                        channel.myUserIdentity.userName
+                    )
+                    channelService.sendTradeLogMessage(encoded, channel).await()
+                    channel.setIsInMediation(true)
+                    val contract: BisqEasyContract =
+                        Mappings.BisqEasyContractMapping.toBisq2Model(value.bisqEasyTradeModel.contract)
+                    mediationRequestService.requestMediation(channel, contract)
+                    Result.success(Unit)
+                } else {
+                    Result.failure(MediatorNotAvailableException())
+                }
             } else {
-                return Result.failure(MediatorNotAvailableException())
+                Result.failure(RuntimeException("No channel found for trade ID $tradeId"))
             }
-        } else {
-            return Result.failure(RuntimeException("No channel found for trade ID $tradeId"))
         }
     }
 }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -147,7 +148,7 @@ class UserProfilePresenter(
     override fun onSave() {
         disableInteractive()
         setShowLoading(true)
-        launchUI {
+        presenterScope.launch {
             try {
                 val na = getLocalizedNA()
                 val safeStatement = statement.value.takeUnless { it == na } ?: ""
@@ -183,7 +184,7 @@ class UserProfilePresenter(
     }
 
     private fun initEditableFields() {
-        launchUI {
+        presenterScope.launch {
             runCatching {
                 userProfileServiceFacade.getSelectedUserProfile()
             }.onSuccess { profile ->

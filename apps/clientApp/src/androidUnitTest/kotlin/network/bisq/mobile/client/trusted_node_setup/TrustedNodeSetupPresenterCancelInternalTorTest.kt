@@ -1,6 +1,12 @@
 package network.bisq.mobile.client.trusted_node_setup
 
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -8,6 +14,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.di.clientTestModule
+import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.websocket.ConnectionState
+import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.settings.domain.SensitiveSettings
+import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
+import network.bisq.mobile.client.test_utils.TestDoubles
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -23,22 +36,6 @@ import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import network.bisq.mobile.client.common.di.clientTestModule
-import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
-import network.bisq.mobile.client.common.domain.websocket.ConnectionState
-import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.settings.domain.SensitiveSettings
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
-import network.bisq.mobile.client.test_utils.TestDoubles
-import kotlin.coroutines.CoroutineContext
 
 @ExperimentalCoroutinesApi
 class TrustedNodeSetupPresenterCancelInternalTorTest {
@@ -88,16 +85,9 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
 
         // Test jobs manager that runs UI/IO on the same test dispatcher
         val testJobsManager = object : CoroutineJobsManager {
-            private val uiScope = CoroutineScope(testDispatcher)
-            private val ioScope = CoroutineScope(testDispatcher)
-            override fun addJob(job: Job) = job
-            override fun launchUI(context: CoroutineContext, block: suspend CoroutineScope.() -> Unit) = uiScope.launch(context) { block(this) }
-            override fun launchIO(block: suspend CoroutineScope.() -> Unit) = ioScope.launch { block(this) }
-            override fun <T> collectUI(flow: Flow<T>, collector: suspend (T) -> Unit) = launchUI { flow.collect { collector(it) } }
-            override fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit) = launchIO { flow.collect { collector(it) } }
+            private val scope = CoroutineScope(testDispatcher)
             override suspend fun dispose() {}
-            override fun getUIScope() = uiScope
-            override fun getIOScope() = ioScope
+            override fun getScope() = scope
             override fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {}
         }
 

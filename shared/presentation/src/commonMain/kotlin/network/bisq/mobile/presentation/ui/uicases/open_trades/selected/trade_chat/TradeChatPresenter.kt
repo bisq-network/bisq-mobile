@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
@@ -112,44 +113,47 @@ class TradeChatPresenter(
             return
         }
 
-        launchUI {
+        presenterScope.launch {
             val bisqEasyOpenTradeChannelModel = currentTrade.bisqEasyOpenTradeChannelModel
             // cancel notifications of chat related to this trade
             notificationController.cancel(NotificationIds.getNewChatMessageId(currentTrade.shortTradeId))
 
-            collectUI(bisqEasyOpenTradeChannelModel.chatMessages) { messages ->
-                observedChatMessages.update {
-                    val newMessages = messages - it
-                    newMessages.forEach { m ->
-                        m.addMessageDeliveryStatusObserver(messageDeliveryServiceFacade)
-                    }
-                    messages
-                }
-            }
-
-            collectUI(ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
-                messages.filter { message ->
-                    when (message.chatMessageType) {
-                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(
-                            message.senderUserProfileId
-                        )
-
-                        else -> true
-                    }
-                }.toList().sortedByDescending { it.date }
-            }) { messages ->
-                _sortedChatMessages.value = messages
-                messages.forEach { message ->
-                    val userProfile = message.senderUserProfile
-                    if (_userProfileIconByProfileId.value[userProfile.id] == null) {
-                        val image = userProfileServiceFacade.getUserProfileIcon(
-                            userProfile
-                        )
-                        _userProfileIconByProfileId.update { it + (userProfile.id to image) }
+            presenterScope.launch {
+                bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
+                    observedChatMessages.update {
+                        val newMessages = messages - it
+                        newMessages.forEach { m ->
+                            m.addMessageDeliveryStatusObserver(messageDeliveryServiceFacade)
+                        }
+                        messages
                     }
                 }
             }
 
+            presenterScope.launch {
+                ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
+                    messages.filter { message ->
+                        when (message.chatMessageType) {
+                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(
+                                message.senderUserProfileId
+                            )
+
+                            else -> true
+                        }
+                    }.toList().sortedByDescending { it.date }
+                }.collect { messages ->
+                    _sortedChatMessages.value = messages
+                    messages.forEach { message ->
+                        val userProfile = message.senderUserProfile
+                        if (_userProfileIconByProfileId.value[userProfile.id] == null) {
+                            val image = userProfileServiceFacade.getUserProfileIcon(
+                                userProfile
+                            )
+                            _userProfileIconByProfileId.update { it + (userProfile.id to image) }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -172,7 +176,7 @@ class TradeChatPresenter(
                 )
             }
         }
-        launchIO {
+        presenterScope.launch {
             tradeChatMessagesServiceFacade.sendChatMessage(finalText, citation)
             _quotedMessage.value = null
         }
@@ -187,7 +191,7 @@ class TradeChatPresenter(
     }
 
     fun onAddReaction(message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum) {
-        launchIO {
+        presenterScope.launch {
             tradeChatMessagesServiceFacade.addChatMessageReaction(message.id, reaction)
         }
     }
@@ -196,7 +200,7 @@ class TradeChatPresenter(
         message: BisqEasyOpenTradeMessageModel,
         reaction: BisqEasyOpenTradeMessageReactionVO
     ) {
-        launchIO {
+        presenterScope.launch {
             tradeChatMessagesServiceFacade.removeChatMessageReaction(message.id, reaction)
         }
     }
@@ -222,7 +226,7 @@ class TradeChatPresenter(
     }
 
     fun onConfirmedIgnoreUser(id: String) {
-        launchIO {
+        presenterScope.launch {
             disableInteractive()
             try {
                 userProfileServiceFacade.ignoreUserProfile(id)
@@ -236,7 +240,7 @@ class TradeChatPresenter(
     }
 
     fun onConfirmedUndoIgnoreUser(id: String) {
-        launchIO {
+        presenterScope.launch {
             disableInteractive()
             try {
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
@@ -282,15 +286,14 @@ class TradeChatPresenter(
     }
 
     fun onDontShowAgainChatRulesWarningBox() {
-        launchUI {
+        presenterScope.launch {
             settingsRepository.setShowChatRulesWarnBox(false)
         }
     }
 
     fun onUpdateReadCount(newValue: Int) {
-        val tradeId = selectedTrade.value?.tradeId
-        if (tradeId == null) return
-        launchIO {
+        val tradeId = selectedTrade.value?.tradeId ?: return
+        presenterScope.launch {
             tradeReadStateRepository.setCount(tradeId, newValue)
         }
     }

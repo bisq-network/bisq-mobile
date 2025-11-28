@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -40,14 +41,14 @@ class OpenTradeListPresenter(
         super.onViewAttached()
         tradesServiceFacade.resetSelectedTradeToNull()
         _isLoadingTrades.value = true
-        launchUI {
+        presenterScope.launch {
             combine(
                 mainPresenter.tradesWithUnreadMessages,
                 tradesServiceFacade.openTradeItems,
                 mainPresenter.languageCode
-            ) { unreadMessages, openTrades, _ ->
-                Pair(unreadMessages, openTrades)
-            }.collect { (unreadMessages, openTrades) ->
+            ) { _, openTrades, _ ->
+                openTrades
+            }.collect { openTrades ->
                 _sortedOpenTradeItems.value =
                     openTrades.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
                 _isLoadingTrades.value = false
@@ -69,7 +70,7 @@ class OpenTradeListPresenter(
 
     fun onConfirmTradeRules(value: Boolean) {
         _tradeGuideVisible.value = false
-        launchUI {
+        presenterScope.launch {
             settingsServiceFacade.confirmTradeRules(value)
         }
     }

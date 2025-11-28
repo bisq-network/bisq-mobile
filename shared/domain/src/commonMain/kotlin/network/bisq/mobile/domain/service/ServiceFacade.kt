@@ -15,7 +15,7 @@ import network.bisq.mobile.domain.LifeCycleAware
  *
  * Typical usage pattern:
  * - Call `activate()` when the service is started (optionally overridden by subclasses)
- * - Launch coroutines via `launchIO()` or `collectIO()`
+ * - Launch coroutines via `serviceScope`
  * - Call `deactivate()` to cancel all coroutines and release resources
  *
  */

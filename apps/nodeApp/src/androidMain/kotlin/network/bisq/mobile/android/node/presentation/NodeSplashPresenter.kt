@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
@@ -38,7 +39,7 @@ class NodeSplashPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        collectUI(
+        presenterScope.launch {
             combine(
                 applicationBootstrapFacade.state,
                 numConnections
@@ -49,9 +50,9 @@ class NodeSplashPresenter(
                     state
                 }
 
+            }.collect  { stateAndNumConnections ->
+                _state.value = stateAndNumConnections
             }
-        ) { stateAndNumConnections ->
-            _state.value = stateAndNumConnections
         }
     }
 }

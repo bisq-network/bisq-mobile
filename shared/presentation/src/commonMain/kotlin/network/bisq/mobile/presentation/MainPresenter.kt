@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
@@ -174,7 +175,7 @@ open class MainPresenter(
         context: String = "Initialization"
     ) {
         // Use the existing error handling infrastructure
-        launchUI {
+        presenterScope.launch {
             GenericErrorHandler.handleGenericError(
                 "Initialization process failed during: $context",
                 exception

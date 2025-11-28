@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -134,11 +135,13 @@ class OfferbookMarketPresenter(
     }
 
     private fun observeGlobalMarketPrices() {
-        collectIO(marketPriceServiceFacade.globalPriceUpdate) { timestamp ->
-            log.d { "Offerbook received global price update at timestamp: $timestamp" }
-            val previousValue = _marketPriceUpdated.value
-            _marketPriceUpdated.value = !_marketPriceUpdated.value
-            log.d { "Offerbook triggered market filtering update: $previousValue -> ${_marketPriceUpdated.value}" }
+        presenterScope.launch {
+            marketPriceServiceFacade.globalPriceUpdate.collect { timestamp ->
+                log.d { "Offerbook received global price update at timestamp: $timestamp" }
+                val previousValue = _marketPriceUpdated.value
+                _marketPriceUpdated.value = !_marketPriceUpdated.value
+                log.d { "Offerbook triggered market filtering update: $previousValue -> ${_marketPriceUpdated.value}" }
+            }
         }
     }
 }

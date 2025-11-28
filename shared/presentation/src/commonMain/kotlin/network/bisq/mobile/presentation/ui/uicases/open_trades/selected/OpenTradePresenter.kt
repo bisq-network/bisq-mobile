@@ -113,11 +113,11 @@ class OpenTradePresenter(
             return
         }
 
-        collectUI(currentTrade.bisqEasyTradeModel.tradeState) { tradeState ->
-            tradeStateChanged(tradeState)
+        presenterScope.launch {
+            currentTrade.bisqEasyTradeModel.tradeState.collect(::tradeStateChanged)
         }
 
-        collectUI(
+        presenterScope.launch {
             isUserIgnored.combine(currentTrade.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
                 if (isIgnored) {
                     messages.filter {
@@ -129,14 +129,16 @@ class OpenTradePresenter(
                 } else {
                     messages
                 }
+            }.collect {
+                msgCount.update { _ -> it.size }
+                _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
             }
-        ) {
-            msgCount.update { _ -> it.size }
-            _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
         }
 
-        collectUI(currentTrade.bisqEasyOpenTradeChannelModel.isInMediation) {
-            _isInMediation.value = it
+        presenterScope.launch {
+            currentTrade.bisqEasyOpenTradeChannelModel.isInMediation.collect {
+                _isInMediation.value = it
+            }
         }
     }
 
@@ -251,7 +253,7 @@ class OpenTradePresenter(
 
     fun onConfirmedUndoIgnoreUser() {
         val id = selectedTrade.value?.peersUserProfile?.id
-        launchIO {
+        presenterScope.launch {
             disableInteractive()
             try {
                 if (id == null) {

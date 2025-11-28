@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -107,7 +108,7 @@ class BuyerState1aPresenter(
         val bitcoinPaymentData = bitcoinPaymentData.value
         if (bitcoinPaymentData.isEmpty()) return
         setShowInvalidAddressDialog(false)
-        launchUI {
+        presenterScope.launch {
             showLoading()
             val result = tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData)
             hideLoading()

@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.service.bootstrap
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.BaseService
@@ -26,7 +27,7 @@ abstract class ApplicationLifecycleService(
     fun initialize() {
         log.i { "Initialize core services and Tor" }
 
-        launchIO {
+        serviceScope.launch {
             try {
                 activateServiceFacades()
             } catch (e: Exception) {
@@ -37,7 +38,7 @@ abstract class ApplicationLifecycleService(
 
     protected open fun onUnrecoverableError(e: Throwable) {
         log.e(e) { "Unrecoverable error detected. Application must be restarted. Stopping services." }
-        launchIO {
+        serviceScope.launch {
             try {
                 deactivateServiceFacades()
             } catch (e: Exception) {
@@ -60,7 +61,7 @@ abstract class ApplicationLifecycleService(
             return
         }
 
-        launchIO {
+        serviceScope.launch {
             try {
                 deactivateServiceFacades()
             } catch (e: Exception) {
@@ -79,7 +80,7 @@ abstract class ApplicationLifecycleService(
             return
         }
 
-        launchIO {
+        serviceScope.launch {
             try {
                 // Perform shutdown off the UI thread
                 deactivateServiceFacades()

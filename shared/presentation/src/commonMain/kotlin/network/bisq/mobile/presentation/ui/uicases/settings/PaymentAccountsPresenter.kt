@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -24,7 +25,7 @@ open class PaymentAccountsPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        launchIO {
+        presenterScope.launch {
             try {
                 _isLoadingAccounts.value = true
                 accountsServiceFacade.getAccounts()
@@ -37,7 +38,7 @@ open class PaymentAccountsPresenter(
 
     override fun selectAccount(account: UserDefinedFiatAccountVO) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 accountsServiceFacade.setSelectedAccount(account)
             } finally {
@@ -52,7 +53,7 @@ open class PaymentAccountsPresenter(
             return
         }
         showLoading()
-        launchIO {
+        presenterScope.launch {
             try {
                 val newAccount = UserDefinedFiatAccountVO(
                     accountName = newName,
@@ -75,7 +76,7 @@ open class PaymentAccountsPresenter(
         }
         showLoading()
         if (selectedAccount.value != null) {
-            launchIO {
+            presenterScope.launch {
                 try {
                     val newAccount = UserDefinedFiatAccountVO(
                         accountName = newName,
@@ -97,7 +98,7 @@ open class PaymentAccountsPresenter(
     override fun deleteCurrentAccount() {
         if (selectedAccount.value != null) {
             showLoading()
-            launchIO {
+            presenterScope.launch {
                 try {
                     accountsServiceFacade.removeAccount(selectedAccount.value!!)
                     showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n())

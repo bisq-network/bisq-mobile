@@ -1,10 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
@@ -54,13 +53,10 @@ class CreateOfferDirectionPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        launchIO {
-            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launchIO
+        presenterScope.launch {
+            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
             val reputation = reputationServiceFacade.getReputation(profile.id).getOrNull()
-
-            withContext(Dispatchers.Main) {
-                _reputation.value = reputation
-            }
+            _reputation.value = reputation
         }
     }
 
