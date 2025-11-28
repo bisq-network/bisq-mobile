@@ -27,8 +27,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
@@ -73,14 +73,12 @@ class HttpClientService(
 
         stopFlow.resetReplayCache()
 
-        serviceScope.launch(Dispatchers.Default) {
-            getHttpClientSettingsFlow().collect { newConfig ->
-                if (lastConfig != newConfig) {
-                    lastConfig = newConfig
-                    _httpClient.value?.close()
-                    _httpClient.value = createNewInstance(newConfig)
-                    _httpClientChangedFlow.emit(newConfig)
-                }
+        getHttpClientSettingsFlow().flowOn(Dispatchers.Default).collect { newConfig ->
+            if (lastConfig != newConfig) {
+                lastConfig = newConfig
+                _httpClient.value?.close()
+                _httpClient.value = createNewInstance(newConfig)
+                _httpClientChangedFlow.emit(newConfig)
             }
         }
     }
