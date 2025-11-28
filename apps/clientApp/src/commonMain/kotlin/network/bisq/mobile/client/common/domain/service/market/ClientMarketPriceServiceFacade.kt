@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.market
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -35,7 +36,7 @@ class ClientMarketPriceServiceFacade(
             updateMarketPriceItem()
         }
 
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.Default) {
             val observer = apiGateway.subscribeMarketPrice()
             observer.webSocketEvent.collect { webSocketEvent ->
                 try {
