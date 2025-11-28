@@ -102,7 +102,11 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
                 // direct functional alternative, we use `EmptyCoroutineContext` to ensure that a
                 // coroutine
                 // launched within this scope will run in the same context as the caller.
-                Dispatchers.Main.immediate
+                try {
+                    Dispatchers.Main.immediate
+                } catch (_: UnsupportedOperationException) {
+                    Dispatchers.Main
+                }
             } catch (_: NotImplementedError) {
                 // In Native environments where `Dispatchers.Main` might not exist (e.g., Linux):
                 EmptyCoroutineContext
