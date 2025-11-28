@@ -21,7 +21,7 @@ interface CoroutineJobsManager {
     suspend fun dispose()
     
     /**
-     * Get the coroutine scope. Uses [Dispatchers.Main] by default
+     * Get the coroutine scope. prefers Dispatchers.Main.immediate (or Dispatchers.Main), falling back to a platform-safe context when Main is unavailable
      */
     fun getScope(): CoroutineScope
 
@@ -81,8 +81,8 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     }
 
     private fun disposeScopes() {
-        runCatching { scope.cancel() }.onFailure {
-            log.w { "Failed to cancel scope: ${it.message}" }
+        runCatching { scope.cancel() }.onFailure { throwable ->
+            log.w(throwable) { "Failed to cancel scope: ${throwable.message}" }
         }
     }
 
