@@ -1,15 +1,17 @@
 package network.bisq.mobile.presentation.ui.components
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,8 +21,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.CircularProgressIndicator
-
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -40,11 +41,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.MainPresenter
 import org.koin.compose.koinInject
-
-import android.app.Activity
-import androidx.activity.result.contract.ActivityResultContract
 
 private class OpenDocumentWithPersist : ActivityResultContract<Array<String>, Uri?>() {
     override fun createIntent(context: Context, input: Array<String>): Intent {
@@ -64,6 +61,7 @@ private class OpenDocumentWithPersist : ActivityResultContract<Array<String>, Ur
 const val backupPrefix = "bisq2_mobile-backup-"
 private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
 
+// TODO: needs refactor: Important tasks must be executed on presenter scope, a simple screen rotation will cancel the composable scope
 @Composable
 actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> CompletableDeferred<String?>) {
     val context = LocalContext.current
