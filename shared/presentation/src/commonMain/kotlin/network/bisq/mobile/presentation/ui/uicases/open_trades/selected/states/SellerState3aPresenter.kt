@@ -79,9 +79,14 @@ class SellerState3aPresenter(
         }
         presenterScope.launch {
             showLoading()
-            tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
-            hideLoading()
-            setShowInvalidAddressDialog(false)
+                val result = tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
+                hideLoading()
+                if (result.isSuccess) {
+                    setShowInvalidAddressDialog(false)
+                } else {
+                    // TODO: Display error to user (e.g., via snackbar or error dialog) ?
+                    log.e { "Failed to confirm BTC sent: ${result.exceptionOrNull()?.message}" }
+                }
         }
     }
 
