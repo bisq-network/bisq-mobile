@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.service.market_price
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,7 +58,8 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
     }
     
     protected fun restoreSelectedMarketFromSettings(onMarketRestored: (MarketVO) -> Unit) {
-        serviceScope.launch(Dispatchers.Default) {
+        // onMarketRestored is Blocking on client (runBlocking waits for mutex)
+        serviceScope.launch(Dispatchers.IO) {
             try {
                 settingsRepository.fetch().selectedMarketCode.let { marketCode ->
                     // Parse the market code to get base and quote currency
