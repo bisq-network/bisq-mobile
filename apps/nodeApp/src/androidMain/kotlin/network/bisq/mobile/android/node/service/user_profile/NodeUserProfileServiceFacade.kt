@@ -74,9 +74,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
         serviceScope.launch(Dispatchers.Default) {
             _selectedUserProfile.value = getSelectedUserProfile()
-            launchIO {
-                getIgnoredUserProfileIds()
-            }
+            getIgnoredUserProfileIds()
         }
 
         numUserProfilesPin = userProfileService.numUserProfiles.addObserver { num ->
@@ -122,9 +120,11 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {
-        userService.userIdentityService.createAndPublishNewUserProfile(
-            nickName, keyPair, pubKeyHash, proofOfWork, AVATAR_VERSION, "", ""
-        ).join()
+        withContext(Dispatchers.IO) {
+            userService.userIdentityService.createAndPublishNewUserProfile(
+                nickName, keyPair, pubKeyHash, proofOfWork, AVATAR_VERSION, "", ""
+            ).await()
+        }
 
         pubKeyHash = null
         keyPair = null
@@ -186,7 +186,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO> {
-        return ids.mapNotNull { id -> findUserProfile(id) }
+        return withContext(Dispatchers.Default) { ids.mapNotNull { id -> findUserProfile(id) } }
     }
 
     override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage {
@@ -249,21 +249,25 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun ignoreUserProfile(profileId: String) {
-        require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
-        val userProfile = userProfileService.findUserProfile(profileId)
-            .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
+        withContext(Dispatchers.Default) {
+            require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
+            val userProfile = userProfileService.findUserProfile(profileId)
+                .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
-        userProfileService.ignoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates ignoredUserIds
+            userProfileService.ignoreUserProfile(userProfile)
+            getIgnoredUserProfileIds() // updates ignoredUserIds
+        }
     }
 
     override suspend fun undoIgnoreUserProfile(profileId: String) {
-        require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
-        val userProfile = userProfileService.findUserProfile(profileId)
-            .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
+        withContext(Dispatchers.Default) {
+            require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
+            val userProfile = userProfileService.findUserProfile(profileId)
+                .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
-        userProfileService.undoIgnoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates ignoredUserIds
+            userProfileService.undoIgnoreUserProfile(userProfile)
+            getIgnoredUserProfileIds() // updates ignoredUserIds
+        }
     }
 
     override suspend fun isUserIgnored(profileId: String): Boolean {
@@ -286,7 +290,9 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
         return try {
             val userProfile = Mappings.UserProfileMapping.toBisq2Model(accusedUserProfile)
-            moderationRequestService.reportUserProfile(userProfile, trimmedMessage)
+            withContext(Dispatchers.Default) {
+                moderationRequestService.reportUserProfile(userProfile, trimmedMessage)
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

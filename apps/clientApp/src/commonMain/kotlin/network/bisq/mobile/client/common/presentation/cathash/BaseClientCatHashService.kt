@@ -2,6 +2,9 @@ package network.bisq.mobile.client.common.presentation.cathash
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientCatHashService
@@ -139,7 +142,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     }
 
     private fun writeAsync(image: PlatformImage, iconFilePath: Path) {
-        launchIO {
+        serviceScope.launch(Dispatchers.IO) {
             try {
                 writeRawImage(image, iconFilePath.toString())
             } catch (e: Exception) {

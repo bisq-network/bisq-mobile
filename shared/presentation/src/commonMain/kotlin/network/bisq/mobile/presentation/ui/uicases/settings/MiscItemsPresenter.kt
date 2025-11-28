@@ -12,6 +12,7 @@ import bisqapps.shared.presentation.generated.resources.nav_user
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -103,7 +104,7 @@ open class MiscItemsPresenter(
     }
 
     private fun loadIgnoredUsers() {
-        launchIO {
+        presenterScope.launch {
             try {
                 val ignoredUserIds = userProfileService.getIgnoredUserProfileIds()
 

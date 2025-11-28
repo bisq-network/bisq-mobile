@@ -1,6 +1,10 @@
 package network.bisq.mobile.android.node
 
 import android.app.Activity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -61,7 +65,7 @@ class NodeApplicationLifecycleService(
             return
         }
 
-        launchIO {
+        serviceScope.launch(Dispatchers.IO) {
             // Cancellation should not happen at this point, so we ignore all errors and just log them
             // Till the process is killed
             try {
@@ -105,8 +109,11 @@ class NodeApplicationLifecycleService(
         networkServiceFacade.activate()
 
         log.i { "Start initializing applicationService" }
-        // Block until applicationService initialization is completed
-        androidApplicationService.initialize().join()
+        // androidApplicationService.initialize() contains thread blocking calls
+        withContext(Dispatchers.IO) {
+            // Block until applicationService initialization is completed
+            androidApplicationService.initialize().await()
+        }
         log.i { "ApplicationService initialization completed" }
 
         settingsServiceFacade.activate()
@@ -152,7 +159,7 @@ class NodeApplicationLifecycleService(
 
         try {
             log.i { "Stopping applicationService" }
-            provider.applicationService.shutdown().join()
+            provider.applicationService.shutdown().await()
             log.i { "ApplicationService stopped" }
         } catch (e: Exception) {
             log.e("Error at applicationService.shutdown", e)

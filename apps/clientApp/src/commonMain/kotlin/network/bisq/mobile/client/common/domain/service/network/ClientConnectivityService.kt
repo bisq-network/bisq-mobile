@@ -1,5 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.network
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -57,7 +59,7 @@ class ClientConnectivityService(
      */
     fun startMonitoring(period: Long = PERIOD, startDelay: Long = 5_000) {
         job?.cancel()
-        job = launchIO {
+        job = serviceScope.launch(Dispatchers.IO) {
             delay(startDelay)
             while (true) {
                 checkConnectivity()
@@ -106,7 +108,7 @@ class ClientConnectivityService(
     }
 
     private fun runPendingBlocks() {
-        launchIO {
+        serviceScope.launch(Dispatchers.Default) {
             mutex.withLock {
                 val blocksToExecute = pendingConnectivityBlocks.let {
                     val blocks = it.toList()
@@ -161,7 +163,7 @@ class ClientConnectivityService(
     fun runWhenConnected(block: suspend () -> Unit): Job {
         return serviceScope.launch {
             if (isConnected()) {
-                launchIO { block() }
+                serviceScope.launch(Dispatchers.IO) { block() }
             } else {
                 mutex.withLock {
                     pendingConnectivityBlocks.add(block)

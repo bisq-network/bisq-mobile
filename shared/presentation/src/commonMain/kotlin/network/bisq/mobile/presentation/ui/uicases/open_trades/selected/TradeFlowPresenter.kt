@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnumExtensions.isSeller
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -97,9 +98,11 @@ class TradeFlowPresenter(
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         isMainChain = paymentMethod == "MAIN_CHAIN"
 
-        collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
-            log.d { "Trade State Changed to: $tradeState" }
-            tradeStateChanged(tradeState)
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyTradeModel.tradeState.collect {tradeState ->
+                log.d { "Trade State Changed to: $tradeState" }
+                tradeStateChanged(tradeState)
+            }
         }
     }
 

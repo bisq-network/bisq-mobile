@@ -475,7 +475,9 @@ class CreateOfferAmountPresenter(
         ) ?: 0L
         _requiredReputation.value = requiredReputation
 
-        launchUI {
+        // TODO: it sounds like its better to do this on Dispatchers.Default as processing is significant,
+        // and theres a blocking call (in marketPriceServiceFacade), but doing so fails the related tests
+        presenterScope.launch {
             val peersScoreByUserProfileId = getPeersScoreByUserProfileId()
             val numPotentialTakers =
                 peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value) >= requiredReputation }.count()
@@ -512,21 +514,21 @@ class CreateOfferAmountPresenter(
 
     private fun updateSellerAmountLimitInfo(firstLoad: Boolean = false) {
         val range = maxAmount - minAmount
-        launchUI {
+        presenterScope.launch {
             val userProfile: UserProfileVO =
-                userProfileServiceFacade.getSelectedUserProfile() ?: return@launchUI
+                userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
 
             val reputationScore: ReputationScoreVO =
-                reputationServiceFacade.getReputation(userProfile.id).getOrNull() ?: return@launchUI
+                reputationServiceFacade.getReputation(userProfile.id).getOrNull() ?: return@launch
 
             _requiredReputation.value = reputationScore.totalScore
-            val market = createOfferModel.market ?: return@launchUI
+            val market = createOfferModel.market ?: return@launch
 
             val amount = getReputationBasedQuoteSideAmount(
                 marketPriceServiceFacade,
                 market,
                 _requiredReputation.value
-            ) ?: return@launchUI
+            ) ?: return@launch
 
             val reputationBasedMaxValue = (amount.value.toFloat() - minAmount) / range
             _reputationBasedMaxSliderValue.value = reputationBasedMaxValue

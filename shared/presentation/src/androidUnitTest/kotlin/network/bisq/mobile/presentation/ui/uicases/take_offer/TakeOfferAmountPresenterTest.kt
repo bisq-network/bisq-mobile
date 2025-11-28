@@ -68,11 +68,13 @@ class TakeOfferAmountPresenterTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     private val testDispatcher = StandardTestDispatcher()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun setUpMainDispatcher() {
         Dispatchers.setMain(testDispatcher)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @AfterTest
     fun tearDownMainDispatcher() {
         Dispatchers.resetMain()
@@ -274,6 +276,7 @@ class TakeOfferAmountPresenterTest {
         )
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun onSliderValueChanged_is_sampled_and_onSliderDragFinished_updates_immediately() = runTest {
         // Arrange market prices map (100 USD per BTC)

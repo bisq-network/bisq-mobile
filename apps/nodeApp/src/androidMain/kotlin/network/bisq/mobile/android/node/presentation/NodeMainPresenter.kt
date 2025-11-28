@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.presentation
 
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
@@ -34,9 +35,11 @@ class NodeMainPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        collectUI(connectivityService.status) { status ->
-            _showAllConnectionsLostDialogue.value = ConnectivityStatus.DISCONNECTED == status
-            _showReconnectOverlay.value = ConnectivityStatus.RECONNECTING == status
+        presenterScope.launch {
+            connectivityService.status.collect { status ->
+                _showAllConnectionsLostDialogue.value = ConnectivityStatus.DISCONNECTED == status
+                _showReconnectOverlay.value = ConnectivityStatus.RECONNECTING == status
+            }
         }
     }
 

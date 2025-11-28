@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -24,7 +25,7 @@ open class UserAgreementPresenter(
 
     override fun onAcceptTerms() {
         showLoading()
-        launchUI {
+        presenterScope.launch {
             try {
                 settingsServiceFacade.confirmTacAccepted(true)
                 navigateToOnboarding()

@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.contract.RoleEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -44,11 +45,15 @@ class InterruptedTradePresenter(
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
-        collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) {
-            tradeStateChanged(it)
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyTradeModel.tradeState.collect {
+                tradeStateChanged(it)
+            }
         }
-        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
-            _isInMediation.value = it
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect {
+                _isInMediation.value = it
+            }
         }
     }
 
@@ -147,7 +152,7 @@ class InterruptedTradePresenter(
 
     fun onCloseTrade() {
         val trade = selectedTrade.value ?: return
-        launchUI {
+        presenterScope.launch {
             showLoading()
             val result = tradesServiceFacade.closeTrade()
             if (result.isFailure) {
@@ -156,7 +161,7 @@ class InterruptedTradePresenter(
                     "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg)
                 )
                 hideLoading()
-                return@launchUI
+                return@launch
             }
 
             // On success, clear read state. If this fails, report but still navigate back.
@@ -175,7 +180,7 @@ class InterruptedTradePresenter(
     fun onReportToMediator() {
         val trade = selectedTrade.value
         if (trade == null) return
-        launchIO {
+        presenterScope.launch {
             showLoading()
             mediationServiceFacade.reportToMediator(trade)
             hideLoading()

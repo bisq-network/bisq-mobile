@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -31,7 +32,7 @@ open class SettingsPresenter(
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
     override fun setLanguageCode(langCode: String) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 // Mark this as a user-initiated change to prevent fetchSettings from overriding
                 isUserInitiatedLanguageChange = true
@@ -56,7 +57,7 @@ open class SettingsPresenter(
     override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes.asStateFlow()
     override fun setSupportedLanguageCodes(langCodes: Set<String>) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _supportedLanguageCodes.value = langCodes
                 settingsServiceFacade.setSupportedLanguageCodes(langCodes)
@@ -71,7 +72,7 @@ open class SettingsPresenter(
     override val chatNotification: StateFlow<String> get() = _chatNotification.asStateFlow()
     override fun setChatNotification(value: String) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _chatNotification.value = value
             } finally {
@@ -84,7 +85,7 @@ open class SettingsPresenter(
     override val closeOfferWhenTradeTaken: StateFlow<Boolean> get() = _closeOfferWhenTradeTaken.asStateFlow()
     override fun setCloseOfferWhenTradeTaken(value: Boolean) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _closeOfferWhenTradeTaken.value = value
                 settingsServiceFacade.setCloseMyOfferWhenTaken(value)
@@ -100,7 +101,7 @@ open class SettingsPresenter(
     override val tradePriceTolerance: StateFlow<String> get() = _tradePriceTolerance.asStateFlow()
     override fun setTradePriceTolerance(value: String, isValid: Boolean) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _tradePriceTolerance.value = value
                 if (isValid) {
@@ -119,7 +120,7 @@ open class SettingsPresenter(
     override val numDaysAfterRedactingTradeData: StateFlow<String> get() = _numDaysAfterRedactingTradeData.asStateFlow()
     override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _numDaysAfterRedactingTradeData.value = value
                 if (isValid) {
@@ -138,7 +139,7 @@ open class SettingsPresenter(
     override val useAnimations: StateFlow<Boolean> get() = _useAnimations.asStateFlow()
     override fun setUseAnimations(value: Boolean) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _useAnimations.value = value
                 settingsServiceFacade.setUseAnimations(value)
@@ -152,7 +153,7 @@ open class SettingsPresenter(
     override val powFactor: StateFlow<String> get() = _powFactor.asStateFlow()
     override fun setPowFactor(value: String, isValid: Boolean) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _powFactor.value = value
                 if (isValid) {
@@ -169,7 +170,7 @@ open class SettingsPresenter(
     override val ignorePow: StateFlow<Boolean> get() = _ignorePow.asStateFlow()
     override fun setIgnorePow(value: Boolean) {
         disableInteractive()
-        launchUI {
+        presenterScope.launch {
             try {
                 _ignorePow.value = value
                 settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
@@ -184,12 +185,14 @@ open class SettingsPresenter(
     private var isUserInitiatedLanguageChange = false
 
     init {
-        collectUI(mainPresenter.languageCode.drop(1)) {
-            // Only fetch settings if this is not a user-initiated language change
-            if (!isUserInitiatedLanguageChange) {
-                launchFetchSettings()
+        presenterScope.launch {
+            mainPresenter.languageCode.drop(1).collect {
+                // Only fetch settings if this is not a user-initiated language change
+                if (!isUserInitiatedLanguageChange) {
+                    launchFetchSettings()
+                }
+                isUserInitiatedLanguageChange = false
             }
-            isUserInitiatedLanguageChange = false
         }
     }
 
@@ -199,7 +202,7 @@ open class SettingsPresenter(
     }
 
     private fun launchFetchSettings() {
-        launchUI {
+        presenterScope.launch {
             disableInteractive()
             try {
                 fetchMutex.withLock {

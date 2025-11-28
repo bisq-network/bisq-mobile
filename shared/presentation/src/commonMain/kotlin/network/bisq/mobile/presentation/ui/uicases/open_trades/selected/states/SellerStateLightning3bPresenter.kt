@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -26,20 +27,23 @@ class SellerStateLightning3bPresenter(
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
         val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
         val peersUserName = bisqEasyOpenTradeChannelModel.getPeer().userName
-        collectUI(bisqEasyOpenTradeChannelModel.chatMessages) { messages ->
-            for (message in messages) {
-                if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE && message.textString.isNotEmpty()) {
-                    val encodedLogMessage = message.textString
-                    val encodedWithUserName = "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
-                        peersUserName
-                    )
-                    val encodedWithNickName = getEncodedWithNickName(bisqEasyOpenTradeChannelModel)
 
-                    if (encodedLogMessage.equals(encodedWithUserName) || encodedLogMessage.equals(
-                            encodedWithNickName
+        presenterScope.launch {
+            bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
+                for (message in messages) {
+                    if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE && message.textString.isNotEmpty()) {
+                        val encodedLogMessage = message.textString
+                        val encodedWithUserName = "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
+                            peersUserName
                         )
-                    ) {
-                        _buyerHasConfirmedBitcoinReceipt.value = true
+                        val encodedWithNickName = getEncodedWithNickName(bisqEasyOpenTradeChannelModel)
+
+                        if (encodedLogMessage.equals(encodedWithUserName) || encodedLogMessage.equals(
+                                encodedWithNickName
+                            )
+                        ) {
+                            _buyerHasConfirmedBitcoinReceipt.value = true
+                        }
                     }
                 }
             }
@@ -47,7 +51,7 @@ class SellerStateLightning3bPresenter(
     }
 
     fun skipWaiting() {
-        launchIO {
+        presenterScope.launch {
             showLoading()
             tradesServiceFacade.btcConfirmed()
             hideLoading()

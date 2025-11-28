@@ -274,34 +274,38 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val encoded = Res.encode(
-                "bisqEasy.tradeState.info.seller.phase2b.tradeLogMessage",
-                userName,
-                selectedTrade.value!!.formattedQuoteAmount
-            )
-            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
-            bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            return Result.failure(e)
+        return withContext(Dispatchers.Default) {
+            try {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val encoded = Res.encode(
+                    "bisqEasy.tradeState.info.seller.phase2b.tradeLogMessage",
+                    userName,
+                    selectedTrade.value!!.formattedQuoteAmount
+                )
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 
     override suspend fun buyerConfirmFiatSent(): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val encoded = Res.encode(
-                "bisqEasy.tradeState.info.buyer.phase2a.tradeLogMessage",
-                userName,
-                selectedTrade.value!!.quoteCurrencyCode
-            )
-            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
-            bisqEasyTradeService.buyerConfirmFiatSent(trade)
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            return Result.failure(e)
+        return withContext(Dispatchers.Default) {
+            try {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val encoded = Res.encode(
+                    "bisqEasy.tradeState.info.buyer.phase2a.tradeLogMessage",
+                    userName,
+                    selectedTrade.value!!.quoteCurrencyCode
+                )
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                bisqEasyTradeService.buyerConfirmFiatSent(trade)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 
@@ -337,20 +341,22 @@ class NodeTradesServiceFacade(
     }
 
     override suspend fun btcConfirmed(): Result<Unit> {
-        try {
-            val (channel, trade, userName) = getTradeChannelUserNameTriple()
-            val paymentRail = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail
-            if (paymentRail == BitcoinPaymentRail.LN && trade.isBuyer) {
-                val encoded = Res.encode(
-                    "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
-                    userName
-                )
-                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+        return withContext(Dispatchers.Default) {
+            try {
+                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val paymentRail = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail
+                if (paymentRail == BitcoinPaymentRail.LN && trade.isBuyer) {
+                    val encoded = Res.encode(
+                        "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
+                        userName
+                    )
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                }
+                bisqEasyTradeService.btcConfirmed(trade)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-            bisqEasyTradeService.btcConfirmed(trade)
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            return Result.failure(e)
         }
     }
 

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -41,7 +42,7 @@ class ReportUserPresenter(
     }
 
     fun onReportClick() {
-        launchIO {
+        presenterScope.launch {
             val message = _uiState.value.message
             if (!::chatMessage.isInitialized) {
                 log.w { "ReportUserPresenter.onReportClick called before initialize" }
@@ -51,7 +52,7 @@ class ReportUserPresenter(
                         message
                     )
                 )
-                return@launchIO
+                return@launch
             }
             _uiState.update { it.copy(isLoading = true) }
             userProfileServiceFacade.reportUserProfile(

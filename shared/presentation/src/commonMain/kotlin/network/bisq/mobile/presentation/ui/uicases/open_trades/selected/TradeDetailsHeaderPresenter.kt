@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -77,7 +78,7 @@ class TradeDetailsHeaderPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        launchUI {
+        presenterScope.launch {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
                 .filterNotNull()
@@ -111,12 +112,16 @@ class TradeDetailsHeaderPresenter(
             rightAmountDescription = "bisqEasy.tradeState.header.receive".i18n()
         }
 
-        collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) {
-            tradeStateChanged(it)
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyTradeModel.tradeState.collect {
+                tradeStateChanged(it)
+            }
         }
 
-        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
-            this@TradeDetailsHeaderPresenter._isInMediation.value = it
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect {
+                this@TradeDetailsHeaderPresenter._isInMediation.value = it
+            }
         }
     }
 
@@ -257,7 +262,7 @@ class TradeDetailsHeaderPresenter(
         if (selectedTrade.value == null) {
             return
         }
-        launchUI {
+        presenterScope.launch {
             showLoading()
             when (tradeCloseType.value) {
                 TradeCloseType.REJECT -> {
@@ -290,7 +295,7 @@ class TradeDetailsHeaderPresenter(
             return
         }
         _showMediationConfirmationDialog.value = false
-        launchIO {
+        presenterScope.launch {
             showLoading()
             mediationServiceFacade.reportToMediator(trade)
                 .onFailure { exception ->
