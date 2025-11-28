@@ -89,8 +89,6 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
     private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
 
-    private val selectorManager: SelectorManager by lazy { SelectorManager(Dispatchers.IO) }
-
     suspend fun startTor(timeoutMs: Long = 60_000): Boolean {
         when (_state.value) {
             is TorState.Started -> return true
@@ -417,18 +415,27 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
-        delay(500)
-        repeat(3) { attempt ->
+        val selectorManager = SelectorManager(Dispatchers.IO)
+        try {
+            delay(500)
+            repeat(3) { attempt ->
+                try {
+                    val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", controlPort)
+                    socket.close()
+                    log.i { "Verified control port $controlPort is accessible" }
+                    return
+                } catch (e: Exception) {
+                    if (attempt < 2) delay(250)
+                }
+            }
+            log.w { "Control port $controlPort not yet accessible, but continuing anyway" }
+        } finally {
             try {
-                val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", controlPort)
-                socket.close()
-                log.i { "Verified control port $controlPort is accessible" }
-                return
+                selectorManager.close()
             } catch (e: Exception) {
-                if (attempt < 2) delay(250)
+                log.w(e) { "Failed to close selectorManager in verifyControlPortAccessible" }
             }
         }
-        log.w { "Control port $controlPort not yet accessible, but continuing anyway" }
     }
 
     private fun getTorDir(): Path {
@@ -528,23 +535,32 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
-        val start = Clock.System.now().toEpochMilliseconds()
-        while (true) {
-            val stillOpen = try {
-                val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", port)
-                socket.close(); true
-            } catch (_: Exception) {
-                false
+        val selectorManager = SelectorManager(Dispatchers.IO)
+        try {
+            val start = Clock.System.now().toEpochMilliseconds()
+            while (true) {
+                val stillOpen = try {
+                    val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", port)
+                    socket.close(); true
+                } catch (_: Exception) {
+                    false
+                }
+                if (!stillOpen) {
+                    log.i { "Control port $port is closed" }
+                    return
+                }
+                if (Clock.System.now().toEpochMilliseconds() - start > timeoutMs) {
+                    log.w { "Control port $port still open after ${timeoutMs}ms; continuing with purge" }
+                    return
+                }
+                delay(200)
             }
-            if (!stillOpen) {
-                log.i { "Control port $port is closed" }
-                return
+        } finally {
+            try {
+                selectorManager.close()
+            } catch (e: Exception) {
+                log.w(e) { "Failed to close selectorManager in waitForControlPortClosed" }
             }
-            if (Clock.System.now().toEpochMilliseconds() - start > timeoutMs) {
-                log.w { "Control port $port still open after ${timeoutMs}ms; continuing with purge" }
-                return
-            }
-            delay(200)
         }
     }
 
@@ -552,10 +568,5 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         _bootstrapProgress.value = 0
         _socksPort.value = null
         torRuntime = null
-        try {
-            selectorManager.close()
-        } catch (e: Exception) {
-            log.w(e) { "Failed to close selectorManager in KmpTorService" }
-        }
     }
 }
