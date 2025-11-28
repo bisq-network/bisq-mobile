@@ -1,5 +1,7 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.EOFException
 import java.io.File
@@ -26,33 +28,36 @@ private val HEADER: ByteArray = "BISQENC|AES256GCM|PBKDF2|v1\n".toByteArray(Char
 
 private fun getCipher(): Cipher = Cipher.getInstance("AES/GCM/NoPadding")
 
-fun encrypt(input: File, output: File, password: String) {
-    val secureRandom = SecureRandom()
-    val salt = ByteArray(SALT_LEN).also { secureRandom.nextBytes(it) }
-    val iv = ByteArray(IV_LEN).also { secureRandom.nextBytes(it) }
-    val keyBytes = deriveKey(password, salt)
-    try {
-        val cipher = getCipher()
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyBytes, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+suspend fun encrypt(input: File, output: File, password: String) {
+    // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
+    withContext(Dispatchers.Default) {
+        val secureRandom = SecureRandom()
+        val salt = ByteArray(SALT_LEN).also { secureRandom.nextBytes(it) }
+        val iv = ByteArray(IV_LEN).also { secureRandom.nextBytes(it) }
+        val keyBytes = deriveKey(password, salt)
+        try {
+            val cipher = getCipher()
+            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyBytes, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
 
-        FileOutputStream(output, false).use { fos ->
-            // Write format header first
-            fos.write(HEADER)
-            // Then write salt and IV
-            fos.write(salt)
-            fos.write(iv)
-            // Stream ciphertext
-            CipherOutputStream(fos, cipher).use { cos ->
-                FileInputStream(input).use { fis ->
-                    fis.copyTo(cos)
+            FileOutputStream(output, false).use { fos ->
+                // Write format header first
+                fos.write(HEADER)
+                // Then write salt and IV
+                fos.write(salt)
+                fos.write(iv)
+                // Stream ciphertext
+                CipherOutputStream(fos, cipher).use { cos ->
+                    FileInputStream(input).use { fis ->
+                        fis.copyTo(cos)
+                    }
                 }
             }
+        } finally {
+            // Clear sensitive data
+            salt.fill(0)
+            iv.fill(0)
+            keyBytes.fill(0)
         }
-    } finally {
-        // Clear sensitive data
-        salt.fill(0)
-        iv.fill(0)
-        keyBytes.fill(0)
     }
 }
 
@@ -61,37 +66,40 @@ fun encrypt(input: File, output: File, password: String) {
  * @return A temporary file containing the decrypted content.
  * Caller must delete this file after use.
  */
-fun decrypt(inputStream: InputStream, password: String): File {
-    val src = if (inputStream is BufferedInputStream) inputStream else BufferedInputStream(inputStream, 8 * 1024)
+suspend fun decrypt(inputStream: InputStream, password: String): File {
+    // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
+    return withContext(Dispatchers.Default) {
+        val src = if (inputStream is BufferedInputStream) inputStream else BufferedInputStream(inputStream, 8 * 1024)
 
-    // Require header; fail fast if missing or mismatched
-    val headerBuf = ByteArray(HEADER.size)
-    src.readChunk(headerBuf)
-    if (!headerBuf.contentEquals(HEADER)) {
-        throw java.io.IOException("Invalid or unsupported encryption format header")
-    }
-
-    val salt = ByteArray(SALT_LEN).also { src.readChunk(it) }
-    val iv = ByteArray(IV_LEN).also { src.readChunk(it) }
-    val keyBytes = deriveKey(password, salt)
-
-    try {
-        val cipher = getCipher()
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(keyBytes, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-
-        val tempFile = File.createTempFile("decrypted_", ".zip")
-        CipherInputStream(src, cipher).use { cis ->
-            FileOutputStream(tempFile).use { fos ->
-                cis.copyTo(fos)
-            }
+        // Require header; fail fast if missing or mismatched
+        val headerBuf = ByteArray(HEADER.size)
+        src.readChunk(headerBuf)
+        if (!headerBuf.contentEquals(HEADER)) {
+            throw java.io.IOException("Invalid or unsupported encryption format header")
         }
-        // If password was wrong, GCM tag verification happens at cis.close()
-        return tempFile
-    } finally {
-        // Clear sensitive data
-        salt.fill(0)
-        iv.fill(0)
-        keyBytes.fill(0)
+
+        val salt = ByteArray(SALT_LEN).also { src.readChunk(it) }
+        val iv = ByteArray(IV_LEN).also { src.readChunk(it) }
+        val keyBytes = deriveKey(password, salt)
+
+        try {
+            val cipher = getCipher()
+            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(keyBytes, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+
+            val tempFile = File.createTempFile("decrypted_", ".zip")
+            CipherInputStream(src, cipher).use { cis ->
+                FileOutputStream(tempFile).use { fos ->
+                    cis.copyTo(fos)
+                }
+            }
+            // If password was wrong, GCM tag verification happens at cis.close()
+            tempFile
+        } finally {
+            // Clear sensitive data
+            salt.fill(0)
+            iv.fill(0)
+            keyBytes.fill(0)
+        }
     }
 }
 
