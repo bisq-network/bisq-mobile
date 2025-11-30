@@ -27,11 +27,11 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        val score: ReputationScore = withContext(Dispatchers.Default) {
-            reputationService.getReputationScore(userProfileId)
+        return withContext(Dispatchers.Default) {
+            val score: ReputationScore = reputationService.getReputationScore(userProfileId)
+            val scoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(score)
+            Result.success(scoreVO)
         }
-        val scoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(score)
-        return Result.success(scoreVO)
     }
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
