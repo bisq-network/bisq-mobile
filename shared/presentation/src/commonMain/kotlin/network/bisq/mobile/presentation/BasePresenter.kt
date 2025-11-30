@@ -6,11 +6,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,8 +32,6 @@ import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -153,7 +148,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         duration: SnackbarDuration,
 
     ) {
-        launchUI(Dispatchers.Main) {
+        presenterScope.launch {
             snackbarHostState.showSnackbar(
                 BisqSnackbarVisuals(
                     message = message,
@@ -165,7 +160,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     }
 
     override fun dismissSnackbar() {
-        launchUI(Dispatchers.Main) {
+        presenterScope.launch {
             snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
@@ -183,7 +178,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
      * Link your UI to this state to disable user interactions.
      */
     protected fun enableInteractive() {
-        launchUI {
+        presenterScope.launch {
             delay(SMALLEST_PERCEPTIVE_DELAY)
             _isInteractive.value = true
         }
@@ -307,7 +302,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
                     exitWarningShown = true
 
                     // Set a timer to reset the warning state after a few seconds
-                    launchUI {
+                    presenterScope.launch {
                         delay(EXIT_WARNING_TIMEOUT) // 3 seconds timeout for exit warning
                         exitWarningShown = false
                     }
@@ -345,7 +340,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         // In bisq2, UserActivityDetected is triggered on mouse move and key press events
         // In bisq-mobile, userActivityDetected is triggered on every screen navigation,
         // which helps to reset user.publishDate.
-        launchUI {
+        presenterScope.launch {
             if (I18nSupport.isReady) { // Makes sure bundles are loaded. This fails for Splash
                 rootPresenter?.userProfileServiceFacade?.userActivityDetected()
             }
@@ -357,7 +352,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         // Cancel any pending global loading dialog to prevent stuck overlays
         hideLoading()
         // Presenter level support for auto disposal
-        CoroutineScope(Dispatchers.IO).launch { jobsManager.dispose() }
+        CoroutineScope(Dispatchers.Main).launch { jobsManager.dispose() }
     }
 
     @CallSuper
@@ -524,26 +519,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     }
 
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
-
-    // Presenter-level helper methods for launching coroutines with the jobsManager
-    protected fun launchUI(
-        context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend CoroutineScope.() -> Unit
-    ): Job {
-        return jobsManager.launchUI(context, block)
-    }
-
-    protected fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {
-        return jobsManager.launchIO(block)
-    }
-
-    protected fun <T> collectUI(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
-        return jobsManager.collectUI(flow, collector)
-    }
-
-    protected fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
-        return jobsManager.collectIO(flow, collector)
-    }
 
     private fun blockInteractivityForBriefMoment() {
         disableInteractive()

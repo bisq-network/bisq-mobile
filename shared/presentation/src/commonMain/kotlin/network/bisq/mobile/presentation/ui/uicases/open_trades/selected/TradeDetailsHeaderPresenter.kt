@@ -1,14 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -80,7 +78,7 @@ class TradeDetailsHeaderPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        launchUI {
+        presenterScope.launch {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
                 .filterNotNull()
@@ -114,12 +112,16 @@ class TradeDetailsHeaderPresenter(
             rightAmountDescription = "bisqEasy.tradeState.header.receive".i18n()
         }
 
-        collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) {
-            tradeStateChanged(it)
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyTradeModel.tradeState.collect {
+                tradeStateChanged(it)
+            }
         }
 
-        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
-            this@TradeDetailsHeaderPresenter._isInMediation.value = it
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect {
+                this@TradeDetailsHeaderPresenter._isInMediation.value = it
+            }
         }
     }
 
@@ -257,24 +259,21 @@ class TradeDetailsHeaderPresenter(
 
     fun onInterruptTrade() {
         _showInterruptionConfirmationDialog.value = false
-        val selectedTrade = selectedTrade.value
-        if (selectedTrade == null) {
+        if (selectedTrade.value == null) {
             return
         }
-        launchUI {
+        presenterScope.launch {
             showLoading()
-            withContext(Dispatchers.IO) {
-                when (tradeCloseType.value) {
-                    TradeCloseType.REJECT -> {
-                        tradesServiceFacade.rejectTrade()
-                    }
-
-                    TradeCloseType.CANCEL -> {
-                        tradesServiceFacade.cancelTrade()
-                    }
-
-                    else -> Unit
+            when (tradeCloseType.value) {
+                TradeCloseType.REJECT -> {
+                    tradesServiceFacade.rejectTrade()
                 }
+
+                TradeCloseType.CANCEL -> {
+                    tradesServiceFacade.cancelTrade()
+                }
+
+                else -> Unit
             }
             _showInterruptionConfirmationDialog.value = false
             hideLoading()
@@ -296,7 +295,7 @@ class TradeDetailsHeaderPresenter(
             return
         }
         _showMediationConfirmationDialog.value = false
-        launchIO {
+        presenterScope.launch {
             showLoading()
             mediationServiceFacade.reportToMediator(trade)
                 .onFailure { exception ->

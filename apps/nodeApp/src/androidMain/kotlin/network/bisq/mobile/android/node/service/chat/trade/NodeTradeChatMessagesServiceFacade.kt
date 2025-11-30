@@ -9,7 +9,9 @@ import bisq.common.observable.collection.CollectionObserver
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.Mappings.BisqEasyOpenTradeMessageReactionMapping
@@ -79,12 +81,15 @@ class NodeTradeChatMessagesServiceFacade(
     }
 
     override suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit> {
-        selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
-            val citation = Optional.ofNullable(citationVO?.let { Mappings.CitationMapping.toBisq2Model(it) })
-            val channel = bisqEasyOpenTradeChannelService.findChannel(id).get()
-            bisqEasyOpenTradeChannelService.sendTextMessage(text, citation, channel)
+        return withContext(Dispatchers.Default) {
+            selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
+                val citation =
+                    Optional.ofNullable(citationVO?.let { Mappings.CitationMapping.toBisq2Model(it) })
+                val channel = bisqEasyOpenTradeChannelService.findChannel(id).get()
+                bisqEasyOpenTradeChannelService.sendTextMessage(text, citation, channel)
+            }
+            Result.success(Unit)
         }
-        return Result.success(Unit)
     }
 
     override suspend fun addChatMessageReaction(messageId: String, reactionEnum: ReactionEnum): Result<Unit> {
@@ -170,16 +175,23 @@ class NodeTradeChatMessagesServiceFacade(
         unbindAllReactionsPins()
     }
 
-    private fun addOrRemoveChatMessageReaction(messageId: String, reactionEnum: ReactionEnum, isRemoved: Boolean): Result<Unit> {
-        selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
-            bisqEasyOpenTradeChannelService.findChannel(id).getOrNull()?.let { channel ->
-                channel.chatMessages.find { it.id == messageId }?.let { message ->
-                    val reaction = Mappings.ReactionMapping.toBisq2Model(reactionEnum)
-                    bisqEasyOpenTradeChannelService.sendTextMessageReaction(message, channel, reaction, isRemoved)
+    private suspend fun addOrRemoveChatMessageReaction(messageId: String, reactionEnum: ReactionEnum, isRemoved: Boolean): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
+                bisqEasyOpenTradeChannelService.findChannel(id).getOrNull()?.let { channel ->
+                    channel.chatMessages.find { it.id == messageId }?.let { message ->
+                        val reaction = Mappings.ReactionMapping.toBisq2Model(reactionEnum)
+                        bisqEasyOpenTradeChannelService.sendTextMessageReaction(
+                            message,
+                            channel,
+                            reaction,
+                            isRemoved
+                        )
+                    }
                 }
             }
+            Result.success(Unit)
         }
-        return Result.success(Unit)
     }
 
     private fun unbindPinByTradeId(tradeId: String) {

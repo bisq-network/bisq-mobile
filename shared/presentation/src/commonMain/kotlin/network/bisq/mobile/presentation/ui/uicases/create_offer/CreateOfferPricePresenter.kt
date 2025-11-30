@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
@@ -85,14 +86,16 @@ class CreateOfferPricePresenter(
     }
 
     private fun observeMarketPriceChanges() {
-        collectIO(marketPriceServiceFacade.selectedMarketPriceItem) { marketPriceItem ->
-            runCatching {
-                if (marketPriceItem != null) {
-                    revalidateCurrentPrices()
+        presenterScope.launch {
+            marketPriceServiceFacade.selectedMarketPriceItem.collect { marketPriceItem ->
+                runCatching {
+                    if (marketPriceItem != null) {
+                        revalidateCurrentPrices()
+                    }
+                }.onFailure { e ->
+                    log.e(e) { "Failed to process market price change: ${e.message}" }
+                    showSnackbar("mobile.bisqEasy.tradeWizard.price.updateError".i18n(), isError = true)
                 }
-            }.onFailure { e ->
-                log.e(e) { "Failed to process market price change: ${e.message}" }
-                showSnackbar("mobile.bisqEasy.tradeWizard.price.updateError".i18n(), isError = true)
             }
         }
     }

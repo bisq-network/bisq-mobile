@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -57,20 +58,28 @@ open class DashboardPresenter(
 
         mainPresenter.setIsMainContentVisible(true)
 
-        collectUI(mainPresenter.languageCode) {
-            marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
+        presenterScope.launch {
+            mainPresenter.languageCode.collect {
+                marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
+            }
         }
-        collectUI(offersServiceFacade.offerbookMarketItems) { items ->
-            val totalOffers = items.sumOf { it.numOffers }
-            _offersOnline.value = totalOffers
+        presenterScope.launch {
+            offersServiceFacade.offerbookMarketItems.collect { items ->
+                val totalOffers = items.sumOf { it.numOffers }
+                _offersOnline.value = totalOffers
+            }
         }
-        collectUI(userProfileServiceFacade.numUserProfiles) {
-            _publishedProfiles.value = it
+        presenterScope.launch {
+            userProfileServiceFacade.numUserProfiles.collect {
+                _publishedProfiles.value = it
+            }
         }
-        collectUI(networkServiceFacade.numConnections) {
-            // numConnections in networkServiceFacade can be -1 (if no connections present at bootstrap),
-            // but in UI we want to show always >= 0.
-            _numConnections.value = it.coerceAtLeast(0)
+        presenterScope.launch {
+            networkServiceFacade.numConnections.collect {
+                // numConnections in networkServiceFacade can be -1 (if no connections present at bootstrap),
+                // but in UI we want to show always >= 0.
+                _numConnections.value = it.coerceAtLeast(0)
+            }
         }
     }
 
@@ -93,7 +102,7 @@ open class DashboardPresenter(
     }
 
     fun saveNotificationPermissionState(state: NotificationPermissionState) {
-        launchIO { settingsRepository.setNotificationPermissionState(state) }
+        presenterScope.launch { settingsRepository.setNotificationPermissionState(state) }
     }
 
     suspend fun hasNotificationPermission(): Boolean = notificationController.hasPermission()

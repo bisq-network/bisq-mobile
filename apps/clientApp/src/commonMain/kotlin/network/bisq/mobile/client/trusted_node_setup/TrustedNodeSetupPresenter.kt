@@ -3,8 +3,6 @@ package network.bisq.mobile.client.trusted_node_setup
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
@@ -19,15 +17,15 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
-import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
+import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
+import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
@@ -160,11 +158,9 @@ class TrustedNodeSetupPresenter(
             _apiUrl.value = "http://" + localHost() + ":8090"
         }
 
-        launchUI {
+        presenterScope.launch {
             try {
-                val settings = withContext(Dispatchers.IO) {
-                    sensitiveSettingsRepository.fetch()
-                }
+                val settings = sensitiveSettingsRepository.fetch()
                 _password.value = settings.bisqApiPassword
                 _selectedProxyOption.value = settings.selectedProxyOption
                 if (settings.bisqApiUrl.isBlank()) {
@@ -231,7 +227,7 @@ class TrustedNodeSetupPresenter(
         log.d { "Test: $newApiUrlString isWorkflow $isWorkflow" }
         val newApiUrl = parseAndNormalizeUrl(newApiUrlString)
 
-        connectJob = launchUI {
+        connectJob = presenterScope.launch {
             if (newApiUrl == null) {
                 onConnectionError(
                     IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
@@ -239,7 +235,7 @@ class TrustedNodeSetupPresenter(
                 )
                 _isNodeSetupInProgress.value = false
                 connectJob = null
-                return@launchUI
+                return@launch
             }
             try {
                 val newProxyHost: String?
@@ -289,7 +285,7 @@ class TrustedNodeSetupPresenter(
                     IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
                 } else {
                     val timeoutSecs = WebSocketClient.determineTimeout(newApiUrl.host) / 1000
-                    countdownJob = launchUI {
+                    countdownJob = presenterScope.launch {
                         for (i in timeoutSecs downTo 0) {
                             _timeoutCounter.value = i
                             delay(1000)
@@ -385,7 +381,7 @@ class TrustedNodeSetupPresenter(
 
         // If using INTERNAL_TOR and Tor is still bootstrapping, stop it to avoid inconsistent state on next attempt
         if (selectedProxyOption.value == BisqProxyOption.INTERNAL_TOR && kmpTorService.state.value is KmpTorService.TorState.Starting) {
-            launchIO {
+            presenterScope.launch {
                 try {
                     kmpTorService.stopTor()
                 } catch (e: Exception) {
@@ -448,7 +444,7 @@ class TrustedNodeSetupPresenter(
     }
 
     private fun navigateToSplashScreen() {
-        launchUI {
+        presenterScope.launch {
             navigateTo(NavRoute.Splash) {
                 it.popUpTo(NavRoute.Splash) { inclusive = true }
             }

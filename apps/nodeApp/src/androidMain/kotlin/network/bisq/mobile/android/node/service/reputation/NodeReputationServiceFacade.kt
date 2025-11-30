@@ -2,6 +2,8 @@ package network.bisq.mobile.android.node.service.reputation
 
 import bisq.user.reputation.ReputationScore
 import bisq.user.reputation.ReputationService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
@@ -25,33 +27,36 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        val score: ReputationScore = reputationService.getReputationScore(userProfileId)
-        val scoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(score)
-        return Result.success(scoreVO)
+        return withContext(Dispatchers.Default) {
+            val score: ReputationScore = reputationService.getReputationScore(userProfileId)
+            val scoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(score)
+            Result.success(scoreVO)
+        }
     }
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
-        return try {
-            val userService = applicationService.userService.get()
-            val userProfile = userService.userProfileService.findUserProfile(userProfileId)
+        return withContext(Dispatchers.Default) {
+            try {
+                val userService = applicationService.userService.get()
+                val userProfile = userService.userProfileService.findUserProfile(userProfileId)
+                if (userProfile.isPresent) {
+                    val profile = userProfile.get()
+                    val profileAge = reputationService.profileAgeService.getProfileAge(profile)
 
-            if (userProfile.isPresent) {
-                val profile = userProfile.get()
-                val profileAge = reputationService.profileAgeService.getProfileAge(profile)
-
-                if (profileAge.isPresent) {
-                    log.d { "Profile age from ProfileAgeService: ${profileAge.get()} for userId=$userProfileId" }
-                    Result.success(profileAge.get())
+                    if (profileAge.isPresent) {
+                        log.d { "Profile age from ProfileAgeService: ${profileAge.get()} for userId=$userProfileId" }
+                        Result.success(profileAge.get())
+                    } else {
+                        log.d { "No profile age data available from ProfileAgeService for userId=$userProfileId" }
+                        Result.success(null)
+                    }
                 } else {
-                    log.d { "No profile age data available from ProfileAgeService for userId=$userProfileId" }
-                    Result.success(null)
+                    Result.failure(NoSuchElementException("UserProfile for userId=$userProfileId not found"))
                 }
-            } else {
-                Result.failure(NoSuchElementException("UserProfile for userId=$userProfileId not found"))
+            } catch (e: Exception) {
+                log.e(e) { "Failed to get profile age for userId=$userProfileId" }
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to get profile age for userId=$userProfileId" }
-            Result.failure(e)
         }
     }
 }

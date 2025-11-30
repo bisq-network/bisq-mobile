@@ -4,7 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.utils.copyDirectory
 import network.bisq.mobile.android.node.utils.deleteFileInDirectory
@@ -48,7 +48,7 @@ class NodeResourcesPresenter(
     override fun onBackupDataDir(password: String?) {
         _showBackupOverlay.value = false
         val context: Context by inject()
-        launchIO {
+        presenterScope.launch(Dispatchers.IO) {
             try {
                 val cacheDir = context.cacheDir
                 val dataDir = File(context.filesDir, "Bisq2_mobile")
@@ -77,10 +77,7 @@ class NodeResourcesPresenter(
                 val outFile = File(shareDir, outName)
                 try {
                     if (useEncryption) {
-                        // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
-                        withContext(Dispatchers.Default) {
-                            encrypt(zipFile, outFile, sanitizedPassword)
-                        }
+                        encrypt(zipFile, outFile, sanitizedPassword)
                         zipFile.delete()
                     } else if (!zipFile.renameTo(outFile)) {
                         zipFile.copyTo(outFile, overwrite = true)
@@ -121,7 +118,7 @@ class NodeResourcesPresenter(
     override fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray): CompletableDeferred<String?> {
         val context: Context by inject()
         val result: CompletableDeferred<String?> = CompletableDeferred()
-        launchIO {
+        presenterScope.launch(Dispatchers.IO) {
             try {
                 val filesDir = context.filesDir
 
@@ -131,10 +128,8 @@ class NodeResourcesPresenter(
                 var decryptedTempFile: File? = null
                 val inputStream: InputStream = if (!password.isNullOrEmpty()) {
                     try {
-                        // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
-                        val decryptedFile = withContext(Dispatchers.Default) {
-                            decrypt(rawInputStream, password)
-                        }
+
+                        val decryptedFile = decrypt(rawInputStream, password)
                         decryptedTempFile = decryptedFile
                         decryptedFile.inputStream()
                     } catch (e: Exception) {

@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -45,23 +46,29 @@ abstract class SplashPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        collectUI(state) { value ->
-            log.d { "Splash State: $value" }
-        }
-
-        collectUI(progress) { value ->
-            if (value >= 1.0f) {
-                navigateToNextScreen()
+        presenterScope.launch {
+            state.collect { value ->
+                log.d { "Splash State: $value" }
             }
         }
 
-        collectUI(shouldShowProgressToast) { shouldShow ->
-            if (shouldShow) {
-                showSnackbar("mobile.bootstrap.progress.continuing".i18n(), isError = false)
-                applicationBootstrapFacade.setShouldShowProgressToast(false)
+
+        presenterScope.launch {
+            progress.collect { value ->
+                if (value >= 1.0f) {
+                    navigateToNextScreen()
+                }
             }
         }
 
+        presenterScope.launch {
+            shouldShowProgressToast.collect { shouldShow ->
+                if (shouldShow) {
+                    showSnackbar("mobile.bootstrap.progress.continuing".i18n(), isError = false)
+                    applicationBootstrapFacade.setShouldShowProgressToast(false)
+                }
+            }
+        }
         _appNameAndVersion.value = versionProvider.getAppNameAndVersion(isDemo, isIOS())
     }
 

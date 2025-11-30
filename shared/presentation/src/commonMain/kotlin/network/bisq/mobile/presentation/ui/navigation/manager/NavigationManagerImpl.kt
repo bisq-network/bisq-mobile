@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
@@ -31,6 +32,8 @@ class NavigationManagerImpl(
     private val _currentTab = MutableStateFlow<TabNavRoute?>(null)
     override val currentTab: StateFlow<TabNavRoute?> = _currentTab.asStateFlow()
     private var tabDestinationListener: NavController.OnDestinationChangedListener? = null
+
+    private val scope get() = coroutineJobsManager.getScope()
 
     private suspend fun getRootNavController(): NavHostController? {
         val controller = withTimeoutOrNull(GET_TIMEOUT) {
@@ -98,7 +101,7 @@ class NavigationManagerImpl(
         customSetup: (NavOptionsBuilder) -> Unit,
         onCompleted: (() -> Unit)?
     ) {
-        coroutineJobsManager.launchUI {
+        scope.launch {
             runCatching {
                 getRootNavController()?.navigate(destination) {
                     customSetup(this)
@@ -117,10 +120,9 @@ class NavigationManagerImpl(
         shouldRestoreState: Boolean
     ) {
         log.d { "Navigating to tab $destination " }
-        coroutineJobsManager.launchUI {
+        scope.launch {
             if (!isAtMainScreen()) {
-                val rootNav = getRootNavController()
-                if (rootNav == null) return@launchUI
+                val rootNav = getRootNavController() ?: return@launch
                 val isTabContainerInBackStack = rootNav.currentBackStack.value.any {
                     it.destination.hasRoute(NavRoute.TabContainer::class)
                 }
@@ -132,8 +134,7 @@ class NavigationManagerImpl(
                     }
                 }
             }
-            val tabNav = getTabNavController()
-            if (tabNav == null) return@launchUI
+            val tabNav = getTabNavController() ?: return@launch
             tabNav.navigate(destination) {
                 popUpTo(NavRoute.HomeScreenGraphKey) {
                     saveState = saveStateOnPopUp
@@ -149,7 +150,7 @@ class NavigationManagerImpl(
         shouldInclusive: Boolean,
         shouldSaveState: Boolean
     ) {
-        coroutineJobsManager.launchUI {
+        scope.launch {
             getRootNavController()?.popBackStack(
                 route = destination,
                 inclusive = shouldInclusive,
@@ -159,18 +160,16 @@ class NavigationManagerImpl(
     }
 
     override fun navigateFromUri(uri: String) {
-        coroutineJobsManager.launchUI {
+        scope.launch {
             val navUri = NavUri(uri)
-            val rootNavController = getRootNavController()
-            if (rootNavController == null) return@launchUI
+            val rootNavController = getRootNavController() ?: return@launch
             if (rootNavController.graph.hasDeepLink(navUri)) {
                 val navOptions = navOptions {
                     launchSingleTop = true
                 }
                 rootNavController.navigate(navUri, navOptions)
             } else if (isAtMainScreen()) {
-                val tabNavController = getTabNavController()
-                if (tabNavController == null) return@launchUI
+                val tabNavController = getTabNavController() ?: return@launch
                 if (tabNavController.graph.hasDeepLink(navUri)) {
                     val navOptions = navOptions {
                         popUpTo(NavRoute.HomeScreenGraphKey) {
@@ -188,7 +187,7 @@ class NavigationManagerImpl(
     }
 
     override fun navigateBack(onCompleted: (() -> Unit)?) {
-        coroutineJobsManager.launchUI {
+        scope.launch {
             getRootNavController()?.let { rootNavController ->
                 if (rootNavController.currentBackStack.value.size > 1) {
                     rootNavController.popBackStack()

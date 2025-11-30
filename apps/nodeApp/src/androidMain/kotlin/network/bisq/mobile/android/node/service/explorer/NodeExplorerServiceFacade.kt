@@ -2,6 +2,7 @@ package network.bisq.mobile.android.node.service.explorer
 
 import bisq.bonded_roles.explorer.ExplorerService
 import bisq.bonded_roles.explorer.dto.Tx
+import kotlinx.coroutines.future.await
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerResult
@@ -34,17 +35,15 @@ class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Pr
             if (cachedExplorerResults.containsKey(txId)) {
                 return cachedExplorerResults[txId]!!
             }
-            return explorerService.requestTx(txId)
-                .thenApply { tx ->
-                    val isConfirmed = tx.status.isConfirmed
-                    val outputValues = filterOutputsByAddress(tx, address)
-                    val explorerResult = ExplorerResult(isConfirmed, outputValues)
-                    if (isConfirmed) {
-                        cachedExplorerResults[txId] = explorerResult
-                    }
-                    log.i { "explorerResult $explorerResult" }
-                    return@thenApply explorerResult
-                }.join()
+            val tx = explorerService.requestTx(txId).await()
+            val isConfirmed = tx.status.isConfirmed
+            val outputValues = filterOutputsByAddress(tx, address)
+            val explorerResult = ExplorerResult(isConfirmed, outputValues)
+            if (isConfirmed) {
+                cachedExplorerResults[txId] = explorerResult
+            }
+            log.i { "explorerResult $explorerResult" }
+            return explorerResult
         } catch (throwable: Throwable) {
             log.e { "Request transaction from ${explorerService.selectedProvider.get().baseUrl} failed with $throwable" }
             val exceptionName = throwable.getRootCause()::class.simpleName ?: "Unknown exception"

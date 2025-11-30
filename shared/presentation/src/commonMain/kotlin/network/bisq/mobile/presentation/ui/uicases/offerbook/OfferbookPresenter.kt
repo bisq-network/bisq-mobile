@@ -2,13 +2,14 @@ package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -111,7 +112,7 @@ open class OfferbookPresenter(
         super.onViewAttached()
 
         selectedOffer = null
-        launchIO {
+        presenterScope.launch {
             // pack strongly-typed, use vararg combine -> Array, then map
             combine(
                 offersServiceFacade.offerbookListItems,
@@ -146,7 +147,7 @@ open class OfferbookPresenter(
                     log.d { "OfferbookPresenter filtering - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir: $direction, In: ${offers.size}, paySel=${payments.size}, setSel=${settlements.size}, onlyMine=$onlyMine" }
 
                     val filtered = mutableListOf<OfferItemPresentationModel>()
-                    if (selectedProfile == null) return@mapLatest filtered to selectedProfile
+                    if (selectedProfile == null) return@mapLatest null
                     var directionFilteredCount = 0
                     var ignoredUserFilteredCount = 0
                     var methodFilteredCount = 0
@@ -204,13 +205,14 @@ open class OfferbookPresenter(
                     _availableSettlementMethodIds.value = availableSettlements
 
                     log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, OnlyMy: $onlyMyFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
-                    filtered to selectedProfile
+                    val processed = filtered.map { offer -> processOffer(offer, selectedProfile) }
+                    val sorted = processed.sortedWith(
+                        compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                    sorted
                 }
-                .collectLatest { (filtered, selectedProfile) ->
-                    if (selectedProfile != null) {
-                        val processed = processAllOffers(filtered, selectedProfile)
-                        val sorted = processed.sortedWith(
-                            compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                .flowOn(Dispatchers.Default)
+                .collectLatest { sorted ->
+                    if (sorted != null) {
                         _sortedFilteredOffers.value = sorted
                         log.d { "OfferbookPresenter final result - ${sorted.size} offers displayed for market" }
                     }
@@ -218,7 +220,7 @@ open class OfferbookPresenter(
         }
 
         // Derive and publish filter UI state from available + selected sets
-        launchIO {
+        presenterScope.launch {
             combine(
                 availablePaymentMethodIds,
                 availableSettlementMethodIds,
@@ -250,13 +252,13 @@ open class OfferbookPresenter(
                     onlyMyOffers = onlyMine,
                     hasActiveFilters = hasActive,
                 )
-            }.collectLatest { ui ->
+            }.flowOn(Dispatchers.Default).collectLatest { ui ->
                 _filterUiState.value = ui
             }
         }
 
         // Auto-manage default selections and availability changes
-        launchIO {
+        presenterScope.launch {
             availablePaymentMethodIds.collectLatest { avail ->
                 val current = _selectedPaymentMethodIds.value
                 val newlyAdded = avail - prevAvailPayment
@@ -268,7 +270,7 @@ open class OfferbookPresenter(
                 prevAvailPayment = avail
             }
         }
-        launchIO {
+        presenterScope.launch {
             availableSettlementMethodIds.collectLatest { avail ->
                 val current = _selectedSettlementMethodIds.value
                 val newlyAdded = avail - prevAvailSettlement
@@ -281,13 +283,6 @@ open class OfferbookPresenter(
             }
         }
 
-    }
-
-    private suspend fun processAllOffers(
-        offers: List<OfferItemPresentationModel>,
-        userProfile: UserProfileVO,
-    ): List<OfferItemPresentationModel> = withContext(Dispatchers.IO) {
-        offers.map { offer -> processOffer(offer, userProfile) }
     }
 
     private suspend fun processOffer(
@@ -330,11 +325,9 @@ open class OfferbookPresenter(
         // Not doing copyWith of item to assign these properties.
         // Because `OfferItemPresentationModel` class has StateFlow props
         // and so creating a new object of it, breaks the flow listeners
-        withContext(Dispatchers.Main) {
-            item.formattedQuoteAmount = formattedQuoteAmount
-            item.formattedPriceSpec = formattedPrice
-            item.isInvalidDueToReputation = isInvalid
-        }
+        item.formattedQuoteAmount = formattedQuoteAmount
+        item.formattedPriceSpec = formattedPrice
+        item.isInvalidDueToReputation = isInvalid
 
         return item
     }
@@ -377,23 +370,21 @@ open class OfferbookPresenter(
         runCatching {
             _showDeleteConfirmation.value = false
             require(selectedOffer.isMyOffer)
-            launchUI {
+            presenterScope.launch {
                 showLoading()
-                withContext(Dispatchers.IO) {
-                    val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
-                        .getOrDefault(false)
-                    log.d { "delete offer success $result" }
-                    hideLoading()
-                    if (result) {
-                        deselectOffer()
-                    } else {
-                        log.w { "Failed to delete offer ${selectedOffer.offerId}" }
-                        showSnackbar(
-                            "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
-                                selectedOffer.offerId
-                            ), true
-                        )
-                    }
+                val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
+                    .getOrDefault(false)
+                log.d { "delete offer success $result" }
+                hideLoading()
+                if (result) {
+                    deselectOffer()
+                } else {
+                    log.w { "Failed to delete offer ${selectedOffer.offerId}" }
+                    showSnackbar(
+                        "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
+                            selectedOffer.offerId
+                        ), true
+                    )
                 }
             }
         }.onFailure {
@@ -418,7 +409,7 @@ open class OfferbookPresenter(
                 require(!item.isMyOffer)
                 val selectedProfile = selectedUserProfile.value
                 require(selectedProfile != null)
-                launchUI {
+                presenterScope.launch {
                     try {
                         if (canTakeOffer(item, selectedProfile)) {
                             takeOfferPresenter.selectOfferToTake(item)
@@ -450,87 +441,87 @@ open class OfferbookPresenter(
     }
 
     private suspend fun canTakeOffer(item: OfferItemPresentationModel, userProfile: UserProfileVO): Boolean {
-        val bisqEasyOffer = item.bisqEasyOffer
-        val requiredReputationScoreForMaxOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
-            marketPriceServiceFacade, bisqEasyOffer
-        )
-        require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
-        val requiredReputationScoreForMinOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
-            marketPriceServiceFacade, bisqEasyOffer
-        )
-        require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
+        return withContext(Dispatchers.Default) {
+            val bisqEasyOffer = item.bisqEasyOffer
+            val requiredReputationScoreForMaxOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
+                marketPriceServiceFacade, bisqEasyOffer
+            )
+            require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
+            val requiredReputationScoreForMinOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
+                marketPriceServiceFacade, bisqEasyOffer
+            )
+            require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
 
-        val market = bisqEasyOffer.market
-        val quoteCurrencyCode = market.quoteCurrencyCode
-        val minFiatAmount: String = AmountFormatter.formatAmount(
-            FiatVOFactory.from(bisqEasyOffer.getFixedOrMinAmount(), quoteCurrencyCode),
-            useLowPrecision = true,
-            withCode = true
-        )
-        val maxFiatAmount: String = AmountFormatter.formatAmount(
-            FiatVOFactory.from(bisqEasyOffer.getFixedOrMaxAmount(), quoteCurrencyCode),
-            useLowPrecision = true,
-            withCode = true
-        )
+            val market = bisqEasyOffer.market
+            val quoteCurrencyCode = market.quoteCurrencyCode
+            val minFiatAmount: String = AmountFormatter.formatAmount(
+                FiatVOFactory.from(bisqEasyOffer.getFixedOrMinAmount(), quoteCurrencyCode),
+                useLowPrecision = true,
+                withCode = true
+            )
+            val maxFiatAmount: String = AmountFormatter.formatAmount(
+                FiatVOFactory.from(bisqEasyOffer.getFixedOrMaxAmount(), quoteCurrencyCode),
+                useLowPrecision = true,
+                withCode = true
+            )
 
-        // For BUY offers: The maker wants to buy Bitcoin, so the taker (me) becomes the seller
-        // For SELL offers: The maker wants to sell Bitcoin, so the maker becomes the seller
-        val userProfileId = if (bisqEasyOffer.direction == DirectionEnum.SELL) {
-            bisqEasyOffer.makerNetworkId.pubKey.id // Offer maker is seller (wants to sell Bitcoin)
-        } else {
-            userProfile.id // I am seller (taker selling to maker who wants to buy)
-        }
-
-        val reputationResult: Result<ReputationScoreVO> = withContext(Dispatchers.IO) {
-            reputationServiceFacade.getReputation(userProfileId)
-        }
-
-        val sellersScore: Long = reputationResult.getOrNull()?.totalScore ?: 0
-        val isReputationNotCached = reputationResult.exceptionOrNull()?.message?.contains("not cached yet") == true
-
-        reputationResult.exceptionOrNull()?.let { exception ->
-            log.w("Exception at reputationServiceFacade.getReputation", exception)
-            if (isReputationNotCached) {
-                log.i { "Reputation not cached yet for user $userProfileId, allowing offer to be taken" }
-            }
-        }
-
-        val isAmountRangeOffer = bisqEasyOffer.amountSpec is RangeAmountSpecVO
-
-        // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
-        val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
-        if (!canBuyerTakeOffer) {
-            val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.REPUTATION_WIKI_URL)
-            val takersDirection = bisqEasyOffer.direction.mirror
-            isReputationWarningForSellerAsTaker = takersDirection == DirectionEnum.SELL
-            if (takersDirection == DirectionEnum.BUY) {
-                // SELL offer: Maker wants to sell Bitcoin, so they are the seller
-                // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
-                val learnMore = "mobile.reputation.learnMoreAtWiki".i18n()
-                notEnoughReputationHeadline = "chat.message.takeOffer.buyer.invalidOffer.headline".i18n()
-                val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.buyer.invalidOffer.rangeAmount.text"
-                else "chat.message.takeOffer.buyer.invalidOffer.fixedAmount.text"
-
-                notEnoughReputationMessage = warningKey.i18n(
-                    sellersScore,
-                    if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
-                    if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
-                ) + "\n\n" + learnMore + "\n\n" + link
+            // For BUY offers: The maker wants to buy Bitcoin, so the taker (me) becomes the seller
+            // For SELL offers: The maker wants to sell Bitcoin, so the maker becomes the seller
+            val userProfileId = if (bisqEasyOffer.direction == DirectionEnum.SELL) {
+                bisqEasyOffer.makerNetworkId.pubKey.id // Offer maker is seller (wants to sell Bitcoin)
             } else {
-                // BUY offer: Maker wants to buy Bitcoin, so taker becomes the seller
-                // Taker (me) wants to sell Bitcoin - checking if I have enough reputation
-                notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
-                val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
-                else "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
-                notEnoughReputationMessage = warningKey.i18n(
-                    sellersScore,
-                    if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
-                    if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
-                ) + "\n\n" + "mobile.reputation.warning.navigateToReputation".i18n()
+                userProfile.id // I am seller (taker selling to maker who wants to buy)
             }
-        }
 
-        return canBuyerTakeOffer
+            val reputationResult: Result<ReputationScoreVO> = reputationServiceFacade.getReputation(userProfileId)
+
+            val sellersScore: Long = reputationResult.getOrNull()?.totalScore ?: 0
+            val isReputationNotCached = reputationResult.exceptionOrNull()?.message?.contains("not cached yet") == true
+
+            reputationResult.exceptionOrNull()?.let { exception ->
+                log.w("Exception at reputationServiceFacade.getReputation", exception)
+                if (isReputationNotCached) {
+                    log.i { "Reputation not cached yet for user $userProfileId, allowing offer to be taken" }
+                }
+            }
+
+            val isAmountRangeOffer = bisqEasyOffer.amountSpec is RangeAmountSpecVO
+
+            // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
+            val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
+            if (!canBuyerTakeOffer) {
+                val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.REPUTATION_WIKI_URL)
+                val takersDirection = bisqEasyOffer.direction.mirror
+                isReputationWarningForSellerAsTaker = takersDirection == DirectionEnum.SELL
+                if (takersDirection == DirectionEnum.BUY) {
+                    // SELL offer: Maker wants to sell Bitcoin, so they are the seller
+                    // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
+                    val learnMore = "mobile.reputation.learnMoreAtWiki".i18n()
+                    notEnoughReputationHeadline = "chat.message.takeOffer.buyer.invalidOffer.headline".i18n()
+                    val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.buyer.invalidOffer.rangeAmount.text"
+                    else "chat.message.takeOffer.buyer.invalidOffer.fixedAmount.text"
+
+                    notEnoughReputationMessage = warningKey.i18n(
+                        sellersScore,
+                        if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
+                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
+                    ) + "\n\n" + learnMore + "\n\n" + link
+                } else {
+                    // BUY offer: Maker wants to buy Bitcoin, so taker becomes the seller
+                    // Taker (me) wants to sell Bitcoin - checking if I have enough reputation
+                    notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
+                    val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
+                    else "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
+                    notEnoughReputationMessage = warningKey.i18n(
+                        sellersScore,
+                        if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
+                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
+                    ) + "\n\n" + "mobile.reputation.warning.navigateToReputation".i18n()
+                }
+            }
+
+            canBuyerTakeOffer
+        }
     }
 
     private fun deselectOffer() {
@@ -624,12 +615,10 @@ open class OfferbookPresenter(
     }
 
     fun showReputationRequirementInfo(item: OfferItemPresentationModel) {
-        launchUI {
+        presenterScope.launch {
             try {
                 val selectedProfile = selectedUserProfile.value
-                if (selectedProfile == null) {
-                    throw IllegalStateException("selectedUserProfile is null")
-                }
+                    ?: throw IllegalStateException("selectedUserProfile is null")
                 // Set up the dialog content
                 setupReputationDialogContent(item, selectedProfile)
 

@@ -1,11 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -33,14 +31,12 @@ class SellerState1Presenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        launchUI {
-            val _accounts = withContext(Dispatchers.IO) {
-                accountsServiceFacade.getAccounts()
-            }
+        presenterScope.launch {
+            val accounts = accountsServiceFacade.getAccounts()
 
-            if (_accounts.size > 0) {
-                onPaymentDataInput(_accounts[0].accountPayload.accountData, true)
-                _paymentAccountName.value = _accounts[0].accountName
+            if (accounts.isNotEmpty()) {
+                onPaymentDataInput(accounts[0].accountPayload.accountData, true)
+                _paymentAccountName.value = accounts[0].accountName
             }
         }
     }
@@ -62,7 +58,7 @@ class SellerState1Presenter(
     fun onSendPaymentData() {
         val paymentAccountData = paymentAccountData.value
         if (paymentAccountData.isEmpty()) return
-        launchIO {
+        presenterScope.launch {
             showLoading()
             tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData)
             hideLoading()

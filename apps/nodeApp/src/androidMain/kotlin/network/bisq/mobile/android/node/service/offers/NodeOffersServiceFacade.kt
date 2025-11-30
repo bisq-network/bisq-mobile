@@ -31,7 +31,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -144,25 +146,28 @@ class NodeOffersServiceFacade(
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {
-            val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> =
-                bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
-            check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
-            val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
-            val authorUserProfileId: String = offerbookMessage.authorUserProfileId
-            val optionalUserIdentity = userIdentityService.findUserIdentity(authorUserProfileId)
-            check(optionalUserIdentity.isPresent) { "UserIdentity for authorUserProfileId $authorUserProfileId not found" }
-            val userIdentity = optionalUserIdentity.get()
-            check(userIdentity == userIdentityService.selectedUserIdentity) { "Selected selectedUserIdentity does not match the offers authorUserIdentity" }
-            val broadcastResult: BroadcastResult =
-                bisqEasyOfferbookChannelService.deleteChatMessage(
-                    offerbookMessage,
-                    userIdentity.networkIdWithKeyPair
-                ).join()
-            val broadcastResultNotEmpty = broadcastResult.isNotEmpty()
-            if (!broadcastResultNotEmpty) {
-                log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
+            // significant CPU work and possibly blocking action
+            return withContext(Dispatchers.IO) {
+                val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> =
+                    bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
+                check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
+                val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
+                val authorUserProfileId: String = offerbookMessage.authorUserProfileId
+                val optionalUserIdentity = userIdentityService.findUserIdentity(authorUserProfileId)
+                check(optionalUserIdentity.isPresent) { "UserIdentity for authorUserProfileId $authorUserProfileId not found" }
+                val userIdentity = optionalUserIdentity.get()
+                check(userIdentity == userIdentityService.selectedUserIdentity) { "Selected selectedUserIdentity does not match the offers authorUserIdentity" }
+                val broadcastResult: BroadcastResult =
+                    bisqEasyOfferbookChannelService.deleteChatMessage(
+                        offerbookMessage,
+                        userIdentity.networkIdWithKeyPair
+                    ).await()
+                val broadcastResultNotEmpty = broadcastResult.isNotEmpty()
+                if (!broadcastResultNotEmpty) {
+                    log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
+                }
+                Result.success(broadcastResultNotEmpty)
             }
-            return Result.success(broadcastResultNotEmpty)
         } catch (e: Exception) {
             return Result.failure(e)
         }
@@ -178,15 +183,19 @@ class NodeOffersServiceFacade(
         supportedLanguageCodes: Set<String>
     ): Result<String> {
         return try {
-            val offerId = createOffer(
-                Mappings.DirectionMapping.toBisq2Model(direction),
-                Mappings.MarketMapping.toBisq2Model(market),
-                bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
-                fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
-                Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
-                Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
-                ArrayList<String>(supportedLanguageCodes)
-            )
+            // significant CPU work and possibly blocking action, otherwise Default dispatcher
+            // would be a better choice
+            val offerId = withContext(Dispatchers.IO) {
+                createOffer(
+                    Mappings.DirectionMapping.toBisq2Model(direction),
+                    Mappings.MarketMapping.toBisq2Model(market),
+                    bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
+                    fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
+                    Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
+                    Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
+                    ArrayList<String>(supportedLanguageCodes)
+                )
+            }
             Result.success(offerId)
         } catch (e: Exception) {
             log.e(e) { "Failed to create offer: ${e.message}" }
@@ -195,7 +204,7 @@ class NodeOffersServiceFacade(
     }
 
     // Private
-    private fun createOffer(
+    private suspend fun createOffer(
         direction: Direction,
         market: Market,
         bitcoinPaymentMethods: List<BitcoinPaymentMethod>,
@@ -242,8 +251,7 @@ class NodeOffersServiceFacade(
             false
         )
 
-        // blocking call
-        bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).join()
+        bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).await()
         return bisqEasyOffer.id
     }
 

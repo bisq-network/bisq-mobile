@@ -1,6 +1,10 @@
 package network.bisq.mobile.android.node
 
 import android.app.Activity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -61,7 +65,7 @@ class NodeApplicationLifecycleService(
             return
         }
 
-        launchIO {
+        serviceScope.launch {
             // Cancellation should not happen at this point, so we ignore all errors and just log them
             // Till the process is killed
             try {
@@ -71,17 +75,19 @@ class NodeApplicationLifecycleService(
                 log.e("Error at deactivateServiceFacades", e)
             }
             try {
-                // After we have shut down the services we delete the private and settings directories.
-                // Those will get restored from our backup at next startup.
-                val dbDir = File(appContext.filesDir, "Bisq2_mobile/db")
-                listOf("private", "settings").forEach { subDirName ->
-                    val dir = File(dbDir, subDirName)
-                    if (dir.exists()) {
-                        val deleted = dir.deleteRecursively()
-                        if (deleted) {
-                            log.i { "Successfully deleted $subDirName directory" }
-                        } else {
-                            log.w { "Failed to delete $subDirName directory - restore may be incomplete" }
+                withContext(Dispatchers.IO) {
+                    // After we have shut down the services we delete the private and settings directories.
+                    // Those will get restored from our backup at next startup.
+                    val dbDir = File(appContext.filesDir, "Bisq2_mobile/db")
+                    listOf("private", "settings").forEach { subDirName ->
+                        val dir = File(dbDir, subDirName)
+                        if (dir.exists()) {
+                            val deleted = dir.deleteRecursively()
+                            if (deleted) {
+                                log.i { "Successfully deleted $subDirName directory" }
+                            } else {
+                                log.w { "Failed to delete $subDirName directory - restore may be incomplete" }
+                            }
                         }
                     }
                 }
@@ -105,8 +111,11 @@ class NodeApplicationLifecycleService(
         networkServiceFacade.activate()
 
         log.i { "Start initializing applicationService" }
-        // Block until applicationService initialization is completed
-        androidApplicationService.initialize().join()
+        // androidApplicationService.initialize() contains thread blocking calls
+        withContext(Dispatchers.IO) {
+            // Block until applicationService initialization is completed
+            androidApplicationService.initialize().await()
+        }
         log.i { "ApplicationService initialization completed" }
 
         settingsServiceFacade.activate()
@@ -152,7 +161,7 @@ class NodeApplicationLifecycleService(
 
         try {
             log.i { "Stopping applicationService" }
-            provider.applicationService.shutdown().join()
+            provider.applicationService.shutdown().await()
             log.i { "ApplicationService stopped" }
         } catch (e: Exception) {
             log.e("Error at applicationService.shutdown", e)

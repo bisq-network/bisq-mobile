@@ -14,9 +14,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -65,30 +65,32 @@ class ClientUserProfileServiceFacade(
     override suspend fun activate() {
         super<ServiceFacade>.activate()
 
-        collectIO(webSocketClientService.connectionState) {
-            if (it is ConnectionState.Connected) {
-                // Initialize selected user profile with proper error handling
-                runCatching {
-                    getSelectedUserProfile()
-                }.onSuccess { profile ->
-                    _selectedUserProfile.value = profile
-                }.onFailure { e ->
-                    if (e is CancellationException) {
-                        throw e
+        serviceScope.launch {
+            webSocketClientService.connectionState.collect {
+                if (it is ConnectionState.Connected) {
+                    // Initialize selected user profile with proper error handling
+                    runCatching {
+                        getSelectedUserProfile()
+                    }.onSuccess { profile ->
+                        _selectedUserProfile.value = profile
+                    }.onFailure { e ->
+                        if (e is CancellationException) {
+                            throw e
+                        }
+                        // Expected at first run
+                        log.d("Error getting user profile: ${e.message}")
                     }
-                    // Expected at first run
-                    log.d("Error getting user profile: ${e.message}")
-                }
 
-                // Ensure ignored users cache is initialized before any hot-path calls
-                try {
-                    getIgnoredUserProfileIds()
-                    log.d { "Ignored users cache initialized successfully" }
-                } catch (e: Exception) {
-                    log.e(e) { "Failed to initialize ignored users cache during activation" }
-                    // Set empty cache to prevent repeated network calls
-                    ignoredUserIdsMutex.withLock {
-                        _ignoredUserIds.value = emptySet()
+                    // Ensure ignored users cache is initialized before any hot-path calls
+                    try {
+                        getIgnoredUserProfileIds()
+                        log.d { "Ignored users cache initialized successfully" }
+                    } catch (e: Exception) {
+                        log.e(e) { "Failed to initialize ignored users cache during activation" }
+                        // Set empty cache to prevent repeated network calls
+                        ignoredUserIdsMutex.withLock {
+                            _ignoredUserIds.value = emptySet()
+                        }
                     }
                 }
             }

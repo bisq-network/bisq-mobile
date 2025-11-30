@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -28,7 +29,7 @@ class IgnoredUsersPresenter(
     }
 
     private fun loadIgnoredUsers() {
-        launchIO {
+        presenterScope.launch {
             try {
                 val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toList()
                 val userProfiles = userProfileServiceFacade.findUserProfiles(ignoredUserIds)
@@ -45,7 +46,7 @@ class IgnoredUsersPresenter(
     }
 
     override fun unblockUserConfirm(userId: String) {
-        launchIO {
+        presenterScope.launch {
             try {
                 userProfileServiceFacade.undoIgnoreUserProfile(userId)
                 _ignoreUserId.value = ""

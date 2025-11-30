@@ -1,5 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.network
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -57,7 +59,7 @@ class ClientConnectivityService(
      */
     fun startMonitoring(period: Long = PERIOD, startDelay: Long = 5_000) {
         job?.cancel()
-        job = launchIO {
+        job = serviceScope.launch(Dispatchers.IO) {
             delay(startDelay)
             while (true) {
                 checkConnectivity()
@@ -106,7 +108,7 @@ class ClientConnectivityService(
     }
 
     private fun runPendingBlocks() {
-        launchIO {
+        serviceScope.launch(Dispatchers.Default) {
             mutex.withLock {
                 val blocksToExecute = pendingConnectivityBlocks.let {
                     val blocks = it.toList()
@@ -148,27 +150,6 @@ class ClientConnectivityService(
             }
         }
         log.d { "Connectivity stopped being monitored" }
-    }
-
-    /**
-     * Executes the given block when connectivity is available.
-     * If connectivity is already available, executes immediately.
-     * Otherwise, schedules execution for when connectivity is restored.
-     *
-     * @param block The code to execute when connectivity is available
-     * @return A job that can be cancelled if needed
-     */
-    fun runWhenConnected(block: suspend () -> Unit): Job {
-        return serviceScope.launch {
-            if (isConnected()) {
-                launchIO { block() }
-            } else {
-                mutex.withLock {
-                    pendingConnectivityBlocks.add(block)
-                    log.d { "Added block to be run when connectivity restarts" }
-                }
-            }
-        }
     }
 
     private fun isConnected(): Boolean {

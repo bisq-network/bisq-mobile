@@ -1,8 +1,11 @@
 package network.bisq.mobile.domain.service.market_price
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -38,13 +41,13 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
     }
     
     protected fun persistSelectedMarketToSettings(marketListItem: MarketListItem) {
-        launchIO {
+        serviceScope.launch {
             try {
                 val baseCurrencyCode = marketListItem.market.baseCurrencyCode
                 val quoteCurrencyCode = marketListItem.market.quoteCurrencyCode
                 if (baseCurrencyCode.isBlank() || quoteCurrencyCode.isBlank()) {
                     log.w("Invalid currency codes: base='$baseCurrencyCode', quote='$quoteCurrencyCode'")
-                    return@launchIO
+                    return@launch
                 }
                 val marketCode = "$baseCurrencyCode/$quoteCurrencyCode"
                 settingsRepository.setSelectedMarketCode(marketCode)
@@ -55,7 +58,8 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
     }
     
     protected fun restoreSelectedMarketFromSettings(onMarketRestored: (MarketVO) -> Unit) {
-        launchIO {
+        // onMarketRestored is Blocking on client (runBlocking waits for mutex)
+        serviceScope.launch(Dispatchers.IO) {
             try {
                 settingsRepository.fetch().selectedMarketCode.let { marketCode ->
                     // Parse the market code to get base and quote currency

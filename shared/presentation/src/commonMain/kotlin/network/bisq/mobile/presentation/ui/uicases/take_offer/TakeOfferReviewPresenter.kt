@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.displayString
@@ -64,16 +65,20 @@ class TakeOfferReviewPresenter(
     }
 
     init {
-        collectUI(takeOfferStatus) {
-            log.i { "takeOfferStatus: $it" }
-            if (it == TakeOfferStatus.SUCCESS) {
-                setShowTakeOfferSuccessDialog(true)
+        presenterScope.launch {
+            takeOfferStatus.collect {
+                log.i { "takeOfferStatus: $it" }
+                if (it == TakeOfferStatus.SUCCESS) {
+                    setShowTakeOfferSuccessDialog(true)
+                }
             }
         }
-        // To ignore the first init message
-        collectUI(takeOfferErrorMessage.drop(1)) {
-            log.e { "takeOfferErrorMessage: $it" }
-            showSnackbar(it ?: "mobile.takeOffer.unexpectedError".i18n(), true)
+        presenterScope.launch {
+            // To ignore the first init message
+            takeOfferErrorMessage.drop(1).collect {
+                log.e { "takeOfferErrorMessage: $it" }
+                showSnackbar(it ?: "mobile.takeOffer.unexpectedError".i18n(), true)
+            }
         }
 
         takeOfferModel = takeOfferPresenter.takeOfferModel
@@ -122,17 +127,20 @@ class TakeOfferReviewPresenter(
         setShowTakeOfferProgressDialog(true)
         disableInteractive()
 
-        launchUI {
+        presenterScope.launch {
             try {
                 if (isDemo()) {
                     showSnackbar("Take offer is disabled in demo mode")
                 } else {
-                    // takeOffer use withContext(Dispatchers.IO) for calling the service
                     val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
 
                     // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
-                    collectUI(statusFlow) { takeOfferStatus.value = it }
-                    collectUI(errorFlow) { takeOfferErrorMessage.value = it }
+                    presenterScope.launch {
+                        statusFlow.collect { takeOfferStatus.value = it }
+                    }
+                    presenterScope.launch {
+                        errorFlow.collect {takeOfferErrorMessage.value = it }
+                    }
                 }
             } catch (e: Exception) {
                 log.e("Take offer failed", e)

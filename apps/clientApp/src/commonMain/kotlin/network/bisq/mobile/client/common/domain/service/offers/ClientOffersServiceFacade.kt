@@ -10,11 +10,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
+import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -123,22 +123,24 @@ class ClientOffersServiceFacade(
     }
 
     private fun observeAvailableMarkets() {
-        launchIO {
+        serviceScope.launch {
             offersMutex.withLock {
                 getMarketsJob?.cancel()
-                getMarketsJob = collectIO(webSocketClientService.connectionState) { state ->
-                    if (state is ConnectionState.Connected) {
-                        val result = apiGateway.getMarkets()
-                        if (result.isFailure) {
-                            result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
-                            log.w { "GetMarkets failed, market list will remain empty" }
-                        } else {
-                            val markets = result.getOrThrow()
-                            fillMarketListItems(markets)
-                            subscribeNumOffers()
-                            getMarketsJob?.cancel() // we only need this once
-                        }
+                getMarketsJob = serviceScope.launch(Dispatchers.Default) {
+                    webSocketClientService.connectionState.collect { state ->
+                        if (state is ConnectionState.Connected) {
+                            val result = apiGateway.getMarkets()
+                            if (result.isFailure) {
+                                result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
+                                log.w { "GetMarkets failed, market list will remain empty" }
+                            } else {
+                                val markets = result.getOrThrow()
+                                fillMarketListItems(markets)
+                                subscribeNumOffers()
+                                getMarketsJob?.cancel() // we only need this once
+                            }
 
+                        }
                     }
                 }
             }
@@ -146,7 +148,7 @@ class ClientOffersServiceFacade(
     }
 
     private fun observeMarketPrice() {
-        launchIO {
+        serviceScope.launch {
             runCatching {
                 marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
                     if (marketPriceItem != null) {

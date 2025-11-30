@@ -1,11 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -79,13 +77,16 @@ class SellerState3aPresenter(
             _showInvalidAddressDialog.value = true
             return
         }
-        launchUI {
+        presenterScope.launch {
             showLoading()
-            withContext(Dispatchers.IO) {
-                tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
-            }
+            val result = tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
             hideLoading()
-            setShowInvalidAddressDialog(false)
+            if (result.isSuccess) {
+                setShowInvalidAddressDialog(false)
+            } else {
+                // TODO: Display error to user (e.g., via snackbar or error dialog) ?
+                log.e { "Failed to confirm BTC sent: ${result.exceptionOrNull()?.message}" }
+            }
         }
     }
 

@@ -1,14 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -478,10 +475,10 @@ class CreateOfferAmountPresenter(
         ) ?: 0L
         _requiredReputation.value = requiredReputation
 
-        launchUI {
-            val peersScoreByUserProfileId = withContext(Dispatchers.IO) {
-                getPeersScoreByUserProfileId()
-            }
+        // TODO: it sounds like its better to do this on Dispatchers.Default as processing is significant,
+        // and theres a blocking call (in marketPriceServiceFacade), but doing so fails the related tests
+        presenterScope.launch {
+            val peersScoreByUserProfileId = getPeersScoreByUserProfileId()
             val numPotentialTakers =
                 peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value) >= requiredReputation }.count()
             _shouldShowWarningIcon.value = numPotentialTakers == 0
@@ -517,23 +514,21 @@ class CreateOfferAmountPresenter(
 
     private fun updateSellerAmountLimitInfo(firstLoad: Boolean = false) {
         val range = maxAmount - minAmount
-        launchUI {
-            val userProfile: UserProfileVO = withContext(Dispatchers.IO) {
-                userProfileServiceFacade.getSelectedUserProfile()
-            } ?: return@launchUI
+        presenterScope.launch {
+            val userProfile: UserProfileVO =
+                userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
 
-            val reputationScore: ReputationScoreVO = withContext(Dispatchers.IO) {
-                reputationServiceFacade.getReputation(userProfile.id).getOrNull()
-            } ?: return@launchUI
+            val reputationScore: ReputationScoreVO =
+                reputationServiceFacade.getReputation(userProfile.id).getOrNull() ?: return@launch
 
             _requiredReputation.value = reputationScore.totalScore
-            val market = createOfferModel.market ?: return@launchUI
+            val market = createOfferModel.market ?: return@launch
 
             val amount = getReputationBasedQuoteSideAmount(
                 marketPriceServiceFacade,
                 market,
                 _requiredReputation.value
-            ) ?: return@launchUI
+            ) ?: return@launch
 
             val reputationBasedMaxValue = (amount.value.toFloat() - minAmount) / range
             _reputationBasedMaxSliderValue.value = reputationBasedMaxValue

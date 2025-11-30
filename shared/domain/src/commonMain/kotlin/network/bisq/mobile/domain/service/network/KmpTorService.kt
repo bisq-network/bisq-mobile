@@ -111,11 +111,9 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                         val newStartDefer = serviceScope.async {
                             val runtime = getTorRuntime()
                             val startTime = Clock.System.now().toEpochMilliseconds()
-                            withContext(Dispatchers.IO) {
-                                withTimeout(timeoutMs) {
-                                    runtime.startDaemonAsync()
-                                    configTor()
-                                }
+                            withTimeout(timeoutMs) {
+                                runtime.startDaemonAsync()
+                                configTor()
                             }
                             val durationMs = Clock.System.now().toEpochMilliseconds() - startTime
                             remainingTime = (timeoutMs - durationMs).coerceAtLeast(0)
@@ -183,9 +181,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                     _state.value = TorState.Stopping
                     try {
                         val runtime = getTorRuntime()
-                        withContext(Dispatchers.IO) {
-                            runtime.stopDaemonAsync()
-                        }
+                        runtime.stopDaemonAsync()
                         log.i { "Tor daemon stopped successfully" }
                         _state.value = TorState.Stopped(reason)
                     } catch (e: Exception) {
@@ -420,11 +416,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
         val selectorManager = SelectorManager(Dispatchers.IO)
-        try {
+        selectorManager.use {
             delay(500)
             repeat(3) { attempt ->
                 try {
-                    val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", controlPort)
+                    val socket = aSocket(it).tcp().connect("127.0.0.1", controlPort)
                     socket.close()
                     log.i { "Verified control port $controlPort is accessible" }
                     return
@@ -433,10 +429,6 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 }
             }
             log.w { "Control port $controlPort not yet accessible, but continuing anyway" }
-        } catch (e: Exception) {
-            log.w(e) { "Control port $controlPort not yet accessible, but continuing anyway" }
-        } finally {
-            selectorManager.close()
         }
     }
 
@@ -538,11 +530,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
     private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
         val selectorManager = SelectorManager(Dispatchers.IO)
-        try {
+        selectorManager.use {
             val start = Clock.System.now().toEpochMilliseconds()
             while (true) {
                 val stillOpen = try {
-                    val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", port)
+                    val socket = aSocket(it).tcp().connect("127.0.0.1", port)
                     socket.close(); true
                 } catch (_: Exception) {
                     false
@@ -557,8 +549,6 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 }
                 delay(200)
             }
-        } finally {
-            selectorManager.close()
         }
     }
 

@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.guide
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -21,7 +22,7 @@ class TradeGuideTradeRulesPresenter(
 
     fun tradeRulesNextClick() {
         showLoading()
-        launchUI {
+        presenterScope.launch {
             try {
                 val isConfirmed = tradeRulesConfirmed.first()
                 if (!isConfirmed) {

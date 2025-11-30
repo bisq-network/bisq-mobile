@@ -1,18 +1,19 @@
 package network.bisq.mobile.domain.utils
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Files
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class EncryptionUtilsTest {
 
     @Test
-    fun encryptWritesHeaderAndDecryptsRoundtrip() {
+    fun encryptWritesHeaderAndDecryptsRoundtrip() = runTest {
         val tmpDir = Files.createTempDirectory("encTest").toFile()
         val input = File(tmpDir, "in.zip").apply { writeText("hello world\n12345") }
         val enc = File(tmpDir, "out.enc")
@@ -38,7 +39,7 @@ class EncryptionUtilsTest {
     }
 
     @Test
-    fun decryptFailsWithoutHeader() {
+    fun decryptFailsWithoutHeader() = runTest {
         val tmpDir = Files.createTempDirectory("encNoHdr").toFile()
         val input = File(tmpDir, "in.zip").apply { writeText("abc") }
         val enc = File(tmpDir, "out.enc")

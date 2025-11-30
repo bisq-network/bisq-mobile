@@ -2,10 +2,6 @@ package network.bisq.mobile.domain.service
 
 import androidx.annotation.CallSuper
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.LifeCycleAware
 
 /**
@@ -19,7 +15,7 @@ import network.bisq.mobile.domain.LifeCycleAware
  *
  * Typical usage pattern:
  * - Call `activate()` when the service is started (optionally overridden by subclasses)
- * - Launch coroutines via `launchIO()` or `collectIO()`
+ * - Launch coroutines via `serviceScope`
  * - Call `deactivate()` to cancel all coroutines and release resources
  *
  */
@@ -40,10 +36,7 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
         if (isActivated.compareAndSet(expect = true, update = false)) {
             log.i { "Deactivating service ${this::class.simpleName}" }
 
-            // Clean up all jobs managed by the jobsManager in a new scope because this will be killed
-            CoroutineScope(Dispatchers.IO).launch {
-                jobsManager.dispose()
-            }
+            jobsManager.dispose()
         }
     }
 }

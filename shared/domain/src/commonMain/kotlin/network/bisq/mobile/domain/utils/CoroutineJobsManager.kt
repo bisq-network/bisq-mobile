@@ -3,17 +3,10 @@ package network.bisq.mobile.domain.utils
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
@@ -21,42 +14,6 @@ import kotlin.coroutines.EmptyCoroutineContext
  * This helps centralize job management and disposal across the application.
  */
 interface CoroutineJobsManager {
-    /**
-     * Add a job to be managed and automatically disposed when [dispose] is called.
-     * @param job The job to be managed
-     * @return The same job for chaining
-     */
-    fun addJob(job: Job): Job
-    
-    /**
-     * Launch a new coroutine in the UI scope and automatically manage its lifecycle.
-     * @param block The coroutine code to execute
-     * @return The created job
-     */
-    fun launchUI(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job
-    
-    /**
-     * Launch a new coroutine in the IO scope and automatically manage its lifecycle.
-     * @param block The coroutine code to execute
-     * @return The created job
-     */
-    fun launchIO(block: suspend CoroutineScope.() -> Unit): Job
-    
-    /**
-     * Collect a flow in the UI scope and automatically manage the job's lifecycle.
-     * @param flow The flow to collect
-     * @param collector The collector function
-     * @return The created job
-     */
-    fun <T> collectUI(flow: Flow<T>, collector: suspend (T) -> Unit): Job
-    
-    /**
-     * Collect a flow in the IO scope and automatically manage the job's lifecycle.
-     * @param flow The flow to collect
-     * @param collector The collector function
-     * @return The created job
-     */
-    fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit): Job
     
     /**
      * Dispose all managed jobs.
@@ -64,14 +21,9 @@ interface CoroutineJobsManager {
     suspend fun dispose()
     
     /**
-     * Get the UI coroutine scope.
+     * Get the coroutine scope. prefers Dispatchers.Main.immediate (or Dispatchers.Main), falling back to a platform-safe context when Main is unavailable
      */
-    fun getUIScope(): CoroutineScope
-    
-    /**
-     * Get the IO coroutine scope.
-     */
-    fun getIOScope(): CoroutineScope
+    fun getScope(): CoroutineScope
 
     /**
      * Set a custom coroutine exception handler.
@@ -85,12 +37,6 @@ interface CoroutineJobsManager {
  * Implementation of [CoroutineJobsManager] that manages coroutine jobs and their lifecycle.
  */
 class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
-    private val jobs = mutableSetOf<Job>()
-    private val jobsMutex = Mutex()
-
-    // Dedicated scope for job management operations - independent of user scopes
-    private var jobManagementScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
     private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         log.e(exception) { "Uncaught coroutine exception" }
 
@@ -105,16 +51,9 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     // TODO we might need to make the whole manager platform-specific to cater for iOS properly
     // Platform-aware scope creation
     private val isIOS = getPlatformInfo().type == PlatformType.IOS
-    private var uiScope = if (isIOS) {
-        CoroutineScope(Dispatchers.Main + SupervisorJob())
-    } else {
-        CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
-    }
-    private var ioScope = if (isIOS) {
-        CoroutineScope(Dispatchers.IO + SupervisorJob())
-    } else {
-        CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
-    }
+
+
+    private var scope: CoroutineScope = createScope()
 
     // Callback for handling coroutine exceptions
     private var onCoroutineException: ((Throwable) -> Unit)? = null
@@ -126,44 +65,9 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
         }
         onCoroutineException = handler
     }
-    
-    // uses dedicated scope to avoid collisions
-    override fun addJob(job: Job): Job {
-        jobManagementScope.launch {
-            jobsMutex.withLock { jobs.add(job) }
-        }
-        job.invokeOnCompletion {
-            jobManagementScope.launch {
-                jobsMutex.withLock { jobs.remove(job) }
-            }
-        }
-        return job
-    }
-    
-    override fun launchUI(context: CoroutineContext,  block: suspend CoroutineScope.() -> Unit): Job {
-        return addJob(uiScope.launch(context) { block() })
-    }
 
-    override fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {
-        return addJob(ioScope.launch { block() })
-    }
-    
-    override fun <T> collectUI(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
-        return launchUI {
-            flow.collect { collector(it) }
-        }
-    }
-    
-    override fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
-        return launchIO {
-            flow.collect { collector(it) }
-        }
-    }
+    override fun getScope(): CoroutineScope = scope
 
-    override fun getUIScope(): CoroutineScope = uiScope
-
-    override fun getIOScope(): CoroutineScope = ioScope
-    
     override suspend fun dispose() {
         if (isIOS) {
             // On iOS, don't dispose scopes during shutdown to avoid crashes
@@ -176,42 +80,44 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
         recreateScopes()
     }
 
-    private suspend fun disposeScopes() {
-        runCatching {
-            jobsMutex.withLock {
-                jobs.forEach {
-                    runCatching { it.cancel() }.onFailure {
-                        log.w { "Failed to cancel job: ${it.message}" }
-                    }
-                }
-                jobs.clear()
-            }
-
-            runCatching { uiScope.cancel() }.onFailure {
-                log.w { "Failed to cancel UI scope: ${it.message}" }
-            }
-            runCatching { ioScope.cancel() }.onFailure {
-                log.w { "Failed to cancel IO scope: ${it.message}" }
-            }
-            runCatching { jobManagementScope.cancel() }.onFailure {
-                log.w { "Failed to cancel job management scope: ${it.message}" }
-            }
-        }.onFailure {
-            log.e(it) { "Failed to dispose coroutine jobs" }
+    private fun disposeScopes() {
+        runCatching { scope.cancel() }.onFailure { throwable ->
+            log.w(throwable) { "Failed to cancel scope: ${throwable.message}" }
         }
     }
 
     private fun recreateScopes() {
-        runCatching {
-            uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
-            ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
-            jobManagementScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        }.onFailure {
-            log.e(it) { "Failed to recreate coroutine scopes" }
-            // Fallback: create basic scopes without exception handler
-            uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-            ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-            jobManagementScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        scope = createScope()
+    }
+
+    private fun createScope(): CoroutineScope {
+        // this is how viewModelScope dispatcher is selected:
+        // https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/viewmodel/internal/CloseableCoroutineScope.kt;l=52-69
+        val dispatcher =
+            try {
+                // In platforms where `Dispatchers.Main` is not available, Kotlin Multiplatform will
+                // throw
+                // an exception (the specific exception type may depend on the platform). Since there's
+                // no
+                // direct functional alternative, we use `EmptyCoroutineContext` to ensure that a
+                // coroutine
+                // launched within this scope will run in the same context as the caller.
+                try {
+                    Dispatchers.Main.immediate
+                } catch (_: UnsupportedOperationException) {
+                    Dispatchers.Main
+                }
+            } catch (_: NotImplementedError) {
+                // In Native environments where `Dispatchers.Main` might not exist (e.g., Linux):
+                EmptyCoroutineContext
+            } catch (_: IllegalStateException) {
+                // In JVM Desktop environments where `Dispatchers.Main` might not exist (e.g., Swing):
+                EmptyCoroutineContext
+            }
+        return if (isIOS) {
+            CoroutineScope(dispatcher + SupervisorJob())
+        } else {
+            CoroutineScope(dispatcher + SupervisorJob() + exceptionHandler)
         }
     }
 }
