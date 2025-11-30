@@ -352,7 +352,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         // Cancel any pending global loading dialog to prevent stuck overlays
         hideLoading()
         // Presenter level support for auto disposal
-        CoroutineScope(Dispatchers.Default).launch { jobsManager.dispose() }
+        CoroutineScope(Dispatchers.Main).launch { jobsManager.dispose() }
     }
 
     @CallSuper
