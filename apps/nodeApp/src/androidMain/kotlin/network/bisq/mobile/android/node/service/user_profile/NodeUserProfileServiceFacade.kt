@@ -72,7 +72,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override suspend fun activate() {
         super<ServiceFacade>.activate()
 
-        serviceScope.launch(Dispatchers.Default) {
+        serviceScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
             getIgnoredUserProfileIds()
         }
