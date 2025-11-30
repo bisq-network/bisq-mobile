@@ -152,27 +152,6 @@ class ClientConnectivityService(
         log.d { "Connectivity stopped being monitored" }
     }
 
-    /**
-     * Executes the given block when connectivity is available.
-     * If connectivity is already available, executes immediately.
-     * Otherwise, schedules execution for when connectivity is restored.
-     *
-     * @param block The code to execute when connectivity is available
-     * @return A job that can be cancelled if needed
-     */
-    fun runWhenConnected(block: suspend () -> Unit): Job {
-        return serviceScope.launch {
-            if (isConnected()) {
-                serviceScope.launch(Dispatchers.IO) { block() }
-            } else {
-                mutex.withLock {
-                    pendingConnectivityBlocks.add(block)
-                    log.d { "Added block to be run when connectivity restarts" }
-                }
-            }
-        }
-    }
-
     private fun isConnected(): Boolean {
         return webSocketClientService.isConnected()
     }
