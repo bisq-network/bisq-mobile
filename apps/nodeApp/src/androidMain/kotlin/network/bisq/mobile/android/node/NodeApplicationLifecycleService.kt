@@ -65,7 +65,7 @@ class NodeApplicationLifecycleService(
             return
         }
 
-        serviceScope.launch(Dispatchers.IO) {
+        serviceScope.launch {
             // Cancellation should not happen at this point, so we ignore all errors and just log them
             // Till the process is killed
             try {
@@ -75,17 +75,19 @@ class NodeApplicationLifecycleService(
                 log.e("Error at deactivateServiceFacades", e)
             }
             try {
-                // After we have shut down the services we delete the private and settings directories.
-                // Those will get restored from our backup at next startup.
-                val dbDir = File(appContext.filesDir, "Bisq2_mobile/db")
-                listOf("private", "settings").forEach { subDirName ->
-                    val dir = File(dbDir, subDirName)
-                    if (dir.exists()) {
-                        val deleted = dir.deleteRecursively()
-                        if (deleted) {
-                            log.i { "Successfully deleted $subDirName directory" }
-                        } else {
-                            log.w { "Failed to delete $subDirName directory - restore may be incomplete" }
+                withContext(Dispatchers.IO) {
+                    // After we have shut down the services we delete the private and settings directories.
+                    // Those will get restored from our backup at next startup.
+                    val dbDir = File(appContext.filesDir, "Bisq2_mobile/db")
+                    listOf("private", "settings").forEach { subDirName ->
+                        val dir = File(dbDir, subDirName)
+                        if (dir.exists()) {
+                            val deleted = dir.deleteRecursively()
+                            if (deleted) {
+                                log.i { "Successfully deleted $subDirName directory" }
+                            } else {
+                                log.w { "Failed to delete $subDirName directory - restore may be incomplete" }
+                            }
                         }
                     }
                 }
