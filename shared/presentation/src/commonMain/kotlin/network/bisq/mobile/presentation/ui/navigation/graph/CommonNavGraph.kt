@@ -35,7 +35,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTrad
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.ChatRulesScreen
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersScreen
-import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountsScreen
+import network.bisq.mobile.presentation.ui.uicases.settings.payment_accounts.PaymentAccountsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.ReputationScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen

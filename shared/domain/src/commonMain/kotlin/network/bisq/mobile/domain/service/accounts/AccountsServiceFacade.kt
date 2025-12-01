@@ -8,10 +8,10 @@ interface AccountsServiceFacade : LifeCycleAware {
     val accounts: StateFlow<List<UserDefinedFiatAccountVO>>
     val selectedAccount: StateFlow<UserDefinedFiatAccountVO?>
 
-    suspend fun getAccounts(): List<UserDefinedFiatAccountVO>
-    suspend fun addAccount(account: UserDefinedFiatAccountVO)
-    suspend fun saveAccount(account: UserDefinedFiatAccountVO)
-    suspend fun removeAccount(account: UserDefinedFiatAccountVO, updateSelectedAccount: Boolean = true)
-    suspend fun getSelectedAccount()
-    suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO)
+    suspend fun getAccounts(): Result<List<UserDefinedFiatAccountVO>>
+    suspend fun addAccount(account: UserDefinedFiatAccountVO): Result<Unit>
+    suspend fun saveAccount(account: UserDefinedFiatAccountVO): Result<Unit>
+    suspend fun deleteAccount(account: UserDefinedFiatAccountVO): Result<Unit>
+    suspend fun getSelectedAccount(): Result<Unit>
+    suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO): Result<Unit>
 }
