@@ -289,6 +289,12 @@ configurations.all {
     exclude(group = "com.github.bisq-network", module = "jsocks")
 }
 
+// Exclude conflicting dependencies from Robolectric to use Bisq core versions
+configurations.matching { it.name.contains("UnitTest") }.configureEach {
+    exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
+    exclude(group = "com.google.guava", module = "guava")
+}
+
 dependencies {
     // Project modules
     implementation(project(sharedPresentationModule))

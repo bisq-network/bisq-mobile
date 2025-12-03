@@ -14,10 +14,7 @@ plugins {
 }
 
 dependencies {
-    androidTestImplementation(libs.androidx.test.compose.junit4)
-    androidTestImplementation(libs.androidx.test.compose.manifest)
     debugImplementation(compose.uiTooling)
-    debugImplementation(libs.androidx.test.compose.manifest)
 }
 
 version = project.findProperty("shared.version") as String
@@ -85,6 +82,7 @@ kotlin {
             implementation(libs.androidx.test.core)
             implementation(libs.androidx.test.espresso.core)
             implementation(libs.androidx.test.junit)
+            implementation(libs.androidx.test.compose.manifest)
 
             // Kotlin
             implementation(libs.kotlin.test.junit)
@@ -129,6 +127,15 @@ android {
                 .toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    // Enable resources for Robolectric unit tests
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
