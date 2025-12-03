@@ -29,7 +29,7 @@ class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage
 
     suspend fun request(
         webSocketRequest: WebSocketRequest,
-        timeoutMillis: Long = 10000_000
+        timeoutMillis: Long = 30_000
     ): WebSocketResponse? {
         log.i { "Sending request with ID: ${webSocketRequest.requestId}" }
         mutex.withLock {
