@@ -289,6 +289,16 @@ configurations.all {
     exclude(group = "com.github.bisq-network", module = "jsocks")
 }
 
+// Force Bisq2 core dependency versions in unit tests to match production
+// Robolectric 4.16 brings bcprov-jdk18on:1.81, but Bisq2 requires 1.78.1
+configurations.matching { it.name.contains("UnitTest") }.configureEach {
+    resolutionStrategy {
+        force("${libs.bouncycastle.prov.get().module}:${libs.versions.bouncycastle.lib.get()}")
+        force("${libs.bouncycastle.pg.get().module}:${libs.versions.bouncycastle.lib.get()}")
+        force("${libs.google.guava.get().module}:${libs.versions.google.guava.lib.get()}")
+    }
+}
+
 dependencies {
     // Project modules
     implementation(project(sharedPresentationModule))
@@ -308,7 +318,7 @@ dependencies {
     annotationProcessor(libs.lombok)
     implementation(libs.typesafe.config)
 
-    implementation(libs.bouncycastle)
+    implementation(libs.bouncycastle.prov)
     implementation(libs.bouncycastle.pg)
 
     // Bisq2 core modules
