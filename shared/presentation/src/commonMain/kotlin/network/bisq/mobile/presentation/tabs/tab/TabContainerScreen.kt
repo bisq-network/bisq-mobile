@@ -1,0 +1,119 @@
+package network.bisq.mobile.presentation.tabs.tab
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.rememberNavController
+import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.nav_home
+import bisqapps.shared.presentation.generated.resources.nav_more
+import bisqapps.shared.presentation.generated.resources.nav_offers
+import bisqapps.shared.presentation.generated.resources.nav_trades
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqFABAddButton
+import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticScaffold
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.common.ui.navigation.BottomNavigation
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.navigation.graph.TabNavGraph
+import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import org.koin.compose.koinInject
+
+
+interface ITabContainerPresenter : ViewPresenter {
+    val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
+    val showAnimation: StateFlow<Boolean>
+    fun createOffer()
+}
+
+@Composable
+fun TabContainerScreen() {
+    val presenter: ITabContainerPresenter = koinInject()
+    val navigationManager: NavigationManager = koinInject()
+    val tabNavController = rememberNavController()
+
+    RememberPresenterLifecycle(presenter)
+    DisposableEffect(tabNavController) {
+        navigationManager.setTabNavController(tabNavController)
+        onDispose {
+            navigationManager.setTabNavController(null)
+        }
+    }
+
+    val isInteractive by presenter.isInteractive.collectAsState()
+    val currentTab by navigationManager.currentTab.collectAsState()
+
+    val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
+    val showAnimation by presenter.showAnimation.collectAsState()
+
+    val navigationItems = listOf(
+        BottomNavigationItem(
+            "mobile.bottomNavigation.home".i18n(),
+            NavRoute.TabHome,
+            Res.drawable.nav_home
+        ),
+        BottomNavigationItem(
+            "mobile.bottomNavigation.offerbook".i18n(),
+            NavRoute.TabOfferbookMarket,
+            Res.drawable.nav_offers
+        ),
+        BottomNavigationItem(
+            "mobile.bottomNavigation.myTrades".i18n(),
+            NavRoute.TabOpenTradeList,
+            Res.drawable.nav_trades
+        ),
+        BottomNavigationItem(
+            "mobile.bottomNavigation.miscItems.tab".i18n(),
+            NavRoute.TabMiscItems,
+            Res.drawable.nav_more
+        ),
+    )
+
+    BisqStaticScaffold(
+        topBar = {
+            // TODO: Since Topbar should go inside Scaffold
+            // the TopBar is written here commonly for all 4 tabs.
+            // Based on currentRoute, TopBar customization is done.
+            // Ideally, if this goes inside each Tabpage, it will look better.
+            // But it's a trade off.
+            TopBar(
+                isHome = currentTab == NavRoute.TabHome,
+                title = when (currentTab) {
+                    NavRoute.TabHome -> ""
+                    NavRoute.TabOfferbookMarket -> navigationItems[1].title
+                    NavRoute.TabOpenTradeList -> "mobile.bottomNavigation.myOpenTrades".i18n()
+                    NavRoute.TabMiscItems -> "mobile.bottomNavigation.miscItems.headline".i18n()
+                    else -> "mobile.bottomNavigation.app".i18n()
+                },
+                backBehavior = {
+                    presenter.onMainBackNavigation()
+                }
+            )
+
+        },
+        bottomBar = {
+            BottomNavigation(
+                items = navigationItems,
+                currentRoute = currentTab,
+                unreadTradeCount = tradesWithUnreadMessages.values.sum(),
+                showAnimation = showAnimation,
+                onItemClick = { currentNavigationItem ->
+                    presenter.navigateToTab(currentNavigationItem.route)
+                })
+        },
+        floatingButton = {
+            if (currentTab == NavRoute.TabOfferbookMarket) {
+                BisqFABAddButton(
+                    onClick = presenter::createOffer,
+                )
+            }
+        },
+        isInteractive = isInteractive,
+        snackbarHostState = presenter.getSnackState(),
+        content = { TabNavGraph(tabNavController) }
+    )
+}

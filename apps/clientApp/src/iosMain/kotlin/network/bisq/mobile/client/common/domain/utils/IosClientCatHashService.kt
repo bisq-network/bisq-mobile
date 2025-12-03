@@ -3,7 +3,7 @@ package network.bisq.mobile.client.common.domain.utils
 import kotlinx.io.IOException
 import network.bisq.mobile.client.common.presentation.cat_hash.BaseClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.presentation.ui.helpers.IosImageUtil
+import network.bisq.mobile.presentation.common.ui.utils.IosImageUtil
 import platform.Foundation.NSData
 import platform.Foundation.NSString
 import platform.Foundation.dataWithContentsOfFile

@@ -23,8 +23,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import network.bisq.mobile.client.common.presentation.cat_hash.BaseClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.utils.AndroidImageUtil
-import network.bisq.mobile.utils.AndroidImageUtil.PATH_TO_DRAWABLE
+import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil
+import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil.PATH_TO_DRAWABLE
 import java.io.File
 
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"

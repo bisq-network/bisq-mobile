@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
+import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 
 /**
  * Client-specific TopBar presenter: relaxes connectivity mapping so the shine animation

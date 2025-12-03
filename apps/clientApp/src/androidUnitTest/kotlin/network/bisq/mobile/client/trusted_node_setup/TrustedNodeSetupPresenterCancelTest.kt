@@ -19,7 +19,7 @@ import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
-import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -34,8 +34,8 @@ import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.settings.domain.SensitiveSettings
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.test_utils.TestDoubles
 
 class TrustedNodeSetupPresenterCancelTest {
