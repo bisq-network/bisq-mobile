@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.organisms.settings
+package network.bisq.mobile.presentation.ui.uicases.settings.payment_accounts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -66,13 +66,13 @@ fun AppPaymentAccountCard(
             label = "paymentAccounts.legacy.createAccount.accountName".i18n(),
             validation = {
                 if (it.isEmpty()) {
-                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.name.isMandatory".i18n()
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.isMandatory".i18n()
                 }
                 if (it.length < 3) {
-                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.name.minLength".i18n()
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.minLength".i18n()
                 }
                 if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.name.maxLength".i18n()
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.maxLength".i18n()
                 }
                 return@BisqTextField null
             }
@@ -89,13 +89,13 @@ fun AppPaymentAccountCard(
             minLines = 2,
             validation = {
                 if (it.isEmpty()) {
-                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.accountData.isMandatory".i18n()
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.isMandatory".i18n()
                 }
                 if (it.length < 3) {
-                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.accountData.minLength".i18n()
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.minLength".i18n()
                 }
                 if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.accountData.maxLength".i18n()
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.maxLength".i18n()
                 }
                 return@BisqTextField null
             }

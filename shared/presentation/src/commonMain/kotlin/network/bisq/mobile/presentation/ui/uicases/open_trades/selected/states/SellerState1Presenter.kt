@@ -1,11 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -34,14 +31,16 @@ class SellerState1Presenter(
         super.onViewAttached()
 
         launchUI {
-            val _accounts = withContext(Dispatchers.IO) {
-                accountsServiceFacade.getAccounts()
-            }
-
-            if (_accounts.size > 0) {
-                onPaymentDataInput(_accounts[0].accountPayload.accountData, true)
-                _paymentAccountName.value = _accounts[0].accountName
-            }
+            accountsServiceFacade.getAccounts()
+                .onSuccess { accounts ->
+                    accounts.firstOrNull()?.let { account ->
+                        onPaymentDataInput(account.accountPayload.accountData, true)
+                        _paymentAccountName.value = account.accountName
+                    }
+                }
+                .onFailure { error ->
+                    log.e(error) { "Failed to load accounts" }
+                }
         }
     }
 

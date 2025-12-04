@@ -49,11 +49,10 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_ch
 import network.bisq.mobile.presentation.ui.uicases.report_user.ReportUserPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IIgnoredUsersPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.payment_accounts.PaymentAccountsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ReputationPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
@@ -108,7 +107,7 @@ val presentationModule = module {
 
     factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 
-    single { PaymentAccountsPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
+    factory { PaymentAccountsPresenter(get(), get()) }
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get()) }
