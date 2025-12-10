@@ -52,7 +52,6 @@ import network.bisq.mobile.presentation.ui.uicases.settings.IIgnoredUsersPresent
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ReputationPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter

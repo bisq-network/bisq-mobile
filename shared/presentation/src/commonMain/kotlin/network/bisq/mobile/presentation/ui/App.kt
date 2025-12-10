@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.ui
 
-import ErrorOverlay
+import GenericErrorOverlay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -170,7 +170,7 @@ fun App(
                 }
             }
 
-            ErrorOverlay()
+            GenericErrorOverlay()
 
             if (showAllConnectionsLostDialogue) {
                 WarningConfirmationDialog(

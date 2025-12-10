@@ -5,16 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.organisms.ReportBugPanel
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import org.koin.compose.koinInject
 
 @Composable
-fun ErrorOverlay() {
-    val appPresenter: AppPresenter = koinInject()
-
+fun GenericErrorOverlay() {
     val errorMessage by GenericErrorHandler.genericErrorMessage.collectAsState()
     val isUncaughtException by GenericErrorHandler.isUncaughtException.collectAsState()
 
