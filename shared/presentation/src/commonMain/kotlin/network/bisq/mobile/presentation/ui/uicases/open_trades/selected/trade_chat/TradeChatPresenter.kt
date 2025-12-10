@@ -142,7 +142,7 @@ class TradeChatPresenter(
                 }.toList().sortedByDescending { it.date }
             }.collect { messages ->
                 _sortedChatMessages.value = messages
-                messages.forEach { message ->
+                for (message in messages) {
                     val userProfile = message.senderUserProfile
                     if (_userProfileIconByProfileId.value[userProfile.id] == null) {
                         val image = userProfileServiceFacade.getUserProfileIcon(
