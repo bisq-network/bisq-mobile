@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import androidx.compose.foundation.ScrollState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,10 +95,6 @@ class OpenTradePresenter(
 
     private var _coroutineScope: CoroutineScope? = null
 
-    private var languageJob: Job? = null
-    private var tradeStateJob: Job? = null
-    private var mediationJob: Job? = null
-
     fun initialize(tradeId: String, scrollState: ScrollState, uiScope: CoroutineScope) {
         tradesServiceFacade.selectOpenTrade(tradeId)
         _selectedTrade.value = tradesServiceFacade.selectedTrade.value
@@ -146,13 +141,6 @@ class OpenTradePresenter(
         _tradeAbortedBoxVisible.value = false
         _tradeProcessBoxVisible.value = false
         _isInMediation.value = false
-
-        languageJob?.cancel()
-        tradeStateJob?.cancel()
-        mediationJob?.cancel()
-        languageJob = null
-        tradeStateJob = null
-        mediationJob = null
 
         super.onViewUnattaching()
     }

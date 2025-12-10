@@ -50,7 +50,7 @@ class NodeSplashPresenter(
                     state
                 }
 
-            }.collect  { stateAndNumConnections ->
+            }.collect { stateAndNumConnections ->
                 _state.value = stateAndNumConnections
             }
         }
