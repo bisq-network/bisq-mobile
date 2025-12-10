@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.network
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -59,7 +58,7 @@ class ClientConnectivityService(
      */
     fun startMonitoring(period: Long = PERIOD, startDelay: Long = 5_000) {
         job?.cancel()
-        job = serviceScope.launch(Dispatchers.IO) {
+        job = serviceScope.launch(Dispatchers.Default) {
             delay(startDelay)
             while (true) {
                 checkConnectivity()

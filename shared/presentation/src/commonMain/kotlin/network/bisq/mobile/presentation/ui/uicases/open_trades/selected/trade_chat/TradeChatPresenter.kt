@@ -113,44 +113,42 @@ class TradeChatPresenter(
             return
         }
 
-        presenterScope.launch {
-            val bisqEasyOpenTradeChannelModel = currentTrade.bisqEasyOpenTradeChannelModel
-            // cancel notifications of chat related to this trade
-            notificationController.cancel(NotificationIds.getNewChatMessageId(currentTrade.shortTradeId))
+        val bisqEasyOpenTradeChannelModel = currentTrade.bisqEasyOpenTradeChannelModel
+        // cancel notifications of chat related to this trade
+        notificationController.cancel(NotificationIds.getNewChatMessageId(currentTrade.shortTradeId))
 
-            presenterScope.launch {
-                bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
-                    observedChatMessages.update {
-                        val newMessages = messages - it
-                        newMessages.forEach { m ->
-                            m.addMessageDeliveryStatusObserver(messageDeliveryServiceFacade)
-                        }
-                        messages
+        presenterScope.launch {
+            bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
+                observedChatMessages.update {
+                    val newMessages = messages - it
+                    newMessages.forEach { m ->
+                        m.addMessageDeliveryStatusObserver(messageDeliveryServiceFacade)
                     }
+                    messages
                 }
             }
+        }
 
-            presenterScope.launch {
-                ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
-                    messages.filter { message ->
-                        when (message.chatMessageType) {
-                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(
-                                message.senderUserProfileId
-                            )
+        presenterScope.launch {
+            ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
+                messages.filter { message ->
+                    when (message.chatMessageType) {
+                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(
+                            message.senderUserProfileId
+                        )
 
-                            else -> true
-                        }
-                    }.toList().sortedByDescending { it.date }
-                }.collect { messages ->
-                    _sortedChatMessages.value = messages
-                    messages.forEach { message ->
-                        val userProfile = message.senderUserProfile
-                        if (_userProfileIconByProfileId.value[userProfile.id] == null) {
-                            val image = userProfileServiceFacade.getUserProfileIcon(
-                                userProfile
-                            )
-                            _userProfileIconByProfileId.update { it + (userProfile.id to image) }
-                        }
+                        else -> true
+                    }
+                }.toList().sortedByDescending { it.date }
+            }.collect { messages ->
+                _sortedChatMessages.value = messages
+                messages.forEach { message ->
+                    val userProfile = message.senderUserProfile
+                    if (_userProfileIconByProfileId.value[userProfile.id] == null) {
+                        val image = userProfileServiceFacade.getUserProfileIcon(
+                            userProfile
+                        )
+                        _userProfileIconByProfileId.update { it + (userProfile.id to image) }
                     }
                 }
             }

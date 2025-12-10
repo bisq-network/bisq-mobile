@@ -28,7 +28,7 @@ class NodeMediationServiceFacade(applicationService: AndroidApplicationService.P
     }
 
     override suspend fun reportToMediator(value: TradeItemPresentationModel): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+        return withContext(Dispatchers.IO) {
             val tradeId = value.tradeId
             val optionalChannel = channelService.findChannelByTradeId(tradeId)
             if (optionalChannel.isPresent) {
@@ -43,6 +43,7 @@ class NodeMediationServiceFacade(applicationService: AndroidApplicationService.P
                     channel.setIsInMediation(true)
                     val contract: BisqEasyContract =
                         Mappings.BisqEasyContractMapping.toBisq2Model(value.bisqEasyTradeModel.contract)
+                    // requestMediation has synchronize call in confidentialSend's first ifPresent branch
                     mediationRequestService.requestMediation(channel, contract)
                     Result.success(Unit)
                 } else {

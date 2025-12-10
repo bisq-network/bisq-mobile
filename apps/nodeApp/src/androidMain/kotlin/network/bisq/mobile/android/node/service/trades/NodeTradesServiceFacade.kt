@@ -276,11 +276,12 @@ class NodeTradesServiceFacade(
     override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
+                val selectedTradeSnapshot = selectedTrade.value
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded = Res.encode(
                     "bisqEasy.tradeState.info.seller.phase2b.tradeLogMessage",
                     userName,
-                    selectedTrade.value!!.formattedQuoteAmount
+                    selectedTradeSnapshot!!.formattedQuoteAmount
                 )
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
@@ -294,11 +295,12 @@ class NodeTradesServiceFacade(
     override suspend fun buyerConfirmFiatSent(): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
+                val selectedTradeSnapshot = selectedTrade.value
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded = Res.encode(
                     "bisqEasy.tradeState.info.buyer.phase2a.tradeLogMessage",
                     userName,
-                    selectedTrade.value!!.quoteCurrencyCode
+                    selectedTradeSnapshot!!.quoteCurrencyCode
                 )
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 bisqEasyTradeService.buyerConfirmFiatSent(trade)

@@ -293,10 +293,8 @@ class WebSocketClientService(
             }
             return error
         } finally {
-            serviceScope.launch {
-                wsClient.dispose()
-                httpClient.close()
-            }
+            wsClient.dispose()
+            httpClient.close()
         }
     }
 }

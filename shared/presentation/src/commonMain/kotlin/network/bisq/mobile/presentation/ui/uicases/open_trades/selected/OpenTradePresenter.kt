@@ -241,12 +241,13 @@ class OpenTradePresenter(
 
     fun onConfirmedUndoIgnoreUser() {
         val id = selectedTrade.value?.peersUserProfile?.id
+        if (id == null) {
+            log.e { "Expected user profile id to not be null when undoing ignore, but was null" }
+            return
+        }
         presenterScope.launch {
             disableInteractive()
             try {
-                if (id == null) {
-                    throw IllegalStateException("expected user profile id to not be null, but was null")
-                }
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
                 hideUndoIgnoreDialog()
             } catch (e: Exception) {
