@@ -390,7 +390,7 @@ class AndroidApplicationService(
                             log.i("ApplicationService shutdown completed")
                             return@handle true
                         } else {
-                            startupErrorMessage.set("Shutdown applicationService failed with result=false")
+                            shutDownErrorMessage.set("Shutdown applicationService failed with result=false")
                             log.e(shutDownErrorMessage.get())
                         }
                     } else {

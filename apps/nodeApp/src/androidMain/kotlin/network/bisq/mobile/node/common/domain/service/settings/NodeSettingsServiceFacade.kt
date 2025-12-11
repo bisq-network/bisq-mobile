@@ -121,13 +121,14 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     // Misc
     private var tradeRulesConfirmedPin: Pin? = null
+    private var isTacAcceptedPin: Pin? = null
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
         settingsService.languageCode.addObserver { code ->
             _languageCode.value = code
         }
-        tradeRulesConfirmedPin = settingsService.isTacAccepted.addObserver { isTacAccepted ->
+        isTacAcceptedPin = settingsService.isTacAccepted.addObserver { isTacAccepted ->
             _isTacAccepted.value = isTacAccepted
         }
         tradeRulesConfirmedPin = settingsService.tradeRulesConfirmed.addObserver { isConfirmed ->
@@ -155,6 +156,7 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     override suspend fun deactivate() {
         tradeRulesConfirmedPin?.unbind()
+        isTacAcceptedPin?.unbind()
 
         super<ServiceFacade>.deactivate()
     }
