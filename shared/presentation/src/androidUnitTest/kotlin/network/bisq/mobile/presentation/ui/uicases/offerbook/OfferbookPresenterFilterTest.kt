@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
@@ -358,9 +359,9 @@ class OfferbookPresenterFilterTest {
 	        // but mark filters as active so the controller remains visible on the screen.
 		        presenter.setOnlyMyOffers(true)
 		        awaitSortedCount(presenter, 0)
-		        // Let filter UI state catch up, then assert on the latest snapshot instead of
-		        // waiting on a filtered flow, which can be sensitive to scheduling.
-		        runCurrent()
+		        // Let filter UI state and its upstream flows fully settle, then assert on the
+		        // latest snapshot instead of waiting on a filtered flow.
+		        advanceUntilIdle()
 		        val filterState = presenter.filterUiState.value
 		        assertTrue(filterState.onlyMyOffers)
 		        assertTrue(filterState.hasActiveFilters)
@@ -382,12 +383,12 @@ class OfferbookPresenterFilterTest {
 	        // Clear all selections via the presenter API; because this is treated as a manual
 	        // filter, it should hide all offers but mark filters as active.
 	        presenter.setSelectedPaymentMethodIds(emptySet())
-	        presenter.setSelectedSettlementMethodIds(emptySet())
-	        awaitSortedCount(presenter, 0)
+		        presenter.setSelectedSettlementMethodIds(emptySet())
+		        awaitSortedCount(presenter, 0)
 
-		        // Let filter UI state catch up, then assert on the latest snapshot instead of
-		        // waiting on a filtered flow, which can be sensitive to scheduling.
-		        runCurrent()
+		        // Let filter UI state and its upstream flows fully settle, then assert on the
+		        // latest snapshot instead of waiting on a filtered flow.
+		        advanceUntilIdle()
 		        val filterState = presenter.filterUiState.value
 		        assertTrue(
 		            filterState.payment.any { icon -> !icon.selected } ||
