@@ -62,11 +62,11 @@ import kotlin.test.assertTrue
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
 
 
-class TakeOfferAmountPresenterTest {
+	@OptIn(ExperimentalCoroutinesApi::class)
+	class TakeOfferAmountPresenterTest {
 
-    // --- Fakes (Android/JVM-friendly) ---
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val testDispatcher = StandardTestDispatcher()
+	    // --- Fakes (Android/JVM-friendly) ---
+	    private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
     fun setUpMainDispatcher() {
