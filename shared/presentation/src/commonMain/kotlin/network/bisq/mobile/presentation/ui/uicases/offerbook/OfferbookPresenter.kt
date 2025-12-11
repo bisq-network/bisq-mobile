@@ -261,7 +261,11 @@ open class OfferbookPresenter(
                 val current = _selectedPaymentMethodIds.value
                 val newlyAdded = avail - prevAvailPayment
                 val newSelection = (current intersect avail) + (if (hasManualPaymentFilter) emptySet() else newlyAdded)
-                val finalSelection = if (current.isEmpty()) avail else newSelection
+				// If the user has never customized this filter, default to selecting all
+				// available methods when we first obtain availability. Once a manual
+				// filter is applied (including clearing all methods), we keep the
+				// user's selection stable across availability changes.
+				val finalSelection = if (current.isEmpty() && !hasManualPaymentFilter) avail else newSelection
                 if (finalSelection != current) {
                     _selectedPaymentMethodIds.value = finalSelection
                 }
@@ -273,7 +277,10 @@ open class OfferbookPresenter(
                 val current = _selectedSettlementMethodIds.value
                 val newlyAdded = avail - prevAvailSettlement
                 val newSelection = (current intersect avail) + (if (hasManualSettlementFilter) emptySet() else newlyAdded)
-                val finalSelection = if (current.isEmpty()) avail else newSelection
+				// Mirror payment-method behavior: only auto-select all when there is
+				// no manual filter yet. Manual filters (including empty selection)
+				// should remain stable when availability changes.
+				val finalSelection = if (current.isEmpty() && !hasManualSettlementFilter) avail else newSelection
                 if (finalSelection != current) {
                     _selectedSettlementMethodIds.value = finalSelection
                 }
