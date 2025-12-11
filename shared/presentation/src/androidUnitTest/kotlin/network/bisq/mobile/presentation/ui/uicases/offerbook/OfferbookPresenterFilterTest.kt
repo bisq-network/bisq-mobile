@@ -332,70 +332,70 @@ class OfferbookPresenterFilterTest {
         assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
     }
 
-		    @Test
-		    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
-		    fun test_onlyMyOffers_with_no_own_offers_marks_filters_active() = runTest(testDispatcher) {
-	        val allOffers = listOf(
-	            makeOffer("o1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
-	            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
-	        )
-	        val presenter = buildPresenterWithOffers(allOffers)
-	        runCurrent()
+    @Test
+    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
+    fun test_onlyMyOffers_with_no_own_offers_marks_filters_active() = runTest(testDispatcher) {
+        val allOffers = listOf(
+            makeOffer("o1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
+        )
+        val presenter = buildPresenterWithOffers(allOffers)
+        runCurrent()
 
-	        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
-	        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
-	        awaitBaseline(presenter, expectedPayments, expectedSettlements)
+        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
+        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
+        awaitBaseline(presenter, expectedPayments, expectedSettlements)
 
-	        // Start from a state where all methods are selected and all offers are visible
-	        presenter.setSelectedPaymentMethodIds(expectedPayments)
-	        presenter.setSelectedSettlementMethodIds(expectedSettlements)
-	        awaitSortedCount(presenter, allOffers.size)
+        // Start from a state where all methods are selected and all offers are visible
+        presenter.setSelectedPaymentMethodIds(expectedPayments)
+        presenter.setSelectedSettlementMethodIds(expectedSettlements)
+        awaitSortedCount(presenter, allOffers.size)
 
-	        // Enabling "Only my offers" when user has no offers should yield an empty list
-	        // but mark filters as active so the controller remains visible on the screen.
-		        presenter.setOnlyMyOffers(true)
-		        awaitSortedCount(presenter, 0)
-		        // Let filter UI state and its upstream flows fully settle, then assert on the
-		        // latest snapshot instead of waiting on a filtered flow.
-		        advanceUntilIdle()
-		        val filterState = presenter.filterUiState.value
-		        assertTrue(filterState.onlyMyOffers)
-		        assertTrue(filterState.hasActiveFilters)
-	    }
+        // Enabling "Only my offers" when user has no offers should yield an empty list
+        // but mark filters as active so the controller remains visible on the screen.
+        presenter.setOnlyMyOffers(true)
+        awaitSortedCount(presenter, 0)
+        // Let filter UI state and its upstream flows fully settle, then assert on the
+        // latest snapshot instead of waiting on a filtered flow.
+        advanceUntilIdle()
+        val filterState = presenter.filterUiState.value
+        assertTrue(filterState.onlyMyOffers)
+        assertTrue(filterState.hasActiveFilters)
+    }
 
-		    @Test
-		    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
-		    fun test_method_filters_mark_filters_active_when_list_empty() = runTest(testDispatcher) {
-	        val allOffers = listOf(
-	            makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
-	            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
-	        )
-	        val presenter = buildPresenterWithOffers(allOffers)
-	        runCurrent()
+    @Test
+    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
+    fun test_method_filters_mark_filters_active_when_list_empty() = runTest(testDispatcher) {
+        val allOffers = listOf(
+            makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
+        )
+        val presenter = buildPresenterWithOffers(allOffers)
+        runCurrent()
 
-	        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
-	        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
-	        awaitBaseline(presenter, expectedPayments, expectedSettlements)
+        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
+        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
+        awaitBaseline(presenter, expectedPayments, expectedSettlements)
 
-	        // Clear all selections via the presenter API; because this is treated as a manual
-	        // filter, it should hide all offers but mark filters as active.
-	        presenter.setSelectedPaymentMethodIds(emptySet())
-		        presenter.setSelectedSettlementMethodIds(emptySet())
-		        awaitSortedCount(presenter, 0)
+        // Clear all selections via the presenter API; because this is treated as a manual
+        // filter, it should hide all offers but mark filters as active.
+        presenter.setSelectedPaymentMethodIds(emptySet())
+        presenter.setSelectedSettlementMethodIds(emptySet())
+        awaitSortedCount(presenter, 0)
 
-		        // Let filter UI state and its upstream flows fully settle, then assert on the
-		        // latest snapshot instead of waiting on a filtered flow.
-		        advanceUntilIdle()
-		        val filterState = presenter.filterUiState.value
-		        assertTrue(
-		            filterState.payment.any { icon -> !icon.selected } ||
-		                filterState.settlement.any { icon -> !icon.selected }
-		        )
-		        assertTrue(filterState.hasActiveFilters)
-	    }
+        // Let filter UI state and its upstream flows fully settle, then assert on the
+        // latest snapshot instead of waiting on a filtered flow.
+        advanceUntilIdle()
+        val filterState = presenter.filterUiState.value
+        assertTrue(
+            filterState.payment.any { icon -> !icon.selected } ||
+                filterState.settlement.any { icon -> !icon.selected }
+        )
+        assertTrue(filterState.hasActiveFilters)
+    }
 
 	
-	    @Test
+    @Test
     fun test_onlyMyOffers_respects_method_filters() = runTest(testDispatcher) {
         val allOffers = listOf(
             makeOffer("m1", isMy = true, quoteMethods = listOf("NATIONAL_BANK"), baseMethods = listOf("MAIN_CHAIN")),
