@@ -36,13 +36,13 @@ class NavigationManagerImpl(
     private val scope get() = coroutineJobsManager.getScope()
 
     private suspend fun getRootNavController(): NavHostController? {
-        val controller = withTimeoutOrNull(GET_TIMEOUT) {
-            rootNavControllerFlow.mapNotNull { it }.first()
-        }
-        if (controller == null) {
-            log.e { "Timed out waiting for root nav controller after ${GET_TIMEOUT}ms" }
-        }
-        return controller
+	        val controller = withTimeoutOrNull(GET_TIMEOUT) {
+	            rootNavControllerFlow.mapNotNull { it }.first()
+	        }
+	        if (controller == null) {
+	            log.e { "Timed out waiting for root nav controller after ${GET_TIMEOUT}ms" }
+	        }
+	        return controller
     }
 
     private suspend fun getTabNavController(): NavHostController? {
@@ -60,39 +60,61 @@ class NavigationManagerImpl(
     }
 
     override fun setTabNavController(navController: NavHostController?) {
-        tabDestinationListener?.let { listener ->
-            tabNavControllerFlow.value?.removeOnDestinationChangedListener(listener)
-        }
-        tabNavControllerFlow.update { navController }
-        if (navController != null) {
-            NavController.OnDestinationChangedListener { _, destination, _ ->
-                _currentTab.value = destination.getTabNavRoute()
-            }.let { listener ->
-                tabDestinationListener = listener
-                navController.addOnDestinationChangedListener(listener)
-            }
-            _currentTab.value = navController.currentDestination?.getTabNavRoute()
-        } else {
-            _currentTab.value = null
-        }
+	        // Be defensive here: on some platforms / lifecycles the NavHostController may be
+	        // registered before its graph/back stack is fully ready. Any interaction that
+	        // touches destinations must therefore be wrapped to avoid crashing (especially on iOS).
+	        tabDestinationListener?.let { listener ->
+	            runCatching {
+	                tabNavControllerFlow.value?.removeOnDestinationChangedListener(listener)
+	            }.onFailure { e ->
+	                log.e(e) { "Failed to remove previous tab destination listener" }
+	            }
+	        }
+	        tabNavControllerFlow.update { navController }
+	        if (navController != null) {
+	            runCatching {
+	                NavController.OnDestinationChangedListener { _, destination, _ ->
+	                    _currentTab.value = destination.getTabNavRoute()
+	                }.let { listener ->
+	                    tabDestinationListener = listener
+	                    navController.addOnDestinationChangedListener(listener)
+	                }
+	                _currentTab.value = navController.currentDestination?.getTabNavRoute()
+	            }.onFailure { e ->
+	                log.e(e) { "Failed to initialize tab nav controller (graph may not be ready yet)" }
+	            }
+	        } else {
+	            _currentTab.value = null
+	        }
     }
 
     override fun isAtMainScreen(): Boolean {
-        val currentBackStackEntry = rootNavControllerFlow.value?.currentBackStackEntry
-        val hasTabContainerRoute =
-            currentBackStackEntry?.destination?.hasRoute<NavRoute.TabContainer>()
-        val route = rootNavControllerFlow.value?.currentBackStackEntry?.destination?.route
-        log.d { "Current screen $route" }
-        return hasTabContainerRoute ?: false
+	        val navController = rootNavControllerFlow.value ?: return false
+	        return runCatching {
+	            val currentBackStackEntry = navController.currentBackStackEntry
+	            val hasTabContainerRoute =
+	                currentBackStackEntry?.destination?.hasRoute<NavRoute.TabContainer>()
+	            val route = currentBackStackEntry?.destination?.route
+	            log.d { "Current screen $route" }
+	            hasTabContainerRoute ?: false
+	        }.onFailure { e ->
+	            log.e(e) { "Failed to determine if at main screen (nav graph may not be ready yet)" }
+	        }.getOrNull() ?: false
     }
 
     override fun isAtHomeTab(): Boolean {
-        val currentBackStackEntry = tabNavControllerFlow.value?.currentBackStackEntry
-        val hasTabHomeRoute =
-            currentBackStackEntry?.destination?.hasRoute<NavRoute.TabHome>() ?: false
-        val route = tabNavControllerFlow.value?.currentBackStackEntry?.destination?.route
-        log.d { "Current tab $route" }
-        return isAtMainScreen() && hasTabHomeRoute
+	        val navController = tabNavControllerFlow.value ?: return false
+	        val isHomeTab = runCatching {
+	            val currentBackStackEntry = navController.currentBackStackEntry
+	            val hasTabHomeRoute =
+	                currentBackStackEntry?.destination?.hasRoute<NavRoute.TabHome>() ?: false
+	            val route = currentBackStackEntry?.destination?.route
+	            log.d { "Current tab $route" }
+	            hasTabHomeRoute
+	        }.onFailure { e ->
+	            log.e(e) { "Failed to determine if at home tab (nav graph may not be ready yet)" }
+	        }.getOrNull() ?: false
+	        return isAtMainScreen() && isHomeTab
     }
 
 
@@ -121,27 +143,31 @@ class NavigationManagerImpl(
     ) {
         log.d { "Navigating to tab $destination " }
         scope.launch {
-            if (!isAtMainScreen()) {
-                val rootNav = getRootNavController() ?: return@launch
-                val isTabContainerInBackStack = rootNav.currentBackStack.value.any {
-                    it.destination.hasRoute(NavRoute.TabContainer::class)
-                }
-                if (isTabContainerInBackStack) {
-                    rootNav.popBackStack(NavRoute.TabContainer, inclusive = false)
-                } else {
-                    rootNav.navigate(NavRoute.TabContainer) {
-                        launchSingleTop = true
-                    }
-                }
-            }
-            val tabNav = getTabNavController() ?: return@launch
-            tabNav.navigate(destination) {
-                popUpTo(NavRoute.HomeScreenGraphKey) {
-                    saveState = saveStateOnPopUp
-                }
-                launchSingleTop = shouldLaunchSingleTop
-                restoreState = shouldRestoreState
-            }
+	            runCatching {
+	                if (!isAtMainScreen()) {
+	                    val rootNav = getRootNavController() ?: return@runCatching
+	                    val isTabContainerInBackStack = rootNav.currentBackStack.value.any {
+	                        it.destination.hasRoute(NavRoute.TabContainer::class)
+	                    }
+	                    if (isTabContainerInBackStack) {
+	                        rootNav.popBackStack(NavRoute.TabContainer, inclusive = false)
+	                    } else {
+	                        rootNav.navigate(NavRoute.TabContainer) {
+	                            launchSingleTop = true
+	                        }
+	                    }
+	                }
+	                val tabNav = getTabNavController() ?: return@runCatching
+	                tabNav.navigate(destination) {
+	                    popUpTo(NavRoute.HomeScreenGraphKey) {
+	                        saveState = saveStateOnPopUp
+	                    }
+	                    launchSingleTop = shouldLaunchSingleTop
+	                    restoreState = shouldRestoreState
+	                }
+	            }.onFailure { e ->
+	                log.e(e) { "Failed to navigate to tab $destination" }
+	            }
         }
     }
 
@@ -151,54 +177,71 @@ class NavigationManagerImpl(
         shouldSaveState: Boolean
     ) {
         scope.launch {
-            getRootNavController()?.popBackStack(
-                route = destination,
-                inclusive = shouldInclusive,
-                saveState = shouldSaveState
-            )
+	            runCatching {
+	                getRootNavController()?.popBackStack(
+	                    route = destination,
+	                    inclusive = shouldInclusive,
+	                    saveState = shouldSaveState
+	                )
+	            }.onFailure { e ->
+	                log.e(e) { "Failed to navigate back to $destination" }
+	            }
         }
     }
 
     override fun navigateFromUri(uri: String) {
         scope.launch {
-            val navUri = NavUri(uri)
-            val rootNavController = getRootNavController() ?: return@launch
-            if (rootNavController.graph.hasDeepLink(navUri)) {
-                val navOptions = navOptions {
-                    launchSingleTop = true
-                }
-                rootNavController.navigate(navUri, navOptions)
-            } else if (isAtMainScreen()) {
-                val tabNavController = getTabNavController() ?: return@launch
-                if (tabNavController.graph.hasDeepLink(navUri)) {
-                    val navOptions = navOptions {
-                        popUpTo(NavRoute.HomeScreenGraphKey) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                    tabNavController.navigate(navUri, navOptions)
-                } else {
-                    // ignore
-                }
-            }
+	            runCatching {
+	                val navUri = NavUri(uri)
+	                val rootNavController = getRootNavController() ?: return@runCatching
+	                if (rootNavController.graph.hasDeepLink(navUri)) {
+	                    val navOptions = navOptions {
+	                        launchSingleTop = true
+	                    }
+	                    rootNavController.navigate(navUri, navOptions)
+	                } else if (isAtMainScreen()) {
+	                    val tabNavController = getTabNavController() ?: return@runCatching
+	                    if (tabNavController.graph.hasDeepLink(navUri)) {
+	                        val navOptions = navOptions {
+	                            popUpTo(NavRoute.HomeScreenGraphKey) {
+	                                saveState = true
+	                            }
+	                            launchSingleTop = true
+	                            restoreState = true
+	                        }
+	                        tabNavController.navigate(navUri, navOptions)
+	                    } else {
+	                        // ignore
+	                    }
+	                }
+	            }.onFailure { e ->
+	                log.e(e) { "Failed to navigate from uri $uri" }
+	            }
         }
     }
 
     override fun navigateBack(onCompleted: (() -> Unit)?) {
         scope.launch {
-            getRootNavController()?.let { rootNavController ->
-                if (rootNavController.currentBackStack.value.size > 1) {
-                    rootNavController.popBackStack()
-                }
-            }
+	            runCatching {
+	                getRootNavController()?.let { rootNavController ->
+	                    if (rootNavController.currentBackStack.value.size > 1) {
+	                        rootNavController.popBackStack()
+	                    }
+	                }
+	            }.onFailure { e ->
+	                log.e(e) { "Failed to navigate back" }
+	            }
             onCompleted?.invoke()
         }
     }
 
-    override fun showBackButton() =
-        rootNavControllerFlow.value?.previousBackStackEntry != null && !isAtMainScreen()
+	    override fun showBackButton() =
+	        runCatching {
+	            val rootNav = rootNavControllerFlow.value
+	            rootNav?.previousBackStackEntry != null && !isAtMainScreen()
+	        }.onFailure { e ->
+	            log.e(e) { "Failed to determine showBackButton state" }
+	        }.getOrNull() ?: false
 
     private fun NavDestination.getTabNavRoute(): TabNavRoute? {
         return when {
