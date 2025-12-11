@@ -356,12 +356,14 @@ class OfferbookPresenterFilterTest {
 
 	        // Enabling "Only my offers" when user has no offers should yield an empty list
 	        // but mark filters as active so the controller remains visible on the screen.
-	        presenter.setOnlyMyOffers(true)
-	        awaitSortedCount(presenter, 0)
-	        val filterState = presenter.filterUiState
-	            .filter { it.onlyMyOffers }
-	            .first()
-	        assertTrue(filterState.hasActiveFilters)
+		        presenter.setOnlyMyOffers(true)
+		        awaitSortedCount(presenter, 0)
+		        // Let filter UI state catch up, then assert on the latest snapshot instead of
+		        // waiting on a filtered flow, which can be sensitive to scheduling.
+		        runCurrent()
+		        val filterState = presenter.filterUiState.value
+		        assertTrue(filterState.onlyMyOffers)
+		        assertTrue(filterState.hasActiveFilters)
 	    }
 
 	    @Test
