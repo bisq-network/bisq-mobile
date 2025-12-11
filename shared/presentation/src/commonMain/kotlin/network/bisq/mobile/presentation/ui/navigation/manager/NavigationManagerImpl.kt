@@ -46,21 +46,17 @@ class NavigationManagerImpl(
     // Suspend until the root controller is available *and* its navigation graph is ready,
     // always collecting and checking on the Main dispatcher.
     private suspend fun getRootNavController(): NavHostController {
-        return withContext(dispatcher) {
-            val controller = rootNavControllerFlow.mapNotNull { it }.first()
-            controller.awaitGraphReady()
-            controller
-        }
+        val controller = rootNavControllerFlow.mapNotNull { it }.first()
+        controller.awaitGraphReady()
+        return controller
     }
 
     // Suspend until the tab controller is available *and* its navigation graph is ready,
     // always collecting and checking on the Main dispatcher.
     private suspend fun getTabNavController(): NavHostController {
-        return withContext(dispatcher) {
-            val controller = tabNavControllerFlow.mapNotNull { it }.first()
-            controller.awaitGraphReady()
-            controller
-        }
+        val controller = tabNavControllerFlow.mapNotNull { it }.first()
+        controller.awaitGraphReady()
+        return controller
     }
 
     override fun setRootNavController(navController: NavHostController?) {
