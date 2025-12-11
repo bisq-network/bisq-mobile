@@ -3,10 +3,12 @@ package network.bisq.mobile.domain.utils
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.domain.utils.CoroutineJobsManager.Companion.createDispatcher
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
@@ -14,6 +16,14 @@ import kotlin.coroutines.EmptyCoroutineContext
  * This helps centralize job management and disposal across the application.
  */
 interface CoroutineJobsManager {
+
+    companion object {
+        fun createDispatcher(): MainCoroutineDispatcher = try {
+            Dispatchers.Main.immediate
+        } catch (_: UnsupportedOperationException) {
+            Dispatchers.Main
+        }
+    }
     
     /**
      * Dispose all managed jobs.
@@ -102,11 +112,7 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
                 // direct functional alternative, we use `EmptyCoroutineContext` to ensure that a
                 // coroutine
                 // launched within this scope will run in the same context as the caller.
-                try {
-                    Dispatchers.Main.immediate
-                } catch (_: UnsupportedOperationException) {
-                    Dispatchers.Main
-                }
+                createDispatcher()
             } catch (_: NotImplementedError) {
                 // In Native environments where `Dispatchers.Main` might not exist (e.g., Linux):
                 EmptyCoroutineContext

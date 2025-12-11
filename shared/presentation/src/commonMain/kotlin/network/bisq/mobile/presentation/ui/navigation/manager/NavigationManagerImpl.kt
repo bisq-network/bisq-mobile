@@ -19,6 +19,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.CoroutineJobsManager.Companion.createDispatcher
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
@@ -40,10 +41,12 @@ class NavigationManagerImpl(
     // External scope, but we always dispatch to Main when touching NavController.
     private val scope get() = coroutineJobsManager.getScope()
 
+    private val dispatcher get() = createDispatcher()
+
     // Suspend until the root controller is available *and* its navigation graph is ready,
     // always collecting and checking on the Main dispatcher.
     private suspend fun getRootNavController(): NavHostController {
-        return withContext(Dispatchers.Main.immediate) {
+        return withContext(dispatcher) {
             val controller = rootNavControllerFlow.mapNotNull { it }.first()
             controller.awaitGraphReady()
             controller
@@ -53,7 +56,7 @@ class NavigationManagerImpl(
     // Suspend until the tab controller is available *and* its navigation graph is ready,
     // always collecting and checking on the Main dispatcher.
     private suspend fun getTabNavController(): NavHostController {
-        return withContext(Dispatchers.Main.immediate) {
+        return withContext(dispatcher) {
             val controller = tabNavControllerFlow.mapNotNull { it }.first()
             controller.awaitGraphReady()
             controller
@@ -63,7 +66,7 @@ class NavigationManagerImpl(
     override fun setRootNavController(navController: NavHostController?) {
         // Ensure we set on Main to avoid thread checks in NavController internals.
         scope.launch {
-            withContext(Dispatchers.Main.immediate) {
+            withContext(dispatcher) {
                 rootNavControllerFlow.value = navController
             }
         }
@@ -72,7 +75,7 @@ class NavigationManagerImpl(
     override fun setTabNavController(navController: NavHostController?) {
         // Ensure listener operations happen on Main and are protected.
         scope.launch {
-            withContext(Dispatchers.Main.immediate) {
+            withContext(dispatcher) {
                 tabDestinationListener?.let { listener ->
                     runCatching {
                         tabNavControllerFlow.value?.removeOnDestinationChangedListener(listener)
@@ -141,7 +144,7 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(Dispatchers.Main.immediate) {
+                    withContext(dispatcher) {
                         runCatching {
                             rootNav.navigate(destination) {
                                 customSetup(this)
@@ -169,7 +172,7 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(Dispatchers.Main.immediate) {
+                    withContext(dispatcher) {
                         runCatching {
                             if (!isAtMainScreen()) {
                                 val isTabContainerInBackStack = rootNav.currentBackStack.value.any {
@@ -189,7 +192,7 @@ class NavigationManagerImpl(
                     }
 
                     val tabNav = getTabNavController()
-                    withContext(Dispatchers.Main.immediate) {
+                    withContext(dispatcher) {
                         runCatching {
                             tabNav.navigate(destination) {
                                 popUpTo(NavRoute.HomeScreenGraphKey) {
@@ -218,7 +221,7 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(Dispatchers.Main.immediate) {
+                    withContext(dispatcher) {
                         runCatching {
                             rootNav.popBackStack(
                                 route = destination,
@@ -242,16 +245,20 @@ class NavigationManagerImpl(
                 try {
                     val navUri = NavUri(uri)
                     val rootNavController = getRootNavController()
-                    withContext(Dispatchers.Main.immediate) {
-                        runCatching {
-                            if (rootNavController.graph.hasDeepLink(navUri)) {
+                    withContext(dispatcher) {
+                        if (rootNavController.graph.hasDeepLink(navUri)) {
+                            runCatching {
                                 val navOptions = navOptions {
                                     launchSingleTop = true
                                 }
                                 rootNavController.navigate(navUri, navOptions)
-                            } else if (isAtMainScreen()) {
-                                val tabNavController = getTabNavController()
-                                if (tabNavController.graph.hasDeepLink(navUri)) {
+                            }.onFailure { e ->
+                                log.e(e) { "Failed to navigate from uri $uri via root graph" }
+                            }
+                        } else if (isAtMainScreen()) {
+                            val tabNavController = getTabNavController()
+                            if (tabNavController.graph.hasDeepLink(navUri)) {
+                                runCatching {
                                     val navOptions = navOptions {
                                         popUpTo(NavRoute.HomeScreenGraphKey) {
                                             saveState = true
@@ -260,12 +267,12 @@ class NavigationManagerImpl(
                                         restoreState = true
                                     }
                                     tabNavController.navigate(navUri, navOptions)
-                                } else {
-                                    // ignore
+                                }.onFailure { e ->
+                                    log.e(e) { "Failed to navigate from uri $uri via tab graph" }
                                 }
+                            } else {
+                                // Deep link not handled by tab graph; ignore.
                             }
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to navigate from uri $uri" }
                         }
                     }
                 } catch (t: Throwable) {
@@ -280,7 +287,7 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(Dispatchers.Main.immediate) {
+                    withContext(dispatcher) {
                         runCatching {
                             if (rootNav.currentBackStack.value.size > 1) {
                                 rootNav.popBackStack()
@@ -309,20 +316,24 @@ class NavigationManagerImpl(
     // Public cleanup hook; can be called when owner is destroyed.
     fun close() {
         scope.launch {
-            withContext(Dispatchers.Main.immediate) {
-                try {
-                    tabDestinationListener?.let { listener ->
-                        runCatching {
-                            tabNavControllerFlow.value?.removeOnDestinationChangedListener(listener)
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to remove tab destination listener in close()" }
+            navMutex.withLock {
+                withContext(dispatcher) {
+                    try {
+                        tabDestinationListener?.let { listener ->
+                            runCatching {
+                                tabNavControllerFlow.value?.removeOnDestinationChangedListener(
+                                    listener
+                                )
+                            }.onFailure { e ->
+                                log.e(e) { "Failed to remove tab destination listener in close()" }
+                            }
                         }
+                    } finally {
+                        tabDestinationListener = null
+                        rootNavControllerFlow.value = null
+                        tabNavControllerFlow.value = null
+                        _currentTab.value = null
                     }
-                } finally {
-                    tabDestinationListener = null
-                    rootNavControllerFlow.value = null
-                    tabNavControllerFlow.value = null
-                    _currentTab.value = null
                 }
             }
         }
