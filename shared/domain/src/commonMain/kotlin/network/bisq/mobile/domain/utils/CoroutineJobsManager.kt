@@ -8,7 +8,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.utils.CoroutineJobsManager.Companion.createDispatcher
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
@@ -16,15 +15,6 @@ import kotlin.coroutines.EmptyCoroutineContext
  * This helps centralize job management and disposal across the application.
  */
 interface CoroutineJobsManager {
-
-    companion object {
-        fun createDispatcher(): MainCoroutineDispatcher = try {
-            Dispatchers.Main.immediate
-        } catch (_: UnsupportedOperationException) {
-            Dispatchers.Main
-        }
-    }
-    
     /**
      * Dispose all managed jobs.
      */
@@ -124,6 +114,14 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
             CoroutineScope(dispatcher + SupervisorJob())
         } else {
             CoroutineScope(dispatcher + SupervisorJob() + exceptionHandler)
+        }
+    }
+
+    private fun createDispatcher(): MainCoroutineDispatcher {
+        return try {
+            Dispatchers.Main.immediate
+        } catch (_: UnsupportedOperationException) {
+            Dispatchers.Main
         }
     }
 }
