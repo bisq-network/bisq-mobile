@@ -5,8 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -14,7 +12,6 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManagerImpl
 import kotlin.test.Test
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NavigationManagerImplTest {

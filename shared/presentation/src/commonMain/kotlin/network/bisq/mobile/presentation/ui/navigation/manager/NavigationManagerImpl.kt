@@ -7,7 +7,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavUri
 import androidx.navigation.navOptions
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,9 +16,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.CoroutineJobsManager.Companion.createDispatcher
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
@@ -41,8 +38,6 @@ class NavigationManagerImpl(
     // External scope, but we always dispatch to Main when touching NavController.
     private val scope get() = coroutineJobsManager.getScope()
 
-    private val dispatcher get() = createDispatcher()
-
     // Suspend until the root controller is available *and* its navigation graph is ready,
     // always collecting and checking on the Main dispatcher.
     private suspend fun getRootNavController(): NavHostController {
@@ -62,41 +57,37 @@ class NavigationManagerImpl(
     override fun setRootNavController(navController: NavHostController?) {
         // Ensure we set on Main to avoid thread checks in NavController internals.
         scope.launch {
-            withContext(dispatcher) {
-                rootNavControllerFlow.value = navController
-            }
+            rootNavControllerFlow.value = navController
         }
     }
 
     override fun setTabNavController(navController: NavHostController?) {
         // Ensure listener operations happen on Main and are protected.
         scope.launch {
-            withContext(dispatcher) {
-                tabDestinationListener?.let { listener ->
-                    runCatching {
-                        tabNavControllerFlow.value?.removeOnDestinationChangedListener(listener)
-                    }.onFailure { e ->
-                        log.e(e) { "Failed to remove previous tab destination listener" }
-                    }
+            tabDestinationListener?.let { listener ->
+                runCatching {
+                    tabNavControllerFlow.value?.removeOnDestinationChangedListener(listener)
+                }.onFailure { e ->
+                    log.e(e) { "Failed to remove previous tab destination listener" }
                 }
+            }
 
-                tabNavControllerFlow.value = navController
+            tabNavControllerFlow.value = navController
 
-                if (navController != null) {
-                    runCatching {
-                        NavController.OnDestinationChangedListener { _, destination, _ ->
-                            _currentTab.value = destination.getTabNavRoute()
-                        }.let { listener ->
-                            tabDestinationListener = listener
-                            navController.addOnDestinationChangedListener(listener)
-                        }
-                        _currentTab.value = navController.currentDestination?.getTabNavRoute()
-                    }.onFailure { e ->
-                        log.e(e) { "Failed to initialize tab nav controller (graph may not be ready yet)" }
+            if (navController != null) {
+                runCatching {
+                    NavController.OnDestinationChangedListener { _, destination, _ ->
+                        _currentTab.value = destination.getTabNavRoute()
+                    }.let { listener ->
+                        tabDestinationListener = listener
+                        navController.addOnDestinationChangedListener(listener)
                     }
-                } else {
-                    _currentTab.value = null
+                    _currentTab.value = navController.currentDestination?.getTabNavRoute()
+                }.onFailure { e ->
+                    log.e(e) { "Failed to initialize tab nav controller (graph may not be ready yet)" }
                 }
+            } else {
+                _currentTab.value = null
             }
         }
     }
@@ -140,14 +131,12 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(dispatcher) {
-                        runCatching {
-                            rootNav.navigate(destination) {
-                                customSetup(this)
-                            }
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to navigate to $destination" }
+                    runCatching {
+                        rootNav.navigate(destination) {
+                            customSetup(this)
                         }
+                    }.onFailure { e ->
+                        log.e(e) { "Failed to navigate to $destination" }
                     }
                 } catch (t: Throwable) {
                     log.e(t) { "Failed to navigate to $destination (exception)" }
@@ -168,38 +157,34 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(dispatcher) {
-                        runCatching {
-                            if (!isAtMainScreen()) {
-                                val isTabContainerInBackStack = rootNav.currentBackStack.value.any {
-                                    it.destination.hasRoute(NavRoute.TabContainer::class)
-                                }
-                                if (isTabContainerInBackStack) {
-                                    rootNav.popBackStack(NavRoute.TabContainer, inclusive = false)
-                                } else {
-                                    rootNav.navigate(NavRoute.TabContainer) {
-                                        launchSingleTop = true
-                                    }
+                    runCatching {
+                        if (!isAtMainScreen()) {
+                            val isTabContainerInBackStack = rootNav.currentBackStack.value.any {
+                                it.destination.hasRoute(NavRoute.TabContainer::class)
+                            }
+                            if (isTabContainerInBackStack) {
+                                rootNav.popBackStack(NavRoute.TabContainer, inclusive = false)
+                            } else {
+                                rootNav.navigate(NavRoute.TabContainer) {
+                                    launchSingleTop = true
                                 }
                             }
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to prepare tab container navigation" }
                         }
+                    }.onFailure { e ->
+                        log.e(e) { "Failed to prepare tab container navigation" }
                     }
 
                     val tabNav = getTabNavController()
-                    withContext(dispatcher) {
-                        runCatching {
-                            tabNav.navigate(destination) {
-                                popUpTo(NavRoute.HomeScreenGraphKey) {
-                                    saveState = saveStateOnPopUp
-                                }
-                                launchSingleTop = shouldLaunchSingleTop
-                                restoreState = shouldRestoreState
+                    runCatching {
+                        tabNav.navigate(destination) {
+                            popUpTo(NavRoute.HomeScreenGraphKey) {
+                                saveState = saveStateOnPopUp
                             }
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to navigate to tab $destination" }
+                            launchSingleTop = shouldLaunchSingleTop
+                            restoreState = shouldRestoreState
                         }
+                    }.onFailure { e ->
+                        log.e(e) { "Failed to navigate to tab $destination" }
                     }
                 } catch (t: Throwable) {
                     log.e(t) { "Failed to navigate to tab $destination (exception)" }
@@ -217,16 +202,14 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(dispatcher) {
-                        runCatching {
-                            rootNav.popBackStack(
-                                route = destination,
-                                inclusive = shouldInclusive,
-                                saveState = shouldSaveState,
-                            )
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to popBackStack to $destination" }
-                        }
+                    runCatching {
+                        rootNav.popBackStack(
+                            route = destination,
+                            inclusive = shouldInclusive,
+                            saveState = shouldSaveState,
+                        )
+                    }.onFailure { e ->
+                        log.e(e) { "Failed to popBackStack to $destination" }
                     }
                 } catch (t: Throwable) {
                     log.e(t) { "Failed to navigate back to $destination (exception)" }
@@ -241,34 +224,32 @@ class NavigationManagerImpl(
                 try {
                     val navUri = NavUri(uri)
                     val rootNavController = getRootNavController()
-                    withContext(dispatcher) {
-                        if (rootNavController.graph.hasDeepLink(navUri)) {
+                    if (rootNavController.graph.hasDeepLink(navUri)) {
+                        runCatching {
+                            val navOptions = navOptions {
+                                launchSingleTop = true
+                            }
+                            rootNavController.navigate(navUri, navOptions)
+                        }.onFailure { e ->
+                            log.e(e) { "Failed to navigate from uri $uri via root graph" }
+                        }
+                    } else if (isAtMainScreen()) {
+                        val tabNavController = getTabNavController()
+                        if (tabNavController.graph.hasDeepLink(navUri)) {
                             runCatching {
                                 val navOptions = navOptions {
-                                    launchSingleTop = true
-                                }
-                                rootNavController.navigate(navUri, navOptions)
-                            }.onFailure { e ->
-                                log.e(e) { "Failed to navigate from uri $uri via root graph" }
-                            }
-                        } else if (isAtMainScreen()) {
-                            val tabNavController = getTabNavController()
-                            if (tabNavController.graph.hasDeepLink(navUri)) {
-                                runCatching {
-                                    val navOptions = navOptions {
-                                        popUpTo(NavRoute.HomeScreenGraphKey) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
+                                    popUpTo(NavRoute.HomeScreenGraphKey) {
+                                        saveState = true
                                     }
-                                    tabNavController.navigate(navUri, navOptions)
-                                }.onFailure { e ->
-                                    log.e(e) { "Failed to navigate from uri $uri via tab graph" }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                            } else {
-                                // Deep link not handled by tab graph; ignore.
+                                tabNavController.navigate(navUri, navOptions)
+                            }.onFailure { e ->
+                                log.e(e) { "Failed to navigate from uri $uri via tab graph" }
                             }
+                        } else {
+                            // Deep link not handled by tab graph; ignore.
                         }
                     }
                 } catch (t: Throwable) {
@@ -283,14 +264,12 @@ class NavigationManagerImpl(
             navMutex.withLock {
                 try {
                     val rootNav = getRootNavController()
-                    withContext(dispatcher) {
-                        runCatching {
-                            if (rootNav.currentBackStack.value.size > 1) {
-                                rootNav.popBackStack()
-                            }
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to navigate back" }
+                    runCatching {
+                        if (rootNav.currentBackStack.value.size > 1) {
+                            rootNav.popBackStack()
                         }
+                    }.onFailure { e ->
+                        log.e(e) { "Failed to navigate back" }
                     }
                 } catch (t: Throwable) {
                     log.e(t) { "Failed to navigate back (exception)" }
@@ -308,32 +287,6 @@ class NavigationManagerImpl(
         }.onFailure { e ->
             log.e(e) { "Failed to determine showBackButton state" }
         }.getOrNull() ?: false
-
-    // Public cleanup hook; can be called when owner is destroyed.
-    fun close() {
-        scope.launch {
-            navMutex.withLock {
-                withContext(dispatcher) {
-                    try {
-                        tabDestinationListener?.let { listener ->
-                            runCatching {
-                                tabNavControllerFlow.value?.removeOnDestinationChangedListener(
-                                    listener
-                                )
-                            }.onFailure { e ->
-                                log.e(e) { "Failed to remove tab destination listener in close()" }
-                            }
-                        }
-                    } finally {
-                        tabDestinationListener = null
-                        rootNavControllerFlow.value = null
-                        tabNavControllerFlow.value = null
-                        _currentTab.value = null
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * Await until the NavController has an attached navigation graph.
