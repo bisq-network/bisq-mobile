@@ -34,8 +34,8 @@ import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.common.domain.utils.createHttpClient
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
 import network.bisq.mobile.crypto.getSha256
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.awaitOrCancel

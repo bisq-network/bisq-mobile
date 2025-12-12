@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState

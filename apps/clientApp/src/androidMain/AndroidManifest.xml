@@ -43,7 +43,7 @@
 
         <!-- OS services -->
         <service
-            android:name="network.bisq.mobile.presentation.notification.ForegroundService"
+            android:name="network.bisq.mobile.presentation.common.notification.ForegroundService"
             android:exported="false"
             android:foregroundServiceType="remoteMessaging"
             android:permission="android.permission.FOREGROUND_SERVICE" />

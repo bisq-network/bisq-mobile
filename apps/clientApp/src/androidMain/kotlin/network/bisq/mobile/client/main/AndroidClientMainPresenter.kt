@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.presentation.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 
 /**
  * Redefinition to be able to access activity for trading notifications click handling

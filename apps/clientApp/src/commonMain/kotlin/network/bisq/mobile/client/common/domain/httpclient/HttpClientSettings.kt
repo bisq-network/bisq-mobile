@@ -2,7 +2,7 @@ package network.bisq.mobile.client.common.domain.httpclient
 
 import io.ktor.client.engine.ProxyBuilder
 import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.client.settings.domain.SensitiveSettings
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.getPlatformInfo
 

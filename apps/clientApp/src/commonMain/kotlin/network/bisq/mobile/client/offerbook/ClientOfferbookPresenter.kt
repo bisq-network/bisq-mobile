@@ -5,10 +5,10 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
-import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookPresenter
-import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 
 class ClientOfferbookPresenter(
     mainPresenter: MainPresenter,
