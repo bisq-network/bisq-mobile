@@ -44,10 +44,10 @@ class NodeNetworkServiceFacade(
             "Expected exactly one transport type on mobile, found ${serviceNodesByTransport.size}"
         }
         serviceNodesByTransport.values.forEach { serviceNode ->
-            serviceNodeStatePin = serviceNode.state.addObserver { state ->
-                if (ServiceNode.State.INITIALIZING == state) {
-                    defaultNode = serviceNode.defaultNode
-                    requireNotNull(defaultNode) { "defaultNode is not null when state is ServiceNode.State.INITIALIZING" }
+            serviceNodeStatePin = serviceNode.state.addObserver {
+                val node = serviceNode.defaultNode
+                if (node != null) {
+                    defaultNode = node
                     defaultNode!!.addListener(this)
                     updateNumConnections()
 
