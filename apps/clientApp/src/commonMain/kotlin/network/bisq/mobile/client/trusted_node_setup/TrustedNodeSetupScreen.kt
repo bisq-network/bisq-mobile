@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
@@ -37,23 +39,26 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.BarcodeScannerView
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSelect
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ScanQrIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
+import network.bisq.mobile.presentation.ui.components.organisms.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.rememberBlurTriggerSetup
 import network.bisq.mobile.presentation.ui.helpers.setBlurTrigger
@@ -84,11 +89,29 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val torState by presenter.torState.collectAsState()
     val torProgress by presenter.torProgress.collectAsState()
     val timeoutCounter by presenter.timeoutCounter.collectAsState()
+    val showBarcodeView by presenter.showBarcodeView.collectAsState()
+    val showBarcodeError by presenter.showBarcodeError.collectAsState()
+    val triggerValidation by presenter.triggerApiUrlValidation.collectAsState()
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showAdvancedOptions by remember { mutableStateOf(false) }
+
+    // see BitcoinLnAddressField for reasoning
+    val validationLogic = remember {
+        { input: String ->
+            presenter.validateApiUrl(
+                input, selectedProxyOption,
+            )
+        }
+    }
+    var validationError by remember {
+        mutableStateOf({ input: String -> validationLogic(input) })
+    }
+    LaunchedEffect(triggerValidation) {
+        validationError = { input: String -> validationLogic(input) }
+    }
 
     BisqScrollScaffold(
         topBar = if (!isWorkflow) {
@@ -163,7 +186,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
             ) {
                 BisqTextField(
                     modifier = Modifier.weight(0.8f).setBlurTrigger(blurTriggerSetup),
@@ -173,12 +196,34 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     placeholder = apiUrlPrompt,
                     disabled = isNodeSetupInProgress,
                     showPaste = true,
-                    validation = {
-                        presenter.validateApiUrl(
-                            it, selectedProxyOption,
+                    validation = validationError,
+                )
+
+                if (isWorkflow) {
+                    Column {
+                        // a little hack to align the button with input
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            BisqText.baseLight(
+                                text = " ",
+                                color = Color.Transparent,
+                                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                            )
+                        }
+                        BisqGap.VQuarter()
+                        // end of the hack
+                        BisqButton(
+                            backgroundColor = BisqTheme.colors.secondary,
+                            onClick = presenter::onBarcodeClick,
+                            modifier = Modifier.size(BisqUIConstants.ScreenPadding4X),
+                            iconOnly = {
+                                ScanQrIcon()
+                            },
                         )
                     }
-                )
+                }
             }
 
             AdvancedOptionsDrawer(
@@ -321,6 +366,23 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 }
             }
         }
+    }
+
+    if (showBarcodeView) {
+        BarcodeScannerView(
+            onCanceled = presenter::onBarcodeViewDismiss,
+            onFailed = { presenter.onBarcodeFail() }
+        ) {
+            presenter.onBarcodeResult(it.data)
+        }
+    }
+
+    if (showBarcodeError) {
+        BisqGeneralErrorDialog(
+            errorTitle = "mobile.barcode.error.title".i18n(),
+            errorMessage = "mobile.barcode.error.message".i18n(),
+            onClose = presenter::onBarcodeErrorClose
+        )
     }
 }
 

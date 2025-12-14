@@ -142,6 +142,15 @@ class TrustedNodeSetupPresenter(
     private val _timeoutCounter = MutableStateFlow(0L)
     val timeoutCounter = _timeoutCounter.asStateFlow()
 
+    private val _showBarcodeView = MutableStateFlow(false)
+    val showBarcodeView: StateFlow<Boolean> = _showBarcodeView.asStateFlow()
+
+    private val _showBarcodeError = MutableStateFlow(false)
+    val showBarcodeError: StateFlow<Boolean> = _showBarcodeError.asStateFlow()
+
+    private val _triggerApiUrlValidation = MutableStateFlow(0)
+    val triggerApiUrlValidation = _triggerApiUrlValidation.asStateFlow()
+
     // Track ongoing connect attempt and countdown to support cancellation
     private var connectJob: Job? = null
     private var countdownJob: Job? = null
@@ -545,5 +554,28 @@ class TrustedNodeSetupPresenter(
             return "mobile.trustedNodeSetup.host.ip.invalid".i18n()
         }
         return null
+    }
+
+    fun onBarcodeClick() {
+        _showBarcodeView.value = true
+    }
+
+    fun onBarcodeFail() {
+        _showBarcodeView.value = false
+        _showBarcodeError.value = true
+    }
+
+    fun onBarcodeErrorClose() {
+        _showBarcodeError.value = false
+    }
+
+    fun onBarcodeViewDismiss() {
+        _showBarcodeView.value = false
+    }
+
+    fun onBarcodeResult(value: String) {
+        onApiUrlChanged(value)
+        _showBarcodeView.value = false
+        _triggerApiUrlValidation.value++
     }
 }

@@ -22,6 +22,7 @@ val clientFrameworkBaseName = "ClientApp"
 val clientAppModuleName = "clientApp"
 val sharedPresentationModule = ":shared:presentation"
 val sharedDomainModule = ":shared:domain"
+val sharedKScanModule = ":shared:kscan"
 
 dependencies {
     debugImplementation(compose.uiTooling)
@@ -67,6 +68,7 @@ kotlin {
         commonMain.dependencies {
             api(project(sharedPresentationModule))
             api(project(sharedDomainModule))
+            api(project(sharedKScanModule))
             implementation(compose.ui)
             implementation(compose.foundation)
             implementation(compose.material3)
