@@ -4,7 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
 
@@ -41,9 +42,15 @@ open class SettingsRepositoryImpl(
         }
     }
 
-    override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {
+    override suspend fun setNotificationPermissionState(value: PermissionState) {
         settingsStore.updateData {
             it.copy(notificationPermissionState = value)
+        }
+    }
+
+    override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {
+        settingsStore.updateData {
+            it.copy(batteryOptimizationState = value)
         }
     }
 

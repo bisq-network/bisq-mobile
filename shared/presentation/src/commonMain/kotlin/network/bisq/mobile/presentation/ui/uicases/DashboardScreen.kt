@@ -35,7 +35,8 @@ import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
 import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
@@ -45,6 +46,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.AmountWithCurrency
+import network.bisq.mobile.presentation.ui.components.organisms.BatteryOptimizationsDialog
 import network.bisq.mobile.presentation.ui.components.organisms.NotificationPermissionDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.rememberNotificationPermissionLauncher
@@ -67,52 +69,127 @@ fun DashboardScreen() {
     val marketPrice by presenter.marketPrice.collectAsState()
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val notifPermissionState by presenter.savedNotifPermissionState.collectAsState()
+    val batteryPermissionState by presenter.savedBatteryOptimizationState.collectAsState()
     var isPermissionRequestDialogVisible by remember { mutableStateOf(false) }
+    var isBatteryOptimizationsDialogVisible by remember { mutableStateOf(false) }
+    val isForeground by presenter.isForeground.collectAsState()
     val showNumConnections = presenter.showNumConnections
 
     val notifPermLauncher = rememberNotificationPermissionLauncher { granted ->
         if (granted) {
-            presenter.saveNotificationPermissionState(NotificationPermissionState.GRANTED)
+            presenter.saveNotificationPermissionState(PermissionState.GRANTED)
         } else {
             // we can't ask more than twice, so we won't ask again
-            if (notifPermissionState == NotificationPermissionState.DENIED) {
-                presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+            if (notifPermissionState == PermissionState.DENIED) {
+                presenter.saveNotificationPermissionState(PermissionState.DONT_ASK_AGAIN)
                 presenter.showSnackbar(
                     "mobile.permissions.notifications.dismissed".i18n(),
                     duration = SnackbarDuration.Indefinite,
                 )
             } else {
-                presenter.saveNotificationPermissionState(NotificationPermissionState.DENIED)
+                presenter.saveNotificationPermissionState(PermissionState.DENIED)
+            }
+        }
+    }
+
+    LaunchedEffect(isForeground, notifPermissionState, batteryPermissionState) {
+        // detect state change when user switches the app
+        // this is required in case user manually leaves the app instead of using the buttons
+        // otherwise we cannot detect the changes and respond appropriately
+        if (notifPermissionState != PermissionState.DONT_ASK_AGAIN) {
+            if (presenter.hasNotificationPermission()) {
+                presenter.saveNotificationPermissionState(PermissionState.GRANTED)
+            } else {
+                presenter.saveNotificationPermissionState(PermissionState.DENIED)
+            }
+        }
+        if (
+            batteryPermissionState != BatteryOptimizationState.DONT_ASK_AGAIN
+        ) {
+            if (presenter.platformSettingsManager.isIgnoringBatteryOptimizations()) {
+                presenter.saveBatteryOptimizationState(BatteryOptimizationState.IGNORED)
+            } else {
+                presenter.saveBatteryOptimizationState(BatteryOptimizationState.NOT_IGNORED)
             }
         }
     }
 
     LaunchedEffect(notifPermissionState) {
         when (notifPermissionState) {
-            NotificationPermissionState.GRANTED -> {
+            PermissionState.GRANTED -> {
                 if (presenter.hasNotificationPermission()) {
                     isPermissionRequestDialogVisible = false
                 } else {
                     presenter.saveNotificationPermissionState(
-                        NotificationPermissionState.NOT_GRANTED
+                        PermissionState.NOT_GRANTED
                     )
                 }
             }
 
-            NotificationPermissionState.NOT_GRANTED,
-            NotificationPermissionState.DENIED -> {
-                if (notifPermissionState == NotificationPermissionState.DENIED && isPermissionRequestDialogVisible) {
+            PermissionState.NOT_GRANTED,
+            PermissionState.DENIED -> {
+                if (notifPermissionState == PermissionState.DENIED && isPermissionRequestDialogVisible) {
                     isPermissionRequestDialogVisible = false
                 } else {
                     isPermissionRequestDialogVisible = true
                 }
             }
 
-            NotificationPermissionState.DONT_ASK_AGAIN -> {
+            PermissionState.DONT_ASK_AGAIN -> {
                 isPermissionRequestDialogVisible = false
             }
 
-            else -> null // ignore initial state
+            null -> {} // ignore initial state
+        }
+    }
+
+    val batteryOptimizationLauncher =
+        presenter.platformSettingsManager.rememberBatteryOptimizationsLauncher { ignored ->
+            if (ignored) {
+                presenter.saveBatteryOptimizationState(BatteryOptimizationState.IGNORED)
+            } else {
+                if (batteryPermissionState == BatteryOptimizationState.DONT_ASK_AGAIN) {
+                    presenter.saveBatteryOptimizationState(BatteryOptimizationState.DONT_ASK_AGAIN)
+                    presenter.showSnackbar(
+                        "mobile.platform.settings.batteryOptimizations.dismissed".i18n(),
+                        duration = SnackbarDuration.Indefinite,
+                    )
+                } else {
+                    presenter.saveBatteryOptimizationState(BatteryOptimizationState.NOT_IGNORED)
+                }
+            }
+        }
+
+    LaunchedEffect(batteryPermissionState, notifPermissionState) {
+        when (batteryPermissionState) {
+            BatteryOptimizationState.IGNORED -> {
+                if (presenter.platformSettingsManager.isIgnoringBatteryOptimizations()) {
+                    isBatteryOptimizationsDialogVisible = false
+                } else {
+                    presenter.saveBatteryOptimizationState(
+                        BatteryOptimizationState.NOT_IGNORED
+                    )
+                }
+            }
+
+            BatteryOptimizationState.NOT_IGNORED -> {
+                // we only show this dialog if user has chosen to receive notifications
+                // otherwise it doesn't make much sense
+                isBatteryOptimizationsDialogVisible =
+                    if (notifPermissionState == PermissionState.GRANTED &&
+                        batteryPermissionState == BatteryOptimizationState.NOT_IGNORED
+                    ) {
+                        true
+                    } else {
+                        false
+                    }
+            }
+
+            BatteryOptimizationState.DONT_ASK_AGAIN -> {
+                isBatteryOptimizationsDialogVisible = false
+            }
+
+            null -> {} // ignore initial state
         }
     }
 
@@ -133,7 +210,7 @@ fun DashboardScreen() {
         },
         onPermissionDenied = { dontAskAgain ->
             if (dontAskAgain) {
-                presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+                presenter.saveNotificationPermissionState(PermissionState.DONT_ASK_AGAIN)
                 presenter.showSnackbar(
                     "mobile.permissions.notifications.dismissed".i18n(),
                     duration = SnackbarDuration.Indefinite,
@@ -142,7 +219,20 @@ fun DashboardScreen() {
                 // less important on iOS, so we allow background tap to dismiss
                 isPermissionRequestDialogVisible = false
             }
-        }
+        },
+        isBatteryOptimizationsDialogVisible = isBatteryOptimizationsDialogVisible,
+        onBatteryOptimizationIgnoreRequest = {
+            batteryOptimizationLauncher.launch()
+        },
+        onBatteryOptimizationIgnoreDismissed = { dontAskAgain ->
+            if (dontAskAgain) {
+                presenter.saveBatteryOptimizationState(BatteryOptimizationState.DONT_ASK_AGAIN)
+                presenter.showSnackbar(
+                    "mobile.platform.settings.batteryOptimizations.dismissed".i18n(),
+                    duration = SnackbarDuration.Indefinite,
+                )
+            }
+        },
     )
 }
 
@@ -161,6 +251,9 @@ private fun DashboardContent(
     isPermissionRequestDialogVisible: Boolean,
     onPermissionRequest: () -> Unit,
     onPermissionDenied: (dontAskAgain: Boolean) -> Unit,
+    isBatteryOptimizationsDialogVisible: Boolean,
+    onBatteryOptimizationIgnoreRequest: () -> Unit,
+    onBatteryOptimizationIgnoreDismissed: (dontAskAgain: Boolean) -> Unit,
 ) {
     val padding = BisqUIConstants.ScreenPadding
     BisqScrollScaffold(
@@ -236,6 +329,13 @@ private fun DashboardContent(
             onDismiss = onPermissionDenied,
         )
     }
+
+    if (isBatteryOptimizationsDialogVisible) {
+        BatteryOptimizationsDialog(
+            onConfirm = onBatteryOptimizationIgnoreRequest,
+            onDismiss = onBatteryOptimizationIgnoreDismissed,
+        )
+    }
 }
 
 
@@ -302,6 +402,7 @@ private fun DashboardContentPreview(
     language: String = "en",
     tradeRulesConfirmed: Boolean = true,
     isPermissionRequestDialogVisible: Boolean = false,
+    isBatteryOptimizationsDialogVisible: Boolean = false,
 ) {
     BisqTheme.Preview(language = language) {
         DashboardContent(
@@ -318,6 +419,9 @@ private fun DashboardContentPreview(
             isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
             onPermissionRequest = {},
             onPermissionDenied = { _ -> },
+            isBatteryOptimizationsDialogVisible = isBatteryOptimizationsDialogVisible,
+            onBatteryOptimizationIgnoreRequest = {},
+            onBatteryOptimizationIgnoreDismissed = { _ -> },
         )
     }
 }

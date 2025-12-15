@@ -2,8 +2,9 @@ package network.bisq.mobile.node.service.offers
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import network.bisq.mobile.domain.data.model.BatteryOptimizationState
 import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -42,8 +43,8 @@ class NodeOffersServiceFacadeIntegrationTest {
         override suspend fun setFirstLaunch(value: Boolean) {}
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
         override suspend fun setSelectedMarketCode(value: String) {}
-        override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {}
-
+        override suspend fun setNotificationPermissionState(value: PermissionState) {}
+        override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {}
         override suspend fun update(transform: suspend (Settings) -> Settings) {}
 
         override suspend fun clear() {}

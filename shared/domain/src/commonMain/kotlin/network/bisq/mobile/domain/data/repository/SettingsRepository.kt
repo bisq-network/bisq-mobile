@@ -2,7 +2,8 @@ package network.bisq.mobile.domain.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 
 interface SettingsRepository {
@@ -17,7 +18,9 @@ interface SettingsRepository {
 
     suspend fun setSelectedMarketCode(value: String)
 
-    suspend fun setNotificationPermissionState(value: NotificationPermissionState)
+    suspend fun setNotificationPermissionState(value: PermissionState)
+
+    suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState)
 
     suspend fun update(transform: suspend (t: Settings) -> Settings)
 

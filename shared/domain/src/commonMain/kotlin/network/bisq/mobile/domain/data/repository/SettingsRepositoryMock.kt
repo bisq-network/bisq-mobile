@@ -4,7 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
 
@@ -31,9 +32,15 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
         }
     }
 
-    override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {
+    override suspend fun setNotificationPermissionState(value: PermissionState) {
         _data.update {
             it.copy(notificationPermissionState = value)
+        }
+    }
+
+    override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {
+        _data.update {
+            it.copy(batteryOptimizationState = value)
         }
     }
 
