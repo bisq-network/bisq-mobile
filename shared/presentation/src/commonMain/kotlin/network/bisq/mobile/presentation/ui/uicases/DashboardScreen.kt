@@ -96,14 +96,15 @@ fun DashboardScreen() {
         // detect state change when user switches the app
         // this is required in case user manually leaves the app instead of using the buttons
         // otherwise we cannot detect the changes and respond appropriately
-        if (notifPermissionState != PermissionState.DONT_ASK_AGAIN) {
+        if (notifPermissionState != null && notifPermissionState != PermissionState.DONT_ASK_AGAIN) {
             if (presenter.hasNotificationPermission()) {
                 presenter.saveNotificationPermissionState(PermissionState.GRANTED)
             } else {
-                presenter.saveNotificationPermissionState(PermissionState.DENIED)
+                presenter.saveNotificationPermissionState(PermissionState.NOT_GRANTED)
             }
         }
         if (
+            batteryPermissionState != null &&
             batteryPermissionState != BatteryOptimizationState.DONT_ASK_AGAIN
         ) {
             if (presenter.platformSettingsManager.isIgnoringBatteryOptimizations()) {
