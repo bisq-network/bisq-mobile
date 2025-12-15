@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 class PlatformSettingsManagerImpl : PlatformSettingsManager {
     @Composable
     override fun rememberBatteryOptimizationsLauncher(onResult: (Boolean) -> Unit): RequestLauncher {
-        val requestLauncher = remember {
+        val requestLauncher = remember(onResult) {
             object : RequestLauncher {
                 override fun launch() {
                     onResult(true) // not available on iOS
