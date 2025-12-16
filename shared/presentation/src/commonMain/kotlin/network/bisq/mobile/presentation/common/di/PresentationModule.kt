@@ -49,7 +49,6 @@ import network.bisq.mobile.presentation.trade.trade_chat.TradeChatPresenter
 import network.bisq.mobile.presentation.report_user.ReportUserPresenter
 import network.bisq.mobile.presentation.settings.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.settings.ignored_users.IIgnoredUsersPresenter
-import network.bisq.mobile.presentation.settings.payment_accounts.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.settings.user_profile.IUserProfilePresenter
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsPresenter
@@ -74,7 +73,12 @@ val presentationModule = module {
 
     single<NetworkStatusBannerPresenter> { NetworkStatusBannerPresenter(get(), get()) }
 
-    factory<UserAgreementPresenter> { UserAgreementPresenter(get(), get()) } bind IAgreementPresenter::class
+    factory<UserAgreementPresenter> {
+        UserAgreementPresenter(
+            get(),
+            get()
+        )
+    } bind IAgreementPresenter::class
 
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
@@ -92,7 +96,20 @@ val presentationModule = module {
         )
     } bind IUserProfilePresenter::class
 
-    single<DashboardPresenter> { DashboardPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    single<DashboardPresenter> {
+        DashboardPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
 
     single {
         CreateProfilePresenter(
@@ -105,7 +122,7 @@ val presentationModule = module {
 
     factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 
-    single { PaymentAccountsPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
+    factory { PaymentAccountsPresenter(get(), get()) }
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get()) }
@@ -145,7 +162,24 @@ val presentationModule = module {
     single { BuyerState4Presenter(get(), get(), get()) }
 
     // Trade General process
-    factory { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory {
+        TradeStatesProvider(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
     factory { OpenTradeListPresenter(get(), get(), get(), get()) }
     factory { TradeDetailsHeaderPresenter(get(), get(), get(), get()) }
     factory { InterruptedTradePresenter(get(), get(), get(), get()) }

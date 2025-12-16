@@ -12,6 +12,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.ByteArrayContent
@@ -153,6 +154,12 @@ class HttpClientService(
 
     suspend fun patch(block: HttpRequestBuilder.() -> Unit): HttpResponse {
         return getClient().patch {
+            block(this)
+        }
+    }
+
+    suspend fun put(block: HttpRequestBuilder.() -> Unit): HttpResponse {
+        return getClient().put {
             block(this)
         }
     }

@@ -11,8 +11,8 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryImpl
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
-import network.bisq.mobile.client.common.domain.service.accounts.AccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.accounts.ClientAccountsServiceFacade
+import network.bisq.mobile.client.common.domain.service.accounts.UserDefinedFiatAccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
@@ -221,7 +221,7 @@ val clientDomainModule = module {
     single { SettingsApiGateway(get()) }
     single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
 
-    single { AccountsApiGateway(get()) }
+    single { UserDefinedFiatAccountsApiGateway(get()) }
     single<AccountsServiceFacade> { ClientAccountsServiceFacade(get()) }
 
     single<LanguageServiceFacade> { ClientLanguageServiceFacade() }

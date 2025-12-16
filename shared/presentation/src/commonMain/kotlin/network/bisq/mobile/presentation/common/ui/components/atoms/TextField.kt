@@ -58,11 +58,25 @@ enum class BisqTextFieldType {
 
 
 /**
+ * @deprecated This stateful version of BisqTextField is deprecated. Use BisqTextFieldV0 instead.
+ * BisqTextFieldV0 is a stateless component that provides better composability and testability.
+ *
+ * Note: BisqTextFieldV0 has core features. Additional features will be added as needed.
+ * Validation logic should be handled in the presenter layer.
+ *
  * TODO:
  * 1. Should have a BisqNumberField with customizations like numberWithTwoDecimals
  * and whose value is Double and onValueChange emits Double
  * 2. Add onFocusOut event, to reset data incase of invalid inputs
  */
+@Deprecated(
+    message = "Use BisqTextFieldV0 instead. This stateful version will be removed in a future release.",
+    replaceWith = ReplaceWith(
+        "BisqTextFieldV0",
+        "network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0"
+    ),
+    level = DeprecationLevel.WARNING
+)
 @Composable
 fun BisqTextField(
     label: String = "",

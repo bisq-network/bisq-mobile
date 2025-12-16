@@ -52,8 +52,28 @@ class WebSocketApiClient(
     }
 
     suspend inline fun <reified T, reified R> put(path: String, requestBody: R): Result<T> {
-        val bodyAsJson = json.encodeToString(requestBody)
-        return request<T>("PUT", path, bodyAsJson)
+        if (useHttpClient) {
+            log.d { "HTTP PUT to " + (apiPath + path) }
+            log.d { "Request body: $requestBody" }
+            try {
+                val response: HttpResponse = httpClientService.put {
+                    url {
+                        path(apiPath + path)
+                    }
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    setBody(requestBody)
+                }
+                log.d { "HTTP PUT done status=${response.status}" }
+                return getResultFromHttpResponse<T>(response)
+            } catch (e: Exception) {
+                log.e(e) { "HTTP PUT failed for " + (apiPath + path) + ": ${e.message}" }
+                return Result.failure(e)
+            }
+        } else {
+            val bodyAsJson = json.encodeToString(requestBody)
+            return request<T>("PUT", path, bodyAsJson)
+        }
     }
 
     suspend inline fun <reified T> patch(path: String): Result<T> {
@@ -63,6 +83,7 @@ class WebSocketApiClient(
     suspend inline fun <reified T, reified R> patch(path: String, requestBody: R): Result<T> {
         if (useHttpClient) {
             log.d { "HTTP PATCH to ${apiPath + path}" }
+            log.d { "Request body: $requestBody" }
             try {
                 val response: HttpResponse = httpClientService.patch {
                     url {

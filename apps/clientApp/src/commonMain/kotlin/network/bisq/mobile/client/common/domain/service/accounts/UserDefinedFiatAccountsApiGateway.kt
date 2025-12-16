@@ -5,10 +5,10 @@ import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccount
 import network.bisq.mobile.domain.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
 
-class AccountsApiGateway(
+class UserDefinedFiatAccountsApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
 ) : Logging {
-    private val basePath = "payment-accounts"
+    private val basePath = "payment-accounts/fiat/user-defined-fiat"
 
     suspend fun getPaymentAccounts(): Result<List<UserDefinedFiatAccountVO>> {
         return webSocketApiClient.get<List<UserDefinedFiatAccountVO>>(basePath)
@@ -38,5 +38,12 @@ class AccountsApiGateway(
         return webSocketApiClient.get("$basePath/selected")
     }
 
+    suspend fun saveAccount(accountName: String, account: UserDefinedFiatAccountVO): Result<Unit> {
+        val parsedAccountName = encodeURIParam(accountName)
+        return webSocketApiClient.put(
+            "$basePath/$parsedAccountName",
+            SaveAccountRequest(account.accountName, account.accountPayload.accountData)
+        )
+    }
 
 }

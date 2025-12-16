@@ -1,8 +1,11 @@
 package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_1
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -16,7 +19,9 @@ class SellerState1Presenter(
     private val accountsServiceFacade: AccountsServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
-    val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = accountsServiceFacade.accounts
+    val accounts: StateFlow<List<UserDefinedFiatAccountVO>> =
+        accountsServiceFacade.accountState.map { state -> state.accounts }
+            .stateIn(presenterScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private var _paymentAccountData = MutableStateFlow("")
     val paymentAccountData: StateFlow<String> get() = _paymentAccountData.asStateFlow()
@@ -32,12 +37,16 @@ class SellerState1Presenter(
         super.onViewAttached()
 
         presenterScope.launch {
-            val accounts = accountsServiceFacade.getAccounts()
-
-            if (accounts.isNotEmpty()) {
-                onPaymentDataInput(accounts[0].accountPayload.accountData, true)
-                _paymentAccountName.value = accounts[0].accountName
-            }
+            accountsServiceFacade.getAccounts()
+                .onSuccess { accounts ->
+                    accounts.firstOrNull()?.let { account ->
+                        onPaymentDataInput(account.accountPayload.accountData, true)
+                        _paymentAccountName.value = account.accountName
+                    }
+                }
+                .onFailure { error ->
+                    log.e(error) { "Failed to load accounts" }
+                }
         }
     }
 
