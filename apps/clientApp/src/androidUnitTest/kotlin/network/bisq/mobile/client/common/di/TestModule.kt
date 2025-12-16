@@ -8,10 +8,10 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.presentation.ui.GlobalUiManager
-import network.bisq.mobile.presentation.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
-import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
+import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import org.koin.dsl.module
 
 @OptIn(ExperimentalCoroutinesApi::class)

@@ -1,0 +1,126 @@
+package network.bisq.mobile.presentation.settings.ignored_users
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
+import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import org.koin.compose.koinInject
+
+interface IIgnoredUsersPresenter : ViewPresenter {
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
+    val ignoredUsers: StateFlow<List<UserProfileVO>>
+    val ignoreUserId: StateFlow<String>
+    fun unblockUser(userId: String)
+    fun unblockUserConfirm(userId: String)
+    fun dismissConfirm()
+}
+
+@Composable
+fun IgnoredUsersScreen() {
+    val presenter: IIgnoredUsersPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
+    val isInteractive by presenter.isInteractive.collectAsState()
+    val ignoredUsers by presenter.ignoredUsers.collectAsState()
+    val ignoreUserId by presenter.ignoreUserId.collectAsState()
+    val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
+
+    BisqScrollScaffold(
+        topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
+        verticalArrangement = Arrangement.SpaceBetween,
+        isInteractive = isInteractive,
+    ) {
+
+        if (ignoredUsers.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                BisqText.baseRegular(
+                    text = "mobile.settings.ignoredUsers.empty".i18n(), color = BisqTheme.colors.mid_grey20
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
+                ignoredUsers.forEach { userProfile ->
+                    IgnoredUserItem(
+                        userProfile = userProfile,
+                        userProfileIconProvider = presenter.userProfileIconProvider,
+                        onUnblock = { presenter.unblockUser(userProfile.id) }
+                    )
+                }
+            }
+        }
+
+        if (showIgnoreUserWarnBox) {
+            ConfirmationDialog(
+                headline = "mobile.error.warning".i18n(),
+                headlineColor = BisqTheme.colors.warning,
+                headlineLeftIcon = { WarningIcon() },
+                message = "mobile.chat.undoIgnoreUserWarn".i18n(),
+                confirmButtonText = "user.profileCard.userActions.undoIgnore".i18n(),
+                dismissButtonText = "action.cancel".i18n(),
+                verticalButtonPlacement = true,
+                onConfirm = {
+                    presenter.unblockUserConfirm(ignoreUserId)
+                },
+                onDismiss = { presenter.dismissConfirm() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun IgnoredUserItem(
+    userProfile: UserProfileVO,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
+    onUnblock: () -> Unit
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(
+            horizontal = BisqUIConstants.ScreenPaddingHalf,
+            vertical = BisqUIConstants.ScreenPaddingHalf
+        ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        UserProfileIcon(userProfile, userProfileIconProvider, 40.dp)
+        BisqGap.HHalf()
+
+        BisqText.baseRegular(
+            text = userProfile.userName, modifier = Modifier.weight(1f)
+        )
+
+        BisqGap.H1()
+
+        BisqButton(
+            "mobile.settings.ignoredUsers.unblock".i18n(),
+            type = BisqButtonType.GreyOutline,
+            onClick = onUnblock
+        )
+
+    }
+} 

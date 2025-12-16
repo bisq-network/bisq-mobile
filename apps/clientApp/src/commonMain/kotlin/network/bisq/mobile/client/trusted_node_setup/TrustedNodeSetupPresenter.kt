@@ -3,6 +3,7 @@ package network.bisq.mobile.client.trusted_node_setup
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
@@ -18,13 +19,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -34,9 +35,9 @@ import network.bisq.mobile.domain.utils.NetworkUtils.isValidIpv4
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.BasePresenter
-import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import org.koin.core.component.inject
 
 /**
@@ -367,7 +368,7 @@ class TrustedNodeSetupPresenter(
                 // timeout should be handled as an error (not a user cancellation)
                 onConnectionError(e, newApiUrl.toNormalizedString())
                 currentCoroutineContext().ensureActive()
-            } catch (e: kotlinx.coroutines.CancellationException) {
+            } catch (e: CancellationException) {
                 // user cancelled: do not show error, just reset state
                 _wsClientConnectionState.value = ConnectionState.Disconnected()
                 _status.value = ""

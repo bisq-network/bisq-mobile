@@ -1,0 +1,242 @@
+package network.bisq.mobile.presentation.settings.settings
+
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
+import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.setDefaultLocale
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.main.MainPresenter
+
+open class SettingsPresenter(
+    private val settingsServiceFacade: SettingsServiceFacade,
+    private val languageServiceFacade: LanguageServiceFacade,
+    private val mainPresenter: MainPresenter
+) : BasePresenter(mainPresenter), IGeneralSettingsPresenter {
+
+    override val i18nPairs get() = languageServiceFacade.i18nPairs
+    override val allLanguagePairs get() = languageServiceFacade.allPairs
+    override val blockInteractivityOnAttached: Boolean = true
+    private val fetchMutex = Mutex()
+
+    private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
+    override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
+    override fun setLanguageCode(langCode: String) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                // Mark this as a user-initiated change to prevent fetchSettings from overriding
+                isUserInitiatedLanguageChange = true
+
+                log.i { "Setting language code to: $langCode" }
+                setDefaultLocale(langCode) // update lang in app's context
+                settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
+                _languageCode.value = langCode
+                log.i { "Successfully set language code to: $langCode" }
+            } catch (e: Exception) {
+                log.e(e) { "Failed to set language code to: $langCode" }
+                // Reset to previous language on error
+                isUserInitiatedLanguageChange = false
+                throw e
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(setOf("en"))
+    override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes.asStateFlow()
+    override fun setSupportedLanguageCodes(langCodes: Set<String>) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _supportedLanguageCodes.value = langCodes
+                settingsServiceFacade.setSupportedLanguageCodes(langCodes)
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private val _chatNotification: MutableStateFlow<String> =
+        MutableStateFlow("chat.notificationsSettingsMenu.all".i18n())
+    override val chatNotification: StateFlow<String> get() = _chatNotification.asStateFlow()
+    override fun setChatNotification(value: String) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _chatNotification.value = value
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private val _closeOfferWhenTradeTaken: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    override val closeOfferWhenTradeTaken: StateFlow<Boolean> get() = _closeOfferWhenTradeTaken.asStateFlow()
+    override fun setCloseOfferWhenTradeTaken(value: Boolean) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _closeOfferWhenTradeTaken.value = value
+                settingsServiceFacade.setCloseMyOfferWhenTaken(value)
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    // This is internally represented as ratio. So 100% is saved as 1.0, 5% as 0.05.
+    // Hence the 100 multiplier and divider
+    private val _tradePriceTolerance: MutableStateFlow<String> = MutableStateFlow("5")
+    override val tradePriceTolerance: StateFlow<String> get() = _tradePriceTolerance.asStateFlow()
+    override fun setTradePriceTolerance(value: String, isValid: Boolean) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _tradePriceTolerance.value = value
+                if (isValid) {
+                    val _value = value.toDoubleOrNullLocaleAware()
+                    if (_value != null) {
+                        settingsServiceFacade.setMaxTradePriceDeviation(_value / 100)
+                    }
+                }
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private val _numDaysAfterRedactingTradeData = MutableStateFlow("90")
+    override val numDaysAfterRedactingTradeData: StateFlow<String> get() = _numDaysAfterRedactingTradeData.asStateFlow()
+    override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _numDaysAfterRedactingTradeData.value = value
+                if (isValid) {
+                    val _value = value.toIntOrNull()
+                    if (_value != null) {
+                        settingsServiceFacade.setNumDaysAfterRedactingTradeData(_value)
+                    }
+                }
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    override val useAnimations: StateFlow<Boolean> get() = _useAnimations.asStateFlow()
+    override fun setUseAnimations(value: Boolean) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _useAnimations.value = value
+                settingsServiceFacade.setUseAnimations(value)
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private val _powFactor: MutableStateFlow<String> = MutableStateFlow("1")
+    override val powFactor: StateFlow<String> get() = _powFactor.asStateFlow()
+    override fun setPowFactor(value: String, isValid: Boolean) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _powFactor.value = value
+                if (isValid) {
+                    val _value = value.toIntOrNull()
+                    settingsServiceFacade.setDifficultyAdjustmentFactor(_value?.toDouble() ?: 0.0)
+                }
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private val _ignorePow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val ignorePow: StateFlow<Boolean> get() = _ignorePow.asStateFlow()
+    override fun setIgnorePow(value: Boolean) {
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                _ignorePow.value = value
+                settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+
+    private var isUserInitiatedLanguageChange = false
+
+    init {
+        presenterScope.launch {
+            mainPresenter.languageCode.drop(1).collect {
+                // Only fetch settings if this is not a user-initiated language change
+                if (!isUserInitiatedLanguageChange) {
+                    launchFetchSettings()
+                }
+                isUserInitiatedLanguageChange = false
+            }
+        }
+    }
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        launchFetchSettings()
+    }
+
+    private fun launchFetchSettings() {
+        presenterScope.launch {
+            disableInteractive()
+            try {
+                fetchMutex.withLock {
+                    fetchSettings()
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Failed to fetch settings" }
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    private suspend fun fetchSettings() {
+        val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
+        val langCode = settings.languageCode
+
+        // Wait for language pairs to be loaded if they're empty
+        var i18nPairs = languageServiceFacade.i18nPairs.value
+        var retryCount = 0
+        while (i18nPairs.isEmpty() && retryCount < 10) {
+            delay(100) // Wait 100ms
+            i18nPairs = languageServiceFacade.i18nPairs.value
+            retryCount++
+        }
+
+        _languageCode.value = langCode
+        _supportedLanguageCodes.value = settings.supportedLanguageCodes.ifEmpty { setOf("en") }
+        _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
+        _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
+        _useAnimations.value = settings.useAnimations
+        _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
+        _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value.toInt().toString()
+        _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
+    }
+}

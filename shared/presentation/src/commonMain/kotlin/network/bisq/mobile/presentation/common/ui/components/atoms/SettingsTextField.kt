@@ -1,0 +1,27 @@
+package network.bisq.mobile.presentation.common.ui.components.atoms
+
+import androidx.compose.runtime.Composable
+
+@Composable
+fun SettingsTextField(
+    label: String,
+    value: String,
+    editable: Boolean = true,
+    isTextArea: Boolean = false,
+    onValueChange: ((String, Boolean) -> Unit)? = null,
+    trailingIcon: (@Composable () -> Unit)? = null
+) {
+    BisqTextField(
+        label = label,
+        value = value,
+        disabled = !editable,
+        isTextArea = isTextArea,
+        minLines = if (isTextArea) 2 else 1,
+        onValueChange = { newValue, isValid ->
+            if (onValueChange != null) {
+                onValueChange(newValue, isValid)
+            }
+        },
+        rightSuffix = trailingIcon
+    )
+}

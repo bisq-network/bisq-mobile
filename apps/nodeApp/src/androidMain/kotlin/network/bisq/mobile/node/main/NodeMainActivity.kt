@@ -4,8 +4,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import network.bisq.mobile.node.NodeApp
-import network.bisq.mobile.presentation.MainActivity
+import network.bisq.mobile.presentation.main.MainActivity
 
 /**
  * Bisq Android Node Main Activity

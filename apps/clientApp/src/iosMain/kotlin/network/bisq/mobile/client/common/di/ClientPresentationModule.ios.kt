@@ -6,9 +6,9 @@ import network.bisq.mobile.client.onboarding.ClientOnboardingPresenter
 import network.bisq.mobile.domain.getStorageDir
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.IosDeviceInfoProvider
-import network.bisq.mobile.presentation.PlatformSettingsManager
-import network.bisq.mobile.presentation.PlatformSettingsManagerImpl
-import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
+import network.bisq.mobile.presentation.startup.onboarding.IOnboardingPresenter
+import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
+import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
 import org.koin.dsl.bind
 import org.koin.dsl.module
 

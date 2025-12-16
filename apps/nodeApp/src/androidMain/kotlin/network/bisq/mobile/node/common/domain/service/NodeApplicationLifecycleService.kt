@@ -24,7 +24,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.restartProcess
 import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
-import network.bisq.mobile.presentation.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import java.io.File
 
 /**

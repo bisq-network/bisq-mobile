@@ -15,10 +15,10 @@ import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.node.common.di.androidNodeDomainModule
 import network.bisq.mobile.node.common.di.androidNodePresentationModule
-import network.bisq.mobile.node.resources.backupFileName
+import network.bisq.mobile.node.settings.resources.backupFileName
 import network.bisq.mobile.node.common.domain.utils.moveDirReplace
-import network.bisq.mobile.presentation.MainApplication
-import network.bisq.mobile.presentation.di.presentationModule
+import network.bisq.mobile.presentation.main.MainApplication
+import network.bisq.mobile.presentation.common.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.android.get
 import org.koin.core.module.Module

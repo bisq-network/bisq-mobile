@@ -1,0 +1,25 @@
+package network.bisq.mobile.presentation.common.ui.components.organisms.chat
+
+import androidx.compose.runtime.Composable
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIconFilled
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+
+@Composable
+fun UndoIgnoreDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ConfirmationDialog(
+        headline = "mobile.error.warning".i18n(),
+        headlineColor = BisqTheme.colors.warning,
+        headlineLeftIcon = { WarningIconFilled() },
+        message = "mobile.chat.undoIgnoreUserWarn".i18n(),
+        confirmButtonText = "user.profileCard.userActions.undoIgnore".i18n(),
+        dismissButtonText = "action.cancel".i18n(),
+        verticalButtonPlacement = true,
+        onConfirm = onConfirm,
+        onDismiss = { _ -> onDismiss() },
+    )
+}

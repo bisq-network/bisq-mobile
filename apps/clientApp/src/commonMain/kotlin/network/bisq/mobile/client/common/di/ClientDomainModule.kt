@@ -39,10 +39,10 @@ import network.bisq.mobile.client.common.domain.websocket.messages.SubscriptionR
 import network.bisq.mobile.client.common.domain.websocket.messages.SubscriptionResponse
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketMessage
-import network.bisq.mobile.client.settings.domain.SensitiveSettings
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepository
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsRepositoryImpl
-import network.bisq.mobile.client.settings.domain.SensitiveSettingsSerializer
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryImpl
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.domain.data.EnvironmentController

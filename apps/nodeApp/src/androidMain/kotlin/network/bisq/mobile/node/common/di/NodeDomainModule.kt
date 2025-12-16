@@ -49,11 +49,11 @@ import network.bisq.mobile.node.common.domain.service.settings.NodeSettingsServi
 import network.bisq.mobile.node.common.domain.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.node.common.domain.service.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.node.common.domain.utils.NodeVersionProvider
-import network.bisq.mobile.presentation.notification.ForegroundServiceController
-import network.bisq.mobile.presentation.notification.ForegroundServiceControllerImpl
-import network.bisq.mobile.presentation.notification.NotificationController
-import network.bisq.mobile.presentation.notification.NotificationControllerImpl
-import network.bisq.mobile.presentation.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
+import network.bisq.mobile.presentation.common.notification.ForegroundServiceControllerImpl
+import network.bisq.mobile.presentation.common.notification.NotificationController
+import network.bisq.mobile.presentation.common.notification.NotificationControllerImpl
+import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import okio.Path.Companion.toOkioPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
