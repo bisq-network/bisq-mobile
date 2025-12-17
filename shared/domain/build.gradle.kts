@@ -60,7 +60,7 @@ buildConfig {
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
         // Note: Update when updating kmp-tor lib
-        buildConfigField("TOR_VERSION", "13.5.2")
+        buildConfigField("TOR_VERSION", "0.4.8.21") // is TOR DAEMON version
         buildConfigField(
             "IS_DEBUG",
             (

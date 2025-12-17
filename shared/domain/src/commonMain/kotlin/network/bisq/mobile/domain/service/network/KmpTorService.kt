@@ -54,6 +54,9 @@ class KmpTorService(
     private val baseDir: Path,
 ) : BaseService(),
     Logging {
+    companion object {
+        private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 60_000L
+    }
     sealed class TorState {
         protected abstract val i18nKey: String
 
@@ -93,7 +96,7 @@ class KmpTorService(
 
     private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
 
-    suspend fun startTor(timeoutMs: Long = 60_000): Boolean {
+    suspend fun startTor(timeoutMs: Long = DEFAULT_BOOTSTRAP_TIMEOUT_MS): Boolean {
         when (_state.value) {
             is TorState.Started -> return true
             is TorState.Stopping -> return false
