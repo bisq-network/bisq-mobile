@@ -94,7 +94,7 @@ val androidNodeDomainModule =
 
         single<KmpTorService> {
             val applicationService = get<AndroidApplicationService>()
-            KmpTorService(applicationService.config.baseDir.toOkioPath(true))
+            KmpTorService(applicationService.config.appDataDirPath.toOkioPath(true))
         }
 
         single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class

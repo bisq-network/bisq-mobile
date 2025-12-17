@@ -16,14 +16,11 @@
  */
 package network.bisq.mobile.node.common.domain.mapping
 
-import bisq.account.payment_method.BitcoinPaymentMethod
-import bisq.account.payment_method.FiatPaymentMethod
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookMessage
 import bisq.i18n.Res
 import bisq.offer.amount.OfferAmountFormatter
 import bisq.offer.amount.spec.RangeAmountSpec
-import bisq.offer.payment_method.PaymentMethodSpecUtil
 import bisq.offer.price.PriceUtil
 import bisq.offer.price.spec.PriceSpecFormatter
 import bisq.presentation.formatters.DateFormatter
@@ -34,7 +31,6 @@ import bisq.user.reputation.ReputationService
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import java.text.DateFormat
 import java.util.Date
-import java.util.stream.Collectors
 
 object OfferItemPresentationVOFactory {
     fun create(
@@ -95,17 +91,11 @@ object OfferItemPresentationVOFactory {
                 .orElse("")
         val formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(priceSpec, false)
         val quoteSidePaymentMethods: List<String> =
-            PaymentMethodSpecUtil
-                .getPaymentMethods(bisqEasyOffer.quoteSidePaymentMethodSpecs)
-                .stream()
-                .map { method: FiatPaymentMethod -> method.name }
-                .collect(Collectors.toList())
-        val baseSidePaymentMethods =
-            PaymentMethodSpecUtil
-                .getPaymentMethods(bisqEasyOffer.baseSidePaymentMethodSpecs)
-                .stream()
-                .map { method: BitcoinPaymentMethod -> method.name }
-                .collect(Collectors.toList())
+            bisqEasyOffer.quoteSidePaymentMethodSpecs
+                .map { it.paymentMethod.paymentRailName }
+        val baseSidePaymentMethods: List<String> =
+            bisqEasyOffer.baseSidePaymentMethodSpecs
+                .map { it.paymentMethod.paymentRailName }
 
         val reputationScore = reputationService.getReputationScore(authorUserProfileId)
         val reputationScoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(reputationScore)

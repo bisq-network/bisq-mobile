@@ -33,7 +33,7 @@ class NodeNetworkServiceFacade(
 
     override suspend fun isTorEnabled(): Boolean {
         val networkServiceConfig = provider.applicationService.networkServiceConfig
-        return networkServiceConfig.supportedTransportTypes.contains(TransportType.TOR)
+        return networkServiceConfig?.supportedTransportTypes?.contains(TransportType.TOR) ?: false
     }
 
     override suspend fun activate() {
@@ -102,11 +102,11 @@ class NodeNetworkServiceFacade(
             return
         }
         val inventoryService = serviceNode.inventoryService.get()
-        val inventoryRequestService = inventoryService.inventoryRequestService
 
         allDataReceivedPin =
-            inventoryRequestService.allDataReceived.addObserver { allDataReceived ->
-                _allDataReceived.value = allDataReceived
+            inventoryService.numPendingInventoryRequests.addObserver { numPendingRequests ->
+                log.d { "Node inventory pending requests: $numPendingRequests" }
+                _allDataReceived.value = numPendingRequests == 0
             }
     }
 }

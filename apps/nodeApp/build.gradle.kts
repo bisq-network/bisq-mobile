@@ -312,6 +312,7 @@ dependencies {
     implementation(libs.bisq.core.security)
     implementation(libs.bisq.core.identity)
     implementation(libs.bisq.core.account)
+    implementation(libs.bisq.core.burningman)
     implementation(libs.bisq.core.settings)
     implementation(libs.bisq.core.bonded.roles)
     implementation(libs.bisq.core.user)

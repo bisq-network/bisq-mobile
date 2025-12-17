@@ -16,6 +16,10 @@
  */
 package network.bisq.mobile.node.common.domain.mapping
 
+import bisq.account.payment_method.BitcoinPaymentMethodSpec
+import bisq.account.payment_method.PaymentMethodSpec
+import bisq.account.payment_method.PaymentMethodSpecUtil
+import bisq.account.payment_method.fiat.FiatPaymentMethodSpec
 import bisq.account.protocol_type.TradeProtocolType
 import bisq.chat.ChatChannelDomain
 import bisq.chat.ChatMessageType
@@ -27,14 +31,17 @@ import bisq.chat.notifications.ChatChannelNotificationType
 import bisq.chat.reactions.BisqEasyOfferbookMessageReaction
 import bisq.chat.reactions.BisqEasyOpenTradeMessageReaction
 import bisq.chat.reactions.Reaction
-import bisq.common.currency.Market
 import bisq.common.encoding.Hex
+import bisq.common.market.Market
 import bisq.common.monetary.Coin
 import bisq.common.monetary.Fiat
 import bisq.common.monetary.Monetary
 import bisq.common.monetary.PriceQuote
 import bisq.common.network.Address
 import bisq.common.network.AddressByTransportTypeMap
+import bisq.common.network.ClearnetAddress
+import bisq.common.network.I2PAddress
+import bisq.common.network.TorAddress
 import bisq.common.network.TransportType
 import bisq.contract.ContractSignatureData
 import bisq.contract.Party
@@ -55,10 +62,6 @@ import bisq.offer.bisq_easy.BisqEasyOffer
 import bisq.offer.options.OfferOption
 import bisq.offer.options.ReputationOption
 import bisq.offer.options.TradeTermsOption
-import bisq.offer.payment_method.BitcoinPaymentMethodSpec
-import bisq.offer.payment_method.FiatPaymentMethodSpec
-import bisq.offer.payment_method.PaymentMethodSpec
-import bisq.offer.payment_method.PaymentMethodSpecUtil
 import bisq.offer.price.spec.FixPriceSpec
 import bisq.offer.price.spec.FloatPriceSpec
 import bisq.offer.price.spec.MarketPriceSpec
@@ -77,6 +80,7 @@ import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
 import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import bisq.user.reputation.ReputationScore
+import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.domain.data.replicated.account.protocol_type.TradeProtocolTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
@@ -202,7 +206,7 @@ class Mappings {
                 ChatChannelDomain.DISCUSSION -> ChatChannelDomainEnum.DISCUSSION
                 ChatChannelDomain.SUPPORT -> ChatChannelDomainEnum.SUPPORT
                 ChatChannelDomain.BISQ_EASY_PRIVATE_CHAT -> ChatChannelDomainEnum.DISCUSSION
-//                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK // TODO restore for v2.1.8 when musig gets incorporated
+                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OPEN_TRADES
                 ChatChannelDomain.EVENTS -> ChatChannelDomainEnum.DISCUSSION
             }
     }
@@ -555,7 +559,7 @@ class Mappings {
         fun toBisq2Model(value: AddressByTransportTypeMapVO): AddressByTransportTypeMap =
             AddressByTransportTypeMap(
                 value.map.entries.associate {
-                    TransportTypeMapping.toBisq2Model(it.key) to AddressMapping.toBisq2Model(it.value)
+                    TransportTypeMapping.toBisq2Model(it.key) to AddressMapping.toBisq2Model(it.key, it.value)
                 },
             )
 
@@ -568,7 +572,12 @@ class Mappings {
     }
 
     object AddressMapping {
-        fun toBisq2Model(value: AddressVO): Address = Address(value.host, value.port)
+        fun toBisq2Model(key: TransportTypeEnum, value: AddressVO): Address =
+            when (key) {
+                TransportTypeEnum.CLEAR -> ClearnetAddress(value.host, value.port)
+                TransportTypeEnum.I2P -> I2PAddress(value.host, value.port)
+                else -> TorAddress(value.host, value.port)
+            }
 
         fun fromBisq2Model(value: Address): AddressVO = AddressVO(value.host, value.port)
     }
@@ -846,10 +855,9 @@ class Mappings {
                 value.quoteSidePaymentMethodSpecs.map { FiatPaymentMethodSpecMapping.toBisq2Model(it) }.toList(),
                 value.offerOptions.map { OfferOptionMapping.toBisq2Model(it) }.toList(),
                 value.supportedLanguageCodes,
-//                TODO part of Bisq v2.1.8
-//                BuildNodeConfig.TRADE_OFFER_VERSION,
-//                BuildNodeConfig.TRADE_PROTOCOL_VERSION,
-//                BuildNodeConfig.APP_VERSION
+                BuildNodeConfig.TRADE_OFFER_VERSION,
+                BuildNodeConfig.TRADE_PROTOCOL_VERSION,
+                BuildNodeConfig.APP_VERSION
             )
 
         fun fromBisq2Model(value: BisqEasyOffer): BisqEasyOfferVO =
@@ -918,7 +926,7 @@ class Mappings {
 
         fun fromBisq2Model(value: BitcoinPaymentMethodSpec): BitcoinPaymentMethodSpecVO =
             BitcoinPaymentMethodSpecVO(
-                value.paymentMethod.name,
+                value.paymentMethod.paymentRailName,
                 value.saltedMakerAccountId.orElse(null),
             )
     }
@@ -930,7 +938,11 @@ class Mappings {
             return FiatPaymentMethodSpec(method, Optional.ofNullable(value.saltedMakerAccountId))
         }
 
-        fun fromBisq2Model(value: FiatPaymentMethodSpec): FiatPaymentMethodSpecVO = FiatPaymentMethodSpecVO(value.paymentMethod.name, value.saltedMakerAccountId.orElse(null))
+        fun fromBisq2Model(value: FiatPaymentMethodSpec): FiatPaymentMethodSpecVO =
+            FiatPaymentMethodSpecVO(
+                value.paymentMethod.paymentRailName,
+                value.saltedMakerAccountId.orElse(null),
+            )
     }
 
     object PaymentMethodSpecMapping {
@@ -1052,6 +1064,7 @@ class Mappings {
                 value.keyId,
                 KeyPairMapping.toBisq2Model(value.keyPair),
                 TorKeyPairMapping.toBisq2Model(value.torKeyPair),
+                null, // TODO when supporting i2p gets implemented
             )
 
         fun fromBisq2Model(value: KeyBundle): KeyBundleVO =
@@ -1059,6 +1072,7 @@ class Mappings {
                 value.keyId,
                 KeyPairMapping.fromBisq2Model(value.keyPair),
                 TorKeyPairMapping.fromBisq2Model(value.torKeyPair),
+                null, // TODO when supporting i2p gets implemented
             )
     }
 
@@ -1111,13 +1125,11 @@ class Mappings {
                 settingsService.isTacAccepted.get(),
                 settingsService.tradeRulesConfirmed.get(),
                 settingsService.closeMyOfferWhenTaken.get(),
-                settingsService.languageCode.get(),
-                settingsService.supportedLanguageCodes,
+                settingsService.languageTag.get(),
+                settingsService.supportedLanguageTags,
                 settingsService.maxTradePriceDeviation.get(),
                 settingsService.useAnimations.get(),
-                // TODO for Bisq v2.1.8
-//                MarketMapping.fromBisq2Model(settingsService.selectedMuSigMarket.get()),
-                MarketMapping.fromBisq2Model(settingsService.selectedMarket.get()),
+                MarketMapping.fromBisq2Model(settingsService.selectedMuSigMarket.get()),
                 settingsService.numDaysAfterRedactingTradeData.get(),
             )
     }

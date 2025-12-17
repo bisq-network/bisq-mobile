@@ -184,6 +184,7 @@ bisq-core-offer = { module = "bisq:offer", version.ref = "bisq-core" }
 bisq-core-persistence = { module = "bisq:persistence", version.ref = "bisq-core" }
 bisq-core-presentation = { module = "bisq:presentation", version.ref = "bisq-core" }
 bisq-core-account = { module = "bisq:account", version.ref = "bisq-core" }
+bisq-core-burningman = { module = "bisq:burningman", version.ref = "bisq-core" }
 bisq-core-application = { module = "bisq:application", version.ref = "bisq-core" }
 bisq-core-bonded-roles = { module = "bisq:bonded-roles", version.ref = "bisq-core" }
 bisq-core-chat = { module = "bisq:chat", version.ref = "bisq-core" }
