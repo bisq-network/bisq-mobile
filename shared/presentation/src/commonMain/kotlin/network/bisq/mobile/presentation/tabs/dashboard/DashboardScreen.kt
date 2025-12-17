@@ -149,15 +149,7 @@ fun DashboardScreen() {
             if (ignored) {
                 presenter.saveBatteryOptimizationState(BatteryOptimizationState.IGNORED)
             } else {
-                if (batteryPermissionState == BatteryOptimizationState.DONT_ASK_AGAIN) {
-                    presenter.saveBatteryOptimizationState(BatteryOptimizationState.DONT_ASK_AGAIN)
-                    presenter.showSnackbar(
-                        "mobile.platform.settings.batteryOptimizations.dismissed".i18n(),
-                        duration = SnackbarDuration.Indefinite,
-                    )
-                } else {
-                    presenter.saveBatteryOptimizationState(BatteryOptimizationState.NOT_IGNORED)
-                }
+                presenter.saveBatteryOptimizationState(BatteryOptimizationState.NOT_IGNORED)
             }
         }
 
