@@ -10,7 +10,17 @@ class SettingsApiGateway(
 ) : Logging {
     private val basePath = "settings"
 
-    suspend fun getSettings(): Result<SettingsVO> = webSocketApiClient.get(basePath)
+    suspend fun getSettings(): Result<SettingsVO> {
+        // Server may return empty array "[]" when no settings exist yet
+        // In that case, return default SettingsVO
+        val result = webSocketApiClient.get<SettingsVO>(basePath)
+        return if (result.isFailure && result.exceptionOrNull() is kotlinx.serialization.SerializationException) {
+            log.w { "Failed to deserialize settings, returning defaults: ${result.exceptionOrNull()?.message}" }
+            Result.success(SettingsVO())
+        } else {
+            result
+        }
+    }
 
     suspend fun getApiVersion(): Result<ApiVersionSettingsVO> = webSocketApiClient.get("$basePath/version")
 

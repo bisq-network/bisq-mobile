@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class TradeProtocolTypeEnum {
     BISQ_EASY,
-    BISQ_MU_SIG,
+    MU_SIG,
     SUBMARINE,
     LIQUID_MU_SIG,
     BISQ_LIGHTNING,

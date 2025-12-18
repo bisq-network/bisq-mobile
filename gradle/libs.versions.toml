@@ -4,7 +4,7 @@
 bisq-core = "2.1.8"
 bisq-core-commit = "d25503dc8581e92de3a8318c0650e0a9ef4b5fd9"
 # API version is usually same as bisq-core but for more control we keep it separated
-#bisq-api = "2.1.7"
+#bisq-api = "2.1.8"
 
 # -------------------- Kotlin & JetBrains --------------------
 kotlin = "2.2.10"

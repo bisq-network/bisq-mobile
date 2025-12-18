@@ -162,7 +162,7 @@ class Mappings {
         fun toBisq2Model(value: TradeProtocolTypeEnum): TradeProtocolType =
             when (value) {
                 TradeProtocolTypeEnum.BISQ_EASY -> TradeProtocolType.BISQ_EASY
-//                TradeProtocolTypeEnum.BISQ_MU_SIG -> TradeProtocolType.BISQ_MU_SIG
+                TradeProtocolTypeEnum.MU_SIG -> TradeProtocolType.MU_SIG
                 TradeProtocolTypeEnum.SUBMARINE -> TradeProtocolType.SUBMARINE
                 TradeProtocolTypeEnum.LIQUID_MU_SIG -> TradeProtocolType.LIQUID_MU_SIG
                 TradeProtocolTypeEnum.BISQ_LIGHTNING -> TradeProtocolType.BISQ_LIGHTNING
@@ -197,6 +197,7 @@ class Mappings {
                 ChatChannelDomainEnum.BISQ_EASY_OPEN_TRADES -> ChatChannelDomain.BISQ_EASY_OPEN_TRADES
                 ChatChannelDomainEnum.DISCUSSION -> ChatChannelDomain.DISCUSSION
                 ChatChannelDomainEnum.SUPPORT -> ChatChannelDomain.SUPPORT
+                ChatChannelDomainEnum.MU_SIG_OPEN_TRADES -> ChatChannelDomain.MU_SIG_OPEN_TRADES
             }
 
         fun fromBisq2Model(value: ChatChannelDomain): ChatChannelDomainEnum =
@@ -206,7 +207,7 @@ class Mappings {
                 ChatChannelDomain.DISCUSSION -> ChatChannelDomainEnum.DISCUSSION
                 ChatChannelDomain.SUPPORT -> ChatChannelDomainEnum.SUPPORT
                 ChatChannelDomain.BISQ_EASY_PRIVATE_CHAT -> ChatChannelDomainEnum.DISCUSSION
-                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OPEN_TRADES
+                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.MU_SIG_OPEN_TRADES
                 ChatChannelDomain.EVENTS -> ChatChannelDomainEnum.DISCUSSION
             }
     }

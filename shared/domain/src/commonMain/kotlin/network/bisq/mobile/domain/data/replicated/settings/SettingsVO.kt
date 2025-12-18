@@ -21,15 +21,15 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 
 @Serializable
 data class SettingsVO(
-    val isTacAccepted: Boolean,
-    val tradeRulesConfirmed: Boolean,
-    val closeMyOfferWhenTaken: Boolean,
-    val languageCode: String,
-    val supportedLanguageCodes: Set<String>,
-    val maxTradePriceDeviation: Double,
+    val isTacAccepted: Boolean = false,
+    val tradeRulesConfirmed: Boolean = false,
+    val closeMyOfferWhenTaken: Boolean = false,
+    val languageCode: String = "en",
+    val supportedLanguageCodes: Set<String> = emptySet(),
+    val maxTradePriceDeviation: Double = 0.1,
     val useAnimations: Boolean = true,
-    val selectedMarket: MarketVO,
-    val numDaysAfterRedactingTradeData: Int,
+    val selectedMarket: MarketVO? = null,
+    val numDaysAfterRedactingTradeData: Int = 90,
 )
 
 val settingsVODemoObj =
