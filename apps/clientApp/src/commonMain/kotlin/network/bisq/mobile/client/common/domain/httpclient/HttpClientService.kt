@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.domain.httpclient
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -33,11 +34,14 @@ import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.utils.createHttpClient
 import network.bisq.mobile.crypto.getSha256
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.domain.PlatformType
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import kotlin.concurrent.Volatile
 
@@ -50,6 +54,7 @@ class HttpClientService(
     private val kmpTorService: KmpTorService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val jsonConfig: Json,
+    private val versionProvider: VersionProvider,
     private val defaultHost: String,
     private val defaultPort: Int,
 ) : ServiceFacade() {
@@ -64,7 +69,10 @@ class HttpClientService(
     private var _httpClient: MutableStateFlow<HttpClient?> = MutableStateFlow(null)
     private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
-    private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
+    private val stopFlow = MutableSharedFlow<Unit>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    ) // signal to cancel waiters
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -172,6 +180,12 @@ class HttpClientService(
         log.d { "HttpClient baseUrl set to $baseUrl" }
         val password = clientSettings.password
         return createHttpClient(proxy) {
+            install(UserAgent) {
+                agent = versionProvider.getAppNameAndVersion(
+                    false,
+                    getPlatformInfo().type == PlatformType.IOS
+                )
+            }
             install(ContentNegotiation) {
                 json(jsonConfig)
             }

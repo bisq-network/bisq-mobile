@@ -7,6 +7,10 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryImpl
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
 import network.bisq.mobile.client.common.domain.service.accounts.AccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.accounts.ClientAccountsServiceFacade
 import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade
@@ -39,10 +43,6 @@ import network.bisq.mobile.client.common.domain.websocket.messages.SubscriptionR
 import network.bisq.mobile.client.common.domain.websocket.messages.SubscriptionResponse
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketMessage
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryImpl
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.domain.data.EnvironmentController
@@ -149,6 +149,7 @@ val clientDomainModule = module {
 
     single {
         HttpClientService(
+            get(),
             get(),
             get(),
             get(),
