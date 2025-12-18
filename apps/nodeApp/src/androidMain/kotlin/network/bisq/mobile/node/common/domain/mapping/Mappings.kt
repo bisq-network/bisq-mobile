@@ -170,13 +170,12 @@ class Mappings {
                 TradeProtocolTypeEnum.BSQ_SWAP -> TradeProtocolType.BSQ_SWAP
                 TradeProtocolTypeEnum.LIGHTNING_ESCROW -> TradeProtocolType.LIGHTNING_ESCROW
                 TradeProtocolTypeEnum.MONERO_SWAP -> TradeProtocolType.MONERO_SWAP
-                else -> throw IllegalArgumentException("Unsupported enum $value")
             }
 
         fun fromBisq2Model(value: TradeProtocolType): TradeProtocolTypeEnum =
             when (value) {
                 TradeProtocolType.BISQ_EASY -> TradeProtocolTypeEnum.BISQ_EASY
-//                TradeProtocolType.BISQ_MU_SIG -> TradeProtocolTypeEnum.BISQ_MU_SIG
+                TradeProtocolType.MU_SIG -> TradeProtocolTypeEnum.MU_SIG
                 TradeProtocolType.SUBMARINE -> TradeProtocolTypeEnum.SUBMARINE
                 TradeProtocolType.LIQUID_MU_SIG -> TradeProtocolTypeEnum.LIQUID_MU_SIG
                 TradeProtocolType.BISQ_LIGHTNING -> TradeProtocolTypeEnum.BISQ_LIGHTNING
@@ -184,7 +183,6 @@ class Mappings {
                 TradeProtocolType.BSQ_SWAP -> TradeProtocolTypeEnum.BSQ_SWAP
                 TradeProtocolType.LIGHTNING_ESCROW -> TradeProtocolTypeEnum.LIGHTNING_ESCROW
                 TradeProtocolType.MONERO_SWAP -> TradeProtocolTypeEnum.MONERO_SWAP
-                else -> throw IllegalArgumentException("Unsupported enum $value")
             }
     }
 

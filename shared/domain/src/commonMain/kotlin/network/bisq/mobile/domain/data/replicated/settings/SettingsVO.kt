@@ -34,13 +34,13 @@ data class SettingsVO(
 
 val settingsVODemoObj =
     SettingsVO(
-        true,
-        true,
-        true,
-        "EN",
-        setOf("EN", "SP"),
-        1.0,
-        true,
-        MarketVO("AUD", "AUD"),
-        1,
+        isTacAccepted = true,
+        tradeRulesConfirmed = true,
+        closeMyOfferWhenTaken = true,
+        languageCode = "en",
+        supportedLanguageCodes = setOf("en", "es"),
+        maxTradePriceDeviation = 1.0,
+        useAnimations = true,
+        selectedMarket = MarketVO("AUD", "AUD"),
+        numDaysAfterRedactingTradeData = 1,
     )
