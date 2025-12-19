@@ -46,10 +46,12 @@ class NodeNetworkServiceFacade(
         }
         serviceNodesByTransport.values.forEach { serviceNode ->
             serviceNodeStatePin =
-                serviceNode.state.addObserver {
-                    val node = serviceNode.defaultNode
-                    if (node != null) {
-                        defaultNode = node
+                serviceNode.state.addObserver { state ->
+                    log.i { "ServiceNode state changed to: $state, defaultNode: ${serviceNode.defaultNode}" }
+                    if (ServiceNode.State.INITIALIZING == state) {
+                        defaultNode = serviceNode.defaultNode
+                        requireNotNull(defaultNode) { "defaultNode is not null when state is ServiceNode.State.INITIALIZING" }
+                        log.i { "Setting up Node.Listener for defaultNode: $defaultNode" }
                         defaultNode!!.addListener(this)
                         updateNumConnections()
 
@@ -82,6 +84,7 @@ class NodeNetworkServiceFacade(
     }
 
     override fun onConnection(connection: Connection) {
+        log.i { "onConnection: ${connection.peerAddress}, total: ${defaultNode?.numConnections ?: -1}" }
         updateNumConnections()
     }
 
@@ -89,6 +92,7 @@ class NodeNetworkServiceFacade(
         connection: Connection,
         closeReason: CloseReason,
     ) {
+        log.i { "onDisconnect: ${connection.peerAddress}, reason: $closeReason, total: ${defaultNode?.numConnections ?: -1}" }
         updateNumConnections()
     }
 

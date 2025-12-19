@@ -25,12 +25,11 @@ object UserDefinedFiatAccountMapping {
 }
 
 object UserDefinedFiatAccountPayloadMapping {
-    fun toBisq2Model(value: UserDefinedFiatAccountPayloadVO): UserDefinedFiatAccountPayload {
-        return UserDefinedFiatAccountPayload(
+    fun toBisq2Model(value: UserDefinedFiatAccountPayloadVO): UserDefinedFiatAccountPayload =
+        UserDefinedFiatAccountPayload(
             StringUtils.createUid(),
             value.accountData,
         )
-    }
 
     fun fromBisq2Model(value: UserDefinedFiatAccountPayload): UserDefinedFiatAccountPayloadVO =
         UserDefinedFiatAccountPayloadVO(

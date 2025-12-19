@@ -31,8 +31,7 @@ class NodeAccountsServiceFacade(
         super<ServiceFacade>.deactivate()
     }
 
-    private fun findBisq2Account(account: UserDefinedFiatAccountVO): UserDefinedFiatAccount? =
-        accountService.accountByNameMap[account.accountName] as? UserDefinedFiatAccount
+    private fun findBisq2Account(account: UserDefinedFiatAccountVO): UserDefinedFiatAccount? = accountService.accountByNameMap[account.accountName] as? UserDefinedFiatAccount
 
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> =
         accountService
@@ -87,7 +86,12 @@ class NodeAccountsServiceFacade(
     override suspend fun getSelectedAccount() {
         val optional = accountService.selectedAccount
         if (optional.isPresent) {
-            val bisq2Account = optional.get() as? UserDefinedFiatAccount ?: return
+            val bisq2Account = optional.get() as? UserDefinedFiatAccount
+            if (bisq2Account == null) {
+                // Clear local state when selected account is not the expected type
+                _selectedAccount.value = null
+                return
+            }
             _selectedAccount.value = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
         } else {
             _selectedAccount.value = null

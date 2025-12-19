@@ -571,7 +571,10 @@ class Mappings {
     }
 
     object AddressMapping {
-        fun toBisq2Model(key: TransportTypeEnum, value: AddressVO): Address =
+        fun toBisq2Model(
+            key: TransportTypeEnum,
+            value: AddressVO,
+        ): Address =
             when (key) {
                 TransportTypeEnum.CLEAR -> ClearnetAddress(value.host, value.port)
                 TransportTypeEnum.I2P -> I2PAddress(value.host, value.port)
@@ -856,7 +859,7 @@ class Mappings {
                 value.supportedLanguageCodes,
                 BuildNodeConfig.TRADE_OFFER_VERSION,
                 BuildNodeConfig.TRADE_PROTOCOL_VERSION,
-                BuildNodeConfig.APP_VERSION
+                BuildNodeConfig.APP_VERSION,
             )
 
         fun fromBisq2Model(value: BisqEasyOffer): BisqEasyOfferVO =

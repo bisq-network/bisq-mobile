@@ -57,6 +57,7 @@ class KmpTorService(
     companion object {
         private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 60_000L
     }
+
     sealed class TorState {
         protected abstract val i18nKey: String
 
@@ -445,14 +446,15 @@ class KmpTorService(
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
         val selectorManager = SelectorManager(Dispatchers.IO)
         selectorManager.use {
-            delay(500)
+            delay(500L)
             repeat(3) { attempt ->
                 try {
+                    log.d { "Trying control port connection..." }
                     val socket = aSocket(it).tcp().connect("127.0.0.1", controlPort)
                     socket.close()
                     log.i { "Verified control port $controlPort is accessible" }
                     return
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     if (attempt < 2) delay(250)
                 }
             }

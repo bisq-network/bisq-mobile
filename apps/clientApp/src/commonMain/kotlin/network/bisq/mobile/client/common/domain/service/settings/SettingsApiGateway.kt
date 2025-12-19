@@ -10,9 +10,7 @@ class SettingsApiGateway(
 ) : Logging {
     private val basePath = "settings"
 
-    suspend fun getSettings(): Result<SettingsVO> {
-        return webSocketApiClient.get(basePath)
-    }
+    suspend fun getSettings(): Result<SettingsVO> = webSocketApiClient.get(basePath)
 
     suspend fun getApiVersion(): Result<ApiVersionSettingsVO> = webSocketApiClient.get("$basePath/version")
 
