@@ -23,6 +23,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 
 
+import network.bisq.mobile.presentation.common.ui.platform.CUSTOM_PAYMENT_BACKGROUND_COLORS
+import network.bisq.mobile.presentation.common.ui.platform.customPaymentOverlayLetterColor
+import network.bisq.mobile.presentation.common.ui.platform.isIOSPlatform
 import network.bisq.mobile.presentation.common.ui.platform.platformTextStyleNoFontPadding
 
 import androidx.compose.foundation.layout.width
@@ -525,47 +528,67 @@ private fun FilterIcon(
     // For unknown payment methods, mirror the fallback used in PaymentMethods:
     // - Use one of the custom_payment_* icons deterministically
     // - Overlay the first letter as a label
-    val (isMissingPayment, fallbackPath, overlayLetter) = if (isPayment) {
+    val (isMissingPayment, customIconIdx, overlayLetter) = if (isPayment) {
         val (_, missing) = i18NPaymentMethod(item.id)
         if (missing) {
             val idx = customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size)
-            Triple(true, "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png", item.id.firstOrNull()?.uppercase() ?: "?")
-        } else Triple(false, null, null)
-    } else Triple(false, null, null)
+            Triple(true, idx, item.id.firstOrNull()?.uppercase() ?: "?")
+        } else Triple(false, -1, null)
+    } else Triple(false, -1, null)
+
+    val fallbackPath = if (isMissingPayment) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[customIconIdx]}.png" else null
 
     val inPreview = LocalInspectionMode.current
-    var imageModifier = Modifier
+    // For custom payment icons, apply alpha only to the image so the overlay letter stays visible
+    var boxModifier = Modifier
         .size(size)
-        .alpha(alpha)
         .semantics { contentDescription = "filter_icon_${item.id}" }
+    if (!isMissingPayment) {
+        boxModifier = boxModifier.alpha(alpha)
+    }
     if (!compact) {
-        imageModifier = imageModifier.clickable(
+        boxModifier = boxModifier.clickable(
             indication = null,
             interactionSource = remember { MutableInteractionSource() }
         ) { onToggle(item.id) }
     }
 
-    Box(modifier = imageModifier, contentAlignment = Alignment.Center) {
-        if (inPreview) {
-            val previewPath = fallbackPath ?: item.iconPath
-            Image(
-                painter = painterResource(previewDrawableFromPath(previewPath)),
-
-
-                contentDescription = item.label,
-                modifier = Modifier.fillMaxSize()
+    Box(modifier = boxModifier, contentAlignment = Alignment.Center) {
+        // For custom payment icons on iOS, use a programmatic colored background
+        // because the PNG images don't render correctly on iOS
+        if (isMissingPayment && isIOSPlatform()) {
+            val bgColor = CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(customIconIdx) {
+                CUSTOM_PAYMENT_BACKGROUND_COLORS[0]
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(alpha)
+                    .background(bgColor, RoundedCornerShape(4.dp))
             )
         } else {
-            DynamicImage(
-                path = item.iconPath,
-                fallbackPath = fallbackPath,
-                contentDescription = item.label,
-                modifier = Modifier.fillMaxSize()
-            )
+            // For Android or non-custom payment icons, use the image
+            val imageAlphaModifier = if (isMissingPayment) Modifier.fillMaxSize().alpha(alpha) else Modifier.fillMaxSize()
+            if (inPreview) {
+                val previewPath = fallbackPath ?: item.iconPath
+                Image(
+                    painter = painterResource(previewDrawableFromPath(previewPath)),
+                    contentDescription = item.label,
+                    modifier = imageAlphaModifier
+                )
+            } else {
+                DynamicImage(
+                    path = item.iconPath,
+                    fallbackPath = fallbackPath,
+                    contentDescription = item.label,
+                    modifier = imageAlphaModifier
+                )
+            }
         }
         if (isMissingPayment && overlayLetter != null) {
             val letterSizeSp = if (size < 16.dp) 11f else 12f
             // Use tighter lineHeight and no font padding to keep the letter visually centered in small boxes
+            // iOS uses a lighter color due to different text rendering that makes dark text barely visible
             BisqText.styledText(
                 text = overlayLetter,
                 style = BisqTheme.typography.baseBold.copy(
@@ -574,7 +597,10 @@ private fun FilterIcon(
                     platformStyle = platformTextStyleNoFontPadding()
                 ),
                 textAlign = TextAlign.Center,
-                color = BisqTheme.colors.dark_grey20,
+                color = customPaymentOverlayLetterColor(
+                    darkColor = BisqTheme.colors.dark_grey20,
+                    lightColor = BisqTheme.colors.white
+                ),
             )
         }
     }
@@ -628,15 +654,28 @@ private fun MethodChip(
         val paymentFallbackPath = if (isPaymentRow) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png" else null
 
         Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
-            DynamicImage(
-                path = item.iconPath,
-                fallbackPath = paymentFallbackPath,
-                contentDescription = item.label,
-                modifier = Modifier.size(iconSize)
-            )
+            // For custom payment icons on iOS, use a programmatic colored background
+            if (isMissingPayment && isIOSPlatform()) {
+                val bgColor = CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(idx) {
+                    CUSTOM_PAYMENT_BACKGROUND_COLORS[0]
+                }
+                Box(
+                    modifier = Modifier
+                        .size(iconSize)
+                        .background(bgColor, RoundedCornerShape(2.dp))
+                )
+            } else {
+                DynamicImage(
+                    path = item.iconPath,
+                    fallbackPath = paymentFallbackPath,
+                    contentDescription = item.label,
+                    modifier = Modifier.size(iconSize)
+                )
+            }
             if (isMissingPayment && overlayLetter != null) {
                 val letterSizeSp = if (iconSize < 16.dp) 11f else 12f
                 // Use tighter lineHeight and no font padding to keep the letter visually centered in small boxes
+                // iOS uses a lighter color due to different text rendering that makes dark text barely visible
                 BisqText.styledText(
                     text = overlayLetter,
                     style = BisqTheme.typography.baseBold.copy(
@@ -645,7 +684,10 @@ private fun MethodChip(
                         platformStyle = platformTextStyleNoFontPadding()
                     ),
                     textAlign = TextAlign.Center,
-                    color = BisqTheme.colors.dark_grey20,
+                    color = customPaymentOverlayLetterColor(
+                        darkColor = BisqTheme.colors.dark_grey20,
+                        lightColor = BisqTheme.colors.white
+                    ),
                 )
             }
         }
