@@ -75,7 +75,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.common.ui.utils.customPaymentIconIndex
-import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
+import network.bisq.mobile.presentation.common.ui.utils.hasKnownPaymentIcon
+import network.bisq.mobile.presentation.common.ui.utils.hasKnownSettlementIcon
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.InternalResourceApi
 import org.jetbrains.compose.resources.ResourceItem
@@ -525,25 +526,23 @@ private fun FilterIcon(
 ) {
     val alpha = if (item.selected) 1f else 0.35f
 
-    // For unknown payment methods, mirror the fallback used in PaymentMethods:
-    // - Use one of the custom_payment_* icons deterministically
-    // - Overlay the first letter as a label
-    val (isMissingPayment, customIconIdx, overlayLetter) = if (isPayment) {
-        val (_, missing) = i18NPaymentMethod(item.id)
-        if (missing) {
-            val idx = customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size)
-            Triple(true, idx, item.id.firstOrNull()?.uppercase() ?: "?")
-        } else Triple(false, -1, null)
-    } else Triple(false, -1, null)
+    // Check if the method has a known icon file (not just i18n entry)
+    // For payment methods: check hasKnownPaymentIcon
+    // For settlement methods: check hasKnownSettlementIcon
+    val hasKnownIcon = if (isPayment) hasKnownPaymentIcon(item.id) else hasKnownSettlementIcon(item.id)
+    val isMissingIcon = !hasKnownIcon
 
-    val fallbackPath = if (isMissingPayment) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[customIconIdx]}.png" else null
+    // For methods without known icons, use custom fallback with overlay letter
+    val customIconIdx = if (isMissingIcon) customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size) else -1
+    val overlayLetter = if (isMissingIcon) (item.id.firstOrNull()?.uppercase() ?: "?") else null
+    val fallbackPath = if (isMissingIcon) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[customIconIdx]}.png" else null
 
     val inPreview = LocalInspectionMode.current
-    // For custom payment icons, apply alpha only to the image so the overlay letter stays visible
+    // For custom icons, apply alpha only to the image so the overlay letter stays visible
     var boxModifier = Modifier
         .size(size)
         .semantics { contentDescription = "filter_icon_${item.id}" }
-    if (!isMissingPayment) {
+    if (!isMissingIcon) {
         boxModifier = boxModifier.alpha(alpha)
     }
     if (!compact) {
@@ -554,9 +553,9 @@ private fun FilterIcon(
     }
 
     Box(modifier = boxModifier, contentAlignment = Alignment.Center) {
-        // For custom payment icons on iOS, use a programmatic colored background
+        // For custom icons on iOS, use a programmatic colored background
         // because the PNG images don't render correctly on iOS
-        if (isMissingPayment && isIOSPlatform()) {
+        if (isMissingIcon && isIOSPlatform()) {
             val bgColor = CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(customIconIdx) {
                 CUSTOM_PAYMENT_BACKGROUND_COLORS[0]
             }
@@ -567,8 +566,8 @@ private fun FilterIcon(
                     .background(bgColor, RoundedCornerShape(4.dp))
             )
         } else {
-            // For Android or non-custom payment icons, use the image
-            val imageAlphaModifier = if (isMissingPayment) Modifier.fillMaxSize().alpha(alpha) else Modifier.fillMaxSize()
+            // For Android or methods with known icons, use the image
+            val imageAlphaModifier = if (isMissingIcon) Modifier.fillMaxSize().alpha(alpha) else Modifier.fillMaxSize()
             if (inPreview) {
                 val previewPath = fallbackPath ?: item.iconPath
                 Image(
@@ -585,7 +584,7 @@ private fun FilterIcon(
                 )
             }
         }
-        if (isMissingPayment && overlayLetter != null) {
+        if (isMissingIcon && overlayLetter != null) {
             val letterSizeSp = if (size < 16.dp) 11f else 12f
             // Use tighter lineHeight and no font padding to keep the letter visually centered in small boxes
             // iOS uses a lighter color due to different text rendering that makes dark text barely visible
@@ -645,17 +644,16 @@ private fun MethodChip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // Always provide a fallback custom icon for payment methods; overlay letter only when i18n is missing.
-        val (isMissingPayment, overlayLetter) = if (isPaymentRow) {
-            val (_, missing) = i18NPaymentMethod(item.id)
-            Pair(missing, item.id.firstOrNull()?.uppercase() ?: "?")
-        } else Pair(false, null)
+        // Check if the method has a known icon file (not just i18n entry)
+        val hasKnownIcon = if (isPaymentRow) hasKnownPaymentIcon(item.id) else hasKnownSettlementIcon(item.id)
+        val isMissingIcon = !hasKnownIcon
+        val overlayLetter = if (isMissingIcon) (item.id.firstOrNull()?.uppercase() ?: "?") else null
         val idx = customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size)
-        val paymentFallbackPath = if (isPaymentRow) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png" else null
+        val fallbackPath = if (isMissingIcon) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png" else null
 
         Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
-            // For custom payment icons on iOS, use a programmatic colored background
-            if (isMissingPayment && isIOSPlatform()) {
+            // For custom icons on iOS, use a programmatic colored background
+            if (isMissingIcon && isIOSPlatform()) {
                 val bgColor = CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(idx) {
                     CUSTOM_PAYMENT_BACKGROUND_COLORS[0]
                 }
@@ -667,12 +665,12 @@ private fun MethodChip(
             } else {
                 DynamicImage(
                     path = item.iconPath,
-                    fallbackPath = paymentFallbackPath,
+                    fallbackPath = fallbackPath,
                     contentDescription = item.label,
                     modifier = Modifier.size(iconSize)
                 )
             }
-            if (isMissingPayment && overlayLetter != null) {
+            if (isMissingIcon && overlayLetter != null) {
                 val letterSizeSp = if (iconSize < 16.dp) 11f else 12f
                 // Use tighter lineHeight and no font padding to keep the letter visually centered in small boxes
                 // iOS uses a lighter color due to different text rendering that makes dark text barely visible

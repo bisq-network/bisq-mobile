@@ -22,6 +22,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CloseIconButton
+import network.bisq.mobile.presentation.common.ui.platform.CUSTOM_PAYMENT_BACKGROUND_COLORS
+import network.bisq.mobile.presentation.common.ui.platform.customPaymentOverlayLetterColor
+import network.bisq.mobile.presentation.common.ui.platform.isIOSPlatform
 import network.bisq.mobile.presentation.common.ui.utils.customPaymentIconIndex
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
@@ -69,20 +72,35 @@ fun PaymentTypeCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Box {
-            DynamicImage(
-                path = image,
-                fallbackPath = "drawable/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png",
-                contentDescription =  if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
-                modifier = Modifier.size(20.dp)
-            )
+        Box(contentAlignment = Alignment.Center) {
+            // For custom payment icons on iOS, use a programmatic colored background
+            if (isCustomPaymentMethod && isIOSPlatform()) {
+                val bgColor = CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(customIndex) {
+                    CUSTOM_PAYMENT_BACKGROUND_COLORS[0]
+                }
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(bgColor, RoundedCornerShape(4.dp))
+                )
+            } else {
+                DynamicImage(
+                    path = image,
+                    fallbackPath = "drawable/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png",
+                    contentDescription =  if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
             if (isCustomPaymentMethod && title.isNotEmpty()) {
                 Box(modifier = Modifier.size(20.dp), contentAlignment = Alignment.Center) {
                     val firstChar = title.firstOrNull()?.toString()?.uppercase().orEmpty()
                     BisqText.baseBold(
                         text = firstChar,
                         textAlign = TextAlign.Center,
-                        color = BisqTheme.colors.dark_grey20,
+                        color = customPaymentOverlayLetterColor(
+                            darkColor = BisqTheme.colors.dark_grey20,
+                            lightColor = BisqTheme.colors.white
+                        ),
                         modifier = Modifier.size(20.dp).wrapContentSize()
                     )
                 }

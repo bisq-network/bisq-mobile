@@ -26,3 +26,51 @@ fun customPaymentIconIndex(
 
     return nonNegative % customPaymentIconLength
 }
+
+// Payment methods that have dedicated icon files in drawable/payment/fiat/
+private val KNOWN_FIAT_PAYMENT_ICONS = setOf(
+    "ACH_TRANSFER",
+    "AMAZON_GIFT_CARD",
+    "BIZUM",
+    "CASH_APP",
+    "CASH_BY_MAIL",
+    "CASH_DEPOSIT",
+    "F2F",
+    "FASTER_PAYMENTS",
+    "INTERAC_E_TRANSFER",
+    "NATIONAL_BANK",
+    "PAY_ID",
+    "PIX",
+    "REVOLUT",
+    "SEPA",
+    "SEPA_INSTANT",
+    "STRIKE",
+    "SWIFT",
+    "UPI",
+    "US_POSTAL_MONEY_ORDER",
+    "WISE",
+    "ZELLE",
+)
+
+// Settlement methods that have dedicated icon files in drawable/payment/bitcoin/
+private val KNOWN_SETTLEMENT_ICONS = setOf(
+    "BTC",
+    "MAIN_CHAIN",
+    "ONCHAIN",
+    "ON_CHAIN",
+    "LIGHTNING",
+    "LN",
+)
+
+/**
+ * Returns true if the payment method ID has a known icon file.
+ * This is used to determine whether to show a custom fallback icon.
+ */
+fun hasKnownPaymentIcon(paymentMethodId: String): Boolean =
+    KNOWN_FIAT_PAYMENT_ICONS.contains(paymentMethodId.uppercase())
+
+/**
+ * Returns true if the settlement method ID has a known icon file.
+ */
+fun hasKnownSettlementIcon(settlementMethodId: String): Boolean =
+    KNOWN_SETTLEMENT_ICONS.contains(settlementMethodId.uppercase())
