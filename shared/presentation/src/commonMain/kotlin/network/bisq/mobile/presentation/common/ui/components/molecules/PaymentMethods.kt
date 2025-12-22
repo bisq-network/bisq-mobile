@@ -40,12 +40,13 @@ fun PaymentMethods(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             quoteSidePaymentMethods.forEach { paymentMethod ->
+                val trimmedPaymentMethod = paymentMethod.trim()
 
                 Box(contentAlignment = Alignment.Center) {
                     // Check if the payment method has a known icon file
-                    val isMissingIcon = !hasKnownPaymentIcon(paymentMethod)
+                    val isMissingIcon = !hasKnownPaymentIcon(trimmedPaymentMethod)
                     val customIndex = if(isMissingIcon)
-                        customPaymentIconIndex(paymentMethod, CUSTOM_PAYMENT_ICON_IDS.size)
+                        customPaymentIconIndex(trimmedPaymentMethod, CUSTOM_PAYMENT_ICON_IDS.size)
                     else
                         0
                     val fallbackPath = "drawable/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png"
@@ -62,18 +63,18 @@ fun PaymentMethods(
                     } else {
                         DynamicImage(
                             path = "drawable/payment/fiat/${
-                                paymentMethod
+                                trimmedPaymentMethod
                                     .lowercase()
                                     .replace("-", "_")
                             }.png",
-                            contentDescription =  if (isMissingIcon) "mobile.components.paymentMethods.customPaymentMethod".i18n(paymentMethod) else paymentMethod,
+                            contentDescription =  if (isMissingIcon) "mobile.components.paymentMethods.customPaymentMethod".i18n(trimmedPaymentMethod) else trimmedPaymentMethod,
                             fallbackPath = fallbackPath,
                             modifier = Modifier.size(20.dp),
                         )
                     }
                     if (isMissingIcon) {
                         // Use white text on both platforms for visibility on colored backgrounds
-                        val firstChar = if (paymentMethod.isNotEmpty()) paymentMethod[0].toString().uppercase() else "?"
+                        val firstChar = if (trimmedPaymentMethod.isNotEmpty()) trimmedPaymentMethod[0].toString().uppercase() else "?"
                         BisqText.baseBold(
                             text = firstChar,
                             color = BisqTheme.colors.white,
@@ -88,10 +89,11 @@ fun PaymentMethods(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             baseSidePaymentMethods.forEach { settlementMethod ->
+                val trimmedSettlementMethod = settlementMethod.trim()
                 // Check if the settlement method has a known icon file
-                val isMissingIcon = !hasKnownSettlementIcon(settlementMethod)
+                val isMissingIcon = !hasKnownSettlementIcon(trimmedSettlementMethod)
                 val customIndex = if(isMissingIcon)
-                    customPaymentIconIndex(settlementMethod, CUSTOM_PAYMENT_ICON_IDS.size)
+                    customPaymentIconIndex(trimmedSettlementMethod, CUSTOM_PAYMENT_ICON_IDS.size)
                 else
                     0
                 val fallbackPath = if (isMissingIcon) "drawable/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png" else null
@@ -109,7 +111,7 @@ fun PaymentMethods(
                     } else {
                         DynamicImage(
                             "drawable/payment/bitcoin/${
-                                settlementMethod
+                                trimmedSettlementMethod
                                     .lowercase()
                                     .replace("-", "_")
                             }.png",
@@ -119,7 +121,7 @@ fun PaymentMethods(
                     }
                     if (isMissingIcon) {
                         // Use white text on both platforms for visibility on colored backgrounds
-                        val firstChar = if (settlementMethod.isNotEmpty()) settlementMethod[0].toString().uppercase() else "?"
+                        val firstChar = if (trimmedSettlementMethod.isNotEmpty()) trimmedSettlementMethod[0].toString().uppercase() else "?"
                         BisqText.baseBold(
                             text = firstChar,
                             color = BisqTheme.colors.white,

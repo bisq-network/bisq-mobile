@@ -529,12 +529,13 @@ private fun FilterIcon(
     // Check if the method has a known icon file (not just i18n entry)
     // For payment methods: check hasKnownPaymentIcon
     // For settlement methods: check hasKnownSettlementIcon
-    val hasKnownIcon = if (isPayment) hasKnownPaymentIcon(item.id) else hasKnownSettlementIcon(item.id)
+    val trimmedId = item.id.trim()
+    val hasKnownIcon = if (isPayment) hasKnownPaymentIcon(trimmedId) else hasKnownSettlementIcon(trimmedId)
     val isMissingIcon = !hasKnownIcon
 
     // For methods without known icons, use custom fallback with overlay letter
-    val customIconIdx = if (isMissingIcon) customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size) else -1
-    val overlayLetter = if (isMissingIcon) (item.id.firstOrNull()?.uppercase() ?: "?") else null
+    val customIconIdx = if (isMissingIcon) customPaymentIconIndex(trimmedId, CUSTOM_PAYMENT_IDS.size) else -1
+    val overlayLetter = if (isMissingIcon) (trimmedId.firstOrNull()?.uppercase() ?: "?") else null
     val fallbackPath = if (isMissingIcon) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[customIconIdx]}.png" else null
 
     val inPreview = LocalInspectionMode.current
@@ -645,9 +646,10 @@ private fun MethodChip(
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         // Check if the method has a known icon file (not just i18n entry)
-        val hasKnownIcon = if (isPaymentRow) hasKnownPaymentIcon(item.id) else hasKnownSettlementIcon(item.id)
+        val trimmedId = item.id.trim()
+        val hasKnownIcon = if (isPaymentRow) hasKnownPaymentIcon(trimmedId) else hasKnownSettlementIcon(trimmedId)
         val isMissingIcon = !hasKnownIcon
-        val overlayLetter = if (isMissingIcon) (item.id.firstOrNull()?.uppercase() ?: "?") else null
+        val overlayLetter = if (isMissingIcon) (trimmedId.firstOrNull()?.uppercase() ?: "?") else null
         val idx = customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size)
         val fallbackPath = if (isMissingIcon) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png" else null
 
