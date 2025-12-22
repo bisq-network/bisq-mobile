@@ -650,7 +650,7 @@ private fun MethodChip(
         val hasKnownIcon = if (isPaymentRow) hasKnownPaymentIcon(trimmedId) else hasKnownSettlementIcon(trimmedId)
         val isMissingIcon = !hasKnownIcon
         val overlayLetter = if (isMissingIcon) (trimmedId.firstOrNull()?.uppercase() ?: "?") else null
-        val idx = customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size)
+        val idx = customPaymentIconIndex(trimmedId, CUSTOM_PAYMENT_IDS.size)
         val fallbackPath = if (isMissingIcon) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png" else null
 
         Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
