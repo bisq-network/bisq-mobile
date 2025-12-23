@@ -21,8 +21,6 @@ import network.bisq.mobile.node.common.domain.utils.saveToDownloads
 import network.bisq.mobile.node.common.domain.utils.shareBackup
 import network.bisq.mobile.node.common.domain.utils.unzipToDirectory
 import network.bisq.mobile.node.common.domain.utils.zipDirectory
-import network.bisq.mobile.node.settings.backup.presentation.backupFileName
-import network.bisq.mobile.node.settings.backup.presentation.backupPrefix
 import org.koin.core.component.inject
 import java.io.File
 import java.io.IOException
@@ -33,6 +31,8 @@ import java.time.format.DateTimeFormatter
 
 
 private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
+const val backupFileName = "bisq_db_from_backup"
+const val backupPrefix = "bisq2_mobile-backup-"
 
 data class RestorePreFlightResult(
     val errorMessage: String? = null,

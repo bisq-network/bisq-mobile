@@ -16,7 +16,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.node.common.di.androidNodeDomainModule
 import network.bisq.mobile.node.common.di.androidNodePresentationModule
 import network.bisq.mobile.node.common.domain.utils.moveDirReplace
-import network.bisq.mobile.node.settings.backup.presentation.backupFileName
+import network.bisq.mobile.node.settings.backup.domain.backupFileName
 import network.bisq.mobile.presentation.common.di.presentationModule
 import network.bisq.mobile.presentation.main.MainApplication
 import org.bouncycastle.jce.provider.BouncyCastleProvider

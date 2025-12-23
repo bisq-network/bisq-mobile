@@ -12,10 +12,6 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.component.inject
 
-
-const val backupFileName = "bisq_db_from_backup"
-const val backupPrefix = "bisq2_mobile-backup-"
-
 class BackupPresenter(
     private val mainPresenter: MainPresenter,
     private val nodeBackupServiceFacade: NodeBackupServiceFacade,
