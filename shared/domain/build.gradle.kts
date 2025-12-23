@@ -91,7 +91,6 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core)
-            implementation(libs.koin.core)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kmp.tor.resource.exec)
@@ -100,9 +99,6 @@ kotlin {
         commonMain.dependencies {
             // AndroidX
             implementation(libs.androidx.datastore.okio)
-
-            // Kotlin
-            implementation(libs.kotlin.reflect)
 
             // KotlinX
             implementation(libs.kotlinx.coroutines.core)
@@ -163,8 +159,6 @@ kotlin {
 
             // Other libraries
             implementation(libs.junit)
-            implementation(libs.mockk)
-            implementation(libs.robolectric)
         }
 
         iosMain.dependencies {
@@ -179,11 +173,7 @@ kotlin {
         }
 
         iosTest.dependencies {
-            // Kotlin
-            implementation(libs.kotlin.test)
-
-            // KotlinX
-            implementation(libs.kotlinx.coroutines.test)
+            // add ios specifics
         }
     }
 }

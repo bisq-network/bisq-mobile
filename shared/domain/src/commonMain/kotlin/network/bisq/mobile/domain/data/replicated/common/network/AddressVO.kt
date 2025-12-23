@@ -35,8 +35,7 @@ data class AddressVO(val host: String, val port: Int) {
             if (rawHost.isBlank()) return null
 
             val host = if (rawHost.endsWith(".onion")) rawHost.lowercase() else rawHost
-            val portStr = match.groupValues[2]
-            val port = if (portStr.isNotEmpty()) portStr.toIntOrNull() ?: return null else return null
+            val port = match.groupValues[2].toIntOrNull() ?: return null
             if (port !in 1..65535) return null
 
             return AddressVO(host, port)

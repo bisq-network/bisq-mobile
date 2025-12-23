@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -99,17 +100,18 @@ class ByteArrayUtilTest {
         assertContentEquals(byteArrayOf(), result)
     }
 
-    // ByteArrayAsBase64Serializer round-trip test
+    // ByteArrayAsBase64Serializer tests
+    @Test
+    fun `ByteArrayAsBase64Serializer has correct descriptor`() {
+        assertEquals("ByteArrayAsBase64", ByteArrayAsBase64Serializer.descriptor.serialName)
+    }
+
     @Test
     fun `ByteArrayAsBase64Serializer round-trip preserves data`() {
         val original = byteArrayOf(0, 1, 127, -128, -1)
-        
-        // Simulate serialization
-        val serializer = ByteArrayAsBase64Serializer
-        assertEquals("ByteArrayAsBase64", serializer.descriptor.serialName)
-        
-        // The actual serialization is tested via kotlinx.serialization integration
-        // Here we just verify the descriptor is correct
+        val json = Json.encodeToString(ByteArrayAsBase64Serializer, original)
+        val decoded = Json.decodeFromString(ByteArrayAsBase64Serializer, json)
+        assertContentEquals(original, decoded)
     }
 }
 
