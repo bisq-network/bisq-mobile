@@ -177,9 +177,9 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
                 var decryptedTempFile: File? = null
                 if (!password.isNullOrEmpty()) {
                     try {
-                        val decryptedFile = decrypt(inputStream, password)
-                        runCatching {
-                            inputStream.close()
+
+                        val decryptedFile = inputStream.use {
+                            decrypt(it, password)
                         }
                         decryptedTempFile = decryptedFile
                         inputStream = decryptedFile.inputStream()
@@ -189,7 +189,9 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
                     }
                 }
                 try {
-                    unzipToDirectory(inputStream, backupDir)
+                    inputStream.use {
+                        unzipToDirectory(it, backupDir)
+                    }
                 } catch (e: Exception) {
                     // Clean up incomplete backup to prevent corrupted restore on next launch
                     if (backupDir.exists()) {
@@ -198,10 +200,6 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
                     val errorMessage = "mobile.resources.restore.error.unzipFailed".i18n()
                     throw IOException(errorMessage, e)
                 } finally {
-                    try {
-                        inputStream.close()
-                    } catch (ignore: Exception) {
-                    }
                     decryptedTempFile?.let { temp ->
                         if (!temp.delete()) {
                             temp.deleteOnExit()
@@ -231,10 +229,6 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
             } catch (e: Exception) {
                 log.e(e) { errorMessage(e) }
                 return@async e
-            } finally {
-                runCatching {
-                    inputStream?.close()
-                }
             }
         }
     }
@@ -249,7 +243,7 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
     }
 
     private fun getFileName(context: Context, uri: Uri): String {
-        var fileName = "data.na".i18n()
+        var fileName = "unknown"
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             if (cursor.moveToFirst() && nameIndex != -1) {

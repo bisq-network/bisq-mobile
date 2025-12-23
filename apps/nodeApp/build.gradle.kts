@@ -40,6 +40,7 @@ kotlin {
 
             // Compose
             implementation(compose.foundation)
+            implementation(compose.material3)
 
             // Other libraries
             implementation(libs.navigation.compose)

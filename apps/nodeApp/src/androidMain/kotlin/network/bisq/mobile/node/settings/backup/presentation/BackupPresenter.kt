@@ -71,7 +71,7 @@ class BackupPresenter(
                                 showWorkingDialog = false,
                             )
                         }
-                        showSnackbar("mobile.resources.backup.success".i18n())
+                        showSnackbar("mobile.resources.backup.success".i18n(), isError = false)
                     }
                 }
             }
@@ -152,7 +152,10 @@ class BackupPresenter(
                             )
                         }
                     } else {
-                        showSnackbar("mobile.resources.restore.success".i18n())
+                        _uiState.update {
+                            it.copy(showWorkingDialog = false)
+                        }
+                        showSnackbar("mobile.resources.restore.success".i18n(), isError = false)
                     }
                 }
             }
