@@ -1,6 +1,5 @@
 package network.bisq.mobile.domain.utils
 
-import io.ktor.util.encodeBase64
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -8,13 +7,14 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import okio.ByteString.Companion.decodeBase64
+import okio.ByteString.Companion.toByteString
 
 object ByteArrayAsBase64Serializer : KSerializer<ByteArray> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("ByteArrayAsBase64", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: ByteArray) {
-        val base64String = value.encodeBase64()
+        val base64String = value.toByteString().base64()
         encoder.encodeString(base64String)
     }
 

@@ -1,9 +1,48 @@
 package network.bisq.mobile.domain.utils
+
+import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.domain.utils.StringUtils.urlEncode
+import network.bisq.mobile.domain.utils.StringUtils.randomAlphaNum
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class StringUtilsTest {
+
+    /** truncate tests **/
+    @Test
+    fun `truncate returns original string when shorter than maxLength`() {
+        assertEquals("hello", "hello".truncate(10))
+    }
+
+    @Test
+    fun `truncate returns original string when equal to maxLength`() {
+        assertEquals("hello", "hello".truncate(5))
+    }
+
+    @Test
+    fun `truncate shortens string and adds ellipsis`() {
+        assertEquals("hel...", "hello world".truncate(6))
+    }
+
+    @Test
+    fun `truncate uses custom ellipsis`() {
+        assertEquals("hello..", "hello world".truncate(7, ".."))
+    }
+
+    /** randomAlphaNum tests **/
+    @Test
+    fun `randomAlphaNum generates string of correct length`() {
+        assertEquals(20, randomAlphaNum().length)
+        assertEquals(10, randomAlphaNum(10).length)
+        assertEquals(1, randomAlphaNum(1).length)
+    }
+
+    @Test
+    fun `randomAlphaNum contains only alphanumeric characters`() {
+        val result = randomAlphaNum(100)
+        assertTrue(result.all { it.isLetterOrDigit() })
+    }
 
     /** url-encoding start **/
     @Test

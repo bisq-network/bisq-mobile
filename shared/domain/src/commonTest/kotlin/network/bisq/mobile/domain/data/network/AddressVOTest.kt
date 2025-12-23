@@ -85,4 +85,72 @@ class AddressVOTest {
         val result = AddressVO.from("http://:8080")
         assertNull(result)
     }
+
+    // Additional edge cases for regex-based parser
+    @Test
+    fun `from should handle https schema`() {
+        val result = AddressVO.from("https://secure.example.com:443")
+        assertEquals(AddressVO("secure.example.com", 443), result)
+    }
+
+    @Test
+    fun `from should handle IP address`() {
+        val result = AddressVO.from("192.168.1.1:8080")
+        assertEquals(AddressVO("192.168.1.1", 8080), result)
+    }
+
+    @Test
+    fun `from should handle localhost`() {
+        val result = AddressVO.from("localhost:3000")
+        assertEquals(AddressVO("localhost", 3000), result)
+    }
+
+    @Test
+    fun `from should handle URL with path`() {
+        val result = AddressVO.from("http://example.com:8080/path/to/resource")
+        assertEquals(AddressVO("example.com", 8080), result)
+    }
+
+    @Test
+    fun `from should trim whitespace`() {
+        val result = AddressVO.from("  example.com:8080  ")
+        assertEquals(AddressVO("example.com", 8080), result)
+    }
+
+    @Test
+    fun `from should return null for whitespace only`() {
+        val result = AddressVO.from("   ")
+        assertNull(result)
+    }
+
+    @Test
+    fun `from should handle subdomain`() {
+        val result = AddressVO.from("api.v2.example.com:9000")
+        assertEquals(AddressVO("api.v2.example.com", 9000), result)
+    }
+
+    @Test
+    fun `from should return null for missing port`() {
+        val result = AddressVO.from("example.com")
+        assertNull(result)
+    }
+
+    @Test
+    fun `from should return null for URL with schema but no port`() {
+        val result = AddressVO.from("http://example.com")
+        assertNull(result)
+    }
+
+    @Test
+    fun `from should handle long onion address`() {
+        val onion = "abcdefghijklmnopqrstuvwxyz234567abcdefghijklmnopqrstuv.onion"
+        val result = AddressVO.from("$onion:9050")
+        assertEquals(AddressVO(onion, 9050), result)
+    }
+
+    @Test
+    fun `from should handle custom schema`() {
+        val result = AddressVO.from("ws://websocket.example.com:8080")
+        assertEquals(AddressVO("websocket.example.com", 8080), result)
+    }
 }

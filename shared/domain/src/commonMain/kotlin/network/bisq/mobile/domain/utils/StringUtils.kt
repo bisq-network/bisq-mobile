@@ -1,7 +1,5 @@
 package network.bisq.mobile.domain.utils
 
-import io.ktor.utils.io.charsets.Charsets
-import io.ktor.utils.io.core.toByteArray
 import kotlin.random.Random
 
 object StringUtils {
@@ -22,7 +20,7 @@ object StringUtils {
     }
 
     fun String.urlEncode(): String {
-        val bytes = this.toByteArray(Charsets.UTF_8)
+        val bytes = this.encodeToByteArray()
         val sb = StringBuilder(bytes.size * 3)
 
         var i = 0

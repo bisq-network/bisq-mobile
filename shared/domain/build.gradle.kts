@@ -90,11 +90,11 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
-            implementation(libs.kmp.tor.resource.exec)
             implementation(libs.androidx.core)
             implementation(libs.koin.core)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.kmp.tor.resource.exec)
             implementation(libs.process.phoenix)
         }
         commonMain.dependencies {
@@ -108,11 +108,8 @@ kotlin {
             api(libs.okio) // to allow platform specific path conversion for kmp tor
             implementation(libs.bignum)
 
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.serialization.kotlinx.json)
+            // ktor-network is used by KmpTorService for TCP socket verification
             implementation(libs.ktor.network)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.client.websockets)
 
             implementation(libs.kmp.tor.runtime)
 
