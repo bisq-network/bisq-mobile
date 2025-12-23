@@ -1,6 +1,7 @@
 package network.bisq.mobile.node.settings.backup.domain
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import bisq.common.application.DevMode.isDevMode
@@ -21,7 +22,6 @@ import network.bisq.mobile.node.common.domain.utils.saveToDownloads
 import network.bisq.mobile.node.common.domain.utils.shareBackup
 import network.bisq.mobile.node.common.domain.utils.unzipToDirectory
 import network.bisq.mobile.node.common.domain.utils.zipDirectory
-import org.koin.core.component.inject
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -39,11 +39,12 @@ data class RestorePreFlightResult(
     val passwordRequired: Boolean = false
 )
 
-class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeApplicationLifecycleService) :
-    ServiceFacade() {
+class NodeBackupServiceFacade(
+    private val nodeApplicationLifecycleService: NodeApplicationLifecycleService,
+    private val context: Context
+) : ServiceFacade() {
 
     fun backupDataDir(password: String?): Deferred<Throwable?> {
-        val context: Context by inject()
         return serviceScope.async(Dispatchers.IO) {
             try {
                 val cacheDir = context.cacheDir
@@ -112,9 +113,16 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
     }
 
     suspend fun restorePrefightCheck(uri: Uri): RestorePreFlightResult {
-        val context: Context by inject()
-
         return withContext(Dispatchers.IO) {
+            try {
+                // Persist access across restarts
+                context.contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: SecurityException) {
+                log.e(e) { "takePersistableUriPermission failed" }
+            }
+
             var passwordRequired = false
             var errorMessage: String?
             try {
@@ -162,7 +170,6 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
         password: String?,
         view: Any?,
     ): Deferred<Throwable?> {
-        val context: Context by inject()
         return serviceScope.async(Dispatchers.IO) {
             var inputStream: InputStream? = null
             try {

@@ -124,7 +124,7 @@ val androidNodeDomainModule = module {
 
     single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
 
-    single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get()) }
+    single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get()) }
 
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 

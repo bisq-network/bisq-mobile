@@ -1,7 +1,5 @@
 package network.bisq.mobile.node.settings.backup.presentation
 
-import android.content.Context
-import android.content.Intent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -10,7 +8,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.settings.backup.domain.NodeBackupServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.component.inject
 
 class BackupPresenter(
     private val mainPresenter: MainPresenter,
@@ -28,8 +25,6 @@ class BackupPresenter(
     val uiState = _uiState.asStateFlow()
 
     fun onAction(action: BackupUiActions) {
-        val context: Context by inject()
-
         when (action) {
             is BackupUiActions.ShowBackupDialog -> {
                 _uiState.update {
@@ -74,15 +69,6 @@ class BackupPresenter(
 
             is BackupUiActions.OnRestoreFromFileActivityResult -> {
                 action.uri?.let { selectedUri ->
-                    try {
-                        // Persist access across restarts
-                        context.contentResolver.takePersistableUriPermission(
-                            selectedUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        )
-                    } catch (e: SecurityException) {
-                        log.e(e) { "takePersistableUriPermission failed" }
-                    }
-
                     presenterScope.launch {
                         val result = nodeBackupServiceFacade.restorePrefightCheck(selectedUri)
                         if (result.errorMessage != null) {
