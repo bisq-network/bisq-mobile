@@ -3,10 +3,13 @@ package network.bisq.mobile.node.common.presentation
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import network.bisq.mobile.node.settings.backup.presentation.BackupScreen
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
+import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
@@ -17,5 +20,10 @@ fun NodeNavGraph(rootNavController: NavHostController) {
         startDestination = NavRoute.Splash,
     ) {
         addCommonAppRoutes()
+        addNodeAppRoutes()
     }
+}
+
+fun NavGraphBuilder.addNodeAppRoutes() {
+    addScreen<NavRoute.BackupAndRestore> { BackupScreen() }
 }

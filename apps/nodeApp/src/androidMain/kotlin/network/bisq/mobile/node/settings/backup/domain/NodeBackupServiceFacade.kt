@@ -1,12 +1,15 @@
-package network.bisq.mobile.node.settings.resources
+package network.bisq.mobile.node.settings.backup.domain
 
 import android.content.Context
-import kotlinx.coroutines.CompletableDeferred
+import android.net.Uri
+import android.provider.OpenableColumns
+import bisq.common.application.DevMode.isDevMode
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.utils.DeviceInfoProvider
-import network.bisq.mobile.domain.utils.VersionProvider
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.decrypt
 import network.bisq.mobile.domain.utils.encrypt
 import network.bisq.mobile.i18n.i18n
@@ -18,10 +21,9 @@ import network.bisq.mobile.node.common.domain.utils.saveToDownloads
 import network.bisq.mobile.node.common.domain.utils.shareBackup
 import network.bisq.mobile.node.common.domain.utils.unzipToDirectory
 import network.bisq.mobile.node.common.domain.utils.zipDirectory
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.settings.resources.ResourcesPresenter
+import network.bisq.mobile.node.settings.backup.presentation.backupFileName
+import network.bisq.mobile.node.settings.backup.presentation.backupPrefix
 import org.koin.core.component.inject
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -29,26 +31,20 @@ import java.security.GeneralSecurityException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-const val backupFileName = "bisq_db_from_backup"
-const val backupPrefix = "bisq2_mobile-backup-"
 
-class NodeResourcesPresenter(
-    private val mainPresenter: MainPresenter,
-    versionProvider: VersionProvider,
-    deviceInfoProvider: DeviceInfoProvider,
-    private val nodeApplicationLifecycleService: NodeApplicationLifecycleService
-) : ResourcesPresenter(mainPresenter, versionProvider, deviceInfoProvider) {
+private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
 
-    override fun onViewAttached() {
-        super.onViewAttached()
+data class RestorePreFlightResult(
+    val errorMessage: String? = null,
+    val passwordRequired: Boolean = false
+)
 
-        _showBackupAndRestore.value = true
-    }
+class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeApplicationLifecycleService) :
+    ServiceFacade() {
 
-    override fun onBackupDataDir(password: String?) {
-        _showBackupOverlay.value = false
+    fun backupDataDir(password: String?): Deferred<Throwable?> {
         val context: Context by inject()
-        presenterScope.launch(Dispatchers.IO) {
+        return serviceScope.async(Dispatchers.IO) {
             try {
                 val cacheDir = context.cacheDir
                 val dataDir = File(context.filesDir, "Bisq2_mobile")
@@ -69,7 +65,9 @@ class NodeResourcesPresenter(
                 destDir.deleteRecursively()
 
                 // Clean up any previously exported backups in the share directory
-                deleteFileInDirectory(targetDir = shareDir, fileFilter = { it.name.startsWith(backupPrefix) })
+                deleteFileInDirectory(
+                    targetDir = shareDir,
+                    fileFilter = { it.name.startsWith(backupPrefix) })
 
                 val sanitizedPassword = password?.trim()?.takeIf { it.isNotEmpty() }
                 val useEncryption = !sanitizedPassword.isNullOrEmpty()
@@ -92,16 +90,12 @@ class NodeResourcesPresenter(
                 }
                 val uri = getShareableUriForFile(outFile, context)
 
-                mainPresenter.showSnackbar("mobile.resources.backup.success".i18n(), isError = false)
-
                 // In debug/dev mode, also save a copy to Downloads for easy local testing
                 if (isDevMode()) {
                     try {
-                        val mimeType = if (useEncryption) "application/octet-stream" else "application/zip"
-                        val saved = saveToDownloads(context, outFile, outName, mimeType)
-                        if (saved != null) {
-                            mainPresenter.showSnackbar("Saved to Downloads (debug): $outName", isError = false)
-                        }
+                        val mimeType =
+                            if (useEncryption) "application/octet-stream" else "application/zip"
+                        saveToDownloads(context, outFile, outName, mimeType)
                     } catch (t: Throwable) {
                         log.w(t) { "Failed to save backup to Downloads in debug mode" }
                     }
@@ -109,35 +103,87 @@ class NodeResourcesPresenter(
 
                 val shareMime = if (useEncryption) "application/octet-stream" else "application/zip"
                 shareBackup(context, uri.toString(), mimeType = shareMime)
+                return@async null
             } catch (e: Exception) {
                 log.e(e) { "Failed to backup data directory" }
+                return@async e
             }
         }
     }
 
-    override fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray): CompletableDeferred<String?> {
+    suspend fun restorePrefightCheck(uri: Uri): RestorePreFlightResult {
         val context: Context by inject()
-        val result: CompletableDeferred<String?> = CompletableDeferred()
-        presenterScope.launch(Dispatchers.IO) {
+
+        return withContext(Dispatchers.IO) {
+            var passwordRequired = false
+            var errorMessage: String?
+            try {
+                val fileName = getFileName(context, uri)
+                passwordRequired = fileName.endsWith(".enc")
+
+
+                val isValid = fileName.startsWith(backupPrefix) &&
+                        (passwordRequired || fileName.endsWith(".zip"))
+
+                if (!isValid) {
+                    throw IllegalStateException("mobile.resources.restore.error.invalidFileName".i18n())
+                }
+
+                val size = context.contentResolver.openFileDescriptor(uri, "r")
+                    .use { it?.statSize } ?: 0
+                if (size > MAX_BACKUP_SIZE_BYTES) {
+                    throw IllegalStateException("mobile.resources.restore.error.fileSizeTooLarge".i18n())
+                } else if (size <= 0L) {
+                    throw IllegalStateException("mobile.resources.restore.error.fileEmpty".i18n())
+                }
+
+                // we just read a few bytes to ensure we can read it
+                val bytes = context.contentResolver.openInputStream(uri)?.use { input ->
+                    input.readNBytes(4)
+                }
+                if (bytes == null || bytes.isEmpty()) {
+                    throw IllegalStateException("mobile.resources.restore.error.cannotReadFile".i18n())
+                }
+
+                return@withContext RestorePreFlightResult(passwordRequired = passwordRequired)
+            } catch (e: Exception) {
+                log.e(e) { "Importing backup failed" }
+                errorMessage = "mobile.resources.restore.error".i18n(e.message ?: e.toString())
+                return@withContext RestorePreFlightResult(
+                    errorMessage = errorMessage,
+                    passwordRequired = passwordRequired
+                )
+            }
+        }
+    }
+
+    fun restoreBackup(
+        uri: Uri,
+        password: String?,
+        view: Any?,
+    ): Deferred<Throwable?> {
+        val context: Context by inject()
+        return serviceScope.async(Dispatchers.IO) {
+            var inputStream: InputStream? = null
             try {
                 val filesDir = context.filesDir
 
                 val backupDir = File(filesDir, backupFileName)
                 if (backupDir.exists()) backupDir.deleteRecursively()
-                val rawInputStream: InputStream = ByteArrayInputStream(data)
-                var decryptedTempFile: File? = null
-                val inputStream: InputStream = if (!password.isNullOrEmpty()) {
-                    try {
 
-                        val decryptedFile = decrypt(rawInputStream, password)
+                inputStream = context.contentResolver.openInputStream(uri)
+                    ?: throw IllegalStateException("mobile.resources.restore.error.cannotReadFile".i18n())
+
+                var decryptedTempFile: File? = null
+                if (!password.isNullOrEmpty()) {
+                    try {
+                        val decryptedFile = decrypt(inputStream, password)
                         decryptedTempFile = decryptedFile
-                        decryptedFile.inputStream()
+                        inputStream = decryptedFile.inputStream()
                     } catch (e: Exception) {
                         val errorMessage = "mobile.resources.restore.error.decryptionFailed".i18n()
                         throw GeneralSecurityException(errorMessage, e)
                     }
-                } else {
-                    rawInputStream
                 }
                 try {
                     unzipToDirectory(inputStream, backupDir)
@@ -161,27 +207,31 @@ class NodeResourcesPresenter(
                 }
 
                 if (backupDir.exists()) {
-                    val requiredDirs = listOf(File(backupDir, "private"), File(backupDir, "settings"))
+                    val requiredDirs =
+                        listOf(File(backupDir, "private"), File(backupDir, "settings"))
                     if (!requiredDirs.all { it.exists() && it.isDirectory }) {
-                        val errorMessage = "mobile.resources.restore.error.invalidBackupStructure".i18n()
+                        val errorMessage =
+                            "mobile.resources.restore.error.invalidBackupStructure".i18n()
                         throw IOException(errorMessage)
                     }
 
-                    // Delay restart slightly so the UI can surface the success toast before the process restarts.
+                    // Delay restart slightly so the UI can surface the success toast in beforeRestartHook
+                    // before the process restarts.
                     // 1500ms chosen as a pragmatic balance between user feedback and flow speed.
-                    result.complete(null)
                     delay(1500)
                     nodeApplicationLifecycleService.restartForRestoreDataDirectory(view) // onRestoreDataDir is called from UI, so view is not null here
                 } else {
                     val errorMessage = "mobile.resources.restore.error.missingBackupDir".i18n()
                     throw IOException(errorMessage)
                 }
+                return@async null
             } catch (e: Exception) {
                 log.e(e) { errorMessage(e) }
-                result.completeExceptionally(e)
+                return@async e
+            } finally {
+                inputStream?.close()
             }
         }
-        return result
     }
 
     private fun errorMessage(e: Exception): String = e.message ?: e.javaClass.simpleName
@@ -191,5 +241,16 @@ class NodeResourcesPresenter(
         val date = LocalDateTime.now().format(formatter)
         val postFix = if (useEncryption) ".enc" else ".zip"
         return backupPrefix + date + postFix
+    }
+
+    private fun getFileName(context: Context, uri: Uri): String {
+        var fileName = "data.na".i18n()
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (cursor.moveToFirst() && nameIndex != -1) {
+                fileName = cursor.getString(nameIndex)
+            }
+        }
+        return fileName
     }
 }

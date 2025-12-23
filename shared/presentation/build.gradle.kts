@@ -40,9 +40,11 @@ kotlin {
             implementation(project(":shared:domain"))
             implementation(project(":shared:kscan"))
 
+            api(compose.material3)
+            api(compose.components.resources)
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.components.resources)
+            implementation(compose.ui)
             implementation(compose.components.uiToolingPreview)
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
@@ -107,6 +109,11 @@ kotlin {
             }
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    generateResClass = always
 }
 
 android {

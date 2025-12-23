@@ -1,26 +1,25 @@
 package network.bisq.mobile.node.common.di
 
-import network.bisq.mobile.node.tabs.dashboard.NodeDashboardPresenter
 import network.bisq.mobile.node.main.NodeMainPresenter
-import network.bisq.mobile.node.tabs.more.NodeMiscItemsPresenter
-import network.bisq.mobile.node.startup.onboarding.NodeOnboardingPresenter
-import network.bisq.mobile.node.settings.resources.NodeResourcesPresenter
+import network.bisq.mobile.node.settings.backup.presentation.BackupPresenter
 import network.bisq.mobile.node.settings.settings.NodeSettingsPresenter
+import network.bisq.mobile.node.startup.onboarding.NodeOnboardingPresenter
 import network.bisq.mobile.node.startup.splash.NodeSplashPresenter
+import network.bisq.mobile.node.tabs.dashboard.NodeDashboardPresenter
+import network.bisq.mobile.node.tabs.more.NodeMiscItemsPresenter
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
-import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
+import network.bisq.mobile.presentation.main.AppPresenter
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
 import network.bisq.mobile.presentation.settings.settings.IGeneralSettingsPresenter
-import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
-import network.bisq.mobile.presentation.settings.resources.ResourcesPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
 import network.bisq.mobile.presentation.startup.onboarding.IOnboardingPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
+import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
+import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -52,7 +51,7 @@ val androidNodePresentationModule = module {
 
     factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
 
-    factory<ResourcesPresenter> { NodeResourcesPresenter(get(), get(), get(), get()) }
+    factory<BackupPresenter> { BackupPresenter(get(), get()) }
 
     single<MainPresenter> {
         NodeMainPresenter(

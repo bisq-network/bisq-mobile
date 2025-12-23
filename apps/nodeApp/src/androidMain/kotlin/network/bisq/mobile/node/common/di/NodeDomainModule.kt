@@ -27,14 +27,12 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
-import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.BuildConfig
+import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.NodeApplicationLifecycleService
-import network.bisq.mobile.node.main.NodeMainActivity
-import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
-import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import network.bisq.mobile.node.common.domain.service.accounts.NodeAccountsServiceFacade
 import network.bisq.mobile.node.common.domain.service.bootstrap.NodeApplicationBootstrapFacade
+import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import network.bisq.mobile.node.common.domain.service.chat.trade.NodeTradeChatMessagesServiceFacade
 import network.bisq.mobile.node.common.domain.service.common.NodeLanguageServiceFacade
 import network.bisq.mobile.node.common.domain.service.explorer.NodeExplorerServiceFacade
@@ -48,7 +46,10 @@ import network.bisq.mobile.node.common.domain.service.reputation.NodeReputationS
 import network.bisq.mobile.node.common.domain.service.settings.NodeSettingsServiceFacade
 import network.bisq.mobile.node.common.domain.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.node.common.domain.service.user_profile.NodeUserProfileServiceFacade
+import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
 import network.bisq.mobile.node.common.domain.utils.NodeVersionProvider
+import network.bisq.mobile.node.main.NodeMainActivity
+import network.bisq.mobile.node.settings.backup.domain.NodeBackupServiceFacade
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceControllerImpl
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -122,6 +123,8 @@ val androidNodeDomainModule = module {
     single<AccountsServiceFacade> { NodeAccountsServiceFacade(get()) }
 
     single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
+
+    single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get()) }
 
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 

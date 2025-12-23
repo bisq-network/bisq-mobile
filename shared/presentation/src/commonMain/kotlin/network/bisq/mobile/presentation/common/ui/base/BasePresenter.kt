@@ -22,17 +22,17 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.main.AppPresenter
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbarVisuals
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.platform.moveAppToBackground
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.main.AppPresenter
+import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import network.bisq.mobile.presentation.common.ui.platform.moveAppToBackground
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -113,8 +113,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         const val SMALLEST_PERCEPTIVE_DELAY = 250L
         var isDemo = false
     }
-
-    protected var view: Any? = null
 
     protected val navigationManager: NavigationManager by inject()
 
@@ -331,7 +329,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
 
     @CallSuper
     override fun onViewAttached() {
-        log.i { "Lifecycle: View ${if (view != null) view!!::class.simpleName else ""} attached to presenter ${this::class.simpleName}" }
         if (blockInteractivityOnAttached) {
             blockInteractivityForBriefMoment()
         } else {
@@ -400,19 +397,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
 //            and we are using singletons
 //            rootPresenter?.unregisterChild(this)
         }
-    }
-
-    fun attachView(view: Any) {
-        // at the moment the attach view is with the activity/ main view in ios
-        // unless we change this there is no point in sharing with dependents
-        this.view = view
-        log.i { "Lifecycle: Main View attached to Main Presenter" }
-    }
-
-    fun detachView() {
-        onViewUnattaching()
-        this.view = null
-        log.i { "Lifecycle: View Dettached from Presenter" }
     }
 
     protected fun registerChild(child: BasePresenter) {

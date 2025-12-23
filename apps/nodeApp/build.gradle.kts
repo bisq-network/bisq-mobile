@@ -320,6 +320,7 @@ dependencies {
     implementation(libs.protoc)
 
     // Dependency injection & logging
+    implementation(libs.koin.compose)
     implementation(libs.koin.android)
     implementation(libs.logging.kermit)
 }

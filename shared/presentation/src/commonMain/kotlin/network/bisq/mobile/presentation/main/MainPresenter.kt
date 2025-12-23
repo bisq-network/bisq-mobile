@@ -63,6 +63,9 @@ open class MainPresenter(
 
     final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 
+    var view: Any? = null
+        private set
+
     // TODO: refactor when TradeItemPresentationModel is completely immutable
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> =
         tradesServiceFacade.openTradeItems
@@ -118,10 +121,24 @@ open class MainPresenter(
         log.i { "Small screen: ${_isSmallScreen.value}" }
     }
 
+    fun attachView(view: Any) {
+        // at the moment the attach view is with the activity/ main view in ios
+        // unless we change this there is no point in sharing with dependents
+        this.view = view
+        log.i { "Lifecycle: Main View attached to Main Presenter" }
+    }
+
+    fun detachView() {
+        onViewUnattaching()
+        this.view = null
+        log.i { "Lifecycle: View Dettached from Presenter" }
+    }
 
     @CallSuper
     override fun onViewAttached() {
         super.onViewAttached()
+
+        log.i { "Lifecycle: View ${if (view != null) view!!::class.simpleName else ""} attached to presenter ${this::class.simpleName}" }
 
         languageCode.filter { it.isNotEmpty() }.onEach {
             settingsService.setLanguageCode(it)
