@@ -45,6 +45,7 @@ fun CreateOfferSettlementMethodScreen() {
             availablePaymentMethods = availableBaseSidePaymentMethods,
             selectedPaymentMethods = selectedBaseSidePaymentMethods,
             onToggle = { selected -> presenter.onToggleBaseSidePaymentMethod(selected) },
+            isPaymentMethod = false,
         )
     }
 }

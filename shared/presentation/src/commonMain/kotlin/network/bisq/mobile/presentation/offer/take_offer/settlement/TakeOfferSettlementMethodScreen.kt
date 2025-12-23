@@ -59,6 +59,7 @@ fun TakeOfferSettlementMethodScreen() {
                 availablePaymentMethods = presenter.baseSidePaymentMethods.toMutableSet(),
                 selectedPaymentMethods = baseSidePaymentMethod,
                 onToggle = { selected -> presenter.onBaseSidePaymentMethodSelected(selected) },
+                isPaymentMethod = false,
             )
         }
     }

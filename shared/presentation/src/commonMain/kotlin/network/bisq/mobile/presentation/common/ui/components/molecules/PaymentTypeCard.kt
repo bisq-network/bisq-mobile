@@ -28,6 +28,7 @@ fun PaymentTypeCard(
     isSelected: Boolean = false,
     isCustomPaymentMethod: Boolean = false,
     showRemoveCustom: Boolean = false,
+    isPaymentMethod: Boolean = true,
 ) {
     val backgroundColor = if (isSelected) {
         BisqTheme.colors.primaryDim
@@ -54,7 +55,7 @@ fun PaymentTypeCard(
         // For known methods, pass the image path to use the correct icon
         PaymentMethodIcon(
             methodId = if (isCustomPaymentMethod) title else image.substringAfterLast("/").substringBefore("."),
-            isPaymentMethod = true,
+            isPaymentMethod = isPaymentMethod,
             size = 20.dp,
             contentDescription = if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
             iconPathOverride = image,

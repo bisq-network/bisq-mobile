@@ -28,6 +28,7 @@ fun PaymentMethodCard(
     showCustomPayment: Boolean = false,
     onAddCustomPayment: ((String) -> Unit)? = null,
     onRemoveCustomPayment: ((String) -> Unit)? = null,
+    isPaymentMethod: Boolean = true,
 ) {
 
     val selected by selectedPaymentMethods.collectAsState()
@@ -66,7 +67,8 @@ fun PaymentMethodCard(
                     onRemove = { onRemoveCustomPayment?.invoke(entry.key) },
                     isSelected = selected.contains(entry.key),
                     isCustomPaymentMethod = entry.isCustom,
-                    showRemoveCustom = showCustomPayment
+                    showRemoveCustom = showCustomPayment,
+                    isPaymentMethod = isPaymentMethod
                 )
             }
 

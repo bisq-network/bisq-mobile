@@ -257,8 +257,8 @@ class NodeTradesServiceFacade(
         return withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
-                val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentMethod"
+                val paymentRailName = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail.name
+                val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentRailName"
                 val encoded = Res.encode(
                     key,
                     userName,
