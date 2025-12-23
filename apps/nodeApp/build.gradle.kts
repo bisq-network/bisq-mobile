@@ -34,22 +34,33 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.dependencies {
+            // Project modules
+            api(project(sharedPresentationModule))
+
+            // Compose
+            implementation(compose.foundation)
+
+            // Other libraries
+            implementation(libs.navigation.compose)
+        }
+
         androidMain.dependencies {
+            // Compose
             implementation(compose.preview)
+
+            // AndroidX
             implementation(libs.androidx.activity.compose)
         }
 
         androidUnitTest.dependencies {
-            implementation(libs.mockk)
+            // Kotlin
             implementation(libs.kotlin.test.junit)
-            implementation(libs.junit)
-            implementation(libs.robolectric)
-        }
 
-        commonMain.dependencies {
-            api(project(sharedPresentationModule))
-            implementation(compose.foundation)
-            implementation(libs.navigation.compose)
+            // Other libraries
+            implementation(libs.junit)
+            implementation(libs.mockk)
+            implementation(libs.robolectric)
         }
     }
 }

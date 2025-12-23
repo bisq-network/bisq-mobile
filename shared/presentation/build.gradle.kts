@@ -42,46 +42,66 @@ kotlin {
 
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(compose.material3)
             implementation(compose.materialIconsExtended)
-            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(compose.ui)
+
+            // AndroidX
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.logging.kermit)
+            implementation(libs.androidx.lifecycle.viewmodel)
+
+            // KotlinX
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
 
-            implementation(libs.koin.core)
+            // Koin
             implementation(libs.koin.compose)
-            implementation(libs.navigation.compose)
+            implementation(libs.koin.core)
+
+            // Other libraries
+            implementation(libs.atomicfu)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
-
-            implementation(libs.atomicfu)
+            implementation(libs.logging.kermit)
+            implementation(libs.navigation.compose)
         }
+
         androidMain.dependencies {
+            // AndroidX
             implementation(libs.androidx.activity.compose)
-            //implementation(libs.androidx.activity.ktx)
+
+            // Koin
             implementation(libs.koin.android)
         }
-        androidUnitTest.dependencies {
-            implementation(libs.mockk)
-            implementation(libs.kotlin.test.junit)
-            implementation(libs.junit)
-            implementation(libs.kotlinx.coroutines.test)
 
-            implementation(libs.robolectric)
+        androidUnitTest.dependencies {
+            // AndroidX
+            implementation(libs.androidx.test.compose.junit4)
             implementation(libs.androidx.test.core)
             implementation(libs.androidx.test.espresso.core)
-            implementation(libs.androidx.test.compose.junit4)
             implementation(libs.androidx.test.junit)
+
+            // Kotlin
+            implementation(libs.kotlin.test.junit)
+
+            // KotlinX
+            implementation(libs.kotlinx.coroutines.test)
+
+            // Other libraries
+            implementation(libs.junit)
+            implementation(libs.mockk)
+            implementation(libs.robolectric)
         }
+
         val commonTest by getting {
             dependencies {
+                // Kotlin
                 implementation(libs.kotlin.test)
+
+                // Compose
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.uiTest)
             }

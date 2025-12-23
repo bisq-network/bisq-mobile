@@ -66,51 +66,75 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            api(project(sharedPresentationModule))
+            // Project modules
             api(project(sharedDomainModule))
             api(project(sharedKScanModule))
-            implementation(compose.ui)
+            api(project(sharedPresentationModule))
+
+            // Compose
+            implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
             implementation(compose.foundation)
             implementation(compose.material3)
-            implementation(compose.components.uiToolingPreview)
-            implementation(compose.components.resources)
+            implementation(compose.ui)
 
-            implementation(libs.navigation.compose)
-            implementation(libs.logging.kermit)
+            // AndroidX
             implementation(libs.androidx.datastore.okio)
-            implementation(libs.atomicfu)
-            implementation(libs.bignum)
 
-            implementation(libs.koin.core)
-            implementation(libs.koin.compose)
-
+            // KotlinX
+            implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
 
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.network)
+            // Koin
+            implementation(libs.koin.compose)
+            implementation(libs.koin.core)
+
+            // Ktor
             implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.websockets)
+            implementation(libs.ktor.network)
+            implementation(libs.ktor.serialization.kotlinx.json)
+
+            // Other libraries
+            implementation(libs.atomicfu)
+            implementation(libs.bignum)
+            implementation(libs.logging.kermit)
+            implementation(libs.navigation.compose)
         }
 
         commonTest.dependencies {
+            // Kotlin
             implementation(libs.kotlin.test)
+
+            // KotlinX
             implementation(libs.kotlinx.coroutines.test)
+
+            // Koin
             implementation(libs.koin.test)
         }
 
         androidMain.dependencies {
+            // Compose
             implementation(compose.preview)
+
+            // AndroidX
             implementation(libs.androidx.activity.compose)
-            implementation(libs.koin.android)
-            implementation(libs.ktor.client.okhttp) // For slf4j dependency issue
             implementation(libs.androidx.core.splashscreen)
+
+            // Koin
+            implementation(libs.koin.android)
+
+            // Ktor
+            implementation(libs.ktor.client.okhttp)
         }
 
         androidUnitTest.dependencies {
+            // Kotlin
             implementation(libs.kotlin.test)
+
+            // Other libraries
             implementation(libs.mockk)
         }
     }

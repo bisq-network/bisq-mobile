@@ -98,25 +98,30 @@ kotlin {
             implementation(libs.process.phoenix)
         }
         commonMain.dependencies {
-            //put your multiplatform dependencies here
-            implementation(libs.koin.core)
+            // AndroidX
+            implementation(libs.androidx.datastore.okio)
+
+            // Kotlin
+            implementation(libs.kotlin.reflect)
+
+            // KotlinX
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.logging.kermit)
-            api(libs.okio) // to allow platform specific path conversion for kmp tor
-            implementation(libs.bignum)
 
-            // ktor-network is used by KmpTorService for TCP socket verification
+            // Koin
+            implementation(libs.koin.core)
+
+            // Ktor - network only, used by KmpTorService for TCP socket verification
             implementation(libs.ktor.network)
 
-            implementation(libs.kmp.tor.runtime)
-
+            // Other libraries
             implementation(libs.atomicfu)
-            implementation(libs.kotlin.reflect)
-
-            implementation(libs.androidx.datastore.okio)
+            implementation(libs.bignum)
+            implementation(libs.kmp.tor.runtime)
+            implementation(libs.logging.kermit)
+            api(libs.okio) // api to allow platform specific path conversion for kmp-tor
 
             configurations.all {
                 exclude(group = "org.slf4j", module = "slf4j-api")
@@ -124,37 +129,60 @@ kotlin {
         }
 
         commonTest.dependencies {
+            // Kotlin
             implementation(libs.kotlin.test)
+
+            // KotlinX
             implementation(libs.kotlinx.coroutines.test)
+
+            // Koin
             implementation(libs.koin.test)
         }
 
         androidUnitTest.dependencies {
-            implementation(libs.mockk)
+            // Kotlin
             implementation(libs.kotlin.test.junit)
+
+            // Other libraries
             implementation(libs.junit)
+            implementation(libs.mockk)
             implementation(libs.robolectric)
         }
 
         androidInstrumentedTest.dependencies {
-            implementation(libs.mockk)
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(libs.kotlin.test.junit)
-            implementation(libs.junit)
-            implementation(libs.robolectric)
+            // AndroidX
             implementation(libs.androidx.test.core)
             implementation(libs.androidx.test.espresso.core)
             implementation(libs.androidx.test.junit)
+
+            // Kotlin
+            implementation(libs.kotlin.test.junit)
+
+            // KotlinX
+            implementation(libs.kotlinx.coroutines.test)
+
+            // Other libraries
+            implementation(libs.junit)
+            implementation(libs.mockk)
+            implementation(libs.robolectric)
         }
 
         iosMain.dependencies {
+            // Koin
             implementation(libs.koin.core)
-            implementation(libs.kmp.tor.resource.noexec)
+
+            // Ktor
             implementation(libs.ktor.client.darwin)
+
+            // Other libraries
+            implementation(libs.kmp.tor.resource.noexec)
         }
 
         iosTest.dependencies {
+            // Kotlin
             implementation(libs.kotlin.test)
+
+            // KotlinX
             implementation(libs.kotlinx.coroutines.test)
         }
     }
