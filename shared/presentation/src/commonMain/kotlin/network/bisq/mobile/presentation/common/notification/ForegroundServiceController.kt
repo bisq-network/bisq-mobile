@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface ForegroundServiceController {
     fun startService()
     fun stopService()
-    fun <T> registerObserver(flow: Flow<T>, onStateChange: (T) -> Unit)
+    fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit)
     fun unregisterObserver(flow: Flow<*>)
     fun unregisterObservers()
     fun isServiceRunning(): Boolean

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
@@ -27,10 +28,10 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
+import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 
 /**
  * Main Presenter as an example of implementation for now.
@@ -130,16 +131,14 @@ open class MainPresenter(
     @CallSuper
     override fun onDestroying() {
         // to stop notification service and fully kill app (no zombie mode)
-        stopOpenTradeNotificationsService()
+        runBlocking {
+            openTradesNotificationService.stopNotificationService()
+        }
         super.onDestroying()
     }
 
     open fun reactivateServices() {
         // do nth
-    }
-
-    private fun stopOpenTradeNotificationsService() {
-        openTradesNotificationService.stopNotificationService()
     }
 
     override fun setIsMainContentVisible(value: Boolean) {

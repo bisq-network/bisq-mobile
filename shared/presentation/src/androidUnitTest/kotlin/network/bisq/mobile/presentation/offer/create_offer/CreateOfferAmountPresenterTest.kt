@@ -45,15 +45,15 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
-import network.bisq.mobile.presentation.offer.create_offer.amount.CreateOfferAmountPresenter
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.create_offer.amount.CreateOfferAmountPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -211,7 +211,7 @@ class CreateOfferAmountPresenterTest {
     private class FakeForegroundServiceController : ForegroundServiceController {
         override fun startService() {}
         override fun stopService() {}
-        override fun <T> registerObserver(flow: Flow<T>, onStateChange: (T) -> Unit) {}
+        override fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit) {}
         override fun unregisterObserver(flow: Flow<*>) {}
         override fun unregisterObservers() {}
         override fun isServiceRunning(): Boolean = false

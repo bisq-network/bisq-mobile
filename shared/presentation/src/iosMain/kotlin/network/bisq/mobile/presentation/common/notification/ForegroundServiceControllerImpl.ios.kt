@@ -12,14 +12,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
-import network.bisq.mobile.presentation.common.notification.NotificationController
 import platform.BackgroundTasks.BGProcessingTask
 import platform.BackgroundTasks.BGProcessingTaskRequest
 import platform.BackgroundTasks.BGTaskScheduler
-import platform.Foundation.NSDate
-
 import platform.Foundation.NSBundle
+import platform.Foundation.NSDate
 
 
 class ForegroundServiceControllerImpl(private val notificationController: NotificationController) :
@@ -77,7 +74,7 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
     }
 
 
-    override fun <T> registerObserver(flow: Flow<T>, onStateChange: (T) -> Unit) {
+    override fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit) {
         if (observerJobs.contains(flow)) {
             log.w { "State flow observer already registered, skipping registration" }
             return

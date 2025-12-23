@@ -65,7 +65,7 @@ class ForegroundServiceControllerImpl(
         }
     }
 
-    override fun <T> registerObserver(flow: Flow<T>, onStateChange: (T) -> Unit) {
+    override fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit) {
         if (observerJobs.contains(flow)) {
             log.w { "Flow observer already registered, skipping registration" }
             return

@@ -51,14 +51,14 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
-import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -68,7 +68,7 @@ import kotlin.test.assertTrue
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
 
 
-	@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 	class TakeOfferAmountPresenterTest {
 
 	    // --- Fakes (Android/JVM-friendly) ---
@@ -200,7 +200,7 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
     private class FakeForegroundServiceController : ForegroundServiceController {
         override fun startService() {}
         override fun stopService() {}
-        override fun <T> registerObserver(flow: Flow<T>, onStateChange: (T) -> Unit) {}
+        override fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit) {}
         override fun unregisterObserver(flow: Flow<*>) {}
         override fun unregisterObservers() {}
         override fun isServiceRunning(): Boolean = false
