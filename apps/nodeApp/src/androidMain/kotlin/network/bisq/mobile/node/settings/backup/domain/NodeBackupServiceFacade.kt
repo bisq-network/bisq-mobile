@@ -178,6 +178,9 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
                 if (!password.isNullOrEmpty()) {
                     try {
                         val decryptedFile = decrypt(inputStream, password)
+                        runCatching {
+                            inputStream.close()
+                        }
                         decryptedTempFile = decryptedFile
                         inputStream = decryptedFile.inputStream()
                     } catch (e: Exception) {
@@ -229,7 +232,9 @@ class NodeBackupServiceFacade(private val nodeApplicationLifecycleService: NodeA
                 log.e(e) { errorMessage(e) }
                 return@async e
             } finally {
-                inputStream?.close()
+                runCatching {
+                    inputStream?.close()
+                }
             }
         }
     }
