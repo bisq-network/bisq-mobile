@@ -1,0 +1,46 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+# Override ktlint default (which is OFF/unlimited)
+max_line_length = 120
+# Temporarily disable max line length errors (still shows violations but doesn't fail)
+ktlint_standard_max-line-length = disabled
+# Allow underscores in package names (project convention)
+ktlint_standard_package-name = disabled
+# Already ktlint defaults, but kept for IDE consistency
+indent_size = 4
+indent_style = space
+
+# Tell ktlint's STANDARD function-naming rule to ignore @Composable
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Preview naming strategy - enforce "Preview" suffix
+compose_preview_naming_enabled = true
+compose_preview_naming_strategy = suffix
+
+compose_check_modifiers_for_visibility = only_public
+
+# Disable backing-property-naming rule - we use protected backing properties (not just private)
+# for inheritance-based state management in abstract classes (e.g., ServiceFacade subclasses)
+ktlint_standard_backing-property-naming = disabled
+
+# -------------------- Compose Rules Configuration --------------------
+# See: https://mrmans0n.github.io/compose-rules/
+# Enable all Compose-specific linting rules
+ktlint_compose_enabled = true
+
+# TODO: Re-enable this rule after refactoring composables to accept modifier parameters
+# Temporarily disabled to avoid warnings on existing composables that emit content without modifier parameters
+ktlint_compose_modifier-missing-check = disabled
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

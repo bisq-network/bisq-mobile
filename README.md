@@ -49,6 +49,7 @@
    - [Goal](#goal)
    - [How to contribute](#how-to-contribute)
      - [Project dev requirements](#project-dev-requirements)
+     - [Code Style & Linting](#code-style--linting)
    - [Getting started](#getting-started)
      - [Getting started for Android Node](#getting-started-for-android-node)
    - [Local Env Setup](#local-env-setup)
@@ -93,6 +94,50 @@ We follow Bisq standard guidelines for contributions, fork + PR, etc. Please ref
 We track work via GitHub issues at https://github.com/bisq-network/bisq-mobile/issues. Pick something that interests you or open a new issue for discussion.
 
 For Jetpack Compose best practices in this project, see the [Compose guidelines](./docs/compose-guidelines/README.md).
+
+### Code Style & Linting
+
+This project uses **ktlint** with **Compose Rules** to maintain consistent code style across the
+codebase.
+
+#### Quick Commands
+
+```bash
+# Check code style
+./gradlew ktlintCheck
+
+# Auto-fix style violations
+./gradlew ktlintFormat
+```
+
+#### Git Hooks
+
+Git hooks are automatically installed when you sync the project. They will:
+
+- **Pre-commit**: Check ktlint on staged files only (with auto-fix prompt)
+- **Pre-push**: Run full ktlint check + unit tests
+
+To bypass hooks temporarily (not recommended):
+
+```bash
+git commit --no-verify
+git push --no-verify
+```
+
+#### CI/CD
+
+All pull requests automatically run ktlint checks in CI. Make sure your code passes locally before
+pushing:
+
+```bash
+./gradlew ktlintCheck test
+```
+
+#### Configuration
+
+- **`.editorconfig`**: Main ktlint configuration with Compose-specific rules
+- **`build.gradle.kts`**: ktlint plugin setup (version 1.7.1)
+- **Compose Rules**: Enabled for Compose best practices enforcement
 
 For now follow along to learn how to run this project.
 If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!

@@ -69,6 +69,8 @@ buildconfig = "5.5.4"
 protobuf = "0.9.4"
 protob = "4.28.2"
 process-phoenix = "3.0.0"
+ktlint = "14.0.1"
+compose-rules = "0.4.26"
 
 # -------------------- Bisq Core Transitive Dependencies --------------------
 chimp-jsocks-lib = { strictly = '567e1cd6' }
@@ -165,6 +167,7 @@ koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 # -------------------- Utilities --------------------
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protob" }
 process-phoenix = { module = "com.jakewharton:process-phoenix", version.ref = "process-phoenix" }
+compose-rules-ktlint = { module = "io.nlopez.compose.rules:ktlint", version.ref = "compose-rules" }
 
 # -------------------- Bisq Core Modules --------------------
 bisq-core-common = { module = "bisq:common", version.ref = "bisq-core" }
@@ -256,3 +259,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
 kmp-tor-resource-filterjar = { id = "io.matthewnelson.kmp.tor.resource-filterjar", version.ref = "kmp-tor-resource" }
 kmp-tor-resource-frameworks = { id = "io.matthewnelson.kmp.tor.resource-frameworks", version.ref = "kmp-tor-resource" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
