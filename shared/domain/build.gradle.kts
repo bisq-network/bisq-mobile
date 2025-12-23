@@ -91,22 +91,27 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.kmp.tor.resource.exec)
+            implementation(libs.androidx.core)
+            implementation(libs.koin.core)
+            implementation(libs.koin.android)
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.process.phoenix)
         }
         commonMain.dependencies {
             //put your multiplatform dependencies here
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
             implementation(libs.logging.kermit)
             api(libs.okio) // to allow platform specific path conversion for kmp tor
-            implementation(libs.kotlinx.datetime)
             implementation(libs.bignum)
 
             implementation(libs.ktor.client.core)
-            implementation(libs.kotlinx.serialization.core)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.network)
             implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.websockets)
 
             implementation(libs.kmp.tor.runtime)
@@ -126,14 +131,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.koin.test)
         }
-        androidMain.dependencies {
-            implementation(libs.androidx.core)
 
-            implementation(libs.koin.core)
-            implementation(libs.koin.android)
-            implementation(libs.ktor.client.okhttp)
-            implementation(libs.process.phoenix)
-        }
         androidUnitTest.dependencies {
             implementation(libs.mockk)
             implementation(libs.kotlin.test.junit)
