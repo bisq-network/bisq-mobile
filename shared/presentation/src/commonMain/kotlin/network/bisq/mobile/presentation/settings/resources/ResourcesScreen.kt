@@ -35,8 +35,7 @@ fun ResourcesScreen() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
-    val versionInfo by presenter.versionInfo.collectAsState()
-    val deviceInfo by presenter.deviceInfo.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
     val dividerModifier = Modifier.padding(
         top = BisqUIConstants.ScreenPaddingHalf,
         bottom = BisqUIConstants.ScreenPadding
@@ -58,12 +57,12 @@ fun ResourcesScreen() {
         BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
 
-        Version(versionInfo)
+        Version(uiState.versionInfo)
 
         BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
 
-        DeviceInfo(deviceInfo)
+        DeviceInfo(uiState.deviceInfo)
 
         BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
