@@ -13,9 +13,7 @@ class ReputationApiGateway(
 ) : Logging {
     private val basePath = "reputation"
 
-    suspend fun getProfileAge(userProfileId: String): Result<Long?> {
-        return webSocketApiClient.get("$basePath/profile-age/$userProfileId")
-    }
+    suspend fun getProfileAge(userProfileId: String): Result<Long?> = webSocketApiClient.get("$basePath/profile-age/$userProfileId")
 
     suspend fun subscribeUserReputation(): WebSocketEventObserver {
         try {
@@ -26,7 +24,5 @@ class ReputationApiGateway(
         }
     }
 
-    suspend fun getReputationScore(userProfileId: String): Result<ReputationScoreVO> {
-        return webSocketApiClient.get("$basePath/score/$userProfileId")
-    }
+    suspend fun getReputationScore(userProfileId: String): Result<ReputationScoreVO> = webSocketApiClient.get("$basePath/score/$userProfileId")
 }

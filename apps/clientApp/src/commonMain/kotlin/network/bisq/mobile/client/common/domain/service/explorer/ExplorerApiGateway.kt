@@ -8,11 +8,7 @@ class ExplorerApiGateway(
 ) : Logging {
     private val basePath = "explorer"
 
-    suspend fun getSelectedBlockExplorer(): Result<Map<String, String>> {
-        return webSocketApiClient.get("$basePath/selected")
-    }
+    suspend fun getSelectedBlockExplorer(): Result<Map<String, String>> = webSocketApiClient.get("$basePath/selected")
 
-    suspend fun requestTx(txId: String): Result<ExplorerTxDto> {
-        return webSocketApiClient.get("$basePath/tx/$txId")
-    }
+    suspend fun requestTx(txId: String): Result<ExplorerTxDto> = webSocketApiClient.get("$basePath/tx/$txId")
 }

@@ -4,5 +4,5 @@ enum class IosNotificationInterruptionLevel {
     ACTIVE,
     CRITICAL,
     PASSIVE,
-    TIME_SENSITIVE
+    TIME_SENSITIVE,
 }

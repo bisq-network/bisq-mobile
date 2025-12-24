@@ -23,9 +23,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.WhyHighPricePopup
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import org.koin.compose.koinInject
 
@@ -67,26 +67,28 @@ fun CreateOfferPriceScreen() {
         closeAction = true,
         onConfirmedClose = presenter::onClose,
     ) {
-        BisqText.h3Light(
-            text = "mobile.bisqEasy.tradeWizard.price.title".i18n(), modifier = Modifier.align(Alignment.Start)
+        BisqText.H3Light(
+            text = "mobile.bisqEasy.tradeWizard.price.title".i18n(),
+            modifier = Modifier.align(Alignment.Start),
         )
         BisqGap.V1()
         Column(
             modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding2X),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
             ToggleTab(
                 options = presenter.priceTypes,
                 selectedOption = priceType,
-                onOptionSelected = { priceType -> presenter.onSelectPriceType(priceType) },
+                onOptionSelect = { priceType -> presenter.onSelectPriceType(priceType) },
                 getDisplayString = { presenter.getPriceTypeDisplayString(it) },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.CenterHorizontally),
             )
             Column(
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
                 if (priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
-                    BisqTextField(label = "bisqEasy.price.percentage.inputBoxText".i18n(),
+                    BisqTextField(
+                        label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it, isValid) },
@@ -102,17 +104,19 @@ fun CreateOfferPriceScreen() {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeLessThanMarketPrice".i18n()
                             }
                             return@BisqTextField null
-                        })
+                        },
+                    )
 
                     BisqTextField(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
                         disabled = true,
                         onValueChange = { it, isValid -> }, // Deactivated
-                        indicatorColor = BisqTheme.colors.mid_grey10
+                        indicatorColor = BisqTheme.colors.mid_grey10,
                     )
                 } else {
-                    BisqTextField(label = presenter.fixPriceDescription,
+                    BisqTextField(
+                        label = presenter.fixPriceDescription,
                         value = formattedPrice,
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
@@ -126,11 +130,12 @@ fun CreateOfferPriceScreen() {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeLessThanMarketPrice".i18n()
                             }
                             return@BisqTextField null
-                        })
+                        },
+                    )
                     BisqTextField(
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
-                        onValueChange = { it, isValid -> },// Deactivated
+                        onValueChange = { it, isValid -> }, // Deactivated
                         disabled = true,
                         indicatorColor = BisqTheme.colors.mid_grey10,
                         valueSuffix = "%",
@@ -145,10 +150,10 @@ fun CreateOfferPriceScreen() {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
                     ) {
-                        BisqText.smallLightGrey("Min: ${min.toInt()}%")
-                        BisqText.smallLightGrey("Max: ${max.toInt()}%")
+                        BisqText.SmallLightGrey("Min: ${min.toInt()}%")
+                        BisqText.SmallLightGrey("Max: ${max.toInt()}%")
                     }
                 }
             }
@@ -157,12 +162,14 @@ fun CreateOfferPriceScreen() {
                 BisqGap.V1()
 
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    NoteText(notes = hintText,
+                    NoteText(
+                        notes = hintText,
                         linkText = "bisqEasy.price.feedback.learnWhySection.openButton".i18n(),
                         textAlign = TextAlign.Center,
                         onLinkClick = {
                             presenter.setShowWhyPopup(true)
-                        })
+                        },
+                    )
                 }
             }
         }

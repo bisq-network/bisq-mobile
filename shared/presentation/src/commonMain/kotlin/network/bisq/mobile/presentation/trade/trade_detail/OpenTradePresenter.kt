@@ -30,8 +30,8 @@ import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OpenTradePresenter(
@@ -41,7 +41,6 @@ class OpenTradePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     val tradeFlowPresenter: TradeFlowPresenter,
 ) : BasePresenter(mainPresenter) {
-
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
 
@@ -67,13 +66,15 @@ class OpenTradePresenter(
         }
 
     private val msgCount: MutableStateFlow<Int> = MutableStateFlow(0)
-    val newMsgCount = readCount.combine(msgCount) { readCount, msgCount ->
-        (msgCount - readCount).coerceAtLeast(0)
-    }.stateIn(
-        scope = presenterScope,
-        started = SharingStarted.Lazily,
-        initialValue = 0,
-    )
+    val newMsgCount =
+        readCount
+            .combine(msgCount) { readCount, msgCount ->
+                (msgCount - readCount).coerceAtLeast(0)
+            }.stateIn(
+                scope = presenterScope,
+                started = SharingStarted.Lazily,
+                initialValue = 0,
+            )
 
     private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> =
         MutableStateFlow(null)
@@ -82,20 +83,25 @@ class OpenTradePresenter(
     private val _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
 
     val isUserIgnored =
-        selectedTrade.combine(userProfileServiceFacade.ignoredProfileIds) { trade, ignoredIds ->
-            trade?.peersUserProfile?.id?.let { ignoredIds.contains(it) } ?: false
-        }.stateIn(
-            scope = presenterScope,
-            started = SharingStarted.Eagerly,
-            initialValue = false,
-        )
+        selectedTrade
+            .combine(userProfileServiceFacade.ignoredProfileIds) { trade, ignoredIds ->
+                trade?.peersUserProfile?.id?.let { ignoredIds.contains(it) } ?: false
+            }.stateIn(
+                scope = presenterScope,
+                started = SharingStarted.Eagerly,
+                initialValue = false,
+            )
 
     private val _showUndoIgnoreDialog = MutableStateFlow(false)
     val showUndoIgnoreDialog: StateFlow<Boolean> get() = _showUndoIgnoreDialog.asStateFlow()
 
     private var _coroutineScope: CoroutineScope? = null
 
-    fun initialize(tradeId: String, scrollState: ScrollState, uiScope: CoroutineScope) {
+    fun initialize(
+        tradeId: String,
+        scrollState: ScrollState,
+        uiScope: CoroutineScope,
+    ) {
         tradesServiceFacade.selectOpenTrade(tradeId)
         _selectedTrade.value = tradesServiceFacade.selectedTrade.value
         _tradePaneScrollState.value = scrollState
@@ -113,21 +119,22 @@ class OpenTradePresenter(
         }
 
         presenterScope.launch {
-            isUserIgnored.combine(currentTrade.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
-                if (isIgnored) {
-                    messages.filter {
-                        when (it.chatMessageType) {
-                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId != currentTrade.peersUserProfile.id
-                            else -> true
+            isUserIgnored
+                .combine(currentTrade.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
+                    if (isIgnored) {
+                        messages.filter {
+                            when (it.chatMessageType) {
+                                ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId != currentTrade.peersUserProfile.id
+                                else -> true
+                            }
                         }
+                    } else {
+                        messages
                     }
-                } else {
-                    messages
+                }.collect {
+                    msgCount.update { _ -> it.size }
+                    _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
                 }
-            }.collect {
-                msgCount.update { _ -> it.size }
-                _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
-            }
         }
 
         presenterScope.launch {
@@ -233,7 +240,6 @@ class OpenTradePresenter(
     fun onOpenUndoIgnoreDialog() {
         _showUndoIgnoreDialog.value = true
     }
-
 
     fun hideUndoIgnoreDialog() {
         _showUndoIgnoreDialog.value = false

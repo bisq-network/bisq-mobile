@@ -10,16 +10,16 @@ import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 
 class ClientMiscItemsPresenter(
     userProfileService: UserProfileServiceFacade,
-    mainPresenter: MainPresenter
+    mainPresenter: MainPresenter,
 ) : MiscItemsPresenter(userProfileService, mainPresenter) {
-
     override fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
         menuItems.add(
-            menuItems.size - 2, MenuItem.Leaf(
+            menuItems.size - 2,
+            MenuItem.Leaf(
                 "mobile.more.trustedNode".i18n(),
                 icon = Res.drawable.nav_trusted_node,
-                TrustedNodeSetupSettings
-            )
+                TrustedNodeSetupSettings,
+            ),
         )
         return menuItems.toList()
     }

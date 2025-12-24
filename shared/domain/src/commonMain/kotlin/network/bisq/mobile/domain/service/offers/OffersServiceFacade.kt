@@ -16,8 +16,9 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.ServiceFacade
 
-abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
-
+abstract class OffersServiceFacade :
+    ServiceFacade(),
+    LifeCycleAware {
     protected val _offerbookListItems = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
     val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> get() = _offerbookListItems
 
@@ -26,24 +27,30 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
 
     protected val _offerbookMarketItems = MutableStateFlow<List<MarketListItem>>(emptyList())
     val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
+
     // Loading indicator for offerbook data fetch/select cycles
     protected val _isOfferbookLoading = MutableStateFlow(false)
     val isOfferbookLoading: StateFlow<Boolean> get() = _isOfferbookLoading
 
-
-    val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> = offerbookMarketItems.map { list -> list.sortedWith(
-        compareByDescending<MarketListItem> { it.numOffers }
-            .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.uppercase()) }
-            .thenBy { item ->
-                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.uppercase()))
-                    item.localeFiatCurrencyName.ifBlank { item.market.quoteCurrencyName }
-                else null
-            }
-    )}.stateIn(
-        serviceScope,
-        SharingStarted.WhileSubscribed(5_000, 10_000),
-        emptyList()
-    )
+    val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> =
+        offerbookMarketItems
+            .map { list ->
+                list.sortedWith(
+                    compareByDescending<MarketListItem> { it.numOffers }
+                        .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.uppercase()) }
+                        .thenBy { item ->
+                            if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.uppercase())) {
+                                item.localeFiatCurrencyName.ifBlank { item.market.quoteCurrencyName }
+                            } else {
+                                null
+                            }
+                        },
+                )
+            }.stateIn(
+                serviceScope,
+                SharingStarted.WhileSubscribed(5_000, 10_000),
+                emptyList(),
+            )
 
     abstract suspend fun deleteOffer(offerId: String): Result<Boolean>
 
@@ -59,7 +66,6 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
 
     abstract fun selectOfferbookMarket(marketListItem: MarketListItem)
 
-
     // [1] thenBy doesn’t work as expected for boolean expressions because true and false are
     // sorted alphabetically (false before true), thus we use thenByDescending
 
@@ -70,17 +76,16 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
 
         val mainCurrencies: List<String> = listOf("USD", "EUR", "GBP", "CAD", "AUD", "RUB", "CNY", "INR", "NGN")
 
-        fun isTerminalState(tradeState: BisqEasyTradeStateEnum): Boolean {
-            return when (tradeState) {
+        fun isTerminalState(tradeState: BisqEasyTradeStateEnum): Boolean =
+            when (tradeState) {
                 BisqEasyTradeStateEnum.BTC_CONFIRMED,
                 BisqEasyTradeStateEnum.CANCELLED,
                 BisqEasyTradeStateEnum.FAILED,
                 BisqEasyTradeStateEnum.FAILED_AT_PEER,
                 BisqEasyTradeStateEnum.REJECTED,
                 BisqEasyTradeStateEnum.PEER_REJECTED,
-                    -> true
+                -> true
                 else -> false
             }
-        }
     }
 }

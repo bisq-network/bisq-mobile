@@ -36,7 +36,7 @@ fun BisqScrollLayout(
     onModifier: ((Modifier) -> Modifier)? = null, // allows to customize modifier settings
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -48,28 +48,28 @@ fun BisqScrollLayout(
     }
 
     Box(
-        modifier = Modifier
-            .let {
-                if (scaffoldPadding != null) {
-                    it.padding(scaffoldPadding)
-                } else {
-                    it
-                }
-            }
-            .fillMaxSize()
-            .imePadding()
-            .background(BisqTheme.colors.backgroundColor)
-
+        modifier =
+            Modifier
+                .let {
+                    if (scaffoldPadding != null) {
+                        it.padding(scaffoldPadding)
+                    } else {
+                        it
+                    }
+                }.fillMaxSize()
+                .imePadding()
+                .background(BisqTheme.colors.backgroundColor),
     ) {
         Column(
             horizontalAlignment = horizontalAlignment,
             verticalArrangement = verticalArrangement,
-            modifier = Modifier
-                .fillMaxSize()
-                // .background(color = BisqTheme.colors.backgroundColor)
-                .padding(contentPadding)
-                .verticalScroll(scrollState)
-                .run { onModifier?.invoke(this) ?: this }
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // .background(color = BisqTheme.colors.backgroundColor)
+                    .padding(contentPadding)
+                    .verticalScroll(scrollState)
+                    .run { onModifier?.invoke(this) ?: this },
         ) {
             content()
         }
@@ -77,27 +77,29 @@ fun BisqScrollLayout(
         // This covers only the Scaffold content, not the TopBar or BottomBar
         if (!isInteractive) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        coroutineScope {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    awaitPointerEvent()// .consumeAllChanges() // Consumes all touch events
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            coroutineScope {
+                                awaitPointerEventScope {
+                                    while (true) {
+                                        awaitPointerEvent() // .consumeAllChanges() // Consumes all touch events
+                                    }
                                 }
                             }
-                        }
-                    }
-                    .clearAndSetSemantics { } // Disables accessibility interactions
+                        }.clearAndSetSemantics { }, // Disables accessibility interactions
             )
         }
 
         if (showJumpToBottom) {
             JumpToBottomFloatingButton(
                 visible = jumpToBottomVisible,
-                onClicked = { scope.launch { scrollState.animateScrollTo(scrollState.maxValue) } },
-                modifier = Modifier.align(Alignment.BottomEnd)
-                    .offset(x = -BisqUIConstants.ScreenPadding),
+                onClick = { scope.launch { scrollState.animateScrollTo(scrollState.maxValue) } },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = -BisqUIConstants.ScreenPadding),
                 jumpOffset = 12,
             )
         }

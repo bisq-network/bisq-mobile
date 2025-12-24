@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b
 
 import androidx.compose.foundation.layout.Arrangement
@@ -33,18 +35,18 @@ fun BuyerStateLightning3b(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_bitcoin_confirmation,
-                isLoading = true
+                isLoading = true,
             )
             // The seller has sent the Bitcoin via Lightning network
-            BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase3b.headline.ln".i18n())
+            BisqText.H5Light("bisqEasy.tradeState.info.buyer.phase3b.headline.ln".i18n())
         }
         Column {
             BisqGap.V1()
-            BisqText.baseLightGrey(
+            BisqText.BaseLightGrey(
                 // Transfers via the Lightning Network are typically near-instant....
                 "bisqEasy.tradeState.info.buyer.phase3b.info.ln".i18n(),
             )

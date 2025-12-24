@@ -19,8 +19,9 @@ import network.bisq.mobile.domain.LifeCycleAware
  * - Call `deactivate()` to cancel all coroutines and release resources
  *
  */
-abstract class ServiceFacade : BaseService(), LifeCycleAware {
-
+abstract class ServiceFacade :
+    BaseService(),
+    LifeCycleAware {
     private var isActivated = atomic(false)
 
     @CallSuper

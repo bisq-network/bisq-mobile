@@ -20,7 +20,7 @@ object SensitiveSettingsSerializer : OkioSerializer<SensitiveSettings> {
             val decrypted = decrypt(source.readByteArray()).decodeToString()
             dataStoreJson.decodeFromString(
                 SensitiveSettings.serializer(),
-                decrypted
+                decrypted,
             )
         } catch (e: SerializationException) {
             throw CorruptionException("Cannot deserialize SensitiveSettings", e)
@@ -31,7 +31,10 @@ object SensitiveSettingsSerializer : OkioSerializer<SensitiveSettings> {
         }
     }
 
-    override suspend fun writeTo(t: SensitiveSettings, sink: BufferedSink) {
+    override suspend fun writeTo(
+        t: SensitiveSettings,
+        sink: BufferedSink,
+    ) {
         val payload = dataStoreJson.encodeToString(SensitiveSettings.serializer(), t)
         val encryptedPayload = encrypt(payload.toByteArray())
         sink.write(encryptedPayload)

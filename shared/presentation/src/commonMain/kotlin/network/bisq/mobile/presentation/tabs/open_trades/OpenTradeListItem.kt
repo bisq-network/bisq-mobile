@@ -35,26 +35,30 @@ fun OpenTradeListItem(
     OpenTradeCard(
         borderWidth = 6.dp,
         borderColor = BisqTheme.colors.yellow,
-        hasNotifications = hasNotifications
+        hasNotifications = hasNotifications,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onSelect
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onSelect,
+                    ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(
                 horizontalAlignment = Alignment.Start,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
-                BisqText.baseLightGrey(
-                    text = item.directionalTitle.uppercase()
-                        .replace(":", ""), // 'Buying from:' or 'Selling to:'
+                BisqText.BaseLightGrey(
+                    text =
+                        item.directionalTitle
+                            .uppercase()
+                            .replace(":", ""),
+                    // 'Buying from:' or 'Selling to:'
                 )
                 Row(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
                     UserProfileRow(
@@ -65,25 +69,25 @@ fun OpenTradeListItem(
                         badgeCount = unreadCount,
                     )
                 }
-                BisqText.smallLightGrey("${item.formattedDate} ${item.formattedTime}")
-                BisqText.smallLightGrey("mobile.bisqEasy.openTrades.title".i18n(item.shortTradeId))
+                BisqText.SmallLightGrey("${item.formattedDate} ${item.formattedTime}")
+                BisqText.SmallLightGrey("mobile.bisqEasy.openTrades.title".i18n(item.shortTradeId))
             }
             Column(
                 horizontalAlignment = Alignment.End,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
-                BisqText.largeRegular(
+                BisqText.LargeRegular(
                     text = item.quoteAmountWithCode,
-                    color = BisqTheme.colors.primary
+                    color = BisqTheme.colors.primary,
                 )
                 BisqGap.VHalf()
                 Row(modifier = Modifier.padding(top = 1.dp)) {
                     if (item.formattedPrice.length > 18) {
-                        BisqText.xsmallRegularGrey("@ ")
-                        BisqText.xsmallRegular(item.formattedPrice)
+                        BisqText.XSmallRegularGrey("@ ")
+                        BisqText.XSmallRegular(item.formattedPrice)
                     } else {
-                        BisqText.smallRegularGrey("@ ")
-                        BisqText.smallRegular(item.formattedPrice)
+                        BisqText.SmallRegularGrey("@ ")
+                        BisqText.SmallRegular(item.formattedPrice)
                     }
                 }
                 BisqGap.VQuarter()
@@ -91,7 +95,7 @@ fun OpenTradeListItem(
                 BisqGap.VHalf()
                 PaymentMethods(
                     listOf(item.bitcoinSettlementMethod),
-                    listOf(item.fiatPaymentMethod)
+                    listOf(item.fiatPaymentMethod),
                 )
             }
         }

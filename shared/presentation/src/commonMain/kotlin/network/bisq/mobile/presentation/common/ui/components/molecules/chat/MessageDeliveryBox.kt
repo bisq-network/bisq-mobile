@@ -53,10 +53,11 @@ fun MessageDeliveryBox(
             expanded = showInfo,
             onDismissRequest = onDismissMenu,
             containerColor = BisqTheme.colors.dark_grey50,
-            offset = DpOffset(
-                x = 0.dp,
-                y = BisqUIConstants.ScreenPaddingQuarter
-            ),
+            offset =
+                DpOffset(
+                    x = 0.dp,
+                    y = BisqUIConstants.ScreenPaddingQuarter,
+                ),
         ) {
             MessageDeliveryInfo(map, userNameProvider)
         }
@@ -64,8 +65,9 @@ fun MessageDeliveryBox(
             val messageDeliveryStatus = messageDeliveryInfo.messageDeliveryStatus
 
             Row(
-                modifier = Modifier
-                    .semantics(mergeDescendants = true) {},
+                modifier =
+                    Modifier
+                        .semantics(mergeDescendants = true) {},
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter),
             ) {
@@ -75,7 +77,7 @@ fun MessageDeliveryBox(
                         size = 12.dp,
                     ) {
                         DeliveryStatusTrySendingAgain(
-                            colorFilter = ColorFilter.tint(BisqTheme.colors.yellow)
+                            colorFilter = ColorFilter.tint(BisqTheme.colors.yellow),
                         )
                     }
                 }
@@ -84,21 +86,24 @@ fun MessageDeliveryBox(
                 val iconModifier = Modifier.size(13.dp)
                 when (messageDeliveryStatus) {
                     MessageDeliveryStatusEnum.CONNECTING -> DeliveryStatusConnecting(modifier = iconModifier, colorFilter = grey)
-                    MessageDeliveryStatusEnum.SENT, MessageDeliveryStatusEnum.TRY_ADD_TO_MAILBOX -> DeliveryStatusSent(
-                        modifier = iconModifier,
-                        colorFilter = grey
-                    )
+                    MessageDeliveryStatusEnum.SENT, MessageDeliveryStatusEnum.TRY_ADD_TO_MAILBOX ->
+                        DeliveryStatusSent(
+                            modifier = iconModifier,
+                            colorFilter = grey,
+                        )
 
-                    MessageDeliveryStatusEnum.ACK_RECEIVED, MessageDeliveryStatusEnum.MAILBOX_MSG_RECEIVED -> DeliveryStatusReceived(
-                        modifier = iconModifier,
-                        colorFilter = grey
-                    )
+                    MessageDeliveryStatusEnum.ACK_RECEIVED, MessageDeliveryStatusEnum.MAILBOX_MSG_RECEIVED ->
+                        DeliveryStatusReceived(
+                            modifier = iconModifier,
+                            colorFilter = grey,
+                        )
 
                     MessageDeliveryStatusEnum.ADDED_TO_MAILBOX -> DeliveryStatusMailbox(modifier = iconModifier, colorFilter = grey)
-                    MessageDeliveryStatusEnum.FAILED -> DeliveryStatusUndelivered(
-                        modifier = iconModifier,
-                        colorFilter = ColorFilter.tint(BisqTheme.colors.yellow)
-                    )
+                    MessageDeliveryStatusEnum.FAILED ->
+                        DeliveryStatusUndelivered(
+                            modifier = iconModifier,
+                            colorFilter = ColorFilter.tint(BisqTheme.colors.yellow),
+                        )
                 }
             }
         }
@@ -113,32 +118,35 @@ fun MessageDeliveryInfo(
     val multiplePeers = map.size > 1
 
     val usernames by produceState(initialValue = emptyMap(), map) {
-        value = map.keys.associateWith { id ->
+        value =
+            map.keys.associateWith { id ->
+                if (multiplePeers) {
+                    userNameProvider.invoke(id)
+                } else {
+                    "" // Ignore as we only show user name if multiplePeers are used
+                }
+            }
+    }
+
+    val infoText =
+        map.entries.joinToString("\n\n") { (peerProfileId, messageDeliveryInfo) ->
+            val messageDeliveryStatus = messageDeliveryInfo.messageDeliveryStatus
+            val deliveryState = "chat.message.deliveryState.${messageDeliveryStatus.name}".i18n()
             if (multiplePeers) {
-                userNameProvider.invoke(id)
+                val userName = usernames[peerProfileId] ?: "data.na".i18n()
+                "chat.message.deliveryState.multiplePeers".i18n(userName, deliveryState)
             } else {
-                "" // Ignore as we only show user name if multiplePeers are used
+                deliveryState
             }
         }
-    }
 
-    val infoText = map.entries.joinToString("\n\n") { (peerProfileId, messageDeliveryInfo) ->
-        val messageDeliveryStatus = messageDeliveryInfo.messageDeliveryStatus
-        val deliveryState = "chat.message.deliveryState.${messageDeliveryStatus.name}".i18n()
-        if (multiplePeers) {
-            val userName = usernames[peerProfileId] ?: "data.na".i18n()
-            "chat.message.deliveryState.multiplePeers".i18n(userName, deliveryState)
-        } else {
-            deliveryState
-        }
-    }
-
-    BisqText.xsmallLight(
+    BisqText.XSmallLight(
         text = infoText,
         color = BisqTheme.colors.white,
-        modifier = Modifier.padding(
-            vertical = BisqUIConstants.ScreenPaddingQuarter,
-            horizontal = BisqUIConstants.ScreenPadding
-        )
+        modifier =
+            Modifier.padding(
+                vertical = BisqUIConstants.ScreenPaddingQuarter,
+                horizontal = BisqUIConstants.ScreenPadding,
+            ),
     )
 }

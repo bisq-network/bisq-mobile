@@ -57,22 +57,29 @@ class BarcodeAnalyzer(
     private val onCanceled: () -> Unit,
 ) : ImageAnalysis.Analyzer {
     private val scannerOptions =
-        BarcodeScannerOptions.Builder()
+        BarcodeScannerOptions
+            .Builder()
             .setBarcodeFormats(getMLKitBarcodeFormats(codeTypes))
             .setZoomSuggestionOptions(
-                ZoomSuggestionOptions.Builder { zoomRatio ->
-                    val maxZoomRatio =
-                        (camera?.cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1.0f)
-                            .coerceAtMost(5.0f)
-                    if (zoomRatio <= maxZoomRatio) {
-                        camera?.cameraControl?.setZoomRatio(zoomRatio)
-                        true
-                    } else {
-                        false
-                    }
-                }.setMaxSupportedZoomRatio(5.0f).build(),
-            )
-            .build()
+                ZoomSuggestionOptions
+                    .Builder { zoomRatio ->
+                        val maxZoomRatio =
+                            (
+                                camera
+                                    ?.cameraInfo
+                                    ?.zoomState
+                                    ?.value
+                                    ?.maxZoomRatio ?: 1.0f
+                            ).coerceAtMost(5.0f)
+                        if (zoomRatio <= maxZoomRatio) {
+                            camera?.cameraControl?.setZoomRatio(zoomRatio)
+                            true
+                        } else {
+                            false
+                        }
+                    }.setMaxSupportedZoomRatio(5.0f)
+                    .build(),
+            ).build()
 
     private val scanner = BarcodeScanning.getClient(scannerOptions)
     private val barcodesDetected = mutableMapOf<String, Int>()
@@ -93,22 +100,20 @@ class BarcodeAnalyzer(
 
         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-        scanner.process(image)
+        scanner
+            .process(image)
             .addOnSuccessListener { barcodes ->
                 val relevantBarcodes = barcodes.filter { isRequestedFormat(it) }
                 if (relevantBarcodes.isNotEmpty()) {
                     processFoundBarcodes(relevantBarcodes)
                 }
-            }
-            .addOnFailureListener {
+            }.addOnFailureListener {
                 onFailed(it)
                 imageProxy.close()
-            }
-            .addOnCanceledListener {
+            }.addOnCanceledListener {
                 onCanceled()
                 imageProxy.close()
-            }
-            .addOnCompleteListener {
+            }.addOnCompleteListener {
                 imageProxy.close()
             }
     }
@@ -167,7 +172,8 @@ class BarcodeAnalyzer(
             )
 
         private val MLKIT_TO_APP_FORMAT_MAP: Map<Int, BarcodeFormat> =
-            APP_TO_MLKIT_FORMAT_MAP.entries.associateBy({ it.value }) { it.key }
+            APP_TO_MLKIT_FORMAT_MAP.entries
+                .associateBy({ it.value }) { it.key }
                 .plus(FORMAT_UNKNOWN to BarcodeFormat.TYPE_UNKNOWN)
 
         fun getMLKitBarcodeFormats(appFormats: List<BarcodeFormat>): Int {
@@ -182,8 +188,6 @@ class BarcodeAnalyzer(
                 .let { if (it == 0) FORMAT_ALL_FORMATS else it }
         }
 
-        fun mlKitFormatToAppFormat(mlKitFormat: Int): BarcodeFormat {
-            return MLKIT_TO_APP_FORMAT_MAP[mlKitFormat] ?: BarcodeFormat.TYPE_UNKNOWN
-        }
+        fun mlKitFormatToAppFormat(mlKitFormat: Int): BarcodeFormat = MLKIT_TO_APP_FORMAT_MAP[mlKitFormat] ?: BarcodeFormat.TYPE_UNKNOWN
     }
 }

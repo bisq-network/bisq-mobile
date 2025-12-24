@@ -13,15 +13,15 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
-import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun BisqGeneralErrorDialog(
-    errorTitle: String = "popup.headline.error".i18n(),
     errorMessage: String,
     onClose: () -> Unit,
+    errorTitle: String = "popup.headline.error".i18n(),
 ) {
     BisqDialog(
         onDismissRequest = onClose,
@@ -31,15 +31,15 @@ fun BisqGeneralErrorDialog(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            BisqText.h4Regular(
+            BisqText.H4Regular(
                 text = errorTitle,
                 color = BisqTheme.colors.light_grey10,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
-            BisqText.baseRegularGrey(
+            BisqText.BaseRegularGrey(
                 text = errorMessage,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
             BisqButton(
@@ -56,19 +56,19 @@ private fun BisqGeneralErrorDialogPreview() {
     BisqTheme.Preview {
         BisqGeneralErrorDialog(
             errorMessage = "Something went wrong while processing your request. Please try again later.",
-            onClose = {}
+            onClose = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun BisqGeneralErrorDialogPreview_EmptyTitle() {
+private fun BisqGeneralErrorDialogPreview_EmptyTitlePreview() {
     BisqTheme.Preview {
         BisqGeneralErrorDialog(
             errorTitle = EMPTY_STRING,
             errorMessage = "Something went wrong while processing your request. Please try again later.",
-            onClose = {}
+            onClose = {},
         )
     }
 }

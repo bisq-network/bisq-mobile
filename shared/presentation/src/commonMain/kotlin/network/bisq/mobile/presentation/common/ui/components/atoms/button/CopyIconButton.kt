@@ -12,14 +12,17 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
+import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.compose.koinInject
 
 @Composable
-fun CopyIconButton(value: String, showToast: Boolean = true) {
+fun CopyIconButton(
+    value: String,
+    showToast: Boolean = true,
+) {
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
 
@@ -34,7 +37,7 @@ fun CopyIconButton(value: String, showToast: Boolean = true) {
                 if (showToast) {
                     presenter.showSnackbar("mobile.components.copyIconButton.copied".i18n())
                 }
-            }
+            },
         ) {
             CopyIcon()
         }

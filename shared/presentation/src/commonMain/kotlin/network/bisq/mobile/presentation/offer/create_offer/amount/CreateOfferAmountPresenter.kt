@@ -34,10 +34,10 @@ import network.bisq.mobile.domain.utils.MonetarySlider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
-import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter.AmountType
 
@@ -49,7 +49,6 @@ class CreateOfferAmountPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     lateinit var headline: String
     lateinit var quoteCurrencyCode: String
     lateinit var formattedMinAmount: String
@@ -131,6 +130,7 @@ class CreateOfferAmountPresenter(
 
     private val _showLimitPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showLimitPopup: StateFlow<Boolean> get() = _showLimitPopup.asStateFlow()
+
     fun setShowLimitPopup(newValue: Boolean) {
         _showLimitPopup.value = newValue
     }
@@ -146,10 +146,12 @@ class CreateOfferAmountPresenter(
 
         _amountType.value = createOfferModel.amountType
 
-        headline = if (createOfferModel.direction.isBuy)
-            "bisqEasy.tradeWizard.amount.headline.buyer".i18n()
-        else
-            "bisqEasy.tradeWizard.amount.headline.seller".i18n()
+        headline =
+            if (createOfferModel.direction.isBuy) {
+                "bisqEasy.tradeWizard.amount.headline.buyer".i18n()
+            } else {
+                "bisqEasy.tradeWizard.amount.headline.seller".i18n()
+            }
 
         minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
         maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
@@ -160,12 +162,13 @@ class CreateOfferAmountPresenter(
         formattedMaxAmountWithCode =
             AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
-        var valueInFraction = if (createOfferModel.quoteSideFixedAmount != null) {
-            quoteSideFixedAmount = createOfferModel.quoteSideFixedAmount!!
-            MonetarySlider.minorToFraction(quoteSideFixedAmount.value, minAmount, maxAmount)
-        } else {
-            createOfferModel.fixedAmountSliderPosition
-        }
+        var valueInFraction =
+            if (createOfferModel.quoteSideFixedAmount != null) {
+                quoteSideFixedAmount = createOfferModel.quoteSideFixedAmount!!
+                MonetarySlider.minorToFraction(quoteSideFixedAmount.value, minAmount, maxAmount)
+            } else {
+                createOfferModel.fixedAmountSliderPosition
+            }
         _fixedAmountSliderPosition.value = valueInFraction
         applyFixedAmountSliderValue(fixedAmountSliderPosition.value)
 
@@ -173,19 +176,21 @@ class CreateOfferAmountPresenter(
         applyRangeAmountSliderValue(rangeSliderPosition)
         _maxRangeSliderValue.value = rangeSliderPosition.endInclusive
 
-        valueInFraction = if (createOfferModel.quoteSideMinRangeAmount != null) {
-            quoteSideMinRangeAmount = createOfferModel.quoteSideMinRangeAmount!!
-            MonetarySlider.minorToFraction(quoteSideMinRangeAmount.value, minAmount, maxAmount)
-        } else {
-            createOfferModel.rangeSliderPosition.start
-        }
+        valueInFraction =
+            if (createOfferModel.quoteSideMinRangeAmount != null) {
+                quoteSideMinRangeAmount = createOfferModel.quoteSideMinRangeAmount!!
+                MonetarySlider.minorToFraction(quoteSideMinRangeAmount.value, minAmount, maxAmount)
+            } else {
+                createOfferModel.rangeSliderPosition.start
+            }
         _minRangeSliderValue.value = valueInFraction
-        valueInFraction = if (createOfferModel.quoteSideMaxRangeAmount != null) {
-            quoteSideMaxRangeAmount = createOfferModel.quoteSideMaxRangeAmount!!
-            MonetarySlider.minorToFraction(quoteSideMaxRangeAmount.value, minAmount, maxAmount)
-        } else {
-            createOfferModel.rangeSliderPosition.endInclusive
-        }
+        valueInFraction =
+            if (createOfferModel.quoteSideMaxRangeAmount != null) {
+                quoteSideMaxRangeAmount = createOfferModel.quoteSideMaxRangeAmount!!
+                MonetarySlider.minorToFraction(quoteSideMaxRangeAmount.value, minAmount, maxAmount)
+            } else {
+                createOfferModel.rangeSliderPosition.endInclusive
+            }
         _maxRangeSliderValue.value = valueInFraction
         applyRangeAmountSliderValue(_minRangeSliderValue.value.._maxRangeSliderValue.value)
 
@@ -295,15 +300,16 @@ class CreateOfferAmountPresenter(
         if (fixedDragJob == null) {
             // Leading-edge immediate update for responsive feedback
             applyFixedAmountSliderValue(value)
-            fixedDragJob = presenterScope.launch {
-                // Trailing-edge coalesced update
-                delay(dragUpdateSampleMs)
-                latestFixedPending?.let {
-                    applyFixedAmountSliderValue(it)
-                    latestFixedPending = null
+            fixedDragJob =
+                presenterScope.launch {
+                    // Trailing-edge coalesced update
+                    delay(dragUpdateSampleMs)
+                    latestFixedPending?.let {
+                        applyFixedAmountSliderValue(it)
+                        latestFixedPending = null
+                    }
+                    fixedDragJob = null
                 }
-                fixedDragJob = null
-            }
         } else {
             // Coalesce subsequent updates within the sample window
             latestFixedPending = value
@@ -313,12 +319,13 @@ class CreateOfferAmountPresenter(
     fun onMinRangeSliderValueChange(value: Float) {
         if (rangeMinDragJob == null) {
             applyMinRangeAmountSliderValue(value)
-            rangeMinDragJob = presenterScope.launch {
-                delay(dragUpdateSampleMs)
-                latestRangeMinPending?.let { applyMinRangeAmountSliderValue(it) }
-                latestRangeMinPending = null
-                rangeMinDragJob = null
-            }
+            rangeMinDragJob =
+                presenterScope.launch {
+                    delay(dragUpdateSampleMs)
+                    latestRangeMinPending?.let { applyMinRangeAmountSliderValue(it) }
+                    latestRangeMinPending = null
+                    rangeMinDragJob = null
+                }
         } else {
             latestRangeMinPending = value
         }
@@ -327,12 +334,13 @@ class CreateOfferAmountPresenter(
     fun onMaxRangeSliderValueChange(value: Float) {
         if (rangeMaxDragJob == null) {
             applyMaxRangeAmountSliderValue(value)
-            rangeMaxDragJob = presenterScope.launch {
-                delay(dragUpdateSampleMs)
-                latestRangeMaxPending?.let { applyMaxRangeAmountSliderValue(it) }
-                latestRangeMaxPending = null
-                rangeMaxDragJob = null
-            }
+            rangeMaxDragJob =
+                presenterScope.launch {
+                    delay(dragUpdateSampleMs)
+                    latestRangeMaxPending?.let { applyMaxRangeAmountSliderValue(it) }
+                    latestRangeMaxPending = null
+                    rangeMaxDragJob = null
+                }
         } else {
             latestRangeMaxPending = value
         }
@@ -342,24 +350,26 @@ class CreateOfferAmountPresenter(
         // Handle each thumb independently to preserve immediate feedback per-thumb
         if (rangeMinDragJob == null) {
             applyMinRangeAmountSliderValue(value.start)
-            rangeMinDragJob = presenterScope.launch {
-                delay(dragUpdateSampleMs)
-                latestRangeMinPending?.let { applyMinRangeAmountSliderValue(it) }
-                latestRangeMinPending = null
-                rangeMinDragJob = null
-            }
+            rangeMinDragJob =
+                presenterScope.launch {
+                    delay(dragUpdateSampleMs)
+                    latestRangeMinPending?.let { applyMinRangeAmountSliderValue(it) }
+                    latestRangeMinPending = null
+                    rangeMinDragJob = null
+                }
         } else {
             latestRangeMinPending = value.start
         }
 
         if (rangeMaxDragJob == null) {
             applyMaxRangeAmountSliderValue(value.endInclusive)
-            rangeMaxDragJob = presenterScope.launch {
-                delay(dragUpdateSampleMs)
-                latestRangeMaxPending?.let { applyMaxRangeAmountSliderValue(it) }
-                latestRangeMaxPending = null
-                rangeMaxDragJob = null
-            }
+            rangeMaxDragJob =
+                presenterScope.launch {
+                    delay(dragUpdateSampleMs)
+                    latestRangeMaxPending?.let { applyMaxRangeAmountSliderValue(it) }
+                    latestRangeMaxPending = null
+                    rangeMaxDragJob = null
+                }
         } else {
             latestRangeMaxPending = value.endInclusive
         }
@@ -420,14 +430,17 @@ class CreateOfferAmountPresenter(
     }
 
     private fun getMaxAmountForValidation(): Long {
-        val maxRepBasedValue = if (reputationBasedMaxSliderValue.value == null)
-            0L
-        else
-            sliderValueToAmount(reputationBasedMaxSliderValue.value!!)
-        return if (maxRepBasedValue == 0L)
+        val maxRepBasedValue =
+            if (reputationBasedMaxSliderValue.value == null) {
+                0L
+            } else {
+                sliderValueToAmount(reputationBasedMaxSliderValue.value!!)
+            }
+        return if (maxRepBasedValue == 0L) {
             maxAmount
-        else
+        } else {
             minOf(maxAmount, maxRepBasedValue)
+        }
     }
 
     // private
@@ -442,7 +455,7 @@ class CreateOfferAmountPresenter(
     private fun handleAmountTextChange(
         textInput: String,
         onValueParsed: (Float) -> Unit,
-        onInvalidInput: () -> Unit
+        onInvalidInput: () -> Unit,
     ) {
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
@@ -463,17 +476,19 @@ class CreateOfferAmountPresenter(
         _reputationBasedMaxSliderValue.value = null
         val market = createOfferModel.market ?: return
 
-        val fixedOrMinAmount: FiatVO = if (amountType.value == AmountType.FIXED_AMOUNT) {
-            quoteSideFixedAmount
-        } else {
-            quoteSideMinRangeAmount
-        }
+        val fixedOrMinAmount: FiatVO =
+            if (amountType.value == AmountType.FIXED_AMOUNT) {
+                quoteSideFixedAmount
+            } else {
+                quoteSideMinRangeAmount
+            }
 
-        val requiredReputation: Long = findRequiredReputationScoreByFiatAmount(
-            marketPriceServiceFacade,
-            market,
-            fixedOrMinAmount
-        ) ?: 0L
+        val requiredReputation: Long =
+            findRequiredReputationScoreByFiatAmount(
+                marketPriceServiceFacade,
+                market,
+                fixedOrMinAmount,
+            ) ?: 0L
         _requiredReputation.value = requiredReputation
 
         // TODO: it sounds like its better to do this on Dispatchers.Default as processing is significant,
@@ -499,16 +514,18 @@ class CreateOfferAmountPresenter(
             val firstPart: String =
                 "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.firstPart".i18n(
                     formattedFixedOrMinAmount,
-                    requiredReputation
+                    requiredReputation,
                 )
-            val secondPart = if (numPotentialTakers == 0) {
-                "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.secondPart.noSellers".i18n()
-            } else {
-                if (numPotentialTakers == 1)
-                    "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.secondPart.singular".i18n(numSellers)
-                else
-                    "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.secondPart.plural".i18n(numSellers)
-            }
+            val secondPart =
+                if (numPotentialTakers == 0) {
+                    "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.secondPart.noSellers".i18n()
+                } else {
+                    if (numPotentialTakers == 1) {
+                        "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.secondPart.singular".i18n(numSellers)
+                    } else {
+                        "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.secondPart.plural".i18n(numSellers)
+                    }
+                }
             _amountLimitInfoOverlayInfo.value = firstPart + "\n\n" + secondPart + "\n\n"
         }
     }
@@ -525,21 +542,23 @@ class CreateOfferAmountPresenter(
             _requiredReputation.value = reputationScore.totalScore
             val market = createOfferModel.market ?: return@launch
 
-            val amount = getReputationBasedQuoteSideAmount(
-                marketPriceServiceFacade,
-                market,
-                _requiredReputation.value
-            ) ?: return@launch
+            val amount =
+                getReputationBasedQuoteSideAmount(
+                    marketPriceServiceFacade,
+                    market,
+                    _requiredReputation.value,
+                ) ?: return@launch
 
             val reputationBasedMaxValue = (amount.value.toFloat() - minAmount) / range
             _reputationBasedMaxSliderValue.value = reputationBasedMaxValue
             _rightMarkerValue.value = reputationBasedMaxValue
 
-            _formattedReputationBasedMaxAmount.value = AmountFormatter.formatAmount(
-                amount,
-                useLowPrecision = true,
-                withCode = true
-            )
+            _formattedReputationBasedMaxAmount.value =
+                AmountFormatter.formatAmount(
+                    amount,
+                    useLowPrecision = true,
+                    withCode = true,
+                )
             _amountLimitInfo.value =
                 "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(_formattedReputationBasedMaxAmount.value)
 
@@ -552,10 +571,10 @@ class CreateOfferAmountPresenter(
         }
     }
 
-    private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int {
-        return getPeersScoreByUserProfileId().filter { (_, value) -> withTolerance(value) >= requiredReputationScore }
+    private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int =
+        getPeersScoreByUserProfileId()
+            .filter { (_, value) -> withTolerance(value) >= requiredReputationScore }
             .count()
-    }
 
     private suspend fun getPeersScoreByUserProfileId(): Map<String, Long> {
         val myProfileIds: Set<String> = userProfileServiceFacade.getUserIdentityIds().toSet()
@@ -596,7 +615,6 @@ class CreateOfferAmountPresenter(
         _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
     }
 
-
     private fun applyMinRangeAmountSliderValue(amount: Float) {
         val separator = getGroupingSeparator().toString()
         _minRangeSliderValue.value = amount
@@ -632,13 +650,9 @@ class CreateOfferAmountPresenter(
         _formattedBaseSideFixedAmount.value = AmountFormatter.formatAmount(baseSideFixedAmount, false)
     }
 
-    private fun sliderValueToAmount(amount: Float): Long {
-        return MonetarySlider.fractionToAmountLong(amount, minAmount, maxAmount, 10_000L)
-    }
+    private fun sliderValueToAmount(amount: Float): Long = MonetarySlider.fractionToAmountLong(amount, minAmount, maxAmount, 10_000L)
 
-    private fun getFractionForFiat(value: Double): Float {
-        return MonetarySlider.faceValueToFraction(value, minAmount, maxAmount, 4)
-    }
+    private fun getFractionForFiat(value: Double): Float = MonetarySlider.faceValueToFraction(value, minAmount, maxAmount, 4)
 
     private fun commitToModel() {
         if (amountType.value == AmountType.RANGE_AMOUNT && quoteSideMinRangeAmount.asDouble() == quoteSideMaxRangeAmount.asDouble()) {
@@ -652,7 +666,7 @@ class CreateOfferAmountPresenter(
             quoteSideMinRangeAmount,
             baseSideMinRangeAmount,
             quoteSideMaxRangeAmount,
-            baseSideMaxRangeAmount
+            baseSideMaxRangeAmount,
         )
     }
 }

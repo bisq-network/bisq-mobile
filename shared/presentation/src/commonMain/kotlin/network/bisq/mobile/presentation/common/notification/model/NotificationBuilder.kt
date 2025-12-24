@@ -34,8 +34,8 @@ class NotificationBuilder {
         ios = IosNotificationConfig().apply(block)
     }
 
-    fun build(): NotificationConfig {
-        return NotificationConfig(
+    fun build(): NotificationConfig =
+        NotificationConfig(
             id = id ?: StringUtils.randomAlphaNum(),
             skipInForeground = skipInForeground,
             title = title,
@@ -45,5 +45,4 @@ class NotificationBuilder {
             android = android,
             ios = ios,
         )
-    }
 }

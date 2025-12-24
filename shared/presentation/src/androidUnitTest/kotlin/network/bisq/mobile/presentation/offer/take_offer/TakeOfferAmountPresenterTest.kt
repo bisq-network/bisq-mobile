@@ -67,12 +67,10 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
 
-
 @OptIn(ExperimentalCoroutinesApi::class)
-	class TakeOfferAmountPresenterTest {
-
-	    // --- Fakes (Android/JVM-friendly) ---
-	    private val testDispatcher = StandardTestDispatcher()
+class TakeOfferAmountPresenterTest {
+    // --- Fakes (Android/JVM-friendly) ---
+    private val testDispatcher = StandardTestDispatcher()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
@@ -89,31 +87,47 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
     private class FakeSettingsRepository : SettingsRepository {
         private val _data = MutableStateFlow(Settings())
         override val data: StateFlow<Settings> = _data
+
         override suspend fun setFirstLaunch(value: Boolean) {}
+
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
+
         override suspend fun setSelectedMarketCode(value: String) {}
+
         override suspend fun setNotificationPermissionState(value: PermissionState) {}
+
         override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {}
-        override suspend fun update(transform: suspend (t: Settings) -> Settings) { _data.value = transform(_data.value) }
-        override suspend fun clear() { _data.value = Settings() }
+
+        override suspend fun update(transform: suspend (t: Settings) -> Settings) {
+            _data.value = transform(_data.value)
+        }
+
+        override suspend fun clear() {
+            _data.value = Settings()
+        }
     }
 
     private class FakeMarketPriceServiceFacade(
         settingsRepository: SettingsRepository,
-        private val prices: Map<MarketVO, MarketPriceItem>
+        private val prices: Map<MarketVO, MarketPriceItem>,
     ) : MarketPriceServiceFacade(settingsRepository) {
         override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? =
-            prices.entries.firstOrNull { (k, _) ->
-                k.baseCurrencyCode == marketVO.baseCurrencyCode && k.quoteCurrencyCode == marketVO.quoteCurrencyCode
-            }?.value
+            prices.entries
+                .firstOrNull { (k, _) ->
+                    k.baseCurrencyCode == marketVO.baseCurrencyCode && k.quoteCurrencyCode == marketVO.quoteCurrencyCode
+                }?.value
+
         override fun findUSDMarketPriceItem(): MarketPriceItem? = findMarketPriceItem(MarketVO("BTC", "USD"))
+
         override fun refreshSelectedFormattedMarketPrice() {}
+
         override fun selectMarket(marketListItem: MarketListItem) {}
     }
 
     private class FakeTradesServiceFacade : TradesServiceFacade {
         override val selectedTrade: StateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
         override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
+
         override suspend fun takeOffer(
             bisqEasyOffer: OfferVO,
             takersBaseSideAmount: MonetaryVO,
@@ -121,45 +135,79 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
             bitcoinPaymentMethod: String,
             fiatPaymentMethod: String,
             takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
-            takeOfferErrorMessage: MutableStateFlow<String?>
+            takeOfferErrorMessage: MutableStateFlow<String?>,
         ): Result<String> = Result.success("trade-1")
+
         override fun selectOpenTrade(tradeId: String) {}
+
         override suspend fun rejectTrade(): Result<Unit> = Result.success(Unit)
+
         override suspend fun cancelTrade(): Result<Unit> = Result.success(Unit)
+
         override suspend fun closeTrade(): Result<Unit> = Result.success(Unit)
+
         override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> = Result.success(Unit)
+
         override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> = Result.success(Unit)
+
         override suspend fun sellerConfirmFiatReceipt(): Result<Unit> = Result.success(Unit)
+
         override suspend fun buyerConfirmFiatSent(): Result<Unit> = Result.success(Unit)
+
         override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> = Result.success(Unit)
+
         override suspend fun btcConfirmed(): Result<Unit> = Result.success(Unit)
+
         override suspend fun exportTradeDate(): Result<Unit> = Result.success(Unit)
+
         override fun resetSelectedTradeToNull() {}
     }
 
     private class FakeSettingsServiceFacade : SettingsServiceFacade {
         override suspend fun getSettings() = Result.success(settingsVODemoObj)
+
         override val isTacAccepted: StateFlow<Boolean?> = MutableStateFlow(true)
+
         override suspend fun confirmTacAccepted(value: Boolean) {}
+
         override val tradeRulesConfirmed: StateFlow<Boolean> = MutableStateFlow(true)
+
         override suspend fun confirmTradeRules(value: Boolean) {}
+
         override val languageCode: StateFlow<String> = MutableStateFlow("en")
+
         override suspend fun setLanguageCode(value: String) {}
+
         override val supportedLanguageCodes: StateFlow<Set<String>> = MutableStateFlow(setOf("en"))
+
         override suspend fun setSupportedLanguageCodes(value: Set<String>) {}
+
         override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> = MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
+
         override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {}
+
         override val closeMyOfferWhenTaken: StateFlow<Boolean> = MutableStateFlow(true)
+
         override suspend fun setCloseMyOfferWhenTaken(value: Boolean) {}
+
         override val maxTradePriceDeviation: StateFlow<Double> = MutableStateFlow(0.0)
+
         override suspend fun setMaxTradePriceDeviation(value: Double) {}
+
         override val useAnimations: StateFlow<Boolean> = MutableStateFlow(false)
+
         override suspend fun setUseAnimations(value: Boolean) {}
+
         override val difficultyAdjustmentFactor: StateFlow<Double> = MutableStateFlow(1.0)
+
         override suspend fun setDifficultyAdjustmentFactor(value: Double) {}
+
         override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> = MutableStateFlow(false)
+
         override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {}
+
         override val numDaysAfterRedactingTradeData: StateFlow<Int> = MutableStateFlow(30)
+
         override suspend fun setNumDaysAfterRedactingTradeData(days: Int) {}
     }
 
@@ -167,43 +215,83 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
         override val selectedUserProfile: StateFlow<UserProfileVO?> = MutableStateFlow(null)
         override val ignoredProfileIds: StateFlow<Set<String>> = MutableStateFlow(emptySet())
         override val numUserProfiles: StateFlow<Int> = MutableStateFlow(1)
+
         override suspend fun hasUserProfile(): Boolean = true
-        override suspend fun generateKeyPair(imageSize: Int, result: (String, String, PlatformImage?) -> Unit) {}
+
+        override suspend fun generateKeyPair(
+            imageSize: Int,
+            result: (String, String, PlatformImage?) -> Unit,
+        ) {
+        }
+
         override suspend fun createAndPublishNewUserProfile(nickName: String) {}
-        override suspend fun updateAndPublishUserProfile(statement: String?, terms: String?) = Result.success(createMockUserProfile("me"))
+
+        override suspend fun updateAndPublishUserProfile(
+            statement: String?,
+            terms: String?,
+        ) = Result.success(createMockUserProfile("me"))
+
         override suspend fun getUserIdentityIds(): List<String> = emptyList()
+
         override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> = Triple(null, null, null)
+
         override suspend fun getSelectedUserProfile() = createMockUserProfile("me")
+
         override suspend fun findUserProfile(profileId: String) = createMockUserProfile(profileId)
+
         override suspend fun findUserProfiles(ids: List<String>) = ids.map { createMockUserProfile(it) }
-        override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number) = createEmptyImage()
+
+        override suspend fun getUserProfileIcon(
+            userProfile: UserProfileVO,
+            size: Number,
+        ) = createEmptyImage()
+
         override suspend fun getUserProfileIcon(userProfile: UserProfileVO) = createEmptyImage()
+
         override suspend fun getUserPublishDate(): Long = 0L
+
         override suspend fun userActivityDetected() {}
+
         override suspend fun ignoreUserProfile(profileId: String) {}
+
         override suspend fun undoIgnoreUserProfile(profileId: String) {}
+
         override suspend fun isUserIgnored(profileId: String): Boolean = false
+
         override suspend fun getIgnoredUserProfileIds(): Set<String> = emptySet()
+
         override suspend fun reportUserProfile(
             accusedUserProfile: UserProfileVO,
-            message: String
+            message: String,
         ): Result<Unit> = Result.failure(Exception("unused in test"))
     }
 
     private class FakeNotificationController : NotificationController {
         override suspend fun hasPermission(): Boolean = true
+
         override fun notify(config: NotificationConfig) {}
+
         override fun cancel(id: String) {}
+
         override fun isAppInForeground(): Boolean = true
     }
 
     private class FakeForegroundServiceController : ForegroundServiceController {
         override fun startService() {}
+
         override fun stopService() {}
-        override fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit) {}
+
+        override fun <T> registerObserver(
+            flow: Flow<T>,
+            onStateChange: suspend (T) -> Unit,
+        ) {}
+
         override fun unregisterObserver(flow: Flow<*>) {}
+
         override fun unregisterObservers() {}
+
         override fun isServiceRunning(): Boolean = false
+
         override fun dispose() {}
     }
 
@@ -212,11 +300,19 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
         override val isForeground: StateFlow<Boolean> = _isForeground
     }
 
-    private class FakeUrlLauncher : UrlLauncher { override fun openUrl(url: String) {} }
+    private class FakeUrlLauncher : UrlLauncher {
+        override fun openUrl(url: String) {}
+    }
 
     private class FakeTradeReadStateRepository : TradeReadStateRepository {
         override val data: Flow<TradeReadStateMap> = flowOf(TradeReadStateMap())
-        override suspend fun setCount(tradeId: String, count: Int) {}
+
+        override suspend fun setCount(
+            tradeId: String,
+            count: Int,
+        ) {
+        }
+
         override suspend fun clearId(tradeId: String) {}
     }
 
@@ -226,13 +322,14 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
         val notificationController = FakeNotificationController()
         val foregroundServiceController = FakeForegroundServiceController()
         val foregroundDetector = FakeForegroundDetector()
-        val openTradesNotificationService = OpenTradesNotificationService(
-            notificationController,
-            foregroundServiceController,
-            tradesServiceFacade,
-            userProfileServiceFacade,
-            foregroundDetector
-        )
+        val openTradesNotificationService =
+            OpenTradesNotificationService(
+                notificationController,
+                foregroundServiceController,
+                tradesServiceFacade,
+                userProfileServiceFacade,
+                foregroundDetector,
+            )
         val settingsService = FakeSettingsServiceFacade()
         val tradeReadStateRepository = FakeTradeReadStateRepository()
         val urlLauncher = FakeUrlLauncher()
@@ -243,7 +340,7 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
             settingsService,
             tradeReadStateRepository,
             urlLauncher,
-            TestApplicationLifecycleService()
+            TestApplicationLifecycleService(),
         )
     }
 
@@ -252,20 +349,21 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
         val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L) // $10.0000 .. $100.0000
         val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) }) // 100 USD per BTC
         val makerNetworkId = NetworkIdVO(AddressByTransportTypeMapVO(mapOf()), PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"))
-        val offer = BisqEasyOfferVO(
-            id = "offer-1",
-            date = 0L,
-            makerNetworkId = makerNetworkId,
-            direction = DirectionEnum.BUY,
-            market = market,
-            amountSpec = amountSpec,
-            priceSpec = priceSpec,
-            protocolTypes = emptyList(),
-            baseSidePaymentMethodSpecs = emptyList(),
-            quoteSidePaymentMethodSpecs = emptyList(),
-            offerOptions = emptyList(),
-            supportedLanguageCodes = emptyList()
-        )
+        val offer =
+            BisqEasyOfferVO(
+                id = "offer-1",
+                date = 0L,
+                makerNetworkId = makerNetworkId,
+                direction = DirectionEnum.BUY,
+                market = market,
+                amountSpec = amountSpec,
+                priceSpec = priceSpec,
+                protocolTypes = emptyList(),
+                baseSidePaymentMethodSpecs = emptyList(),
+                quoteSidePaymentMethodSpecs = emptyList(),
+                offerOptions = emptyList(),
+                supportedLanguageCodes = emptyList(),
+            )
         val user = createMockUserProfile("Alice")
         val reputation = ReputationScoreVO(0, 0.0, 0)
         return OfferItemPresentationDto(
@@ -279,66 +377,71 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
             formattedPriceSpec = "",
             quoteSidePaymentMethods = listOf("SEPA"),
             baseSidePaymentMethods = listOf("BTC"),
-            reputationScore = reputation
+            reputationScore = reputation,
         )
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onSliderValueChanged_is_sampled_and_onSliderDragFinished_updates_immediately() = runTest {
-        // Arrange market prices map (100 USD per BTC)
-        val marketUSD = MarketVOFactory.USD
-        val marketUSDItem = MarketPriceItem(marketUSD, with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) }, formattedPrice = "100 USD")
-        val prices = mapOf(marketUSD to marketUSDItem)
-        val settingsRepo = FakeSettingsRepository()
-        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+    fun onSliderValueChanged_is_sampled_and_onSliderDragFinished_updates_immediately() =
+        runTest {
+            // Arrange market prices map (100 USD per BTC)
+            val marketUSD = MarketVOFactory.USD
+            val marketUSDItem =
+                MarketPriceItem(
+                    marketUSD,
+                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
+                    formattedPrice = "100 USD",
+                )
+            val prices = mapOf(marketUSD to marketUSDItem)
+            val settingsRepo = FakeSettingsRepository()
+            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-        // Mock top-level android-specific function called from MainPresenter.init
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
+            // Mock top-level android-specific function called from MainPresenter.init
+            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+            every { getScreenWidthDp() } returns 480
 
-        val mainPresenter = makeMainPresenter()
-        val tradesServiceFacade = FakeTradesServiceFacade()
-        val takeOfferPresenter =
-            TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+            val mainPresenter = makeMainPresenter()
+            val tradesServiceFacade = FakeTradesServiceFacade()
+            val takeOfferPresenter =
+                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
 
-        // Select offer
-        val dto = makeOfferDto()
-        val model = OfferItemPresentationModel(dto)
-        takeOfferPresenter.selectOfferToTake(model)
+            // Select offer
+            val dto = makeOfferDto()
+            val model = OfferItemPresentationModel(dto)
+            takeOfferPresenter.selectOfferToTake(model)
 
-        // Create Amount presenter (runs init)
-        val presenter =
-            TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+            // Create Amount presenter (runs init)
+            val presenter =
+                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
 
-        val beforeQuote = presenter.formattedQuoteAmount.value
-        val beforeBase = presenter.formattedBaseAmount.value
+            val beforeQuote = presenter.formattedQuoteAmount.value
+            val beforeBase = presenter.formattedBaseAmount.value
 
-        // Act: drag updates schedule a sampled heavy update; not immediate
-        presenter.onSliderValueChanged(0.75f)
-        val midQuote = presenter.formattedQuoteAmount.value
-        val midBase = presenter.formattedBaseAmount.value
-        assertEquals(beforeQuote, midQuote)
-        assertEquals(beforeBase, midBase)
-        assertTrue(presenter.amountValid.value)
+            // Act: drag updates schedule a sampled heavy update; not immediate
+            presenter.onSliderValueChanged(0.75f)
+            val midQuote = presenter.formattedQuoteAmount.value
+            val midBase = presenter.formattedBaseAmount.value
+            assertEquals(beforeQuote, midQuote)
+            assertEquals(beforeBase, midBase)
+            assertTrue(presenter.amountValid.value)
 
-        // After debounce window, sampled update should refresh values
-        advanceTimeBy(40)
-        runCurrent()
-        val afterSampleQuote = presenter.formattedQuoteAmount.value
-        val afterSampleBase = presenter.formattedBaseAmount.value
-        assertNotEquals(beforeQuote, afterSampleQuote)
-        assertNotEquals(beforeBase, afterSampleBase)
+            // After debounce window, sampled update should refresh values
+            advanceTimeBy(40)
+            runCurrent()
+            val afterSampleQuote = presenter.formattedQuoteAmount.value
+            val afterSampleBase = presenter.formattedBaseAmount.value
+            assertNotEquals(beforeQuote, afterSampleQuote)
+            assertNotEquals(beforeBase, afterSampleBase)
 
-        // Another drag then immediate release triggers immediate update (no extra wait)
-        val beforeReleaseQuote = presenter.formattedQuoteAmount.value
-        val beforeReleaseBase = presenter.formattedBaseAmount.value
-        presenter.onSliderValueChanged(0.80f)
-        presenter.onSliderDragFinished()
-        val afterReleaseQuote = presenter.formattedQuoteAmount.value
-        val afterReleaseBase = presenter.formattedBaseAmount.value
-        assertNotEquals(beforeReleaseQuote, afterReleaseQuote)
-        assertNotEquals(beforeReleaseBase, afterReleaseBase)
-    }
+            // Another drag then immediate release triggers immediate update (no extra wait)
+            val beforeReleaseQuote = presenter.formattedQuoteAmount.value
+            val beforeReleaseBase = presenter.formattedBaseAmount.value
+            presenter.onSliderValueChanged(0.80f)
+            presenter.onSliderDragFinished()
+            val afterReleaseQuote = presenter.formattedQuoteAmount.value
+            val afterReleaseBase = presenter.formattedBaseAmount.value
+            assertNotEquals(beforeReleaseQuote, afterReleaseQuote)
+            assertNotEquals(beforeReleaseBase, afterReleaseBase)
+        }
 }
-

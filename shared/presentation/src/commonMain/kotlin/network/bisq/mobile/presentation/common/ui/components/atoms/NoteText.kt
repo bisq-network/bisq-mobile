@@ -19,8 +19,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 
 // Pass either uri or onLinkClick. Not both
 @Composable
@@ -37,83 +37,93 @@ fun NoteText(
     val scope = rememberCoroutineScope()
     var showConfirmDialog by remember { mutableStateOf(false) }
 
-    val annotatedString = buildAnnotatedString {
-        append(notes)
-        append(" ")
+    val annotatedString =
+        buildAnnotatedString {
+            append(notes)
+            append(" ")
 
-        if (uri != null) {
-            withLink(
-                LinkAnnotation.Url(
-                    url = uri,
-                    styles = TextLinkStyles(
-                        style = SpanStyle(
-                            color = BisqTheme.colors.primary,
-                            textDecoration = TextDecoration.Underline
-                        )
+            if (uri != null) {
+                withLink(
+                    LinkAnnotation.Url(
+                        url = uri,
+                        styles =
+                            TextLinkStyles(
+                                style =
+                                    SpanStyle(
+                                        color = BisqTheme.colors.primary,
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
+                            ),
+                        linkInteractionListener = { _ ->
+                            // Handle URL click with confirmation if needed
+                            if (openConfirmation) {
+                                showConfirmDialog = true
+                            } else {
+                                uriHandler.openUri(uri)
+                            }
+                        },
                     ),
-                    linkInteractionListener = { _ ->
-                        // Handle URL click with confirmation if needed
+                ) {
+                    append(linkText)
+                }
+            } else if (onLinkClick != null) {
+                // For custom actions, use LinkAnnotation.Clickable
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = "custom_action",
+                        styles =
+                            TextLinkStyles(
+                                style =
+                                    SpanStyle(
+                                        color = BisqTheme.colors.primary,
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
+                            ),
+                    ) {
+                        // Handle custom click with confirmation if needed
                         if (openConfirmation) {
                             showConfirmDialog = true
                         } else {
-                            uriHandler.openUri(uri)
+                            onLinkClick()
                         }
-                    }
-                )
-            ) {
-                append(linkText)
-            }
-        } else if (onLinkClick != null) {
-            // For custom actions, use LinkAnnotation.Clickable
-            withLink(
-                LinkAnnotation.Clickable(
-                    tag = "custom_action",
-                    styles = TextLinkStyles(
-                        style = SpanStyle(
-                            color = BisqTheme.colors.primary,
-                            textDecoration = TextDecoration.Underline
-                        )
-                    )
+                    },
                 ) {
-                    // Handle custom click with confirmation if needed
-                    if (openConfirmation) {
-                        showConfirmDialog = true
-                    } else {
-                        onLinkClick()
-                    }
+                    // Apply styling manually since LinkAnnotation.Clickable doesn't have styles parameter
+                    val start = length
+                    append(linkText)
+                    val end = length
+                    addStyle(
+                        SpanStyle(
+                            color = BisqTheme.colors.primary,
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                        start,
+                        end,
+                    )
                 }
-            ) {
-                // Apply styling manually since LinkAnnotation.Clickable doesn't have styles parameter
+            } else {
+                // Fallback: just styled text without link functionality
                 val start = length
                 append(linkText)
                 val end = length
                 addStyle(
                     SpanStyle(
                         color = BisqTheme.colors.primary,
-                        textDecoration = TextDecoration.Underline
-                    ), start, end
+                        textDecoration = TextDecoration.Underline,
+                    ),
+                    start,
+                    end,
                 )
             }
-        } else {
-            // Fallback: just styled text without link functionality
-            val start = length
-            append(linkText)
-            val end = length
-            addStyle(
-                SpanStyle(
-                    color = BisqTheme.colors.primary,
-                    textDecoration = TextDecoration.Underline
-                ), start, end
-            )
         }
-    }
 
     BasicText(
         text = annotatedString,
-        style = BisqTheme.typography.smallRegular.copy(
-            color = BisqTheme.colors.mid_grey20,
-            textAlign = textAlign
-        )
+        style =
+            BisqTheme.typography.smallRegular.copy(
+                color = BisqTheme.colors.mid_grey20,
+                textAlign = textAlign,
+            ),
     )
 
     if (showConfirmDialog) {
@@ -132,7 +142,7 @@ fun NoteText(
                     clipboard.setClipEntry(AnnotatedString(uri ?: linkText).toClipEntry())
                 }
                 showConfirmDialog = false
-            }
+            },
         )
     }
 }

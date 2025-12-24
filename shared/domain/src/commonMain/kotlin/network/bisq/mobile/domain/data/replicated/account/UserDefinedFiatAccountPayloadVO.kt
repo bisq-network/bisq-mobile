@@ -4,9 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserDefinedFiatAccountPayloadVO(
-    val accountData: String
+    val accountData: String,
 ) {
-
     companion object {
         const val MAX_DATA_LENGTH = 1000
     }
@@ -19,11 +18,11 @@ data class UserDefinedFiatAccountPayloadVO(
         require(accountData.isNotBlank()) { "Account data cannot be blank" }
     }
 }
-//data class UserDefinedFiatAccountPayloadVO(
+// data class UserDefinedFiatAccountPayloadVO(
 //    override val id: String,
 //    override val paymentMethodName: String,
 //    val accountData: String
-//) : AccountPayloadVO(id, paymentMethodName) {
+// ) : AccountPayloadVO(id, paymentMethodName) {
 //
 //    companion object {
 //        const val MAX_DATA_LENGTH = 1000
@@ -36,4 +35,4 @@ data class UserDefinedFiatAccountPayloadVO(
 //    override fun verify() {
 //        require(accountData.isNotBlank()) { "Account data cannot be blank" }
 //    }
-//}
+// }

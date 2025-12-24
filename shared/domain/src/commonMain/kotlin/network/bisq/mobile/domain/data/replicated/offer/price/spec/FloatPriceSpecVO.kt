@@ -21,4 +21,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FloatPriceSpec")
-data class FloatPriceSpecVO(@SerialName("percentage") val percentage: Double) : PriceSpecVO
+data class FloatPriceSpecVO(
+    @SerialName("percentage") val percentage: Double,
+) : PriceSpecVO

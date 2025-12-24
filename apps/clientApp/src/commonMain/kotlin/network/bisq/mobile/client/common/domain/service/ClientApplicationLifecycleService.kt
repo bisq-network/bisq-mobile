@@ -36,7 +36,6 @@ class ClientApplicationLifecycleService(
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val connectivityService: ConnectivityService,
 ) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
-
     override suspend fun activateServiceFacades() {
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
         networkServiceFacade.activate()

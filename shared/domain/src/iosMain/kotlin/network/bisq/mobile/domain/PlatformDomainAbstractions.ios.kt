@@ -59,11 +59,12 @@ import platform.posix.memcpy
 import kotlin.experimental.ExperimentalNativeApi
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
-    val formatter = NSDateFormatter().apply {
-        dateStyle = NSDateFormatterMediumStyle
-        timeStyle = NSDateFormatterShortStyle
-        locale = NSLocale.currentLocale
-    }
+    val formatter =
+        NSDateFormatter().apply {
+            dateStyle = NSDateFormatterMediumStyle
+            timeStyle = NSDateFormatterShortStyle
+            locale = NSLocale.currentLocale
+        }
 
     val instant = dateTime.toInstant(TimeZone.currentSystemDefault())
     val nsDate = NSDate(instant.toEpochMilliseconds() / 1000.0)
@@ -72,15 +73,13 @@ actual fun formatDateTime(dateTime: LocalDateTime): String {
 }
 
 @OptIn(BetaInteropApi::class)
-actual fun encodeURIParam(param: String): String {
-    return NSString.create(string = param)
+actual fun encodeURIParam(param: String): String =
+    NSString
+        .create(string = param)
         .stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLPathAllowedCharacterSet)
         ?: param
-}
 
-actual fun getDeviceLanguageCode(): String {
-    return NSLocale.currentLocale.languageCode ?: "en"
-}
+actual fun getDeviceLanguageCode(): String = NSLocale.currentLocale.languageCode ?: "en"
 
 private var globalOnCrash: ((Throwable) -> Unit)? = null
 
@@ -89,23 +88,24 @@ private var globalOnCrash: ((Throwable) -> Unit)? = null
 actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
     // TODO this catches the exceptions but let them go through crashing the app, whether in android it will stop the propagation
     globalOnCrash = onCrash
-    NSSetUncaughtExceptionHandler(staticCFunction { exception: NSException? ->
-        if (exception != null) {
-            println("Uncaught exception: ${exception.name}, reason: ${exception.reason}")
-            println("Stack trace: ${exception.callStackSymbols.joinToString("\n")}")
+    NSSetUncaughtExceptionHandler(
+        staticCFunction { exception: NSException? ->
+            if (exception != null) {
+                println("Uncaught exception: ${exception.name}, reason: ${exception.reason}")
+                println("Stack trace: ${exception.callStackSymbols.joinToString("\n")}")
 
-            // TODO report to some sort non-survaillant crashlytics?
+                // TODO report to some sort non-survaillant crashlytics?
 
-            // Let the UI react
-            val cause = Throwable(exception.reason)
-            val throwable = Throwable(message = exception.name, cause)
-            globalOnCrash?.invoke(throwable)
+                // Let the UI react
+                val cause = Throwable(exception.reason)
+                val throwable = Throwable(message = exception.name, cause)
+                globalOnCrash?.invoke(throwable)
 
-            // needed on iOS
-            dispatch_async(dispatch_get_main_queue()) {
-                println("Performing cleanup after uncaught exception")
+                // needed on iOS
+                dispatch_async(dispatch_get_main_queue()) {
+                    println("Performing cleanup after uncaught exception")
+                }
             }
-        }
 //        setUnhandledExceptionHook { throwable ->
 //            println("Uncaught Kotlin exception: ${throwable.message}")
 //            throwable.printStackTrace()
@@ -116,7 +116,8 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
 //                globalOnCrash?.invoke()
 //            }
 //        }
-    })
+        },
+    )
 }
 
 class IOSUrlLauncher : UrlLauncher {
@@ -139,8 +140,9 @@ actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
 @OptIn(BetaInteropApi::class)
 actual fun loadProperties(fileName: String): Map<String, String> {
     val bundle = NSBundle.mainBundle
-    val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
-        ?: return emptyMap()
+    val path =
+        bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
+            ?: return emptyMap()
 
     // Read file as UTF-8 text and parse Java-style .properties content
     val data = NSData.dataWithContentsOfFile(path) ?: return emptyMap()
@@ -188,22 +190,28 @@ private fun parseProperties(content: String): Map<String, String> {
             if (!escaped) {
                 when (c) {
                     '\\' -> escaped = true
-                    '=', ':' -> if (inKey) {
-                        inKey = false
-                    } else appendTarget(c)
-
-                    ' ', '\t', '\u000c' -> if (inKey) {
-                        // whitespace can separate key and value
-                        // skip consecutive whitespace and set to value
-                        var j = idx + 1
-                        while (j < line.length && (line[j] == ' ' || line[j] == '\t' || line[j] == '\u000c')) j++
-                        if (j < line.length && !inKey) {
-                            // already in value
-                            appendTarget(c)
-                        } else if (inKey) {
+                    '=', ':' ->
+                        if (inKey) {
                             inKey = false
+                        } else {
+                            appendTarget(c)
                         }
-                    } else appendTarget(c)
+
+                    ' ', '\t', '\u000c' ->
+                        if (inKey) {
+                            // whitespace can separate key and value
+                            // skip consecutive whitespace and set to value
+                            var j = idx + 1
+                            while (j < line.length && (line[j] == ' ' || line[j] == '\t' || line[j] == '\u000c')) j++
+                            if (j < line.length && !inKey) {
+                                // already in value
+                                appendTarget(c)
+                            } else if (inKey) {
+                                inKey = false
+                            }
+                        } else {
+                            appendTarget(c)
+                        }
 
                     else -> appendTarget(c)
                 }
@@ -228,7 +236,8 @@ private fun parseProperties(content: String): Map<String, String> {
                                 // idx will be incremented by for-loop, so advance by 4
                                 // but we can't modify idx in Kotlin for-loop; rebuild remainder
                             } else {
-                                appendTarget('u'); appendTarget(hex[0])
+                                appendTarget('u')
+                                appendTarget(hex[0])
                             }
                         } else {
                             appendTarget('u')
@@ -255,11 +264,11 @@ private fun endsWithUnescapedBackslash(s: String): Boolean {
     var count = 0
     var i = s.length - 1
     while (i >= 0 && s[i] == '\\') {
-        count++; i--
+        count++
+        i--
     }
     return count % 2 == 1
 }
-
 
 fun NSDictionary.entriesAsMap(): Map<String, String> {
     val map = mutableMapOf<String, String>()
@@ -273,17 +282,20 @@ fun NSDictionary.entriesAsMap(): Map<String, String> {
 }
 
 @Serializable(with = PlatformImageSerializer::class)
-actual class PlatformImage(val image: UIImage) {
+actual class PlatformImage(
+    val image: UIImage,
+) {
     actual fun serialize(): ByteArray {
         val nsData: NSData = UIImagePNGRepresentation(image)!!
         return nsData.toByteArray()
     }
 
-    companion actual object {
+    actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val nsData = data.toNSData()
-            val image = UIImage(data = nsData)
-                ?: throw IllegalArgumentException("Failed to decode image data")
+            val image =
+                UIImage(data = nsData)
+                    ?: throw IllegalArgumentException("Failed to decode image data")
             return PlatformImage(image)
         }
     }
@@ -311,21 +323,24 @@ fun NSData.toByteArray(): ByteArray {
 }
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-fun ByteArray.toNSData(): NSData {
-    return NSData.create(bytes = this.refTo(0).getPointer(MemScope()), length = this.size.toULong())
-}
+fun ByteArray.toNSData(): NSData = NSData.create(bytes = this.refTo(0).getPointer(MemScope()), length = this.size.toULong())
 
-actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
-    override fun format(value: Double, precision: Int): String {
-        val formatter = NSNumberFormatter().apply {
-            numberStyle = NSNumberFormatterDecimalStyle
-            maximumFractionDigits = precision.toULong()
-            minimumFractionDigits = precision.toULong()
-            locale = defaultLocale
+actual val decimalFormatter: DecimalFormatter =
+    object : DecimalFormatter {
+        override fun format(
+            value: Double,
+            precision: Int,
+        ): String {
+            val formatter =
+                NSNumberFormatter().apply {
+                    numberStyle = NSNumberFormatterDecimalStyle
+                    maximumFractionDigits = precision.toULong()
+                    minimumFractionDigits = precision.toULong()
+                    locale = defaultLocale
+                }
+            return formatter.stringFromNumber(NSNumber(value)) ?: value.toString()
         }
-        return formatter.stringFromNumber(NSNumber(value)) ?: value.toString()
     }
-}
 
 private var defaultLocale: NSLocale = NSLocale.currentLocale
 
@@ -334,26 +349,29 @@ actual fun setDefaultLocale(language: String) {
 }
 
 actual fun getDecimalSeparator(): Char {
-    val formatter = NSNumberFormatter().apply {
-        numberStyle = NSNumberFormatterDecimalStyle
-        locale = defaultLocale
-    }
+    val formatter =
+        NSNumberFormatter().apply {
+            numberStyle = NSNumberFormatterDecimalStyle
+            locale = defaultLocale
+        }
     return formatter.decimalSeparator.first()
 }
 
 actual fun getGroupingSeparator(): Char {
-    val formatter = NSNumberFormatter().apply {
-        numberStyle = NSNumberFormatterDecimalStyle
-        locale = defaultLocale
-    }
+    val formatter =
+        NSNumberFormatter().apply {
+            numberStyle = NSNumberFormatterDecimalStyle
+            locale = defaultLocale
+        }
     return formatter.groupingSeparator.first()
 }
 
 actual fun String.toDoubleOrNullLocaleAware(): Double? {
-    val formatter = NSNumberFormatter().apply {
-        numberStyle = NSNumberFormatterDecimalStyle
-        locale = defaultLocale
-    }
+    val formatter =
+        NSNumberFormatter().apply {
+            numberStyle = NSNumberFormatterDecimalStyle
+            locale = defaultLocale
+        }
     val number = formatter.numberFromString(this)
     return number?.doubleValue?.toDouble()
 }
@@ -366,14 +384,20 @@ actual fun getLocaleCurrencyName(currencyCode: String): String {
 @OptIn(ExperimentalForeignApi::class)
 actual fun Scope.getStorageDir(): String {
     val paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, true)
-    val appSupport = (paths.firstOrNull() as? String)
-        ?: throw IllegalStateException("Could not get application support directory")
-    val url = NSURL.fileURLWithPath(appSupport).URLByAppendingPathComponent("Data")
-        ?: throw IllegalStateException("Could not get Data in support directory")
+    val appSupport =
+        (paths.firstOrNull() as? String)
+            ?: throw IllegalStateException("Could not get application support directory")
+    val url =
+        NSURL.fileURLWithPath(appSupport).URLByAppendingPathComponent("Data")
+            ?: throw IllegalStateException("Could not get Data in support directory")
     memScoped {
-        val success = NSFileManager.defaultManager.createDirectoryAtURL(
-            url, withIntermediateDirectories = true, attributes = null, error = null
-        )
+        val success =
+            NSFileManager.defaultManager.createDirectoryAtURL(
+                url,
+                withIntermediateDirectories = true,
+                attributes = null,
+                error = null,
+            )
         if (!success) throw IllegalStateException("Failed to create application support subdirectory")
     }
     return url.path ?: appSupport

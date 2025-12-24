@@ -12,8 +12,8 @@ import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 class ClientReputationServiceFacade(
     val apiGateway: ReputationApiGateway,
     private val json: Json,
-) : ServiceFacade(), ReputationServiceFacade {
-
+) : ServiceFacade(),
+    ReputationServiceFacade {
     // MutableStateFlow is only used as there is no kmp compatible concurrent map. The ConcurrentMap from ktor is not recommended to be
     // used as its only an internal implementation.
     // reputationByUserProfileId is used only as local cache to avoid frequent API calls.
@@ -38,14 +38,13 @@ class ClientReputationServiceFacade(
         super<ServiceFacade>.deactivate()
     }
 
-    override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
-        return try {
+    override suspend fun getProfileAge(userProfileId: String): Result<Long?> =
+        try {
             apiGateway.getProfileAge(userProfileId)
         } catch (e: Exception) {
             log.e(e) { "Failed to get profile age for userId=$userProfileId" }
             Result.failure(e)
         }
-    }
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {

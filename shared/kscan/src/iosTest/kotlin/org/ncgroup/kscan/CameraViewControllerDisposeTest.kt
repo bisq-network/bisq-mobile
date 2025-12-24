@@ -1,8 +1,8 @@
 package org.ncgroup.kscan
 
-import kotlin.test.Test
 import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVMediaTypeVideo
+import kotlin.test.Test
 
 class CameraViewControllerDisposeTest {
     private fun makeController(device: AVCaptureDevice): CameraViewController =

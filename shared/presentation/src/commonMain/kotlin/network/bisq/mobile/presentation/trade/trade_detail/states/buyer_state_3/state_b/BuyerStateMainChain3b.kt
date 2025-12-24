@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b
 
 import androidx.compose.foundation.layout.Arrangement
@@ -26,8 +28,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.PaymentProofField
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.PaymentProofType
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.TxConfirmationState.CONFIRMED
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.TxConfirmationState.FAILED
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.TxConfirmationState.IDLE
@@ -54,25 +56,25 @@ fun BuyerStateMainChain3b(
 
     val role = if (tradeItemModel.bisqEasyTradeModel.isBuyer) "buyer" else "seller"
     val waitingText =
-        "bisqEasy.tradeState.info.$role.phase3b.balance.prompt".i18n(txId)  // Waiting for blockchain data...
+        "bisqEasy.tradeState.info.$role.phase3b.balance.prompt".i18n(txId) // Waiting for blockchain data...
     val balanceLabel = "bisqEasy.tradeState.info.$role.phase3b.balance".i18n() // Bitcoin payment
     Column {
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_bitcoin_confirmation,
-                isLoading = true
+                isLoading = true,
             )
             // Waiting for blockchain confirmation
-            BisqText.h5Light("bisqEasy.tradeState.info.$role.phase3b.headline.MAIN_CHAIN".i18n())
+            BisqText.H5Light("bisqEasy.tradeState.info.$role.phase3b.headline.MAIN_CHAIN".i18n())
         }
 
         Column {
             BisqGap.V1()
-            BisqText.baseLightGrey(
+            BisqText.BaseLightGrey(
                 // The Bitcoin payment require at least 1 blockchain confirmation to be considered complete.
                 "bisqEasy.tradeState.info.$role.phase3b.info.MAIN_CHAIN".i18n(),
             )
@@ -91,7 +93,8 @@ fun BuyerStateMainChain3b(
 
             when (confirmationState) {
                 IDLE,
-                REQUEST_STARTED -> {
+                REQUEST_STARTED,
+                -> {
                     BisqTextField(
                         label = balanceLabel,
                         placeholder = waitingText,
@@ -103,12 +106,12 @@ fun BuyerStateMainChain3b(
                                 return@BisqTextField explorerRequestError
                             }
                             return@BisqTextField null
-                        }
+                        },
                     )
                 }
 
                 IN_MEMPOOL -> {
-                    //todo
+                    // todo
                     BisqTextField(
                         label = balanceLabel,
                         value = btcBalance,
@@ -120,29 +123,29 @@ fun BuyerStateMainChain3b(
                                 return@BisqTextField explorerRequestError
                             }
                             return@BisqTextField null
-                        }
+                        },
                     )
                 }
 
                 CONFIRMED -> {
-                    //todo
+                    // todo
                     BisqTextField(
                         label = balanceLabel,
                         value = btcBalance,
                         helperText = "bisqEasy.tradeState.info.phase3b.balance.help.confirmed".i18n(), // Transaction is confirmed
-                        //color = BisqTheme.colors.primary,
+                        // color = BisqTheme.colors.primary,
                         disabled = true,
                         validation = {
                             if (explorerRequestError?.isNotEmpty() == true) {
                                 return@BisqTextField explorerRequestError
                             }
                             return@BisqTextField null
-                        }
+                        },
                     )
                 }
 
                 FAILED -> {
-                    //todo
+                    // todo
                     BisqTextField(
                         label = balanceLabel,
                         value = waitingText,
@@ -152,7 +155,7 @@ fun BuyerStateMainChain3b(
                                 return@BisqTextField explorerRequestError
                             }
                             return@BisqTextField null
-                        }
+                        },
                     )
                 }
             }
@@ -163,9 +166,9 @@ fun BuyerStateMainChain3b(
                 textComponent = {
                     val contentColor = LocalContentColor.current
                     AutoResizeText(
-                       text = buttonText,
-                       color = contentColor,
-                       textAlign = TextAlign.Center
+                        text = buttonText,
+                        color = contentColor,
+                        textAlign = TextAlign.Center,
                     )
                 },
                 type = if (skip) BisqButtonType.Grey else BisqButtonType.Default,
@@ -182,7 +185,7 @@ fun BuyerStateMainChain3b(
                 dismissButtonText = "action.close".i18n(),
                 verticalButtonPlacement = true,
                 onConfirm = { presenter.onCompleteTrade() },
-                onDismiss = { presenter.onAmountNotMatchingDialogDismiss() }
+                onDismiss = { presenter.onAmountNotMatchingDialogDismiss() },
             )
         }
     }

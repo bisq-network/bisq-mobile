@@ -3,12 +3,13 @@ package network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class BisqEasyTradeStateEnum(val isFinalState: Boolean = false) {
+enum class BisqEasyTradeStateEnum(
+    val isFinalState: Boolean = false,
+) {
     INIT,
 
     // Take offer
     TAKER_SENT_TAKE_OFFER_REQUEST,
-
 
     // BUYER AS TAKER *****************************/
     // Branch 1: Buyer receives take offer response first
@@ -28,7 +29,6 @@ enum class BisqEasyTradeStateEnum(val isFinalState: Boolean = false) {
     TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
     // *********************************************/
 
-
     // SELLER AS MAKER *****************************/
     // Branch 1: Seller receives take offer request first
     MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
@@ -46,7 +46,6 @@ enum class BisqEasyTradeStateEnum(val isFinalState: Boolean = false) {
     // Unique final converging step (the three states have been completed)
     MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
     // *********************************************/
-
 
     // SELLER AS TAKER *****************************/
     // Branch 1: Seller receives take offer response first
@@ -66,7 +65,6 @@ enum class BisqEasyTradeStateEnum(val isFinalState: Boolean = false) {
     TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
     // *********************************************/
 
-
     // BUYER AS MAKER *****************************/
     // Branch 1: Buyer receives take offer request first
     MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
@@ -84,7 +82,6 @@ enum class BisqEasyTradeStateEnum(val isFinalState: Boolean = false) {
     // Unique final converging step (all three states have been completed)
     MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
     // *********************************************/
-
 
     // Fiat payment
     BUYER_SENT_FIAT_SENT_CONFIRMATION,
@@ -104,5 +101,5 @@ enum class BisqEasyTradeStateEnum(val isFinalState: Boolean = false) {
     PEER_CANCELLED(true),
 
     FAILED(true),
-    FAILED_AT_PEER(true);
+    FAILED_AT_PEER(true),
 }

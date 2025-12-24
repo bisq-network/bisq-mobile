@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,15 +23,13 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferProgressDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferSuccessDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.SnackbarHostState
+import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
-
 
 @Composable
 fun TakeOfferReviewTradeScreen() {
@@ -44,12 +43,15 @@ fun TakeOfferReviewTradeScreen() {
 
     val takeOffer = takeOfferPresenter.takeOfferModel
     var stepIndex = 1
-    if (takeOffer.hasAmountRange)
+    if (takeOffer.hasAmountRange) {
         stepIndex++
-    if (takeOffer.hasMultipleQuoteSidePaymentMethods)
+    }
+    if (takeOffer.hasMultipleQuoteSidePaymentMethods) {
         stepIndex++
-    if (takeOffer.hasMultipleBaseSidePaymentMethods)
+    }
+    if (takeOffer.hasMultipleBaseSidePaymentMethods) {
         stepIndex++
+    }
 
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.review".i18n(),
@@ -63,12 +65,12 @@ fun TakeOfferReviewTradeScreen() {
         shouldBlurBg = showProgressDialog || showSuccessDialog,
         showUserAvatar = false,
         closeAction = true,
-        onConfirmedClose = presenter::onClose
+        onConfirmedClose = presenter::onClose,
     ) {
         BisqGap.V1()
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
         ) {
             InfoBox(
                 label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
@@ -83,7 +85,7 @@ fun TakeOfferReviewTradeScreen() {
                     InfoBoxSats(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = presenter.amountToReceive,
-                        rightAlign = true
+                        rightAlign = true,
                     )
                 } else {
                     InfoRowContainer {
@@ -94,7 +96,7 @@ fun TakeOfferReviewTradeScreen() {
                         InfoBoxSats(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = presenter.amountToReceive,
-                            rightAlign = true
+                            rightAlign = true,
                         )
                     }
                 }
@@ -107,7 +109,7 @@ fun TakeOfferReviewTradeScreen() {
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = presenter.amountToReceive,
-                        rightAlign = true
+                        rightAlign = true,
                     )
                 } else {
                     InfoRowContainer {
@@ -118,7 +120,7 @@ fun TakeOfferReviewTradeScreen() {
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = presenter.amountToReceive,
-                            rightAlign = true
+                            rightAlign = true,
                         )
                     }
                 }
@@ -128,7 +130,7 @@ fun TakeOfferReviewTradeScreen() {
         BisqHDivider()
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
         ) {
             InfoBox(
                 label = "bisqEasy.tradeWizard.review.priceDescription.taker".i18n(),
@@ -136,15 +138,15 @@ fun TakeOfferReviewTradeScreen() {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(
                             verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            BisqText.h6Light(presenter.price)
+                            BisqText.H6Light(presenter.price)
                             BisqGap.HQuarter()
-                            BisqText.baseLightGrey(presenter.marketCodes)
+                            BisqText.BaseLightGrey(presenter.marketCodes)
                         }
-                        BisqText.smallLightGrey(presenter.priceDetails)
+                        BisqText.SmallLightGrey(presenter.priceDetails)
                     }
-                }
+                },
             )
 
             InfoBox(
@@ -162,13 +164,13 @@ fun TakeOfferReviewTradeScreen() {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(
                             verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            BisqText.h6Light(presenter.fee)
+                            BisqText.H6Light(presenter.fee)
                         }
-                        BisqText.smallLightGrey(presenter.feeDetails)
+                        BisqText.SmallLightGrey(presenter.feeDetails)
                     }
-                }
+                },
             )
         }
     }
@@ -179,7 +181,7 @@ fun TakeOfferReviewTradeScreen() {
 
     if (showSuccessDialog) {
         TakeOfferSuccessDialog(
-            onShowTrades = { presenter.onGoToOpenTrades() }
+            onShowTrades = { presenter.onGoToOpenTrades() },
         )
     }
 }
@@ -219,12 +221,12 @@ fun TakeOfferReviewContent(
         shouldBlurBg = showProgressDialog || showSuccessDialog,
         showUserAvatar = false,
         closeAction = true,
-        onConfirmedClose = onClose
+        onConfirmedClose = onClose,
     ) {
         BisqGap.V1()
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
         ) {
             InfoBox(
                 label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
@@ -239,7 +241,7 @@ fun TakeOfferReviewContent(
                     InfoBoxSats(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = amountToReceive,
-                        rightAlign = true
+                        rightAlign = true,
                     )
                 } else {
                     InfoRowContainer {
@@ -250,7 +252,7 @@ fun TakeOfferReviewContent(
                         InfoBoxSats(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = amountToReceive,
-                            rightAlign = true
+                            rightAlign = true,
                         )
                     }
                 }
@@ -263,7 +265,7 @@ fun TakeOfferReviewContent(
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = amountToReceive,
-                        rightAlign = true
+                        rightAlign = true,
                     )
                 } else {
                     InfoRowContainer {
@@ -274,7 +276,7 @@ fun TakeOfferReviewContent(
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = amountToReceive,
-                            rightAlign = true
+                            rightAlign = true,
                         )
                     }
                 }
@@ -284,7 +286,7 @@ fun TakeOfferReviewContent(
         BisqHDivider()
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
         ) {
             InfoBox(
                 label = "bisqEasy.tradeWizard.review.priceDescription.taker".i18n(),
@@ -292,15 +294,15 @@ fun TakeOfferReviewContent(
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(
                             verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            BisqText.h6Light(price)
+                            BisqText.H6Light(price)
                             BisqGap.HQuarter()
-                            BisqText.baseLightGrey(marketCodes)
+                            BisqText.BaseLightGrey(marketCodes)
                         }
-                        BisqText.smallLightGrey(priceDetails)
+                        BisqText.SmallLightGrey(priceDetails)
                     }
-                }
+                },
             )
 
             InfoBox(
@@ -318,13 +320,13 @@ fun TakeOfferReviewContent(
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(
                             verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            BisqText.h6Light(fee)
+                            BisqText.H6Light(fee)
                         }
-                        BisqText.smallLightGrey(feeDetails)
+                        BisqText.SmallLightGrey(feeDetails)
                     }
-                }
+                },
             )
         }
     }
@@ -333,10 +335,9 @@ fun TakeOfferReviewContent(
         TakeOfferProgressDialog()
     }
 
-
     if (showSuccessDialog) {
         TakeOfferSuccessDialog(
-            onShowTrades = onGoToOpenTrades
+            onShowTrades = onGoToOpenTrades,
         )
     }
 }
@@ -348,7 +349,7 @@ fun TakeOfferReviewContent(
 
 @Preview
 @Composable
-fun TakeOfferReviewPreview() {
+private fun TakeOfferReviewPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             TakeOfferReviewContent(

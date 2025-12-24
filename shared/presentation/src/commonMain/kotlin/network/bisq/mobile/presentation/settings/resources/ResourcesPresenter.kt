@@ -10,15 +10,15 @@ import network.bisq.mobile.presentation.main.MainPresenter
 open class ResourcesPresenter(
     mainPresenter: MainPresenter,
     versionProvider: VersionProvider,
-    deviceInfoProvider: DeviceInfoProvider
+    deviceInfoProvider: DeviceInfoProvider,
 ) : BasePresenter(mainPresenter) {
-
-    private val _uiState: MutableStateFlow<ResourcesUiState> = MutableStateFlow(
-        ResourcesUiState(
-            versionInfo = versionProvider.getVersionInfo(isDemo, isIOS()),
-            deviceInfo = deviceInfoProvider.getDeviceInfo(),
+    private val _uiState: MutableStateFlow<ResourcesUiState> =
+        MutableStateFlow(
+            ResourcesUiState(
+                versionInfo = versionProvider.getVersionInfo(isDemo, isIOS()),
+                deviceInfo = deviceInfoProvider.getDeviceInfo(),
+            ),
         )
-    )
     val uiState = _uiState.asStateFlow()
 
     fun onAction(action: ResourcesUiAction) {

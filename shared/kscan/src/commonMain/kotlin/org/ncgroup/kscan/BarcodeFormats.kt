@@ -2,6 +2,34 @@
 
 package org.ncgroup.kscan
 
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_ALL_FORMATS
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_AZTEC
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_CODABAR
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_CODE_128
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_CODE_39
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_CODE_93
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_DATA_MATRIX
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_EAN_13
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_EAN_8
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_ITF
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_PDF417
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_QR_CODE
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_UPC_A
+import org.ncgroup.kscan.BarcodeFormats.FORMAT_UPC_E
+import org.ncgroup.kscan.BarcodeFormats.TYPE_CALENDAR_EVENT
+import org.ncgroup.kscan.BarcodeFormats.TYPE_CONTACT_INFO
+import org.ncgroup.kscan.BarcodeFormats.TYPE_DRIVER_LICENSE
+import org.ncgroup.kscan.BarcodeFormats.TYPE_EMAIL
+import org.ncgroup.kscan.BarcodeFormats.TYPE_GEO
+import org.ncgroup.kscan.BarcodeFormats.TYPE_ISBN
+import org.ncgroup.kscan.BarcodeFormats.TYPE_PHONE
+import org.ncgroup.kscan.BarcodeFormats.TYPE_PRODUCT
+import org.ncgroup.kscan.BarcodeFormats.TYPE_SMS
+import org.ncgroup.kscan.BarcodeFormats.TYPE_TEXT
+import org.ncgroup.kscan.BarcodeFormats.TYPE_UNKNOWN
+import org.ncgroup.kscan.BarcodeFormats.TYPE_URL
+import org.ncgroup.kscan.BarcodeFormats.TYPE_WIFI
+
 /**
  * An object that provides access to various barcode formats.
  *
@@ -69,7 +97,6 @@ expect object BarcodeFormats {
     val TYPE_CALENDAR_EVENT: BarcodeFormat
     val TYPE_DRIVER_LICENSE: BarcodeFormat
 }
-
 
 enum class BarcodeFormat {
     FORMAT_CODE_128,

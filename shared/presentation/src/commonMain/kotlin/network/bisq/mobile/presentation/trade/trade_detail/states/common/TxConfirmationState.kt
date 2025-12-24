@@ -5,5 +5,5 @@ enum class TxConfirmationState {
     REQUEST_STARTED,
     IN_MEMPOOL,
     CONFIRMED,
-    FAILED
+    FAILED,
 }

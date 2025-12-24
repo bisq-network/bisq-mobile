@@ -30,7 +30,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-
 @Composable
 fun TradeChatRow(
     selectedTrade: TradeItemPresentationModel?,
@@ -39,45 +38,47 @@ fun TradeChatRow(
     newMsgCount: Int = 0,
     enabled: Boolean = true,
 ) {
-    val text = remember(lastChatMsg, selectedTrade) {
-        if (lastChatMsg == null) {
-            ""
-        } else {
-            when (lastChatMsg.chatMessageType) {
-                ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE -> lastChatMsg.decodedText
-                ChatMessageTypeEnum.LEAVE -> "bisqEasy.openTrades.chat.peerLeft.headline".i18n(
-                    lastChatMsg.senderUserName
-                )
+    val text =
+        remember(lastChatMsg, selectedTrade) {
+            if (lastChatMsg == null) {
+                ""
+            } else {
+                when (lastChatMsg.chatMessageType) {
+                    ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE -> lastChatMsg.decodedText
+                    ChatMessageTypeEnum.LEAVE ->
+                        "bisqEasy.openTrades.chat.peerLeft.headline".i18n(
+                            lastChatMsg.senderUserName,
+                        )
 
-                else ->
-                    if (lastChatMsg.text != null) {
-                        val sender =
-                            if (lastChatMsg.senderUserProfile.id == selectedTrade?.myUserProfile?.id) {
-                                "mobile.tradeChat.sender.me".i18n()
-                            } else {
-                                lastChatMsg.senderUserProfile.nickName
-                            }
-                        sender + ": " + lastChatMsg.text
-                    } else {
-                        ""
-                    }
+                    else ->
+                        if (lastChatMsg.text != null) {
+                            val sender =
+                                if (lastChatMsg.senderUserProfile.id == selectedTrade?.myUserProfile?.id) {
+                                    "mobile.tradeChat.sender.me".i18n()
+                                } else {
+                                    lastChatMsg.senderUserProfile.nickName
+                                }
+                            sender + ": " + lastChatMsg.text
+                        } else {
+                            ""
+                        }
+                }
             }
         }
-    }
 
     Box(
-        Modifier.background(
-            color = BisqTheme.colors.dark_grey40,
-            shape = RoundedCornerShape(BisqUIConstants.BorderRadius)
-        ).clickable(enabled = enabled, onClick = onOpenChat)
-    )
-    {
+        Modifier
+            .background(
+                color = BisqTheme.colors.dark_grey40,
+                shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
+            ).clickable(enabled = enabled, onClick = onOpenChat),
+    ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(start = BisqUIConstants.ScreenPadding, end = 2.dp, top = 2.dp, bottom = 2.dp),
         ) {
-            BisqText.styledText(
+            BisqText.StyledText(
                 text = text,
                 color = BisqTheme.colors.mid_grey20,
                 overflow = TextOverflow.Ellipsis,
@@ -95,13 +96,15 @@ fun TradeChatRow(
                             yOffset = (-4).dp,
                         )
                     }
-                }) {
+                },
+            ) {
                 ChatIcon(
-                    modifier = Modifier.size(34.dp).border(
-                        1.dp,
-                        BisqTheme.colors.primary,
-                        RoundedCornerShape(BisqUIConstants.BorderRadius),
-                    )
+                    modifier =
+                        Modifier.size(34.dp).border(
+                            1.dp,
+                            BisqTheme.colors.primary,
+                            RoundedCornerShape(BisqUIConstants.BorderRadius),
+                        ),
                 )
             }
         }
@@ -119,11 +122,12 @@ private fun TradeChatRowPreview() {
         )
     }
 }
+
 @Preview
 @Composable
 private fun TradeChatRowWithBadgePreview() {
     BisqTheme.Preview {
-        Column (Modifier.padding(14.dp)) {
+        Column(Modifier.padding(14.dp)) {
             TradeChatRow(
                 selectedTrade = null,
                 onOpenChat = {},

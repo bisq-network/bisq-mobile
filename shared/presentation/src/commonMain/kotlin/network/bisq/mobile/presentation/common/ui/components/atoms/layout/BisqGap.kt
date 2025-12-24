@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 object BisqGap {
-
     @Composable
     fun VQuarter() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingQuarter))
@@ -111,4 +110,3 @@ object BisqGap {
         Spacer(modifier = Modifier.weight(1f))
     }
 }
-

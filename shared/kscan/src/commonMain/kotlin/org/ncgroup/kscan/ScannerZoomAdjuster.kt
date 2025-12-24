@@ -32,10 +32,10 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 internal fun ScannerZoomAdjuster(
-    modifier: Modifier = Modifier,
     zoomRatio: Float,
     zoomRatioOnChange: (Float) -> Unit,
     maxZoomRatio: Float,
+    modifier: Modifier = Modifier,
     zoomStep: Float = 0.5f,
     containerColor: Color = Color(0xFF291544),
     contentColor: Color = Color.White,

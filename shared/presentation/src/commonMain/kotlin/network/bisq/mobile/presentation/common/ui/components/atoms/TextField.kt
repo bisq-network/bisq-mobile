@@ -56,7 +56,6 @@ enum class BisqTextFieldType {
     Transparent,
 }
 
-
 /**
  * TODO:
  * 1. Should have a BisqNumberField with customizations like numberWithTwoDecimals
@@ -65,6 +64,8 @@ enum class BisqTextFieldType {
  */
 @Composable
 fun BisqTextField(
+    modifier: Modifier = Modifier,
+    rightSuffixModifier: Modifier = Modifier.width(50.dp),
     label: String = "",
     value: String = "",
     onValueChange: ((String, Boolean) -> Unit)? = null,
@@ -72,7 +73,6 @@ fun BisqTextField(
     labelRightSuffix: (@Composable () -> Unit)? = null,
     leftSuffix: (@Composable () -> Unit)? = null,
     rightSuffix: (@Composable () -> Unit)? = null,
-    rightSuffixModifier: Modifier = Modifier.width(50.dp),
     rightSuffixContentAlignment: Alignment = Alignment.CenterEnd,
     isSearch: Boolean = false,
     helperText: String = "",
@@ -94,12 +94,12 @@ fun BisqTextField(
     valueSuffix: String? = null,
     validation: ((String) -> String?)? = null,
     numberWithTwoDecimals: Boolean = false,
-    modifier: Modifier = Modifier,
-    textStyle: TextStyle = TextStyle(
-        color = color,
-        fontSize = 18.sp,
-        textDecoration = TextDecoration.None
-    ),
+    textStyle: TextStyle =
+        TextStyle(
+            color = color,
+            fontSize = 18.sp,
+            textDecoration = TextDecoration.None,
+        ),
     textFieldAlignment: Alignment = Alignment.TopStart,
     enableAnimation: Boolean = LocalAnimationsEnabled.current,
     onFocus: () -> Unit = {},
@@ -124,34 +124,39 @@ fun BisqTextField(
     val animatedLineProgress by animateFloatAsState(
         targetValue = if (isFocused && enableAnimation) 1f else 0f,
         animationSpec = tween(durationMillis = 300),
-        label = "BottomBorderAnimation"
+        label = "BottomBorderAnimation",
     )
 
-    val imeAction = when {
-        isSearch -> ImeAction.Search
-        isTextArea -> ImeAction.Next
-        else -> ImeAction.Done
-    }
+    val imeAction =
+        when {
+            isSearch -> ImeAction.Search
+            isTextArea -> ImeAction.Next
+            else -> ImeAction.Done
+        }
 
-    val finalTextValue = buildString {
-        valuePrefix?.let {
-            if (!value.startsWith(valuePrefix))
-                append(it)
+    val finalTextValue =
+        buildString {
+            valuePrefix?.let {
+                if (!value.startsWith(valuePrefix)) {
+                    append(it)
+                }
+            }
+            append(value)
+            valueSuffix?.let {
+                if (!value.endsWith(valueSuffix)) {
+                    append(it)
+                }
+            }
         }
-        append(value)
-        valueSuffix?.let {
-            if (!value.endsWith(valueSuffix))
-                append(it)
-        }
-    }
 
     val dangerColor = BisqTheme.colors.danger
     val grey2Color = BisqTheme.colors.mid_grey20
-    val finalIndicatorColor = when {
-        !validationError.isNullOrEmpty() && hasInteracted && enableAnimation -> dangerColor
-        !enableAnimation && isFocused -> indicatorColor
-        else -> grey2Color
-    }
+    val finalIndicatorColor =
+        when {
+            !validationError.isNullOrEmpty() && hasInteracted && enableAnimation -> dangerColor
+            !enableAnimation && isFocused -> indicatorColor
+            else -> grey2Color
+        }
 
     val secondaryHoverColor = BisqTheme.colors.secondaryHover
     val secondaryDisabledColor = BisqTheme.colors.secondaryDisabled
@@ -159,10 +164,12 @@ fun BisqTextField(
         derivedStateOf {
             when {
                 disabled -> secondaryDisabledColor
-                isFocused -> if (type == BisqTextFieldType.Default)
-                    secondaryHoverColor
-                else
-                    backgroundColor
+                isFocused ->
+                    if (type == BisqTextFieldType.Default) {
+                        secondaryHoverColor
+                    } else {
+                        backgroundColor
+                    }
 
                 else -> backgroundColor
             }
@@ -207,42 +214,45 @@ fun BisqTextField(
     }
 
     val decimalSeparator = remember { getDecimalSeparator().toString() }
-    val decimalLoosePattern = remember(decimalSeparator) {
-        Regex("^[-]?\\d*(${Regex.escape(decimalSeparator)}\\d{0,})?$")
-    }
+    val decimalLoosePattern =
+        remember(decimalSeparator) {
+            Regex("^[-]?\\d*(${Regex.escape(decimalSeparator)}\\d{0,})?$")
+        }
     val focusManager = LocalFocusManager.current
 
     BasicTextField(
         value = finalTextValue,
         visualTransformation = visualTransformation,
         onValueChange = { newTextValue ->
-            val processedValue = processText(
-                newValue = newTextValue,
-                oldValue = finalTextValue,
-                valuePrefix = valuePrefix,
-                valueSuffix = valueSuffix,
-                maxLength = maxLength,
-                numberWithTwoDecimals = numberWithTwoDecimals,
-                decimalSeparator = decimalSeparator,
-                decimalLoosePattern = decimalLoosePattern
-            )
+            val processedValue =
+                processText(
+                    newValue = newTextValue,
+                    oldValue = finalTextValue,
+                    valuePrefix = valuePrefix,
+                    valueSuffix = valueSuffix,
+                    maxLength = maxLength,
+                    numberWithTwoDecimals = numberWithTwoDecimals,
+                    decimalSeparator = decimalSeparator,
+                    decimalLoosePattern = decimalLoosePattern,
+                )
             if (processedValue == value) return@BasicTextField
             validationError = validation?.invoke(processedValue)
             onValueChange?.invoke(processedValue, validationError.isNullOrEmpty())
             hasInteracted = true
         },
-        modifier = modifier
-            .fillMaxWidth()
-            .onFocusChanged { focusState ->
-                isFocused = focusState.isFocused
-                if (focusState.isFocused) {
-                    onFocus()
-                }
-                if (!focusState.isFocused) {
-                    if (value.isNotEmpty()) hasInteracted = true
-                    validationError = validation?.invoke(value)
-                }
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    isFocused = focusState.isFocused
+                    if (focusState.isFocused) {
+                        onFocus()
+                    }
+                    if (!focusState.isFocused) {
+                        if (value.isNotEmpty()) hasInteracted = true
+                        validationError = validation?.invoke(value)
+                    }
+                },
         enabled = !disabled,
         readOnly = readOnly,
         textStyle = finalTextStyle,
@@ -260,12 +270,12 @@ fun BisqTextField(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BisqText.baseLight(
+                        BisqText.BaseLight(
                             text = label,
                             color = finalLabelColor,
-                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
                         )
                         labelRightSuffix?.invoke()
                     }
@@ -274,37 +284,36 @@ fun BisqTextField(
 
                 // The main input area with background and suffixes
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = BisqUIConstants.BorderRadius,
-                                topEnd = BisqUIConstants.BorderRadius,
-                            )
-                        )
-                        .background(finalBackgroundColor)
-                        .drawBehind {
-                            if (!isSearch && type == BisqTextFieldType.Default) {
-                                val strokeWidth = 4.dp.toPx()
-                                val y = size.height
-                                drawLine(
-                                    color = finalIndicatorColor,
-                                    start = Offset(0f, y),
-                                    end = Offset(size.width, y),
-                                    strokeWidth = strokeWidth
-                                )
-                                if (animatedLineProgress > 0f) {
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = BisqUIConstants.BorderRadius,
+                                    topEnd = BisqUIConstants.BorderRadius,
+                                ),
+                            ).background(finalBackgroundColor)
+                            .drawBehind {
+                                if (!isSearch && type == BisqTextFieldType.Default) {
+                                    val strokeWidth = 4.dp.toPx()
+                                    val y = size.height
                                     drawLine(
-                                        color = indicatorColor,
+                                        color = finalIndicatorColor,
                                         start = Offset(0f, y),
-                                        end = Offset(size.width * animatedLineProgress, y),
-                                        strokeWidth = strokeWidth
+                                        end = Offset(size.width, y),
+                                        strokeWidth = strokeWidth,
                                     )
+                                    if (animatedLineProgress > 0f) {
+                                        drawLine(
+                                            color = indicatorColor,
+                                            start = Offset(0f, y),
+                                            end = Offset(size.width * animatedLineProgress, y),
+                                            strokeWidth = strokeWidth,
+                                        )
+                                    }
                                 }
-                            }
-                        }
-                        .padding(paddingValues),
-                    verticalAlignment = Alignment.CenterVertically
+                            }.padding(paddingValues),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     leftSuffix?.invoke()
                     if (leftSuffix != null) Spacer(Modifier.width(10.dp))
@@ -314,7 +323,7 @@ fun BisqTextField(
                         contentAlignment = textFieldAlignment,
                     ) {
                         if (value.isEmpty() && valuePrefix.isNullOrEmpty() && valueSuffix.isNullOrEmpty()) {
-                            BisqText.largeLightGrey(placeholder)
+                            BisqText.LargeLightGrey(placeholder)
                         }
                         innerTextField()
                     }
@@ -324,16 +333,17 @@ fun BisqTextField(
                     }
                     if (showPaste && !disabled) {
                         PasteIconButton(onPaste = { pasted ->
-                            val processed = processText(
-                                newValue = pasted,
-                                oldValue = value,
-                                valuePrefix = valuePrefix,
-                                valueSuffix = valueSuffix,
-                                maxLength = maxLength,
-                                numberWithTwoDecimals = numberWithTwoDecimals,
-                                decimalSeparator = decimalSeparator,
-                                decimalLoosePattern = decimalLoosePattern
-                            )
+                            val processed =
+                                processText(
+                                    newValue = pasted,
+                                    oldValue = value,
+                                    valuePrefix = valuePrefix,
+                                    valueSuffix = valueSuffix,
+                                    maxLength = maxLength,
+                                    numberWithTwoDecimals = numberWithTwoDecimals,
+                                    decimalSeparator = decimalSeparator,
+                                    decimalLoosePattern = decimalLoosePattern,
+                                )
                             validationError = validation?.invoke(processed)
                             onValueChange?.invoke(processed, validationError.isNullOrEmpty())
                             hasInteracted = true
@@ -359,14 +369,15 @@ fun BisqTextField(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BisqText.smallLight(
+                        BisqText.SmallLight(
                             text = error,
-                            modifier = Modifier
-                                .padding(start = 4.dp, top = 1.dp, bottom = 4.dp)
-                                .weight(1f),
-                            color = BisqTheme.colors.danger
+                            modifier =
+                                Modifier
+                                    .padding(start = 4.dp, top = 1.dp, bottom = 4.dp)
+                                    .weight(1f),
+                            color = BisqTheme.colors.danger,
                         )
                         CharacterCounter(showCharacterCounter, value.length, maxLength)
                     }
@@ -375,13 +386,14 @@ fun BisqTextField(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BisqText.smallLightGrey(
+                        BisqText.SmallLightGrey(
                             text = helperText,
-                            modifier = Modifier
-                                .padding(start = 4.dp, top = 1.dp, bottom = 4.dp)
-                                .weight(1f),
+                            modifier =
+                                Modifier
+                                    .padding(start = 4.dp, top = 1.dp, bottom = 4.dp)
+                                    .weight(1f),
                         )
                         CharacterCounter(showCharacterCounter, value.length, maxLength)
                     }
@@ -389,13 +401,13 @@ fun BisqTextField(
                     BisqGap.VQuarter()
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
                     ) {
                         CharacterCounter(showCharacterCounter, value.length, maxLength)
                     }
                 }
             }
-        }
+        },
     )
 }
 
@@ -430,13 +442,14 @@ fun processText(
         val integerPart = parts[0]
         val decimalPart = if (parts.size == 2) parts[1] else ""
 
-        val trimmedValue = when {
-            parts.size == 2 && decimalPart.length > 2 -> {
-                "$integerPart$separator${decimalPart.take(2)}"
-            }
+        val trimmedValue =
+            when {
+                parts.size == 2 && decimalPart.length > 2 -> {
+                    "$integerPart$separator${decimalPart.take(2)}"
+                }
 
-            else -> cleanValue // let the user keep typing normally
-        }
+                else -> cleanValue // let the user keep typing normally
+            }
         return trimmedValue
     } else {
         return cleanValue
@@ -444,9 +457,13 @@ fun processText(
 }
 
 @Composable
-private fun CharacterCounter(showCharacterCounter: Boolean, valueLength: Int, maxLength: Int) {
+private fun CharacterCounter(
+    showCharacterCounter: Boolean,
+    valueLength: Int,
+    maxLength: Int,
+) {
     if (showCharacterCounter && maxLength > 0) {
-        BisqText.smallLightGrey(
+        BisqText.SmallLightGrey(
             text = "$valueLength / $maxLength",
             modifier = Modifier.padding(end = 4.dp, top = 1.dp, bottom = 4.dp),
         )
@@ -455,7 +472,7 @@ private fun CharacterCounter(showCharacterCounter: Boolean, valueLength: Int, ma
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_Empty() {
+private fun BisqTextFieldPreview_EmptyPreview() {
     var text by remember { mutableStateOf("") }
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
@@ -471,14 +488,14 @@ private fun BisqTextFieldPreview_Empty() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_Search() {
+private fun BisqTextFieldPreview_SearchPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
                 label = "Label",
                 placeholder = "Search text",
                 onValueChange = { _, _ -> },
-                isSearch = true
+                isSearch = true,
             )
         }
     }
@@ -486,7 +503,7 @@ private fun BisqTextFieldPreview_Search() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_TextArea() {
+private fun BisqTextFieldPreview_TextAreaPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -495,22 +512,21 @@ private fun BisqTextFieldPreview_TextArea() {
                 onValueChange = { _, _ -> },
                 isTextArea = true,
                 helperText = "Maximum 4 lines",
-                maxLines = 4
+                maxLines = 4,
             )
         }
     }
 }
 
-
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithValue() {
+private fun BisqTextFieldPreview_WithValuePreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
                 label = "Label",
                 value = "Some value entered by the user",
-                onValueChange = { _, _ -> }
+                onValueChange = { _, _ -> },
             )
         }
     }
@@ -518,14 +534,14 @@ private fun BisqTextFieldPreview_WithValue() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithHelperText() {
+private fun BisqTextFieldPreview_WithHelperTextPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
                 label = "Label",
                 value = "A valid value",
                 onValueChange = { _, _ -> },
-                helperText = "This is some helpful text."
+                helperText = "This is some helpful text.",
             )
         }
     }
@@ -533,7 +549,7 @@ private fun BisqTextFieldPreview_WithHelperText() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithError() {
+private fun BisqTextFieldPreview_WithErrorPreview() {
     BisqTheme.Preview {
         // To preview the error state, we must simulate interaction.
         // The error text will not show in a static preview unless hasInteracted=true.
@@ -543,7 +559,7 @@ private fun BisqTextFieldPreview_WithError() {
                 label = "Field with Validation",
                 value = "invalid",
                 onValueChange = { _, _ -> },
-                validation = { "This field has an error." }
+                validation = { "This field has an error." },
             )
         }
     }
@@ -551,14 +567,14 @@ private fun BisqTextFieldPreview_WithError() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_Disabled() {
+private fun BisqTextFieldPreview_DisabledPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
                 label = "Disabled Field",
                 value = "You can't edit this",
                 onValueChange = { _, _ -> },
-                disabled = true
+                disabled = true,
             )
         }
     }
@@ -566,7 +582,7 @@ private fun BisqTextFieldPreview_Disabled() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithSuffixes() {
+private fun BisqTextFieldPreview_WithSuffixesPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -574,17 +590,17 @@ private fun BisqTextFieldPreview_WithSuffixes() {
                 value = "1,250.75",
                 onValueChange = { _, _ -> },
                 leftSuffix = {
-                    BisqText.baseRegular(
+                    BisqText.BaseRegular(
                         text = "₿",
-                        color = BisqTheme.colors.light_grey20
+                        color = BisqTheme.colors.light_grey20,
                     )
                 },
                 rightSuffix = {
-                    BisqText.baseRegular(
+                    BisqText.BaseRegular(
                         text = "BTC",
-                        color = BisqTheme.colors.light_grey20
+                        color = BisqTheme.colors.light_grey20,
                     )
-                }
+                },
             )
         }
     }
@@ -592,14 +608,14 @@ private fun BisqTextFieldPreview_WithSuffixes() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_LabelWithSuffix() {
+private fun BisqTextFieldPreview_LabelWithSuffixPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
                 label = "Amount",
                 value = "100.00",
                 onValueChange = { _, _ -> },
-                labelRightSuffix = { BisqText.smallLightGrey(text = "Optional") }
+                labelRightSuffix = { BisqText.SmallLightGrey(text = "Optional") },
             )
         }
     }
@@ -607,7 +623,7 @@ private fun BisqTextFieldPreview_LabelWithSuffix() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithCharacterCounter() {
+private fun BisqTextFieldPreview_WithCharacterCounterPreview() {
     var text by remember { mutableStateOf("Hello World") }
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
@@ -618,7 +634,7 @@ private fun BisqTextFieldPreview_WithCharacterCounter() {
                 placeholder = "Enter your message...",
                 maxLength = 100,
                 showCharacterCounter = true,
-                helperText = "Enter a long message, if you like. Enter a long message, if you like."
+                helperText = "Enter a long message, if you like. Enter a long message, if you like.",
             )
         }
     }
@@ -626,7 +642,7 @@ private fun BisqTextFieldPreview_WithCharacterCounter() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithCharacterCounterAndError() {
+private fun BisqTextFieldPreview_WithCharacterCounterAndErrorPreview() {
     var text by remember { mutableStateOf("Hello World") }
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {

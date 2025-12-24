@@ -28,5 +28,5 @@ data class TxVO(
     val size: Int,
     val weight: Int,
     val fee: Int,
-    val status: StatusVO
+    val status: StatusVO,
 )

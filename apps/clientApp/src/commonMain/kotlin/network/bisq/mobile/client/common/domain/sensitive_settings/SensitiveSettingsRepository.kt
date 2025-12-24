@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 interface SensitiveSettingsRepository {
-
     val data: Flow<SensitiveSettings>
 
     suspend fun fetch() = data.first()

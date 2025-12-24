@@ -9,8 +9,9 @@ import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
 
-class SettingsRepositoryMock : SettingsRepository, Logging {
-
+class SettingsRepositoryMock :
+    SettingsRepository,
+    Logging {
     private val _data = MutableStateFlow(Settings())
     override val data: StateFlow<Settings> get() = _data.asStateFlow()
 
@@ -47,7 +48,6 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
     override suspend fun update(transform: suspend (Settings) -> Settings) {
         _data.value = transform(_data.value)
     }
-
 
     override suspend fun clear() {
         _data.update {

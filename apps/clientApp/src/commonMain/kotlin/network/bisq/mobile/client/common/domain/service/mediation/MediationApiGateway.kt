@@ -4,11 +4,7 @@ import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApi
 import network.bisq.mobile.domain.utils.Logging
 
 class MediationApiGateway(
-    private val webSocketApiClient: WebSocketApiClient
+    private val webSocketApiClient: WebSocketApiClient,
 ) : Logging {
-
-    suspend fun reportToMediator(tradeId: String): Result<Unit> {
-        return webSocketApiClient.post("trades/$tradeId/mediation", "")
-    }
+    suspend fun reportToMediator(tradeId: String): Result<Unit> = webSocketApiClient.post("trades/$tradeId/mediation", "")
 }
-

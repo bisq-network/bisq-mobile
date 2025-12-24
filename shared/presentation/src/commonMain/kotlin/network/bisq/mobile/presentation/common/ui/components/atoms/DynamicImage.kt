@@ -12,11 +12,11 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 @Composable
 fun DynamicImage(
     path: String,
+    modifier: Modifier = Modifier,
     fallbackPath: String? = null,
     contentDescription: String = "",
-    modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
-    onImageLoadError: (String) -> Unit = {}
+    onImageLoadError: (String) -> Unit = {},
 ) {
     // If image is not found we get an exception. If used inside AsyncImage we cannot use try/catch
     // and error let app crash
@@ -41,6 +41,6 @@ fun DynamicImage(
         onError = {
             onImageLoadError.invoke(path)
         },
-        contentScale = contentScale
+        contentScale = contentScale,
     )
 }

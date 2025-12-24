@@ -9,8 +9,8 @@ import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 
 class ClientAccountsServiceFacade(
     private val apiGateway: AccountsApiGateway,
-) : ServiceFacade(), AccountsServiceFacade {
-
+) : ServiceFacade(),
+    AccountsServiceFacade {
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
     override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = _accounts.asStateFlow()
 
@@ -48,7 +48,10 @@ class ClientAccountsServiceFacade(
         setSelectedAccount(account)
     }
 
-    override suspend fun removeAccount(account: UserDefinedFiatAccountVO, updateSelectedAccount: Boolean) {
+    override suspend fun removeAccount(
+        account: UserDefinedFiatAccountVO,
+        updateSelectedAccount: Boolean,
+    ) {
         apiGateway.deleteAccount(account.accountName)
         getAccounts()
         if (updateSelectedAccount) {
@@ -72,5 +75,4 @@ class ClientAccountsServiceFacade(
         apiGateway.setSelectedAccount(account)
         _selectedAccount.value = account
     }
-
 }

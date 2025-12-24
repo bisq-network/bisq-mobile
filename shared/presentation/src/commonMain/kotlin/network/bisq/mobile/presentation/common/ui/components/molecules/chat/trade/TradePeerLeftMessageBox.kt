@@ -21,34 +21,38 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-fun TradePeerLeftMessageBox(message: BisqEasyOpenTradeMessageModel, modifier: Modifier = Modifier) {
+fun TradePeerLeftMessageBox(
+    message: BisqEasyOpenTradeMessageModel,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = modifier
-            .background(BisqTheme.colors.dark_grey30)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
+        modifier =
+            modifier
+                .background(BisqTheme.colors.dark_grey30)
+                .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
     ) {
         Column(
-            modifier = Modifier.padding(
-                top = BisqUIConstants.ScreenPadding,
-                bottom = BisqUIConstants.ScreenPadding2X,
-                start = BisqUIConstants.ScreenPadding,
-                end = BisqUIConstants.ScreenPadding
-            ),
+            modifier =
+                Modifier.padding(
+                    top = BisqUIConstants.ScreenPadding,
+                    bottom = BisqUIConstants.ScreenPadding2X,
+                    start = BisqUIConstants.ScreenPadding,
+                    end = BisqUIConstants.ScreenPadding,
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
                 modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPaddingHalf),
-            )
-            {
+            ) {
                 LeaveChatIcon()
                 val peerUserName = message.senderUserName
-                BisqText.smallLight("bisqEasy.openTrades.chat.peerLeft.headline".i18n(peerUserName), color = BisqTheme.colors.primary)
+                BisqText.SmallLight("bisqEasy.openTrades.chat.peerLeft.headline".i18n(peerUserName), color = BisqTheme.colors.primary)
             }
-            BisqText.smallLight("bisqEasy.openTrades.chat.peerLeft.subHeadline".i18n())
-            BisqText.xsmallLightGrey(message.dateString)
+            BisqText.SmallLight("bisqEasy.openTrades.chat.peerLeft.subHeadline".i18n())
+            BisqText.XSmallLightGrey(message.dateString)
         }
     }
 }
@@ -60,28 +64,30 @@ private fun TradePeerLeftMessageBoxPreview() {
         val peerUserProfile = createMockUserProfile("Alice")
         val myUserProfile = createMockUserProfile("Bob")
 
-        val dto = BisqEasyOpenTradeMessageDto(
-            tradeId = "trade123",
-            messageId = "msg123",
-            channelId = "channel123",
-            senderUserProfile = peerUserProfile,
-            receiverUserProfileId = myUserProfile.networkId.pubKey.id,
-            receiverNetworkId = myUserProfile.networkId,
-            text = null,
-            citation = null,
-            date = 1234567890000L,
-            mediator = null,
-            chatMessageType = ChatMessageTypeEnum.LEAVE,
-            bisqEasyOffer = null,
-            chatMessageReactions = emptySet(),
-            citationAuthorUserProfile = null
-        )
+        val dto =
+            BisqEasyOpenTradeMessageDto(
+                tradeId = "trade123",
+                messageId = "msg123",
+                channelId = "channel123",
+                senderUserProfile = peerUserProfile,
+                receiverUserProfileId = myUserProfile.networkId.pubKey.id,
+                receiverNetworkId = myUserProfile.networkId,
+                text = null,
+                citation = null,
+                date = 1234567890000L,
+                mediator = null,
+                chatMessageType = ChatMessageTypeEnum.LEAVE,
+                bisqEasyOffer = null,
+                chatMessageReactions = emptySet(),
+                citationAuthorUserProfile = null,
+            )
 
-        val message = BisqEasyOpenTradeMessageModel(
-            dto,
-            myUserProfile,
-            emptyList()
-        )
+        val message =
+            BisqEasyOpenTradeMessageModel(
+                dto,
+                myUserProfile,
+                emptyList(),
+            )
 
         TradePeerLeftMessageBox(message = message)
     }

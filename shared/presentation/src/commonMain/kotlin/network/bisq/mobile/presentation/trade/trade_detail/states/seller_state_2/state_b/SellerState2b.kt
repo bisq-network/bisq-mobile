@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_b
 
 import androidx.compose.foundation.layout.Column
@@ -25,10 +27,10 @@ fun SellerState2b(
         BisqGap.V1()
         BisqGap.VHalf()
         // Check if you have received {0} with reason for payment ''{1}''
-        BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2b.headline".i18n(quoteAmountWithCode, shortId))
+        BisqText.H5Light("bisqEasy.tradeState.info.seller.phase2b.headline".i18n(quoteAmountWithCode, shortId))
 
         BisqGap.V1()
-        BisqText.baseLightGrey(
+        BisqText.BaseLightGrey(
             // Visit your bank account or payment provider app to confirm receipt of the buyer's payment.
             "bisqEasy.tradeState.info.seller.phase2b.info".i18n(quoteAmountWithCode),
         )

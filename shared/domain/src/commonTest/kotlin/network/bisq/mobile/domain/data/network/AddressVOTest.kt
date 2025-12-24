@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class AddressVOTest {
-
     @Test
     fun `from should parse valid URL with schema`() {
         val result = AddressVO.from("http://example.com:8080")
@@ -60,7 +59,6 @@ class AddressVOTest {
         val result = AddressVO.from("not-a-url")
         assertNull(result)
     }
-
 
     @Test
     fun `from should return null for negative port`() {

@@ -54,7 +54,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.min
 
-
 /** UI model for a toggleable method icon (payment or settlement). */
 data class MethodIconState(
     val id: String,
@@ -96,26 +95,28 @@ fun OfferbookFilterController(
         Surface(
             color = headerBg,
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) {
-                    onExpandedChange?.invoke(true) ?: run { internalExpanded = true }
-                }
-                .semantics { contentDescription = "offerbook_filters_header" }
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                    ) {
+                        onExpandedChange?.invoke(true) ?: run { internalExpanded = true }
+                    }.semantics { contentDescription = "offerbook_filters_header" },
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf),
             ) {
                 // Dynamic collapsed header: icons hug the ↔ centers by default, reserve space for chevron
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 32.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(end = 32.dp),
                 ) {
                     CollapsedHeaderBar(
                         payment = state.payment,
@@ -123,9 +124,10 @@ fun OfferbookFilterController(
                     )
                 }
                 ExpandAllIcon(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(20.dp)
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterEnd)
+                            .size(20.dp),
                 )
             }
         }
@@ -136,153 +138,175 @@ fun OfferbookFilterController(
                 onExpandedChange?.invoke(false) ?: run { internalExpanded = false }
             }) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(all = BisqUIConstants.ScreenPadding),
-                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(all = BisqUIConstants.ScreenPadding),
+                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BisqText.h4Light(
+                        BisqText.H4Light(
                             text = "mobile.offerbook.filters.title".i18n(),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         val clearEnabled = state.hasActiveFilters
                         val clearAlpha = if (clearEnabled) 1f else 0.4f
-                        BisqText.baseRegular(
+                        BisqText.BaseRegular(
                             text = "bisqEasy.offerbook.offerList.table.filters.paymentMethods.clearFilters".i18n(),
                             underline = true,
-                            modifier = Modifier
-                                .padding(start = 12.dp)
-                                .alpha(clearAlpha)
-                                .clickable(enabled = clearEnabled) { onClearAll() }
-)
+                            modifier =
+                                Modifier
+                                    .padding(start = 12.dp)
+                                    .alpha(clearAlpha)
+                                    .clickable(enabled = clearEnabled) { onClearAll() },
+                        )
                     }
                     var search by rememberSaveable { mutableStateOf("") }
                     BisqSearchField(
                         value = search,
-                        onValueChanged = { text, _ -> search = text },
-                        placeholder = "action.search".i18n()
+                        onValueChange = { text, _ -> search = text },
+                        placeholder = "action.search".i18n(),
                     )
 
-                    val filteredPayment = if (search.isBlank()) state.payment else state.payment.filter {
-                        it.label.contains(search, ignoreCase = true) || it.id.contains(search, ignoreCase = true)
-                    }
-                    val filteredSettlement = if (search.isBlank()) state.settlement else state.settlement.filter {
-                        it.label.contains(search, ignoreCase = true) || it.id.contains(search, ignoreCase = true)
-                    }
+                    val filteredPayment =
+                        if (search.isBlank()) {
+                            state.payment
+                        } else {
+                            state.payment.filter {
+                                it.label.contains(search, ignoreCase = true) || it.id.contains(search, ignoreCase = true)
+                            }
+                        }
+                    val filteredSettlement =
+                        if (search.isBlank()) {
+                            state.settlement
+                        } else {
+                            state.settlement.filter {
+                                it.label.contains(search, ignoreCase = true) || it.id.contains(search, ignoreCase = true)
+                            }
+                        }
 
-                    val selectedPaymentIds = state.payment.filter { it.selected }.map { it.id }.toSet()
+                    val selectedPaymentIds =
+                        state.payment
+                            .filter { it.selected }
+                            .map { it.id }
+                            .toSet()
                     val visiblePaymentIds = filteredPayment.map { it.id }.toSet()
                     val canSelectAllPayment = visiblePaymentIds.any { it !in selectedPaymentIds }
                     val canSelectNonePayment = visiblePaymentIds.any { it in selectedPaymentIds }
 
-                    val selectedSettlementIds = state.settlement.filter { it.selected }.map { it.id }.toSet()
+                    val selectedSettlementIds =
+                        state.settlement
+                            .filter { it.selected }
+                            .map { it.id }
+                            .toSet()
                     val visibleSettlementIds = filteredSettlement.map { it.id }.toSet()
                     val canSelectAllSettlement = visibleSettlementIds.any { it !in selectedSettlementIds }
                     val canSelectNoneSettlement = visibleSettlementIds.any { it in selectedSettlementIds }
 
                     // Payments
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.paymentMethod".i18n())
+                        BisqText.BaseLight("bisqEasy.offerbook.offerList.table.columns.paymentMethod".i18n())
                         Spacer(Modifier.weight(1f))
                         val alphaAllP = if (canSelectAllPayment) 1f else 0.4f
-                        BisqText.baseRegular(
+                        BisqText.BaseRegular(
                             text = "mobile.offerbook.filters.selectAll".i18n(),
                             underline = true,
-                            modifier = Modifier
-                                .padding(start = 12.dp)
-                                .alpha(alphaAllP)
-                                .clickable(enabled = canSelectAllPayment) {
-                                    val newSet = selectedPaymentIds + visiblePaymentIds
-                                    onSetPaymentSelection(newSet)
-                                }
+                            modifier =
+                                Modifier
+                                    .padding(start = 12.dp)
+                                    .alpha(alphaAllP)
+                                    .clickable(enabled = canSelectAllPayment) {
+                                        val newSet = selectedPaymentIds + visiblePaymentIds
+                                        onSetPaymentSelection(newSet)
+                                    },
                         )
                         Spacer(Modifier.width(12.dp))
                         val alphaNoneP = if (canSelectNonePayment) 1f else 0.4f
-                        BisqText.baseRegular(
+                        BisqText.BaseRegular(
                             text = "mobile.offerbook.filters.selectNone".i18n(),
                             underline = true,
-                            modifier = Modifier
-                                .alpha(alphaNoneP)
-                                .clickable(enabled = canSelectNonePayment) {
-                                    val newSet = selectedPaymentIds - visiblePaymentIds
-                                    onSetPaymentSelection(newSet)
-                                }
+                            modifier =
+                                Modifier
+                                    .alpha(alphaNoneP)
+                                    .clickable(enabled = canSelectNonePayment) {
+                                        val newSet = selectedPaymentIds - visiblePaymentIds
+                                        onSetPaymentSelection(newSet)
+                                    },
                         )
                     }
                     FilterIconsRow(items = filteredPayment, onToggle = onTogglePayment, isPaymentRow = true)
 
                     // Settlement
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.settlementMethod".i18n())
+                        BisqText.BaseLight("bisqEasy.offerbook.offerList.table.columns.settlementMethod".i18n())
                         Spacer(Modifier.weight(1f))
                         val alphaAllS = if (canSelectAllSettlement) 1f else 0.4f
-                        BisqText.baseRegular(
+                        BisqText.BaseRegular(
                             text = "mobile.offerbook.filters.selectAll".i18n(),
                             underline = true,
-                            modifier = Modifier
-                                .padding(start = 12.dp)
-                                .alpha(alphaAllS)
-                                .clickable(enabled = canSelectAllSettlement) {
-                                    val newSet = selectedSettlementIds + visibleSettlementIds
-                                    onSetSettlementSelection(newSet)
-                                }
+                            modifier =
+                                Modifier
+                                    .padding(start = 12.dp)
+                                    .alpha(alphaAllS)
+                                    .clickable(enabled = canSelectAllSettlement) {
+                                        val newSet = selectedSettlementIds + visibleSettlementIds
+                                        onSetSettlementSelection(newSet)
+                                    },
                         )
                         Spacer(Modifier.width(12.dp))
                         val alphaNoneS = if (canSelectNoneSettlement) 1f else 0.4f
-                        BisqText.baseRegular(
+                        BisqText.BaseRegular(
                             text = "mobile.offerbook.filters.selectNone".i18n(),
                             underline = true,
-                            modifier = Modifier
-                                .alpha(alphaNoneS)
-                                .clickable(enabled = canSelectNoneSettlement) {
-                                    val newSet = selectedSettlementIds - visibleSettlementIds
-                                    onSetSettlementSelection(newSet)
-                                }
+                            modifier =
+                                Modifier
+                                    .alpha(alphaNoneS)
+                                    .clickable(enabled = canSelectNoneSettlement) {
+                                        val newSet = selectedSettlementIds - visibleSettlementIds
+                                        onSetSettlementSelection(newSet)
+                                    },
                         )
                     }
                     FilterIconsRow(items = filteredSettlement, onToggle = onToggleSettlement, isPaymentRow = false)
 
-
                     // Only my offers
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BisqText.baseLight(
+                        BisqText.BaseLight(
                             "mobile.offerbook.filters.onlyMyOffers".i18n(),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable(
-                                    enabled = true,
-                                    onClick = { onOnlyMyOffersChange(!state.onlyMyOffers) },
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                )
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .clickable(
+                                        enabled = true,
+                                        onClick = { onOnlyMyOffersChange(!state.onlyMyOffers) },
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ),
                         )
                         Checkbox(
                             checked = state.onlyMyOffers,
                             onCheckedChange = onOnlyMyOffersChange,
-                            colors = CheckboxColors(
-                                uncheckedBoxColor = BisqTheme.colors.secondary,
-                                uncheckedBorderColor = BisqTheme.colors.mid_grey20,
-                                uncheckedCheckmarkColor = BisqTheme.colors.secondary,
-
-                                checkedBoxColor = BisqTheme.colors.secondary,
-                                checkedBorderColor = BisqTheme.colors.primaryDim,
-                                checkedCheckmarkColor = BisqTheme.colors.primary,
-
-                                disabledBorderColor = BisqTheme.colors.backgroundColor,
-                                disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
-                                disabledIndeterminateBorderColor = BisqTheme.colors.backgroundColor,
-
-                                disabledCheckedBoxColor = BisqTheme.colors.secondary,
-                                disabledUncheckedBoxColor = BisqTheme.colors.secondary,
-                                disabledIndeterminateBoxColor = BisqTheme.colors.secondary,
-                            )
+                            colors =
+                                CheckboxColors(
+                                    uncheckedBoxColor = BisqTheme.colors.secondary,
+                                    uncheckedBorderColor = BisqTheme.colors.mid_grey20,
+                                    uncheckedCheckmarkColor = BisqTheme.colors.secondary,
+                                    checkedBoxColor = BisqTheme.colors.secondary,
+                                    checkedBorderColor = BisqTheme.colors.primaryDim,
+                                    checkedCheckmarkColor = BisqTheme.colors.primary,
+                                    disabledBorderColor = BisqTheme.colors.backgroundColor,
+                                    disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
+                                    disabledIndeterminateBorderColor = BisqTheme.colors.backgroundColor,
+                                    disabledCheckedBoxColor = BisqTheme.colors.secondary,
+                                    disabledUncheckedBoxColor = BisqTheme.colors.secondary,
+                                    disabledIndeterminateBoxColor = BisqTheme.colors.secondary,
+                                ),
                         )
                     }
 
@@ -310,17 +334,20 @@ private fun FilterIconsRow(
     Box(modifier = rowModifier) {
         if (visibleItems.isEmpty()) {
             // Stable empty state: no layout jump, subtle hint
-            BisqText.baseLight(
-                text = if (isPaymentRow)
-                    "mobile.offerbook.filters.noPaymentMatches".i18n()
-                else
-                    "mobile.offerbook.filters.noSettlementMatches".i18n(),
+            BisqText.BaseLight(
+                text =
+                    if (isPaymentRow) {
+                        "mobile.offerbook.filters.noPaymentMatches".i18n()
+                    } else {
+                        "mobile.offerbook.filters.noSettlementMatches".i18n()
+                    },
                 color = BisqTheme.colors.mid_grey20,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .semantics {
-                        contentDescription = if (isPaymentRow) "no_payment_matches" else "no_settlement_matches"
-                    }
+                modifier =
+                    Modifier
+                        .align(Alignment.Center)
+                        .semantics {
+                            contentDescription = if (isPaymentRow) "no_payment_matches" else "no_settlement_matches"
+                        },
             )
         } else {
             val listState = rememberLazyListState()
@@ -339,7 +366,7 @@ private fun FilterIconsRow(
                 state = listState,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().height(rowHeight)
+                modifier = Modifier.fillMaxWidth().height(rowHeight),
             ) {
                 items(visibleItems, key = { it.id }) { item ->
                     if (compact) {
@@ -355,28 +382,32 @@ private fun FilterIconsRow(
             val fadeWidth = 12.dp
             if (canScrollBack) {
                 Box(
-                    modifier = Modifier
-                        .height(rowHeight)
-                        .width(fadeWidth)
-                        .align(Alignment.CenterStart)
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(BisqTheme.colors.dark_grey50, Color.Transparent)
-                            )
-                        )
+                    modifier =
+                        Modifier
+                            .height(rowHeight)
+                            .width(fadeWidth)
+                            .align(Alignment.CenterStart)
+                            .background(
+                                brush =
+                                    Brush.horizontalGradient(
+                                        colors = listOf(BisqTheme.colors.dark_grey50, Color.Transparent),
+                                    ),
+                            ),
                 )
             }
             if (canScrollForward) {
                 Box(
-                    modifier = Modifier
-                        .height(rowHeight)
-                        .width(fadeWidth)
-                        .align(Alignment.CenterEnd)
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Color.Transparent, BisqTheme.colors.dark_grey50)
-                            )
-                        )
+                    modifier =
+                        Modifier
+                            .height(rowHeight)
+                            .width(fadeWidth)
+                            .align(Alignment.CenterEnd)
+                            .background(
+                                brush =
+                                    Brush.horizontalGradient(
+                                        colors = listOf(Color.Transparent, BisqTheme.colors.dark_grey50),
+                                    ),
+                            ),
                 )
             }
         }
@@ -402,25 +433,25 @@ private fun CollapsedHeaderBar(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(spacing),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clipToBounds()
+                modifier = Modifier.clipToBounds(),
             ) {
                 paymentSelected.forEach { item ->
                     FilterIcon(item = item, size = iconSize, compact = true, onToggle = {}, isPayment = true)
                 }
             }
             // Center arrow
-            BisqText.baseLight("\u2194", singleLine = true)
+            BisqText.BaseLight("\u2194", singleLine = true)
             // Right icons (selected settlement, cap at 2 for compact header)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(spacing),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clipToBounds()
+                modifier = Modifier.clipToBounds(),
             ) {
                 settlementSelected.take(2).forEach { item ->
                     FilterIcon(item = item, size = iconSize, compact = true, onToggle = {}, isPayment = false)
                 }
             }
-        }
+        },
     ) { measurables, constraints ->
         val width = constraints.maxWidth
 
@@ -444,12 +475,13 @@ private fun CollapsedHeaderBar(
         val minArrowX = leftFullWidth + gapPx
         val maxArrowX = width - rightFullWidth - gapPx - arrowPlaceable.width
         // Avoid empty range crashes when content overflows available width
-        arrowX = if (minArrowX <= maxArrowX) {
-            arrowX.coerceIn(minArrowX, maxArrowX)
-        } else {
-            // Prioritize fitting the (small) right side fully; left will be clipped
-            maxArrowX.coerceAtLeast(0)
-        }
+        arrowX =
+            if (minArrowX <= maxArrowX) {
+                arrowX.coerceIn(minArrowX, maxArrowX)
+            } else {
+                // Prioritize fitting the (small) right side fully; left will be clipped
+                maxArrowX.coerceAtLeast(0)
+            }
 
         // Now constrain left/right to the space they actually have
         val leftMax = (arrowX - gapPx).coerceAtLeast(0)
@@ -488,14 +520,16 @@ private fun FilterIcon(
 ) {
     val alpha = if (item.selected) 1f else 0.35f
 
-    var boxModifier = Modifier
-        .size(size)
-        .semantics { contentDescription = "filter_icon_${item.id}" }
+    var boxModifier =
+        Modifier
+            .size(size)
+            .semantics { contentDescription = "filter_icon_${item.id}" }
     if (!compact) {
-        boxModifier = boxModifier.clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-        ) { onToggle(item.id) }
+        boxModifier =
+            boxModifier.clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            ) { onToggle(item.id) }
     }
 
     Box(modifier = boxModifier, contentAlignment = Alignment.Center) {
@@ -511,8 +545,6 @@ private fun FilterIcon(
     }
 }
 
-
-
 @Composable
 private fun MethodChip(
     item: MethodIconState,
@@ -520,35 +552,36 @@ private fun MethodChip(
     onToggle: (String) -> Unit,
     height: Dp,
 ) {
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(50)
+    val shape =
+        androidx.compose.foundation.shape
+            .RoundedCornerShape(50)
     val containerColor = if (item.selected) BisqTheme.colors.secondary else BisqTheme.colors.mid_grey10
     val borderColor = if (item.selected) BisqTheme.colors.primary else Color.Transparent
 
-    val chipModifier = Modifier
-        .heightIn(min = height)
-        .then(
-            Modifier.border(
-                BorderStroke(1.dp, borderColor),
-                shape
-            )
-        )
-        .background(containerColor, shape)
-        .clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-        ) { onToggle(item.id) }
-        .semantics {
-            contentDescription = item.label
-            selected = item.selected
-        }
-        .padding(horizontal = 10.dp)
+    val chipModifier =
+        Modifier
+            .heightIn(min = height)
+            .then(
+                Modifier.border(
+                    BorderStroke(1.dp, borderColor),
+                    shape,
+                ),
+            ).background(containerColor, shape)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            ) { onToggle(item.id) }
+            .semantics {
+                contentDescription = item.label
+                selected = item.selected
+            }.padding(horizontal = 10.dp)
 
     val iconSize = if (height >= 28.dp) 16.dp else 14.dp
 
     Row(
         modifier = chipModifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         PaymentMethodIcon(
             methodId = item.id,
@@ -560,7 +593,7 @@ private fun MethodChip(
             iconPathOverride = item.iconPath,
         )
 
-        BisqText.baseLight(text = item.label, singleLine = true)
+        BisqText.BaseLight(text = item.label, singleLine = true)
     }
 }
 
@@ -568,32 +601,39 @@ private fun MethodChip(
 // Previews with mocked data
 // ----------------------
 
-private fun mockState(allSelected: Boolean = true, partial: Boolean = false): OfferbookFilterUiState {
-    val payments = listOf("SEPA", "REVOLUT", "WISE", "CASH_APP").mapIndexed { idx, id ->
-        MethodIconState(
-            id = id,
-            label = id,
-            iconPath = paymentIconPath(id),
-            selected = when {
-                allSelected -> true
-                partial -> idx % 2 == 0
+private fun mockState(
+    allSelected: Boolean = true,
+    partial: Boolean = false,
+): OfferbookFilterUiState {
+    val payments =
+        listOf("SEPA", "REVOLUT", "WISE", "CASH_APP").mapIndexed { idx, id ->
+            MethodIconState(
+                id = id,
+                label = id,
+                iconPath = paymentIconPath(id),
+                selected =
+                    when {
+                        allSelected -> true
+                        partial -> idx % 2 == 0
 
-                else -> false
-            }
-        )
-    }
-    val settlements = listOf("BTC", "LIGHTNING").mapIndexed { idx, id ->
-        MethodIconState(
-            id = id,
-            label = id,
-            iconPath = settlementIconPath(id),
-            selected = when {
-                allSelected -> true
-                partial -> idx % 2 == 0
-                else -> false
-            }
-        )
-    }
+                        else -> false
+                    },
+            )
+        }
+    val settlements =
+        listOf("BTC", "LIGHTNING").mapIndexed { idx, id ->
+            MethodIconState(
+                id = id,
+                label = id,
+                iconPath = settlementIconPath(id),
+                selected =
+                    when {
+                        allSelected -> true
+                        partial -> idx % 2 == 0
+                        else -> false
+                    },
+            )
+        }
     val hasActive = payments.any { !it.selected } || settlements.any { !it.selected }
     return OfferbookFilterUiState(
         payment = payments,
@@ -605,15 +645,11 @@ private fun mockState(allSelected: Boolean = true, partial: Boolean = false): Of
 
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_AllSelected() {
+private fun Preview_OfferbookFilterController_AllSelectedPreview() {
     val ui = mockState(allSelected = true)
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {
             OfferbookFilterController(
-
-
-
-
                 state = ui,
                 onTogglePayment = {},
                 onToggleSettlement = {},
@@ -628,7 +664,7 @@ private fun Preview_OfferbookFilterController_AllSelected() {
 
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_PartialFilters() {
+private fun Preview_OfferbookFilterController_PartialFiltersPreview() {
     val ui = mockState(allSelected = false, partial = true)
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {
@@ -645,38 +681,50 @@ private fun Preview_OfferbookFilterController_PartialFilters() {
     }
 }
 
-
-
-
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_ManyPayments() {
-    val payments = listOf(
-        "SEPA", "SEPA_INSTANT", "SWIFT", "PIX", "BIZUM", "UPI", "ZELLE",
-        "CASH_APP", "WISE", "REVOLUT", "ACH_TRANSFER", "INTERAC_E_TRANSFER", "F2F"
-    )
+private fun Preview_OfferbookFilterController_ManyPaymentsPreview() {
+    val payments =
+        listOf(
+            "SEPA",
+            "SEPA_INSTANT",
+            "SWIFT",
+            "PIX",
+            "BIZUM",
+            "UPI",
+            "ZELLE",
+            "CASH_APP",
+            "WISE",
+            "REVOLUT",
+            "ACH_TRANSFER",
+            "INTERAC_E_TRANSFER",
+            "F2F",
+        )
     val settlements = listOf("BTC", "LIGHTNING")
 
-    val ui = OfferbookFilterUiState(
-        payment = payments.mapIndexed { idx, id ->
-            MethodIconState(
-                id = id,
-                label = id,
-                iconPath = paymentIconPath(id),
-                selected = idx % 2 == 0
-            )
-        },
-        settlement = settlements.mapIndexed { idx, id ->
-            MethodIconState(
-                id = id,
-                label = id,
-                iconPath = settlementIconPath(id),
-                selected = idx % 2 == 0
-            )
-        },
-        onlyMyOffers = false,
-        hasActiveFilters = true,
-    )
+    val ui =
+        OfferbookFilterUiState(
+            payment =
+                payments.mapIndexed { idx, id ->
+                    MethodIconState(
+                        id = id,
+                        label = id,
+                        iconPath = paymentIconPath(id),
+                        selected = idx % 2 == 0,
+                    )
+                },
+            settlement =
+                settlements.mapIndexed { idx, id ->
+                    MethodIconState(
+                        id = id,
+                        label = id,
+                        iconPath = settlementIconPath(id),
+                        selected = idx % 2 == 0,
+                    )
+                },
+            onlyMyOffers = false,
+            hasActiveFilters = true,
+        )
 
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {
@@ -695,7 +743,7 @@ private fun Preview_OfferbookFilterController_ManyPayments() {
 
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_Expanded() {
+private fun Preview_OfferbookFilterController_ExpandedPreview() {
     val ui = mockState(allSelected = false, partial = true)
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {
@@ -707,7 +755,7 @@ private fun Preview_OfferbookFilterController_Expanded() {
                 onClearAll = {},
                 onSetPaymentSelection = {},
                 onSetSettlementSelection = {},
-                initialExpanded = true
+                initialExpanded = true,
             )
         }
     }

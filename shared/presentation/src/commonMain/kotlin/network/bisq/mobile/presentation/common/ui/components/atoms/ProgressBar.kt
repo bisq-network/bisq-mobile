@@ -14,16 +14,15 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 @Composable
 fun BisqProgressBar(
     progress: Float,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 100.dp)
-        .padding(bottom = 20.dp)
-        .height(2.dp)
+    modifier: Modifier =
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 100.dp)
+            .padding(bottom = 20.dp)
+            .height(2.dp),
 ) {
-    
-
     LinearProgressIndicator(
-        progress = {progress},
+        progress = { progress },
         modifier = modifier,
         trackColor = BisqTheme.colors.mid_grey20,
         color = BisqTheme.colors.primary,
@@ -33,8 +32,8 @@ fun BisqProgressBar(
                 drawScope = this,
                 stopSize = 0.dp,
                 color = BisqTheme.colors.mid_grey20,
-                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap
+                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
             )
-        }
+        },
     )
 }

@@ -1,10 +1,22 @@
+// TODO: remove and fix the issue
+@file:Suppress("ktlint:compose:lambda-param-in-effect")
+
 package network.bisq.mobile.presentation.common.ui.components.molecules.inputfield
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -23,13 +35,13 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 @Composable
 fun FiatInputField(
     text: String,
-    onValueChanged: (String) -> Unit = {},
-    enabled: Boolean = true,
     currency: String,
+    onValueChange: (String) -> Unit = {},
+    enabled: Boolean = true,
     paddingValues: PaddingValues = PaddingValues(all = 0.dp),
     textAlign: TextAlign = TextAlign.End,
     validation: ((String) -> String?)? = null,
-    smallFont: Boolean = false
+    smallFont: Boolean = false,
 ) {
     var validationError: String? by remember { mutableStateOf(null) }
     val maxLength = 8
@@ -43,47 +55,52 @@ fun FiatInputField(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(paddingValues)
-            .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
-            .background(color = BisqTheme.colors.dark_grey40)
-            .border(
-                1.dp,
-                if (validationError == null) BisqTheme.colors.transparent else BisqTheme.colors.danger,
-                RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf)
-            )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(paddingValues)
+                .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
+                .background(color = BisqTheme.colors.dark_grey40)
+                .border(
+                    1.dp,
+                    if (validationError == null) BisqTheme.colors.transparent else BisqTheme.colors.danger,
+                    RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf),
+                ),
     ) {
-        val fontSize = if (smallFont) {
-            if (text.length < 6)
-                24.sp
-            else if (text.length < 8)
-                20.sp
-            else
-                16.sp
-        } else {
-            32.sp
-        }
+        val fontSize =
+            if (smallFont) {
+                if (text.length < 6) {
+                    24.sp
+                } else if (text.length < 8) {
+                    20.sp
+                } else {
+                    16.sp
+                }
+            } else {
+                32.sp
+            }
         BisqTextField(
             value = text,
             onValueChange = { newValue, isValid ->
-                onValueChanged(newValue)
+                onValueChange(newValue)
             },
             keyboardType = KeyboardType.Number,
             rightSuffix = {
-                if (smallFont)
-                    BisqText.h6Regular(currency, modifier = Modifier.offset(y = (-2).dp))
-                else
-                    BisqText.h5Regular(currency, modifier = Modifier.offset(y = (-2).dp))
+                if (smallFont) {
+                    BisqText.H6Regular(currency, modifier = Modifier.offset(y = (-2).dp))
+                } else {
+                    BisqText.H5Regular(currency, modifier = Modifier.offset(y = (-2).dp))
+                }
             },
             indicatorColor = BisqTheme.colors.transparent,
-            textStyle = TextStyle(
-                color = Color.White,
-                fontSize = fontSize,
-                textAlign = textAlign,
-                fontWeight = FontWeight.Light,
-                textDecoration = TextDecoration.None
-            ),
+            textStyle =
+                TextStyle(
+                    color = Color.White,
+                    fontSize = fontSize,
+                    textAlign = textAlign,
+                    fontWeight = FontWeight.Light,
+                    textDecoration = TextDecoration.None,
+                ),
             validation = {
                 if (validation != null) {
                     validationError = validation(it)

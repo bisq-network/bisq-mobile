@@ -10,7 +10,6 @@ import network.bisq.mobile.presentation.main.MainActivity
  * Bisq Android Node Main Activity
  */
 class NodeMainActivity : MainActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install splash screen before super.onCreate to prevent UI blocking
         installSplashScreen()
@@ -21,7 +20,7 @@ class NodeMainActivity : MainActivity() {
         // tested with better results than manifest flag
         window.setFlags(
             WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
         )
         setContent {
             NodeApp()

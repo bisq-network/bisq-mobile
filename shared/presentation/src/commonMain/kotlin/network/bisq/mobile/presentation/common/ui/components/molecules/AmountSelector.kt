@@ -9,8 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.domain.getDecimalSeparator
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AmountSlider
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
@@ -24,15 +24,15 @@ fun BisqAmountSelector(
     formattedMinAmount: String,
     formattedMaxAmount: String,
     sliderPosition: Float,
-    maxSliderValue: Float? = null,
-    leftMarkerSliderValue: Float? = null,
-    rightMarkerSliderValue: Float? = null,
     formattedFiatAmount: String,
     formattedBtcAmount: String,
     onSliderValueChange: (sliderValue: Float) -> Unit,
     onTextValueChange: (String) -> Unit,
+    maxSliderValue: Float? = null,
+    leftMarkerSliderValue: Float? = null,
+    rightMarkerSliderValue: Float? = null,
     validateTextField: ((String) -> String?)? = null,
-    onSliderValueChangeFinished: (() -> Unit)? = null,
+    onSliderValueChangeFinish: (() -> Unit)? = null,
 ) {
     val decimalSeparator = getDecimalSeparator()
     val formattedFiatAmountValueInt = formattedFiatAmount.substringBefore(decimalSeparator)
@@ -40,19 +40,18 @@ fun BisqAmountSelector(
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-
         FiatInputField(
             text = formattedFiatAmountValueInt,
-            onValueChanged = { onTextValueChange.invoke(it) },
+            onValueChange = { onTextValueChange.invoke(it) },
             currency = quoteCurrencyCode,
             validation = {
                 if (validateTextField != null) {
                     return@FiatInputField validateTextField(it)
                 }
                 return@FiatInputField null
-            }
+            },
         )
 
         BtcSatsText(formattedBtcAmount)
@@ -66,7 +65,7 @@ fun BisqAmountSelector(
                 leftMarker = leftMarkerSliderValue,
                 rightMarker = rightMarkerSliderValue,
                 onValueChange = { onSliderValueChange(it) },
-                onValueChangeFinished = onSliderValueChangeFinished
+                onValueChangeFinished = onSliderValueChangeFinish,
             )
 
             BisqGap.V1()
@@ -74,10 +73,10 @@ fun BisqAmountSelector(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
             ) {
-                BisqText.smallRegularGrey("mobile.min".i18n() + " $formattedMinAmount")
-                BisqText.smallRegularGrey("mobile.max".i18n() + " $formattedMaxAmount")
+                BisqText.SmallRegularGrey("mobile.min".i18n() + " $formattedMinAmount")
+                BisqText.SmallRegularGrey("mobile.max".i18n() + " $formattedMaxAmount")
             }
         }
     }

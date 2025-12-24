@@ -19,7 +19,7 @@ enum class InfoBoxValueType {
 
 enum class InfoBoxStyle {
     Style1, // Label on top, value below
-    Style2  // Value on top, label below
+    Style2, // Value on top, label below
 }
 
 @Composable
@@ -32,42 +32,45 @@ fun InfoBox(
     valueType: InfoBoxValueType = InfoBoxValueType.BoldValue,
     style: InfoBoxStyle = InfoBoxStyle.Style1,
 ) {
+    val valueWidget: @Composable () -> Unit =
+        if (value != null) {
+            // todo just a quick fix for min-max values to allow to display them without breaking layout
+            // val adjustedValueType = if (value.length > 14) InfoBoxValueType.SmallValue else valueType
+            // buddha: Even with `SmallValue` it breaks for currencies like 'Vietnamese Dong'. So I made ...
+            //    ... them (Amount to Pay, Amount to Receive) take 2 rows in CreateOfferReviewScreen
+            {
+                when (valueType) {
+                    InfoBoxValueType.BoldValue ->
+                        if (style == InfoBoxStyle.Style1) {
+                            BisqText.H6Light(value)
+                        } else {
+                            BisqText.BaseLight(value)
+                        }
 
-    val valueWidget: @Composable () -> Unit = if (value != null) {
-        // todo just a quick fix for min-max values to allow to display them without breaking layout
-        // val adjustedValueType = if (value.length > 14) InfoBoxValueType.SmallValue else valueType
-        // buddha: Even with `SmallValue` it breaks for currencies like 'Vietnamese Dong'. So I made ...
-        //    ... them (Amount to Pay, Amount to Receive) take 2 rows in CreateOfferReviewScreen
-        {
-            when (valueType) {
-                InfoBoxValueType.BoldValue -> if (style == InfoBoxStyle.Style1)
-                    BisqText.h6Light(value)
-                else
-                    BisqText.baseLight(value)
-                InfoBoxValueType.SmallValue -> BisqText.baseLight(value)
-                InfoBoxValueType.TitleSmall -> BisqText.h4Light(value)
+                    InfoBoxValueType.SmallValue -> BisqText.BaseLight(value)
+                    InfoBoxValueType.TitleSmall -> BisqText.H4Light(value)
+                }
+            }
+        } else if (valueComposable != null) {
+            {
+                valueComposable()
+            }
+        } else {
+            {
+                BisqText.H6Light(text = "mobile.components.infoBox.error".i18n(), color = BisqTheme.colors.danger)
             }
         }
-    } else if (valueComposable != null) {
-        {
-            valueComposable()
-        }
-    } else {
-        {
-            BisqText.h6Light(text = "mobile.components.infoBox.error".i18n(), color = BisqTheme.colors.danger)
-        }
-    }
 
     when (style) {
         InfoBoxStyle.Style1 -> {
             Column(
                 horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                BisqText.baseLightGrey(label)
+                BisqText.BaseLightGrey(label)
                 valueWidget()
                 if (subvalue != null) {
-                    BisqText.smallLight(text = subvalue, color = BisqTheme.colors.mid_grey30)
+                    BisqText.SmallLight(text = subvalue, color = BisqTheme.colors.mid_grey30)
                 }
             }
         }
@@ -75,15 +78,14 @@ fun InfoBox(
         InfoBoxStyle.Style2 -> {
             Column(
                 horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(0.dp)
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 valueWidget()
                 if (subvalue != null) {
-                    BisqText.xsmallLight(text = subvalue, color = BisqTheme.colors.mid_grey30)
+                    BisqText.XSmallLight(text = subvalue, color = BisqTheme.colors.mid_grey30)
                 }
-                BisqText.smallLightGrey(text = label, modifier = Modifier.offset(y = (-4).dp))
+                BisqText.SmallLightGrey(text = label, modifier = Modifier.offset(y = (-4).dp))
             }
         }
     }
-
 }

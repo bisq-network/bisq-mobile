@@ -14,6 +14,6 @@ fun InfoBoxCurrency(
         rightAlign = rightAlign,
         valueComposable = {
             AmountWithCurrency(value)
-        }
+        },
     )
 }

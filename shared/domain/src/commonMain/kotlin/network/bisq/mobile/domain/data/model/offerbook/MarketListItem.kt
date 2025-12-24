@@ -22,23 +22,28 @@ import network.bisq.mobile.domain.utils.CurrencyUtils
 /**
  * Provides data for offerbook market list items
  */
-data class MarketListItem(val market: MarketVO, val numOffers: Int, val localeFiatCurrencyName: String) {
+data class MarketListItem(
+    val market: MarketVO,
+    val numOffers: Int,
+    val localeFiatCurrencyName: String,
+) {
     companion object {
-        fun from(market: MarketVO, numOffers: Int = 0): MarketListItem {
-            return MarketListItem(
+        fun from(
+            market: MarketVO,
+            numOffers: Int = 0,
+        ): MarketListItem =
+            MarketListItem(
                 market,
                 numOffers,
                 CurrencyUtils.getLocaleFiatCurrencyName(
                     market.quoteCurrencyCode,
-                    market.quoteCurrencyName
-                )
+                    market.quoteCurrencyName,
+                ),
             )
-        }
     }
 
-    override fun toString(): String {
-        return "MarketListItem(market=$market, " +
-                "numOffers=$numOffers, " +
-                "localeFiatCurrencyName=$localeFiatCurrencyName)"
-    }
+    override fun toString(): String =
+        "MarketListItem(market=$market, " +
+            "numOffers=$numOffers, " +
+            "localeFiatCurrencyName=$localeFiatCurrencyName)"
 }

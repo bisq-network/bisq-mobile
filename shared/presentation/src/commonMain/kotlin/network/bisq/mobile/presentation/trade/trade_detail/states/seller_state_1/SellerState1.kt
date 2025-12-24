@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_1
 
 import androidx.compose.foundation.layout.Column
@@ -14,7 +16,7 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 
 @Composable
 fun SellerState1(
-    presenter: SellerState1Presenter
+    presenter: SellerState1Presenter,
 ) {
     RememberPresenterLifecycle(presenter)
 
@@ -25,10 +27,10 @@ fun SellerState1(
 
     Column {
         BisqGap.V1()
-        BisqText.h5Light("bisqEasy.tradeState.info.seller.phase1.headline".i18n()) // Send your payment account data to the buyer
+        BisqText.H5Light("bisqEasy.tradeState.info.seller.phase1.headline".i18n()) // Send your payment account data to the buyer
 
         BisqGap.V1()
-        BisqText.baseLightGrey(
+        BisqText.BaseLightGrey(
             "bisqEasy.tradeState.info.seller.phase1.accountData.prompt".i18n(), // Fill in your payment account data. E.g. IBAN, BIC and account owner name
         )
 
@@ -40,7 +42,7 @@ fun SellerState1(
                 optionKey = { it.accountName },
                 optionLabel = { it.accountName },
                 selectedKey = paymentAccountName,
-                onSelected = {
+                onSelect = {
                     presenter.setPaymentAccountName(it.accountName)
                     presenter.onPaymentDataInput(it.accountPayload.accountData, true)
                 },
@@ -65,7 +67,7 @@ fun SellerState1(
                 }
 
                 return@BisqTextField null
-            }
+            },
         )
 
         BisqGap.V1()

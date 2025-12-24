@@ -16,17 +16,17 @@ import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqFABAddButton
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.navigation.BottomNavigation
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.TabNavGraph
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
-
 
 interface ITabContainerPresenter : ViewPresenter {
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
     val showAnimation: StateFlow<Boolean>
+
     fun createOffer()
 }
 
@@ -50,28 +50,29 @@ fun TabContainerScreen() {
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
 
-    val navigationItems = listOf(
-        BottomNavigationItem(
-            "mobile.bottomNavigation.home".i18n(),
-            NavRoute.TabHome,
-            Res.drawable.nav_home
-        ),
-        BottomNavigationItem(
-            "mobile.bottomNavigation.offerbook".i18n(),
-            NavRoute.TabOfferbookMarket,
-            Res.drawable.nav_offers
-        ),
-        BottomNavigationItem(
-            "mobile.bottomNavigation.myTrades".i18n(),
-            NavRoute.TabOpenTradeList,
-            Res.drawable.nav_trades
-        ),
-        BottomNavigationItem(
-            "mobile.bottomNavigation.miscItems.tab".i18n(),
-            NavRoute.TabMiscItems,
-            Res.drawable.nav_more
-        ),
-    )
+    val navigationItems =
+        listOf(
+            BottomNavigationItem(
+                "mobile.bottomNavigation.home".i18n(),
+                NavRoute.TabHome,
+                Res.drawable.nav_home,
+            ),
+            BottomNavigationItem(
+                "mobile.bottomNavigation.offerbook".i18n(),
+                NavRoute.TabOfferbookMarket,
+                Res.drawable.nav_offers,
+            ),
+            BottomNavigationItem(
+                "mobile.bottomNavigation.myTrades".i18n(),
+                NavRoute.TabOpenTradeList,
+                Res.drawable.nav_trades,
+            ),
+            BottomNavigationItem(
+                "mobile.bottomNavigation.miscItems.tab".i18n(),
+                NavRoute.TabMiscItems,
+                Res.drawable.nav_more,
+            ),
+        )
 
     BisqStaticScaffold(
         topBar = {
@@ -82,18 +83,18 @@ fun TabContainerScreen() {
             // But it's a trade off.
             TopBar(
                 isHome = currentTab == NavRoute.TabHome,
-                title = when (currentTab) {
-                    NavRoute.TabHome -> ""
-                    NavRoute.TabOfferbookMarket -> navigationItems[1].title
-                    NavRoute.TabOpenTradeList -> "mobile.bottomNavigation.myOpenTrades".i18n()
-                    NavRoute.TabMiscItems -> "mobile.bottomNavigation.miscItems.headline".i18n()
-                    else -> "mobile.bottomNavigation.app".i18n()
-                },
+                title =
+                    when (currentTab) {
+                        NavRoute.TabHome -> ""
+                        NavRoute.TabOfferbookMarket -> navigationItems[1].title
+                        NavRoute.TabOpenTradeList -> "mobile.bottomNavigation.myOpenTrades".i18n()
+                        NavRoute.TabMiscItems -> "mobile.bottomNavigation.miscItems.headline".i18n()
+                        else -> "mobile.bottomNavigation.app".i18n()
+                    },
                 backBehavior = {
                     presenter.onMainBackNavigation()
-                }
+                },
             )
-
         },
         bottomBar = {
             BottomNavigation(
@@ -103,7 +104,8 @@ fun TabContainerScreen() {
                 showAnimation = showAnimation,
                 onItemClick = { currentNavigationItem ->
                     presenter.navigateToTab(currentNavigationItem.route)
-                })
+                },
+            )
         },
         floatingButton = {
             if (currentTab == NavRoute.TabOfferbookMarket) {
@@ -114,6 +116,6 @@ fun TabContainerScreen() {
         },
         isInteractive = isInteractive,
         snackbarHostState = presenter.getSnackState(),
-        content = { TabNavGraph(tabNavController) }
+        content = { TabNavGraph(tabNavController) },
     )
 }

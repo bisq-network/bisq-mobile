@@ -17,9 +17,5 @@
 package network.bisq.mobile.domain.data.replicated.account.payment_method
 
 object FiatPaymentRailEnumExtensions {
-    fun FiatPaymentRailEnum.supportsCurrency(currencyCode: String): Boolean {
-        return currencyCodes.contains(currencyCode)
-    }
+    fun FiatPaymentRailEnum.supportsCurrency(currencyCode: String): Boolean = currencyCodes.contains(currencyCode)
 }
-
-

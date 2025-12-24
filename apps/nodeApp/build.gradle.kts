@@ -73,9 +73,14 @@ localProperties.load(File(rootDir, "local.properties").inputStream())
 // -------------------- Android Configuration --------------------
 android {
     namespace = "network.bisq.mobile.node"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk =
+        libs.versions.android.compileSdk
+            .get()
+            .toInt()
     // pin ndk version for deterministic builds
-    ndkVersion = libs.versions.android.ndk.get()
+    ndkVersion =
+        libs.versions.android.ndk
+            .get()
 
     signingConfigs {
         create("release") {
@@ -113,8 +118,14 @@ android {
 
     defaultConfig {
         applicationId = "network.bisq.mobile.node"
-        minSdk = libs.versions.android.node.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        minSdk =
+            libs.versions.android.node.minSdk
+                .get()
+                .toInt()
+        targetSdk =
+            libs.versions.android.targetSdk
+                .get()
+                .toInt()
         multiDexEnabled = true
         versionCode = versionCodeValue
         versionName = project.version.toString()
@@ -151,28 +162,31 @@ android {
             excludes.add("META-INF/NOTICE.markdown")
 
             pickFirsts.add("**/protobuf/**/*.class")
-            pickFirsts += listOf(
-                "META-INF/LICENSE*",
-                "META-INF/NOTICE*",
-                "META-INF/services/**",
-                "META-INF/*.version"
-            )
+            pickFirsts +=
+                listOf(
+                    "META-INF/LICENSE*",
+                    "META-INF/NOTICE*",
+                    "META-INF/services/**",
+                    "META-INF/*.version",
+                )
         }
         jniLibs {
             // Pick first for duplicate native libraries across dependencies
-            pickFirsts += listOf(
-                "lib/**/libtor.so",
-                "lib/**/libcrypto.so",
-                "lib/**/libevent*.so",
-                "lib/**/libssl.so",
-                "lib/**/libsqlite*.so",
-                "lib/**/libdatastore_shared_counter.so"
-            )
+            pickFirsts +=
+                listOf(
+                    "lib/**/libtor.so",
+                    "lib/**/libcrypto.so",
+                    "lib/**/libevent*.so",
+                    "lib/**/libssl.so",
+                    "lib/**/libsqlite*.so",
+                    "lib/**/libdatastore_shared_counter.so",
+                )
             // Exclude problematic native libraries
-            excludes += listOf(
-                "**/libmagtsync.so",
-                "**/libMEOW*.so"
-            )
+            excludes +=
+                listOf(
+                    "**/libmagtsync.so",
+                    "**/libMEOW*.so",
+                )
             // Required for kmp-tor exec resources - helps prevent EOCD corruption
             useLegacyPackaging = true
         }
@@ -185,7 +199,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("release")
             dependenciesInfo {
@@ -217,7 +231,6 @@ android {
             versionNameSuffix = "-profile"
             matchingFallbacks += listOf("release")
         }
-
     }
     applicationVariants.all {
         val variant = this
@@ -256,8 +269,11 @@ protobuf {
     }
     generateProtoTasks {
         all().forEach { task ->
-            val variantName = Regex("(debug|release|profile)", RegexOption.IGNORE_CASE)
-                .find(task.name)?.value?.lowercase() ?: "debug"
+            val variantName =
+                Regex("(debug|release|profile)", RegexOption.IGNORE_CASE)
+                    .find(task.name)
+                    ?.value
+                    ?.lowercase() ?: "debug"
             task.inputs.dir(layout.buildDirectory.dir("/extracted-include-protos/$variantName"))
             task.builtins {
                 create("java")
@@ -332,7 +348,7 @@ tasks.withType<Test> {
     javaLauncher.set(
         javaToolchains.launcherFor {
             languageVersion.set(JavaLanguageVersion.of(21))
-        }
+        },
     )
 }
 
@@ -341,21 +357,20 @@ afterEvaluate {
     val generateResourceBundlesTask =
         project(sharedDomainModule).tasks.findByName("generateResourceBundles")
     if (generateResourceBundlesTask != null) {
-        tasks.matching { task ->
-            task.name.startsWith("compile") ||
+        tasks
+            .matching { task ->
+                task.name.startsWith("compile") ||
                     task.name.startsWith("assemble") ||
                     task.name.startsWith("bundle") ||
                     task.name.contains("Build")
-        }.configureEach {
-            dependsOn(generateResourceBundlesTask)
-        }
+            }.configureEach {
+                dependsOn(generateResourceBundlesTask)
+            }
     }
 }
 
 // -------------------- Helper Functions --------------------
-fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
-    return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
-}
+fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 
 // -------------------- ProGuard Mapping Configuration --------------------
 extra["moduleName"] = nodeAppModuleName

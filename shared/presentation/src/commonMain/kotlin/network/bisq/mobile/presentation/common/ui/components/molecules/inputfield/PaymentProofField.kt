@@ -16,29 +16,36 @@ enum class PaymentProofType {
 
 @Composable
 fun PaymentProofField(
-    label: String = "",
     value: String,
+    modifier: Modifier = Modifier,
+    label: String = "",
     onValueChange: ((String, Boolean) -> Unit)? = null,
     disabled: Boolean = false,
     type: PaymentProofType = PaymentProofType.BitcoinTx,
-    modifier: Modifier = Modifier,
     direction: DirectionEnum = DirectionEnum.BUY,
 ) {
-    val validation: (String) -> String? = remember(type) {
-        {
-            when (type) {
-                PaymentProofType.BitcoinTx -> {
-                    if (BitcoinTransactionValidation.validateTxId(it)) null
-                    else "validation.invalidBitcoinTransactionId".i18n()
-                }
+    val validation: (String) -> String? =
+        remember(type) {
+            {
+                when (type) {
+                    PaymentProofType.BitcoinTx -> {
+                        if (BitcoinTransactionValidation.validateTxId(it)) {
+                            null
+                        } else {
+                            "validation.invalidBitcoinTransactionId".i18n()
+                        }
+                    }
 
-                PaymentProofType.LightningPreImage -> {
-                    if (LightningPreImageValidation.validatePreImage(it)) null
-                    else "validation.invalidLightningPreimage".i18n()
+                    PaymentProofType.LightningPreImage -> {
+                        if (LightningPreImageValidation.validatePreImage(it)) {
+                            null
+                        } else {
+                            "validation.invalidLightningPreimage".i18n()
+                        }
+                    }
                 }
             }
         }
-    }
 
     BisqTextField(
         label = label,
@@ -50,5 +57,4 @@ fun PaymentProofField(
         modifier = modifier,
         validation = validation,
     )
-
 }

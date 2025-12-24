@@ -8,11 +8,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.fastRoundToInt
 
-
 // some of the following functions are taken directly from androidx.compose.foundation.layout.Arrangement,
 // we had to copy them because we couldn't create `Arrangement.spaceBetweenWithMin` without them.
 
-private inline fun IntArray.forEachIndexed(reversed: Boolean, action: (Int, Int) -> Unit) {
+private inline fun IntArray.forEachIndexed(
+    reversed: Boolean,
+    action: (Int, Int) -> Unit,
+) {
     if (!reversed) {
         forEachIndexed(action)
     } else {
@@ -26,7 +28,7 @@ private fun placeSpaceBetween(
     totalSize: Int,
     size: IntArray,
     outPosition: IntArray,
-    reverseInput: Boolean
+    reverseInput: Boolean,
 ) {
     if (size.isEmpty()) return
 
@@ -40,22 +42,22 @@ private fun placeSpaceBetween(
         // we start current with the gap size. That forces the single item to be right-aligned.
         current = gapSize
     }
-    size.forEachIndexed (reverseInput) { index, it ->
+    size.forEachIndexed(reverseInput) { index, it ->
         outPosition[index] = current.fastRoundToInt()
         current += it.toFloat() + gapSize
     }
 }
 
 @Stable
-fun Arrangement.spaceBetweenWithMin(minSpace: Dp): HorizontalOrVertical {
-    return object : HorizontalOrVertical {
+fun Arrangement.spaceBetweenWithMin(minSpace: Dp): HorizontalOrVertical =
+    object : HorizontalOrVertical {
         override val spacing = minSpace
 
         override fun Density.arrange(
             totalSize: Int,
             sizes: IntArray,
             layoutDirection: LayoutDirection,
-            outPositions: IntArray
+            outPositions: IntArray,
         ) = if (layoutDirection == LayoutDirection.Ltr) {
             placeSpaceBetween(totalSize, sizes, outPositions, reverseInput = false)
         } else {
@@ -65,9 +67,8 @@ fun Arrangement.spaceBetweenWithMin(minSpace: Dp): HorizontalOrVertical {
         override fun Density.arrange(
             totalSize: Int,
             sizes: IntArray,
-            outPositions: IntArray
+            outPositions: IntArray,
         ) = placeSpaceBetween(totalSize, sizes, outPositions, reverseInput = false)
 
         override fun toString() = "Arrangement#SpaceBetweenWithMin"
     }
-}

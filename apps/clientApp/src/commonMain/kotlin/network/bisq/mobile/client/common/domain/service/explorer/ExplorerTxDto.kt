@@ -19,4 +19,8 @@ package network.bisq.mobile.client.common.domain.service.explorer
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ExplorerTxDto(val txId: String, val isConfirmed: Boolean, val outputs: List<ExplorerOutputDto>)
+data class ExplorerTxDto(
+    val txId: String,
+    val isConfirmed: Boolean,
+    val outputs: List<ExplorerOutputDto>,
+)

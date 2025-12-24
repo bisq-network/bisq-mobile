@@ -22,10 +22,9 @@ import kotlin.test.assertTrue
  * Full presenter tests would require complex mocking of domain services.
  */
 class TakeOfferAmountInputTest {
-
     // Test data: min = 6 AUD (60000 minor), max = 500 AUD (5000000 minor)
-    private val minAmount = 60000L  // 6.0 AUD
-    private val maxAmount = 5000000L  // 500.0 AUD
+    private val minAmount = 60000L // 6.0 AUD
+    private val maxAmount = 5000000L // 500.0 AUD
 
     @BeforeTest
     fun setup() {
@@ -110,10 +109,13 @@ class TakeOfferAmountInputTest {
         val error = AmountValidator.validate("5", minAmount, maxAmount)
 
         // Should return an error message (5 < 6)
-        assertTrue(error != null && error.isNotEmpty(),
-            "Validation should return error for '5' which is below minimum of 6")
-        assertTrue(error!!.contains("greater"),
-            "Error message should indicate value should be greater than minimum")
+        assertTrue(
+            error != null && error.isNotEmpty(),
+            "Validation should return error for '5' which is below minimum of 6",
+        )
+        assertTrue(
+            error!!.contains("greater"),
+            "Error message should indicate value should be greater than minimum",
+        )
     }
 }
-

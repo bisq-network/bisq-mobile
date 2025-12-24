@@ -12,21 +12,29 @@ import platform.Foundation.writeToFile
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 
-const val PATH_TO_DRAWABLE ="compose-resources/composeResources/bisqapps.shared.presentation.generated.resources/drawable/"
+const val PATH_TO_DRAWABLE =
+    "compose-resources/composeResources/bisqapps.shared.presentation.generated.resources/drawable/"
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
-class IosClientCatHashService(baseDirPath: String) : BaseClientCatHashService("$baseDirPath/Bisq2_mobile") {
+class IosClientCatHashService(
+    baseDirPath: String,
+) : BaseClientCatHashService("$baseDirPath/Bisq2_mobile") {
+    override fun composeImage(
+        paths: Array<String>,
+        size: Int,
+    ): PlatformImage? =
+        IosImageUtil
+            .composeImage(
+                CAT_HASH_PATH,
+                paths,
+                size,
+                size,
+            )?.let { PlatformImage(it) }
 
-    override fun composeImage(paths: Array<String>, size: Int): PlatformImage? {
-        return IosImageUtil.composeImage(
-            CAT_HASH_PATH,
-            paths,
-            size,
-            size
-        )?.let { PlatformImage(it) }
-    }
-
-    override fun writeRawImage(image: PlatformImage, iconFilePath: String) {
+    override fun writeRawImage(
+        image: PlatformImage,
+        iconFilePath: String,
+    ) {
         val uiImage = image.image
         val data = UIImagePNGRepresentation(uiImage)
         val filePath = NSString.stringWithString(iconFilePath)
@@ -47,5 +55,3 @@ class IosClientCatHashService(baseDirPath: String) : BaseClientCatHashService("$
         }
     }
 }
-
-

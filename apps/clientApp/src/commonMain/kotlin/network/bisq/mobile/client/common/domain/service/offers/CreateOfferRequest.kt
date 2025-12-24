@@ -14,5 +14,5 @@ data class CreateOfferRequest(
     val fiatPaymentMethods: Set<String>,
     val amountSpec: AmountSpecVO,
     val priceSpec: PriceSpecVO,
-    val supportedLanguageCodes: Set<String>
+    val supportedLanguageCodes: Set<String>,
 )

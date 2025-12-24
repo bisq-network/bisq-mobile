@@ -33,18 +33,18 @@ fun WalletGuideDownload() {
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
-        BisqText.h3Light("bisqEasy.walletGuide.download.headline".i18n())
+        BisqText.H3Light("bisqEasy.walletGuide.download.headline".i18n())
 
         BisqGap.V2()
 
-        BisqText.baseLight("bisqEasy.walletGuide.download.content".i18n())
+        BisqText.BaseLight("bisqEasy.walletGuide.download.content".i18n())
 
         BisqGap.V2()
 
         LinkButton(
             "bisqEasy.walletGuide.download.link".i18n(),
             link = presenter.blueWalletLink,
-            onClick = { presenter.navigateToBlueWallet() }
+            onClick = { presenter.navigateToBlueWallet() },
         )
 
         BisqGap.V2()
@@ -52,8 +52,7 @@ fun WalletGuideDownload() {
         DynamicImage(
             "drawable/wallet_guide/blue_wallet_download.png",
             contentScale = ContentScale.FillWidth,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
-

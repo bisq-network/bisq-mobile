@@ -18,8 +18,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
@@ -45,17 +45,16 @@ fun CreateOfferMarketScreen() {
         closeAction = true,
         onConfirmedClose = presenter::onClose,
     ) {
-
-        BisqText.h3Light(presenter.headline)
+        BisqText.H3Light(presenter.headline)
         BisqGap.V1()
 
-        BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.market.subTitle".i18n())
+        BisqText.LargeLightGrey("mobile.bisqEasy.tradeWizard.market.subTitle".i18n())
 
         BisqGap.V2()
 
         BisqSearchField(
             value = searchText,
-            onValueChanged = { it, isValid -> presenter.setSearchText(it) },
+            onValueChange = { it, isValid -> presenter.setSearchText(it) },
         )
 
         BisqGap.V1()
@@ -63,13 +62,13 @@ fun CreateOfferMarketScreen() {
         if (isInteractive) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
                 items(filteredMarketList, key = { it.market.marketCodes }) { item ->
                     MarketCard(
                         item,
                         isSelected = selectedMarketItem?.market == item.market,
-                        onClick = { presenter.onSelectMarket(item) }
+                        onClick = { presenter.onSelectMarket(item) },
                     )
                 }
             }

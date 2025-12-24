@@ -17,6 +17,6 @@
 package network.bisq.mobile.domain.data.replicated.account.payment_method
 
 enum class BitcoinPaymentRailEnum : PaymentRailEnum {
-    MAIN_CHAIN,  // Native BTC
-    LN,  // BTC on Lightning network (Layer 2)
+    MAIN_CHAIN, // Native BTC
+    LN, // BTC on Lightning network (Layer 2)
 }

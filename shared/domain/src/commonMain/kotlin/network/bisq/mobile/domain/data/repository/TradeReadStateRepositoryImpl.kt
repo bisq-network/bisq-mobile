@@ -9,8 +9,8 @@ import network.bisq.mobile.domain.utils.Logging
 
 class TradeReadStateRepositoryImpl(
     private val tradeReadStateMapStore: DataStore<TradeReadStateMap>,
-) : TradeReadStateRepository, Logging {
-
+) : TradeReadStateRepository,
+    Logging {
     override val data: Flow<TradeReadStateMap>
         get() =
             tradeReadStateMapStore.data.catch { exception ->
@@ -22,11 +22,14 @@ class TradeReadStateRepositoryImpl(
                 }
             }
 
-    override suspend fun setCount(tradeId: String, count: Int) {
+    override suspend fun setCount(
+        tradeId: String,
+        count: Int,
+    ) {
         require(tradeId.isNotBlank()) { "tradeId cannot be blank" }
         require(count >= 0) { "count must be >= 0" }
 
-        tradeReadStateMapStore.updateData { it.copy(it.map + (tradeId to count))  }
+        tradeReadStateMapStore.updateData { it.copy(it.map + (tradeId to count)) }
     }
 
     override suspend fun clearId(tradeId: String) {

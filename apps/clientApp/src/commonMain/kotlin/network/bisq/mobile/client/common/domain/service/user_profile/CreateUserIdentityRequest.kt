@@ -7,5 +7,5 @@ data class CreateUserIdentityRequest(
     val nickName: String,
     val terms: String = "",
     val statement: String = "",
-    val keyMaterialResponse: KeyMaterialResponse
+    val keyMaterialResponse: KeyMaterialResponse,
 )

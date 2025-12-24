@@ -4,4 +4,7 @@ import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 
 @Serializable
-data class SendChatMessageRequest(val text: String, val citation: CitationVO?)
+data class SendChatMessageRequest(
+    val text: String,
+    val citation: CitationVO?,
+)

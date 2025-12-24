@@ -17,6 +17,6 @@ fun GreyCloseButton(
         type = BisqButtonType.Grey,
         onClick = onClick,
         padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-        fullWidth = true
+        fullWidth = true,
     )
 }

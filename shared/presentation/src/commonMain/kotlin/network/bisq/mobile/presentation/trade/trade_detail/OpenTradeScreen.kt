@@ -32,18 +32,18 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.PaymentProofType
-import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.chat.UndoIgnoreDialog
+import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.CancelTradeDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.CloseTradeDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.InvalidAddressConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.InvalidPaymentProofConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.OpenMediationDialog
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aPresenter
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_4.BuyerState4Presenter
 import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_a.SellerState3aPresenter
@@ -95,13 +95,13 @@ fun OpenTradeScreen(tradeId: String) {
     val shouldBlurBg by remember {
         derivedStateOf {
             showInterruptionConfirmationDialog ||
-                    showMediationConfirmationDialog ||
-                    mediationError.isNotBlank() ||
-                    buyerState1aShowInvalidAddressDialog ||
-                    sellerState3aShowInvalidAddressDialog ||
-                    buyerState4ShowCloseTradeDialog ||
-                    sellerState4ShowCloseTradeDialog ||
-                    showUndoIgnoreDialog
+                showMediationConfirmationDialog ||
+                mediationError.isNotBlank() ||
+                buyerState1aShowInvalidAddressDialog ||
+                sellerState3aShowInvalidAddressDialog ||
+                buyerState4ShowCloseTradeDialog ||
+                sellerState4ShowCloseTradeDialog ||
+                showUndoIgnoreDialog
         }
     }
 
@@ -109,32 +109,34 @@ fun OpenTradeScreen(tradeId: String) {
         topBar = {
             TopBar(
                 "mobile.bisqEasy.openTrades.title".i18n(
-                    selectedTrade?.shortTradeId ?: ""
+                    selectedTrade?.shortTradeId ?: "",
                 ),
                 backBehavior = {
                     when {
                         showBarcodeViewFromBuyerState1a -> buyerState1aPresenter.onBarcodeViewDismiss()
                         else -> presenter.onBackPressed()
                     }
-                }
+                },
             )
         },
         shouldBlurBg = shouldBlurBg,
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(
-                    interactionSource = MutableInteractionSource(),
-                    indication = null
-                ) {
-                    focusManager.clearFocus()
-                }
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = MutableInteractionSource(),
+                        indication = null,
+                    ) {
+                        focusManager.clearFocus()
+                    },
         ) {
             Column(
-                modifier = Modifier
-                    .verticalScroll(scrollState)
-                    .fillMaxSize()
+                modifier =
+                    Modifier
+                        .verticalScroll(scrollState)
+                        .fillMaxSize(),
             ) {
                 if (selectedTrade != null) {
                     TradeDetailsHeader(presenter = headerPresenter)
@@ -145,19 +147,20 @@ fun OpenTradeScreen(tradeId: String) {
                             horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            BisqText.baseRegular(
+                            BisqText.BaseRegular(
                                 modifier = Modifier.weight(1f),
                                 text = "mobile.bisqEasy.openTrades.warnIgnoredUser".i18n(),
-                                color = BisqTheme.colors.warning
+                                color = BisqTheme.colors.warning,
                             )
                             BisqButton(
                                 text = "user.profileCard.userActions.undoIgnore".i18n(),
                                 type = BisqButtonType.GreyOutline,
-                                padding = PaddingValues(
-                                    horizontal = BisqUIConstants.ScreenPaddingHalf,
-                                    vertical = BisqUIConstants.ScreenPaddingHalf,
-                                ),
-                                onClick = presenter::onOpenUndoIgnoreDialog
+                                padding =
+                                    PaddingValues(
+                                        horizontal = BisqUIConstants.ScreenPaddingHalf,
+                                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                                    ),
+                                onClick = presenter::onOpenUndoIgnoreDialog,
                             )
                         }
                     }
@@ -193,8 +196,8 @@ fun OpenTradeScreen(tradeId: String) {
 
     if (showBarcodeViewFromBuyerState1a) {
         BarcodeScannerView(
-            onCanceled = buyerState1aPresenter::onBarcodeViewDismiss,
-            onFailed = { buyerState1aPresenter.onBarcodeFail() }
+            onCancel = buyerState1aPresenter::onBarcodeViewDismiss,
+            onFail = { buyerState1aPresenter.onBarcodeFail() },
         ) {
             buyerState1aPresenter.onBarcodeResult(it.data)
         }
@@ -204,7 +207,7 @@ fun OpenTradeScreen(tradeId: String) {
         BisqGeneralErrorDialog(
             errorTitle = "mobile.barcode.error.title".i18n(),
             errorMessage = "mobile.barcode.error.message".i18n(),
-            onClose = buyerState1aPresenter::onBarcodeErrorClose
+            onClose = buyerState1aPresenter::onBarcodeErrorClose,
         )
     }
 
@@ -214,7 +217,7 @@ fun OpenTradeScreen(tradeId: String) {
             message = "mobile.openTrades.tradeNotFoundDialog.text".i18n(),
             confirmButtonText = "confirmation.ok".i18n(),
             dismissButtonText = EMPTY_STRING,
-            onConfirm = presenter::onTradeNotFoundDialogDismiss
+            onConfirm = presenter::onTradeNotFoundDialogDismiss,
         )
     }
 
@@ -223,7 +226,7 @@ fun OpenTradeScreen(tradeId: String) {
             onCancelConfirm = { headerPresenter.onInterruptTrade() },
             onDismiss = { headerPresenter.onCloseInterruptionConfirmationDialog() },
             isBuyer = headerPresenter.directionEnum.isBuy,
-            isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT
+            isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT,
         )
     }
 
@@ -279,6 +282,4 @@ fun OpenTradeScreen(tradeId: String) {
             onDismiss = presenter::hideUndoIgnoreDialog,
         )
     }
-
 }
-

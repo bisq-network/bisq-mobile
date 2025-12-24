@@ -17,7 +17,7 @@ object PriceSpecVOExtensions {
             return PriceQuoteVOFactory.fromPrice(
                 priceValue,
                 marketPriceItem.market.baseCurrencyCode,
-                marketPriceItem.market.quoteCurrencyCode
+                marketPriceItem.market.quoteCurrencyCode,
             )
         } else {
             // MarketPriceSpec

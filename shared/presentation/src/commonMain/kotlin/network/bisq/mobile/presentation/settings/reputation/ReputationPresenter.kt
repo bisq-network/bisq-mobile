@@ -14,9 +14,9 @@ open class ReputationPresenter(
     mainPresenter: MainPresenter,
     val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     val profileId: StateFlow<String> =
-        userProfileServiceFacade.selectedUserProfile.map { it?.id ?: "data.na".i18n() }
+        userProfileServiceFacade.selectedUserProfile
+            .map { it?.id ?: "data.na".i18n() }
             .stateIn(
                 presenterScope,
                 SharingStarted.Lazily,

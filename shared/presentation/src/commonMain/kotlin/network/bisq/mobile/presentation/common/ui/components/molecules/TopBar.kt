@@ -35,11 +35,11 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeTex
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.MyUserProfileIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -50,6 +50,7 @@ interface ITopBarPresenter : ViewPresenter {
     val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 
     fun avatarEnabled(currentTab: TabNavRoute?): Boolean
+
     fun navigateToUserProfile()
 }
 
@@ -82,7 +83,7 @@ fun TopBar(
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = BisqTheme.colors.mid_grey30
+                tint = BisqTheme.colors.mid_grey30,
             )
         }
     }
@@ -93,9 +94,10 @@ fun TopBar(
                 defaultBackButton()
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = BisqTheme.colors.backgroundColor, //Color.DarkGray,
-        ),
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = BisqTheme.colors.backgroundColor, // Color.DarkGray,
+            ),
         title = {
             if (isHome) {
                 BisqLogoSmall(modifier = Modifier.height(34.dp))
@@ -113,22 +115,21 @@ fun TopBar(
             Row(
                 modifier = Modifier.padding(end = 16.dp),
                 horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-
                 if (extraActions != null) {
                     extraActions()
                 }
 
                 if (showUserAvatar) {
-                    val userIconModifier = Modifier
-                        .size(BisqUIConstants.topBarAvatarSize)
-                        .clickable {
-                            if (presenter.avatarEnabled(currentTabDestination)) {
-                                presenter.navigateToUserProfile()
-                            }
-                        }
-                        .semantics { contentDescription = "top_bar_avatar" }
+                    val userIconModifier =
+                        Modifier
+                            .size(BisqUIConstants.topBarAvatarSize)
+                            .clickable {
+                                if (presenter.avatarEnabled(currentTabDestination)) {
+                                    presenter.navigateToUserProfile()
+                                }
+                            }.semantics { contentDescription = "top_bar_avatar" }
 
                     BisqGap.H1()
                     if (userProfile != null) {
@@ -137,12 +138,13 @@ fun TopBar(
                             presenter.userProfileIconProvider,
                             modifier = userIconModifier,
                             connectivityStatus = connectivityStatus,
-                            showAnimation
+                            showAnimations = showAnimation,
                         )
                     } else {
                         Image(
-                            painterResource(Res.drawable.dummy_user_profile_icon), "",
-                            modifier = userIconModifier
+                            painterResource(Res.drawable.dummy_user_profile_icon),
+                            "",
+                            modifier = userIconModifier,
                         )
                     }
                 }
@@ -151,6 +153,6 @@ fun TopBar(
     )
 
     if (backBehavior != null) {
-        BackHandler(onBackPressed = { backBehavior.invoke() })
+        BackHandler(onBackPress = { backBehavior.invoke() })
     }
 }

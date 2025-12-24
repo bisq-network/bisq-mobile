@@ -1,14 +1,11 @@
 package network.bisq.mobile.domain.parser
 
-import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PriceParserTest {
-
     @Test
     fun `parse should handle empty string`() {
         assertEquals(0.0, PriceParser.parse(""))
@@ -62,7 +59,7 @@ class PriceParserTest {
     fun `parse should throw NumberFormatException for mixed input when platform parsing fails`() {
         // This test verifies that if the platform's toDoubleOrNullLocaleAware returns null,
         // then PriceParser.parse should throw NumberFormatException
-        val testInput = "xyz123"  // Clearly invalid input that should fail on all platforms
+        val testInput = "xyz123" // Clearly invalid input that should fail on all platforms
 
         assertFailsWith<NumberFormatException> {
             PriceParser.parse(testInput)
@@ -146,9 +143,9 @@ class PriceParserTest {
         // At least one of these should work depending on locale, or both should be null
         assertTrue(
             (result1 != null && result1 > 1000) ||
-            (result2 != null && result2 > 1000) ||
-            (result1 == null && result2 == null),
-            "Locale-aware parsing should handle at least one common format or reject both"
+                (result2 != null && result2 > 1000) ||
+                (result1 == null && result2 == null),
+            "Locale-aware parsing should handle at least one common format or reject both",
         )
     }
 
@@ -170,10 +167,10 @@ class PriceParserTest {
 
     @Test
     fun `parse should handle mixed format edge cases`() {
-        assertEquals(123.45, PriceParser.parse("123,45"))  // European decimal
-        assertEquals(123.45, PriceParser.parse("123.45"))  // US decimal
-        assertEquals(1234.0, PriceParser.parse("1,234"))   // Thousands separator
-        assertEquals(1234.0, PriceParser.parse("1.234"))   // European thousands or US decimal > 1000
+        assertEquals(123.45, PriceParser.parse("123,45")) // European decimal
+        assertEquals(123.45, PriceParser.parse("123.45")) // US decimal
+        assertEquals(1234.0, PriceParser.parse("1,234")) // Thousands separator
+        assertEquals(1234.0, PriceParser.parse("1.234")) // European thousands or US decimal > 1000
     }
 
     @Test
@@ -181,8 +178,4 @@ class PriceParserTest {
         assertEquals(1234567.89, PriceParser.parse("1 234 567.89"))
         assertEquals(1234567.89, PriceParser.parse("1 234 567,89"))
     }
-
-
-
-
 }

@@ -13,5 +13,5 @@ data class WebSocketEvent(
     @SerialName("payload")
     val deferredPayload: String? = null,
     val modificationType: ModificationType,
-    val sequenceNumber: Int
+    val sequenceNumber: Int,
 ) : WebSocketMessage

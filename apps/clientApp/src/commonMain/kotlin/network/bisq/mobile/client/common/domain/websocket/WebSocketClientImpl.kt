@@ -73,8 +73,8 @@ class WebSocketClientImpl(
     override val apiUrl: Url,
     private val password: String? = null,
     private val clientScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
-) : WebSocketClient, Logging {
-
+) : WebSocketClient,
+    Logging {
     companion object {
         const val DELAY_TO_RECONNECT = 3000L
         const val MAX_RECONNECT_ATTEMPTS = 5
@@ -113,18 +113,19 @@ class WebSocketClientImpl(
                 log.d { "WS connecting to $apiUrl ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val startTime = DateUtils.now()
-                val newSession = withTimeout(timeout) {
-                    httpClient.webSocketSession {
-                        url {
-                            // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
-                            protocol =
-                                if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
-                            host = apiUrl.host
-                            port = apiUrl.port
-                            path("/websocket")
+                val newSession =
+                    withTimeout(timeout) {
+                        httpClient.webSocketSession {
+                            url {
+                                // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
+                                protocol =
+                                    if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
+                                host = apiUrl.host
+                                port = apiUrl.port
+                                path("/websocket")
+                            }
                         }
                     }
-                }
                 val elapsed = DateUtils.now() - startTime
                 val remainingTime = timeout - elapsed
                 session = newSession
@@ -185,32 +186,34 @@ class WebSocketClientImpl(
         }
         reconnectJob?.cancel()
 
-        val newReconnectJob: Deferred<Throwable?> = clientScope.async {
-            log.d { "Launching reconnect attempt #${reconnectAttempts + 1}" }
-            doDisconnect() // clean up state
+        val newReconnectJob: Deferred<Throwable?> =
+            clientScope.async {
+                log.d { "Launching reconnect attempt #${reconnectAttempts + 1}" }
+                doDisconnect() // clean up state
 
-            // Check if we've exceeded max attempts
-            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                val e = MaximumRetryReachedException(MAX_RECONNECT_ATTEMPTS)
-                log.w { e.message }
-                _webSocketClientStatus.value = ConnectionState.Disconnected(e)
-                // Reset counter for future reconnects
-                reconnectAttempts = 0
-                return@async null
+                // Check if we've exceeded max attempts
+                if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                    val e = MaximumRetryReachedException(MAX_RECONNECT_ATTEMPTS)
+                    log.w { e.message }
+                    _webSocketClientStatus.value = ConnectionState.Disconnected(e)
+                    // Reset counter for future reconnects
+                    reconnectAttempts = 0
+                    return@async null
+                }
+
+                // Implement exponential backoff
+                val delayMillis =
+                    minOf(
+                        DELAY_TO_RECONNECT * (1 shl minOf(reconnectAttempts, 4)), // Exponential backoff
+                        MAX_RECONNECT_DELAY,
+                    )
+                log.d { "Waiting ${delayMillis}ms before reconnect attempt" }
+                delay(delayMillis)
+                reconnectAttempts++
+                val timeout = WebSocketClient.determineTimeout(apiUrl.host)
+                val error = connect(timeout)
+                return@async error
             }
-
-            // Implement exponential backoff
-            val delayMillis = minOf(
-                DELAY_TO_RECONNECT * (1 shl minOf(reconnectAttempts, 4)), // Exponential backoff
-                MAX_RECONNECT_DELAY
-            )
-            log.d { "Waiting ${delayMillis}ms before reconnect attempt" }
-            delay(delayMillis)
-            reconnectAttempts++
-            val timeout = WebSocketClient.determineTimeout(apiUrl.host)
-            val error = connect(timeout)
-            return@async error
-        }
         reconnectJob = newReconnectJob
         newReconnectJob.invokeOnCompletion {
             isReconnecting.value = false
@@ -238,28 +241,35 @@ class WebSocketClientImpl(
         try {
             if (webSocketRequest is WebSocketRestApiRequest && !password.isNullOrBlank()) {
                 val nonce = AuthUtils.generateNonce()
-                val timestamp = Clock.System.now().toEpochMilliseconds().toString()
-                val parsedPath = parseUrl("http://dummy${webSocketRequest.path}")
-                    ?: throw IllegalArgumentException("Invalid path provided: $webSocketRequest.path")
+                val timestamp =
+                    Clock.System
+                        .now()
+                        .toEpochMilliseconds()
+                        .toString()
+                val parsedPath =
+                    parseUrl("http://dummy${webSocketRequest.path}")
+                        ?: throw IllegalArgumentException("Invalid path provided: $webSocketRequest.path")
                 val normalizedPath = AuthUtils.getNormalizedPathAndQuery(parsedPath)
-                val bodySha256Hex = if (webSocketRequest.body.isNotBlank()) {
-                    getSha256(webSocketRequest.body.toByteArray()).toHexString()
-                } else {
-                    null
-                }
-                val authToken = AuthUtils.generateAuthHash(
-                    password,
-                    nonce,
-                    timestamp,
-                    webSocketRequest.method.uppercase(),
-                    normalizedPath,
-                    bodySha256Hex,
-                )
+                val bodySha256Hex =
+                    if (webSocketRequest.body.isNotBlank()) {
+                        getSha256(webSocketRequest.body.toByteArray()).toHexString()
+                    } else {
+                        null
+                    }
+                val authToken =
+                    AuthUtils.generateAuthHash(
+                        password,
+                        nonce,
+                        timestamp,
+                        webSocketRequest.method.uppercase(),
+                        normalizedPath,
+                        bodySha256Hex,
+                    )
                 val replacementRequest =
                     webSocketRequest.copy(
                         authToken = authToken,
                         authTs = timestamp,
-                        authNonce = nonce
+                        authNonce = nonce,
                     )
                 return requestResponseHandler.request(replacementRequest)
             } else {
@@ -301,19 +311,23 @@ class WebSocketClientImpl(
             "Received SubscriptionResponse for topic $topic and subscriberId $subscriberId."
         }
         webSocketEventObservers[subscriberId] = webSocketEventObserver
-        val webSocketEvent = WebSocketEvent(
-            topic,
-            subscriberId,
-            response.payload,
-            ModificationType.REPLACE,
-            0
-        )
+        val webSocketEvent =
+            WebSocketEvent(
+                topic,
+                subscriberId,
+                response.payload,
+                ModificationType.REPLACE,
+                0,
+            )
         webSocketEventObserver.setEvent(webSocketEvent)
         log.i { "Subscription for $topic and subscriberId $subscriberId completed." }
         return webSocketEventObserver
     }
 
-    override suspend fun unSubscribe(topic: Topic, requestId: String) {
+    override suspend fun unSubscribe(
+        topic: Topic,
+        requestId: String,
+    ) {
         log.w { "unSubscribe not yet implemented for topic: $topic, requestId: $requestId" }
         // TODO: Implement unsubscribe logic
     }
@@ -331,7 +345,7 @@ class WebSocketClientImpl(
             for (frame in session.incoming) {
                 if (frame is Frame.Text) {
                     val message = frame.readText()
-                    //todo add input validation
+                    // todo add input validation
                     log.d { "Received raw text $message" }
                     val webSocketMessage: WebSocketMessage =
                         json.decodeFromString(WebSocketMessage.serializer(), message)
@@ -387,12 +401,13 @@ class WebSocketClientImpl(
 
     private suspend fun getApiVersion(): ApiVersionSettingsVO {
         val requestId = createUuid()
-        val webSocketRestApiRequest = WebSocketRestApiRequest(
-            requestId,
-            "GET",
-            "/api/v1/settings/version",
-            "",
-        )
+        val webSocketRestApiRequest =
+            WebSocketRestApiRequest(
+                requestId,
+                "GET",
+                "/api/v1/settings/version",
+                "",
+            )
         val response = sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
         if (response.httpStatusCode == HttpStatusCode.Unauthorized) {

@@ -18,9 +18,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import org.koin.compose.koinInject
 
@@ -40,7 +40,7 @@ fun CreateOfferReviewOfferScreen() {
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
     ) {
         BisqGap.V1()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
@@ -52,7 +52,7 @@ fun CreateOfferReviewOfferScreen() {
                 if (presenter.direction == DirectionEnum.BUY) {
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                        value = presenter.amountToPay
+                        value = presenter.amountToPay,
                     )
                     InfoBox(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
@@ -65,7 +65,7 @@ fun CreateOfferReviewOfferScreen() {
                                     modifier = Modifier.alignByBaseline(),
                                 )
                                 BisqGap.H1()
-                                BisqText.h6Light("–", modifier = Modifier.alignByBaseline())
+                                BisqText.H6Light("–", modifier = Modifier.alignByBaseline())
                                 BisqGap.H1()
                                 BtcSatsText(
                                     formattedBtcAmountValue = presenter.formattedBaseRangeMaxAmount,
@@ -74,17 +74,17 @@ fun CreateOfferReviewOfferScreen() {
                                     modifier = Modifier.alignByBaseline(),
                                 )
                                 BisqGap.HHalf()
-                                BisqText.baseRegularGrey(
+                                BisqText.BaseRegularGrey(
                                     "BTC",
-                                    modifier = Modifier.alignByBaseline()
+                                    modifier = Modifier.alignByBaseline(),
                                 )
                             }
-                        }
+                        },
                     )
                 } else {
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                        value = presenter.amountToReceive
+                        value = presenter.amountToReceive,
                     )
                     InfoBox(
                         label = "bisqEasy.tradeWizard.review.toSend".i18n().uppercase(),
@@ -97,7 +97,7 @@ fun CreateOfferReviewOfferScreen() {
                                     modifier = Modifier.alignByBaseline(),
                                 )
                                 BisqGap.H1()
-                                BisqText.h6Light("–", modifier = Modifier.alignByBaseline())
+                                BisqText.H6Light("–", modifier = Modifier.alignByBaseline())
                                 BisqGap.H1()
                                 BtcSatsText(
                                     presenter.formattedBaseRangeMaxAmount,
@@ -106,12 +106,12 @@ fun CreateOfferReviewOfferScreen() {
                                     modifier = Modifier.alignByBaseline(),
                                 )
                                 BisqGap.HHalf()
-                                BisqText.baseRegularGrey(
+                                BisqText.BaseRegularGrey(
                                     "BTC",
-                                    modifier = Modifier.alignByBaseline()
+                                    modifier = Modifier.alignByBaseline(),
                                 )
                             }
-                        }
+                        },
                     )
                 }
             } else {
@@ -130,7 +130,7 @@ fun CreateOfferReviewOfferScreen() {
                     InfoRowContainer {
                         InfoBoxSats(
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                            value = presenter.amountToPay
+                            value = presenter.amountToPay,
                         )
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
@@ -147,14 +147,14 @@ fun CreateOfferReviewOfferScreen() {
                 valueComposable = {
                     Row(
                         verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        BisqText.h6Light(presenter.formattedPrice)
+                        BisqText.H6Light(presenter.formattedPrice)
                         BisqGap.HQuarter()
-                        BisqText.baseLightGrey(presenter.marketCodes)
+                        BisqText.BaseLightGrey(presenter.marketCodes)
                     }
                 },
-                subvalue = presenter.priceDetails
+                subvalue = presenter.priceDetails,
             )
 
             InfoBox(
@@ -163,7 +163,7 @@ fun CreateOfferReviewOfferScreen() {
             )
             InfoBox(
                 label = "bisqEasy.tradeWizard.review.paymentMethodDescription.btc".i18n(), // Bitcoin settlement method
-                value = presenter.baseSidePaymentMethodDisplayString
+                value = presenter.baseSidePaymentMethodDisplayString,
             )
 
             InfoBox(

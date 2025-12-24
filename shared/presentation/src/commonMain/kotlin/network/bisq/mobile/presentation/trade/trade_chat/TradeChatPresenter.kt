@@ -26,12 +26,12 @@ import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServic
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.NotificationIds
-import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
+import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class TradeChatPresenter(
     mainPresenter: MainPresenter,
@@ -41,9 +41,8 @@ class TradeChatPresenter(
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val notificationController: NotificationController,
-    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
 
@@ -57,7 +56,8 @@ class TradeChatPresenter(
     val showChatRulesWarnBox: StateFlow<Boolean> =
         settingsRepository.data.map { it.showChatRulesWarnBox }.stateIn(
             presenterScope,
-            SharingStarted.Lazily, false
+            SharingStarted.Lazily,
+            false,
         )
 
     private val _userProfileIconByProfileId: MutableStateFlow<Map<String, PlatformImage?>> =
@@ -87,17 +87,18 @@ class TradeChatPresenter(
     val reportUserMessage: StateFlow<String?> get() = _reportUserMessage.asStateFlow()
 
     val readCount =
-        selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
-            if (trade?.tradeId != null) {
-                readStates.getOrElse(trade.tradeId) { 0 }
-            } else {
-                -1
-            }
-        }.stateIn(
-            scope = presenterScope,
-            started = SharingStarted.Lazily,
-            initialValue = -1,
-        )
+        selectedTrade
+            .combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
+                if (trade?.tradeId != null) {
+                    readStates.getOrElse(trade.tradeId) { 0 }
+                } else {
+                    -1
+                }
+            }.stateIn(
+                scope = presenterScope,
+                started = SharingStarted.Lazily,
+                initialValue = -1,
+            )
 
     private val observedChatMessages =
         MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>>(emptySet())
@@ -130,28 +131,33 @@ class TradeChatPresenter(
         }
 
         presenterScope.launch {
-            ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
-                messages.filter { message ->
-                    when (message.chatMessageType) {
-                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(
-                            message.senderUserProfileId
-                        )
+            ignoredProfileIds
+                .combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
+                    messages
+                        .filter { message ->
+                            when (message.chatMessageType) {
+                                ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER ->
+                                    !ignoredIds.contains(
+                                        message.senderUserProfileId,
+                                    )
 
-                        else -> true
-                    }
-                }.toList().sortedByDescending { it.date }
-            }.collect { messages ->
-                _sortedChatMessages.value = messages
-                for (message in messages) {
-                    val userProfile = message.senderUserProfile
-                    if (_userProfileIconByProfileId.value[userProfile.id] == null) {
-                        val image = userProfileServiceFacade.getUserProfileIcon(
-                            userProfile
-                        )
-                        _userProfileIconByProfileId.update { it + (userProfile.id to image) }
+                                else -> true
+                            }
+                        }.toList()
+                        .sortedByDescending { it.date }
+                }.collect { messages ->
+                    _sortedChatMessages.value = messages
+                    for (message in messages) {
+                        val userProfile = message.senderUserProfile
+                        if (_userProfileIconByProfileId.value[userProfile.id] == null) {
+                            val image =
+                                userProfileServiceFacade.getUserProfileIcon(
+                                    userProfile,
+                                )
+                            _userProfileIconByProfileId.update { it + (userProfile.id to image) }
+                        }
                     }
                 }
-            }
         }
     }
 
@@ -167,13 +173,16 @@ class TradeChatPresenter(
     fun sendChatMessage(text: String) {
         val finalText = text.trim()
         if (finalText.isEmpty()) return
-        val citation = quotedMessage.value?.let { quotedMessage ->
-            quotedMessage.text?.let { text ->
-                CitationVO(
-                    quotedMessage.senderUserProfileId, text, quotedMessage.id
-                )
+        val citation =
+            quotedMessage.value?.let { quotedMessage ->
+                quotedMessage.text?.let { text ->
+                    CitationVO(
+                        quotedMessage.senderUserProfileId,
+                        text,
+                        quotedMessage.id,
+                    )
+                }
             }
-        }
         presenterScope.launch {
             tradeChatMessagesServiceFacade.sendChatMessage(finalText, citation)
             _quotedMessage.value = null
@@ -184,11 +193,12 @@ class TradeChatPresenter(
         messageDeliveryServiceFacade.onResendMessage(messageId)
     }
 
-    suspend fun getUserName(peerProfileId: String): String {
-        return userProfileServiceFacade.findUserProfile(peerProfileId)?.userName ?: "data.na".i18n()
-    }
+    suspend fun getUserName(peerProfileId: String): String = userProfileServiceFacade.findUserProfile(peerProfileId)?.userName ?: "data.na".i18n()
 
-    fun onAddReaction(message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum) {
+    fun onAddReaction(
+        message: BisqEasyOpenTradeMessageModel,
+        reaction: ReactionEnum,
+    ) {
         presenterScope.launch {
             tradeChatMessagesServiceFacade.addChatMessageReaction(message.id, reaction)
         }
@@ -196,7 +206,7 @@ class TradeChatPresenter(
 
     fun onRemoveReaction(
         message: BisqEasyOpenTradeMessageModel,
-        reaction: BisqEasyOpenTradeMessageReactionVO
+        reaction: BisqEasyOpenTradeMessageReactionVO,
     ) {
         presenterScope.launch {
             tradeChatMessagesServiceFacade.removeChatMessageReaction(message.id, reaction)
@@ -252,11 +262,11 @@ class TradeChatPresenter(
     }
 
     fun onDismissIgnoreUser() {
-        this.hideIgnoreUserPopup();
+        this.hideIgnoreUserPopup()
     }
 
     fun onDismissUndoIgnoreUser() {
-        this.hideUndoIgnoreUserPopup();
+        this.hideUndoIgnoreUserPopup()
     }
 
     fun onReportUser(tradeMessage: BisqEasyOpenTradeMessageModel) {
@@ -269,13 +279,16 @@ class TradeChatPresenter(
         _reportUserMessage.value = EMPTY_STRING
     }
 
-    fun onReportUserError(errorMessage: String, reportMessage: String) {
+    fun onReportUserError(
+        errorMessage: String,
+        reportMessage: String,
+    ) {
         _reportUserMessage.value = reportMessage
         _showReportUserDialog.value = false
         showSnackbar(
             message = errorMessage,
             isError = true,
-            duration = SnackbarDuration.Short
+            duration = SnackbarDuration.Short,
         )
     }
 
@@ -301,4 +314,3 @@ class TradeChatPresenter(
         navigateBack()
     }
 }
-

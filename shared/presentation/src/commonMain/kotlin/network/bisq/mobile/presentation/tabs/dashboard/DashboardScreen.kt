@@ -48,10 +48,10 @@ import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollSc
 import network.bisq.mobile.presentation.common.ui.components.molecules.AmountWithCurrency
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BatteryOptimizationsDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.NotificationPermissionDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.common.ui.utils.rememberNotificationPermissionLauncher
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.common.ui.utils.rememberNotificationPermissionLauncher
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -75,22 +75,23 @@ fun DashboardScreen() {
     val isForeground by presenter.isForeground.collectAsState()
     val showNumConnections = presenter.showNumConnections
 
-    val notifPermLauncher = rememberNotificationPermissionLauncher { granted ->
-        if (granted) {
-            presenter.saveNotificationPermissionState(PermissionState.GRANTED)
-        } else {
-            // we can't ask more than twice, so we won't ask again
-            if (notifPermissionState == PermissionState.DENIED) {
-                presenter.saveNotificationPermissionState(PermissionState.DONT_ASK_AGAIN)
-                presenter.showSnackbar(
-                    "mobile.permissions.notifications.dismissed".i18n(),
-                    duration = SnackbarDuration.Indefinite,
-                )
+    val notifPermLauncher =
+        rememberNotificationPermissionLauncher { granted ->
+            if (granted) {
+                presenter.saveNotificationPermissionState(PermissionState.GRANTED)
             } else {
-                presenter.saveNotificationPermissionState(PermissionState.DENIED)
+                // we can't ask more than twice, so we won't ask again
+                if (notifPermissionState == PermissionState.DENIED) {
+                    presenter.saveNotificationPermissionState(PermissionState.DONT_ASK_AGAIN)
+                    presenter.showSnackbar(
+                        "mobile.permissions.notifications.dismissed".i18n(),
+                        duration = SnackbarDuration.Indefinite,
+                    )
+                } else {
+                    presenter.saveNotificationPermissionState(PermissionState.DENIED)
+                }
             }
         }
-    }
 
     LaunchedEffect(isForeground, notifPermissionState, batteryPermissionState) {
         // detect state change when user switches the app
@@ -122,13 +123,14 @@ fun DashboardScreen() {
                     isPermissionRequestDialogVisible = false
                 } else {
                     presenter.saveNotificationPermissionState(
-                        PermissionState.NOT_GRANTED
+                        PermissionState.NOT_GRANTED,
                     )
                 }
             }
 
             PermissionState.NOT_GRANTED,
-            PermissionState.DENIED -> {
+            PermissionState.DENIED,
+            -> {
                 if (notifPermissionState == PermissionState.DENIED && isPermissionRequestDialogVisible) {
                     isPermissionRequestDialogVisible = false
                 } else {
@@ -160,7 +162,7 @@ fun DashboardScreen() {
                     isBatteryOptimizationsDialogVisible = false
                 } else {
                     presenter.saveBatteryOptimizationState(
-                        BatteryOptimizationState.NOT_IGNORED
+                        BatteryOptimizationState.NOT_IGNORED,
                     )
                 }
             }
@@ -201,7 +203,7 @@ fun DashboardScreen() {
         onPermissionRequest = {
             notifPermLauncher.launch()
         },
-        onPermissionDenied = { dontAskAgain ->
+        onPermissionDeny = { dontAskAgain ->
             if (dontAskAgain) {
                 presenter.saveNotificationPermissionState(PermissionState.DONT_ASK_AGAIN)
                 presenter.showSnackbar(
@@ -217,7 +219,7 @@ fun DashboardScreen() {
         onBatteryOptimizationIgnoreRequest = {
             batteryOptimizationLauncher.launch()
         },
-        onBatteryOptimizationIgnoreDismissed = { dontAskAgain ->
+        onBatteryOptimizationIgnoreDismiss = { dontAskAgain ->
             if (dontAskAgain) {
                 presenter.saveBatteryOptimizationState(BatteryOptimizationState.DONT_ASK_AGAIN)
                 presenter.showSnackbar(
@@ -243,10 +245,10 @@ private fun DashboardContent(
     onOpenTradeGuide: () -> Unit,
     isPermissionRequestDialogVisible: Boolean,
     onPermissionRequest: () -> Unit,
-    onPermissionDenied: (dontAskAgain: Boolean) -> Unit,
+    onPermissionDeny: (dontAskAgain: Boolean) -> Unit,
     isBatteryOptimizationsDialogVisible: Boolean,
     onBatteryOptimizationIgnoreRequest: () -> Unit,
-    onBatteryOptimizationIgnoreDismissed: (dontAskAgain: Boolean) -> Unit,
+    onBatteryOptimizationIgnoreDismiss: (dontAskAgain: Boolean) -> Unit,
 ) {
     val padding = BisqUIConstants.ScreenPadding
     BisqScrollScaffold(
@@ -258,32 +260,34 @@ private fun DashboardContent(
         Column {
             HomeInfoCard(
                 price = marketPrice,
-                text = "dashboard.marketPrice".i18n()
+                text = "dashboard.marketPrice".i18n(),
             )
             BisqGap.V1()
 
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .height(IntrinsicSize.Max)
-                    .semantics { contentDescription = "dashboard_content" },
-                horizontalArrangement = Arrangement.spacedBy(padding)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Max)
+                        .semantics { contentDescription = "dashboard_content" },
+                horizontalArrangement = Arrangement.spacedBy(padding),
             ) {
                 HomeInfoCard(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     price = offersOnline.toString(),
-                    text = "dashboard.offersOnline".i18n()
+                    text = "dashboard.offersOnline".i18n(),
                 )
                 if (showNumConnections) {
                     HomeInfoCard(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         price = numConnections.toString(),
-                        text = "mobile.dashboard.numConnections".i18n()
+                        text = "mobile.dashboard.numConnections".i18n(),
                     )
                 } else {
                     HomeInfoCard(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         price = publishedProfiles.toString(),
-                        text = "dashboard.activeUsers".i18n()
+                        text = "dashboard.activeUsers".i18n(),
                     )
                 }
             }
@@ -293,24 +297,26 @@ private fun DashboardContent(
         if (tradeRulesConfirmed) {
             DashBoardCard(
                 title = "mobile.dashboard.startTrading.headline".i18n(),
-                bulletPoints = listOf(
-                    Pair("mobile.dashboard.main.content1".i18n(), Res.drawable.icon_markets),
-                    Pair("mobile.dashboard.main.content2".i18n(), Res.drawable.icon_chat_circle),
-                    Pair("mobile.dashboard.main.content3".i18n(), Res.drawable.reputation)
-                ),
+                bulletPoints =
+                    listOf(
+                        Pair("mobile.dashboard.main.content1".i18n(), Res.drawable.icon_markets),
+                        Pair("mobile.dashboard.main.content2".i18n(), Res.drawable.icon_chat_circle),
+                        Pair("mobile.dashboard.main.content3".i18n(), Res.drawable.reputation),
+                    ),
                 buttonText = "mobile.dashboard.startTrading.button".i18n(),
-                buttonHandler = onNavigateToMarkets
+                buttonHandler = onNavigateToMarkets,
             )
         } else {
             DashBoardCard(
                 title = "mobile.dashboard.tradeGuide.headline".i18n(),
-                bulletPoints = listOf(
-                    Pair("mobile.dashboard.tradeGuide.bulletPoint1".i18n(), Res.drawable.thumbs_up),
-                    Pair("bisqEasy.onboarding.top.content2".i18n(), Res.drawable.icon_payment),
-                    Pair("bisqEasy.onboarding.top.content3".i18n(), Res.drawable.icon_learn)
-                ),
+                bulletPoints =
+                    listOf(
+                        Pair("mobile.dashboard.tradeGuide.bulletPoint1".i18n(), Res.drawable.thumbs_up),
+                        Pair("bisqEasy.onboarding.top.content2".i18n(), Res.drawable.icon_payment),
+                        Pair("bisqEasy.onboarding.top.content3".i18n(), Res.drawable.icon_learn),
+                    ),
                 buttonText = "support.resources.guides.tradeGuide".i18n(),
-                buttonHandler = onOpenTradeGuide
+                buttonHandler = onOpenTradeGuide,
             )
         }
         Spacer(modifier = Modifier.fillMaxHeight().weight(0.2f))
@@ -319,29 +325,28 @@ private fun DashboardContent(
     if (isPermissionRequestDialogVisible) {
         NotificationPermissionDialog(
             onConfirm = onPermissionRequest,
-            onDismiss = onPermissionDenied,
+            onDismiss = onPermissionDeny,
         )
     }
 
     if (isBatteryOptimizationsDialogVisible) {
         BatteryOptimizationsDialog(
             onConfirm = onBatteryOptimizationIgnoreRequest,
-            onDismiss = onBatteryOptimizationIgnoreDismissed,
+            onDismiss = onBatteryOptimizationIgnoreDismiss,
         )
     }
 }
-
 
 @Composable
 fun DashBoardCard(
     title: String,
     bulletPoints: List<Pair<String, DrawableResource>>,
     buttonText: String,
-    buttonHandler: () -> Unit
+    buttonHandler: () -> Unit,
 ) {
     BisqCard(
         padding = BisqUIConstants.ScreenPadding2X,
-        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
     ) {
         AutoResizeText(
             text = title,
@@ -355,14 +360,15 @@ fun DashBoardCard(
             bulletPoints.forEach { (pointKey, icon) ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPadding)
+                    modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPadding),
                 ) {
                     Image(
-                        painterResource(icon), "",
-                        modifier = Modifier.size(30.dp)
+                        painterResource(icon),
+                        "",
+                        modifier = Modifier.size(30.dp),
                     )
                     BisqGap.H1()
-                    BisqText.baseLight(pointKey)
+                    BisqText.BaseLight(pointKey)
                 }
             }
         }
@@ -376,14 +382,18 @@ fun DashBoardCard(
 }
 
 @Composable
-fun HomeInfoCard(modifier: Modifier = Modifier, price: String, text: String) {
+fun HomeInfoCard(
+    price: String,
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     BisqCard(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AmountWithCurrency(price) // TODO should be generic
         BisqGap.V1()
-        BisqText.smallRegularGrey(
+        BisqText.SmallRegularGrey(
             text = text,
             textAlign = TextAlign.Center,
         )
@@ -411,34 +421,30 @@ private fun DashboardContentPreview(
             snackbarHostState = SnackbarHostState(),
             isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
             onPermissionRequest = {},
-            onPermissionDenied = { _ -> },
+            onPermissionDeny = { _ -> },
             isBatteryOptimizationsDialogVisible = isBatteryOptimizationsDialogVisible,
             onBatteryOptimizationIgnoreRequest = {},
-            onBatteryOptimizationIgnoreDismissed = { _ -> },
+            onBatteryOptimizationIgnoreDismiss = { _ -> },
         )
     }
 }
 
 @Preview
 @Composable
-private fun DashboardContentPreview_En() = DashboardContentPreview(tradeRulesConfirmed = true)
+private fun DashboardContentPreview_EnPreview() = DashboardContentPreview(tradeRulesConfirmed = true)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_EnRulesNotConfirmed() =
-    DashboardContentPreview(tradeRulesConfirmed = false)
+private fun DashboardContentPreview_EnRulesNotConfirmedPreview() = DashboardContentPreview(tradeRulesConfirmed = false)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_En_PermissionDialog() =
-    DashboardContentPreview(isPermissionRequestDialogVisible = true)
+private fun DashboardContentPreview_En_PermissionDialogPreview() = DashboardContentPreview(isPermissionRequestDialogVisible = true)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_Ru() = DashboardContentPreview("ru", true)
+private fun DashboardContentPreview_RuPreview() = DashboardContentPreview("ru", true)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_RuRulesNotConfirmed() = DashboardContentPreview("ru", false)
-
-
+private fun DashboardContentPreview_RuRulesNotConfirmedPreview() = DashboardContentPreview("ru", false)

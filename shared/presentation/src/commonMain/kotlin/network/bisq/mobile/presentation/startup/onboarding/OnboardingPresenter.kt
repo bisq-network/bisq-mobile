@@ -11,47 +11,52 @@ import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.pager_view.PagerViewItem
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class OnboardingPresenter(
     mainPresenter: MainPresenter,
     private val settingsRepository: SettingsRepository,
     private val userProfileService: UserProfileServiceFacade,
-) : BasePresenter(mainPresenter), IOnboardingPresenter {
-
-    private val pages = listOf(
-        PagerViewItem(
-            title = "mobile.onboarding.teaserHeadline1".i18n(),
-            image = Res.drawable.img_bisq_Easy,
-            desc = "mobile.onboarding.line1".i18n()
-        ),
-        // Shown at full mode
-        PagerViewItem(
-            title = "mobile.onboarding.fullMode.teaserHeadline".i18n(),
-            image = Res.drawable.img_p2p_tor,
-            desc = "mobile.onboarding.fullMode.line".i18n()
-        ),
-        // Shown at client mode
-        PagerViewItem(
-            title = "mobile.onboarding.clientMode.teaserHeadline".i18n(),
-            image = Res.drawable.img_connect,
-            desc = "mobile.onboarding.clientMode.line".i18n()
+) : BasePresenter(mainPresenter),
+    IOnboardingPresenter {
+    private val pages =
+        listOf(
+            PagerViewItem(
+                title = "mobile.onboarding.teaserHeadline1".i18n(),
+                image = Res.drawable.img_bisq_Easy,
+                desc = "mobile.onboarding.line1".i18n(),
+            ),
+            // Shown at full mode
+            PagerViewItem(
+                title = "mobile.onboarding.fullMode.teaserHeadline".i18n(),
+                image = Res.drawable.img_p2p_tor,
+                desc = "mobile.onboarding.fullMode.line".i18n(),
+            ),
+            // Shown at client mode
+            PagerViewItem(
+                title = "mobile.onboarding.clientMode.teaserHeadline".i18n(),
+                image = Res.drawable.img_connect,
+                desc = "mobile.onboarding.clientMode.line".i18n(),
+            ),
         )
-    )
 
     override var filteredPages: List<PagerViewItem> = listOf()
 
     override fun onViewAttached() {
         super.onViewAttached()
 
-        filteredPages = pages.filterIndexed { index, _ ->
-            indexesToShow.contains(index)
-        }
+        filteredPages =
+            pages.filterIndexed { index, _ ->
+                indexesToShow.contains(index)
+            }
     }
 
-    override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
+    override fun onNextButtonClick(
+        coroutineScope: CoroutineScope,
+        pagerState: PagerState,
+    ) {
         presenterScope.launch {
             if (pagerState.currentPage == filteredPages.lastIndex) {
                 showLoading()

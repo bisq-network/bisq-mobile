@@ -26,15 +26,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.components.organisms.pager_view.PagerViewItem
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun BisqPagerView(pagerState: PagerState, pageItems: List<PagerViewItem>) {
-
+fun BisqPagerView(
+    pagerState: PagerState,
+    pageItems: List<PagerViewItem>,
+) {
     CompositionLocalProvider(values = arrayOf()) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -45,23 +46,23 @@ fun BisqPagerView(pagerState: PagerState, pageItems: List<PagerViewItem>) {
                 contentPadding = PaddingValues(horizontal = 18.dp),
                 pageSize = PageSize.Fill,
                 verticalAlignment = Alignment.CenterVertically,
-                state = pagerState
+                state = pagerState,
             ) { index ->
-                pageItems.getOrNull(
-                    index % (pageItems.size)
-                )?.let { item ->
-                    PagerSingleItem(
-                        image = item.image,
-                        title = item.title,
-                        desc = item.desc,
-                        index = index,
-                    )
-                }
+                pageItems
+                    .getOrNull(
+                        index % (pageItems.size),
+                    )?.let { item ->
+                        PagerSingleItem(
+                            image = item.image,
+                            title = item.title,
+                            desc = item.desc,
+                            index = index,
+                        )
+                    }
             }
             PagerLineIndicator(pagerState = pagerState)
         }
     }
-
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -70,22 +71,23 @@ fun PagerSingleItem(
     title: String,
     image: DrawableResource,
     desc: String,
-    index: Int
+    index: Int,
 ) {
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(420.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(color = BisqTheme.colors.dark_grey30)
-            .padding(vertical = 20.dp, horizontal = 10.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(420.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(color = BisqTheme.colors.dark_grey30)
+                .padding(vertical = 20.dp, horizontal = 10.dp),
     ) {
         BisqGap.VHalf()
         Image(painterResource(image), title, modifier = Modifier.size(110.dp))
-        BisqText.h2Light(title, textAlign = TextAlign.Center)
-        BisqText.h6Light(
+        BisqText.H2Light(title, textAlign = TextAlign.Center)
+        BisqText.H6Light(
             text = desc,
             color = BisqTheme.colors.mid_grey20,
             textAlign = TextAlign.Center,
@@ -97,16 +99,17 @@ fun PagerSingleItem(
 @Composable
 fun PagerLineIndicator(pagerState: PagerState) {
     Box(
-        contentAlignment = Alignment.CenterStart
+        contentAlignment = Alignment.CenterStart,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             repeat(pagerState.pageCount) {
                 Box(
-                    modifier = Modifier
-                        .size(width = 76.dp, height = 2.dp)
-                        .background(color = BisqTheme.colors.mid_grey20)
+                    modifier =
+                        Modifier
+                            .size(width = 76.dp, height = 2.dp)
+                            .background(color = BisqTheme.colors.mid_grey20),
                 )
             }
         }
@@ -114,19 +117,20 @@ fun PagerLineIndicator(pagerState: PagerState) {
             Modifier
                 .slidingLineTransition(
                     pagerState,
-                    76f * LocalDensity.current.density
-                )
-                .size(width = 76.dp, height = 3.dp)
+                    76f * LocalDensity.current.density,
+                ).size(width = 76.dp, height = 3.dp)
                 .background(
                     color = BisqTheme.colors.primary,
                     shape = RoundedCornerShape(4.dp),
-                )
+                ),
         )
     }
 }
 
-fun Modifier.slidingLineTransition(pagerState: PagerState, distance: Float) =
-    graphicsLayer {
-        val scrollPosition = pagerState.currentPage + pagerState.currentPageOffsetFraction
-        translationX = scrollPosition * distance
-    }
+fun Modifier.slidingLineTransition(
+    pagerState: PagerState,
+    distance: Float,
+) = graphicsLayer {
+    val scrollPosition = pagerState.currentPage + pagerState.currentPageOffsetFraction
+    translationX = scrollPosition * distance
+}

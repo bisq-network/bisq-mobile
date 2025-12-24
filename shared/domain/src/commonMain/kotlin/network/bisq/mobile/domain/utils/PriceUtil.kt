@@ -13,10 +13,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.MathUtils.roundTo
 import kotlin.math.pow
 
-
-
 object PriceUtil {
-
     /**
      * A quote created from a market price quote and a percentage
      *
@@ -24,10 +21,13 @@ object PriceUtil {
      * @param percentage  Offset from market price in percent normalize to 1 (=100%).
      * @return The quote representing the offset from market price
      */
-    fun fromMarketPriceMarkup(marketPrice: PriceQuoteVO, percentage: Double): PriceQuoteVO {
+    fun fromMarketPriceMarkup(
+        marketPrice: PriceQuoteVO,
+        percentage: Double,
+    ): PriceQuoteVO {
         require(percentage >= -1) { "Percentage must not be lower than -100%" }
         val price = marketPrice.asDouble() * (1 + percentage)
-        return PriceQuoteVOFactory.fromPrice(price, marketPrice.market);
+        return PriceQuoteVOFactory.fromPrice(price, marketPrice.market)
     }
 
     /**
@@ -42,7 +42,10 @@ object PriceUtil {
      * same market (same base and quote codes). This protects against accidental extra scaling
      * of user input while avoiding cross-market interference.
      */
-    fun getPercentageToMarketPrice(marketPrice: PriceQuoteVO, priceQuote: PriceQuoteVO): Double {
+    fun getPercentageToMarketPrice(
+        marketPrice: PriceQuoteVO,
+        priceQuote: PriceQuoteVO,
+    ): Double {
         require(marketPrice.value > 0) { "marketQuote must be positive" }
         require(priceQuote.value >= 0) { "priceQuote must be non-negative" }
 
@@ -63,7 +66,8 @@ object PriceUtil {
         // If ratio is far from 1, try to auto-correct potential 10^n scale mismatches.
         // We only attempt this when both quotes refer to the same market and currencies.
         if (ratio > 10.0 || ratio < 0.1) {
-            val sameMarket = marketPrice.market.baseCurrencyCode == priceQuote.market.baseCurrencyCode &&
+            val sameMarket =
+                marketPrice.market.baseCurrencyCode == priceQuote.market.baseCurrencyCode &&
                     marketPrice.market.quoteCurrencyCode == priceQuote.market.quoteCurrencyCode
             if (sameMarket) {
                 val downScales = (1..4).map { 1 / 10.0.pow(it) }.toDoubleArray()
@@ -96,7 +100,7 @@ object PriceUtil {
     fun findPercentFromMarketPrice(
         marketPriceService: MarketPriceServiceFacade,
         priceSpec: PriceSpecVO,
-        market: MarketVO
+        market: MarketVO,
     ): Double {
         val percentage: Double
         if (priceSpec is FixPriceSpecVO) {

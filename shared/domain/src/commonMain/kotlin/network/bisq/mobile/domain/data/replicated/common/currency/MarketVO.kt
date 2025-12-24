@@ -23,15 +23,18 @@ data class MarketVO(
     val baseCurrencyCode: String,
     val quoteCurrencyCode: String,
     val baseCurrencyName: String = baseCurrencyCode,
-    val quoteCurrencyName: String = quoteCurrencyCode
+    val quoteCurrencyName: String = quoteCurrencyCode,
 )
 
-val marketListDemoObj = listOf(MarketVO("BTC", "USD"),
-    MarketVO("BTC", "EUR"),
-    MarketVO("BTC", "ARS"),
-    MarketVO("BTC", "PYG"),
-    MarketVO("BTC", "LBP"),
-    MarketVO("BTC", "CZK"),
-    MarketVO("BTC", "AUD"),
-    MarketVO("BTC", "CAD"),
-    MarketVO("BTC", "IDR"))
+val marketListDemoObj =
+    listOf(
+        MarketVO("BTC", "USD"),
+        MarketVO("BTC", "EUR"),
+        MarketVO("BTC", "ARS"),
+        MarketVO("BTC", "PYG"),
+        MarketVO("BTC", "LBP"),
+        MarketVO("BTC", "CZK"),
+        MarketVO("BTC", "AUD"),
+        MarketVO("BTC", "CAD"),
+        MarketVO("BTC", "IDR"),
+    )

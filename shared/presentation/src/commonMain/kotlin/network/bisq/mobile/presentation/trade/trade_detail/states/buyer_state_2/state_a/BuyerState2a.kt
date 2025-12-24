@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a
 
 import androidx.compose.foundation.layout.Column
@@ -29,7 +31,7 @@ fun BuyerState2a(
     Column(horizontalAlignment = Alignment.Start) {
         BisqGap.V1()
         // Send {0} to the seller''s payment account
-        BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase2a.headline".i18n(quoteAmount))
+        BisqText.H5Light("bisqEasy.tradeState.info.buyer.phase2a.headline".i18n(quoteAmount))
 
         BisqGap.VHalf()
         BisqTextField(

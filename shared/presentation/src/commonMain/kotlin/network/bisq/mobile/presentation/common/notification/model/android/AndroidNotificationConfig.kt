@@ -48,7 +48,6 @@ class AndroidNotificationConfig {
 
     var category: AndroidNotificationCategory? = null
 
-
     /**
      * `setShowWhen` is called with this value
      */

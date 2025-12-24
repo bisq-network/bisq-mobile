@@ -24,5 +24,5 @@ data class OutputVO(
     val scriptPubKeyAsm: String,
     val scriptPubKeyType: String,
     val address: String,
-    val value: Long
+    val value: Long,
 )

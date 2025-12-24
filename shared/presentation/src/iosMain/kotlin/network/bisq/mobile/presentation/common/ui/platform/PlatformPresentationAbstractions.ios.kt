@@ -31,8 +31,6 @@ actual fun moveAppToBackground(view: Any?) {
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = IOSCurrentTimeProvider()
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun getScreenWidthDp(): Int {
-    return CGRectGetWidth(UIScreen.mainScreen.bounds).toInt()
-}
+actual fun getScreenWidthDp(): Int = CGRectGetWidth(UIScreen.mainScreen.bounds).toInt()
 
 actual fun isAffectedBottomSheetDevice(): Boolean = false

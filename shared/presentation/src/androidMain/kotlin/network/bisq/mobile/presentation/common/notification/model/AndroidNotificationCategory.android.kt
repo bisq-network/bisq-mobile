@@ -3,12 +3,11 @@ package network.bisq.mobile.presentation.common.notification.model
 import androidx.core.app.NotificationCompat
 import network.bisq.mobile.presentation.common.notification.model.android.AndroidNotificationCategory
 
-
 /**
  * Converts the KMP enum value to the target platform value
  */
-fun AndroidNotificationCategory?.toNotificationCompat(): String {
-    return when(this) {
+fun AndroidNotificationCategory?.toNotificationCompat(): String =
+    when (this) {
         AndroidNotificationCategory.CATEGORY_CALL -> NotificationCompat.CATEGORY_CALL
         AndroidNotificationCategory.CATEGORY_NAVIGATION -> NotificationCompat.CATEGORY_NAVIGATION
         AndroidNotificationCategory.CATEGORY_MESSAGE -> NotificationCompat.CATEGORY_MESSAGE
@@ -24,12 +23,11 @@ fun AndroidNotificationCategory?.toNotificationCompat(): String {
         AndroidNotificationCategory.CATEGORY_SERVICE -> NotificationCompat.CATEGORY_SERVICE
         AndroidNotificationCategory.CATEGORY_REMINDER -> NotificationCompat.CATEGORY_REMINDER
         AndroidNotificationCategory.CATEGORY_RECOMMENDATION -> NotificationCompat.CATEGORY_RECOMMENDATION
-        AndroidNotificationCategory.CATEGORY_STATUS  -> NotificationCompat.CATEGORY_STATUS
-        AndroidNotificationCategory.CATEGORY_WORKOUT  -> NotificationCompat.CATEGORY_WORKOUT
-        AndroidNotificationCategory.CATEGORY_LOCATION_SHARING  -> NotificationCompat.CATEGORY_LOCATION_SHARING
-        AndroidNotificationCategory.CATEGORY_STOPWATCH  -> NotificationCompat.CATEGORY_STOPWATCH
-        AndroidNotificationCategory.CATEGORY_MISSED_CALL  -> NotificationCompat.CATEGORY_MISSED_CALL
-        AndroidNotificationCategory.CATEGORY_VOICEMAIL  -> NotificationCompat.CATEGORY_VOICEMAIL
+        AndroidNotificationCategory.CATEGORY_STATUS -> NotificationCompat.CATEGORY_STATUS
+        AndroidNotificationCategory.CATEGORY_WORKOUT -> NotificationCompat.CATEGORY_WORKOUT
+        AndroidNotificationCategory.CATEGORY_LOCATION_SHARING -> NotificationCompat.CATEGORY_LOCATION_SHARING
+        AndroidNotificationCategory.CATEGORY_STOPWATCH -> NotificationCompat.CATEGORY_STOPWATCH
+        AndroidNotificationCategory.CATEGORY_MISSED_CALL -> NotificationCompat.CATEGORY_MISSED_CALL
+        AndroidNotificationCategory.CATEGORY_VOICEMAIL -> NotificationCompat.CATEGORY_VOICEMAIL
         null -> NotificationCompat.CATEGORY_MESSAGE
     }
-}

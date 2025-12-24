@@ -6,7 +6,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class SemanticVersionTest {
-
     @Test
     fun basicOrdering() {
         assertTrue(SemanticVersion.compare("1.0.0", "2.0.0") < 0)
@@ -45,18 +44,19 @@ class SemanticVersionTest {
 
     @Test
     fun listSortingMatchesSemverSpec() {
-        val sorted = listOf(
-            "1.0.0-alpha",
-            "1.0.0-alpha.1",
-            "1.0.0-alpha.beta",
-            "1.0.0-beta",
-            "1.0.0-beta.2",
-            "1.0.0-beta.11",
-            "1.0.0-rc.1",
-            "1.0.0",
-            "2.0.0-0.3.7",
-            "2.0.0"
-        )
+        val sorted =
+            listOf(
+                "1.0.0-alpha",
+                "1.0.0-alpha.1",
+                "1.0.0-alpha.beta",
+                "1.0.0-beta",
+                "1.0.0-beta.2",
+                "1.0.0-beta.11",
+                "1.0.0-rc.1",
+                "1.0.0",
+                "2.0.0-0.3.7",
+                "2.0.0",
+            )
         val shuffled = sorted.shuffled().sortedWith(SemanticVersion.SEMVER_ORDER)
         assertEquals(sorted, shuffled)
     }

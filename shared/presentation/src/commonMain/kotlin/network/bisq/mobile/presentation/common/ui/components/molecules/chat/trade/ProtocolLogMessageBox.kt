@@ -24,42 +24,43 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 @Composable
 fun ProtocolLogMessageBox(
     message: BisqEasyOpenTradeMessageModel,
-    modifier: Modifier = Modifier,
     onResendMessage: (String) -> Unit,
     userNameProvider: suspend (String) -> String,
+    modifier: Modifier = Modifier,
 ) {
     var showInfo by remember { mutableStateOf(false) }
 
     Row(
-        modifier = modifier
-            .background(BisqTheme.colors.dark_grey30)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-
+        modifier =
+            modifier
+                .background(BisqTheme.colors.dark_grey30)
+                .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
     ) {
         Column(
             modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         ) {
-            BisqText.smallLight(message.decodedText, textAlign = TextAlign.Center)
+            BisqText.SmallLight(message.decodedText, textAlign = TextAlign.Center)
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter),
-                modifier = Modifier.clickable {
-                    showInfo = true
-                },
+                modifier =
+                    Modifier.clickable {
+                        showInfo = true
+                    },
             ) {
                 MessageDeliveryBox(
                     onResendMessage = onResendMessage,
                     userNameProvider = userNameProvider,
                     messageDeliveryInfoByPeersProfileId = message.messageDeliveryStatus,
                     showInfo,
-                    onDismissMenu = { showInfo = false }
+                    onDismissMenu = { showInfo = false },
                 )
 
-                BisqText.xsmallLightGrey(message.dateString)
+                BisqText.XSmallLightGrey(message.dateString)
             }
         }
     }

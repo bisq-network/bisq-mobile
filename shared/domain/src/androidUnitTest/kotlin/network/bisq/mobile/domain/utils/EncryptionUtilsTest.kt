@@ -11,51 +11,51 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class EncryptionUtilsTest {
-
     @Test
-    fun encryptWritesHeaderAndDecryptsRoundtrip() = runTest {
-        val tmpDir = Files.createTempDirectory("encTest").toFile()
-        val input = File(tmpDir, "in.zip").apply { writeText("hello world\n12345") }
-        val enc = File(tmpDir, "out.enc")
-        val password = "pass123"
+    fun encryptWritesHeaderAndDecryptsRoundtrip() =
+        runTest {
+            val tmpDir = Files.createTempDirectory("encTest").toFile()
+            val input = File(tmpDir, "in.zip").apply { writeText("hello world\n12345") }
+            val enc = File(tmpDir, "out.enc")
+            val password = "pass123"
 
-        encrypt(input, enc, password)
-        assertTrue(enc.exists() && enc.length() > 0)
+            encrypt(input, enc, password)
+            assertTrue(enc.exists() && enc.length() > 0)
 
-        // Verify header bytes at start
-        val headerExpected = "BISQENC|AES256GCM|PBKDF2|v1\n".toByteArray()
-        FileInputStream(enc).use { fis ->
-            val headerBuf = ByteArray(headerExpected.size)
-            val n = fis.read(headerBuf)
-            assertEquals(headerExpected.size, n)
-            assertTrue(headerBuf.contentEquals(headerExpected))
+            // Verify header bytes at start
+            val headerExpected = "BISQENC|AES256GCM|PBKDF2|v1\n".toByteArray()
+            FileInputStream(enc).use { fis ->
+                val headerBuf = ByteArray(headerExpected.size)
+                val n = fis.read(headerBuf)
+                assertEquals(headerExpected.size, n)
+                assertTrue(headerBuf.contentEquals(headerExpected))
+            }
+
+            // Roundtrip decrypt
+            val decrypted = FileInputStream(enc).use { decrypt(it, password) }
+            val decryptedText = decrypted.readText()
+            assertEquals(input.readText(), decryptedText)
+            decrypted.delete()
         }
 
-        // Roundtrip decrypt
-        val decrypted = FileInputStream(enc).use { decrypt(it, password) }
-        val decryptedText = decrypted.readText()
-        assertEquals(input.readText(), decryptedText)
-        decrypted.delete()
-    }
-
     @Test
-    fun decryptFailsWithoutHeader() = runTest {
-        val tmpDir = Files.createTempDirectory("encNoHdr").toFile()
-        val input = File(tmpDir, "in.zip").apply { writeText("abc") }
-        val enc = File(tmpDir, "out.enc")
-        val noHdr = File(tmpDir, "out_no_hdr.enc")
-        val password = "pass123"
+    fun decryptFailsWithoutHeader() =
+        runTest {
+            val tmpDir = Files.createTempDirectory("encNoHdr").toFile()
+            val input = File(tmpDir, "in.zip").apply { writeText("abc") }
+            val enc = File(tmpDir, "out.enc")
+            val noHdr = File(tmpDir, "out_no_hdr.enc")
+            val password = "pass123"
 
-        encrypt(input, enc, password)
+            encrypt(input, enc, password)
 
-        // Remove header bytes to simulate legacy/invalid format
-        val headerLen = "BISQENC|AES256GCM|PBKDF2|v1\n".toByteArray().size
-        val bytes = enc.readBytes()
-        noHdr.writeBytes(bytes.copyOfRange(headerLen, bytes.size))
+            // Remove header bytes to simulate legacy/invalid format
+            val headerLen = "BISQENC|AES256GCM|PBKDF2|v1\n".toByteArray().size
+            val bytes = enc.readBytes()
+            noHdr.writeBytes(bytes.copyOfRange(headerLen, bytes.size))
 
-        assertFailsWith<IOException> {
-            FileInputStream(noHdr).use { decrypt(it, password) }
+            assertFailsWith<IOException> {
+                FileInputStream(noHdr).use { decrypt(it, password) }
+            }
         }
-    }
 }
-

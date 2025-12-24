@@ -10,13 +10,14 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.inputfiel
 fun InvalidAddressConfirmationDialog(
     addressType: BitcoinLnAddressFieldType,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
 ) {
-    val warningText = if (addressType == BitcoinLnAddressFieldType.Bitcoin) {
-        "bisqEasy.takeOffer.bitcoinPaymentData.warning.MAIN_CHAIN".i18n()
-    } else {
-        "bisqEasy.takeOffer.bitcoinPaymentData.warning.LN".i18n()
-    }
+    val warningText =
+        if (addressType == BitcoinLnAddressFieldType.Bitcoin) {
+            "bisqEasy.takeOffer.bitcoinPaymentData.warning.MAIN_CHAIN".i18n()
+        } else {
+            "bisqEasy.takeOffer.bitcoinPaymentData.warning.LN".i18n()
+        }
 
     WarningConfirmationDialog(
         message = warningText,
@@ -27,5 +28,4 @@ fun InvalidAddressConfirmationDialog(
         horizontalAlignment = Alignment.Start,
         verticalButtonPlacement = true,
     )
-
 }

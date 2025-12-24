@@ -36,7 +36,8 @@ class ClientUserProfileServiceFacade(
     private val clientCatHashService: ClientCatHashService<PlatformImage>,
     private val json: Json,
     private val webSocketClientService: WebSocketClientService,
-) : ServiceFacade(), UserProfileServiceFacade {
+) : ServiceFacade(),
+    UserProfileServiceFacade {
     companion object {
         private const val MIN_PAUSE_TO_NEXT_REPUBLISH = 5 * 60 * 1000L // 5 minutes in milliseconds
     }
@@ -53,8 +54,8 @@ class ClientUserProfileServiceFacade(
     private val _numUserProfiles = MutableStateFlow(0)
     override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
 
-    private val _ignoredUserIds: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
-    override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredUserIds.asStateFlow()
+    private val _ignoredProfileIds: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+    override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredProfileIds.asStateFlow()
     private val ignoredUserIdsMutex = Mutex()
 
     // Track initialization state to prevent race conditions
@@ -89,7 +90,7 @@ class ClientUserProfileServiceFacade(
                         log.e(e) { "Failed to initialize ignored users cache during activation" }
                         // Set empty cache to prevent repeated network calls
                         ignoredUserIdsMutex.withLock {
-                            _ignoredUserIds.value = emptySet()
+                            _ignoredProfileIds.value = emptySet()
                         }
                     }
                 }
@@ -103,7 +104,7 @@ class ClientUserProfileServiceFacade(
         // Clear cache state on deactivation
         serviceScope.launch {
             ignoredUserIdsMutex.withLock {
-                _ignoredUserIds.value = emptySet()
+                _ignoredProfileIds.value = emptySet()
                 isIgnoredUsersCacheInitialized = false
             }
         }
@@ -111,12 +112,13 @@ class ClientUserProfileServiceFacade(
     }
 
     // API
-    override suspend fun hasUserProfile(): Boolean {
-        return getUserIdentityIds().isNotEmpty()
-    }
+    override suspend fun hasUserProfile(): Boolean = getUserIdentityIds().isNotEmpty()
 
     @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun generateKeyPair(imageSize: Int, result: (String, String, PlatformImage?) -> Unit) {
+    override suspend fun generateKeyPair(
+        imageSize: Int,
+        result: (String, String, PlatformImage?) -> Unit,
+    ) {
         val ts = Clock.System.now().toEpochMilliseconds()
         val apiResult = apiGateway.getKeyMaterial()
         if (apiResult.isFailure) {
@@ -127,12 +129,13 @@ class ClientUserProfileServiceFacade(
         createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
         val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
         val solutionEncoded = preparedData.proofOfWork.solutionEncoded
-        val image: PlatformImage? = clientCatHashService.getImage(
-            pubKeyHash,
-            solutionEncoded.decodeBase64Bytes(),
-            0,
-            imageSize
-        )
+        val image: PlatformImage? =
+            clientCatHashService.getImage(
+                pubKeyHash,
+                solutionEncoded.decodeBase64Bytes(),
+                0,
+                imageSize,
+            )
 
         result(preparedData.id, preparedData.nym, image)
         this.keyMaterialResponse = preparedData
@@ -155,7 +158,8 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun updateAndPublishUserProfile(
-        statement: String?, terms: String?
+        statement: String?,
+        terms: String?,
     ): Result<UserProfileVO> {
         try {
             // trigger exception if no selected user profile
@@ -230,12 +234,13 @@ class ClientUserProfileServiceFacade(
         delay(delayDuration)
     }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage {
-        return getUserProfileIcon(userProfile, ClientCatHashService.DEFAULT_SIZE)
-    }
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage = getUserProfileIcon(userProfile, ClientCatHashService.DEFAULT_SIZE)
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage {
-        return try {
+    override suspend fun getUserProfileIcon(
+        userProfile: UserProfileVO,
+        size: Number,
+    ): PlatformImage =
+        try {
             // In case we create the image we want to run it in IO context.
             // We cache the images in the catHashService if its <=120 px
             withContext(Dispatchers.IO) {
@@ -250,11 +255,10 @@ class ClientUserProfileServiceFacade(
             log.e(e) { "Failed to get user profile icon; returning fallback" }
             fallbackProfileImage()
         }
-    }
 
     @OptIn(ExperimentalEncodingApi::class)
-    private fun fallbackProfileImage(): PlatformImage {
-        return try {
+    private fun fallbackProfileImage(): PlatformImage =
+        try {
             // Try to decode a 1x1 transparent PNG
             val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
             val bytes = Base64.decode(base64)
@@ -265,11 +269,8 @@ class ClientUserProfileServiceFacade(
             // and we'll create an empty image in the platform implementation
             createEmptyImage()
         }
-    }
 
-    override suspend fun getUserPublishDate(): Long {
-        return selectedUserProfile.value?.publishDate ?: 0L
-    }
+    override suspend fun getUserPublishDate(): Long = selectedUserProfile.value?.publishDate ?: 0L
 
     override suspend fun userActivityDetected() {
         lastPublishedMutex.withLock {
@@ -278,7 +279,8 @@ class ClientUserProfileServiceFacade(
                 log.d { "Ignoring user activity detection due to recent activity" }
                 return@withLock
             }
-            apiGateway.triggerUserActivityDetection()
+            apiGateway
+                .triggerUserActivityDetection()
                 .onSuccess { lastPublished = now }
                 .onFailure { e -> log.d { "Failed to trigger user activity detection: ${e.message}" } }
         }
@@ -288,7 +290,7 @@ class ClientUserProfileServiceFacade(
         try {
             apiGateway.ignoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
-                _ignoredUserIds.value = _ignoredUserIds.value + profileId
+                _ignoredProfileIds.value = _ignoredProfileIds.value + profileId
                 isIgnoredUsersCacheInitialized = true
             }
         } catch (e: Exception) {
@@ -301,7 +303,7 @@ class ClientUserProfileServiceFacade(
         try {
             apiGateway.undoIgnoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
-                _ignoredUserIds.value = _ignoredUserIds.value - profileId
+                _ignoredProfileIds.value = _ignoredProfileIds.value - profileId
                 isIgnoredUsersCacheInitialized = true
             }
         } catch (e: Exception) {
@@ -310,9 +312,7 @@ class ClientUserProfileServiceFacade(
         }
     }
 
-    override suspend fun isUserIgnored(profileId: String): Boolean {
-        return profileId in getIgnoredUserProfileIds()
-    }
+    override suspend fun isUserIgnored(profileId: String): Boolean = profileId in getIgnoredUserProfileIds()
 
     /**
      * Fast, non-suspending check for ignored users using only the in-memory cache.
@@ -323,7 +323,7 @@ class ClientUserProfileServiceFacade(
      */
     fun isUserIgnoredCached(profileId: String): Boolean {
         // Fast path: check if cache is initialized and contains the user
-        val cache = _ignoredUserIds.value
+        val cache = _ignoredProfileIds.value
         return if (isIgnoredUsersCacheInitialized) {
             profileId in cache
         } else {
@@ -335,19 +335,20 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun getIgnoredUserProfileIds(): Set<String> {
-        if (isIgnoredUsersCacheInitialized) return _ignoredUserIds.value
+        if (isIgnoredUsersCacheInitialized) return _ignoredProfileIds.value
         try {
             val fetched = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
-            val result = ignoredUserIdsMutex.withLock {
-                if (isIgnoredUsersCacheInitialized) {
-                    // Another path (ignore/undo) initialized the cache meanwhile; keep current cache
-                    _ignoredUserIds.value
-                } else {
-                    _ignoredUserIds.value = fetched
-                    isIgnoredUsersCacheInitialized = true
-                    fetched
+            val result =
+                ignoredUserIdsMutex.withLock {
+                    if (isIgnoredUsersCacheInitialized) {
+                        // Another path (ignore/undo) initialized the cache meanwhile; keep current cache
+                        _ignoredProfileIds.value
+                    } else {
+                        _ignoredProfileIds.value = fetched
+                        isIgnoredUsersCacheInitialized = true
+                        fetched
+                    }
                 }
-            }
             return result
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch ignored user IDs" }
@@ -357,7 +358,7 @@ class ClientUserProfileServiceFacade(
 
     override suspend fun reportUserProfile(
         accusedUserProfile: UserProfileVO,
-        message: String
+        message: String,
     ): Result<Unit> {
         val trimmedMessage = message.trim()
         if (trimmedMessage.isBlank()) {

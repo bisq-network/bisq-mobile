@@ -63,12 +63,11 @@ fun CreateOfferAmountScreen() {
         shouldBlurBg = showLimitPopup,
         showUserAvatar = false,
         closeAction = true,
-        onConfirmedClose = presenter::onClose
+        onConfirmedClose = presenter::onClose,
     ) {
-
-        BisqText.h3Light(
+        BisqText.H3Light(
             text = presenter.headline,
-            modifier = Modifier.align(Alignment.Start)
+            modifier = Modifier.align(Alignment.Start),
         )
 
         BisqGap.V2()
@@ -76,16 +75,17 @@ fun CreateOfferAmountScreen() {
         ToggleTab(
             options = presenter.amountTypes,
             selectedOption = amountType,
-            onOptionSelected = { value ->
+            onOptionSelect = { value ->
                 presenter.onSelectAmountType(value)
             },
             getDisplayString = { direction ->
-                if (direction == AmountType.FIXED_AMOUNT)
+                if (direction == AmountType.FIXED_AMOUNT) {
                     "bisqEasy.tradeWizard.amount.amountModel.fixedAmount".i18n()
-                else
+                } else {
                     "bisqEasy.tradeWizard.amount.amountModel.rangeAmount".i18n()
+                }
             },
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier.align(Alignment.CenterHorizontally),
         )
 
         BisqGap.V2()
@@ -103,7 +103,7 @@ fun CreateOfferAmountScreen() {
                 onSliderValueChange = { presenter.onFixedAmountSliderValueChange(it) },
                 onTextValueChange = { presenter.onFixedAmountTextValueChange(it) },
                 validateTextField = { presenter.validateTextField(it) },
-                onSliderValueChangeFinished = presenter::onSliderDragFinished,
+                onSliderValueChangeFinish = presenter::onSliderDragFinished,
             )
         } else {
             RangeAmountSelector(
@@ -124,7 +124,7 @@ fun CreateOfferAmountScreen() {
                 onMaxAmountTextValueChange = { presenter.onMaxAmountTextValueChange(it) },
                 validateRangeMinTextField = { presenter.validateTextField(it) },
                 validateRangeMaxTextField = { presenter.validateTextField(it) },
-                onRangeSliderChangeFinished = presenter::onSliderDragFinished,
+                onRangeSliderChangeFinish = presenter::onSliderDragFinished,
             )
         }
 
@@ -132,7 +132,7 @@ fun CreateOfferAmountScreen() {
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (shouldShowWarningIcon) {
                 WarningIconLightGrey(modifier = Modifier.size(18.dp))
@@ -140,7 +140,7 @@ fun CreateOfferAmountScreen() {
             NoteText(
                 notes = hintText,
                 linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
-                onLinkClick = { presenter.setShowLimitPopup(true) }
+                onLinkClick = { presenter.setShowLimitPopup(true) },
             )
         }
     }
@@ -150,15 +150,15 @@ fun CreateOfferAmountScreen() {
             ReputationBasedBuyerLimitsPopup(
                 onDismiss = { presenter.setShowLimitPopup(false) },
                 onRepLinkClick = presenter::navigateToReputation,
-                amountLimitInfoOverlayInfo = presenter.amountLimitInfoOverlayInfo
+                amountLimitInfoOverlayInfo = presenter.amountLimitInfoOverlayInfo,
             )
         } else {
             ReputationBasedSellerLimitsPopup(
                 onDismiss = { presenter.setShowLimitPopup(false) },
                 reputationScore = reputation.toString(),
                 maxSellAmount = reputationBasedMaxSellAmount,
-                onRepLinkClick =  presenter::navigateToReputation,
-                onBuildRepLinkClick = presenter::navigateToBuildReputation
+                onRepLinkClick = presenter::navigateToReputation,
+                onBuildRepLinkClick = presenter::navigateToBuildReputation,
             )
         }
     }

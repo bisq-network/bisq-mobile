@@ -19,9 +19,8 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 class ClientMarketPriceServiceFacade(
     private val apiGateway: MarketPriceApiGateway,
     private val json: Json,
-    settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository,
 ) : MarketPriceServiceFacade(settingsRepository) {
-
     // Misc
     private val quotes: MutableMap<String, PriceQuoteVO> = mutableMapOf()
     private val quotesMutex = Mutex()
@@ -79,9 +78,7 @@ class ClientMarketPriceServiceFacade(
         }
     }
 
-    override fun findUSDMarketPriceItem(): MarketPriceItem? {
-        return findMarketPriceItem(MarketVOFactory.USD)
-    }
+    override fun findUSDMarketPriceItem(): MarketPriceItem? = findMarketPriceItem(MarketVOFactory.USD)
 
     override fun refreshSelectedFormattedMarketPrice() {
         updateMarketPriceItem()

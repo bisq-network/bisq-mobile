@@ -9,5 +9,5 @@ data class ProofOfWorkVO(
     val challengeEncoded: String?, // Base64 encoded
     val difficulty: Double,
     val solutionEncoded: String, // Base64 encoded
-    val duration: Long
+    val duration: Long,
 )

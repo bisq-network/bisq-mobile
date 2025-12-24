@@ -4,14 +4,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.utils.Logging
 
 class UserRepositoryImpl(
     private val userStore: DataStore<User>,
-) : UserRepository, Logging {
-
+) : UserRepository,
+    Logging {
     override val data: Flow<User>
         get() =
             userStore.data.catch { exception ->
@@ -44,6 +43,4 @@ class UserRepositoryImpl(
     override suspend fun clear() {
         userStore.updateData { User() }
     }
-
-
 }

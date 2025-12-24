@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.main
 
-import network.bisq.mobile.client.common.di.androidClientPresentationModule
 import network.bisq.mobile.client.common.di.androidClientDomainModule
+import network.bisq.mobile.client.common.di.androidClientPresentationModule
 import network.bisq.mobile.client.common.di.clientModules
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.presentation.main.MainApplication
@@ -12,12 +12,12 @@ import org.koin.core.module.Module
  * Android Bisq Connect Application definition
  */
 class ClientMainApplication : MainApplication() {
-    override fun getKoinModules(): List<Module> {
-        return clientModules + listOf(
-            androidClientDomainModule,
-            androidClientPresentationModule,
-        )
-    }
+    override fun getKoinModules(): List<Module> =
+        clientModules +
+            listOf(
+                androidClientDomainModule,
+                androidClientPresentationModule,
+            )
 
     override fun onCreated() {
         // We start here the initialisation (non blocking) of tor and the service facades.

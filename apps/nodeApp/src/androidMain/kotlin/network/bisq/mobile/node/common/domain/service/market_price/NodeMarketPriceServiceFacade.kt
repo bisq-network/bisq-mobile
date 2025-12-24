@@ -9,15 +9,14 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactor
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.Mappings.MarketMapping
+import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
 class NodeMarketPriceServiceFacade(
     private val applicationService: AndroidApplicationService.Provider,
-    settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository,
 ) : MarketPriceServiceFacade(settingsRepository) {
-
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
 
@@ -56,19 +55,17 @@ class NodeMarketPriceServiceFacade(
 
     override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
         val market = MarketMapping.toBisq2Model(marketVO)
-        return marketPriceService.findMarketPrice(market)
+        return marketPriceService
+            .findMarketPrice(market)
             .map { it.priceQuote }
             .map { Mappings.PriceQuoteMapping.fromBisq2Model(it) }
             .map { priceQuoteVO ->
                 val formattedPrice = MarketPriceFormatter.format(priceQuoteVO.value, marketVO)
                 MarketPriceItem(marketVO, priceQuoteVO, formattedPrice)
-            }
-            .orElse(null)
+            }.orElse(null)
     }
 
-    override fun findUSDMarketPriceItem(): MarketPriceItem? {
-        return findMarketPriceItem(MarketVOFactory.USD)
-    }
+    override fun findUSDMarketPriceItem(): MarketPriceItem? = findMarketPriceItem(MarketVOFactory.USD)
 
     override fun refreshSelectedFormattedMarketPrice() {
         updateMarketPriceItem()
@@ -76,29 +73,34 @@ class NodeMarketPriceServiceFacade(
 
     // Private
     private fun observeMarketPrice() {
-        marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver(Runnable {
-            val mapSize = marketPriceService.marketPriceByCurrencyMap.size
-            log.d { "Node market price map updated, size: $mapSize" }
-            updateMarketPriceItem()
-            triggerGlobalPriceUpdate()
-        })
+        marketPricePin =
+            marketPriceService.marketPriceByCurrencyMap.addObserver(
+                Runnable {
+                    val mapSize = marketPriceService.marketPriceByCurrencyMap.size
+                    log.d { "Node market price map updated, size: $mapSize" }
+                    updateMarketPriceItem()
+                    triggerGlobalPriceUpdate()
+                },
+            )
     }
 
     private fun observeSelectedMarket() {
         selectedMarketPin?.unbind()
-        selectedMarketPin = marketPriceService.selectedMarket.addObserver { market ->
-            try {
-                updateMarketPriceItem()
-            } catch (e: Exception) {
-                log.e("Failed to update market item", e)
+        selectedMarketPin =
+            marketPriceService.selectedMarket.addObserver { market ->
+                try {
+                    updateMarketPriceItem()
+                } catch (e: Exception) {
+                    log.e("Failed to update market item", e)
+                }
             }
-        }
     }
 
     private fun updateMarketPriceItem() {
         val market = marketPriceService.selectedMarket.get()
         if (market != null) {
-            marketPriceService.findMarketPriceQuote(market)
+            marketPriceService
+                .findMarketPriceQuote(market)
                 .ifPresent { priceQuote ->
                     val marketVO = MarketMapping.fromBisq2Model(market)
                     val formattedPrice = MarketPriceFormatter.format(priceQuote.value, marketVO)

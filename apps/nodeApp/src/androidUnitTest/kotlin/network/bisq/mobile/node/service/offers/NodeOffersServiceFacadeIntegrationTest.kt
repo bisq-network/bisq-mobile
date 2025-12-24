@@ -36,15 +36,20 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 class NodeOffersServiceFacadeIntegrationTest {
-
     // Minimal fake SettingsRepository
     private class FakeSettingsRepo : SettingsRepository {
         override val data: Flow<Settings> = flowOf(Settings())
+
         override suspend fun setFirstLaunch(value: Boolean) {}
+
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
+
         override suspend fun setSelectedMarketCode(value: String) {}
+
         override suspend fun setNotificationPermissionState(value: PermissionState) {}
+
         override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {}
+
         override suspend fun update(transform: suspend (Settings) -> Settings) {}
 
         override suspend fun clear() {}
@@ -53,12 +58,17 @@ class NodeOffersServiceFacadeIntegrationTest {
     // Minimal fake MarketPriceServiceFacade to drive selectedMarketPriceItem
     private class FakeMarketPriceServiceFacade : MarketPriceServiceFacade(FakeSettingsRepo()) {
         override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? = selectedMarketPriceItem.value
-        override fun findUSDMarketPriceItem(): MarketPriceItem? = selectedMarketPriceItem.value
-        override fun refreshSelectedFormattedMarketPrice() {}
-        override fun selectMarket(marketListItem: MarketListItem) {}
-        fun set(item: MarketPriceItem) { _selectedMarketPriceItem.value = item }
-    }
 
+        override fun findUSDMarketPriceItem(): MarketPriceItem? = selectedMarketPriceItem.value
+
+        override fun refreshSelectedFormattedMarketPrice() {}
+
+        override fun selectMarket(marketListItem: MarketListItem) {}
+
+        fun set(item: MarketPriceItem) {
+            _selectedMarketPriceItem.value = item
+        }
+    }
 
     private fun buildDto(
         id: String,
@@ -66,31 +76,34 @@ class NodeOffersServiceFacadeIntegrationTest {
         amountMinor: Long,
         priceSpec: Any,
         formattedPrice: String = "INIT",
-        formattedBaseAmount: String = "INIT"
+        formattedBaseAmount: String = "INIT",
     ): OfferItemPresentationDto {
-        val makerNetworkId = NetworkIdVO(
-            AddressByTransportTypeMapVO(mapOf()),
-            PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id")
-        )
-        val offer = BisqEasyOfferVO(
-            id = id,
-            date = 0L,
-            makerNetworkId = makerNetworkId,
-            direction = DirectionEnum.BUY,
-            market = market,
-            amountSpec = QuoteSideFixedAmountSpecVO(amountMinor),
-            priceSpec = when (priceSpec) {
-                is FixPriceSpecVO -> priceSpec
-                is FloatPriceSpecVO -> priceSpec
-                is MarketPriceSpecVO -> priceSpec
-                else -> FixPriceSpecVO(PriceQuoteVOFactory.fromPrice(100_00L, market))
-            },
-            protocolTypes = emptyList(),
-            baseSidePaymentMethodSpecs = emptyList(),
-            quoteSidePaymentMethodSpecs = emptyList(),
-            offerOptions = emptyList(),
-            supportedLanguageCodes = emptyList()
-        )
+        val makerNetworkId =
+            NetworkIdVO(
+                AddressByTransportTypeMapVO(mapOf()),
+                PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"),
+            )
+        val offer =
+            BisqEasyOfferVO(
+                id = id,
+                date = 0L,
+                makerNetworkId = makerNetworkId,
+                direction = DirectionEnum.BUY,
+                market = market,
+                amountSpec = QuoteSideFixedAmountSpecVO(amountMinor),
+                priceSpec =
+                    when (priceSpec) {
+                        is FixPriceSpecVO -> priceSpec
+                        is FloatPriceSpecVO -> priceSpec
+                        is MarketPriceSpecVO -> priceSpec
+                        else -> FixPriceSpecVO(PriceQuoteVOFactory.fromPrice(100_00L, market))
+                    },
+                protocolTypes = emptyList(),
+                baseSidePaymentMethodSpecs = emptyList(),
+                quoteSidePaymentMethodSpecs = emptyList(),
+                offerOptions = emptyList(),
+                supportedLanguageCodes = emptyList(),
+            )
         val user = createMockUserProfile("Alice")
         return OfferItemPresentationDto(
             bisqEasyOffer = offer,
@@ -103,7 +116,7 @@ class NodeOffersServiceFacadeIntegrationTest {
             formattedPriceSpec = "",
             quoteSidePaymentMethods = emptyList(),
             baseSidePaymentMethods = emptyList(),
-            reputationScore = ReputationScoreVO(0, 0.0, 0)
+            reputationScore = ReputationScoreVO(0, 0.0, 0),
         )
     }
 
@@ -123,11 +136,12 @@ class NodeOffersServiceFacadeIntegrationTest {
 
         // Prepare offers and updated market item
         val offers = listOf(modelFloat, modelMarket, modelFixed)
-        val updatedMarketItem = MarketPriceItem(
-            market,
-            updatedMarketPrice,
-            PriceQuoteFormatter.format(updatedMarketPrice, true, true)
-        )
+        val updatedMarketItem =
+            MarketPriceItem(
+                market,
+                updatedMarketPrice,
+                PriceQuoteFormatter.format(updatedMarketPrice, true, true),
+            )
 
         OfferFormattingUtil.updateOffersFormattedValues(offers, updatedMarketItem)
 
@@ -143,4 +157,3 @@ class NodeOffersServiceFacadeIntegrationTest {
         assertEquals("INIT", modelFixed.formattedPrice.value)
     }
 }
-

@@ -14,24 +14,23 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.CircularLoadi
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 
 @Composable
-fun BuyerState1b(
-) {
+fun BuyerState1b() {
     Column(horizontalAlignment = Alignment.Start) {
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_account_data,
-                isLoading = true
+                isLoading = true,
             )
             // Wait for the seller's payment account data
-            BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase1b.headline".i18n())
+            BisqText.H5Light("bisqEasy.tradeState.info.buyer.phase1b.headline".i18n())
         }
         Column {
             BisqGap.V2()
-            BisqText.baseLightGrey(
+            BisqText.BaseLightGrey(
                 // You can use the chat below for getting in touch with the seller.
                 "bisqEasy.tradeState.info.buyer.phase1b.info".i18n(),
             )

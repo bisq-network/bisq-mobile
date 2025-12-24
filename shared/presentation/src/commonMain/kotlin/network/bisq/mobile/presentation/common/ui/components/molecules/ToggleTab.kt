@@ -42,10 +42,10 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun <T> ToggleTab(
     options: List<T>,
     selectedOption: T,
-    onOptionSelected: (T) -> Unit,
-    getDisplayString: (T) -> String,// Custom function to display the label for each option
+    onOptionSelect: (T) -> Unit,
+    getDisplayString: (T) -> String, // Custom function to display the label for each option
+    modifier: Modifier = Modifier,
     singleLine: Boolean = false,
-    modifier: Modifier = Modifier
 ) {
     val hPadding = BisqUIConstants.ScreenPadding
     val vPadding = BisqUIConstants.ScreenPadding
@@ -75,11 +75,11 @@ fun <T> ToggleTab(
 
     val animatedWidth by animateDpAsState(
         targetValue = selectedWidthDp,
-        animationSpec = if (isFirstRender) snap() else tween(durationMillis = 300)
+        animationSpec = if (isFirstRender) snap() else tween(durationMillis = 300),
     )
     val animatedOffset by animateDpAsState(
         targetValue = selectedOffsetDp,
-        animationSpec = if (isFirstRender) snap() else tween(durationMillis = 300)
+        animationSpec = if (isFirstRender) snap() else tween(durationMillis = 300),
     )
 
     // Find the maximum height among all options (in px)
@@ -87,30 +87,33 @@ fun <T> ToggleTab(
     val maxHeightDp = with(density) { maxHeightPx.toDp() }
 
     Box(
-        modifier = Modifier.wrapContentSize()
-            .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-            .background(BisqTheme.colors.dark_grey40)
-            .padding(6.dp).then(modifier)
-    ) {
-
-        Box(
-            modifier = Modifier
-                .offset(x = animatedOffset)
-                .width(animatedWidth)
-                .height(maxHeightDp)
-                .background(
-                    BisqTheme.colors.primaryDim,
-                    RoundedCornerShape(BisqUIConstants.BorderRadiusSmall)
-                )
+        modifier =
+            Modifier
                 .wrapContentSize()
+                .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                .background(BisqTheme.colors.dark_grey40)
+                .padding(6.dp)
+                .then(modifier),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .offset(x = animatedOffset)
+                    .width(animatedWidth)
+                    .height(maxHeightDp)
+                    .background(
+                        BisqTheme.colors.primaryDim,
+                        RoundedCornerShape(BisqUIConstants.BorderRadiusSmall),
+                    ).wrapContentSize(),
         ) {
-            BisqText.baseRegular(
+            BisqText.BaseRegular(
                 text = getDisplayString(selectedOption),
-                modifier = Modifier
-                    .padding(horizontal = hPadding, vertical = vPadding)
-                    .alpha(0f)
-                    .clearAndSetSemantics { },
-                singleLine = singleLine
+                modifier =
+                    Modifier
+                        .padding(horizontal = hPadding, vertical = vPadding)
+                        .alpha(0f)
+                        .clearAndSetSemantics { },
+                singleLine = singleLine,
             )
         }
 
@@ -119,33 +122,31 @@ fun <T> ToggleTab(
         ) {
             options.forEach { option ->
                 Box(
-                    modifier = Modifier
-                        .onGloballyPositioned { coordinates ->
-                            optionWidths[option] = coordinates.size.width
-                            optionHeights[option] = coordinates.size.height
-                            optionOffsets[option] = coordinates.positionInParent().x.toInt()
-                        }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {
-                                onOptionSelected(option)
-                            }
-                        )
-                        .padding(horizontal = hPadding, vertical = vPadding)
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .onGloballyPositioned { coordinates ->
+                                optionWidths[option] = coordinates.size.width
+                                optionHeights[option] = coordinates.size.height
+                                optionOffsets[option] = coordinates.positionInParent().x.toInt()
+                            }.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {
+                                    onOptionSelect(option)
+                                },
+                            ).padding(horizontal = hPadding, vertical = vPadding)
+                            .weight(1f),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    BisqText.baseRegular(
+                    BisqText.BaseRegular(
                         text = getDisplayString(option),
                         textAlign = TextAlign.Center,
-                        singleLine = singleLine
+                        singleLine = singleLine,
                     )
                 }
             }
         }
     }
-
 }
 
 @Preview
@@ -155,12 +156,13 @@ private fun ToggleTabPreview() {
         ToggleTab(
             options = AmountType.entries.toList(),
             selectedOption = AmountType.FIXED_AMOUNT,
-            onOptionSelected = { },
+            onOptionSelect = { },
             getDisplayString = { direction ->
-                if (direction == AmountType.FIXED_AMOUNT)
+                if (direction == AmountType.FIXED_AMOUNT) {
                     "bisqEasy.tradeWizard.amount.amountModel.fixedAmount".i18n()
-                else
+                } else {
                     "bisqEasy.tradeWizard.amount.amountModel.rangeAmount".i18n()
+                }
             },
         )
     }

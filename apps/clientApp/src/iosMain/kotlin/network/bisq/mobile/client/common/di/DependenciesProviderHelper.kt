@@ -12,7 +12,6 @@ import org.koin.core.qualifier.Qualifier
  * Helper for iOS koin injection
  */
 class DependenciesProviderHelper {
-
     fun initKoin() {
         // Guard against multiple initializations
         if (_koin != null) {
@@ -21,15 +20,17 @@ class DependenciesProviderHelper {
         }
 
         try {
-            val instance = startKoin {
-                modules(
-                    modules = clientModules +
-                            listOf(
-                                iosClientDomainModule,
-                                iosClientPresentationModule,
-                            )
-                )
-            }
+            val instance =
+                startKoin {
+                    modules(
+                        modules =
+                            clientModules +
+                                listOf(
+                                    iosClientDomainModule,
+                                    iosClientPresentationModule,
+                                ),
+                    )
+                }
 
             _koin = instance.koin
         } catch (e: Exception) {
@@ -42,7 +43,6 @@ class DependenciesProviderHelper {
         val koin: Koin
             get() = _koin ?: error("Koin not initialized. Call initKoin() first.")
     }
-
 }
 
 @OptIn(BetaInteropApi::class)
@@ -62,7 +62,11 @@ fun Koin.get(objCClass: ObjCClass): Any {
 }
 
 @OptIn(BetaInteropApi::class)
-fun Koin.get(objCClass: ObjCClass, qualifier: Qualifier?, parameter: Any): Any {
+fun Koin.get(
+    objCClass: ObjCClass,
+    qualifier: Qualifier?,
+    parameter: Any,
+): Any {
     val kClazz = getOriginalKotlinClass(objCClass)!!
     return get(kClazz, qualifier) { parametersOf(parameter) }
 }

@@ -24,7 +24,10 @@ object ResourceUtils {
      * @param resourceName
      * @return int or 0 if not found
      */
-    fun getImageResourceId(context: Context, resourceName: String?): Int {
+    fun getImageResourceId(
+        context: Context,
+        resourceName: String?,
+    ): Int {
         var resourceId = getResourceIdByName(context, resourceName, "drawable")
         if (resourceId == 0) {
             resourceId = getResourceIdByName(context, resourceName, "mipmap")
@@ -32,17 +35,22 @@ object ResourceUtils {
         return resourceId
     }
 
-    fun getResourceIdByName(context: Context, name: String?, type: String): Int {
+    fun getResourceIdByName(
+        context: Context,
+        name: String?,
+        type: String,
+    ): Int {
         if (name.isNullOrBlank()) {
             return 0
         }
         val normalizedName = name.lowercase(Locale.ENGLISH).replace('-', '_')
 
-        val key = "${normalizedName}_${type}"
+        val key = "${normalizedName}_$type"
 
         return resourceIdCache.computeIfAbsent(key) {
-            // we cannot get the identifier directly in this module
             /**
+             * We cannot get the identifier directly in this module
+             *
              * Use of this function is discouraged because resource reflection makes it harder to
              * perform build optimizations and compile-time verification of code.
              * It is much more efficient to retrieve resources by identifier (e.g. R.foo.bar) than by
@@ -51,12 +59,15 @@ object ResourceUtils {
             context.resources.getIdentifier(
                 normalizedName,
                 type,
-                context.packageName
+                context.packageName,
             )
         }
     }
 
-    fun getSoundUri(context: Context, sound: String?): Uri? {
+    fun getSoundUri(
+        context: Context,
+        sound: String?,
+    ): Uri? {
         if (sound.isNullOrBlank()) {
             return null
         } else if (sound.contains("://")) {
@@ -70,19 +81,21 @@ object ResourceUtils {
                 soundResourceId = getResourceIdByName(context, sound.substring(0, sound.lastIndexOf('.')), "raw")
             }
             if (soundResourceId == 0) {
-                return null;
+                return null
             }
             // use the actual sound name to obtain a stable URI
             return context.resourceUri(soundResourceId)
         }
     }
 
-    private fun Context.resourceUri(resourceId: Int): Uri = with(resources) {
-        Uri.Builder()
-            .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-            .authority(getResourcePackageName(resourceId))
-            .appendPath(getResourceTypeName(resourceId))
-            .appendPath(getResourceEntryName(resourceId))
-            .build()
-    }
+    private fun Context.resourceUri(resourceId: Int): Uri =
+        with(resources) {
+            Uri
+                .Builder()
+                .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+                .authority(getResourcePackageName(resourceId))
+                .appendPath(getResourceTypeName(resourceId))
+                .appendPath(getResourceEntryName(resourceId))
+                .build()
+        }
 }

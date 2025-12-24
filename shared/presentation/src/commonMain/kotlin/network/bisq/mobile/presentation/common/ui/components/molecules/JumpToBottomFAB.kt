@@ -19,15 +19,16 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 @Composable
 fun JumpToBottomFloatingButton(
     visible: Boolean,
-    onClicked: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     jumpOffset: Int = 12,
     badgeCount: Int = 0,
-    modifier: Modifier = Modifier
 ) {
-    val transition = updateTransition(
-        if (visible) Visibility.VISIBLE else Visibility.GONE,
-        label = "JumpToBottom visibility animation"
-    )
+    val transition =
+        updateTransition(
+            if (visible) Visibility.VISIBLE else Visibility.GONE,
+            label = "JumpToBottom visibility animation",
+        )
     val bottomOffset by transition.animateDp(label = "JumpToBottom offset animation") {
         if (it == Visibility.GONE) {
             (-jumpOffset).dp
@@ -43,12 +44,13 @@ fun JumpToBottomFloatingButton(
                     AnimatedBadge(
                         text = badgeCount.toString(),
                         xOffset = (-8).dp,
-                        yOffset = (-4).dp
+                        yOffset = (-4).dp,
                     )
                 }
-            }) {
+            },
+        ) {
             SmallFloatingActionButton(
-                onClick = onClicked,
+                onClick = onClick,
                 shape = FloatingActionButtonDefaults.largeShape,
                 containerColor = BisqTheme.colors.light_grey10,
             ) {
@@ -60,5 +62,5 @@ fun JumpToBottomFloatingButton(
 
 private enum class Visibility {
     VISIBLE,
-    GONE
+    GONE,
 }

@@ -28,14 +28,15 @@ import network.bisq.mobile.presentation.common.ui.utils.hasKnownSettlementIcon
 /**
  * Custom payment icon IDs for fallback icons when a payment method doesn't have a known icon.
  */
-val CUSTOM_PAYMENT_ICON_IDS = listOf(
-    "custom_payment_1",
-    "custom_payment_2",
-    "custom_payment_3",
-    "custom_payment_4",
-    "custom_payment_5",
-    "custom_payment_6",
-)
+val CUSTOM_PAYMENT_ICON_IDS =
+    listOf(
+        "custom_payment_1",
+        "custom_payment_2",
+        "custom_payment_3",
+        "custom_payment_4",
+        "custom_payment_5",
+        "custom_payment_6",
+    )
 
 /**
  * A composable that renders a payment or settlement method icon with fallback support.
@@ -78,18 +79,20 @@ fun PaymentMethodIcon(
 
     Box(
         modifier = Modifier.size(size),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         if (isMissingIcon && isIOSPlatform()) {
             // For custom icons on iOS, use a programmatic colored background
-            val bgColor = CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(customIndex) {
-                CUSTOM_PAYMENT_BACKGROUND_COLORS[0]
-            }
+            val bgColor =
+                CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(customIndex) {
+                    CUSTOM_PAYMENT_BACKGROUND_COLORS[0]
+                }
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(alpha)
-                    .background(bgColor, RoundedCornerShape(cornerRadius))
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .alpha(alpha)
+                        .background(bgColor, RoundedCornerShape(cornerRadius)),
             )
         } else {
             // For Android or methods with known icons, use the image
@@ -98,30 +101,32 @@ fun PaymentMethodIcon(
                 path = iconPath,
                 fallbackPath = fallbackPath,
                 contentDescription = contentDescription ?: trimmedId,
-                modifier = imageModifier
+                modifier = imageModifier,
             )
         }
 
         if (isMissingIcon && overlayLetter != null) {
-            val letterColor = customPaymentOverlayLetterColor(
-                darkColor = BisqTheme.colors.dark_grey20,
-                lightColor = BisqTheme.colors.white
-            )
+            val letterColor =
+                customPaymentOverlayLetterColor(
+                    darkColor = BisqTheme.colors.dark_grey20,
+                    lightColor = BisqTheme.colors.white,
+                )
 
             if (useStyledText) {
                 val letterSizeSp = if (size < 16.dp) 11f else 12f
-                BisqText.styledText(
+                BisqText.StyledText(
                     text = overlayLetter,
-                    style = BisqTheme.typography.baseBold.copy(
-                        fontSize = TextUnit(letterSizeSp, TextUnitType.Sp),
-                        lineHeight = TextUnit(letterSizeSp, TextUnitType.Sp),
-                        platformStyle = platformTextStyleNoFontPadding()
-                    ),
+                    style =
+                        BisqTheme.typography.baseBold.copy(
+                            fontSize = TextUnit(letterSizeSp, TextUnitType.Sp),
+                            lineHeight = TextUnit(letterSizeSp, TextUnitType.Sp),
+                            platformStyle = platformTextStyleNoFontPadding(),
+                        ),
                     textAlign = TextAlign.Center,
                     color = letterColor,
                 )
             } else {
-                BisqText.baseBold(
+                BisqText.BaseBold(
                     text = overlayLetter,
                     color = letterColor,
                 )
@@ -129,4 +134,3 @@ fun PaymentMethodIcon(
         }
     }
 }
-

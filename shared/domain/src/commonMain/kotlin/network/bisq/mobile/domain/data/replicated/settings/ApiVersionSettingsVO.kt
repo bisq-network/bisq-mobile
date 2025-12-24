@@ -4,6 +4,8 @@ import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.shared.BuildConfig
 
 @Serializable
-data class ApiVersionSettingsVO(val version: String)
+data class ApiVersionSettingsVO(
+    val version: String,
+)
 
 val apiVersionSettingsVO = ApiVersionSettingsVO(BuildConfig.BISQ_API_VERSION)

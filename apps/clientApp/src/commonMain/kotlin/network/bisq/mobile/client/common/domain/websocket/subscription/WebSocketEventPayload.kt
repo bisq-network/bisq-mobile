@@ -6,11 +6,13 @@ import kotlinx.serialization.serializer
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.domain.utils.getLogger
 
-data class WebSocketEventPayload<T>(val payload: T) {
+data class WebSocketEventPayload<T>(
+    val payload: T,
+) {
     companion object {
         inline fun <reified T> from(
             json: Json,
-            webSocketEvent: WebSocketEvent
+            webSocketEvent: WebSocketEvent,
         ): WebSocketEventPayload<T> {
             val topic = webSocketEvent.topic
             val deferredPayload = webSocketEvent.deferredPayload!!
@@ -22,7 +24,7 @@ data class WebSocketEventPayload<T>(val payload: T) {
             } catch (e: Exception) {
                 getLogger(WebSocketEventPayload::class.simpleName!!).e(
                     "Deserializing payloadJson failed. topic=$topic; payloadJson=$deferredPayload",
-                    e
+                    e,
                 )
                 throw e
             }

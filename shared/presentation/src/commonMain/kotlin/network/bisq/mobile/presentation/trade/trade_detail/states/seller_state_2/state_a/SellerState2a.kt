@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_a
 
 import androidx.compose.foundation.layout.Arrangement
@@ -29,17 +31,17 @@ fun SellerState2a(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_fiat_payment,
-                isLoading = true
+                isLoading = true,
             )
-            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2a.waitForPayment.headline".i18n(trade.quoteCurrencyCode))
+            BisqText.H5Light("bisqEasy.tradeState.info.seller.phase2a.waitForPayment.headline".i18n(trade.quoteCurrencyCode))
         }
         Column {
             BisqGap.V2()
-            BisqText.baseLightGrey(
+            BisqText.BaseLightGrey(
                 // Once the buyer has initiated the payment of {0}, you will get notified.
                 "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.info".i18n(trade.quoteAmountWithCode),
             )

@@ -6,7 +6,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
-
 @Composable
 fun OpenMediationDialog(
     onCancelConfirm: () -> Unit,
@@ -20,6 +19,6 @@ fun OpenMediationDialog(
         marginTop = BisqUIConstants.ScreenPaddingHalf,
         verticalButtonPlacement = true,
         onDismiss = onDismiss,
-        onConfirm = onCancelConfirm
+        onConfirm = onCancelConfirm,
     )
 }

@@ -30,25 +30,28 @@ fun PaymentTypeCard(
     showRemoveCustom: Boolean = false,
     isPaymentMethod: Boolean = true,
 ) {
-    val backgroundColor = if (isSelected) {
-        BisqTheme.colors.primaryDim
-    } else {
-        BisqTheme.colors.dark_grey50
-    }
+    val backgroundColor =
+        if (isSelected) {
+            BisqTheme.colors.primaryDim
+        } else {
+            BisqTheme.colors.dark_grey50
+        }
 
     Row(
-        modifier = Modifier.fillMaxWidth()
-            .clip(shape = RoundedCornerShape(6.dp))
-            .background(backgroundColor)
-            .padding(horizontal = 18.dp)
-            .padding(vertical = 10.dp)
-            .clickable(
-                onClick = { onClick(title) },
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(6.dp))
+                .background(backgroundColor)
+                .padding(horizontal = 18.dp)
+                .padding(vertical = 10.dp)
+                .clickable(
+                    onClick = { onClick(title) },
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         // Use PaymentMethodIcon for both known and custom payment methods
         // For custom methods, pass the title as methodId to get the overlay letter
@@ -60,12 +63,12 @@ fun PaymentTypeCard(
             contentDescription = if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
             iconPathOverride = image,
         )
-        BisqText.baseRegular(title, modifier = Modifier.weight(1.0f))
+        BisqText.BaseRegular(title, modifier = Modifier.weight(1.0f))
         if (isCustomPaymentMethod && showRemoveCustom) {
             CloseIconButton(
                 onClick = {
                     onRemove?.invoke(title)
-                }
+                },
             )
         }
     }

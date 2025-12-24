@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.common.ui.utils
 
 import androidx.compose.runtime.Composable
 
-
 interface PermissionRequestLauncher {
     fun launch()
 }

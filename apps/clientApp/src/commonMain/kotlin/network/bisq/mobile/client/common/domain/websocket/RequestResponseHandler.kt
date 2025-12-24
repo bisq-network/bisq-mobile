@@ -21,15 +21,16 @@ import network.bisq.mobile.domain.utils.Logging
  * @param sendFunction A suspending function used to send WebSocket messages.
  *                     It takes a [WebSocketMessage] as input and sends it over the WebSocket connection.
  */
-class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage) -> Unit) :
-    Logging {
+class RequestResponseHandler(
+    private val sendFunction: suspend (WebSocketMessage) -> Unit,
+) : Logging {
     private var requestId: String? = null
     private var deferredWebSocketResponse: CompletableDeferred<WebSocketResponse>? = null
     private val mutex = Mutex()
 
     suspend fun request(
         webSocketRequest: WebSocketRequest,
-        timeoutMillis: Long = 30_000
+        timeoutMillis: Long = 30_000,
     ): WebSocketResponse? {
         log.i { "Sending request with ID: ${webSocketRequest.requestId}" }
         mutex.withLock {
@@ -45,10 +46,11 @@ class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage
             }
         }
         return try {
-            val rr = withTimeout(timeoutMillis) {
-                val response: WebSocketResponse? = deferredWebSocketResponse?.await()
-                response
-            }
+            val rr =
+                withTimeout(timeoutMillis) {
+                    val response: WebSocketResponse? = deferredWebSocketResponse?.await()
+                    response
+                }
             rr
         } catch (e: TimeoutCancellationException) {
             log.w(e) { "WARN: Operation timed out after $timeoutMillis ms" }

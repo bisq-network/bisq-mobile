@@ -15,15 +15,11 @@ sealed class NotificationPressAction {
         override val id: String = "route",
     ) : NotificationPressAction()
 
-    class Default() : NotificationPressAction() {
+    class Default : NotificationPressAction() {
         override val id: String = "default"
 
-        override fun equals(other: Any?): Boolean {
-            return other is Default
-        }
+        override fun equals(other: Any?): Boolean = other is Default
 
-        override fun hashCode(): Int {
-            return "default".hashCode()
-        }
+        override fun hashCode(): Int = "default".hashCode()
     }
 }

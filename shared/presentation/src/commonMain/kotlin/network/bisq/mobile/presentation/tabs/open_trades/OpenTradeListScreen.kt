@@ -37,9 +37,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.InformationConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -66,7 +66,7 @@ fun OpenTradeListScreen() {
                 presenter.onCloseTradeGuideConfirmation()
                 presenter.onOpenTradeGuide()
             },
-            onDismiss = presenter::onCloseTradeGuideConfirmation
+            onDismiss = presenter::onCloseTradeGuideConfirmation,
         )
     }
 
@@ -77,13 +77,14 @@ fun OpenTradeListScreen() {
         when {
             isLoadingTrades -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxSize(),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
                         color = BisqTheme.colors.primary,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
                     )
                 }
             }
@@ -95,30 +96,40 @@ fun OpenTradeListScreen() {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = if (tradeGuideVisible) Modifier.fillMaxSize()
-                            .blur(8.dp) else Modifier.fillMaxSize()
+                        modifier =
+                            if (tradeGuideVisible) {
+                                Modifier
+                                    .fillMaxSize()
+                                    .blur(8.dp)
+                            } else {
+                                Modifier.fillMaxSize()
+                            },
                     ) {
                         item {
                             Column(
-                                modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))
-                                    .background(color = BisqTheme.colors.dark_grey30)
-                                    .padding(12.dp),
+                                modifier =
+                                    Modifier
+                                        .clip(shape = RoundedCornerShape(12.dp))
+                                        .background(color = BisqTheme.colors.dark_grey30)
+                                        .padding(12.dp),
                             ) {
                                 WelcomeToFirstTradePane(presenter)
                             }
                         }
                         item {
                             Column(
-                                modifier = Modifier.clip(shape = RoundedCornerShape(8.dp))
-                                    // .background(color = BisqTheme.colors.dark3)
-                                    .padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                modifier =
+                                    Modifier
+                                        .clip(shape = RoundedCornerShape(8.dp))
+                                        // .background(color = BisqTheme.colors.dark3)
+                                        .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                BisqText.h5Light("bisqEasy.openTrades.table.headline".i18n()) // My open trades
+                                BisqText.H5Light("bisqEasy.openTrades.table.headline".i18n()) // My open trades
                                 HorizontalDivider(
                                     modifier = Modifier,
                                     thickness = 0.5.dp,
-                                    color = BisqTheme.colors.mid_grey30
+                                    color = BisqTheme.colors.mid_grey30,
                                 )
                             }
                         }
@@ -127,7 +138,7 @@ fun OpenTradeListScreen() {
                                 trade,
                                 unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
                                 userProfileIconProvider = presenter.userProfileIconProvider,
-                                onSelect = { presenter.onSelect(trade) }
+                                onSelect = { presenter.onSelect(trade) },
                             )
                         }
                     }
@@ -142,7 +153,7 @@ fun OpenTradeListScreen() {
                                 trade,
                                 unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
                                 userProfileIconProvider = presenter.userProfileIconProvider,
-                                onSelect = { presenter.onSelect(trade) }
+                                onSelect = { presenter.onSelect(trade) },
                             )
                         }
                     }
@@ -152,55 +163,57 @@ fun OpenTradeListScreen() {
     }
 }
 
-
 @Composable
 fun WelcomeToFirstTradePane(presenter: OpenTradeListPresenter) {
     Column(
         modifier = Modifier.padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        BisqText.h1Light(
+        BisqText.H1Light(
             text = "bisqEasy.openTrades.welcome.headline".i18n(), // Welcome to your first Bisq Easy trade!
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
         BisqGap.VHalf()
-        BisqText.baseLightGrey(
+        BisqText.BaseLightGrey(
             // Please make yourself familiar with the concept, process and rules for trading on Bisq
-            "bisqEasy.openTrades.welcome.info".i18n()
+            "bisqEasy.openTrades.welcome.info".i18n(),
         )
         BisqGap.V1()
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.Start,
         ) {
             IconWithTextLine(
                 image = Res.drawable.reputation,
-                title = "bisqEasy.openTrades.welcome.line1".i18n() // Learn about the security model of Bisq easy
+                title = "bisqEasy.openTrades.welcome.line1".i18n(), // Learn about the security model of Bisq easy
             )
             IconWithTextLine(
                 image = Res.drawable.fiat_btc,
-                title = "bisqEasy.openTrades.welcome.line2".i18n() // See how the trade process works
+                title = "bisqEasy.openTrades.welcome.line2".i18n(), // See how the trade process works
             )
             IconWithTextLine(
                 image = Res.drawable.thumbs_up,
-                title = "bisqEasy.openTrades.welcome.line3".i18n()  // Make yourself familiar with the trade rules
+                title = "bisqEasy.openTrades.welcome.line3".i18n(), // Make yourself familiar with the trade rules
             )
         }
         BisqGap.V1()
         BisqButton(
             text = "bisqEasy.tradeGuide.open".i18n(), // Open trade guide
-            onClick = presenter::onOpenTradeGuide
+            onClick = presenter::onOpenTradeGuide,
         )
     }
 }
 
 @Composable
-fun IconWithTextLine(image: DrawableResource, title: String) {
+fun IconWithTextLine(
+    image: DrawableResource,
+    title: String,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Image(painterResource(image), null, Modifier.size(30.dp))
         Spacer(modifier = Modifier.width(15.dp))
-        BisqText.baseLight(title)
+        BisqText.BaseLight(title)
     }
 }
 
@@ -210,15 +223,15 @@ fun NoTradesSection(presenter: OpenTradeListPresenter) {
         Column(
             modifier = Modifier.padding(vertical = 52.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(64.dp)
+            verticalArrangement = Arrangement.spacedBy(64.dp),
         ) {
-            BisqText.h4LightGrey(
+            BisqText.H4LightGrey(
                 text = "bisqEasy.openTrades.noTrades".i18n(), // You don't have any open trades
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             BisqButton(
                 text = "mobile.bisqEasy.tradeWizard.selectOffer.noMatchingOffers.browseOfferbook".i18n(),
-                onClick = presenter::onNavigateToOfferbook
+                onClick = presenter::onNavigateToOfferbook,
             )
         }
     }

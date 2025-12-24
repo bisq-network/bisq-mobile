@@ -25,14 +25,13 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
-fun CreateProfileScreen(
-) {
+fun CreateProfileScreen() {
     val presenter: CreateProfilePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
@@ -46,9 +45,9 @@ fun CreateProfileScreen(
 
     BisqScrollScaffold {
         BisqGap.V2()
-        BisqText.h1Light("onboarding.createProfile.headline".i18n())
+        BisqText.H1Light("onboarding.createProfile.headline".i18n())
         BisqGap.V2()
-        BisqText.baseLightGrey(
+        BisqText.BaseLightGrey(
             text = "onboarding.createProfile.subTitle".i18n(),
             modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding2X),
             textAlign = TextAlign.Center,
@@ -61,7 +60,7 @@ fun CreateProfileScreen(
             placeholder = "onboarding.createProfile.nickName.prompt".i18n(),
             validation = {
                 return@BisqTextField presenter.validateNickname(it)
-            }
+            },
         )
         BisqGap.V3()
 
@@ -69,57 +68,62 @@ fun CreateProfileScreen(
             CircularProgressIndicator(
                 modifier = Modifier.size(iconSize),
                 color = BisqTheme.colors.primary,
-                strokeWidth = 2.dp
+                strokeWidth = 2.dp,
             )
         } else {
             profileIcon?.let { profileIcon ->
-                val painter = remember(profileIcon) {
-                    getPlatformImagePainter(profileIcon)
-                }
+                val painter =
+                    remember(profileIcon) {
+                        getPlatformImagePainter(profileIcon)
+                    }
                 Button(
                     contentPadding = PaddingValues(BisqUIConstants.Zero),
                     enabled = !generateKeyPairInProgress,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = BisqTheme.colors.backgroundColor
-                    ),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = BisqTheme.colors.backgroundColor,
+                        ),
                     elevation = ButtonDefaults.buttonElevation(BisqUIConstants.Zero),
-                    onClick = { presenter.onGenerateKeyPair() }) {
+                    onClick = { presenter.onGenerateKeyPair() },
+                ) {
                     Image(
                         painter = painter,
                         contentDescription = "mobile.createProfile.iconGenerated".i18n(),
-                        modifier = Modifier
-                            .size(iconSize)
-                            .semantics { contentDescription = "create_profile_avatar" }
+                        modifier =
+                            Modifier
+                                .size(iconSize)
+                                .semantics { contentDescription = "create_profile_avatar" },
                     )
                 }
             }
         }
 
-        val nymText = if (generateKeyPairInProgress) {
-            "onboarding.createProfile.nym.generating".i18n()
-        } else {
-            nym
-        }
+        val nymText =
+            if (generateKeyPairInProgress) {
+                "onboarding.createProfile.nym.generating".i18n()
+            } else {
+                nym
+            }
 
         BisqGap.V1()
-        BisqText.baseLightGrey("onboarding.createProfile.nym".i18n())
-        BisqText.baseRegularGrey(nymText)
+        BisqText.BaseLightGrey("onboarding.createProfile.nym".i18n())
+        BisqText.BaseRegularGrey(nymText)
         BisqGap.V3()
         BisqButton(
             text = "onboarding.createProfile.regenerate".i18n(),
             type = BisqButtonType.Grey,
             disabled = generateKeyPairInProgress,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding5X, vertical = BisqUIConstants.ScreenPadding),
-            onClick = { presenter.onGenerateKeyPair() }
+            onClick = { presenter.onGenerateKeyPair() },
         )
         BisqGap.V1()
         BisqButton(
-            "action.next".i18n(),
+            text = "action.next".i18n(),
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
             disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || !nickNameValid,
             isLoading = createAndPublishInProgress,
-            modifier = Modifier.semantics { contentDescription = "create_profile_next_button" }
+            modifier = Modifier.semantics { contentDescription = "create_profile_next_button" },
         )
     }
 }

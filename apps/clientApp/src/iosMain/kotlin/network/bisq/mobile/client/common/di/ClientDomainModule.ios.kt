@@ -16,34 +16,35 @@ import network.bisq.mobile.presentation.common.service.OpenTradesNotificationSer
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-val iosClientDomainModule = module {
-    single { AppForegroundController() } bind ForegroundDetector::class
-    single { NotificationControllerImpl(get()) } bind NotificationController::class
-    single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
-    single {
-        OpenTradesNotificationService(get(), get(), get(), get(), get())
-    }
+val iosClientDomainModule =
+    module {
+        single { AppForegroundController() } bind ForegroundDetector::class
+        single { NotificationControllerImpl(get()) } bind NotificationController::class
+        single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
+        single {
+            OpenTradesNotificationService(get(), get(), get(), get(), get())
+        }
 
-    single<ApplicationLifecycleService> {
-        ClientApplicationLifecycleService(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-        )
+        single<ApplicationLifecycleService> {
+            ClientApplicationLifecycleService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+        single<UrlLauncher> { IOSUrlLauncher() }
+        single<VersionProvider> { ClientVersionProvider() }
     }
-    single<UrlLauncher> { IOSUrlLauncher() }
-    single<VersionProvider> { ClientVersionProvider() }
-}

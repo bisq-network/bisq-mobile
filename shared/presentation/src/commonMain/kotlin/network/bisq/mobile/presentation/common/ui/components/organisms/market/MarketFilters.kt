@@ -19,23 +19,21 @@ enum class MarketSortBy {
 
 enum class MarketFilter {
     WithOffers,
-    All
+    All,
 }
 
-fun MarketSortBy.getDisplayName(): String {
-    return when (this) {
+fun MarketSortBy.getDisplayName(): String =
+    when (this) {
         MarketSortBy.MostOffers -> "mobile.components.marketFilter.sortBy.mostOffers".i18n()
         MarketSortBy.NameAZ -> "mobile.components.marketFilter.sortBy.nameAZ".i18n()
         MarketSortBy.NameZA -> "mobile.components.marketFilter.sortBy.nameZA".i18n()
     }
-}
 
-fun MarketFilter.getDisplayName(): String {
-    return when (this) {
+fun MarketFilter.getDisplayName(): String =
+    when (this) {
         MarketFilter.WithOffers -> "mobile.components.marketFilter.showMarkets.withOffers".i18n()
         MarketFilter.All -> "mobile.components.marketFilter.showMarkets.all".i18n()
     }
-}
 
 @Composable
 fun MarketFilters(
@@ -73,7 +71,7 @@ private fun MarketFiltersPreview() {
             sortBy = MarketSortBy.MostOffers,
             filter = MarketFilter.WithOffers,
             onSortByChange = {},
-            onFilterChange = {}
+            onFilterChange = {},
         )
     }
 }

@@ -17,7 +17,8 @@ import network.bisq.mobile.domain.utils.Logging
  */
 class ForegroundServiceControllerImpl(
     private val appForegroundController: AppForegroundController,
-) : ForegroundServiceController, Logging {
+) : ForegroundServiceController,
+    Logging {
     private val context get() = appForegroundController.context
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -65,18 +66,22 @@ class ForegroundServiceControllerImpl(
         }
     }
 
-    override fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit) {
+    override fun <T> registerObserver(
+        flow: Flow<T>,
+        onStateChange: suspend (T) -> Unit,
+    ) {
         if (observerJobs.contains(flow)) {
             log.w { "Flow observer already registered, skipping registration" }
             return
         }
-        val job = serviceScope.launch {
-            try {
-                flow.collect { onStateChange(it) }
-            } catch (e: Exception) {
-                log.w(e) { "Error in flow observer, flow collection terminated" }
+        val job =
+            serviceScope.launch {
+                try {
+                    flow.collect { onStateChange(it) }
+                } catch (e: Exception) {
+                    log.w(e) { "Error in flow observer, flow collection terminated" }
+                }
             }
-        }
         observerJobs[flow] = job
     }
 
@@ -96,5 +101,4 @@ class ForegroundServiceControllerImpl(
         unregisterObservers()
         serviceScope.cancel()
     }
-
 }

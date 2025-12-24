@@ -31,5 +31,5 @@ data class BisqEasyOfferbookMessageDto(
     val citation: CitationVO?,
     val date: Long,
     val wasEdited: Boolean,
-    val chatMessageType: ChatMessageTypeEnum
+    val chatMessageType: ChatMessageTypeEnum,
 )

@@ -8,8 +8,8 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.VersionProvider
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
 
 class ClientSplashPresenter(
@@ -19,15 +19,15 @@ class ClientSplashPresenter(
     settingsRepository: SettingsRepository,
     settingsServiceFacade: SettingsServiceFacade,
     private val webSocketClientService: WebSocketClientService,
-    versionProvider: VersionProvider
+    versionProvider: VersionProvider,
 ) : SplashPresenter(
-    mainPresenter,
-    applicationBootstrapFacade,
-    userProfileService,
-    settingsRepository,
-    settingsServiceFacade,
-    versionProvider
-) {
+        mainPresenter,
+        applicationBootstrapFacade,
+        userProfileService,
+        settingsRepository,
+        settingsServiceFacade,
+        versionProvider,
+    ) {
     override val state: StateFlow<String> get() = applicationBootstrapFacade.state
 
     override suspend fun navigateToNextScreen() {

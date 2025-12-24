@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_a
 
 import androidx.compose.foundation.Image
@@ -24,8 +26,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressField
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.PaymentProofField
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.PaymentProofType
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -56,16 +58,17 @@ fun SellerState3a(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Image(
-                painterResource(Res.drawable.trade_check_circle), "",
-                modifier = Modifier.width(20.dp).height(20.dp)
+                painterResource(Res.drawable.trade_check_circle),
+                "",
+                modifier = Modifier.width(20.dp).height(20.dp),
             )
-            BisqText.baseRegularGrey(
+            BisqText.BaseRegularGrey(
                 // I confirmed to have received {0}
                 "bisqEasy.tradeState.info.seller.phase3a.fiatPaymentReceivedCheckBox".i18n(
-                    quoteAmount
+                    quoteAmount,
                 ),
             )
         }
@@ -75,10 +78,10 @@ fun SellerState3a(
         // Send {0} to the buyer
         // BisqText.h5Light("bisqEasy.tradeState.info.seller.phase3a.sendBtc".i18n(baseAmount))
         Row {
-            BisqText.h5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.send".i18n() + " ")
+            BisqText.H5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.send".i18n() + " ")
             BtcSatsText(baseAmount, textStyle = BisqTheme.typography.h5Regular)
         }
-        BisqText.h5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.toTheBuyer".i18n())
+        BisqText.H5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.toTheBuyer".i18n())
 
         BisqGap.VHalf()
         BisqTextField(
@@ -86,7 +89,7 @@ fun SellerState3a(
             label = "bisqEasy.tradeState.info.seller.phase3a.baseAmount".i18n(),
             value = baseAmount,
             disabled = true,
-            showCopy = true
+            showCopy = true,
         )
 
         BisqGap.VHalf()
@@ -99,7 +102,7 @@ fun SellerState3a(
         )
 
         BisqGap.V1()
-        BisqText.baseRegularGrey(
+        BisqText.BaseRegularGrey(
             // Fill in the Bitcoin transaction ID / Fill in the preimage if available
             paymentProofPrompt,
         )
@@ -122,5 +125,4 @@ fun SellerState3a(
             disabled = buttonEnabled.not(),
         )
     }
-
 }

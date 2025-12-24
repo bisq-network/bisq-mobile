@@ -14,7 +14,7 @@ fun AmountWithCurrency(
 ) {
     val isRangeAmount = formattedPrice.contains("-")
 
-    if(isRangeAmount) {
+    if (isRangeAmount) {
         val priceRange = formattedPrice.split("-")
         if (priceRange.size != 2) {
             // Fallback to single amount display if parsing fails
@@ -25,7 +25,7 @@ fun AmountWithCurrency(
         Row(verticalAlignment = Alignment.CenterVertically) {
             SingleAmountWithCurrency(priceRange[0].trim())
             BisqGap.HHalf()
-            BisqText.h6Light(text = "-")
+            BisqText.H6Light(text = "-")
             BisqGap.HHalf()
             SingleAmountWithCurrency(priceRange[1].trim())
         }
@@ -44,11 +44,11 @@ private fun SingleAmountWithCurrency(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BisqText.h6Light(text = value)
+        BisqText.H6Light(text = value)
 
-        if(priceFragments.size == 2) {
+        if (priceFragments.size == 2) {
             BisqGap.HHalf()
-            BisqText.baseRegularGrey(priceFragments[1])
+            BisqText.BaseRegularGrey(priceFragments[1])
         }
     }
 }

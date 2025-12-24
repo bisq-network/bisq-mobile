@@ -1,3 +1,6 @@
+// TODO: remove and fix the issue
+@file:Suppress("ktlint:compose:lambda-param-in-effect")
+
 package network.bisq.mobile.presentation.common.ui.utils
 
 import androidx.compose.runtime.Composable
@@ -11,7 +14,11 @@ import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
  * @param onDispose <optional> callback before on view unnattaching
  */
 @Composable
-fun RememberPresenterLifecycle(presenter: ViewPresenter, onExecute: (() -> Unit)? = null, onDispose: (() -> Unit)? = null) {
+fun RememberPresenterLifecycle(
+    presenter: ViewPresenter,
+    onExecute: (() -> Unit)? = null,
+    onDispose: (() -> Unit)? = null,
+) {
     DisposableEffect(presenter) {
         try {
             presenter.onViewAttached() // Called when the view is attached
@@ -22,7 +29,7 @@ fun RememberPresenterLifecycle(presenter: ViewPresenter, onExecute: (() -> Unit)
             // Handle the error gracefully without breaking Compose
             GenericErrorHandler.handleGenericError(
                 "Error during view initialization: ${presenter::class.simpleName}",
-                e
+                e,
             )
         }
 
@@ -36,7 +43,7 @@ fun RememberPresenterLifecycle(presenter: ViewPresenter, onExecute: (() -> Unit)
                 // Handle disposal errors gracefully
                 GenericErrorHandler.handleGenericError(
                     "Error during view cleanup: ${presenter::class.simpleName}",
-                    e
+                    e,
                 )
             }
         }

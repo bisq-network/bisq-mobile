@@ -10,15 +10,14 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class CreateProfilePresenter(
     mainPresenter: MainPresenter,
-    private val userProfileService: UserProfileServiceFacade
+    private val userProfileService: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     companion object {
         // The png files used for the image composition are 300 px, thus this is the max size.
         // The view use 140.dp, which translates with a screen density factor of 2 to 280 px
@@ -30,24 +29,28 @@ class CreateProfilePresenter(
     // Properties
     private val _id = MutableStateFlow("")
     val id: StateFlow<String> get() = _id.asStateFlow()
+
     private fun setId(value: String) {
         _id.value = value
     }
 
     private val _nym = MutableStateFlow("")
     val nym: StateFlow<String> get() = _nym.asStateFlow()
+
     private fun setNym(value: String) {
         _nym.value = value
     }
 
     private val _profileIcon = MutableStateFlow<PlatformImage?>(null)
     val profileIcon: StateFlow<PlatformImage?> get() = _profileIcon.asStateFlow()
+
     private fun setProfileIcon(value: PlatformImage?) {
         _profileIcon.value = value
     }
 
     private val _nickName = MutableStateFlow("")
     val nickName: StateFlow<String> get() = _nickName.asStateFlow()
+
     fun setNickname(value: String) {
         // Trim leading/trailing whitespace to avoid accidental spaces causing validation or submission errors
         _nickName.value = value.trim()
@@ -101,30 +104,31 @@ class CreateProfilePresenter(
         if (toSubmit.isNotEmpty()) {
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
-            job = presenterScope.launch {
-                disableInteractive()
-                _createAndPublishInProgress.value = true
-                log.i { "Show busy animation for createAndPublishInProgress" }
-                runCatching {
-                    userProfileService.createAndPublishNewUserProfile(toSubmit)
-                    // Navigate to TabContainer and completely clear the back stack
-                    // This ensures the user can never navigate back to onboarding screens
-                    navigateTo(NavRoute.TabContainer) {
-                        it.popUpTo(NavRoute.Splash) { inclusive = true }
-                    }
+            job =
+                presenterScope.launch {
+                    disableInteractive()
+                    _createAndPublishInProgress.value = true
+                    log.i { "Show busy animation for createAndPublishInProgress" }
+                    runCatching {
+                        userProfileService.createAndPublishNewUserProfile(toSubmit)
+                        // Navigate to TabContainer and completely clear the back stack
+                        // This ensures the user can never navigate back to onboarding screens
+                        navigateTo(NavRoute.TabContainer) {
+                            it.popUpTo(NavRoute.Splash) { inclusive = true }
+                        }
 
-                    log.i { "Hide busy animation for createAndPublishInProgress" }
-                    _createAndPublishInProgress.value = false
-                    enableInteractive()
-                }.onFailure { e ->
-                    GenericErrorHandler.handleGenericError(
-                        "Creating and publishing new user profile failed.",
-                        e
-                    )
-                    _createAndPublishInProgress.value = false
-                    enableInteractive()
+                        log.i { "Hide busy animation for createAndPublishInProgress" }
+                        _createAndPublishInProgress.value = false
+                        enableInteractive()
+                    }.onFailure { e ->
+                        GenericErrorHandler.handleGenericError(
+                            "Creating and publishing new user profile failed.",
+                            e,
+                        )
+                        _createAndPublishInProgress.value = false
+                        enableInteractive()
+                    }
                 }
-            }
         }
     }
 
@@ -136,23 +140,24 @@ class CreateProfilePresenter(
         _generateKeyPairInProgress.value = true
         log.i { "Show busy animation for generateKeyPair" }
 
-        job = presenterScope.launch(Dispatchers.Default) {
-            // takes 200 -1000 ms
-            runCatching {
-                userProfileService.generateKeyPair(
-                    IMAGE_SIZE_IN_PX
-                ) { id, nym, profileIcon ->
-                    setId(id)
-                    setNym(nym)
-                    setProfileIcon(profileIcon)
+        job =
+            presenterScope.launch(Dispatchers.Default) {
+                // takes 200 -1000 ms
+                runCatching {
+                    userProfileService.generateKeyPair(
+                        IMAGE_SIZE_IN_PX,
+                    ) { id, nym, profileIcon ->
+                        setId(id)
+                        setNym(nym)
+                        setProfileIcon(profileIcon)
+                    }
+                }.onFailure {
+                    disableInteractive()
+                    showSnackbar("mobile.profile.generatingKeyPairFailed".i18n())
                 }
-            }.onFailure {
-                disableInteractive()
-                showSnackbar("mobile.profile.generatingKeyPairFailed".i18n())
+                _generateKeyPairInProgress.value = false
+                log.i { "Hide busy animation for generateKeyPair" }
             }
-            _generateKeyPairInProgress.value = false
-            log.i { "Hide busy animation for generateKeyPair" }
-        }
     }
 
     private fun cancelJob() {

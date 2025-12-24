@@ -2,11 +2,11 @@ package network.bisq.mobile.presentation.common.ui.components.molecules
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Stable
 class ConfirmCloseState internal constructor(
-    initial: Boolean = false
+    initial: Boolean = false,
 ) {
     var visible by mutableStateOf(initial)
         internal set
@@ -37,23 +37,27 @@ class ConfirmCloseState internal constructor(
 }
 
 @Composable
-fun rememberConfirmCloseState(): ConfirmCloseState {
-    return rememberSaveable(saver = ConfirmCloseState.Saver) {
+fun rememberConfirmCloseState(): ConfirmCloseState =
+    rememberSaveable(saver = ConfirmCloseState.Saver) {
         ConfirmCloseState(false)
     }
-}
 
 @Composable
 fun ConfirmCloseAction(state: ConfirmCloseState) {
-    BisqIconButton(modifier = Modifier.semantics {
-        contentDescription = "action.close".i18n()
-    }, onClick = { state.open() }, size = BisqUIConstants.topBarAvatarSize
+    BisqIconButton(
+        modifier =
+            Modifier.semantics {
+                contentDescription = "action.close".i18n()
+            },
+        onClick = { state.open() },
+        size = BisqUIConstants.topBarAvatarSize,
     ) { CloseIcon() }
 }
 
 @Composable
 fun ConfirmCloseOverlay(
-    state: ConfirmCloseState, onConfirmedClose: () -> Unit
+    state: ConfirmCloseState,
+    onConfirmedClose: () -> Unit,
 ) {
     if (!state.visible) return
     ConfirmationDialog(onConfirm = {

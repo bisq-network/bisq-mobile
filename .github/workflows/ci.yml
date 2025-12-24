@@ -54,8 +54,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Create fake local.properties
+        run: |
+          echo "KEYSTORE_PATH=/path/to/keystore" > local.properties
+          echo "KEYSTORE_PASSWORD=yourKeystorePassword" >> local.properties
+          echo "KEY_ALIAS=yourKeyAlias" >> local.properties
+          echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
+          echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
+          echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
+
       - name: Run ktlint check
-        run: ./gradlew ktlintCheck
+        if: startsWith(matrix.os, 'ubuntu')
+        run: ./gradlew ktlintCheck --build-cache -Pkotlin.native.ignoreDisabledTargets=true
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -70,15 +80,6 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode.app || true
           xcodebuild -version
-
-      - name: Create fake local.properties
-        run: |
-          echo "KEYSTORE_PATH=/path/to/keystore" > local.properties
-          echo "KEYSTORE_PASSWORD=yourKeystorePassword" >> local.properties
-          echo "KEY_ALIAS=yourKeyAlias" >> local.properties
-          echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
-          echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
-          echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
       - name: Run Android Tests (Ubuntu only)
         if: startsWith(matrix.os, 'ubuntu')

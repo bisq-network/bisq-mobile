@@ -29,24 +29,34 @@ import java.io.File
 
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
-class AndroidClientCatHashService(private val context: Context, filesDir: String) :
-    BaseClientCatHashService("$filesDir/Bisq2_mobile"), Logging {
-    override fun composeImage(paths: Array<String>, size: Int): PlatformImage {
+class AndroidClientCatHashService(
+    private val context: Context,
+    filesDir: String,
+) : BaseClientCatHashService("$filesDir/Bisq2_mobile"),
+    Logging {
+    override fun composeImage(
+        paths: Array<String>,
+        size: Int,
+    ): PlatformImage {
         if (size > 300) {
             log.w { "The image size is limited to 300 px, as the png files used for the composition are 300 px." }
         }
         val imageSize = minOf(300, size)
-        val profileIcon = AndroidImageUtil.composeImage(
-            context,
-            CAT_HASH_PATH,
-            paths,
-            imageSize,
-            imageSize
-        )
+        val profileIcon =
+            AndroidImageUtil.composeImage(
+                context,
+                CAT_HASH_PATH,
+                paths,
+                imageSize,
+                imageSize,
+            )
         return PlatformImage(profileIcon)
     }
 
-    override fun writeRawImage(image: PlatformImage, iconFilePath: String) {
+    override fun writeRawImage(
+        image: PlatformImage,
+        iconFilePath: String,
+    ) {
         val bitmap: Bitmap = image.bitmap.asAndroidBitmap()
         val file = File(iconFilePath)
         AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)

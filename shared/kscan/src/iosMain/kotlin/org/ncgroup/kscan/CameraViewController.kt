@@ -58,7 +58,8 @@ class CameraViewController(
     private val onBarcodeCanceled: () -> Unit,
     private val filter: (Barcode) -> Boolean,
     private val onMaxZoomRatioAvailable: (Float) -> Unit,
-) : UIViewController(null, null), AVCaptureMetadataOutputObjectsDelegateProtocol {
+) : UIViewController(null, null),
+    AVCaptureMetadataOutputObjectsDelegateProtocol {
     private lateinit var captureSession: AVCaptureSession
     private lateinit var previewLayer: AVCaptureVideoPreviewLayer
     private lateinit var videoInput: AVCaptureDeviceInput
@@ -69,7 +70,11 @@ class CameraViewController(
         super.viewDidLoad()
         view.backgroundColor = UIColor.blackColor
         setupCamera()
-        onMaxZoomRatioAvailable(device.activeFormat.videoMaxZoomFactor.toFloat().coerceAtMost(5.0f))
+        onMaxZoomRatioAvailable(
+            device.activeFormat.videoMaxZoomFactor
+                .toFloat()
+                .coerceAtMost(5.0f),
+        )
     }
 
     @OptIn(ExperimentalForeignApi::class)
@@ -162,8 +167,7 @@ class CameraViewController(
                 if (!::previewLayer.isInitialized) return@mapNotNull null
                 previewLayer.transformedMetadataObjectForMetadataObject(metadataObject)
                     as? AVMetadataMachineReadableCodeObject
-            }
-            .filter { barcodeObject ->
+            }.filter { barcodeObject ->
                 isRequestedFormat(barcodeObject.type)
             }.forEach { barcodeObject ->
                 processDetectedBarcode(barcodeObject.stringValue ?: "", barcodeObject.type)
@@ -201,7 +205,10 @@ class CameraViewController(
         try {
             locked = device.lockForConfiguration(null)
             if (locked) {
-                val maxZoom = device.activeFormat.videoMaxZoomFactor.toFloat().coerceAtMost(5.0f)
+                val maxZoom =
+                    device.activeFormat.videoMaxZoomFactor
+                        .toFloat()
+                        .coerceAtMost(5.0f)
                 device.videoZoomFactor = ratio.toDouble().coerceIn(1.0, maxZoom.toDouble())
             }
         } catch (e: Exception) {
@@ -213,20 +220,20 @@ class CameraViewController(
 
     private fun getMetadataObjectTypes(): List<AVMetadataObjectType> {
         if (codeTypes.isEmpty() || codeTypes.contains(BarcodeFormat.FORMAT_ALL_FORMATS)) {
-            return ALL_SUPPORTED_AV_TYPES
+            return allSupportedAvTypes
         }
 
         return codeTypes.mapNotNull { appFormat ->
-            APP_TO_AV_FORMAT_MAP[appFormat]
+            appToAvFormatMap[appFormat]
         }
     }
 
     private fun isRequestedFormat(type: AVMetadataObjectType): Boolean {
         if (codeTypes.contains(BarcodeFormat.FORMAT_ALL_FORMATS)) {
-            return AV_TO_APP_FORMAT_MAP.containsKey(type)
+            return avToAppFormatMap.containsKey(type)
         }
 
-        val appFormat = AV_TO_APP_FORMAT_MAP[type] ?: return false
+        val appFormat = avToAppFormatMap[type] ?: return false
 
         return codeTypes.contains(appFormat)
     }
@@ -249,11 +256,9 @@ class CameraViewController(
         connection.videoOrientation = videoOrientation
     }
 
-    private fun AVMetadataObjectType.toFormat(): BarcodeFormat {
-        return AV_TO_APP_FORMAT_MAP[this] ?: BarcodeFormat.TYPE_UNKNOWN
-    }
+    private fun AVMetadataObjectType.toFormat(): BarcodeFormat = avToAppFormatMap[this] ?: BarcodeFormat.TYPE_UNKNOWN
 
-    private val AV_TO_APP_FORMAT_MAP: Map<AVMetadataObjectType, BarcodeFormat> =
+    private val avToAppFormatMap: Map<AVMetadataObjectType, BarcodeFormat> =
         mapOf(
             AVMetadataObjectTypeQRCode to BarcodeFormat.FORMAT_QR_CODE,
             AVMetadataObjectTypeEAN13Code to BarcodeFormat.FORMAT_EAN_13,
@@ -267,10 +272,10 @@ class CameraViewController(
             AVMetadataObjectTypeDataMatrixCode to BarcodeFormat.FORMAT_DATA_MATRIX,
         )
 
-    private val APP_TO_AV_FORMAT_MAP: Map<BarcodeFormat, AVMetadataObjectType> =
-        AV_TO_APP_FORMAT_MAP.entries.associateBy({ it.value }) { it.key }
+    private val appToAvFormatMap: Map<BarcodeFormat, AVMetadataObjectType> =
+        avToAppFormatMap.entries.associateBy({ it.value }) { it.key }
 
-    val ALL_SUPPORTED_AV_TYPES: List<AVMetadataObjectType> = AV_TO_APP_FORMAT_MAP.keys.toList()
+    val allSupportedAvTypes: List<AVMetadataObjectType> = avToAppFormatMap.keys.toList()
 
     fun dispose() {
         // Best-effort cleanup to avoid retaining camera resources

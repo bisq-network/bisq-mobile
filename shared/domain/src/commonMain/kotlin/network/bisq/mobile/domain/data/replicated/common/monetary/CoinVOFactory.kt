@@ -19,28 +19,39 @@ package network.bisq.mobile.domain.data.replicated.common.monetary
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 object CoinVOFactory {
-    fun CoinVOFactory.from(id: String, value: Long, code: String, precision: Int, lowPrecision: Int): CoinVO {
-        return CoinVO(id, value, code, precision, lowPrecision)
-    }
+    fun CoinVOFactory.from(
+        id: String,
+        value: Long,
+        code: String,
+        precision: Int,
+        lowPrecision: Int,
+    ): CoinVO = CoinVO(id, value, code, precision, lowPrecision)
 
-    fun CoinVOFactory.bitcoinFrom(value: Long): CoinVO {
-        return from(value, "BTC")
-    }
+    fun CoinVOFactory.bitcoinFrom(value: Long): CoinVO = from(value, "BTC")
 
-    fun CoinVOFactory.from(value: Long, code: String): CoinVO {
-        return CoinVO(code, value, code, 8, 4)
-    }
+    fun CoinVOFactory.from(
+        value: Long,
+        code: String,
+    ): CoinVO = CoinVO(code, value, code, 8, 4)
 
-    fun CoinVOFactory.from(value: Long, code: String, precision: Int): CoinVO {
-        return CoinVO(code, value, code, precision, 4)
-    }
+    fun CoinVOFactory.from(
+        value: Long,
+        code: String,
+        precision: Int,
+    ): CoinVO = CoinVO(code, value, code, precision, 4)
 
-    fun CoinVOFactory.fromFaceValue(faceValue: Double, code: String): CoinVO {
+    fun CoinVOFactory.fromFaceValue(
+        faceValue: Double,
+        code: String,
+    ): CoinVO {
         val value = CoinVOFactory.faceValueToLong(faceValue)
         return CoinVOFactory.from(value, code)
     }
 
-    fun CoinVOFactory.faceValueToLong(faceValue: Double, precision: Int = 8): Long {
+    fun CoinVOFactory.faceValueToLong(
+        faceValue: Double,
+        precision: Int = 8,
+    ): Long {
         val maxValue: Double = BigDecimal.fromLong(Long.MAX_VALUE).moveDecimalPoint(-precision).doubleValue(false)
         if (faceValue > maxValue) {
             throw RuntimeException("Provided value would lead to an overflow")
@@ -48,4 +59,3 @@ object CoinVOFactory {
         return BigDecimal.fromDouble(faceValue).moveDecimalPoint(precision).longValue(false)
     }
 }
-

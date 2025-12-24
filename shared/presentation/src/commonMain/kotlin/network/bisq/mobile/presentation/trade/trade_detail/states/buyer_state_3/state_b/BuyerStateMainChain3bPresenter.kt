@@ -8,11 +8,11 @@ import network.bisq.mobile.presentation.trade.trade_detail.states.common.BaseTra
 class BuyerStateMainChain3bPresenter(
     mainPresenter: MainPresenter,
     tradesServiceFacade: TradesServiceFacade,
-    explorerServiceFacade: ExplorerServiceFacade
+    explorerServiceFacade: ExplorerServiceFacade,
 ) : BaseTradeStateMainChain3bPresenter(
-    mainPresenter,
-    tradesServiceFacade,
-    explorerServiceFacade
-) {
+        mainPresenter,
+        tradesServiceFacade,
+        explorerServiceFacade,
+    ) {
     // This class is now a placeholder for any future Buyer-specific logic.
 }

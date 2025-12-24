@@ -7,7 +7,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.Co
 @Composable
 fun CloseTradeDialog(
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
 ) {
     ConfirmationDialog(
         headline = "",
@@ -16,6 +16,6 @@ fun CloseTradeDialog(
         confirmButtonText = "bisqEasy.openTrades.confirmCloseTrade".i18n(),
         onConfirm = onConfirm,
         onDismiss = { _ -> onDismiss() },
-        verticalButtonPlacement = true
+        verticalButtonPlacement = true,
     )
 }

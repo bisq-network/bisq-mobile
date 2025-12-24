@@ -26,26 +26,30 @@ fun AnimatedBadge(
     showAnimation: Boolean = false,
     xOffset: Dp = 8.dp,
     yOffset: Dp = (-8).dp,
-    content: (@Composable RowScope.() -> Unit)? = null
+    content: (@Composable RowScope.() -> Unit)? = null,
 ) {
-
     val scale: Float
 
     if (showAnimation) {
         val transition = rememberInfiniteTransition(label = "badgePulse")
-        scale = transition.animateFloat(
-            initialValue = 1f,
-            targetValue = 1.1f,
-            animationSpec = infiniteRepeatable(
-                animation = keyframes {
-                    durationMillis = 5600 // 600ms pulse + 5000ms delay
-                    1.2f at 300 // halfway scale up
-                    1f at 600 // back to normal (end of pulse)
-                    1f at 5600 // hold until next repeat
-                },
-                repeatMode = RepeatMode.Restart
-            ), label = "scale"
-        ).value
+        scale =
+            transition
+                .animateFloat(
+                    initialValue = 1f,
+                    targetValue = 1.1f,
+                    animationSpec =
+                        infiniteRepeatable(
+                            animation =
+                                keyframes {
+                                    durationMillis = 5600 // 600ms pulse + 5000ms delay
+                                    1.2f at 300 // halfway scale up
+                                    1f at 600 // back to normal (end of pulse)
+                                    1f at 5600 // hold until next repeat
+                                },
+                            repeatMode = RepeatMode.Restart,
+                        ),
+                    label = "scale",
+                ).value
     } else {
         scale = 1f
     }
@@ -53,15 +57,16 @@ fun AnimatedBadge(
     Badge(
         containerColor = badgeColor,
         contentColor = contentColor,
-        modifier = Modifier
-            .offset(x = xOffset, y = yOffset)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+        modifier =
+            Modifier
+                .offset(x = xOffset, y = yOffset)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
     ) {
         if (content == null) {
-            BisqText.xsmallMedium(
+            BisqText.XSmallMedium(
                 text = text,
                 textAlign = TextAlign.Center,
                 color = contentColor,

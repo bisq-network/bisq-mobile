@@ -11,7 +11,7 @@ fun LoadingDialog() {
     BisqDialog {
         CircularProgressIndicator(
             color = BisqTheme.colors.primary,
-            strokeWidth = 2.dp
+            strokeWidth = 2.dp,
         )
     }
 }

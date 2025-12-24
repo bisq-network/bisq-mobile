@@ -12,7 +12,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.system.measureTimeMillis
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Performance tests for avatar caching functionality.
@@ -21,13 +23,15 @@ import kotlin.test.*
  * without complex dependencies, focusing on the core performance characteristics.
  */
 class NodeUserProfileServiceFacadePerformanceTest {
-
     // Simulate the avatar map from the facade
     private val avatarMap: MutableMap<String, MockPlatformImage?> = mutableMapOf()
     private val avatarMapMutex = Mutex()
 
     // Simple mock for PlatformImage to avoid dependencies
-    data class MockPlatformImage(val id: String, val size: Int = 1024)
+    data class MockPlatformImage(
+        val id: String,
+        val size: Int = 1024,
+    )
 
     @Before
     fun setup() {
@@ -42,13 +46,12 @@ class NodeUserProfileServiceFacadePerformanceTest {
     /**
      * Creates a test UserProfileVO with unique nym and realistic data
      */
-    private fun createTestUserProfile(index: Int): UserProfileVO {
-        return userProfileDemoObj.copy(
+    private fun createTestUserProfile(index: Int): UserProfileVO =
+        userProfileDemoObj.copy(
             nym = "testUser$index",
             nickName = "TestUser$index",
-            userName = "testuser$index"
+            userName = "testuser$index",
         )
-    }
 
     /**
      * Simulates avatar generation (the expensive operation)
@@ -62,26 +65,24 @@ class NodeUserProfileServiceFacadePerformanceTest {
     /**
      * Simulates the avatar caching logic from the facade (without mutex for simple tests)
      */
-    private fun getAvatarWithCaching(userProfile: UserProfileVO): MockPlatformImage? {
-        return avatarMap[userProfile.nym] ?: run {
+    private fun getAvatarWithCaching(userProfile: UserProfileVO): MockPlatformImage? =
+        avatarMap[userProfile.nym] ?: run {
             val avatar = generateMockAvatar(userProfile.nym)
             avatarMap[userProfile.nym] = avatar
             avatar
         }
-    }
 
     /**
      * Simulates the avatar caching logic with mutex (thread-safe version)
      */
-    private suspend fun getAvatarWithCachingThreadSafe(userProfile: UserProfileVO): MockPlatformImage? {
-        return avatarMapMutex.withLock {
+    private suspend fun getAvatarWithCachingThreadSafe(userProfile: UserProfileVO): MockPlatformImage? =
+        avatarMapMutex.withLock {
             avatarMap[userProfile.nym] ?: run {
                 val avatar = generateMockAvatar(userProfile.nym)
                 avatarMap[userProfile.nym] = avatar
                 avatar
             }
         }
-    }
 
     @Test
     fun `performance test - 100 users sequential avatar loading`() {
@@ -90,11 +91,12 @@ class NodeUserProfileServiceFacadePerformanceTest {
         val users = (1..userCount).map { createTestUserProfile(it) }
 
         // When
-        val executionTime = measureTimeMillis {
-            users.forEach { user ->
-                getAvatarWithCaching(user)
+        val executionTime =
+            measureTimeMillis {
+                users.forEach { user ->
+                    getAvatarWithCaching(user)
+                }
             }
-        }
 
         // Then
         println("Sequential loading of $userCount avatars took: ${executionTime}ms")
@@ -102,11 +104,12 @@ class NodeUserProfileServiceFacadePerformanceTest {
         assertEquals(userCount, avatarMap.size, "All avatars should be cached")
 
         // Verify cache hits are fast
-        val cacheHitTime = measureTimeMillis {
-            users.forEach { user ->
-                getAvatarWithCaching(user)
+        val cacheHitTime =
+            measureTimeMillis {
+                users.forEach { user ->
+                    getAvatarWithCaching(user)
+                }
             }
-        }
         println("Cache hit time for $userCount users: ${cacheHitTime}ms")
         assertTrue(cacheHitTime < executionTime / 5, "Cache hits should be much faster")
     }
@@ -123,13 +126,15 @@ class NodeUserProfileServiceFacadePerformanceTest {
         }
 
         // When - Test cache lookup performance
-        val lookupTime = measureTimeMillis {
-            repeat(5) { // Multiple rounds to test consistency
-                users.forEach { user ->
-                    getAvatarWithCaching(user)
+        val lookupTime =
+            measureTimeMillis {
+                repeat(5) {
+                    // Multiple rounds to test consistency
+                    users.forEach { user ->
+                        getAvatarWithCaching(user)
+                    }
                 }
             }
-        }
 
         // Then
         val averageTimePerLookup = lookupTime.toDouble() / (userCount * 5)
@@ -183,11 +188,12 @@ class NodeUserProfileServiceFacadePerformanceTest {
         val offerMakers = mutableListOf<UserProfileVO>()
         repeat(offerCount) { index ->
             // 80/20 distribution: 20% of users create 80% of offers
-            val user = if (index < offerCount * 0.8) {
-                users[index % (userCount / 5)] // Top 20% of users
-            } else {
-                users[(userCount / 5) + (index % (userCount * 4 / 5))] // Remaining 80% of users
-            }
+            val user =
+                if (index < offerCount * 0.8) {
+                    users[index % (userCount / 5)] // Top 20% of users
+                } else {
+                    users[(userCount / 5) + (index % (userCount * 4 / 5))] // Remaining 80% of users
+                }
             offerMakers.add(user)
         }
         offerMakers.shuffle()
@@ -195,11 +201,12 @@ class NodeUserProfileServiceFacadePerformanceTest {
         println("Testing $offerCount offers from $userCount unique users")
 
         // When - Simulate loading avatars for all offer makers (as would happen in offer list)
-        val loadingTime = measureTimeMillis {
-            offerMakers.forEach { offer ->
-                getAvatarWithCaching(offer)
+        val loadingTime =
+            measureTimeMillis {
+                offerMakers.forEach { offer ->
+                    getAvatarWithCaching(offer)
+                }
             }
-        }
 
         // Then
         val averageTimePerOffer = loadingTime.toDouble() / offerCount
@@ -215,11 +222,12 @@ class NodeUserProfileServiceFacadePerformanceTest {
         assertEquals(userCount, avatarMap.size, "Should cache exactly $userCount unique avatars")
 
         // Verify cache efficiency - subsequent access should be very fast
-        val cacheAccessTime = measureTimeMillis {
-            offerMakers.forEach { offer ->
-                getAvatarWithCaching(offer)
+        val cacheAccessTime =
+            measureTimeMillis {
+                offerMakers.forEach { offer ->
+                    getAvatarWithCaching(offer)
+                }
             }
-        }
 
         println("Cache access for same offers took: ${cacheAccessTime}ms")
         assertTrue(cacheAccessTime < loadingTime / 10, "Cache access should be at least 10x faster")
@@ -232,11 +240,12 @@ class NodeUserProfileServiceFacadePerformanceTest {
         val duplicateUsers = (1..100).map { baseUser } // Same nym for all
 
         // When
-        val executionTime = measureTimeMillis {
-            duplicateUsers.forEach { user ->
-                getAvatarWithCaching(user)
+        val executionTime =
+            measureTimeMillis {
+                duplicateUsers.forEach { user ->
+                    getAvatarWithCaching(user)
+                }
             }
-        }
 
         // Then
         println("Duplicate nym access (100 requests) took: ${executionTime}ms")
@@ -249,20 +258,22 @@ class NodeUserProfileServiceFacadePerformanceTest {
     }
 
     @Test
-    fun `performance test - concurrent avatar loading is thread-safe`() = runBlocking (Dispatchers.Default) {
-        val user = createTestUserProfile(42)
-        val concurrentJobs = 200
-        val time = measureTimeMillis {
-            coroutineScope {
-                repeat(concurrentJobs) {
-                    launch {
-                        getAvatarWithCachingThreadSafe(user)
+    fun `performance test - concurrent avatar loading is thread-safe`() =
+        runBlocking(Dispatchers.Default) {
+            val user = createTestUserProfile(42)
+            val concurrentJobs = 200
+            val time =
+                measureTimeMillis {
+                    coroutineScope {
+                        repeat(concurrentJobs) {
+                            launch {
+                                getAvatarWithCachingThreadSafe(user)
+                            }
+                        }
                     }
                 }
-            }
+            // Should complete quickly and only one avatar in cache
+            assertTrue(time < 200, "Concurrent cache lookups should be fast")
+            assertEquals(1, avatarMap.size, "Only one avatar should be cached for the same nym")
         }
-        // Should complete quickly and only one avatar in cache
-        assertTrue(time < 200, "Concurrent cache lookups should be fast")
-        assertEquals(1, avatarMap.size, "Only one avatar should be cached for the same nym")
-    }
 }

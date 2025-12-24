@@ -12,34 +12,35 @@ class Subscription<T>(
     private val webSocketClientService: WebSocketClientService,
     private val json: Json,
     private val topic: Topic,
-    private val resultHandler: (List<T>, ModificationType) -> Unit
+    private val resultHandler: (List<T>, ModificationType) -> Unit,
 ) : Logging {
     private var job: Job? = null
 
     fun subscribe() {
         require(job == null)
-        job = CoroutineScope(Dispatchers.Default).launch {
-            // subscribe blocks until we get a response
-            val observer = webSocketClientService.subscribe(topic)
-            observer.webSocketEvent.collect { webSocketEvent ->
-                try {
-                    if (webSocketEvent?.deferredPayload == null) {
-                        return@collect
-                    }
-                    log.d { "deferredPayload = ${webSocketEvent.deferredPayload}" }
-                    val webSocketEventPayload: WebSocketEventPayload<List<T>> =
-                        WebSocketEventPayload.from(json, webSocketEvent)
-                    log.d { "webSocketEventPayload = $webSocketEventPayload" }
+        job =
+            CoroutineScope(Dispatchers.Default).launch {
+                // subscribe blocks until we get a response
+                val observer = webSocketClientService.subscribe(topic)
+                observer.webSocketEvent.collect { webSocketEvent ->
+                    try {
+                        if (webSocketEvent?.deferredPayload == null) {
+                            return@collect
+                        }
+                        log.d { "deferredPayload = ${webSocketEvent.deferredPayload}" }
+                        val webSocketEventPayload: WebSocketEventPayload<List<T>> =
+                            WebSocketEventPayload.from(json, webSocketEvent)
+                        log.d { "webSocketEventPayload = $webSocketEventPayload" }
 
-                    val payload: List<T> = webSocketEventPayload.payload
-                    log.d { "payload = $payload" }
-                    resultHandler(payload, webSocketEvent.modificationType)
-                } catch (e: Exception) {
-                    log.e { "Error at processing webSocketEvent ${e.message}" }
-                    throw e
+                        val payload: List<T> = webSocketEventPayload.payload
+                        log.d { "payload = $payload" }
+                        resultHandler(payload, webSocketEvent.modificationType)
+                    } catch (e: Exception) {
+                        log.e { "Error at processing webSocketEvent ${e.message}" }
+                        throw e
+                    }
                 }
             }
-        }
     }
 
     fun dispose() {

@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 data class BlurTriggerSetup(
     val focusRequester: FocusRequester,
     val setIsFocused: (Boolean) -> Unit,
-    val setShouldBlurAfterFocus: (Boolean) -> Unit
+    val setShouldBlurAfterFocus: (Boolean) -> Unit,
 ) {
     fun triggerBlur() {
         setShouldBlurAfterFocus(true)
@@ -27,13 +27,14 @@ data class BlurTriggerSetup(
 fun rememberBlurTriggerSetup(): BlurTriggerSetup {
     var shouldBlurAfterFocus by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
-    val triggerSetup = remember {
-        BlurTriggerSetup(
-            FocusRequester(),
-            { isFocused = it },
-            { shouldBlurAfterFocus = it },
-        )
-    }
+    val triggerSetup =
+        remember {
+            BlurTriggerSetup(
+                FocusRequester(),
+                { isFocused = it },
+                { shouldBlurAfterFocus = it },
+            )
+        }
     val focusManager = LocalFocusManager.current
 
     LaunchedEffect(isFocused, shouldBlurAfterFocus) {
@@ -46,9 +47,9 @@ fun rememberBlurTriggerSetup(): BlurTriggerSetup {
     return triggerSetup
 }
 
-fun Modifier.setBlurTrigger(triggerSetup: BlurTriggerSetup): Modifier {
-    return this.focusRequester(triggerSetup.focusRequester)
+fun Modifier.setBlurTrigger(triggerSetup: BlurTriggerSetup): Modifier =
+    this
+        .focusRequester(triggerSetup.focusRequester)
         .onFocusChanged { focusState ->
             triggerSetup.setIsFocused(focusState.isFocused)
         }
-}

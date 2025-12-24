@@ -11,7 +11,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TradeItemPresentationModelDirectionTest {
-
     @BeforeTest
     fun initI18n() {
         I18nSupport.initialize("en")
@@ -24,15 +23,16 @@ class TradeItemPresentationModelDirectionTest {
         val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
         every { tradeModel.isSeller } returns true
 
-        val model = TradeItemPresentationModel(
-            tradeItemPresentationDto = dto,
-            bisqEasyOpenTradeChannelModel = channelModel,
-            bisqEasyTradeModel = tradeModel,
-        )
+        val model =
+            TradeItemPresentationModel(
+                tradeItemPresentationDto = dto,
+                bisqEasyOpenTradeChannelModel = channelModel,
+                bisqEasyTradeModel = tradeModel,
+            )
 
         assertEquals(
             "bisqEasy.openTrades.table.direction.seller".i18n().uppercase(),
-            model.directionalTitle
+            model.directionalTitle,
         )
     }
 
@@ -43,16 +43,16 @@ class TradeItemPresentationModelDirectionTest {
         val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
         every { tradeModel.isSeller } returns false
 
-        val model = TradeItemPresentationModel(
-            tradeItemPresentationDto = dto,
-            bisqEasyOpenTradeChannelModel = channelModel,
-            bisqEasyTradeModel = tradeModel,
-        )
+        val model =
+            TradeItemPresentationModel(
+                tradeItemPresentationDto = dto,
+                bisqEasyOpenTradeChannelModel = channelModel,
+                bisqEasyTradeModel = tradeModel,
+            )
 
         assertEquals(
             "bisqEasy.openTrades.table.direction.buyer".i18n().uppercase(),
-            model.directionalTitle
+            model.directionalTitle,
         )
     }
 }
-

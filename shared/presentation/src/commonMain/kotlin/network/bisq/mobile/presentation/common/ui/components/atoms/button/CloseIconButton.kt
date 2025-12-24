@@ -10,7 +10,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CloseIc
 @Composable
 fun CloseIconButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier.size(20.dp)
+    modifier: Modifier = Modifier.size(20.dp),
 ) {
     IconButton(onClick = onClick, modifier = modifier) {
         CloseIcon()

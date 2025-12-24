@@ -9,8 +9,10 @@ import kotlinx.serialization.Serializable
 sealed class BaseModel {
     companion object {
         const val UNDEFINED_ID = ""
+
         inline fun <reified T : BaseModel> typeName(): String = T::class.simpleName ?: "BaseModel"
     }
+
     // Add here any common properties of models (id?, timestamps?)
     open var id: String = UNDEFINED_ID
 
@@ -22,17 +24,17 @@ sealed class BaseModel {
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other == null)
+        if (other == null) {
             return false
+        }
         if (other is BaseModel) {
-            if (other.id != UNDEFINED_ID && id != UNDEFINED_ID)
+            if (other.id != UNDEFINED_ID && id != UNDEFINED_ID) {
                 return other.id == id
+            }
             return super.equals(other)
         }
         return false
     }
 
-    override fun hashCode(): Int {
-        return if (id == UNDEFINED_ID) super.hashCode() else id.hashCode()
-    }
+    override fun hashCode(): Int = if (id == UNDEFINED_ID) super.hashCode() else id.hashCode()
 }

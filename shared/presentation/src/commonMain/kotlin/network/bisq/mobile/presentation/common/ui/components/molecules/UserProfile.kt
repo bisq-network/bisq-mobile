@@ -22,21 +22,20 @@ fun UserProfile(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     reputation: StateFlow<ReputationScoreVO>,
     supportedLanguageCodes: List<String>,
+    modifier: Modifier = Modifier,
     showUserName: Boolean = true,
-    modifier: Modifier = Modifier
 ) {
     val reputationScore by reputation.collectAsState()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+        modifier = modifier,
     ) {
-
         UserProfileIcon(userProfile, userProfileIconProvider)
 
         BisqGap.V1()
         Column {
             if (showUserName) {
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = userProfile.userName,
                     singleLine = true,
                 )
@@ -47,8 +46,8 @@ fun UserProfile(
         BisqGap.V2()
         Row(verticalAlignment = Alignment.CenterVertically) {
             LanguageIcon()
-            BisqText.smallRegularGrey(" : ")
-            BisqText.smallRegular(supportedLanguageCodes.joinToString(", ").uppercase())
+            BisqText.SmallRegularGrey(" : ")
+            BisqText.SmallRegular(supportedLanguageCodes.joinToString(", ").uppercase())
         }
     }
 }

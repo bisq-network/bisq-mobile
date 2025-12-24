@@ -32,9 +32,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.settings.AppPaymentAccountCard
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 interface IPaymentAccountSettingsPresenter : ViewPresenter {
@@ -43,8 +43,16 @@ interface IPaymentAccountSettingsPresenter : ViewPresenter {
 
     fun selectAccount(account: UserDefinedFiatAccountVO)
 
-    fun addAccount(newName: String, newDescription: String)
-    fun saveAccount(newName: String, newDescription: String)
+    fun addAccount(
+        newName: String,
+        newDescription: String,
+    )
+
+    fun saveAccount(
+        newName: String,
+        newDescription: String,
+    )
+
     fun deleteCurrentAccount()
 }
 
@@ -63,7 +71,7 @@ fun PaymentAccountsScreen() {
     var accountNameValid by remember { mutableStateOf(true) }
     var accountDescription by remember {
         mutableStateOf(
-            selectedAccount?.accountPayload?.accountData ?: ""
+            selectedAccount?.accountPayload?.accountData ?: "",
         )
     }
     var accountDescriptionValid by remember { mutableStateOf(true) }
@@ -87,7 +95,7 @@ fun PaymentAccountsScreen() {
         if (showBottomSheet) {
             BisqBottomSheet(
                 containerColor = BisqTheme.colors.dark_grey20,
-                onDismissRequest = { showBottomSheet = false }
+                onDismissRequest = { showBottomSheet = false },
             ) {
                 AppPaymentAccountCard(
                     onCancel = { showBottomSheet = false },
@@ -112,21 +120,20 @@ fun PaymentAccountsScreen() {
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Top,
                 ) {
-
-                    BisqText.baseLightGrey("paymentAccounts.noAccounts.info".i18n())
+                    BisqText.BaseLightGrey("paymentAccounts.noAccounts.info".i18n())
                     BisqGap.V2()
-                    BisqText.h2Light("paymentAccounts.noAccounts.whySetup".i18n())
+                    BisqText.H2Light("paymentAccounts.noAccounts.whySetup".i18n())
                     BisqGap.V1()
-                    BisqText.baseLight("paymentAccounts.noAccounts.whySetup.info".i18n())
+                    BisqText.BaseLight("paymentAccounts.noAccounts.whySetup.info".i18n())
                     BisqGap.V2()
-                    BisqText.baseLightGrey("paymentAccounts.noAccounts.whySetup.note".i18n())
+                    BisqText.BaseLightGrey("paymentAccounts.noAccounts.whySetup.note".i18n())
 
                     BisqGap.V2()
 
                     BisqButton(
                         text = "paymentAccounts.createAccount".i18n(),
                         onClick = { showBottomSheet = !showBottomSheet },
-                        modifier = Modifier.padding(all = 8.dp)
+                        modifier = Modifier.padding(all = 8.dp),
                     )
                 }
             }
@@ -135,7 +142,7 @@ fun PaymentAccountsScreen() {
                 BisqButton(
                     text = "paymentAccounts.legacy.createAccount.headline".i18n(),
                     onClick = { showBottomSheet = !showBottomSheet },
-                    padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                 )
 
                 BisqGap.V1()
@@ -145,7 +152,7 @@ fun PaymentAccountsScreen() {
                     items = accounts.map { it.accountName },
                     // TODO use accounts key
                     label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
-                    onValueChanged = { name, isValid ->
+                    onValueChange = { name, isValid ->
                         var account = accounts.firstOrNull { it.accountName == name }
                         if (account == null) {
                             account =
@@ -167,7 +174,7 @@ fun PaymentAccountsScreen() {
                         }
 
                         return@BisqEditableDropDown null
-                    }
+                    },
                 )
 
                 BisqGap.V1()
@@ -182,7 +189,6 @@ fun PaymentAccountsScreen() {
                     isTextArea = true,
                     minLines = 4,
                     validation = {
-
                         if (it.length < 3) {
                             return@BisqTextField "paymentAccounts.legacy.accountData.paymentAccount.validations.minLength".i18n()
                         }
@@ -192,27 +198,27 @@ fun PaymentAccountsScreen() {
                         }
 
                         return@BisqTextField null
-                    }
+                    },
                 )
 
                 BisqGap.V1()
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     BisqButton(
                         text = "paymentAccounts.deleteAccount".i18n(),
                         type = BisqButtonType.Grey,
                         onClick = { showConfirmationDialog = true },
-                        disabled = selectedAccount == null
+                        disabled = selectedAccount == null,
                     )
                     BisqButton(
                         text = "action.save".i18n(),
                         onClick = {
                             presenter.saveAccount(accountName, accountDescription)
                         },
-                        disabled = !accountNameValid || !accountDescriptionValid
+                        disabled = !accountNameValid || !accountDescriptionValid,
                     )
                 }
             }
@@ -227,7 +233,7 @@ fun PaymentAccountsScreen() {
             },
             onDismiss = {
                 showConfirmationDialog = false
-            }
+            },
         )
     }
 }

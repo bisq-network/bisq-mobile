@@ -22,16 +22,15 @@ class NodeSplashPresenter(
     settingsRepository: SettingsRepository,
     settingsServiceFacade: SettingsServiceFacade,
     networkServiceFacade: NetworkServiceFacade,
-    versionProvider: VersionProvider
+    versionProvider: VersionProvider,
 ) : SplashPresenter(
-    mainPresenter,
-    applicationBootstrapFacade,
-    userProfileService,
-    settingsRepository,
-    settingsServiceFacade,
-    versionProvider
-) {
-
+        mainPresenter,
+        applicationBootstrapFacade,
+        userProfileService,
+        settingsRepository,
+        settingsServiceFacade,
+        versionProvider,
+    ) {
     private val _state = MutableStateFlow("")
     override val state: StateFlow<String> get() = _state.asStateFlow()
     val numConnections: StateFlow<Int> = networkServiceFacade.numConnections
@@ -42,17 +41,16 @@ class NodeSplashPresenter(
         presenterScope.launch {
             combine(
                 applicationBootstrapFacade.state,
-                numConnections
+                numConnections,
             ) { state, numConnections ->
                 if (numConnections >= 0) {
                     "mobile.splash.bootstrapState.stateAndNumConnections".i18n(
                         state,
-                        numConnections
+                        numConnections,
                     )
                 } else {
                     state
                 }
-
             }.collect { stateAndNumConnections ->
                 _state.value = stateAndNumConnections
             }

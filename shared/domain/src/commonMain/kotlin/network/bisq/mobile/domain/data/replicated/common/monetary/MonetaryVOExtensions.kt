@@ -21,14 +21,14 @@ import com.ionspin.kotlin.bignum.decimal.DecimalMode
 import com.ionspin.kotlin.bignum.decimal.RoundingMode
 
 object MonetaryVOExtensions {
-    fun MonetaryVO.toDouble(value: Long): Double {
-        return BigDecimal.fromLong(value).moveDecimalPoint(-precision).scale(precision.toLong()).doubleValue(false)
-    }
+    fun MonetaryVO.toDouble(value: Long): Double =
+        BigDecimal
+            .fromLong(value)
+            .moveDecimalPoint(-precision)
+            .scale(precision.toLong())
+            .doubleValue(false)
 
-    fun MonetaryVO.asDouble(): Double {
-        return toDouble(value)
-    }
+    fun MonetaryVO.asDouble(): Double = toDouble(value)
 
     val MonetaryVO.decimalMode: DecimalMode get() = DecimalMode(precision.toLong(), RoundingMode.ROUND_HALF_AWAY_FROM_ZERO)
 }
-

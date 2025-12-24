@@ -20,8 +20,9 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
-class IosNotificationPermissionRequestLauncher(private val onResult: (Boolean) -> Unit) :
-    PermissionRequestLauncher {
+class IosNotificationPermissionRequestLauncher(
+    private val onResult: (Boolean) -> Unit,
+) : PermissionRequestLauncher {
     override fun launch() {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         center.getNotificationSettingsWithCompletionHandler { settings ->
@@ -41,8 +42,8 @@ class IosNotificationPermissionRequestLauncher(private val onResult: (Boolean) -
                 UNAuthorizationStatusNotDetermined -> {
                     center.requestAuthorizationWithOptions(
                         UNAuthorizationOptionAlert or
-                                UNAuthorizationOptionSound or
-                                UNAuthorizationOptionBadge
+                            UNAuthorizationOptionSound or
+                            UNAuthorizationOptionBadge,
                     ) { granted, error ->
                         dispatch_async(dispatch_get_main_queue()) {
                             onResult(granted)
@@ -60,8 +61,9 @@ class IosNotificationPermissionRequestLauncher(private val onResult: (Boolean) -
     }
 }
 
-class IosCameraPermissionRequestLauncher(private val onResult: (Boolean) -> Unit) :
-    PermissionRequestLauncher {
+class IosCameraPermissionRequestLauncher(
+    private val onResult: (Boolean) -> Unit,
+) : PermissionRequestLauncher {
     override fun launch() {
         val status = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)
         when (status) {

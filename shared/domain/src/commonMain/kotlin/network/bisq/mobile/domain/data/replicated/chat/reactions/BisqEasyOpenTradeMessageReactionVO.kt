@@ -16,5 +16,5 @@ data class BisqEasyOpenTradeMessageReactionVO(
     val chatMessageId: String,
     val reactionId: Int,
     val date: Long,
-    val isRemoved: Boolean
+    val isRemoved: Boolean,
 )

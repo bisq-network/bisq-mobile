@@ -33,44 +33,45 @@ fun MarketCard(
     item: MarketListItem,
     isSelected: Boolean = false,
     hasIgnoredUsers: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val numOffers = item.numOffers
     val highLightColor = BisqTheme.colors.primary
 
-    val backgroundColor = if (isSelected) {
-        BisqTheme.colors.secondary
-    } else {
-        BisqTheme.colors.backgroundColor
-    }
+    val backgroundColor =
+        if (isSelected) {
+            BisqTheme.colors.secondary
+        } else {
+            BisqTheme.colors.backgroundColor
+        }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(backgroundColor)
-            .then(
-                if (isSelected) {
-                    Modifier.drawBehind {
-                        drawLine(
-                            color = highLightColor,
-                            start = Offset(0f, size.height),
-                            end = Offset(0f, 0f),
-                            strokeWidth = 2.dp.toPx()
-                        )
-                    }
-                } else {
-                    Modifier.background(Color.Transparent)
-                }
-            )
-            .padding(vertical = BisqUIConstants.ScreenPadding)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(backgroundColor)
+                .then(
+                    if (isSelected) {
+                        Modifier.drawBehind {
+                            drawLine(
+                                color = highLightColor,
+                                start = Offset(0f, size.height),
+                                end = Offset(0f, 0f),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                        }
+                    } else {
+                        Modifier.background(Color.Transparent)
+                    },
+                ).padding(vertical = BisqUIConstants.ScreenPadding)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ),
     ) {
         if (isSelected) {
             BisqGap.H1()
@@ -82,20 +83,21 @@ fun MarketCard(
                 "drawable/markets/fiat/market_${item.market.quoteCurrencyCode
                     .lowercase()
                     .replace("-", "_")}.png",
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(36.dp),
             )
             BisqGap.HHalf()
             Column {
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = item.localeFiatCurrencyName,
-                    singleLine = true
+                    singleLine = true,
                 )
                 Spacer(modifier = Modifier.height(0.dp))
-                BisqText.baseLightGrey(item.market.quoteCurrencyCode)
+                BisqText.BaseLightGrey(item.market.quoteCurrencyCode)
             }
         }
-        BisqText.baseLight(
-            text = (if (hasIgnoredUsers && numOffers > 0) "~" else "") +
+        BisqText.BaseLight(
+            text =
+                (if (hasIgnoredUsers && numOffers > 0) "~" else "") +
                     "mobile.components.currencyCard.numberOfOffers".i18nPlural(numOffers),
             color = BisqTheme.colors.primary,
             textAlign = TextAlign.End,
@@ -106,4 +108,3 @@ fun MarketCard(
         }
     }
 }
-

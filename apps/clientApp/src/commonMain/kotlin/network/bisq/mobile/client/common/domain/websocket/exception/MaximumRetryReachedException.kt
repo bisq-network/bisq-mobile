@@ -8,8 +8,10 @@ package network.bisq.mobile.client.common.domain.websocket.exception
  */
 data class MaximumRetryReachedException(
     val attempts: Int,
-    override val cause: Throwable? = null
+    override val cause: Throwable? = null,
 ) : Exception("Maximum reconnect attempts ($attempts) reached", cause) {
     override val message: String
-        get() = super.message ?: "Maximum reconnect attempts ($attempts) reached"  // Fallback to avoid null, just in case
+        get() =
+            super.message
+                ?: "Maximum reconnect attempts ($attempts) reached" // Fallback to avoid null, just in case
 }

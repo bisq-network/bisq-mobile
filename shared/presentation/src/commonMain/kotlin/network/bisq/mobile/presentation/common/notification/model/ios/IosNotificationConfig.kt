@@ -23,7 +23,6 @@ class IosNotificationConfig {
      */
     var criticalVolume: Float? = null
 
-
     /**
      * the press action for when user presses the notification itself. by default it will open the app on press. setting this to `null` has no effect on iOS.
      */

@@ -10,8 +10,8 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class NodeMainPresenter(
     urlLauncher: UrlLauncher,
@@ -23,15 +23,14 @@ class NodeMainPresenter(
     tradeReadStateRepository: TradeReadStateRepository,
     applicationLifecycleService: ApplicationLifecycleService,
 ) : MainPresenter(
-    tradesServiceFacade,
-    userProfileServiceFacade,
-    openTradesNotificationService,
-    settingsServiceFacade,
-    tradeReadStateRepository,
-    urlLauncher,
-    applicationLifecycleService,
-) {
-
+        tradesServiceFacade,
+        userProfileServiceFacade,
+        openTradesNotificationService,
+        settingsServiceFacade,
+        tradeReadStateRepository,
+        urlLauncher,
+        applicationLifecycleService,
+    ) {
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -43,7 +42,5 @@ class NodeMainPresenter(
         }
     }
 
-    override fun isDevMode(): Boolean {
-        return isDemo() || BuildNodeConfig.IS_DEBUG
-    }
+    override fun isDevMode(): Boolean = isDemo() || BuildNodeConfig.IS_DEBUG
 }

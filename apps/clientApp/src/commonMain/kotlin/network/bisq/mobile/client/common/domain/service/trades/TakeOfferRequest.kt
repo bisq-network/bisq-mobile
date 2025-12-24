@@ -8,5 +8,5 @@ data class TakeOfferRequest(
     val baseSideAmount: Long,
     val quoteSideAmount: Long,
     val bitcoinPaymentMethod: String,
-    val fiatPaymentMethod: String
+    val fiatPaymentMethod: String,
 )

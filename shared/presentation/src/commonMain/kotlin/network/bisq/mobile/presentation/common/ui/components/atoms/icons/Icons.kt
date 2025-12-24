@@ -70,12 +70,15 @@ import org.jetbrains.compose.resources.painterResource
 expect fun getPlatformImagePainter(platformImage: PlatformImage): Painter
 
 @Composable
-fun CloseIcon(modifier: Modifier = Modifier.size(24.dp), color: Color = Color.White) {
+fun CloseIcon(
+    modifier: Modifier = Modifier.size(24.dp),
+    color: Color = Color.White,
+) {
     Icon(
         Icons.Filled.Close,
         "close",
         modifier = modifier,
-        tint = color
+        tint = color,
     )
 //    Icon(
 //        Icons.Default.Close,
@@ -315,81 +318,80 @@ fun WebLinkIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_web_link), "Web link icon", modifier = modifier)
 }
 
-
 @Composable
 fun DeliveryStatusConnecting(
     modifier: Modifier = Modifier.size(14.dp),
-    colorFilter: ColorFilter? = null
+    colorFilter: ColorFilter? = null,
 ) {
     Image(
         painterResource(Res.drawable.delivery_status_connecting),
         "Connecting",
         modifier = modifier,
-        colorFilter = colorFilter
+        colorFilter = colorFilter,
     )
 }
 
 @Composable
 fun DeliveryStatusSent(
     modifier: Modifier = Modifier.size(12.dp),
-    colorFilter: ColorFilter? = null
+    colorFilter: ColorFilter? = null,
 ) {
     Image(
         painterResource(Res.drawable.delivery_status_sent),
         "Sent",
         modifier = modifier,
-        colorFilter = colorFilter
+        colorFilter = colorFilter,
     )
 }
 
 @Composable
 fun DeliveryStatusMailbox(
     modifier: Modifier = Modifier.size(12.dp),
-    colorFilter: ColorFilter? = null
+    colorFilter: ColorFilter? = null,
 ) {
     Image(
         painterResource(Res.drawable.delivery_status_mailbox),
         "Mailbox",
         modifier = modifier,
-        colorFilter = colorFilter
+        colorFilter = colorFilter,
     )
 }
 
 @Composable
 fun DeliveryStatusReceived(
     modifier: Modifier = Modifier.size(12.dp),
-    colorFilter: ColorFilter? = null
+    colorFilter: ColorFilter? = null,
 ) {
     Image(
         painterResource(Res.drawable.delivery_status_received),
         "Received",
         modifier = modifier,
-        colorFilter = colorFilter
+        colorFilter = colorFilter,
     )
 }
 
 @Composable
 fun DeliveryStatusUndelivered(
     modifier: Modifier = Modifier.size(12.dp),
-    colorFilter: ColorFilter? = null
+    colorFilter: ColorFilter? = null,
 ) {
     Image(
         painterResource(Res.drawable.delivery_status_undelivered),
         "Undelivered",
         modifier = modifier,
-        colorFilter = colorFilter
+        colorFilter = colorFilter,
     )
 }
 
 @Composable
 fun DeliveryStatusTrySendingAgain(
     modifier: Modifier = Modifier.size(12.dp),
-    colorFilter: ColorFilter? = null
+    colorFilter: ColorFilter? = null,
 ) {
     Image(
         painterResource(Res.drawable.delivery_status_try_again),
         "Try again",
         modifier = modifier,
-        colorFilter = colorFilter
+        colorFilter = colorFilter,
     )
 }

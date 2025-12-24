@@ -28,13 +28,12 @@ import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollSc
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface IUserProfilePresenter : ViewPresenter {
-
     val reputation: StateFlow<String>
     val lastUserActivity: StateFlow<String>
     val profileAge: StateFlow<String>
@@ -48,11 +47,15 @@ interface IUserProfilePresenter : ViewPresenter {
     val showLoading: StateFlow<Boolean>
 
     fun onDelete()
+
     fun onSave()
+
     fun updateTradeTerms(it: String)
+
     fun updateStatement(it: String)
 
     val showDeleteProfileConfirmation: StateFlow<Boolean>
+
     fun setShowDeleteProfileConfirmation(value: Boolean)
 }
 
@@ -81,7 +84,6 @@ fun UserProfileScreen() {
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation,
     ) {
-
         UserProfileScreenHeader(presenter)
 
         SettingsTextField(label = "mobile.settings.userProfile.labels.nickname".i18n(), value = nickname, editable = false)
@@ -93,7 +95,7 @@ fun UserProfileScreen() {
             label = "user.userProfile.nymId".i18n(),
             value = botId,
             editable = false,
-            trailingIcon = { CopyIconButton(value = botId) }
+            trailingIcon = { CopyIconButton(value = botId) },
         )
 
         BisqGap.V1()
@@ -103,7 +105,7 @@ fun UserProfileScreen() {
             label = "user.userProfile.profileId".i18n(),
             value = profileId,
             editable = false,
-            trailingIcon = { CopyIconButton(value = profileId) }
+            trailingIcon = { CopyIconButton(value = profileId) },
         )
 
         BisqGap.V1()
@@ -126,7 +128,7 @@ fun UserProfileScreen() {
             label = "user.userProfile.statement".i18n(),
             value = statement,
             isTextArea = true,
-            onValueChange = { newValue, isValid -> presenter.updateStatement(newValue) }
+            onValueChange = { newValue, isValid -> presenter.updateStatement(newValue) },
         )
 
         BisqGap.V1()
@@ -136,7 +138,7 @@ fun UserProfileScreen() {
             label = "user.userProfile.terms".i18n(),
             value = tradeTerms,
             isTextArea = true,
-            onValueChange = { newValue, isValid -> presenter.updateTradeTerms(newValue) }
+            onValueChange = { newValue, isValid -> presenter.updateTradeTerms(newValue) },
         )
         BisqGap.V1()
         UserProfileScreenFooter(presenter, showLoading)
@@ -146,7 +148,7 @@ fun UserProfileScreen() {
         ConfirmationDialog(
             headline = "mobile.settings.userProfile.deleteConfirmationDialog.headline".i18n(),
             onConfirm = presenter::onDelete,
-            onDismiss = { presenter.setShowDeleteProfileConfirmation(false) }
+            onDismiss = { presenter.setShowDeleteProfileConfirmation(false) },
         )
     }
 }
@@ -155,42 +157,48 @@ fun UserProfileScreen() {
 private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
     val selectedUserProfile by presenter.selectedUserProfile.collectAsState()
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
+        contentAlignment = Alignment.Center,
     ) {
         val size = 120.dp
         if (selectedUserProfile != null) {
             UserProfileIcon(
                 selectedUserProfile!!,
                 presenter.userProfileIconProvider,
-                size
+                size,
             )
         } else {
             // Icons are expected to be present, so this branch will never be reached
             Image(
-                painterResource(Res.drawable.dummy_user_profile_icon), "",
-                modifier = Modifier.size(size)
+                painterResource(Res.drawable.dummy_user_profile_icon),
+                "",
+                modifier = Modifier.size(size),
             )
         }
     }
 }
 
 @Composable
-private fun UserProfileScreenFooter(presenter: IUserProfilePresenter, showLoading: Boolean) {
+private fun UserProfileScreenFooter(
+    presenter: IUserProfilePresenter,
+    showLoading: Boolean,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
         BisqButton(
-            "mobile.settings.userProfile.labels.save".i18n(),
+            text = "mobile.settings.userProfile.labels.save".i18n(),
             onClick = presenter::onSave,
             isLoading = showLoading,
             modifier = Modifier.weight(1.0F),
-            padding = PaddingValues(
-                horizontal = BisqUIConstants.ScreenPadding,
-                vertical = BisqUIConstants.ScreenPaddingHalf
-            )
+            padding =
+                PaddingValues(
+                    horizontal = BisqUIConstants.ScreenPadding,
+                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                ),
         )
     }
 }

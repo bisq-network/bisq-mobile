@@ -21,5 +21,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class DirectionEnum {
     BUY,
-    SELL
+    SELL,
 }

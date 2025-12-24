@@ -12,33 +12,34 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 
 class CreateOfferDirectionPresenter(
     mainPresenter: MainPresenter,
     private val createOfferPresenter: CreateOfferPresenter,
     private val userProfileServiceFacade: UserProfileServiceFacade,
-    private val reputationServiceFacade: ReputationServiceFacade
+    private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     var direction: DirectionEnum = createOfferPresenter.createOfferModel.direction
     val marketName: String?
-        get() = createOfferPresenter.createOfferModel.market?.let { market ->
-            CurrencyUtils.getLocaleFiatCurrencyName(
-                market.quoteCurrencyCode,
-                market.quoteCurrencyName
-            )
-        }
+        get() =
+            createOfferPresenter.createOfferModel.market?.let { market ->
+                CurrencyUtils.getLocaleFiatCurrencyName(
+                    market.quoteCurrencyCode,
+                    market.quoteCurrencyName,
+                )
+            }
     val headline: String
         get() {
             val market = createOfferPresenter.createOfferModel.market
             return if (market != null) {
-                val fiatName = CurrencyUtils.getLocaleFiatCurrencyName(
-                    market.quoteCurrencyCode,
-                    market.quoteCurrencyName
-                )
+                val fiatName =
+                    CurrencyUtils.getLocaleFiatCurrencyName(
+                        market.quoteCurrencyCode,
+                        market.quoteCurrencyName,
+                    )
                 "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
             } else {
                 "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
@@ -48,6 +49,7 @@ class CreateOfferDirectionPresenter(
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
     val showSellerReputationWarning: StateFlow<Boolean> get() = _showSellerReputationWarning.asStateFlow()
+
     fun setShowSellerReputationWarning(value: Boolean) {
         _showSellerReputationWarning.value = value
     }

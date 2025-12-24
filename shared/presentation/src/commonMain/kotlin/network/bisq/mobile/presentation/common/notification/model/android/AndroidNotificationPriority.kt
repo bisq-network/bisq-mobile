@@ -5,5 +5,5 @@ enum class AndroidNotificationPriority {
     PRIORITY_LOW,
     PRIORITY_HIGH,
     PRIORITY_MAX,
-    PRIORITY_DEFAULT
+    PRIORITY_DEFAULT,
 }

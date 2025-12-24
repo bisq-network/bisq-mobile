@@ -16,12 +16,14 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 // FinalTODO: Merge StaticScaffold and ScrollScaffold
 @Composable
 fun BisqScrollScaffold(
-    padding: PaddingValues = PaddingValues(
-        top = BisqUIConstants.ScrollTopPadding,
-        bottom = BisqUIConstants.ScreenPadding,
-        start = BisqUIConstants.ScreenPadding,
-        end = BisqUIConstants.ScreenPadding
-    ),
+    modifier: Modifier = Modifier,
+    padding: PaddingValues =
+        PaddingValues(
+            top = BisqUIConstants.ScrollTopPadding,
+            bottom = BisqUIConstants.ScreenPadding,
+            start = BisqUIConstants.ScreenPadding,
+            end = BisqUIConstants.ScreenPadding,
+        ),
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState? = null,
@@ -31,14 +33,18 @@ fun BisqScrollScaffold(
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
     shouldBlurBg: Boolean = false,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Scaffold(
-        modifier = Modifier
-            .then(
-                if (shouldBlurBg) Modifier.blur(BisqUIConstants.ScreenPaddingHalf)
-                else Modifier
-            ),
+        modifier =
+            modifier
+                .then(
+                    if (shouldBlurBg) {
+                        Modifier.blur(BisqUIConstants.ScreenPaddingHalf)
+                    } else {
+                        Modifier
+                    },
+                ),
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
@@ -55,10 +61,10 @@ fun BisqScrollScaffold(
                 verticalArrangement = verticalArrangement,
                 isInteractive = isInteractive,
                 showJumpToBottom = showJumpToBottom,
-                horizontalAlignment = horizontalAlignment
+                horizontalAlignment = horizontalAlignment,
             ) {
                 content()
             }
-        }
+        },
     )
 }

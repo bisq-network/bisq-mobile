@@ -17,7 +17,6 @@ import kotlin.test.BeforeTest
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [31])
 class AndroidImageUtilTest {
-
     private lateinit var context: Context
 
     @BeforeTest

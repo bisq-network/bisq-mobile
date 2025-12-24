@@ -23,7 +23,7 @@ fun PasswordIconButton(
         onClick = {
             obscurePassword = !obscurePassword
             onObscurePassword(obscurePassword)
-        }
+        },
     ) {
         if (obscurePassword) {
             ClosedEyeIcon()

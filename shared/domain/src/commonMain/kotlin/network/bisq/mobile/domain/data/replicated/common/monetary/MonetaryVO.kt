@@ -18,11 +18,8 @@ package network.bisq.mobile.domain.data.replicated.common.monetary
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.toDouble
 import network.bisq.mobile.domain.data.replicated.common.roundDouble
 import network.bisq.mobile.domain.data.replicated.common.scaleDownByPowerOf10
-import kotlin.math.pow
-import kotlin.math.round
 
 @Serializable
 sealed interface MonetaryVO {
@@ -33,20 +30,18 @@ sealed interface MonetaryVO {
     val lowPrecision: Int
 
     companion object {
-        fun toFaceValue(value: MonetaryVO, _precision: Int): Double {
-            return value.toFaceValue(_precision)
-        }
+        fun toFaceValue(
+            value: MonetaryVO,
+            _precision: Int,
+        ): Double = value.toFaceValue(_precision)
     }
+
     fun toFaceValue(_precision: Int): Double {
         val fullPrecision = scaleDownByPowerOf10(value, precision)
         return roundDouble(fullPrecision, _precision)
     }
 
-
     fun round(roundPrecision: Int): MonetaryVO
 
-    fun toDouble(): Double {
-        return BigDecimal.fromLong(value).moveDecimalPoint(-precision).doubleValue(false)
-    }
-
+    fun toDouble(): Double = BigDecimal.fromLong(value).moveDecimalPoint(-precision).doubleValue(false)
 }

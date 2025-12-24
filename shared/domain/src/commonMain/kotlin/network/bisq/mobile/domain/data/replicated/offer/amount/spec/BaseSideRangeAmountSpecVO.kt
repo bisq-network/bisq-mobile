@@ -21,4 +21,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BaseSideRangeAmountSpec")
-data class BaseSideRangeAmountSpecVO(override val minAmount: Long, override val maxAmount: Long) : RangeAmountSpecVO
+data class BaseSideRangeAmountSpecVO(
+    override val minAmount: Long,
+    override val maxAmount: Long,
+) : RangeAmountSpecVO

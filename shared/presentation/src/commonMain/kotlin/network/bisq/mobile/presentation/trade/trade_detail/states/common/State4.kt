@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.common
 
 import androidx.compose.foundation.layout.Arrangement
@@ -35,14 +37,14 @@ fun State4(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_completed,
-                isLoading = true
+                isLoading = true,
             )
             // Trade was successfully completed
-            BisqText.h5Light("bisqEasy.tradeCompleted.title".i18n())
+            BisqText.H5Light("bisqEasy.tradeCompleted.title".i18n())
         }
 
         Column {
@@ -51,20 +53,20 @@ fun State4(
             BtcSatsText(
                 trade.formattedBaseAmount,
                 label = presenter.getMyDirectionString(),
-                style = BtcSatsStyle.TextField
+                style = BtcSatsStyle.TextField,
             )
             BisqGap.VHalf()
 
             BisqTextField(
                 label = presenter.getMyOutcomeString(),
                 value = trade.quoteAmountWithCode,
-                disabled = true
+                disabled = true,
             )
 
             BisqGap.V2()
             Row(
                 horizontalArrangement = Arrangement.End,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
 //                BisqButton(
 //                    text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
@@ -76,7 +78,6 @@ fun State4(
                     onClick = { presenter.onCloseTrade() },
                 )
             }
-
         }
     }
 }

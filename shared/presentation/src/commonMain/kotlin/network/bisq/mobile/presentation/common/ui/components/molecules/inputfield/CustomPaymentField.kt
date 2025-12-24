@@ -29,23 +29,23 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 fun CustomPaymentField(
     onAddCustomPayment: ((String) -> Unit)? = null,
 ) {
-
     var value by rememberSaveable { mutableStateOf("") }
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
-            .background(BisqTheme.colors.dark_grey50)
-            .padding(start = BisqUIConstants.ScreenPadding)
-            .padding(vertical = BisqUIConstants.Zero),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
+                .background(BisqTheme.colors.dark_grey50)
+                .padding(start = BisqUIConstants.ScreenPadding)
+                .padding(vertical = BisqUIConstants.Zero),
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         DynamicImage(
             path = "drawable/payment/fiat/add_custom_grey.png",
             fallbackPath = "drawable/payment/fiat/custom_payment_1.png",
             contentDescription = "mobile.components.paymentTypeCard.customPaymentMethod".i18n(value),
-            modifier = Modifier.size(BisqUIConstants.ScreenPadding2X)
+            modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
         )
         BisqTextField(
             value = value,
@@ -62,12 +62,13 @@ fun CustomPaymentField(
                 value = ""
             },
             enabled = value.isNotBlank(),
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = BisqTheme.colors.primary,
-                contentColor = BisqTheme.colors.white,
-                disabledContainerColor = BisqTheme.colors.primaryDisabled,
-                disabledContentColor = BisqTheme.colors.mid_grey20
-            ),
+            colors =
+                IconButtonDefaults.iconButtonColors(
+                    containerColor = BisqTheme.colors.primary,
+                    contentColor = BisqTheme.colors.white,
+                    disabledContainerColor = BisqTheme.colors.primaryDisabled,
+                    disabledContentColor = BisqTheme.colors.mid_grey20,
+                ),
         ) {
             AddIcon()
         }

@@ -5,15 +5,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.OrderedTextList
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -28,7 +28,7 @@ fun TradeGuideSecurity() {
         isInteractive = isInteractive,
         prevClick = presenter::prevClick,
         nextClick = presenter::securityNextClick,
-        learnMoreClick = presenter::navigateSecurityLearnMore
+        learnMoreClick = presenter::navigateSecurityLearnMore,
     )
 }
 
@@ -49,15 +49,15 @@ fun TradeGuideSecurity() {
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
-        BisqText.h3Light("bisqEasy.tradeGuide.security.headline".i18n())
+        BisqText.H3Light("bisqEasy.tradeGuide.security.headline".i18n())
 
         BisqGap.V2()
 
         OrderedTextList(
             "bisqEasy.tradeGuide.security.content".i18n(),
-            regex=  "- ",
+            regex = "- ",
             style = { t, m ->
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = t,
                     modifier = m,
                     color = BisqTheme.colors.light_grey40,
@@ -70,7 +70,7 @@ fun TradeGuideSecurity() {
         LinkButton(
             "action.learnMore".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
-            onClick = learnMoreClick
+            onClick = learnMoreClick,
         )
     }
 }
@@ -84,14 +84,14 @@ private fun TradeGuideSecurityContentPreview(
             isInteractive = true,
             prevClick = {},
             nextClick = {},
-            learnMoreClick = {}
+            learnMoreClick = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun TradeGuideSecurityContentPreview_En() {
+private fun TradeGuideSecurityContentPreview_EnPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             TradeGuideSecurityContentPreview()
@@ -101,5 +101,4 @@ private fun TradeGuideSecurityContentPreview_En() {
 
 @Preview
 @Composable
-private fun TradeGuideSecurityContentPreview_Ru() = TradeGuideSecurityContentPreview(language = "ru")
-
+private fun TradeGuideSecurityContentPreview_RuPreview() = TradeGuideSecurityContentPreview(language = "ru")

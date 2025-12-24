@@ -24,15 +24,23 @@ import org.jetbrains.compose.resources.DrawableResource
  */
 abstract class MiscItemsPresenter(
     private val userProfileService: UserProfileServiceFacade,
-    mainPresenter: MainPresenter
+    mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
+    sealed class MenuItem(
+        val label: String,
+        val icon: DrawableResource? = null,
+    ) {
+        class Leaf(
+            label: String,
+            icon: DrawableResource,
+            val route: NavRoute,
+        ) : MenuItem(label, icon)
 
-    sealed class MenuItem(val label: String, val icon: DrawableResource? = null) {
-        class Leaf(label: String, icon: DrawableResource, val route: NavRoute) :
-            MenuItem(label, icon)
-        class Parent(label: String, val children: List<MenuItem>) : MenuItem(label)
+        class Parent(
+            label: String,
+            val children: List<MenuItem>,
+        ) : MenuItem(label)
     }
-
 
     private val _menuItems = MutableStateFlow<MenuItem?>(null)
     val menuItems: StateFlow<MenuItem?> get() = _menuItems.asStateFlow()
@@ -45,51 +53,55 @@ abstract class MiscItemsPresenter(
     }
 
     private fun buildMenu(showIgnoredUser: Boolean): MenuItem.Parent {
-        val defaultList: MutableList<MenuItem> = mutableListOf(
-            MenuItem.Leaf(
-                label = "mobile.more.support".i18n(),
-                icon = Res.drawable.nav_support,
-                route = NavRoute.Support
-            ),
-            MenuItem.Leaf(
-                label = "mobile.more.paymentAccounts".i18n(),
-                icon = Res.drawable.nav_accounts,
-                route = NavRoute.PaymentAccounts
-            ),
-            MenuItem.Leaf(
-                label = "mobile.more.reputation".i18n(),
-                icon = Res.drawable.nav_reputation,
-                route = NavRoute.Reputation
-            ),
-            MenuItem.Leaf(
-                label = "mobile.more.userProfile".i18n(),
-                icon = Res.drawable.nav_user,
-                route = NavRoute.UserProfile
-            ),
-            MenuItem.Leaf(
-                label = "mobile.more.settings".i18n(),
-                icon = Res.drawable.nav_settings,
-                route = NavRoute.Settings
-            ),
-            MenuItem.Leaf(
-                label = "mobile.more.resources".i18n(),
-                icon = Res.drawable.nav_resources,
-                route = NavRoute.Resources
+        val defaultList: MutableList<MenuItem> =
+            mutableListOf(
+                MenuItem.Leaf(
+                    label = "mobile.more.support".i18n(),
+                    icon = Res.drawable.nav_support,
+                    route = NavRoute.Support,
+                ),
+                MenuItem.Leaf(
+                    label = "mobile.more.paymentAccounts".i18n(),
+                    icon = Res.drawable.nav_accounts,
+                    route = NavRoute.PaymentAccounts,
+                ),
+                MenuItem.Leaf(
+                    label = "mobile.more.reputation".i18n(),
+                    icon = Res.drawable.nav_reputation,
+                    route = NavRoute.Reputation,
+                ),
+                MenuItem.Leaf(
+                    label = "mobile.more.userProfile".i18n(),
+                    icon = Res.drawable.nav_user,
+                    route = NavRoute.UserProfile,
+                ),
+                MenuItem.Leaf(
+                    label = "mobile.more.settings".i18n(),
+                    icon = Res.drawable.nav_settings,
+                    route = NavRoute.Settings,
+                ),
+                MenuItem.Leaf(
+                    label = "mobile.more.resources".i18n(),
+                    icon = Res.drawable.nav_resources,
+                    route = NavRoute.Resources,
+                ),
             )
-        )
         if (showIgnoredUser) {
             defaultList.add(
-                defaultList.size - 1, MenuItem.Leaf(
+                defaultList.size - 1,
+                MenuItem.Leaf(
                     label = "mobile.settings.ignoredUsers".i18n(),
                     icon = Res.drawable.nav_ignored_users,
-                    route = NavRoute.IgnoredUsers
-                )
+                    route = NavRoute.IgnoredUsers,
+                ),
             )
         }
         return MenuItem.Parent(
-            label = "Bisq", children = addCustomSettings(defaultList)
+            label = "Bisq",
+            children = addCustomSettings(defaultList),
         )
     }
+
     private fun loadIgnoredUsers() {
         presenterScope.launch {
             try {
@@ -98,7 +110,6 @@ abstract class MiscItemsPresenter(
                 if (ignoredUserIds.isNotEmpty()) {
                     _menuItems.value = buildMenu(showIgnoredUser = true)
                 }
-
             } catch (e: Exception) {
                 log.e(e) { "Failed to load ignored users" }
             }

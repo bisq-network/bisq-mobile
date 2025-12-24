@@ -10,16 +10,15 @@ import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 
 class NodeMiscItemsPresenter(
     userProfileService: UserProfileServiceFacade,
-    mainPresenter: MainPresenter
+    mainPresenter: MainPresenter,
 ) : MiscItemsPresenter(userProfileService, mainPresenter) {
-
     override fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
         menuItems.add(
             MenuItem.Leaf(
                 label = "mobile.more.backupAndRestore".i18n(),
                 icon = Res.drawable.backup,
-                route = NavRoute.BackupAndRestore
-            )
+                route = NavRoute.BackupAndRestore,
+            ),
         )
         return menuItems.toList()
     }

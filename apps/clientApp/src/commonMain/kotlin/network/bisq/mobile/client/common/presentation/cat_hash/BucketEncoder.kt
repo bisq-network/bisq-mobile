@@ -24,7 +24,10 @@ object BucketEncoder {
      * @param input A BigInteger input that is to be split up deterministically in buckets according to the bucketSizes array.
      * @return buckets
      */
-    fun encode(input: BigInteger, bucketSizes: IntArray): IntArray {
+    fun encode(
+        input: BigInteger,
+        bucketSizes: IntArray,
+    ): IntArray {
         var value: BigInteger = input
         var currentBucket = 0
         val result = IntArray(bucketSizes.size)
@@ -42,7 +45,10 @@ object BucketEncoder {
         return result
     }
 
-    fun toPaths(buckets: IntArray, pathTemplates: Array<BucketConfig.PathDetails>): Array<String?> {
+    fun toPaths(
+        buckets: IntArray,
+        pathTemplates: Array<BucketConfig.PathDetails>,
+    ): Array<String?> {
         val paths = arrayOfNulls<String>(pathTemplates.size)
         for (i in paths.indices) {
             val path = pathTemplates[i].path
@@ -58,13 +64,17 @@ object BucketEncoder {
         return paths
     }
 
-    private fun generatePath(pathTemplate: String, shapeNumber: Int, index: Int): String {
-        return pathTemplate
+    private fun generatePath(
+        pathTemplate: String,
+        shapeNumber: Int,
+        index: Int,
+    ): String =
+        pathTemplate
             .replace(BucketConfig.SHAPE_NUMBER.toRegex(), shapeNumber.toString())
             .replace(BucketConfig.DIGIT.toRegex(), index.toString().padStart(2, '0'))
-    }
 
-    private fun generatePath(pathTemplate: String, index: Int): String {
-        return pathTemplate.replace(BucketConfig.DIGIT.toRegex(), index.toString().padStart(2, '0'))
-    }
+    private fun generatePath(
+        pathTemplate: String,
+        index: Int,
+    ): String = pathTemplate.replace(BucketConfig.DIGIT.toRegex(), index.toString().padStart(2, '0'))
 }

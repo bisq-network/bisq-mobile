@@ -10,9 +10,8 @@ data class SemanticVersion(
     val minor: Int,
     val patch: Int,
     val preRelease: List<String> = emptyList(),
-    val build: List<String> = emptyList()
+    val build: List<String> = emptyList(),
 ) : Comparable<SemanticVersion> {
-
     override fun compareTo(other: SemanticVersion): Int {
         major.compareTo(other.major).let { if (it != 0) return it }
         minor.compareTo(other.minor).let { if (it != 0) return it }
@@ -55,7 +54,6 @@ data class SemanticVersion(
         private val idPattern = Regex("^[0-9A-Za-z-]+\$")
         private val numericPattern = Regex("^(0|[1-9]\\d*)\$")
 
-
         /** Simple creator from MAJOR.MINOR.PATCH only (no validation for semver extras) */
         fun from(version: String): SemanticVersion {
             val v = version.trim()
@@ -68,19 +66,22 @@ data class SemanticVersion(
         fun parse(input: String): SemanticVersion {
             val s = input.trim()
             require(s.isNotBlank()) { "Version string cannot be blank" }
-            val (coreAndPre, buildMeta) = s.split("+", limit = 2).let {
-                it[0] to it.getOrNull(1)
-            }
+            val (coreAndPre, buildMeta) =
+                s.split("+", limit = 2).let {
+                    it[0] to it.getOrNull(1)
+                }
             val build = buildMeta?.splitBuild() ?: emptyList()
 
-            val (core, pre) = coreAndPre.split("-", limit = 2).let {
-                it[0] to it.getOrNull(1)
-            }
+            val (core, pre) =
+                coreAndPre.split("-", limit = 2).let {
+                    it[0] to it.getOrNull(1)
+                }
             val preRelease = pre?.splitPreRelease() ?: emptyList()
 
             val coreParts = core.split(".")
-            require(coreParts.size == 3 &&
-                    coreParts.all { corePattern.matches(it) }
+            require(
+                coreParts.size == 3 &&
+                    coreParts.all { corePattern.matches(it) },
             ) { "Invalid core version: $s" }
 
             return SemanticVersion(
@@ -88,16 +89,19 @@ data class SemanticVersion(
                 minor = coreParts[1].toInt(),
                 patch = coreParts[2].toInt(),
                 preRelease = preRelease,
-                build = build
+                build = build,
             )
         }
 
-        val SEMVER_ORDER: Comparator<String> = Comparator { a, b ->
-            parse(a).compareTo(parse(b))
-        }
+        val SEMVER_ORDER: Comparator<String> =
+            Comparator { a, b ->
+                parse(a).compareTo(parse(b))
+            }
 
-        fun compare(a: String, b: String): Int =
-            parse(a).compareTo(parse(b))
+        fun compare(
+            a: String,
+            b: String,
+        ): Int = parse(a).compareTo(parse(b))
 
         private fun String.splitPreRelease(): List<String> =
             split(".").map { token ->
@@ -105,7 +109,7 @@ data class SemanticVersion(
                 // For pre-release identifiers: digits-only tokens must not have leading zeros (SemVer 2.0.0, §9)
                 if (token.length > 1 && token[0] == '0' && token.all { ch -> ch in '0'..'9' }) {
                     throw IllegalArgumentException(
-                        "Numeric pre-release identifier must not have leading zeros: $token"
+                        "Numeric pre-release identifier must not have leading zeros: $token",
                     )
                 }
                 token
@@ -117,7 +121,6 @@ data class SemanticVersion(
                 it
             }
 
-        private fun String.isNumeric(): Boolean =
-            numericPattern.matches(this)
+        private fun String.isNumeric(): Boolean = numericPattern.matches(this)
     }
 }

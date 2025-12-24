@@ -25,82 +25,88 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 enum class BtcSatsStyle {
     Default, // Regular text
-    TextField  // Full width, text field style
+    TextField, // Full width, text field style
 }
 
 @Composable
 fun BtcSatsText(
     formattedBtcAmountValue: String, // Expect this to be in btc format (Eg: 0.001112222)
+    modifier: Modifier = Modifier,
     label: String? = null,
     textStyle: TextStyle = BisqTheme.typography.baseLight,
     style: BtcSatsStyle = BtcSatsStyle.Default,
     noCode: Boolean = false,
-    modifier: Modifier = Modifier,
 ) {
-    if (formattedBtcAmountValue.isEmpty())
+    if (formattedBtcAmountValue.isEmpty()) {
         return
+    }
 
     val formattedValue = formatSatsToDisplay(formattedBtcAmountValue, noCode)
 
     if (style == BtcSatsStyle.Default) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             // BtcLogo()
 
-            BisqText.styledText(
+            BisqText.StyledText(
                 text = formattedValue,
                 style = textStyle,
-                modifier = modifier,
             )
         }
     } else if (style == BtcSatsStyle.TextField) {
         val grey2Color = BisqTheme.colors.mid_grey20
 
         if (label?.isNotEmpty() == true) {
-            BisqText.baseLight(
+            BisqText.BaseLight(
                 text = label,
                 color = grey2Color,
-                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
             )
             BisqGap.VQuarter()
         }
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(6.dp))
-                .background(BisqTheme.colors.secondaryDisabled)
-                .drawBehind {
-                    drawLine(
-                        color = grey2Color,
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 4.dp.toPx()
-                    )
-                }
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(shape = RoundedCornerShape(6.dp))
+                    .background(BisqTheme.colors.secondaryDisabled)
+                    .drawBehind {
+                        drawLine(
+                            color = grey2Color,
+                            start = Offset(0f, size.height),
+                            end = Offset(size.width, size.height),
+                            strokeWidth = 4.dp.toPx(),
+                        )
+                    }.padding(BisqUIConstants.ScreenPadding),
         ) {
             // BtcLogo()
-            BisqText.styledText(
+            BisqText.StyledText(
                 text = formattedValue,
                 style = textStyle,
-                modifier = modifier,
             )
         }
     }
 }
 
 @Composable
-private fun formatSatsToDisplay(formattedBtcAmountValue: String, noCode: Boolean): AnnotatedString {
-
-    return buildAnnotatedString {
+private fun formatSatsToDisplay(
+    formattedBtcAmountValue: String,
+    noCode: Boolean,
+): AnnotatedString =
+    buildAnnotatedString {
         val decimalSeparator = getDecimalSeparator()
         val parts = formattedBtcAmountValue.split(decimalSeparator)
         val integerPart = parts[0]
         val fractionalPart = parts[1] ?: ""
 
-        val formattedFractional = fractionalPart.reversed().chunked(3).joinToString(" ").reversed()
+        val formattedFractional =
+            fractionalPart
+                .reversed()
+                .chunked(3)
+                .joinToString(" ")
+                .reversed()
         val leadingZeros = formattedFractional.takeWhile { it == '0' || it == ' ' }
         val significantDigits = formattedFractional.dropWhile { it == '0' || it == ' ' }
 
@@ -117,8 +123,8 @@ private fun formatSatsToDisplay(formattedBtcAmountValue: String, noCode: Boolean
 
         withStyle(style = SpanStyle(color = BisqTheme.colors.white)) {
             append(significantDigits)
-            if (!noCode)
+            if (!noCode) {
                 append(" BTC")
+            }
         }
     }
-}

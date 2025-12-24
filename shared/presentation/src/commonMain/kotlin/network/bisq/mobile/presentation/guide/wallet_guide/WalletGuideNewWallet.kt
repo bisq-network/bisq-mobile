@@ -28,19 +28,18 @@ fun WalletGuideNewWallet() {
         nextOnClick = presenter::newWalletNextClick,
         horizontalAlignment = Alignment.Start,
     ) {
-        BisqText.h3Light("bisqEasy.walletGuide.createWallet.headline".i18n())
+        BisqText.H3Light("bisqEasy.walletGuide.createWallet.headline".i18n())
 
         BisqGap.V2()
 
-        BisqText.baseLight("bisqEasy.walletGuide.createWallet.content".i18n())
+        BisqText.BaseLight("bisqEasy.walletGuide.createWallet.content".i18n())
 
         BisqGap.V2()
 
         DynamicImage(
             "drawable/wallet_guide/blue_wallet_create.png",
             contentScale = ContentScale.FillWidth,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
-

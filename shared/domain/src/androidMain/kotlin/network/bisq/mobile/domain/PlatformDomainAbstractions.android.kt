@@ -37,13 +37,9 @@ actual fun formatDateTime(dateTime: LocalDateTime): String {
     return formatter.format(date)
 }
 
-actual fun encodeURIParam(param: String): String {
-    return URLEncoder.encode(param, StandardCharsets.UTF_8.toString())
-}
+actual fun encodeURIParam(param: String): String = URLEncoder.encode(param, StandardCharsets.UTF_8.toString())
 
-actual fun getDeviceLanguageCode(): String {
-    return Locale.getDefault().language
-}
+actual fun getDeviceLanguageCode(): String = Locale.getDefault().language
 
 actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
     val originalHandler = Thread.getDefaultUncaughtExceptionHandler()
@@ -63,7 +59,9 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
     }
 }
 
-class AndroidUrlLauncher(private val context: Context) : UrlLauncher {
+class AndroidUrlLauncher(
+    private val context: Context,
+) : UrlLauncher {
     override fun openUrl(url: String) {
         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -78,12 +76,12 @@ class AndroidPlatformInfo : PlatformInfo {
 
 actual fun getPlatformInfo(): PlatformInfo = AndroidPlatformInfo()
 
-
 actual fun loadProperties(fileName: String): Map<String, String> {
     val properties = Properties()
     val classLoader = Thread.currentThread().contextClassLoader
-    val resource = classLoader?.getResourceAsStream(fileName)
-        ?: throw IllegalArgumentException("Resource not found: $fileName")
+    val resource =
+        classLoader?.getResourceAsStream(fileName)
+            ?: throw IllegalArgumentException("Resource not found: $fileName")
     // Read .properties using UTF-8 to support non-ASCII characters consistently
     resource.reader(Charsets.UTF_8).use { reader ->
         properties.load(reader)
@@ -93,11 +91,14 @@ actual fun loadProperties(fileName: String): Map<String, String> {
 }
 
 @Serializable(with = PlatformImageSerializer::class)
-actual class PlatformImage(val bitmap: ImageBitmap) {
+actual class PlatformImage(
+    val bitmap: ImageBitmap,
+) {
     actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
-            val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
-                ?: throw IllegalArgumentException("Failed to decode image data")
+            val bitmap =
+                BitmapFactory.decodeByteArray(data, 0, data.size)
+                    ?: throw IllegalArgumentException("Failed to decode image data")
             return PlatformImage(bitmap.asImageBitmap())
         }
     }
@@ -116,30 +117,35 @@ actual fun createEmptyImage(): PlatformImage {
     return PlatformImage(bitmap.asImageBitmap())
 }
 
-actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
-    private val formatters: MutableMap<Pair<Int, Locale>, DecimalFormat> = mutableMapOf()
-    override fun format(value: Double, precision: Int): String {
-        val locale = Locale.getDefault()
-        val key = precision to locale
-        val formatter = formatters.getOrPut(key) {
-            val format = DecimalFormat(generatePattern(precision), DecimalFormatSymbols(locale))
-            format.isGroupingUsed = true
-            format
-        }
-        return formatter.format(value)
-    }
+actual val decimalFormatter: DecimalFormatter =
+    object : DecimalFormatter {
+        private val formatters: MutableMap<Pair<Int, Locale>, DecimalFormat> = mutableMapOf()
 
-    private fun generatePattern(precision: Int): String {
-        return if (precision > 0) {
-            buildString {
-                append("#,##0.")
-                repeat(precision) { append("0") }
-            }
-        } else {
-            "#,##0"
+        override fun format(
+            value: Double,
+            precision: Int,
+        ): String {
+            val locale = Locale.getDefault()
+            val key = precision to locale
+            val formatter =
+                formatters.getOrPut(key) {
+                    val format = DecimalFormat(generatePattern(precision), DecimalFormatSymbols(locale))
+                    format.isGroupingUsed = true
+                    format
+                }
+            return formatter.format(value)
         }
+
+        private fun generatePattern(precision: Int): String =
+            if (precision > 0) {
+                buildString {
+                    append("#,##0.")
+                    repeat(precision) { append("0") }
+                }
+            } else {
+                "#,##0"
+            }
     }
-}
 
 actual fun setDefaultLocale(language: String) {
     // Use Locale.forLanguageTag to support BCP‑47 (e.g., "en-US").
@@ -147,22 +153,17 @@ actual fun setDefaultLocale(language: String) {
     Locale.setDefault(locale)
 }
 
-actual fun getDecimalSeparator(): Char {
-    return DecimalFormatSymbols(Locale.getDefault()).decimalSeparator
-}
+actual fun getDecimalSeparator(): Char = DecimalFormatSymbols(Locale.getDefault()).decimalSeparator
 
-actual fun getGroupingSeparator(): Char {
-    return DecimalFormatSymbols(Locale.getDefault()).groupingSeparator
-}
+actual fun getGroupingSeparator(): Char = DecimalFormatSymbols(Locale.getDefault()).groupingSeparator
 
-actual fun String.toDoubleOrNullLocaleAware(): Double? {
-    return try {
+actual fun String.toDoubleOrNullLocaleAware(): Double? =
+    try {
         val javaLocale = Locale.getDefault()
         NumberFormat.getInstance(javaLocale).parse(this)?.toDouble()
     } catch (e: Exception) {
         null
     }
-}
 
 actual fun getLocaleCurrencyName(currencyCode: String): String {
     val javaLocale = Locale.getDefault()
@@ -174,6 +175,4 @@ actual fun getLocaleCurrencyName(currencyCode: String): String {
     }
 }
 
-actual fun Scope.getStorageDir(): String {
-    return androidContext().filesDir.absolutePath
-}
+actual fun Scope.getStorageDir(): String = androidContext().filesDir.absolutePath

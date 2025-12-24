@@ -151,14 +151,12 @@ import java.util.Base64
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
-
 class Mappings {
-
     // account.protocol_type
 
     object TradeProtocolTypeMapping {
-        fun toBisq2Model(value: TradeProtocolTypeEnum): TradeProtocolType {
-            return when (value) {
+        fun toBisq2Model(value: TradeProtocolTypeEnum): TradeProtocolType =
+            when (value) {
                 TradeProtocolTypeEnum.BISQ_EASY -> TradeProtocolType.BISQ_EASY
 //                TradeProtocolTypeEnum.BISQ_MU_SIG -> TradeProtocolType.BISQ_MU_SIG
                 TradeProtocolTypeEnum.SUBMARINE -> TradeProtocolType.SUBMARINE
@@ -170,10 +168,9 @@ class Mappings {
                 TradeProtocolTypeEnum.MONERO_SWAP -> TradeProtocolType.MONERO_SWAP
                 else -> throw IllegalArgumentException("Unsupported enum $value")
             }
-        }
 
-        fun fromBisq2Model(value: TradeProtocolType): TradeProtocolTypeEnum {
-            return when (value) {
+        fun fromBisq2Model(value: TradeProtocolType): TradeProtocolTypeEnum =
+            when (value) {
                 TradeProtocolType.BISQ_EASY -> TradeProtocolTypeEnum.BISQ_EASY
 //                TradeProtocolType.BISQ_MU_SIG -> TradeProtocolTypeEnum.BISQ_MU_SIG
                 TradeProtocolType.SUBMARINE -> TradeProtocolTypeEnum.SUBMARINE
@@ -185,23 +182,21 @@ class Mappings {
                 TradeProtocolType.MONERO_SWAP -> TradeProtocolTypeEnum.MONERO_SWAP
                 else -> throw IllegalArgumentException("Unsupported enum $value")
             }
-        }
     }
 
     // chat
 
     object ChatChannelDomainMapping {
-        fun toBisq2Model(value: ChatChannelDomainEnum): ChatChannelDomain {
-            return when (value) {
+        fun toBisq2Model(value: ChatChannelDomainEnum): ChatChannelDomain =
+            when (value) {
                 ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK -> ChatChannelDomain.BISQ_EASY_OFFERBOOK
                 ChatChannelDomainEnum.BISQ_EASY_OPEN_TRADES -> ChatChannelDomain.BISQ_EASY_OPEN_TRADES
                 ChatChannelDomainEnum.DISCUSSION -> ChatChannelDomain.DISCUSSION
                 ChatChannelDomainEnum.SUPPORT -> ChatChannelDomain.SUPPORT
             }
-        }
 
-        fun fromBisq2Model(value: ChatChannelDomain): ChatChannelDomainEnum {
-            return when (value) {
+        fun fromBisq2Model(value: ChatChannelDomain): ChatChannelDomainEnum =
+            when (value) {
                 ChatChannelDomain.BISQ_EASY_OFFERBOOK -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK
                 ChatChannelDomain.BISQ_EASY_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OPEN_TRADES
                 ChatChannelDomain.DISCUSSION -> ChatChannelDomainEnum.DISCUSSION
@@ -210,46 +205,39 @@ class Mappings {
 //                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK // TODO restore for v2.1.8 when musig gets incorporated
                 ChatChannelDomain.EVENTS -> ChatChannelDomainEnum.DISCUSSION
             }
-        }
     }
 
     object ChatMessageTypeMapping {
-        fun toBisq2Model(value: ChatMessageTypeEnum): ChatMessageType {
-            return when (value) {
+        fun toBisq2Model(value: ChatMessageTypeEnum): ChatMessageType =
+            when (value) {
                 ChatMessageTypeEnum.TEXT -> ChatMessageType.TEXT
                 ChatMessageTypeEnum.LEAVE -> ChatMessageType.LEAVE
                 ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> ChatMessageType.TAKE_BISQ_EASY_OFFER
                 ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE -> ChatMessageType.PROTOCOL_LOG_MESSAGE
                 ChatMessageTypeEnum.CHAT_RULES_WARNING -> ChatMessageType.CHAT_RULES_WARNING
             }
-        }
 
-        fun fromBisq2Model(value: ChatMessageType): ChatMessageTypeEnum {
-            return when (value) {
+        fun fromBisq2Model(value: ChatMessageType): ChatMessageTypeEnum =
+            when (value) {
                 ChatMessageType.TEXT -> ChatMessageTypeEnum.TEXT
                 ChatMessageType.LEAVE -> ChatMessageTypeEnum.LEAVE
                 ChatMessageType.TAKE_BISQ_EASY_OFFER -> ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER
                 ChatMessageType.PROTOCOL_LOG_MESSAGE -> ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE
                 ChatMessageType.CHAT_RULES_WARNING -> ChatMessageTypeEnum.CHAT_RULES_WARNING
             }
-        }
     }
 
     object CitationMapping {
-        fun toBisq2Model(value: CitationVO): Citation {
-            return Citation(value.authorUserProfileId, value.text, Optional.ofNullable(value.chatMessageId))
-        }
+        fun toBisq2Model(value: CitationVO): Citation = Citation(value.authorUserProfileId, value.text, Optional.ofNullable(value.chatMessageId))
 
-        fun fromBisq2Model(value: Citation): CitationVO {
-            return CitationVO(value.authorUserProfileId, value.text, value.chatMessageId.getOrNull())
-        }
+        fun fromBisq2Model(value: Citation): CitationVO = CitationVO(value.authorUserProfileId, value.text, value.chatMessageId.getOrNull())
     }
 
     // chat.bisq_easy.offerbook
 
     object BisqEasyOfferbookMessageMapping {
-        fun toBisq2Model(value: BisqEasyOfferbookMessageDto): BisqEasyOfferbookMessage {
-            return BisqEasyOfferbookMessage(
+        fun toBisq2Model(value: BisqEasyOfferbookMessageDto): BisqEasyOfferbookMessage =
+            BisqEasyOfferbookMessage(
                 value.id,
                 ChatChannelDomain.BISQ_EASY_OFFERBOOK,
                 value.channelId,
@@ -259,12 +247,11 @@ class Mappings {
                 Optional.ofNullable(value.citation?.let { CitationMapping.toBisq2Model(it) }),
                 value.date,
                 value.wasEdited,
-                ChatMessageTypeMapping.toBisq2Model(value.chatMessageType)
+                ChatMessageTypeMapping.toBisq2Model(value.chatMessageType),
             )
-        }
 
-        fun fromBisq2Model(value: BisqEasyOfferbookMessage): BisqEasyOfferbookMessageDto {
-            return BisqEasyOfferbookMessageDto(
+        fun fromBisq2Model(value: BisqEasyOfferbookMessage): BisqEasyOfferbookMessageDto =
+            BisqEasyOfferbookMessageDto(
                 value.id,
                 value.channelId,
                 value.authorUserProfileId,
@@ -273,9 +260,8 @@ class Mappings {
                 value.citation.getOrNull()?.let { CitationMapping.fromBisq2Model(it) },
                 value.date,
                 value.isWasEdited,
-                ChatMessageTypeMapping.fromBisq2Model(value.chatMessageType)
+                ChatMessageTypeMapping.fromBisq2Model(value.chatMessageType),
             )
-        }
     }
 
     // chat.bisq_easy.open_trades
@@ -295,8 +281,8 @@ class Mappings {
              )
          }*/
 
-        fun fromBisq2Model(value: BisqEasyOpenTradeChannel): BisqEasyOpenTradeChannelDto {
-            return BisqEasyOpenTradeChannelDto(
+        fun fromBisq2Model(value: BisqEasyOpenTradeChannel): BisqEasyOpenTradeChannelDto =
+            BisqEasyOpenTradeChannelDto(
                 value.id,
                 value.tradeId,
                 BisqEasyOfferMapping.fromBisq2Model(value.bisqEasyOffer),
@@ -304,7 +290,6 @@ class Mappings {
                 value.traders.map { UserProfileMapping.fromBisq2Model(it) }.toSet(),
                 value.mediator.getOrNull()?.let { UserProfileMapping.fromBisq2Model(it) },
             )
-        }
     }
 
     object BisqEasyOpenTradeMessageModelMapping {
@@ -352,8 +337,11 @@ class Mappings {
             )
         }
 
-        fun fromBisq2Model(value: BisqEasyOpenTradeMessage, citationAuthorUserProfileVO: UserProfileVO?): BisqEasyOpenTradeMessageDto {
-            return BisqEasyOpenTradeMessageDto(
+        fun fromBisq2Model(
+            value: BisqEasyOpenTradeMessage,
+            citationAuthorUserProfileVO: UserProfileVO?,
+        ): BisqEasyOpenTradeMessageDto =
+            BisqEasyOpenTradeMessageDto(
                 value.tradeId,
                 value.id,
                 value.channelId,
@@ -367,39 +355,34 @@ class Mappings {
                 ChatMessageTypeMapping.fromBisq2Model(value.chatMessageType),
                 value.bisqEasyOffer.getOrNull()?.let { BisqEasyOfferMapping.fromBisq2Model(it) },
                 value.chatMessageReactions.map { BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(it) }.toSet(),
-                citationAuthorUserProfileVO
+                citationAuthorUserProfileVO,
             )
-        }
     }
-
 
     // chat.notifications
 
     object ChatChannelNotificationTypeMapping {
-        fun toBisq2Model(value: ChatChannelNotificationTypeEnum): ChatChannelNotificationType {
-            return when (value) {
+        fun toBisq2Model(value: ChatChannelNotificationTypeEnum): ChatChannelNotificationType =
+            when (value) {
                 ChatChannelNotificationTypeEnum.GLOBAL_DEFAULT -> ChatChannelNotificationType.GLOBAL_DEFAULT
                 ChatChannelNotificationTypeEnum.ALL -> ChatChannelNotificationType.ALL
                 ChatChannelNotificationTypeEnum.MENTION -> ChatChannelNotificationType.MENTION
                 ChatChannelNotificationTypeEnum.OFF -> ChatChannelNotificationType.OFF
             }
-        }
 
-        fun fromBisq2Model(value: ChatChannelNotificationType): ChatChannelNotificationTypeEnum {
-            return when (value) {
+        fun fromBisq2Model(value: ChatChannelNotificationType): ChatChannelNotificationTypeEnum =
+            when (value) {
                 ChatChannelNotificationType.GLOBAL_DEFAULT -> ChatChannelNotificationTypeEnum.GLOBAL_DEFAULT
                 ChatChannelNotificationType.ALL -> ChatChannelNotificationTypeEnum.ALL
                 ChatChannelNotificationType.MENTION -> ChatChannelNotificationTypeEnum.MENTION
                 ChatChannelNotificationType.OFF -> ChatChannelNotificationTypeEnum.OFF
             }
-        }
     }
-
 
     // chat.reactions
     object BisqEasyOpenTradeMessageReactionMapping {
-        fun toBisq2Model(value: BisqEasyOpenTradeMessageReactionVO): BisqEasyOpenTradeMessageReaction {
-            return BisqEasyOpenTradeMessageReaction(
+        fun toBisq2Model(value: BisqEasyOpenTradeMessageReactionVO): BisqEasyOpenTradeMessageReaction =
+            BisqEasyOpenTradeMessageReaction(
                 value.id,
                 UserProfileMapping.toBisq2Model(value.senderUserProfile),
                 value.receiverUserProfileId,
@@ -409,12 +392,11 @@ class Mappings {
                 value.chatMessageId,
                 value.reactionId,
                 value.date,
-                value.isRemoved
+                value.isRemoved,
             )
-        }
 
-        fun fromBisq2Model(value: BisqEasyOpenTradeMessageReaction): BisqEasyOpenTradeMessageReactionVO {
-            return BisqEasyOpenTradeMessageReactionVO(
+        fun fromBisq2Model(value: BisqEasyOpenTradeMessageReaction): BisqEasyOpenTradeMessageReactionVO =
+            BisqEasyOpenTradeMessageReactionVO(
                 value.id,
                 UserProfileMapping.fromBisq2Model(value.senderUserProfile),
                 value.receiverUserProfileId,
@@ -424,41 +406,37 @@ class Mappings {
                 value.chatMessageId,
                 value.reactionId,
                 value.date,
-                value.isRemoved
+                value.isRemoved,
             )
-        }
     }
 
-
     object BisqEasyOfferbookMessageReactionMapping {
-        fun toBisq2Model(value: BisqEasyOfferbookMessageReactionVO): BisqEasyOfferbookMessageReaction {
-            return BisqEasyOfferbookMessageReaction(
+        fun toBisq2Model(value: BisqEasyOfferbookMessageReactionVO): BisqEasyOfferbookMessageReaction =
+            BisqEasyOfferbookMessageReaction(
                 value.id,
                 value.userProfileId,
                 value.chatChannelId,
                 ChatChannelDomainMapping.toBisq2Model(value.chatChannelDomain),
                 value.chatMessageId,
                 value.reactionId,
-                value.date
+                value.date,
             )
-        }
 
-        fun fromBisq2Model(value: BisqEasyOfferbookMessageReaction): BisqEasyOfferbookMessageReactionVO {
-            return BisqEasyOfferbookMessageReactionVO(
+        fun fromBisq2Model(value: BisqEasyOfferbookMessageReaction): BisqEasyOfferbookMessageReactionVO =
+            BisqEasyOfferbookMessageReactionVO(
                 value.id,
                 value.userProfileId,
                 value.chatChannelId,
                 ChatChannelDomainMapping.fromBisq2Model(value.chatChannelDomain),
                 value.chatMessageId,
                 value.reactionId,
-                value.date
+                value.date,
             )
-        }
     }
 
     object ReactionMapping {
-        fun toBisq2Model(value: ReactionEnum): Reaction {
-            return when (value) {
+        fun toBisq2Model(value: ReactionEnum): Reaction =
+            when (value) {
                 ReactionEnum.THUMBS_UP -> Reaction.THUMBS_UP
                 ReactionEnum.THUMBS_DOWN -> Reaction.THUMBS_DOWN
                 ReactionEnum.HAPPY -> Reaction.HAPPY
@@ -466,10 +444,9 @@ class Mappings {
                 ReactionEnum.HEART -> Reaction.HEART
                 ReactionEnum.PARTY -> Reaction.PARTY
             }
-        }
 
-        fun fromBisq2Model(value: Reaction): ReactionEnum {
-            return when (value) {
+        fun fromBisq2Model(value: Reaction): ReactionEnum =
+            when (value) {
                 Reaction.THUMBS_UP -> ReactionEnum.THUMBS_UP
                 Reaction.THUMBS_DOWN -> ReactionEnum.THUMBS_DOWN
                 Reaction.HAPPY -> ReactionEnum.HAPPY
@@ -477,72 +454,59 @@ class Mappings {
                 Reaction.HEART -> ReactionEnum.HEART
                 Reaction.PARTY -> ReactionEnum.PARTY
             }
-        }
     }
-
 
     // common.currency
 
     object MarketMapping {
-        fun toBisq2Model(value: MarketVO): Market {
-            return Market(
+        fun toBisq2Model(value: MarketVO): Market =
+            Market(
                 value.baseCurrencyCode,
                 value.quoteCurrencyCode,
                 value.baseCurrencyName,
-                value.quoteCurrencyName
+                value.quoteCurrencyName,
             )
-        }
 
-        fun fromBisq2Model(value: Market): MarketVO {
-            return MarketVO(
+        fun fromBisq2Model(value: Market): MarketVO =
+            MarketVO(
                 value.baseCurrencyCode,
                 value.quoteCurrencyCode,
                 value.baseCurrencyName,
-                value.quoteCurrencyName
+                value.quoteCurrencyName,
             )
-        }
     }
-
 
     // common.monetary
 
     object CoinMapping {
-        fun toBisq2Model(value: CoinVO): Coin {
-            return Coin(value.id, value.value, value.code, value.precision, value.lowPrecision)
-        }
+        fun toBisq2Model(value: CoinVO): Coin = Coin(value.id, value.value, value.code, value.precision, value.lowPrecision)
 
-        fun fromBisq2Model(value: Coin): CoinVO {
-            return CoinVOFactory.from(
+        fun fromBisq2Model(value: Coin): CoinVO =
+            CoinVOFactory.from(
                 value.id,
                 value.value,
                 value.code,
                 value.precision,
-                value.lowPrecision
+                value.lowPrecision,
             )
-        }
     }
 
     object FiatMapping {
-        fun toBisq2Model(value: FiatVO): Fiat {
-            return Fiat(value.id, value.value, value.code, value.precision, value.lowPrecision)
-        }
+        fun toBisq2Model(value: FiatVO): Fiat = Fiat(value.id, value.value, value.code, value.precision, value.lowPrecision)
 
-        fun fromBisq2Model(value: Fiat): FiatVO {
-            return FiatVOFactory.from(value.id, value.value, value.code, value.precision, value.lowPrecision)
-        }
+        fun fromBisq2Model(value: Fiat): FiatVO = FiatVOFactory.from(value.id, value.value, value.code, value.precision, value.lowPrecision)
     }
 
     object MonetaryMapping {
-        fun toBisq2Model(value: MonetaryVO): Monetary {
-            return if (value is FiatVO) {
+        fun toBisq2Model(value: MonetaryVO): Monetary =
+            if (value is FiatVO) {
                 FiatMapping.toBisq2Model(value)
             } else {
                 CoinMapping.toBisq2Model(value as CoinVO)
             }
-        }
 
-        fun fromBisq2Model(value: Monetary): MonetaryVO {
-            return if (value is Fiat) {
+        fun fromBisq2Model(value: Monetary): MonetaryVO =
+            if (value is Fiat) {
                 FiatVOFactory.from(
                     value.getId(),
                     value.getValue(),
@@ -556,10 +520,9 @@ class Mappings {
                     value.value,
                     value.code,
                     value.precision,
-                    value.lowPrecision
+                    value.lowPrecision,
                 )
             }
-        }
     }
 
     object PriceQuoteMapping {
@@ -567,16 +530,16 @@ class Mappings {
             val baseCurrencyCode = value.market.baseCurrencyCode
             val quoteCurrencyCode = value.market.quoteCurrencyCode
             if (baseCurrencyCode == "BTC") {
-                val baseSideMonetary: Monetary = Coin.asBtcFromFaceValue(1.0);
-                val quoteSideMonetary: Monetary = Fiat.from(value.value, quoteCurrencyCode);
-                return PriceQuote(value.value, baseSideMonetary, quoteSideMonetary);
+                val baseSideMonetary: Monetary = Coin.asBtcFromFaceValue(1.0)
+                val quoteSideMonetary: Monetary = Fiat.from(value.value, quoteCurrencyCode)
+                return PriceQuote(value.value, baseSideMonetary, quoteSideMonetary)
             } else {
-                throw UnsupportedOperationException("Altcoin price quote mapping is not supported yet");
+                throw UnsupportedOperationException("Altcoin price quote mapping is not supported yet")
             }
         }
 
-        fun fromBisq2Model(value: PriceQuote): PriceQuoteVO {
-            return PriceQuoteVO(
+        fun fromBisq2Model(value: PriceQuote): PriceQuoteVO =
+            PriceQuoteVO(
                 value.value,
                 value.precision,
                 value.lowPrecision,
@@ -584,39 +547,35 @@ class Mappings {
                 MonetaryMapping.fromBisq2Model(value.baseSideMonetary),
                 MonetaryMapping.fromBisq2Model(value.quoteSideMonetary),
             )
-        }
     }
-
 
     // common.network
 
     object AddressByTransportTypeMapMapping {
-        fun toBisq2Model(value: AddressByTransportTypeMapVO): AddressByTransportTypeMap {
-            return AddressByTransportTypeMap(value.map.entries.associate {
-                TransportTypeMapping.toBisq2Model(it.key) to AddressMapping.toBisq2Model(it.value)
-            })
-        }
+        fun toBisq2Model(value: AddressByTransportTypeMapVO): AddressByTransportTypeMap =
+            AddressByTransportTypeMap(
+                value.map.entries.associate {
+                    TransportTypeMapping.toBisq2Model(it.key) to AddressMapping.toBisq2Model(it.value)
+                },
+            )
 
-        fun fromBisq2Model(value: AddressByTransportTypeMap): AddressByTransportTypeMapVO {
-            return AddressByTransportTypeMapVO(value.map.entries.associate {
-                TransportTypeMapping.fromBisq2Model(it.key) to AddressMapping.fromBisq2Model(it.value)
-            })
-        }
+        fun fromBisq2Model(value: AddressByTransportTypeMap): AddressByTransportTypeMapVO =
+            AddressByTransportTypeMapVO(
+                value.map.entries.associate {
+                    TransportTypeMapping.fromBisq2Model(it.key) to AddressMapping.fromBisq2Model(it.value)
+                },
+            )
     }
 
     object AddressMapping {
-        fun toBisq2Model(value: AddressVO): Address {
-            return Address(value.host, value.port)
-        }
+        fun toBisq2Model(value: AddressVO): Address = Address(value.host, value.port)
 
-        fun fromBisq2Model(value: Address): AddressVO {
-            return AddressVO(value.host, value.port)
-        }
+        fun fromBisq2Model(value: Address): AddressVO = AddressVO(value.host, value.port)
     }
 
     object TransportTypeMapping {
-        fun toBisq2Model(value: TransportTypeEnum): TransportType {
-            return if (value == TransportTypeEnum.CLEAR) {
+        fun toBisq2Model(value: TransportTypeEnum): TransportType =
+            if (value == TransportTypeEnum.CLEAR) {
                 TransportType.CLEAR
             } else if (value == TransportTypeEnum.TOR) {
                 TransportType.TOR
@@ -625,10 +584,9 @@ class Mappings {
             } else {
                 throw IllegalArgumentException("Unsupported enum $value")
             }
-        }
 
-        fun fromBisq2Model(value: TransportType): TransportTypeEnum {
-            return if (value == TransportType.CLEAR) {
+        fun fromBisq2Model(value: TransportType): TransportTypeEnum =
+            if (value == TransportType.CLEAR) {
                 TransportTypeEnum.CLEAR
             } else if (value == TransportType.TOR) {
                 TransportTypeEnum.TOR
@@ -637,15 +595,13 @@ class Mappings {
             } else {
                 throw IllegalArgumentException("Unsupported enum $value")
             }
-        }
     }
-
 
     // contract
 
     object BisqEasyContractMapping {
-        fun toBisq2Model(value: BisqEasyContractVO): BisqEasyContract {
-            return BisqEasyContract(
+        fun toBisq2Model(value: BisqEasyContractVO): BisqEasyContract =
+            BisqEasyContract(
                 value.takeOfferDate,
                 BisqEasyOfferMapping.toBisq2Model(value.offer),
                 TradeProtocolType.BISQ_EASY,
@@ -656,12 +612,11 @@ class Mappings {
                 FiatPaymentMethodSpecMapping.toBisq2Model(value.quoteSidePaymentMethodSpec),
                 Optional.ofNullable(value.mediator.let { UserProfileMapping.toBisq2Model(value.mediator!!) }),
                 PriceSpecMapping.toBisq2Model(value.priceSpec),
-                value.marketPrice
+                value.marketPrice,
             )
-        }
 
-        fun fromBisq2Model(value: BisqEasyContract): BisqEasyContractVO {
-            return BisqEasyContractVO(
+        fun fromBisq2Model(value: BisqEasyContract): BisqEasyContractVO =
+            BisqEasyContractVO(
                 value.takeOfferDate,
                 BisqEasyOfferMapping.fromBisq2Model(value.offer),
                 PartyMapping.fromBisq2Model(value.maker),
@@ -672,102 +627,87 @@ class Mappings {
                 FiatPaymentMethodSpecMapping.fromBisq2Model(value.quoteSidePaymentMethodSpec),
                 value.mediator.getOrNull()?.let { UserProfileMapping.fromBisq2Model(it) },
                 PriceSpecMapping.fromBisq2Model(value.priceSpec),
-                value.marketPrice
+                value.marketPrice,
             )
-        }
     }
 
     object ContractSignatureDataMapping {
-        fun toBisq2Model(value: ContractSignatureDataVO): ContractSignatureData {
-            return ContractSignatureData(
+        fun toBisq2Model(value: ContractSignatureDataVO): ContractSignatureData =
+            ContractSignatureData(
                 Base64.getDecoder().decode(value.contractHashEncoded),
                 Base64.getDecoder().decode(value.signatureEncoded),
-                PublicKeyMapping.toBisq2Model(value.publicKey)
+                PublicKeyMapping.toBisq2Model(value.publicKey),
             )
-        }
 
-        fun fromBisq2Model(value: ContractSignatureData): ContractSignatureDataVO {
-            return ContractSignatureDataVO(
+        fun fromBisq2Model(value: ContractSignatureData): ContractSignatureDataVO =
+            ContractSignatureDataVO(
                 Base64.getEncoder().encodeToString(value.contractHash),
                 Base64.getEncoder().encodeToString(value.signature),
-                PublicKeyMapping.fromBisq2Model(value.publicKey)
+                PublicKeyMapping.fromBisq2Model(value.publicKey),
             )
-        }
     }
 
     object PartyMapping {
-        fun toBisq2Model(value: PartyVO): Party {
-            return Party(RoleMapping.toBisq2Model(value.role), NetworkIdMapping.toBisq2Model(value.networkId))
-        }
+        fun toBisq2Model(value: PartyVO): Party = Party(RoleMapping.toBisq2Model(value.role), NetworkIdMapping.toBisq2Model(value.networkId))
 
-        fun fromBisq2Model(value: Party): PartyVO {
-            return PartyVO(RoleMapping.fromBisq2Model(value.role), NetworkIdMapping.fromBisq2Model(value.networkId))
-        }
+        fun fromBisq2Model(value: Party): PartyVO = PartyVO(RoleMapping.fromBisq2Model(value.role), NetworkIdMapping.fromBisq2Model(value.networkId))
     }
 
     object RoleMapping {
-        fun toBisq2Model(value: RoleEnum): Role {
-            return when (value) {
+        fun toBisq2Model(value: RoleEnum): Role =
+            when (value) {
                 RoleEnum.MAKER -> Role.MAKER
                 RoleEnum.TAKER -> Role.TAKER
                 RoleEnum.ESCROW_AGENT -> Role.ESCROW_AGENT
             }
-        }
 
-        fun fromBisq2Model(value: Role): RoleEnum {
-            return when (value) {
+        fun fromBisq2Model(value: Role): RoleEnum =
+            when (value) {
                 Role.MAKER -> RoleEnum.MAKER
                 Role.TAKER -> RoleEnum.TAKER
                 Role.ESCROW_AGENT -> RoleEnum.ESCROW_AGENT
             }
-        }
     }
-
 
     // identity
 
     object IdentityMapping {
-        fun toBisq2Model(value: IdentityVO): Identity {
-            return Identity(
+        fun toBisq2Model(value: IdentityVO): Identity =
+            Identity(
                 value.tag,
                 NetworkIdMapping.toBisq2Model(value.networkId),
-                KeyBundleMapping.toBisq2Model(value.keyBundle)
+                KeyBundleMapping.toBisq2Model(value.keyBundle),
             )
-        }
 
-        fun fromBisq2Model(value: Identity): IdentityVO {
-            return IdentityVO(
+        fun fromBisq2Model(value: Identity): IdentityVO =
+            IdentityVO(
                 value.tag,
                 NetworkIdMapping.fromBisq2Model(value.networkId),
-                KeyBundleMapping.fromBisq2Model(value.keyBundle)
+                KeyBundleMapping.fromBisq2Model(value.keyBundle),
             )
-        }
     }
-
 
     // network.identity
 
     object NetworkIdMapping {
-        fun toBisq2Model(value: NetworkIdVO): NetworkId {
-            return NetworkId(
+        fun toBisq2Model(value: NetworkIdVO): NetworkId =
+            NetworkId(
                 AddressByTransportTypeMapMapping.toBisq2Model(value.addressByTransportTypeMap),
-                PubKeyMapping.toBisq2Model(value.pubKey)
+                PubKeyMapping.toBisq2Model(value.pubKey),
             )
-        }
 
-        fun fromBisq2Model(value: NetworkId): NetworkIdVO {
-            return NetworkIdVO(
+        fun fromBisq2Model(value: NetworkId): NetworkIdVO =
+            NetworkIdVO(
                 AddressByTransportTypeMapMapping.fromBisq2Model(value.addressByTransportTypeMap),
-                PubKeyMapping.fromBisq2Model(value.pubKey)
+                PubKeyMapping.fromBisq2Model(value.pubKey),
             )
-        }
     }
 
     // network.p2p.services.confidential.ack
 
     object MessageDeliveryStatusMapping {
-        fun toBisq2Model(value: MessageDeliveryStatusEnum): MessageDeliveryStatus {
-            return when (value) {
+        fun toBisq2Model(value: MessageDeliveryStatusEnum): MessageDeliveryStatus =
+            when (value) {
                 MessageDeliveryStatusEnum.CONNECTING -> MessageDeliveryStatus.CONNECTING
                 MessageDeliveryStatusEnum.SENT -> MessageDeliveryStatus.SENT
                 MessageDeliveryStatusEnum.ACK_RECEIVED -> MessageDeliveryStatus.ACK_RECEIVED
@@ -776,10 +716,9 @@ class Mappings {
                 MessageDeliveryStatusEnum.MAILBOX_MSG_RECEIVED -> MessageDeliveryStatus.MAILBOX_MSG_RECEIVED
                 MessageDeliveryStatusEnum.FAILED -> MessageDeliveryStatus.FAILED
             }
-        }
 
-        fun fromBisq2Model(value: MessageDeliveryStatus): MessageDeliveryStatusEnum {
-            return when (value) {
+        fun fromBisq2Model(value: MessageDeliveryStatus): MessageDeliveryStatusEnum =
+            when (value) {
                 MessageDeliveryStatus.CONNECTING -> MessageDeliveryStatusEnum.CONNECTING
                 MessageDeliveryStatus.SENT -> MessageDeliveryStatusEnum.SENT
                 MessageDeliveryStatus.ACK_RECEIVED -> MessageDeliveryStatusEnum.ACK_RECEIVED
@@ -788,143 +727,113 @@ class Mappings {
                 MessageDeliveryStatus.MAILBOX_MSG_RECEIVED -> MessageDeliveryStatusEnum.MAILBOX_MSG_RECEIVED
                 MessageDeliveryStatus.FAILED -> MessageDeliveryStatusEnum.FAILED
             }
-        }
     }
-
-
 
     // offer
 
     object DirectionMapping {
-        fun toBisq2Model(value: DirectionEnum): Direction {
-            return if (value == DirectionEnum.BUY) {
+        fun toBisq2Model(value: DirectionEnum): Direction =
+            if (value == DirectionEnum.BUY) {
                 Direction.BUY
             } else {
                 Direction.SELL
             }
-        }
 
-        fun fromBisq2Model(value: Direction): DirectionEnum {
-            return if (value == Direction.BUY) {
+        fun fromBisq2Model(value: Direction): DirectionEnum =
+            if (value == Direction.BUY) {
                 DirectionEnum.BUY
             } else {
                 DirectionEnum.SELL
             }
-        }
     }
-
 
     // offer.amount.spec
 
     object AmountSpecMapping {
-        fun toBisq2Model(value: AmountSpecVO): AmountSpec {
-            return if (value is RangeAmountSpecVO) {
+        fun toBisq2Model(value: AmountSpecVO): AmountSpec =
+            if (value is RangeAmountSpecVO) {
                 RangeAmountSpecMapping.toBisq2Model(value)
             } else {
                 FixedAmountSpecMapping.toBisq2Model(value as FixedAmountSpecVO)
             }
-        }
 
-        fun fromBisq2Model(value: AmountSpec): AmountSpecVO {
-            return if (value is RangeAmountSpec) {
+        fun fromBisq2Model(value: AmountSpec): AmountSpecVO =
+            if (value is RangeAmountSpec) {
                 RangeAmountSpecMapping.fromBisq2Model(value)
             } else {
                 FixedAmountSpecMapping.fromBisq2Model(value as FixedAmountSpec)
             }
-        }
     }
 
     object BaseSideFixedAmountSpecMapping {
-        fun toBisq2Model(value: BaseSideFixedAmountSpecVO): BaseSideFixedAmountSpec {
-            return BaseSideFixedAmountSpec(value.amount)
-        }
+        fun toBisq2Model(value: BaseSideFixedAmountSpecVO): BaseSideFixedAmountSpec = BaseSideFixedAmountSpec(value.amount)
 
-        fun fromBisq2Model(value: BaseSideFixedAmountSpec): BaseSideFixedAmountSpecVO {
-            return BaseSideFixedAmountSpecVO(value.amount)
-        }
+        fun fromBisq2Model(value: BaseSideFixedAmountSpec): BaseSideFixedAmountSpecVO = BaseSideFixedAmountSpecVO(value.amount)
     }
 
-
     object BaseSideRangeAmountSpecMapping {
-        fun toBisq2Model(value: BaseSideRangeAmountSpecVO): BaseSideRangeAmountSpec {
-            return BaseSideRangeAmountSpec(value.minAmount, value.maxAmount)
-        }
+        fun toBisq2Model(value: BaseSideRangeAmountSpecVO): BaseSideRangeAmountSpec = BaseSideRangeAmountSpec(value.minAmount, value.maxAmount)
 
-        fun fromBisq2Model(value: BaseSideRangeAmountSpec): BaseSideRangeAmountSpecVO {
-            return BaseSideRangeAmountSpecVO(value.minAmount, value.maxAmount)
-        }
+        fun fromBisq2Model(value: BaseSideRangeAmountSpec): BaseSideRangeAmountSpecVO = BaseSideRangeAmountSpecVO(value.minAmount, value.maxAmount)
     }
 
     object FixedAmountSpecMapping {
-        fun toBisq2Model(value: FixedAmountSpecVO): FixedAmountSpec {
-            return if (value is BaseSideFixedAmountSpecVO) {
+        fun toBisq2Model(value: FixedAmountSpecVO): FixedAmountSpec =
+            if (value is BaseSideFixedAmountSpecVO) {
                 BaseSideFixedAmountSpecMapping.toBisq2Model(value)
             } else if (value is QuoteSideFixedAmountSpecVO) {
                 QuoteSideFixedAmountSpecMapping.toBisq2Model(value)
             } else {
                 throw IllegalArgumentException("Unsupported FixedAmountSpecVO $value")
             }
-        }
 
-        fun fromBisq2Model(value: FixedAmountSpec): FixedAmountSpecVO {
-            return if (value is BaseSideFixedAmountSpec) {
+        fun fromBisq2Model(value: FixedAmountSpec): FixedAmountSpecVO =
+            if (value is BaseSideFixedAmountSpec) {
                 BaseSideFixedAmountSpecMapping.fromBisq2Model(value)
             } else if (value is QuoteSideFixedAmountSpec) {
                 QuoteSideFixedAmountSpecMapping.fromBisq2Model(value)
             } else {
                 throw IllegalArgumentException("Unsupported FixedAmountSpec $value")
             }
-        }
     }
 
     object QuoteSideFixedAmountSpecMapping {
-        fun toBisq2Model(value: QuoteSideFixedAmountSpecVO): QuoteSideFixedAmountSpec {
-            return QuoteSideFixedAmountSpec(value.amount)
-        }
+        fun toBisq2Model(value: QuoteSideFixedAmountSpecVO): QuoteSideFixedAmountSpec = QuoteSideFixedAmountSpec(value.amount)
 
-        fun fromBisq2Model(value: QuoteSideFixedAmountSpec): QuoteSideFixedAmountSpecVO {
-            return QuoteSideFixedAmountSpecVO(value.amount)
-        }
+        fun fromBisq2Model(value: QuoteSideFixedAmountSpec): QuoteSideFixedAmountSpecVO = QuoteSideFixedAmountSpecVO(value.amount)
     }
 
     object QuoteSideRangeAmountSpecMapping {
-        fun toBisq2Model(value: QuoteSideRangeAmountSpecVO): QuoteSideRangeAmountSpec {
-            return QuoteSideRangeAmountSpec(value.minAmount, value.maxAmount)
-        }
+        fun toBisq2Model(value: QuoteSideRangeAmountSpecVO): QuoteSideRangeAmountSpec = QuoteSideRangeAmountSpec(value.minAmount, value.maxAmount)
 
-        fun fromBisq2Model(value: QuoteSideRangeAmountSpec): QuoteSideRangeAmountSpecVO {
-            return QuoteSideRangeAmountSpecVO(value.minAmount, value.maxAmount)
-        }
+        fun fromBisq2Model(value: QuoteSideRangeAmountSpec): QuoteSideRangeAmountSpecVO = QuoteSideRangeAmountSpecVO(value.minAmount, value.maxAmount)
     }
 
     object RangeAmountSpecMapping {
-        fun toBisq2Model(value: RangeAmountSpecVO): RangeAmountSpec {
-            return if (value is BaseSideRangeAmountSpecVO) {
+        fun toBisq2Model(value: RangeAmountSpecVO): RangeAmountSpec =
+            if (value is BaseSideRangeAmountSpecVO) {
                 BaseSideRangeAmountSpecMapping.toBisq2Model(value)
             } else if (value is QuoteSideRangeAmountSpecVO) {
                 QuoteSideRangeAmountSpecMapping.toBisq2Model(value)
             } else {
                 throw IllegalArgumentException("Unsupported RangeAmountSpecVO $value")
             }
-        }
 
-        fun fromBisq2Model(value: RangeAmountSpec): RangeAmountSpecVO {
-            return if (value is BaseSideRangeAmountSpec) {
+        fun fromBisq2Model(value: RangeAmountSpec): RangeAmountSpecVO =
+            if (value is BaseSideRangeAmountSpec) {
                 BaseSideRangeAmountSpecMapping.fromBisq2Model(value)
             } else if (value is QuoteSideRangeAmountSpec) {
                 QuoteSideRangeAmountSpecMapping.fromBisq2Model(value)
             } else {
                 throw IllegalArgumentException("Unsupported RangeAmountSpec $value")
             }
-        }
     }
-
 
     // offer.bisq_easy
 
     object BisqEasyOfferMapping {
-        fun toBisq2Model(value: BisqEasyOfferVO): BisqEasyOffer {
-            return BisqEasyOffer(
+        fun toBisq2Model(value: BisqEasyOfferVO): BisqEasyOffer =
+            BisqEasyOffer(
                 value.id,
                 value.date,
                 NetworkIdMapping.toBisq2Model(value.makerNetworkId),
@@ -942,10 +851,9 @@ class Mappings {
 //                BuildNodeConfig.TRADE_PROTOCOL_VERSION,
 //                BuildNodeConfig.APP_VERSION
             )
-        }
 
-        fun fromBisq2Model(value: BisqEasyOffer): BisqEasyOfferVO {
-            return BisqEasyOfferVO(
+        fun fromBisq2Model(value: BisqEasyOffer): BisqEasyOfferVO =
+            BisqEasyOfferVO(
                 value.id,
                 value.date,
                 NetworkIdMapping.fromBisq2Model(value.makerNetworkId),
@@ -957,27 +865,24 @@ class Mappings {
                 value.baseSidePaymentMethodSpecs.map { BitcoinPaymentMethodSpecMapping.fromBisq2Model(it) },
                 value.quoteSidePaymentMethodSpecs.map { FiatPaymentMethodSpecMapping.fromBisq2Model(it) },
                 value.offerOptions.map { OfferOptionMapping.fromBisq2Model(it) },
-                value.supportedLanguageCodes
+                value.supportedLanguageCodes,
             )
-        }
     }
-
 
     // offer.options
 
     object OfferOptionMapping {
-        fun toBisq2Model(value: OfferOptionVO): OfferOption {
-            return if (value is ReputationOptionVO) {
+        fun toBisq2Model(value: OfferOptionVO): OfferOption =
+            if (value is ReputationOptionVO) {
                 ReputationOptionMapping.toBisq2Model(value)
             } else if (value is TradeTermsOptionVO) {
                 TradeTermsOptionMapping.toBisq2Model(value)
             } else {
                 throw IllegalArgumentException("Unsupported OfferOptionVO $value")
             }
-        }
 
-        fun fromBisq2Model(value: OfferOption): OfferOptionVO {
-            return if (value is ReputationOption) {
+        fun fromBisq2Model(value: OfferOption): OfferOptionVO =
+            if (value is ReputationOption) {
                 @Suppress("DEPRECATION")
                 ReputationOptionVO(value.requiredTotalReputationScore)
             } else if (value is TradeTermsOption) {
@@ -985,13 +890,10 @@ class Mappings {
             } else {
                 throw IllegalArgumentException("Unsupported OfferOption $value")
             }
-        }
     }
 
     object ReputationOptionMapping {
-        fun toBisq2Model(value: ReputationOptionVO): ReputationOption {
-            return ReputationOption(value.requiredTotalReputationScore)
-        }
+        fun toBisq2Model(value: ReputationOptionVO): ReputationOption = ReputationOption(value.requiredTotalReputationScore)
 
         fun fromBisq2Model(value: ReputationOption): ReputationOptionVO {
             @Suppress("DEPRECATION")
@@ -1000,15 +902,10 @@ class Mappings {
     }
 
     object TradeTermsOptionMapping {
-        fun toBisq2Model(value: TradeTermsOptionVO): TradeTermsOption {
-            return TradeTermsOption(value.makersTradeTerms)
-        }
+        fun toBisq2Model(value: TradeTermsOptionVO): TradeTermsOption = TradeTermsOption(value.makersTradeTerms)
 
-        fun fromBisq2Model(value: TradeTermsOption): TradeTermsOptionVO {
-            return TradeTermsOptionVO(value.makersTradeTerms)
-        }
+        fun fromBisq2Model(value: TradeTermsOption): TradeTermsOptionVO = TradeTermsOptionVO(value.makersTradeTerms)
     }
-
 
     // offer.payment_method
 
@@ -1019,12 +916,11 @@ class Mappings {
             return BitcoinPaymentMethodSpec(method, Optional.ofNullable(value.saltedMakerAccountId))
         }
 
-        fun fromBisq2Model(value: BitcoinPaymentMethodSpec): BitcoinPaymentMethodSpecVO {
-            return BitcoinPaymentMethodSpecVO(
+        fun fromBisq2Model(value: BitcoinPaymentMethodSpec): BitcoinPaymentMethodSpecVO =
+            BitcoinPaymentMethodSpecVO(
                 value.paymentMethod.name,
-                value.saltedMakerAccountId.orElse(null)
+                value.saltedMakerAccountId.orElse(null),
             )
-        }
     }
 
     object FiatPaymentMethodSpecMapping {
@@ -1034,102 +930,79 @@ class Mappings {
             return FiatPaymentMethodSpec(method, Optional.ofNullable(value.saltedMakerAccountId))
         }
 
-        fun fromBisq2Model(value: FiatPaymentMethodSpec): FiatPaymentMethodSpecVO {
-            return FiatPaymentMethodSpecVO(value.paymentMethod.name, value.saltedMakerAccountId.orElse(null))
-        }
+        fun fromBisq2Model(value: FiatPaymentMethodSpec): FiatPaymentMethodSpecVO = FiatPaymentMethodSpecVO(value.paymentMethod.name, value.saltedMakerAccountId.orElse(null))
     }
 
     object PaymentMethodSpecMapping {
-        fun toBisq2Model(value: PaymentMethodSpecVO): PaymentMethodSpec<*> {
-            return if (value is FiatPaymentMethodSpecVO) {
+        fun toBisq2Model(value: PaymentMethodSpecVO): PaymentMethodSpec<*> =
+            if (value is FiatPaymentMethodSpecVO) {
                 FiatPaymentMethodSpecMapping.toBisq2Model(value)
             } else if (value is BitcoinPaymentMethodSpecVO) {
                 BitcoinPaymentMethodSpecMapping.toBisq2Model(value)
             } else {
                 throw IllegalArgumentException("Unsupported PaymentMethodSpecVO $value")
             }
-        }
 
-        fun fromBisq2Model(value: PaymentMethodSpec<*>): PaymentMethodSpecVO {
-            return if (value is FiatPaymentMethodSpec) {
+        fun fromBisq2Model(value: PaymentMethodSpec<*>): PaymentMethodSpecVO =
+            if (value is FiatPaymentMethodSpec) {
                 FiatPaymentMethodSpecMapping.fromBisq2Model(value)
             } else if (value is BitcoinPaymentMethodSpec) {
                 BitcoinPaymentMethodSpecMapping.fromBisq2Model(value)
             } else {
                 throw IllegalArgumentException("Unsupported PaymentMethodSpec $value")
             }
-        }
     }
-
 
     // offer.price.spec
 
     object MarketPriceSpecMapping {
-        fun toBisq2Model(value: MarketPriceSpecVO): MarketPriceSpec {
-            return MarketPriceSpec()
-        }
+        fun toBisq2Model(value: MarketPriceSpecVO): MarketPriceSpec = MarketPriceSpec()
 
-        fun fromBisq2Model(value: MarketPriceSpec): MarketPriceSpecVO {
-            return MarketPriceSpecVO()
-        }
+        fun fromBisq2Model(value: MarketPriceSpec): MarketPriceSpecVO = MarketPriceSpecVO()
     }
 
     object FloatPriceSpecMapping {
-        fun toBisq2Model(value: FloatPriceSpecVO): FloatPriceSpec {
-            return FloatPriceSpec(value.percentage)
-        }
+        fun toBisq2Model(value: FloatPriceSpecVO): FloatPriceSpec = FloatPriceSpec(value.percentage)
 
-        fun fromBisq2Model(value: FloatPriceSpec): FloatPriceSpecVO {
-            return FloatPriceSpecVO(value.percentage)
-        }
+        fun fromBisq2Model(value: FloatPriceSpec): FloatPriceSpecVO = FloatPriceSpecVO(value.percentage)
     }
 
     object FixPriceSpecMapping {
-        fun toBisq2Model(value: FixPriceSpecVO): FixPriceSpec {
-            return FixPriceSpec(PriceQuoteMapping.toBisq2Model(value.priceQuote))
-        }
+        fun toBisq2Model(value: FixPriceSpecVO): FixPriceSpec = FixPriceSpec(PriceQuoteMapping.toBisq2Model(value.priceQuote))
 
-        fun fromBisq2Model(value: FixPriceSpec): FixPriceSpecVO {
-            return FixPriceSpecVO(PriceQuoteMapping.fromBisq2Model(value.priceQuote))
-        }
+        fun fromBisq2Model(value: FixPriceSpec): FixPriceSpecVO = FixPriceSpecVO(PriceQuoteMapping.fromBisq2Model(value.priceQuote))
     }
 
     object PriceSpecMapping {
-        fun toBisq2Model(value: PriceSpecVO): PriceSpec {
-            return when (value) {
+        fun toBisq2Model(value: PriceSpecVO): PriceSpec =
+            when (value) {
                 is MarketPriceSpecVO -> MarketPriceSpecMapping.toBisq2Model(value)
                 is FixPriceSpecVO -> FixPriceSpecMapping.toBisq2Model(value)
                 is FloatPriceSpecVO -> FloatPriceSpecMapping.toBisq2Model(value)
                 else -> throw IllegalArgumentException("Unsupported PriceSpecVO $value")
             }
-        }
 
-        fun fromBisq2Model(value: PriceSpec): PriceSpecVO {
-            return when (value) {
+        fun fromBisq2Model(value: PriceSpec): PriceSpecVO =
+            when (value) {
                 is MarketPriceSpec -> MarketPriceSpecMapping.fromBisq2Model(value)
                 is FixPriceSpec -> FixPriceSpecMapping.fromBisq2Model(value)
                 is FloatPriceSpec -> FloatPriceSpecMapping.fromBisq2Model(value)
                 else -> throw IllegalArgumentException("Unsupported PriceSpec $value")
             }
-        }
     }
-
 
     // security.keys
 
     object PrivateKeyMapping {
-        fun toBisq2Model(value: PrivateKeyVO): PrivateKey {
-            return try {
+        fun toBisq2Model(value: PrivateKeyVO): PrivateKey =
+            try {
                 val decoded = Base64.getDecoder().decode(value.encoded)
                 KeyGeneration.generatePrivate(decoded)
             } catch (e: Exception) {
                 throw RuntimeException("Failed to generate privateKey", e)
             }
-        }
 
-        fun fromBisq2Model(value: PrivateKey): PrivateKeyVO {
-            return PrivateKeyVO(Base64.getEncoder().encodeToString(value.encoded))
-        }
+        fun fromBisq2Model(value: PrivateKey): PrivateKeyVO = PrivateKeyVO(Base64.getEncoder().encodeToString(value.encoded))
     }
 
     object KeyPairMapping {
@@ -1147,9 +1020,7 @@ class Mappings {
     }
 
     object PubKeyMapping {
-        fun toBisq2Model(value: PubKeyVO): PubKey {
-            return PubKey(PublicKeyMapping.toBisq2Model(value.publicKey), value.keyId)
-        }
+        fun toBisq2Model(value: PubKeyVO): PubKey = PubKey(PublicKeyMapping.toBisq2Model(value.publicKey), value.keyId)
 
         fun fromBisq2Model(value: PubKey): PubKeyVO {
             val publicKey = value.publicKey
@@ -1172,80 +1043,71 @@ class Mappings {
             }
         }
 
-        fun fromBisq2Model(value: PublicKey): PublicKeyVO {
-            return PublicKeyVO(Base64.getEncoder().encodeToString(value.encoded))
-        }
+        fun fromBisq2Model(value: PublicKey): PublicKeyVO = PublicKeyVO(Base64.getEncoder().encodeToString(value.encoded))
     }
 
     object KeyBundleMapping {
-        fun toBisq2Model(value: KeyBundleVO): KeyBundle {
-            return KeyBundle(
+        fun toBisq2Model(value: KeyBundleVO): KeyBundle =
+            KeyBundle(
                 value.keyId,
                 KeyPairMapping.toBisq2Model(value.keyPair),
-                TorKeyPairMapping.toBisq2Model(value.torKeyPair)
+                TorKeyPairMapping.toBisq2Model(value.torKeyPair),
             )
-        }
 
-        fun fromBisq2Model(value: KeyBundle): KeyBundleVO {
-            return KeyBundleVO(
+        fun fromBisq2Model(value: KeyBundle): KeyBundleVO =
+            KeyBundleVO(
                 value.keyId,
                 KeyPairMapping.fromBisq2Model(value.keyPair),
-                TorKeyPairMapping.fromBisq2Model(value.torKeyPair)
+                TorKeyPairMapping.fromBisq2Model(value.torKeyPair),
             )
-        }
     }
 
     object TorKeyPairMapping {
-        fun toBisq2Model(value: TorKeyPairVO): TorKeyPair {
-            return TorKeyPair(
+        fun toBisq2Model(value: TorKeyPairVO): TorKeyPair =
+            TorKeyPair(
                 Base64.getDecoder().decode(value.privateKeyEncoded),
                 Base64.getDecoder().decode(value.publicKeyEncoded),
-                value.onionAddress
+                value.onionAddress,
             )
-        }
 
-        fun fromBisq2Model(value: TorKeyPair): TorKeyPairVO {
-            return TorKeyPairVO(
+        fun fromBisq2Model(value: TorKeyPair): TorKeyPairVO =
+            TorKeyPairVO(
                 Base64.getEncoder().encodeToString(value.privateKey),
                 Base64.getEncoder().encodeToString(value.publicKey),
-                value.onionAddress
+                value.onionAddress,
             )
-        }
     }
-
 
     // security.pow
 
     object ProofOfWorkMapping {
-        fun toBisq2Model(value: ProofOfWorkVO): ProofOfWork {
-            return ProofOfWork(
+        fun toBisq2Model(value: ProofOfWorkVO): ProofOfWork =
+            ProofOfWork(
                 Base64.getDecoder().decode(value.payloadEncoded),
                 value.counter,
                 value.challengeEncoded?.let { Base64.getDecoder().decode(it) },
                 value.difficulty,
                 Base64.getDecoder().decode(value.solutionEncoded),
-                value.duration
+                value.duration,
             )
-        }
 
-        fun fromBisq2Model(value: ProofOfWork): ProofOfWorkVO {
-            return ProofOfWorkVO(
+        fun fromBisq2Model(value: ProofOfWork): ProofOfWorkVO =
+            ProofOfWorkVO(
                 Base64.getEncoder().encodeToString(value.payload),
                 value.counter,
                 value.challenge?.let { Base64.getEncoder().encodeToString(it) },
                 value.difficulty,
                 Base64.getEncoder().encodeToString(value.solution),
-                value.duration
+                value.duration,
             )
-        }
     }
 
     // settings
 
     object SettingsMapping {
         // toPojo method not implemented as we do not have a settings value object in the domain
-        fun from(settingsService: SettingsService): SettingsVO {
-            return SettingsVO(
+        fun from(settingsService: SettingsService): SettingsVO =
+            SettingsVO(
                 settingsService.isTacAccepted.get(),
                 settingsService.tradeRulesConfirmed.get(),
                 settingsService.closeMyOfferWhenTaken.get(),
@@ -1256,19 +1118,17 @@ class Mappings {
                 // TODO for Bisq v2.1.8
 //                MarketMapping.fromBisq2Model(settingsService.selectedMuSigMarket.get()),
                 MarketMapping.fromBisq2Model(settingsService.selectedMarket.get()),
-                settingsService.numDaysAfterRedactingTradeData.get()
+                settingsService.numDaysAfterRedactingTradeData.get(),
             )
-        }
     }
 
     // payment accounts
 
-
     // trade
 
     object BisqEasyTradeVOMapping {
-        fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeDto {
-            return BisqEasyTradeDto(
+        fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeDto =
+            BisqEasyTradeDto(
                 BisqEasyContractMapping.fromBisq2Model(value.contract),
                 value.id,
                 TradeRoleMapping.fromBisq2Model(value.tradeRole),
@@ -1285,12 +1145,11 @@ class Mappings {
                 value.peersErrorMessage,
                 value.peersErrorStackTrace,
             )
-        }
     }
 
     object BisqEasyTradeModelMapping {
-        fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeModel {
-            return BisqEasyTradeModel(
+        fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeModel =
+            BisqEasyTradeModel(
                 BisqEasyTradeVOMapping.fromBisq2Model(value),
             ).apply {
                 // We set initial values if mutable data
@@ -1306,42 +1165,35 @@ class Mappings {
                 peersErrorMessage.value = value.peersErrorMessage
                 peersErrorStackTrace.value = value.peersErrorStackTrace
             }
-        }
     }
 
-
     object BisqEasyTradePartyVOMapping {
-        fun fromBisq2Model(value: BisqEasyTradeParty): BisqEasyTradePartyVO {
-            return BisqEasyTradePartyVO(NetworkIdMapping.fromBisq2Model(value.networkId))
-        }
+        fun fromBisq2Model(value: BisqEasyTradeParty): BisqEasyTradePartyVO = BisqEasyTradePartyVO(NetworkIdMapping.fromBisq2Model(value.networkId))
     }
 
     object TradeRoleMapping {
-        fun toBisq2Model(value: TradeRoleEnum): TradeRole {
-            return when (value) {
+        fun toBisq2Model(value: TradeRoleEnum): TradeRole =
+            when (value) {
                 TradeRoleEnum.BUYER_AS_TAKER -> TradeRole.BUYER_AS_TAKER
                 TradeRoleEnum.BUYER_AS_MAKER -> TradeRole.BUYER_AS_MAKER
                 TradeRoleEnum.SELLER_AS_TAKER -> TradeRole.SELLER_AS_TAKER
                 TradeRoleEnum.SELLER_AS_MAKER -> TradeRole.SELLER_AS_MAKER
             }
-        }
 
-        fun fromBisq2Model(value: TradeRole): TradeRoleEnum {
-            return when (value) {
+        fun fromBisq2Model(value: TradeRole): TradeRoleEnum =
+            when (value) {
                 TradeRole.BUYER_AS_TAKER -> TradeRoleEnum.BUYER_AS_TAKER
                 TradeRole.BUYER_AS_MAKER -> TradeRoleEnum.BUYER_AS_MAKER
                 TradeRole.SELLER_AS_TAKER -> TradeRoleEnum.SELLER_AS_TAKER
                 TradeRole.SELLER_AS_MAKER -> TradeRoleEnum.SELLER_AS_MAKER
             }
-        }
-
     }
 
     // trade.bisq_easy.protocol
 
     object BisqEasyTradeStateMapping {
-        fun toBisq2Model(value: BisqEasyTradeStateEnum): BisqEasyTradeState {
-            return when (value) {
+        fun toBisq2Model(value: BisqEasyTradeStateEnum): BisqEasyTradeState =
+            when (value) {
                 BisqEasyTradeStateEnum.INIT -> BisqEasyTradeState.INIT
                 BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST -> BisqEasyTradeState.TAKER_SENT_TAKE_OFFER_REQUEST
                 BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> BisqEasyTradeState.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA
@@ -1382,10 +1234,9 @@ class Mappings {
                 BisqEasyTradeStateEnum.FAILED -> BisqEasyTradeState.FAILED
                 BisqEasyTradeStateEnum.FAILED_AT_PEER -> BisqEasyTradeState.FAILED_AT_PEER
             }
-        }
 
-        fun fromBisq2Model(value: BisqEasyTradeState): BisqEasyTradeStateEnum {
-            return when (value) {
+        fun fromBisq2Model(value: BisqEasyTradeState): BisqEasyTradeStateEnum =
+            when (value) {
                 BisqEasyTradeState.INIT -> BisqEasyTradeStateEnum.INIT
                 BisqEasyTradeState.TAKER_SENT_TAKE_OFFER_REQUEST -> BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST
                 BisqEasyTradeState.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA
@@ -1426,33 +1277,29 @@ class Mappings {
                 BisqEasyTradeState.FAILED -> BisqEasyTradeStateEnum.FAILED
                 BisqEasyTradeState.FAILED_AT_PEER -> BisqEasyTradeStateEnum.FAILED_AT_PEER
             }
-        }
     }
-
 
     // user.identity
 
     object UserIdentityMapping {
-        fun toBisq2Model(value: UserIdentityVO): UserIdentity {
-            return UserIdentity(
+        fun toBisq2Model(value: UserIdentityVO): UserIdentity =
+            UserIdentity(
                 IdentityMapping.toBisq2Model(value.identity),
-                UserProfileMapping.toBisq2Model(value.userProfile)
+                UserProfileMapping.toBisq2Model(value.userProfile),
             )
-        }
 
-        fun fromBisq2Model(value: UserIdentity): UserIdentityVO {
-            return UserIdentityVO(
+        fun fromBisq2Model(value: UserIdentity): UserIdentityVO =
+            UserIdentityVO(
                 IdentityMapping.fromBisq2Model(value.identity),
-                UserProfileMapping.fromBisq2Model(value.userProfile)
+                UserProfileMapping.fromBisq2Model(value.userProfile),
             )
-        }
     }
 
     // user.profile
 
     object UserProfileMapping {
-        fun toBisq2Model(value: UserProfileVO): UserProfile {
-            return UserProfile(
+        fun toBisq2Model(value: UserProfileVO): UserProfile =
+            UserProfile(
                 value.version,
                 value.nickName,
                 ProofOfWorkMapping.toBisq2Model(value.proofOfWork),
@@ -1460,12 +1307,11 @@ class Mappings {
                 NetworkIdMapping.toBisq2Model(value.networkId),
                 value.terms,
                 value.statement,
-                value.applicationVersion
+                value.applicationVersion,
             )
-        }
 
-        fun fromBisq2Model(value: UserProfile): UserProfileVO {
-            return UserProfileVO(
+        fun fromBisq2Model(value: UserProfile): UserProfileVO =
+            UserProfileVO(
                 value.version,
                 value.nickName,
                 ProofOfWorkMapping.fromBisq2Model(value.proofOfWork),
@@ -1476,21 +1322,15 @@ class Mappings {
                 value.applicationVersion,
                 value.nym,
                 value.userName,
-                value.publishDate
+                value.publishDate,
             )
-        }
     }
-
 
     // user.reputation
 
     object ReputationScoreMapping {
-        fun toBisq2Model(value: ReputationScoreVO): ReputationScore {
-            return ReputationScore(value.totalScore, value.fiveSystemScore, value.ranking)
-        }
+        fun toBisq2Model(value: ReputationScoreVO): ReputationScore = ReputationScore(value.totalScore, value.fiveSystemScore, value.ranking)
 
-        fun fromBisq2Model(value: ReputationScore): ReputationScoreVO {
-            return ReputationScoreVO(value.totalScore, value.fiveSystemScore, value.ranking)
-        }
+        fun fromBisq2Model(value: ReputationScore): ReputationScoreVO = ReputationScoreVO(value.totalScore, value.fiveSystemScore, value.ranking)
     }
 }

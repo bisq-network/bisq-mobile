@@ -9,6 +9,5 @@ data class KeyMaterialResponse(
     val keyPair: KeyPairVO,
     val id: String,
     val nym: String,
-    val proofOfWork: ProofOfWorkVO
+    val proofOfWork: ProofOfWorkVO,
 )
-

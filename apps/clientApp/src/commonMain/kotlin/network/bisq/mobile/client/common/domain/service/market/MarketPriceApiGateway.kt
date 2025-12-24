@@ -13,11 +13,7 @@ class MarketPriceApiGateway(
     private val basePath = "market-price"
 
     // @Deprecated use subscription instead
-    suspend fun getQuotes(): Result<QuotesResponse> {
-        return webSocketApiClient.get("$basePath/quotes")
-    }
+    suspend fun getQuotes(): Result<QuotesResponse> = webSocketApiClient.get("$basePath/quotes")
 
-    suspend fun subscribeMarketPrice(): WebSocketEventObserver {
-        return webSocketClientService.subscribe(Topic.MARKET_PRICE)
-    }
+    suspend fun subscribeMarketPrice(): WebSocketEventObserver = webSocketClientService.subscribe(Topic.MARKET_PRICE)
 }

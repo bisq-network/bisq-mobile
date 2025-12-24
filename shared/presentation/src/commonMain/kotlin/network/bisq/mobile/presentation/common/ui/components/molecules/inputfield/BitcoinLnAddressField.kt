@@ -21,11 +21,11 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ScanQrIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BitcoinAddressValidation
 import network.bisq.mobile.presentation.common.ui.utils.LightningInvoiceValidation
 import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class BitcoinLnAddressFieldType {
@@ -35,28 +35,34 @@ enum class BitcoinLnAddressFieldType {
 
 @Composable
 fun BitcoinLnAddressField(
-    label: String = "",
     value: String,
+    label: String = "",
     onValueChange: ((String, Boolean) -> Unit)? = null,
     disabled: Boolean = false,
     type: BitcoinLnAddressFieldType = BitcoinLnAddressFieldType.Bitcoin,
-    modifier: Modifier = Modifier,
     onBarcodeClick: (() -> Unit)? = null,
-    triggerValidation: Int? = null
+    triggerValidation: Int? = null,
 ) {
-    
-    val validationLogic = remember(type) {
-        when (type) {
-            BitcoinLnAddressFieldType.Bitcoin -> { input: String ->
-                if (BitcoinAddressValidation.validateAddress(input)) null
-                else "validation.invalidBitcoinAddress".i18n()
-            }
-            BitcoinLnAddressFieldType.Lightning -> { input: String ->
-                if (LightningInvoiceValidation.validateInvoice(input)) null
-                else "validation.invalidLightningInvoice".i18n()
+    val validationLogic =
+        remember(type) {
+            when (type) {
+                BitcoinLnAddressFieldType.Bitcoin -> { input: String ->
+                    if (BitcoinAddressValidation.validateAddress(input)) {
+                        null
+                    } else {
+                        "validation.invalidBitcoinAddress".i18n()
+                    }
+                }
+
+                BitcoinLnAddressFieldType.Lightning -> { input: String ->
+                    if (LightningInvoiceValidation.validateInvoice(input)) {
+                        null
+                    } else {
+                        "validation.invalidLightningInvoice".i18n()
+                    }
+                }
             }
         }
-    }
 
     // Store validation function in mutableStateOf so we can replace it with new function instances.
     // BisqTextField's LaunchedEffect(validation) only triggers when the validation function reference changes.
@@ -81,7 +87,7 @@ fun BitcoinLnAddressField(
             onValueChange = onValueChange,
             disabled = disabled,
             showPaste = true,
-            modifier = modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             helperText = helperText,
             validation = validationError,
         )
@@ -91,12 +97,12 @@ fun BitcoinLnAddressField(
                 if (label.isNotEmpty()) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BisqText.baseLight(
+                        BisqText.BaseLight(
                             text = " ",
                             color = Color.Transparent,
-                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
                         )
                     }
                     BisqGap.VQuarter()
@@ -113,17 +119,16 @@ fun BitcoinLnAddressField(
             }
         }
     }
-
 }
 
 @Preview
 @Composable
-fun BitcoinLnAddressFieldPreview() {
+private fun BitcoinLnAddressFieldPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             BitcoinLnAddressField(
                 value = "",
-                onBarcodeClick = { }
+                onBarcodeClick = { },
             )
         }
     }
@@ -131,13 +136,13 @@ fun BitcoinLnAddressFieldPreview() {
 
 @Preview
 @Composable
-fun BitcoinLnAddressFieldWithLabelPreview() {
+private fun BitcoinLnAddressFieldWithLabelPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             BitcoinLnAddressField(
                 value = "",
                 label = "Test",
-                onBarcodeClick = { }
+                onBarcodeClick = { },
             )
         }
     }
@@ -145,12 +150,12 @@ fun BitcoinLnAddressFieldWithLabelPreview() {
 
 @Preview
 @Composable
-fun BitcoinLnAddressFieldInvalidPreview() {
+private fun BitcoinLnAddressFieldInvalidPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             BitcoinLnAddressField(
                 value = "Test",
-                onBarcodeClick = { }
+                onBarcodeClick = { },
             )
         }
     }

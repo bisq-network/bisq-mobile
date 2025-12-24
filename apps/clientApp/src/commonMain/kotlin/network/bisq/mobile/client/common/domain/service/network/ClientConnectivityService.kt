@@ -14,9 +14,9 @@ import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 
 class ClientConnectivityService(
-    private val webSocketClientService: WebSocketClientService
-) : ConnectivityService(), Logging {
-
+    private val webSocketClientService: WebSocketClientService,
+) : ConnectivityService(),
+    Logging {
     companion object {
         const val TIMEOUT = 5000L
         const val PERIOD = 5000L // default check every 5 sec
@@ -32,15 +32,16 @@ class ClientConnectivityService(
         private var averageTripTime = DEFAULT_AVERAGE_TRIP_TIME
 
         fun newRequestRoundTripTime(timeInMs: Long) {
-            averageTripTime = when (averageTripTime) {
-                DEFAULT_AVERAGE_TRIP_TIME -> {
-                    timeInMs
-                }
+            averageTripTime =
+                when (averageTripTime) {
+                    DEFAULT_AVERAGE_TRIP_TIME -> {
+                        timeInMs
+                    }
 
-                else -> {
-                    (averageTripTime + timeInMs) / 2
+                    else -> {
+                        (averageTripTime + timeInMs) / 2
+                    }
                 }
-            }
             sessionTotalRequests++
         }
     }
@@ -50,21 +51,24 @@ class ClientConnectivityService(
     private val pendingConnectivityBlocks = mutableListOf<suspend () -> Unit>()
     private val mutex = Mutex()
 
-
     /**
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
      * @param period of time in ms to check connectivity
      * @param startDelay to delay the first check, default to 5 secs
      */
-    fun startMonitoring(period: Long = PERIOD, startDelay: Long = 5_000) {
+    fun startMonitoring(
+        period: Long = PERIOD,
+        startDelay: Long = 5_000,
+    ) {
         job?.cancel()
-        job = serviceScope.launch(Dispatchers.Default) {
-            delay(startDelay)
-            while (true) {
-                checkConnectivity()
-                delay(period)
+        job =
+            serviceScope.launch(Dispatchers.Default) {
+                delay(startDelay)
+                while (true) {
+                    checkConnectivity()
+                    delay(period)
+                }
             }
-        }
         log.d { "Connectivity is being monitored" }
     }
 
@@ -85,11 +89,12 @@ class ClientConnectivityService(
         try {
             withTimeout(TIMEOUT) {
                 val previousStatus = _status.value
-                _status.value = when {
-                    !isConnected() -> ConnectivityStatus.RECONNECTING
-                    isSlow() -> ConnectivityStatus.REQUESTING_INVENTORY
-                    else -> ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-                }
+                _status.value =
+                    when {
+                        !isConnected() -> ConnectivityStatus.RECONNECTING
+                        isSlow() -> ConnectivityStatus.REQUESTING_INVENTORY
+                        else -> ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+                    }
                 if (previousStatus != _status.value) {
                     log.d { "Connectivity transition from $previousStatus to ${_status.value}" }
                     if (previousStatus == ConnectivityStatus.RECONNECTING) {
@@ -109,26 +114,28 @@ class ClientConnectivityService(
     private fun runPendingBlocks() {
         serviceScope.launch(Dispatchers.Default) {
             mutex.withLock {
-                val blocksToExecute = pendingConnectivityBlocks.let {
-                    val blocks = it.toList()
-                    pendingConnectivityBlocks.clear()
-                    blocks
-                }
+                val blocksToExecute =
+                    pendingConnectivityBlocks.let {
+                        val blocks = it.toList()
+                        pendingConnectivityBlocks.clear()
+                        blocks
+                    }
 
                 if (blocksToExecute.isNotEmpty()) {
                     log.d { "Executing ${blocksToExecute.size} pending connectivity blocks" }
 
                     blocksToExecute.forEach { block ->
                         // Use service scope intentionally to avoid cancellation
-                        val job = serviceScope.launch {
-                            try {
-                                block()
-                            } catch (e: Exception) {
-                                log.e(e) { "Error executing pending connectivity block" }
-                            } finally {
-                                pendingJobs.remove(this.coroutineContext[Job])
+                        val job =
+                            serviceScope.launch {
+                                try {
+                                    block()
+                                } catch (e: Exception) {
+                                    log.e(e) { "Error executing pending connectivity block" }
+                                } finally {
+                                    pendingJobs.remove(this.coroutineContext[Job])
+                                }
                             }
-                        }
                         pendingJobs.add(job)
                     }
                 }
@@ -151,7 +158,5 @@ class ClientConnectivityService(
         log.d { "Connectivity stopped being monitored" }
     }
 
-    private fun isConnected(): Boolean {
-        return webSocketClientService.isConnected()
-    }
+    private fun isConnected(): Boolean = webSocketClientService.isConnected()
 }

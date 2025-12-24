@@ -3,7 +3,10 @@ package network.bisq.mobile.domain.utils
 import network.bisq.mobile.domain.getLocaleCurrencyName
 
 object CurrencyUtils {
-    fun getLocaleFiatCurrencyName(currencyCode: String, defaultCurrencyName: String): String {
+    fun getLocaleFiatCurrencyName(
+        currencyCode: String,
+        defaultCurrencyName: String,
+    ): String {
         val currencyName = getLocaleCurrencyName(currencyCode).trim()
         return when {
             currencyName.isEmpty() -> defaultCurrencyName
@@ -22,8 +25,8 @@ object CurrencyUtils {
      * - "euro" -> "Euro"
      * - "british pound sterling" -> "British Pound Sterling"
      */
-    private fun capitalizeFirstChar(text: String): String {
-        return if (text.isEmpty()) {
+    private fun capitalizeFirstChar(text: String): String =
+        if (text.isEmpty()) {
             text
         } else {
             text.split(" ").joinToString(" ") { word ->
@@ -34,5 +37,4 @@ object CurrencyUtils {
                 }
             }
         }
-    }
 }

@@ -30,40 +30,43 @@ fun OpenTradeCard(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     backgroundColor: Color = BisqTheme.colors.dark_grey40,
     hasNotifications: Boolean = false,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     // Pick shape based on notification state
-    val shape = if (hasNotifications) {
-        RoundedCornerShape(
-            topStart = 0.dp,
-            bottomStart = 0.dp,
-            topEnd = borderRadius,
-            bottomEnd = borderRadius
-        )
-    } else {
-        RoundedCornerShape(borderRadius)
-    }
+    val shape =
+        if (hasNotifications) {
+            RoundedCornerShape(
+                topStart = 0.dp,
+                bottomStart = 0.dp,
+                topEnd = borderRadius,
+                bottomEnd = borderRadius,
+            )
+        } else {
+            RoundedCornerShape(borderRadius)
+        }
 
     Column(
-        modifier = modifier
-            .clip(shape)
-            .background(backgroundColor)
-            .then(
-                if (hasNotifications && borderColor != Color.Transparent && borderWidth > 0.dp) {
-                    Modifier.drawBehind {
-                        val strokeWidthPx = borderWidth.toPx()
-                        // vertical line on left edge
-                        drawLine(
-                            color = borderColor,
-                            start = Offset(0f, 0f),
-                            end = Offset(0f, size.height),
-                            strokeWidth = strokeWidthPx
-                        )
-                    }
-                } else Modifier
-            )
-            .padding(padding)
-            .fillMaxWidth(),
+        modifier =
+            modifier
+                .clip(shape)
+                .background(backgroundColor)
+                .then(
+                    if (hasNotifications && borderColor != Color.Transparent && borderWidth > 0.dp) {
+                        Modifier.drawBehind {
+                            val strokeWidthPx = borderWidth.toPx()
+                            // vertical line on left edge
+                            drawLine(
+                                color = borderColor,
+                                start = Offset(0f, 0f),
+                                end = Offset(0f, size.height),
+                                strokeWidth = strokeWidthPx,
+                            )
+                        }
+                    } else {
+                        Modifier
+                    },
+                ).padding(padding)
+                .fillMaxWidth(),
         horizontalAlignment = horizontalAlignment,
         verticalArrangement = verticalArrangement,
     ) {

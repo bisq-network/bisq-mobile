@@ -17,15 +17,17 @@ data class TradeItemPresentationModel(
     val bisqEasyOpenTradeChannelModel: BisqEasyOpenTradeChannelModel,
     val bisqEasyTradeModel: BisqEasyTradeModel,
 ) {
-
     // Delegates of tradeItemPresentationVO
     val makerUserProfile: UserProfileVO get() = tradeItemPresentationDto.makerUserProfile
     val takerUserProfile: UserProfileVO get() = tradeItemPresentationDto.takerUserProfile
 
-    val directionalTitle: String get() = if (bisqEasyTradeModel.isSeller)
-        "bisqEasy.openTrades.table.direction.seller".i18n().uppercase()
-    else
-        "bisqEasy.openTrades.table.direction.buyer".i18n().uppercase()
+    val directionalTitle: String
+        get() =
+            if (bisqEasyTradeModel.isSeller) {
+                "bisqEasy.openTrades.table.direction.seller".i18n().uppercase()
+            } else {
+                "bisqEasy.openTrades.table.direction.buyer".i18n().uppercase()
+            }
 
     val formattedDate: String get() = tradeItemPresentationDto.formattedDate
     val formattedTime: String get() = tradeItemPresentationDto.formattedTime
@@ -44,8 +46,13 @@ data class TradeItemPresentationModel(
     val formattedMyRole: String get() = tradeItemPresentationDto.formattedMyRole
 
     // Convenience properties
-    val myUserProfile: UserProfileVO get() = if (bisqEasyTradeModel.isMaker) tradeItemPresentationDto.makerUserProfile
-                                else tradeItemPresentationDto.takerUserProfile
+    val myUserProfile: UserProfileVO
+        get() =
+            if (bisqEasyTradeModel.isMaker) {
+                tradeItemPresentationDto.makerUserProfile
+            } else {
+                tradeItemPresentationDto.takerUserProfile
+            }
     val myUserName: String get() = myUserProfile.userName
 
     val peersUserProfile: UserProfileVO get() = if (bisqEasyTradeModel.isMaker) takerUserProfile else makerUserProfile
@@ -63,8 +70,8 @@ data class TradeItemPresentationModel(
     val quoteAmountWithCode: String get() = "${NumberFormatter.format(quoteAmount.toDouble() / 10000.0)} $quoteCurrencyCode"
     val baseAmountWithCode: String get() = "$formattedBaseAmount $baseCurrencyCode"
 
-    override fun toString(): String {
-        return """
+    override fun toString(): String =
+        """
         TradeItemPresentationModel(
             tradeId=$tradeId,
             shortTradeId=$shortTradeId,
@@ -86,18 +93,17 @@ data class TradeItemPresentationModel(
             fiatPaymentMethod=$fiatPaymentMethodDisplayString,
             mediatorUserName=$mediatorUserName
         )
-    """.trimIndent()
-    }
+        """.trimIndent()
 
     companion object {
-        fun from(tradeItemPresentationDto: TradeItemPresentationDto): TradeItemPresentationModel {
-            return TradeItemPresentationModel(
+        fun from(tradeItemPresentationDto: TradeItemPresentationDto): TradeItemPresentationModel =
+            TradeItemPresentationModel(
                 tradeItemPresentationDto = tradeItemPresentationDto,
-                bisqEasyOpenTradeChannelModel = BisqEasyOpenTradeChannelModel(
-                    tradeItemPresentationDto.channel
-                ),
+                bisqEasyOpenTradeChannelModel =
+                    BisqEasyOpenTradeChannelModel(
+                        tradeItemPresentationDto.channel,
+                    ),
                 bisqEasyTradeModel = BisqEasyTradeModel(tradeItemPresentationDto.trade),
             )
-        }
     }
 }

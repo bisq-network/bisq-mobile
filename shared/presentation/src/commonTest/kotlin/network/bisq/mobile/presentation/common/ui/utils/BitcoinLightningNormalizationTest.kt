@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class BitcoinLightningNormalizationTest {
-
     @Test
     fun uppercase_bech32_bitcoin_address_is_lowercased() {
         val input = "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KYGT080" // sample length
@@ -103,5 +102,4 @@ class BitcoinLightningNormalizationTest {
         val cleaned = BitcoinLightningNormalization.cleanForValidation(input)
         assertEquals("lnbc1abcde", cleaned)
     }
-
 }

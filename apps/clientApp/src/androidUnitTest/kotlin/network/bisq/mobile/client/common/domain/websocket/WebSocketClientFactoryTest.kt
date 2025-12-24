@@ -8,7 +8,6 @@ import kotlin.test.Test
 import kotlin.test.assertIs
 
 class WebSocketClientFactoryTest {
-
     @Test
     fun `creates demo client if demo host and port are used`() {
         val json = mockk<Json>()

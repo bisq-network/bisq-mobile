@@ -7,14 +7,13 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class SellerState3aPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _paymentProof: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -25,6 +24,7 @@ class SellerState3aPresenter(
 
     private val _showInvalidAddressDialog = MutableStateFlow(false)
     val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog.asStateFlow()
+
     fun setShowInvalidAddressDialog(value: Boolean) {
         _showInvalidAddressDialog.value = value
     }
@@ -38,17 +38,18 @@ class SellerState3aPresenter(
     private val _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLightning: StateFlow<Boolean> get() = _isLightning.asStateFlow()
 
-
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         _isLightning.value = paymentMethod == "LN"
-        _bitcoinAddressFieldType.value = if (paymentMethod == "LN")
-            BitcoinLnAddressFieldType.Lightning
-        else
-            BitcoinLnAddressFieldType.Bitcoin
+        _bitcoinAddressFieldType.value =
+            if (paymentMethod == "LN") {
+                BitcoinLnAddressFieldType.Lightning
+            } else {
+                BitcoinLnAddressFieldType.Bitcoin
+            }
         updateButtonEnableState()
     }
 
@@ -57,7 +58,10 @@ class SellerState3aPresenter(
         super.onViewUnattaching()
     }
 
-    fun onPaymentProofInput(value: String, isValid: Boolean) {
+    fun onPaymentProofInput(
+        value: String,
+        isValid: Boolean,
+    ) {
         _paymentProof.value = value.trim().ifEmpty { null }
         _paymentProofValid.value = isValid
         updateButtonEnableState()

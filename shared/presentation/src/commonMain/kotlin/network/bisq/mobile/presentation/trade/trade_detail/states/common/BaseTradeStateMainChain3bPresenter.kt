@@ -20,9 +20,8 @@ import network.bisq.mobile.presentation.main.MainPresenter
 abstract class BaseTradeStateMainChain3bPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val explorerServiceFacade: ExplorerServiceFacade
+    private val explorerServiceFacade: ExplorerServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _buttonText: MutableStateFlow<String> = MutableStateFlow(EMPTY_STRING)
@@ -48,17 +47,20 @@ abstract class BaseTradeStateMainChain3bPresenter(
         MutableStateFlow(null)
     val amountNotMatchingDialogText: StateFlow<String?> get() = _amountNotMatchingDialogText.asStateFlow()
 
-
     private var txAmount: Long? = null
     private var txAmountFormatted: String? = null
     private val openTradeItemModel = tradesServiceFacade.selectedTrade.value
     private val tradeAmount = openTradeItemModel?.bisqEasyTradeModel?.contract?.baseSideAmount
     private val tradeAmountFormatted =
-        if (tradeAmount != null && openTradeItemModel != null) AmountFormatter.formatAmount(
-            CoinVOFactory.from(tradeAmount, openTradeItemModel.baseCurrencyCode),
-            useLowPrecision = false,
-            withCode = true
-        ) else EMPTY_STRING
+        if (tradeAmount != null && openTradeItemModel != null) {
+            AmountFormatter.formatAmount(
+                CoinVOFactory.from(tradeAmount, openTradeItemModel.baseCurrencyCode),
+                useLowPrecision = false,
+                withCode = true,
+            )
+        } else {
+            EMPTY_STRING
+        }
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -104,7 +106,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
                 address,
                 txId,
                 txAmountFormatted,
-                tradeAmountFormatted
+                tradeAmountFormatted,
             )
         } else {
             null
@@ -154,9 +156,8 @@ abstract class BaseTradeStateMainChain3bPresenter(
     private fun doRequestTx(
         txId: String,
         address: String,
-        openTradeItemModel: TradeItemPresentationModel
+        openTradeItemModel: TradeItemPresentationModel,
     ) {
-
         _txConfirmationState.value = TxConfirmationState.REQUEST_STARTED
         _errorMessage.value = null
         _balanceFromTx.value = EMPTY_STRING
@@ -182,14 +183,15 @@ abstract class BaseTradeStateMainChain3bPresenter(
                 if (outputValues.size == 1) {
                     outputValues[0].let { transactionAmount ->
                         txAmount = transactionAmount
-                        txAmountFormatted = AmountFormatter.formatAmount(
-                            CoinVOFactory.from(
-                                transactionAmount,
-                                openTradeItemModel.baseCurrencyCode
-                            ),
-                            useLowPrecision = false,
-                            withCode = true
-                        )
+                        txAmountFormatted =
+                            AmountFormatter.formatAmount(
+                                CoinVOFactory.from(
+                                    transactionAmount,
+                                    openTradeItemModel.baseCurrencyCode,
+                                ),
+                                useLowPrecision = false,
+                                withCode = true,
+                            )
                         _balanceFromTx.value = txAmountFormatted ?: EMPTY_STRING
 
                         if (tradeAmount != null && transactionAmount != tradeAmount) {
@@ -205,14 +207,14 @@ abstract class BaseTradeStateMainChain3bPresenter(
                     _errorMessage.value =
                         "bisqEasy.tradeState.info.phase3b.balance.invalid.multipleOutputsForAddress".i18n()
                 }
-
             } else {
                 _txConfirmationState.value = TxConfirmationState.FAILED
-                _errorMessage.value = "bisqEasy.tradeState.info.phase3b.txId.failed".i18n(
-                    blockExplorer.value,
-                    explorerResult.exceptionName!!,
-                    explorerResult.errorMessage!!
-                )
+                _errorMessage.value =
+                    "bisqEasy.tradeState.info.phase3b.txId.failed".i18n(
+                        blockExplorer.value,
+                        explorerResult.exceptionName!!,
+                        explorerResult.errorMessage!!,
+                    )
             }
         }
     }

@@ -38,7 +38,6 @@ import org.koin.core.component.inject
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
  */
 interface ViewPresenter {
-
     /**
      * allows to enable/disable UI components from the presenters
      */
@@ -73,7 +72,7 @@ interface ViewPresenter {
         destination: TabNavRoute,
         saveStateOnPopUp: Boolean = true,
         shouldLaunchSingleTop: Boolean = true,
-        shouldRestoreState: Boolean = true
+        shouldRestoreState: Boolean = true,
     )
 
     /**
@@ -106,8 +105,11 @@ interface ViewPresenter {
  * Base class allows to have a tree hierarchy of presenters. If the rootPresenter is null, this presenter acts as root
  * if root present is passed, this present attach itself to the root to get updates (consequently its dependants will be always empty
  */
-abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
-    ViewPresenter, KoinComponent, Logging {
+abstract class BasePresenter(
+    private val rootPresenter: MainPresenter?,
+) : ViewPresenter,
+    KoinComponent,
+    Logging {
     companion object {
         const val EXIT_WARNING_TIMEOUT = 3000L
         const val SMALLEST_PERCEPTIVE_DELAY = 250L
@@ -137,15 +139,12 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     // Global UI manager for app-wide UI state (loading dialogs, etc.)
     protected val globalUiManager: GlobalUiManager by inject()
 
-    override fun getSnackState(): SnackbarHostState {
-        return snackbarHostState
-    }
+    override fun getSnackState(): SnackbarHostState = snackbarHostState
 
     override fun showSnackbar(
         message: String,
         isError: Boolean,
         duration: SnackbarDuration,
-
     ) {
         presenterScope.launch {
             snackbarHostState.showSnackbar(
@@ -153,7 +152,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
                     message = message,
                     isError = isError,
                     duration = duration,
-                )
+                ),
             )
         }
     }
@@ -164,9 +163,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         }
     }
 
-    override fun isSmallScreen(): Boolean {
-        return rootPresenter?.isSmallScreen?.value ?: false
-    }
+    override fun isSmallScreen(): Boolean = rootPresenter?.isSmallScreen?.value ?: false
 
     init {
         rootPresenter?.registerChild(child = this)
@@ -216,22 +213,21 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         return isIOS
     }
 
-    override fun isAtHomeTab(): Boolean {
-        return navigationManager.isAtHomeTab()
-    }
+    override fun isAtHomeTab(): Boolean = navigationManager.isAtHomeTab()
 
-    protected fun isAtMainScreen(): Boolean {
-        return navigationManager.isAtMainScreen()
-    }
+    protected fun isAtMainScreen(): Boolean = navigationManager.isAtMainScreen()
 
     /**
      * Navigate to given destination
      */
-    protected fun navigateTo(destination: NavRoute, customSetup: (NavOptionsBuilder) -> Unit = {}) {
+    protected fun navigateTo(
+        destination: NavRoute,
+        customSetup: (NavOptionsBuilder) -> Unit = {},
+    ) {
         disableInteractive()
         navigationManager.navigate(
             destination,
-            customSetup
+            customSetup,
         ) {
             enableInteractive()
         }
@@ -251,12 +247,12 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     protected fun navigateBackTo(
         destination: NavRoute,
         shouldInclusive: Boolean = false,
-        shouldSaveState: Boolean = false
+        shouldSaveState: Boolean = false,
     ) {
         navigationManager.navigateBackTo(
             destination,
             shouldInclusive,
-            shouldSaveState
+            shouldSaveState,
         )
     }
 
@@ -267,13 +263,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         destination: TabNavRoute,
         saveStateOnPopUp: Boolean,
         shouldLaunchSingleTop: Boolean,
-        shouldRestoreState: Boolean
+        shouldRestoreState: Boolean,
     ) {
         navigationManager.navigateToTab(
             destination,
             saveStateOnPopUp,
             shouldLaunchSingleTop,
-            shouldRestoreState
+            shouldRestoreState,
         )
     }
 
@@ -315,7 +311,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
                     destination = NavRoute.TabHome,
                     saveStateOnPopUp = true,
                     shouldLaunchSingleTop = true,
-                    shouldRestoreState = false
+                    shouldRestoreState = false,
                 )
             }
 
@@ -430,16 +426,15 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         transform: (M?) -> T,
         initialValue: T,
         scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
-        started: SharingStarted = SharingStarted.Lazily
-    ): StateFlow<T> {
-        return repositoryFlow
+        started: SharingStarted = SharingStarted.Lazily,
+    ): StateFlow<T> =
+        repositoryFlow
             .map { transform(it) }
             .stateIn(
                 scope = scope,
                 started = started,
-                initialValue = initialValue
+                initialValue = initialValue,
             )
-    }
 
     private fun cleanup() {
         try {
@@ -467,10 +462,11 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         when {
             rootPresenter is AppPresenter -> rootPresenter.onRestartApp()
             this is AppPresenter -> onRestartApp()
-            else -> log.w {
-                "Invalid type. We do not have set the rootPresenter and expect to be the " +
+            else ->
+                log.w {
+                    "Invalid type. We do not have set the rootPresenter and expect to be the " +
                         "MainPresenter which implements AppPresenter"
-            }
+                }
         }
     }
 
@@ -478,10 +474,11 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         when {
             rootPresenter is AppPresenter -> rootPresenter.onTerminateApp()
             this is AppPresenter -> onTerminateApp()
-            else -> log.w {
-                "Invalid type. We do not have set the rootPresenter and expect to be the " +
+            else ->
+                log.w {
+                    "Invalid type. We do not have set the rootPresenter and expect to be the " +
                         "MainPresenter which implements AppPresenter"
-            }
+                }
         }
     }
 
@@ -499,9 +496,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         navigateToUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES)
     }
 
-    protected open fun isDevMode(): Boolean {
-        return rootPresenter?.isDevMode() ?: false
-    }
+    protected open fun isDevMode(): Boolean = rootPresenter?.isDevMode() ?: false
 
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
 

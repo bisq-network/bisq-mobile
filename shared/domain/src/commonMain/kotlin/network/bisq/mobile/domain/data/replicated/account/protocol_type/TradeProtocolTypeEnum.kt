@@ -28,5 +28,5 @@ enum class TradeProtocolTypeEnum {
     LIQUID_SWAP,
     BSQ_SWAP,
     LIGHTNING_ESCROW,
-    MONERO_SWAP
+    MONERO_SWAP,
 }

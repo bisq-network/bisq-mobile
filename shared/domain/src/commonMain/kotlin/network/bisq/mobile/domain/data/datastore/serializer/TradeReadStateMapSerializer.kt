@@ -17,7 +17,7 @@ object TradeReadStateMapSerializer : OkioSerializer<TradeReadStateMap> {
         return try {
             dataStoreJson.decodeFromString(
                 TradeReadStateMap.serializer(),
-                source.readUtf8()
+                source.readUtf8(),
             )
         } catch (e: SerializationException) {
             throw CorruptionException("Cannot deserialize TradeReadStateMap", e)
@@ -26,7 +26,10 @@ object TradeReadStateMapSerializer : OkioSerializer<TradeReadStateMap> {
         }
     }
 
-    override suspend fun writeTo(t: TradeReadStateMap, sink: BufferedSink) {
+    override suspend fun writeTo(
+        t: TradeReadStateMap,
+        sink: BufferedSink,
+    ) {
         val payload = dataStoreJson.encodeToString(TradeReadStateMap.serializer(), t)
         sink.writeUtf8(payload)
     }

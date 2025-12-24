@@ -38,14 +38,15 @@ fun TakeOfferTradeAmountScreen() {
         closeAction = true,
         onConfirmedClose = presenter::onClose,
     ) {
-        BisqText.h3Light("bisqEasy.takeOffer.amount.headline.buyer".i18n())
+        BisqText.H3Light("bisqEasy.takeOffer.amount.headline.buyer".i18n())
         BisqGap.V1()
-        BisqText.largeLightGrey(
+        BisqText.LargeLightGrey(
             // We get currency code appended but for formattedMinAmount we want to omit it in the string
-            text = "bisqEasy.takeOffer.amount.description".i18n(
-                presenter.formattedMinAmount,
-                presenter.formattedMaxAmountWithCode
-            ),
+            text =
+                "bisqEasy.takeOffer.amount.description".i18n(
+                    presenter.formattedMinAmount,
+                    presenter.formattedMaxAmountWithCode,
+                ),
         )
 
         Spacer(modifier = Modifier.height(128.dp))
@@ -60,7 +61,7 @@ fun TakeOfferTradeAmountScreen() {
             onTextValueChange = presenter::onTextValueChanged,
             validateTextField = presenter::validateTextField,
             sliderPosition = sliderPosition,
-            onSliderValueChangeFinished = presenter::onSliderDragFinished,
+            onSliderValueChangeFinish = presenter::onSliderDragFinished,
         )
     }
 }

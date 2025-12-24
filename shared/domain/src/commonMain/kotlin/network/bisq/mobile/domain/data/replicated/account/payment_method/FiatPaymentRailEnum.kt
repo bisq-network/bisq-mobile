@@ -16,9 +16,11 @@
  */
 package network.bisq.mobile.domain.data.replicated.account.payment_method
 
-enum class FiatPaymentRailEnum(val countryCodes: List<String> = emptyList(), val currencyCodes: List<String> = emptyList()) :
-    PaymentRailEnum {
-    CUSTOM(ArrayList(), ArrayList()),  // Custom defined payment rail by the user
+enum class FiatPaymentRailEnum(
+    val countryCodes: List<String> = emptyList(),
+    val currencyCodes: List<String> = emptyList(),
+) : PaymentRailEnum {
+    CUSTOM(ArrayList(), ArrayList()), // Custom defined payment rail by the user
     SEPA(FiatPaymentRailUtil.sepaEuroCountries, listOf("EUR")),
     SEPA_INSTANT(FiatPaymentRailUtil.sepaEuroCountries, listOf("EUR")),
     ZELLE(listOf("US"), listOf("USD")),
@@ -37,11 +39,10 @@ enum class FiatPaymentRailEnum(val countryCodes: List<String> = emptyList(), val
     INTERAC_E_TRANSFER(ArrayList(), listOf("CAD")),
     AMAZON_GIFT_CARD(
         ArrayList(),
-        listOf("AUD", "CAD", "EUR", "GBP", "INR", "JPY", "SAR", "SEK", "SGD", "TRY", "USD")
+        listOf("AUD", "CAD", "EUR", "GBP", "INR", "JPY", "SAR", "SEK", "SGD", "TRY", "USD"),
     ),
     CASH_DEPOSIT,
     UPI(ArrayList(), listOf("INR")),
     BIZUM(listOf("ES"), listOf("EUR")),
-    CASH_APP(listOf("US"), listOf("USD"));
+    CASH_APP(listOf("US"), listOf("USD")),
 }
-

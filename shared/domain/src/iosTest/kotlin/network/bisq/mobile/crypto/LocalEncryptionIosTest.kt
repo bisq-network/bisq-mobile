@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package network.bisq.mobile.crypto
 
 import kotlinx.cinterop.BetaInteropApi
@@ -7,12 +9,15 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.ios.cfDictionaryOf
 import network.bisq.mobile.ios.toByteArray
 import network.bisq.mobile.ios.toNSData
 import platform.Foundation.NSError
-import platform.Security.*
+import platform.Security.SecItemDelete
+import platform.Security.kSecAttrAccount
+import platform.Security.kSecAttrService
+import platform.Security.kSecClass
+import platform.Security.kSecClassGenericPassword
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -24,40 +29,47 @@ import kotlin.test.assertTrue
  */
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 class LocalEncryptionIosTest {
-
     // Synchronous wrappers for testing
-    private fun encryptSync(plaintext: ByteArray, keyAlias: String): ByteArray {
+    private fun encryptSync(
+        plaintext: ByteArray,
+        keyAlias: String,
+    ): ByteArray {
         memScoped {
             val errorPtr = alloc<ObjCObjectVar<NSError?>>()
-            val result = LocalEncryptionBridge.shared().encryptSyncWithData(
-                data = plaintext.toNSData(),
-                keyAlias = keyAlias,
-                error = errorPtr.ptr
-            )
-            
+            val result =
+                LocalEncryptionBridge.shared().encryptSyncWithData(
+                    data = plaintext.toNSData(),
+                    keyAlias = keyAlias,
+                    error = errorPtr.ptr,
+                )
+
             val error = errorPtr.value
             if (error != null) {
                 throw IllegalStateException("Encryption failed: ${error.localizedDescription}")
             }
-            
+
             return result?.toByteArray() ?: throw IllegalStateException("Encryption returned null with no error")
         }
     }
 
-    private fun decryptSync(encrypted: ByteArray, keyAlias: String): ByteArray {
+    private fun decryptSync(
+        encrypted: ByteArray,
+        keyAlias: String,
+    ): ByteArray {
         memScoped {
             val errorPtr = alloc<ObjCObjectVar<NSError?>>()
-            val result = LocalEncryptionBridge.shared().decryptSyncWithData(
-                data = encrypted.toNSData(),
-                keyAlias = keyAlias,
-                error = errorPtr.ptr
-            )
-            
+            val result =
+                LocalEncryptionBridge.shared().decryptSyncWithData(
+                    data = encrypted.toNSData(),
+                    keyAlias = keyAlias,
+                    error = errorPtr.ptr,
+                )
+
             val error = errorPtr.value
             if (error != null) {
                 throw IllegalStateException("Decryption failed: ${error.localizedDescription}")
             }
-            
+
             return result?.toByteArray() ?: throw IllegalStateException("Decryption returned null with no error")
         }
     }
@@ -65,25 +77,37 @@ class LocalEncryptionIosTest {
     @AfterTest
     fun cleanup() {
         // Clean up test keys after each test
-        val testKeys = listOf(
-            "test_key_1", "test_key_2", "test_key_3", "test_key_4", "test_key_5",
-            "test_key_6", "test_key_7", "test_key_8", "test_key_9", "test_key_10",
-            "test_key_11", "test_key_reuse", "test_key_null_bytes", "test_key_tamper"
-        )
-        
+        val testKeys =
+            listOf(
+                "test_key_1",
+                "test_key_2",
+                "test_key_3",
+                "test_key_4",
+                "test_key_5",
+                "test_key_6",
+                "test_key_7",
+                "test_key_8",
+                "test_key_9",
+                "test_key_10",
+                "test_key_11",
+                "test_key_reuse",
+                "test_key_null_bytes",
+                "test_key_tamper",
+            )
+
         testKeys.forEach { keyAlias ->
             deleteKey(keyAlias)
         }
     }
 
-
     private fun deleteKey(keyAlias: String) {
         memScoped {
-            val query = cfDictionaryOf(
-                kSecClass to kSecClassGenericPassword,
-                kSecAttrAccount to "Account $keyAlias",
-                kSecAttrService to "Service network.bisq.mobile"
-            )
+            val query =
+                cfDictionaryOf(
+                    kSecClass to kSecClassGenericPassword,
+                    kSecAttrAccount to "Account $keyAlias",
+                    kSecAttrService to "Service network.bisq.mobile",
+                )
 
             SecItemDelete(query)
         }
@@ -116,7 +140,7 @@ class LocalEncryptionIosTest {
 
         val encrypted = encryptSync(plaintext, keyAlias)
         val decrypted = decryptSync(encrypted, keyAlias)
-        
+
         assertContentEquals(plaintext, decrypted)
     }
 
@@ -161,7 +185,7 @@ class LocalEncryptionIosTest {
 
         val encrypted1 = encryptSync(plaintext, keyAlias)
         val encrypted2 = encryptSync(plaintext, keyAlias)
-        
+
         val decrypted1 = decryptSync(encrypted1, keyAlias)
         val decrypted2 = decryptSync(encrypted2, keyAlias)
 
@@ -248,7 +272,7 @@ class LocalEncryptionIosTest {
         val keyAlias = "test_key_tamper"
 
         val encrypted = encryptSync(plaintext, keyAlias)
-        
+
         // Tamper with the encrypted data (modify a byte in the ciphertext portion)
         val tampered = encrypted.copyOf()
         if (tampered.size > 20) {

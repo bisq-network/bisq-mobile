@@ -4,7 +4,10 @@ import kotlin.math.pow
 import kotlin.math.round
 
 object ByteUnitUtil {
-    fun formatBytesPrecise(bytes: Long, decimals: Int = 2): String {
+    fun formatBytesPrecise(
+        bytes: Long,
+        decimals: Int = 2,
+    ): String {
         if (bytes < 1024) return "$bytes B"
 
         val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB")
@@ -22,5 +25,4 @@ object ByteUnitUtil {
 
         return "$rounded ${units[unitIndex]}"
     }
-
 }

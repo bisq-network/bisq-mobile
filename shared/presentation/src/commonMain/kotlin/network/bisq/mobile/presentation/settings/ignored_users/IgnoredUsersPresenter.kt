@@ -12,9 +12,9 @@ import network.bisq.mobile.presentation.main.MainPresenter
 
 class IgnoredUsersPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
-    mainPresenter: MainPresenter
-) : BasePresenter(mainPresenter), IIgnoredUsersPresenter {
-
+    mainPresenter: MainPresenter,
+) : BasePresenter(mainPresenter),
+    IIgnoredUsersPresenter {
     private val _ignoredUsers = MutableStateFlow<List<UserProfileVO>>(emptyList())
     override val ignoredUsers: StateFlow<List<UserProfileVO>> get() = _ignoredUsers.asStateFlow()
 

@@ -27,6 +27,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ConfirmationDialog(
+    onConfirm: () -> Unit,
     headline: String = "mobile.confirmation.areYouSure".i18n(),
     headlineColor: Color = BisqTheme.colors.white,
     headlineLeftIcon: (@Composable () -> Unit)? = null,
@@ -38,23 +39,22 @@ fun ConfirmationDialog(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
     dismissOnClickOutside: Boolean = true,
-    onConfirm: () -> Unit,
-    onDismiss: (Boolean) -> Unit = {}   // true on dismiss button click; false on bg click dismiss
+    onDismiss: (Boolean) -> Unit = {}, // true on dismiss button click; false on bg click dismiss
 ) {
     BisqDialog(
         dismissOnClickOutside = dismissOnClickOutside,
         horizontalAlignment = horizontalAlignment,
         marginTop = marginTop,
-        onDismissRequest = { onDismiss(false) }
+        onDismissRequest = { onDismiss(false) },
     ) {
         if (headline.isNotEmpty()) {
             if (headlineLeftIcon == null && !closeButton) {
-                BisqText.h6Regular(headline, color = headlineColor)
+                BisqText.H6Regular(headline, color = headlineColor)
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     headlineLeftIcon?.invoke()
                     BisqGap.H1()
-                    BisqText.h6Regular(headline, color = headlineColor)
+                    BisqText.H6Regular(headline, color = headlineColor)
                     BisqGapHFill()
                     if (closeButton) {
                         CloseIconButton(onClick = { onDismiss(false) })
@@ -64,7 +64,7 @@ fun ConfirmationDialog(
             BisqGap.V2()
         }
         if (message.isNotEmpty()) {
-            BisqText.baseLight(message)
+            BisqText.BaseLight(message)
             BisqGap.V2()
         }
         if (verticalButtonPlacement) {
@@ -97,20 +97,22 @@ fun ConfirmationDialog(
             ) {
                 if (confirmButtonText.isNotBlank()) {
                     BisqButton(
-                        modifier = Modifier
-                            .weight(1.0F)
-                            .fillMaxHeight()
-                            .semantics { contentDescription = "dialog_confirm_yes" },
+                        modifier =
+                            Modifier
+                                .weight(1.0F)
+                                .fillMaxHeight()
+                                .semantics { contentDescription = "dialog_confirm_yes" },
                         text = confirmButtonText,
                         onClick = onConfirm,
                     )
                 }
                 if (dismissButtonText.isNotBlank()) {
                     BisqButton(
-                        modifier = Modifier
-                            .weight(1.0F)
-                            .fillMaxHeight()
-                            .semantics { contentDescription = "dialog_confirm_no" },
+                        modifier =
+                            Modifier
+                                .weight(1.0F)
+                                .fillMaxHeight()
+                                .semantics { contentDescription = "dialog_confirm_no" },
                         text = dismissButtonText,
                         type = BisqButtonType.Grey,
                         onClick = { onDismiss(true) },
@@ -123,7 +125,7 @@ fun ConfirmationDialog(
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_Default() {
+private fun ConfirmationDialogPreview_DefaultPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "Are you absolutely sure?",
@@ -131,14 +133,14 @@ private fun ConfirmationDialogPreview_Default() {
             confirmButtonText = "Yes, I'm Sure",
             dismissButtonText = "Cancel",
             onConfirm = {},
-            onDismiss = {}
+            onDismiss = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_Default_single_button() {
+private fun ConfirmationDialogPreview_Default_single_buttonPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "Unrecoverable error",
@@ -147,14 +149,14 @@ private fun ConfirmationDialogPreview_Default_single_button() {
             confirmButtonText = "Close",
             dismissButtonText = "",
             onConfirm = {},
-            onDismiss = {}
+            onDismiss = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_Warning() {
+private fun ConfirmationDialogPreview_WarningPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "mobile.error.warning".i18n(),
@@ -164,14 +166,14 @@ private fun ConfirmationDialogPreview_Warning() {
             confirmButtonText = "chat.ignoreUser.confirm".i18n(),
             dismissButtonText = "action.cancel".i18n(),
             onConfirm = {},
-            onDismiss = {}
+            onDismiss = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_VerticalButtons() {
+private fun ConfirmationDialogPreview_VerticalButtonsPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "Vertical Button Layout",
@@ -180,7 +182,7 @@ private fun ConfirmationDialogPreview_VerticalButtons() {
             dismissButtonText = "Go Back",
             verticalButtonPlacement = true, // Key change
             onConfirm = {},
-            onDismiss = {}
+            onDismiss = {},
         )
     }
 }

@@ -14,6 +14,6 @@ class TestApplicationLifecycleService(
     kmpTorService: KmpTorService = mockk(relaxed = true),
 ) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
     override suspend fun activateServiceFacades() {}
+
     override suspend fun deactivateServiceFacades() {}
 }
-

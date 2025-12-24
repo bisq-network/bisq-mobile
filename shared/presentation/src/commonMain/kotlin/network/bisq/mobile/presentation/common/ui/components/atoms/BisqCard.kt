@@ -23,14 +23,15 @@ fun BisqCard(
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     backgroundColor: Color = BisqTheme.colors.dark_grey40,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-            .background(backgroundColor)
-            .padding(padding)
-            .fillMaxWidth(),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                .background(backgroundColor)
+                .padding(padding)
+                .fillMaxWidth(),
         horizontalAlignment = horizontalAlignment,
         verticalArrangement = verticalArrangement,
     ) {

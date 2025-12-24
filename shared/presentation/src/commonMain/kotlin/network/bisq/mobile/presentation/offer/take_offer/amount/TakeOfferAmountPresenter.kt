@@ -2,10 +2,10 @@ package network.bisq.mobile.presentation.offer.take_offer.amount
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -20,18 +20,17 @@ import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.MonetarySlider
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 
 // TODO Create/Take offer amount preseenters are very similar a base class could be extracted
 class TakeOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter
+    private val takeOfferPresenter: TakeOfferPresenter,
 ) : BasePresenter(mainPresenter) {
-
     private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
     val sliderPosition: StateFlow<Float> get() = _sliderPosition.asStateFlow()
 
@@ -59,6 +58,7 @@ class TakeOfferAmountPresenter(
     val amountValid: StateFlow<Boolean> get() = _amountValid.asStateFlow()
 
     private var dragUpdateJob: Job? = null
+
     // Sample heavy updates during drags to reduce allocation churn on main thread.
     // 32ms ~ 30 FPS. Rationale: keep UI responsive and informative while limiting GC pressure.
     private val dragUpdateSampleMs: Long = 32
@@ -87,10 +87,12 @@ class TakeOfferAmountPresenter(
             _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
             _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
 
-            val valueInFraction = if (takeOfferModel.quoteAmount.value == 0L)
-                0.5F
-            else
-                MonetarySlider.minorToFraction(takeOfferModel.quoteAmount.value, minAmount, maxAmount)
+            val valueInFraction =
+                if (takeOfferModel.quoteAmount.value == 0L) {
+                    0.5F
+                } else {
+                    MonetarySlider.minorToFraction(takeOfferModel.quoteAmount.value, minAmount, maxAmount)
+                }
             _sliderPosition.value = valueInFraction
             applySliderValue(sliderPosition.value)
         }.onFailure { e ->
@@ -113,10 +115,11 @@ class TakeOfferAmountPresenter(
 
         dragUpdateJob?.cancel()
         var job: Job? = null
-        job = presenterScope.launch {
-            delay(dragUpdateSampleMs)
-            applySliderValue(this@TakeOfferAmountPresenter.sliderPosition.value, trackedJob = job)
-        }
+        job =
+            presenterScope.launch {
+                delay(dragUpdateSampleMs)
+                applySliderValue(this@TakeOfferAmountPresenter.sliderPosition.value, trackedJob = job)
+            }
         dragUpdateJob = job
     }
 
@@ -155,9 +158,7 @@ class TakeOfferAmountPresenter(
         }
     }
 
-    fun validateTextField(value: String): String? {
-        return AmountValidator.validate(value, minAmount, maxAmount)
-    }
+    fun validateTextField(value: String): String? = AmountValidator.validate(value, minAmount, maxAmount)
 
     fun getFractionForFiat(value: Double): Float {
         val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
@@ -186,7 +187,10 @@ class TakeOfferAmountPresenter(
         }
     }
 
-    private fun applySliderValue(sliderPosition: Float, trackedJob: Job? = null) {
+    private fun applySliderValue(
+        sliderPosition: Float,
+        trackedJob: Job? = null,
+    ) {
         if (initializationFailed) {
             _amountValid.value = false
             if (trackedJob != null && dragUpdateJob === trackedJob) {

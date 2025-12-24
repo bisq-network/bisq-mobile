@@ -35,7 +35,10 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrCancel
 
-private data class SubscriptionType(val topic: Topic, val parameter: String?)
+private data class SubscriptionType(
+    val topic: Topic,
+    val parameter: String?,
+)
 
 /**
  * Listens to httpclient service client changes and creates a new websocket client accordingly
@@ -46,16 +49,17 @@ class WebSocketClientService(
     private val defaultHost: String,
     private val defaultPort: Int,
     private val httpClientService: HttpClientService,
-    private val webSocketClientFactory: WebSocketClientFactory
-) : ServiceFacade(), Logging {
-
+    private val webSocketClientFactory: WebSocketClientFactory,
+) : ServiceFacade(),
+    Logging {
     companion object {
         // Initial subscriptions tracked for network banner:
-        private val initialSubscriptionTypes = setOf(
-            SubscriptionType(Topic.MARKET_PRICE, null),
-            SubscriptionType(Topic.NUM_USER_PROFILES, null),
-            SubscriptionType(Topic.NUM_OFFERS, null),
-        )
+        private val initialSubscriptionTypes =
+            setOf(
+                SubscriptionType(Topic.MARKET_PRICE, null),
+                SubscriptionType(Topic.NUM_USER_PROFILES, null),
+                SubscriptionType(Topic.NUM_OFFERS, null),
+            )
     }
 
     private val clientUpdateMutex = Mutex()
@@ -66,9 +70,10 @@ class WebSocketClientService(
 
     private var currentClient = MutableStateFlow<WebSocketClient?>(null)
     private val subscriptionMutex = Mutex()
-    private val requestedSubscriptions = MutableStateFlow<Map<SubscriptionType, WebSocketEventObserver>>(
-        LinkedHashMap()
-    )
+    private val requestedSubscriptions =
+        MutableStateFlow<Map<SubscriptionType, WebSocketEventObserver>>(
+            LinkedHashMap(),
+        )
     private var subscriptionsAreApplied = false
 
     private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
@@ -126,46 +131,49 @@ class WebSocketClientService(
      */
     private suspend fun updateWebSocketClient(httpClientSettings: HttpClientSettings) {
         clientUpdateMutex.withLock {
-            val newApiUrl: Url = httpClientSettings.apiUrl?.takeIf { it.isNotBlank() }?.let {
-                parseUrl(it)
-            } ?: parseUrl("http://$defaultHost:$defaultPort")!!
+            val newApiUrl: Url =
+                httpClientSettings.apiUrl?.takeIf { it.isNotBlank() }?.let {
+                    parseUrl(it)
+                } ?: parseUrl("http://$defaultHost:$defaultPort")!!
 
-
-            currentClient.value = currentClient.value?.let {
-                log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.proxyUrl}" }
-                it.dispose()
-                null
-            }
-            val newClient = webSocketClientFactory.createNewClient(
-                httpClientService.getClient(),
-                newApiUrl,
-                httpClientSettings.password,
-            )
+            currentClient.value =
+                currentClient.value?.let {
+                    log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.proxyUrl}" }
+                    it.dispose()
+                    null
+                }
+            val newClient =
+                webSocketClientFactory.createNewClient(
+                    httpClientService.getClient(),
+                    newApiUrl,
+                    httpClientSettings.password,
+                )
             currentClient.value = newClient
             ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
             stateCollectionJob?.cancel()
-            stateCollectionJob = serviceScope.launch {
-                newClient.webSocketClientStatus.collect { state ->
-                    _connectionState.value = state
-                    if (state is ConnectionState.Disconnected) {
-                        subscriptionMutex.withLock {
-                            // connection is lost, we need to apply subscriptions again
-                            subscriptionsAreApplied = false
-                            requestedSubscriptions.value.forEach { entry ->
-                                entry.value.resetSequence()
+            stateCollectionJob =
+                serviceScope.launch {
+                    newClient.webSocketClientStatus.collect { state ->
+                        _connectionState.value = state
+                        if (state is ConnectionState.Disconnected) {
+                            subscriptionMutex.withLock {
+                                // connection is lost, we need to apply subscriptions again
+                                subscriptionsAreApplied = false
+                                requestedSubscriptions.value.forEach { entry ->
+                                    entry.value.resetSequence()
+                                }
                             }
-                        }
-                        if (state.error != null) {
-                            if (shouldAttemptReconnect(state.error)) {
-                                // We disconnected abnormally and we have not reached maximum retry
-                                newClient.reconnect()
+                            if (state.error != null) {
+                                if (shouldAttemptReconnect(state.error)) {
+                                    // We disconnected abnormally and we have not reached maximum retry
+                                    newClient.reconnect()
+                                }
                             }
+                        } else if (state is ConnectionState.Connected) {
+                            applySubscriptions(newClient)
                         }
-                    } else if (state is ConnectionState.Connected) {
-                        applySubscriptions(newClient)
                     }
                 }
-            }
             log.d { "WebSocket client updated with url $newApiUrl" }
         }
     }
@@ -174,7 +182,8 @@ class WebSocketClientService(
         return when (error) {
             is PasswordIncorrectOrMissingException,
             is MaximumRetryReachedException,
-            is WebSocketIsReconnecting -> false
+            is WebSocketIsReconnecting,
+            -> false
 
             is CancellationException -> {
                 if (getPlatformInfo().type == PlatformType.IOS) {
@@ -196,16 +205,13 @@ class WebSocketClientService(
         return client.connect(timeout)
     }
 
-    fun isConnected(): Boolean {
-        return connectionState.value is ConnectionState.Connected
-    }
+    fun isConnected(): Boolean = connectionState.value is ConnectionState.Connected
 
-    private suspend fun getWsClient(): WebSocketClient {
-        return awaitOrCancel(
+    private suspend fun getWsClient(): WebSocketClient =
+        awaitOrCancel(
             currentClient.filterNotNull(),
             stopFlow,
         )
-    }
 
     suspend fun subscribe(
         topic: Topic,
@@ -214,17 +220,18 @@ class WebSocketClientService(
         // we collect subscriptions here and subscribe to them on a best effort basis
         // if client is not connected yet, it will be accumulated and then subscribed at
         // Connected status, otherwise it will be immediately subscribed
-        val (socketObserver, applyNow) = subscriptionMutex.withLock {
-            val type = SubscriptionType(topic, parameter)
-            var observer = requestedSubscriptions.value[type]
-            if (observer == null) {
-                observer = WebSocketEventObserver()
-                requestedSubscriptions.update { current ->
-                    LinkedHashMap(current).apply { put(type, observer) }
+        val (socketObserver, applyNow) =
+            subscriptionMutex.withLock {
+                val type = SubscriptionType(topic, parameter)
+                var observer = requestedSubscriptions.value[type]
+                if (observer == null) {
+                    observer = WebSocketEventObserver()
+                    requestedSubscriptions.update { current ->
+                        LinkedHashMap(current).apply { put(type, observer) }
+                    }
                 }
+                observer to subscriptionsAreApplied
             }
-            observer to subscriptionsAreApplied
-        }
         if (applyNow) {
             val client = getWsClient()
             log.d { "subscriptions already applied; subscribing to $topic individually" }
@@ -254,9 +261,7 @@ class WebSocketClientService(
         }
     }
 
-    suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest): WebSocketResponse? {
-        return getWsClient().sendRequestAndAwaitResponse(webSocketRequest)
-    }
+    suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest): WebSocketResponse? = getWsClient().sendRequestAndAwaitResponse(webSocketRequest)
 
     /**
      * Tests websocket connection to the provided websocket server and proxy
@@ -271,19 +276,21 @@ class WebSocketClientService(
         password: String? = null,
     ): Throwable? {
         val hasProxy = proxyHost != null && proxyPort != null
-        val httpClient = httpClientService.createNewInstance(
-            HttpClientSettings(
-                apiUrl = apiUrl.toString(),
-                proxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
-                isTorProxy = isTorProxy,
-                password = password,
+        val httpClient =
+            httpClientService.createNewInstance(
+                HttpClientSettings(
+                    apiUrl = apiUrl.toString(),
+                    proxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
+                    isTorProxy = isTorProxy,
+                    password = password,
+                ),
             )
-        )
-        val wsClient = webSocketClientFactory.createNewClient(
-            httpClient,
-            apiUrl,
-            password,
-        )
+        val wsClient =
+            webSocketClientFactory.createNewClient(
+                httpClient,
+                apiUrl,
+                password,
+            )
         try {
             val timeout = WebSocketClient.determineTimeout(apiUrl.host)
             val error = wsClient.connect(timeout)

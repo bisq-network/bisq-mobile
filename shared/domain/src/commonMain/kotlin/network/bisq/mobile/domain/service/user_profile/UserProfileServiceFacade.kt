@@ -31,7 +31,10 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * the proof of work solution.
      * The CatHash image is also created based on that hash and the proof of work solution.
      */
-    suspend fun generateKeyPair(imageSize: Int, result: (String, String, PlatformImage?) -> Unit)
+    suspend fun generateKeyPair(
+        imageSize: Int,
+        result: (String, String, PlatformImage?) -> Unit,
+    )
 
     /**
      * Once the user clicks the `create` button we create a user identity and publish the
@@ -46,7 +49,10 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * The user identity contains the key pair and is private data. The UserProfile is public data
      * and shared with the network.
      */
-    suspend fun updateAndPublishUserProfile(statement: String?, terms: String?): Result<UserProfileVO>
+    suspend fun updateAndPublishUserProfile(
+        statement: String?,
+        terms: String?,
+    ): Result<UserProfileVO>
 
     /**
      * Create UserProfileModels from the userIdentities.
@@ -82,7 +88,10 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * This function may perform CPU-intensive work such as Base64 decoding and image generation.
      * It is recommended to call this from a background (non-main) dispatcher.
      */
-    suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage
+    suspend fun getUserProfileIcon(
+        userProfile: UserProfileVO,
+        size: Number,
+    ): PlatformImage
 
     suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage
 
@@ -119,6 +128,8 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * @param accusedUserProfile The profile being reported.
      * @param message A non‑blank, trimmed message.
      */
-    suspend fun reportUserProfile(accusedUserProfile: UserProfileVO, message: String): Result<Unit>
-
+    suspend fun reportUserProfile(
+        accusedUserProfile: UserProfileVO,
+        message: String,
+    ): Result<Unit>
 }

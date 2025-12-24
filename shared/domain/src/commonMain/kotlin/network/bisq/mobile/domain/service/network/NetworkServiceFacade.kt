@@ -9,8 +9,11 @@ import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
-abstract class NetworkServiceFacade(private val kmpTorService: KmpTorService) : ServiceFacade(),
-    LifeCycleAware, Logging {
+abstract class NetworkServiceFacade(
+    private val kmpTorService: KmpTorService,
+) : ServiceFacade(),
+    LifeCycleAware,
+    Logging {
     abstract val numConnections: StateFlow<Int>
     abstract val allDataReceived: StateFlow<Boolean>
 
@@ -37,7 +40,7 @@ abstract class NetworkServiceFacade(private val kmpTorService: KmpTorService) : 
 
     override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
-        
+
         if (isTorEnabled()) {
             kmpTorService.stopTor()
         }

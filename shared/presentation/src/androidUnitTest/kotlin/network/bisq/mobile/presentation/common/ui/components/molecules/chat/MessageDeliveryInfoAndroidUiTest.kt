@@ -7,14 +7,12 @@ import network.bisq.mobile.domain.data.replicated.network.confidential.ack.Messa
 import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryStatusEnum
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.molecules.chat.MessageDeliveryInfo
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
 class MessageDeliveryInfoAndroidUiTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -26,7 +24,7 @@ class MessageDeliveryInfoAndroidUiTest {
             BisqTheme {
                 MessageDeliveryInfo(
                     map = emptyMap(),
-                    userNameProvider = { _ -> "Alice" }
+                    userNameProvider = { _ -> "Alice" },
                 )
             }
         }
@@ -38,11 +36,12 @@ class MessageDeliveryInfoAndroidUiTest {
     @Test
     fun messageDeliveryInfo_composes_with_non_empty_map_and_shows_text() {
         I18nSupport.setLanguage("en")
-        val info = MessageDeliveryInfoVO(
-            messageDeliveryStatus = MessageDeliveryStatusEnum.SENT,
-            ackRequestingMessageId = "msg-1",
-            canManuallyResendMessage = false
-        )
+        val info =
+            MessageDeliveryInfoVO(
+                messageDeliveryStatus = MessageDeliveryStatusEnum.SENT,
+                ackRequestingMessageId = "msg-1",
+                canManuallyResendMessage = false,
+            )
         val expected = "chat.message.deliveryState.${info.messageDeliveryStatus.name}".i18n()
         val map = mapOf("peer-1" to info)
 
@@ -50,11 +49,10 @@ class MessageDeliveryInfoAndroidUiTest {
             BisqTheme {
                 MessageDeliveryInfo(
                     map = map,
-                    userNameProvider = { _ -> "Alice" }
+                    userNameProvider = { _ -> "Alice" },
                 )
             }
         }
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 }
-

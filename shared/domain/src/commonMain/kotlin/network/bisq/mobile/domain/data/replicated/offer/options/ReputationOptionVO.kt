@@ -21,4 +21,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("ReputationOption")
-data class ReputationOptionVO(val requiredTotalReputationScore: Long) : OfferOptionVO
+data class ReputationOptionVO(
+    val requiredTotalReputationScore: Long,
+) : OfferOptionVO

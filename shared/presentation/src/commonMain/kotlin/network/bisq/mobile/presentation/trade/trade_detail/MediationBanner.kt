@@ -23,21 +23,22 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 @Composable
 fun MediationBanner() {
     Column(
-        modifier = Modifier.fillMaxSize()
-            .fillMaxWidth()
-            .clip(shape = RoundedCornerShape(12.dp))
-            .background(color = BisqTheme.colors.yellow)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(12.dp))
+                .background(color = BisqTheme.colors.yellow),
     ) {
-
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.Top,
         ) {
             WarningIconGrey(modifier = Modifier.size(20.dp).offset(y = 2.dp))
-            BisqText.baseRegular(
+            BisqText.BaseRegular(
                 text = "mobile.openTrades.inMediation.banner".i18n(),
-                color = BisqTheme.colors.dark_grey50
+                color = BisqTheme.colors.dark_grey50,
             )
         }
     }

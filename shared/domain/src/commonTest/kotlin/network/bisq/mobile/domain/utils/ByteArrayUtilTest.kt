@@ -8,7 +8,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class ByteArrayUtilTest {
-
     // Base64 encoding/decoding tests
     @Test
     fun `base64ToByteArray decodes valid base64 string`() {
@@ -114,4 +113,3 @@ class ByteArrayUtilTest {
         assertContentEquals(original, decoded)
     }
 }
-

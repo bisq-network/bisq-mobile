@@ -6,6 +6,4 @@ import io.matthewnelson.kmp.tor.resource.noexec.tor.ResourceLoaderTorNoExec
 
 actual fun torResourceLoader(
     resourceDir: File,
-): ResourceLoader.Tor {
-    return ResourceLoaderTorNoExec.getOrCreate(resourceDir)
-}
+): ResourceLoader.Tor = ResourceLoaderTorNoExec.getOrCreate(resourceDir)

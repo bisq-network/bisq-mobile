@@ -23,7 +23,7 @@ object IosImageUtil {
         basePath: String,
         paths: Array<String>,
         width: Int,
-        height: Int
+        height: Int,
     ): UIImage? {
         val size = CGSizeMake(width.toDouble(), height.toDouble())
         var resultImage: UIImage? = null
@@ -38,8 +38,8 @@ object IosImageUtil {
                             0.0,
                             0.0,
                             width.toDouble(),
-                            height.toDouble()
-                        )
+                            height.toDouble(),
+                        ),
                     )
                 }
             }
@@ -52,17 +52,20 @@ object IosImageUtil {
         return resultImage
     }
 
-
     fun getImageByPath(path: String): UIImage? {
-        val resourcePath = NSBundle.mainBundle.pathForResource(
-            name = path,
-            ofType = null
-        )
+        val resourcePath =
+            NSBundle.mainBundle.pathForResource(
+                name = path,
+                ofType = null,
+            )
         val uiImage = resourcePath?.let { UIImage.imageWithContentsOfFile(it) }
         return uiImage
     }
 
-    private fun getImageByPath(basePath: String, path: String): UIImage? {
+    private fun getImageByPath(
+        basePath: String,
+        path: String,
+    ): UIImage? {
         val fullPath = basePath + path
         val imageByPath = getImageByPath(fullPath)
         return imageByPath
@@ -80,7 +83,11 @@ object IosImageUtil {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-fun UIImage.scaleToSize(size: CValue<CGSize>, width: Double, height: Double): UIImage {
+fun UIImage.scaleToSize(
+    size: CValue<CGSize>,
+    width: Double,
+    height: Double,
+): UIImage {
     UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.mainScreen.scale)
     this.drawInRect(CGRectMake(0.0, 0.0, width, height))
     val scaledImage = UIGraphicsGetImageFromCurrentImageContext() ?: this

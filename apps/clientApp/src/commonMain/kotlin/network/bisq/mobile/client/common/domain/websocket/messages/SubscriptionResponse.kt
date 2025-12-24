@@ -8,6 +8,5 @@ import kotlinx.serialization.Serializable
 data class SubscriptionResponse(
     override val requestId: String,
     val payload: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 ) : WebSocketResponse
-

@@ -14,9 +14,10 @@ actual fun nextSecureRandomBytes(count: Int): ByteArray {
         return ByteArray(0)
     }
     val out = ByteArray(count)
-    val status = out.usePinned { pinned ->
-        SecRandomCopyBytes(kSecRandomDefault, count.toULong(), pinned.addressOf(0))
-    }
+    val status =
+        out.usePinned { pinned ->
+            SecRandomCopyBytes(kSecRandomDefault, count.toULong(), pinned.addressOf(0))
+        }
     if (status != errSecSuccess) {
         throw IllegalStateException("SecRandomCopyBytes failed: status=$status")
     }

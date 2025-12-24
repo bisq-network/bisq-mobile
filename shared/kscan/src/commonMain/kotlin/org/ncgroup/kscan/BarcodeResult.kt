@@ -8,9 +8,13 @@ package org.ncgroup.kscan
  * - [OnCanceled]: Indicates that the barcode scanning was canceled by the user.
  */
 sealed interface BarcodeResult {
-    data class OnSuccess(val barcode: Barcode) : BarcodeResult
+    data class OnSuccess(
+        val barcode: Barcode,
+    ) : BarcodeResult
 
-    data class OnFailed(val exception: Exception) : BarcodeResult
+    data class OnFailed(
+        val exception: Exception,
+    ) : BarcodeResult
 
     data object OnCanceled : BarcodeResult
 }

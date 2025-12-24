@@ -5,4 +5,6 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 // user for updates responses too
 @Serializable
-data class CreateUserIdentityResponse(val userProfile: UserProfileVO)
+data class CreateUserIdentityResponse(
+    val userProfile: UserProfileVO,
+)

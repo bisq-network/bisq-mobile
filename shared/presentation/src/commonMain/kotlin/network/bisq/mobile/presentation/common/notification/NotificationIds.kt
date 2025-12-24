@@ -9,15 +9,11 @@ object NotificationIds {
     private const val NEW_CHAT_MESSAGE_PREFIX = "new-msg-"
     private const val TRADE_STATE_UPDATED_PREFIX = "trade-state-"
 
-    fun getBitcoinPaymentUpdatedId(shortTradeId: String) =
-        BITCOIN_PAYMENT_UPDATED_PREFIX + shortTradeId
+    fun getBitcoinPaymentUpdatedId(shortTradeId: String) = BITCOIN_PAYMENT_UPDATED_PREFIX + shortTradeId
 
-    fun getPaymentUpdatedId(shortTradeId: String) =
-        PAYMENT_UPDATED_PREFIX + shortTradeId
+    fun getPaymentUpdatedId(shortTradeId: String) = PAYMENT_UPDATED_PREFIX + shortTradeId
 
-    fun getNewChatMessageId(shortTradeId: String) =
-        NEW_CHAT_MESSAGE_PREFIX + shortTradeId
+    fun getNewChatMessageId(shortTradeId: String) = NEW_CHAT_MESSAGE_PREFIX + shortTradeId
 
-    fun getTradeStateUpdatedId(shortTradeId: String) =
-        TRADE_STATE_UPDATED_PREFIX + shortTradeId
+    fun getTradeStateUpdatedId(shortTradeId: String) = TRADE_STATE_UPDATED_PREFIX + shortTradeId
 }

@@ -1,13 +1,12 @@
 package network.bisq.mobile.presentation.guide.wallet_guide
 
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class WalletGuideDownloadPresenter(
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
-
     val blueWalletLink = "https://bluewallet.io"
 
     fun prevClick() {
@@ -21,5 +20,4 @@ class WalletGuideDownloadPresenter(
     fun navigateToBlueWallet() {
         navigateToUrl(blueWalletLink)
     }
-
 }

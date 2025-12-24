@@ -13,12 +13,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DateUtilsTest {
-
     private val originalClock = DateUtils.clock
     private val fixedInstant = Instant.parse("2024-01-15T12:00:00Z")
-    private val fixedClock = object : Clock {
-        override fun now(): Instant = fixedInstant
-    }
+    private val fixedClock =
+        object : Clock {
+            override fun now(): Instant = fixedInstant
+        }
 
     @BeforeTest
     fun setup() {

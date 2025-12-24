@@ -36,14 +36,15 @@ class TradeDirectionPresentationTest {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     // Minimal Koin module for BasePresenter jobsManager injection
-    private val testKoinModule = module {
-        single { CoroutineExceptionHandlerSetup() }
-        factory<CoroutineJobsManager> {
-            DefaultCoroutineJobsManager().apply {
-                get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
+    private val testKoinModule =
+        module {
+            single { CoroutineExceptionHandlerSetup() }
+            factory<CoroutineJobsManager> {
+                DefaultCoroutineJobsManager().apply {
+                    get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
+                }
             }
         }
-    }
 
     @BeforeTest
     fun setup() {
@@ -62,93 +63,97 @@ class TradeDirectionPresentationTest {
     }
 
     @Test
-    fun seller_seesSellingTo_and_amountsMappedBaseThenQuote() = runTest {
-        // Main presenter only used for languageCode
-        val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        every { mainPresenter.languageCode } returns MutableStateFlow("en")
+    fun seller_seesSellingTo_and_amountsMappedBaseThenQuote() =
+        runTest {
+            // Main presenter only used for languageCode
+            val mainPresenter = mockk<MainPresenter>(relaxed = true)
+            every { mainPresenter.languageCode } returns MutableStateFlow("en")
 
-        // Trade item model and nested flows
-        val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
-        every { tradeModel.isSeller } returns true
-        every { tradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            // Trade item model and nested flows
+            val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
+            every { tradeModel.isSeller } returns true
+            every { tradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
 
-        val channelModel = mockk<BisqEasyOpenTradeChannelModel>(relaxed = true)
-        every { channelModel.isInMediation } returns MutableStateFlow(false)
+            val channelModel = mockk<BisqEasyOpenTradeChannelModel>(relaxed = true)
+            every { channelModel.isInMediation } returns MutableStateFlow(false)
 
-        val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
-        every { tradeItem.bisqEasyTradeModel } returns tradeModel
-        every { tradeItem.bisqEasyOpenTradeChannelModel } returns channelModel
-        every { tradeItem.formattedBaseAmount } returns "0.00433161"
-        every { tradeItem.baseCurrencyCode } returns "BTC"
-        every { tradeItem.formattedQuoteAmount } returns "500.00"
-        every { tradeItem.quoteCurrencyCode } returns "USD"
+            val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
+            every { tradeItem.bisqEasyTradeModel } returns tradeModel
+            every { tradeItem.bisqEasyOpenTradeChannelModel } returns channelModel
+            every { tradeItem.formattedBaseAmount } returns "0.00433161"
+            every { tradeItem.baseCurrencyCode } returns "BTC"
+            every { tradeItem.formattedQuoteAmount } returns "500.00"
+            every { tradeItem.quoteCurrencyCode } returns "USD"
 
-        // Services
-        val tradesServiceFacade = mockk<TradesServiceFacade>()
-        every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(tradeItem)
+            // Services
+            val tradesServiceFacade = mockk<TradesServiceFacade>()
+            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(tradeItem)
 
-        val mediationServiceFacade = mockk<MediationServiceFacade>(relaxed = true)
-        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
+            val mediationServiceFacade = mockk<MediationServiceFacade>(relaxed = true)
+            val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
 
-        val presenter = TradeDetailsHeaderPresenter(
-            mainPresenter = mainPresenter,
-            tradesServiceFacade = tradesServiceFacade,
-            mediationServiceFacade = mediationServiceFacade,
-            userProfileServiceFacade = userProfileServiceFacade,
-        )
+            val presenter =
+                TradeDetailsHeaderPresenter(
+                    mainPresenter = mainPresenter,
+                    tradesServiceFacade = tradesServiceFacade,
+                    mediationServiceFacade = mediationServiceFacade,
+                    userProfileServiceFacade = userProfileServiceFacade,
+                )
 
-        presenter.onViewAttached()
+            presenter.onViewAttached()
 
-        assertEquals("offer.sell".i18n().uppercase(), presenter.direction)
-        assertEquals("bisqEasy.tradeState.header.send".i18n(), presenter.leftAmountDescription)
-        assertEquals("bisqEasy.tradeState.header.receive".i18n(), presenter.rightAmountDescription)
-        assertEquals("0.00433161", presenter.leftAmount.value)
-        assertEquals("BTC", presenter.leftCode.value)
-        assertEquals("500.00", presenter.rightAmount.value)
-        assertEquals("USD", presenter.rightCode.value)
-    }
+            assertEquals("offer.sell".i18n().uppercase(), presenter.direction)
+            assertEquals("bisqEasy.tradeState.header.send".i18n(), presenter.leftAmountDescription)
+            assertEquals("bisqEasy.tradeState.header.receive".i18n(), presenter.rightAmountDescription)
+            assertEquals("0.00433161", presenter.leftAmount.value)
+            assertEquals("BTC", presenter.leftCode.value)
+            assertEquals("500.00", presenter.rightAmount.value)
+            assertEquals("USD", presenter.rightCode.value)
+        }
 
     @Test
-    fun buyer_seesBuyingFrom_and_amountsMappedQuoteThenBase() = runTest {
-        val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        every { mainPresenter.languageCode } returns MutableStateFlow("en")
+    fun buyer_seesBuyingFrom_and_amountsMappedQuoteThenBase() =
+        runTest {
+            val mainPresenter = mockk<MainPresenter>(relaxed = true)
+            every { mainPresenter.languageCode } returns MutableStateFlow("en")
 
-        val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
-        every { tradeModel.isSeller } returns false
-        every { tradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
+            every { tradeModel.isSeller } returns false
+            every { tradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
 
-        val channelModel = mockk<BisqEasyOpenTradeChannelModel>(relaxed = true)
-        every { channelModel.isInMediation } returns MutableStateFlow(false)
+            val channelModel = mockk<BisqEasyOpenTradeChannelModel>(relaxed = true)
+            every { channelModel.isInMediation } returns MutableStateFlow(false)
 
-        val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
-        every { tradeItem.bisqEasyTradeModel } returns tradeModel
-        every { tradeItem.bisqEasyOpenTradeChannelModel } returns channelModel
-        every { tradeItem.formattedBaseAmount } returns "0.00433161"
-        every { tradeItem.baseCurrencyCode } returns "BTC"
-        every { tradeItem.formattedQuoteAmount } returns "500.00"
-        every { tradeItem.quoteCurrencyCode } returns "USD"
+            val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
+            every { tradeItem.bisqEasyTradeModel } returns tradeModel
+            every { tradeItem.bisqEasyOpenTradeChannelModel } returns channelModel
+            every { tradeItem.formattedBaseAmount } returns "0.00433161"
+            every { tradeItem.baseCurrencyCode } returns "BTC"
+            every { tradeItem.formattedQuoteAmount } returns "500.00"
+            every { tradeItem.quoteCurrencyCode } returns "USD"
 
-        val tradesServiceFacade = mockk<TradesServiceFacade>()
-        every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(tradeItem)
+            val tradesServiceFacade = mockk<TradesServiceFacade>()
+            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(tradeItem)
 
-        val mediationServiceFacade = mockk<MediationServiceFacade>(relaxed = true)
-        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
+            val mediationServiceFacade = mockk<MediationServiceFacade>(relaxed = true)
+            val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
 
-        val presenter = TradeDetailsHeaderPresenter(
-            mainPresenter = mainPresenter,
-            tradesServiceFacade = tradesServiceFacade,
-            mediationServiceFacade = mediationServiceFacade,
-            userProfileServiceFacade = userProfileServiceFacade,
-        )
+            val presenter =
+                TradeDetailsHeaderPresenter(
+                    mainPresenter = mainPresenter,
+                    tradesServiceFacade = tradesServiceFacade,
+                    mediationServiceFacade = mediationServiceFacade,
+                    userProfileServiceFacade = userProfileServiceFacade,
+                )
 
-        presenter.onViewAttached()
+            presenter.onViewAttached()
 
-        assertEquals("offer.buy".i18n().uppercase(), presenter.direction)
-        assertEquals("bisqEasy.tradeState.header.pay".i18n(), presenter.leftAmountDescription)
-        assertEquals("bisqEasy.tradeState.header.receive".i18n(), presenter.rightAmountDescription)
-        assertEquals("500.00", presenter.leftAmount.value)
-        assertEquals("USD", presenter.leftCode.value)
-        assertEquals("0.00433161", presenter.rightAmount.value)
-        assertEquals("BTC", presenter.rightCode.value)
-    }
+            assertEquals("offer.buy".i18n().uppercase(), presenter.direction)
+            assertEquals("bisqEasy.tradeState.header.pay".i18n(), presenter.leftAmountDescription)
+            assertEquals("bisqEasy.tradeState.header.receive".i18n(), presenter.rightAmountDescription)
+            assertEquals("500.00", presenter.leftAmount.value)
+            assertEquals("USD", presenter.leftCode.value)
+            assertEquals("0.00433161", presenter.rightAmount.value)
+            assertEquals("BTC", presenter.rightCode.value)
+        }
 }

@@ -16,7 +16,7 @@ fun ChatRulesScreen() {
         UnorderedTextList(
             text = "chat.chatRules.content".i18n(),
             style = { t, m ->
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = t,
                     modifier = m,
                     color = BisqTheme.colors.light_grey40,

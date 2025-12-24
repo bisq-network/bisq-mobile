@@ -15,58 +15,57 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
 fun BisqSwitch(
+    checked: Boolean,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     label: String = "",
     disabled: Boolean = false,
-    checked: Boolean,
     onSwitch: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BisqText.baseLight(
+        BisqText.BaseLight(
             label,
-            modifier = Modifier
-                .weight(1f)
-                .clickable(
-                    enabled = !disabled,
-                    onClick = {
-                        if (onSwitch != null) {
-                            onSwitch(!checked)
-                        }
-                    },
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                )
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .clickable(
+                        enabled = !disabled,
+                        onClick = {
+                            if (onSwitch != null) {
+                                onSwitch(!checked)
+                            }
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ),
         )
 
         Switch(
             checked = checked,
             onCheckedChange = onSwitch,
             enabled = !disabled,
-            colors = SwitchColors(
-                checkedThumbColor = BisqTheme.colors.primaryDim,
-                checkedTrackColor = BisqTheme.colors.primary65,
-                checkedBorderColor = BisqTheme.colors.backgroundColor,
-                checkedIconColor =  BisqTheme.colors.backgroundColor,
-
-                uncheckedThumbColor = BisqTheme.colors.white,
-                uncheckedTrackColor = BisqTheme.colors.white.copy(alpha = 0.45.toFloat()),
-                uncheckedBorderColor = BisqTheme.colors.backgroundColor,
-                uncheckedIconColor = BisqTheme.colors.backgroundColor,
-
-                disabledCheckedThumbColor = BisqTheme.colors.mid_grey30,
-                disabledCheckedTrackColor = BisqTheme.colors.secondary,
-                disabledCheckedBorderColor = BisqTheme.colors.backgroundColor,
-                disabledCheckedIconColor = BisqTheme.colors.backgroundColor,
-
-                disabledUncheckedThumbColor =BisqTheme.colors.mid_grey30,
-                disabledUncheckedTrackColor = BisqTheme.colors.secondary,
-                disabledUncheckedBorderColor =BisqTheme.colors.backgroundColor ,
-                disabledUncheckedIconColor =BisqTheme.colors.backgroundColor,
-            )
+            colors =
+                SwitchColors(
+                    checkedThumbColor = BisqTheme.colors.primaryDim,
+                    checkedTrackColor = BisqTheme.colors.primary65,
+                    checkedBorderColor = BisqTheme.colors.backgroundColor,
+                    checkedIconColor = BisqTheme.colors.backgroundColor,
+                    uncheckedThumbColor = BisqTheme.colors.white,
+                    uncheckedTrackColor = BisqTheme.colors.white.copy(alpha = 0.45.toFloat()),
+                    uncheckedBorderColor = BisqTheme.colors.backgroundColor,
+                    uncheckedIconColor = BisqTheme.colors.backgroundColor,
+                    disabledCheckedThumbColor = BisqTheme.colors.mid_grey30,
+                    disabledCheckedTrackColor = BisqTheme.colors.secondary,
+                    disabledCheckedBorderColor = BisqTheme.colors.backgroundColor,
+                    disabledCheckedIconColor = BisqTheme.colors.backgroundColor,
+                    disabledUncheckedThumbColor = BisqTheme.colors.mid_grey30,
+                    disabledUncheckedTrackColor = BisqTheme.colors.secondary,
+                    disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
+                    disabledUncheckedIconColor = BisqTheme.colors.backgroundColor,
+                ),
         )
     }
 }

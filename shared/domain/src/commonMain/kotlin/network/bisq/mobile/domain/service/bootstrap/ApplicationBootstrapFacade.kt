@@ -22,46 +22,54 @@ abstract class ApplicationBootstrapFacade(
     }
 
     private var currentTimeoutJob: Job? = null
+
     @Volatile
     private var bootstrapSuccessful = false
     private val _state = MutableStateFlow("")
     val state: StateFlow<String> get() = _state.asStateFlow()
+
     fun setState(value: String) {
         _state.value = value
     }
 
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> get() = _progress.asStateFlow()
+
     fun setProgress(value: Float) {
         _progress.value = value
     }
 
     private val _isTimeoutDialogVisible = MutableStateFlow(false)
     val isTimeoutDialogVisible: StateFlow<Boolean> get() = _isTimeoutDialogVisible.asStateFlow()
+
     fun setTimeoutDialogVisible(visible: Boolean) {
         _isTimeoutDialogVisible.value = visible
     }
 
     private val _isBootstrapFailed = MutableStateFlow(false)
     val isBootstrapFailed: StateFlow<Boolean> get() = _isBootstrapFailed.asStateFlow()
+
     fun setBootstrapFailed(failed: Boolean) {
         _isBootstrapFailed.value = failed
     }
 
     private val _torBootstrapFailed = MutableStateFlow(false)
     val torBootstrapFailed: StateFlow<Boolean> = _torBootstrapFailed.asStateFlow()
+
     fun setTorBootstrapFailed(failed: Boolean) {
         _torBootstrapFailed.value = failed
     }
 
     private val _currentBootstrapStage = MutableStateFlow("")
     val currentBootstrapStage: StateFlow<String> get() = _currentBootstrapStage.asStateFlow()
+
     fun setCurrentBootstrapStage(stage: String) {
         _currentBootstrapStage.value = stage
     }
 
     private val _shouldShowProgressToast = MutableStateFlow(false)
     val shouldShowProgressToast: StateFlow<Boolean> get() = _shouldShowProgressToast.asStateFlow()
+
     fun setShouldShowProgressToast(show: Boolean) {
         _shouldShowProgressToast.value = show
     }
@@ -99,10 +107,11 @@ abstract class ApplicationBootstrapFacade(
                     is TorState.Stopping -> {}
                     is TorState.Stopped -> {
                         if (newState.error != null) {
-                            val errorMessage = listOfNotNull(
-                                newState.error.message,
-                                newState.error.cause?.message
-                            ).firstOrNull() ?: "Unknown Tor error"
+                            val errorMessage =
+                                listOfNotNull(
+                                    newState.error.message,
+                                    newState.error.cause?.message,
+                                ).firstOrNull() ?: "Unknown Tor error"
                             setState("mobile.bootstrap.tor.failed".i18n() + ": $errorMessage")
                             cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
                             setTorBootstrapFailed(true)
@@ -114,8 +123,10 @@ abstract class ApplicationBootstrapFacade(
         }
     }
 
-
-    protected fun startTimeoutForStage(stageName: String = state.value, extendedTimeout: Boolean = false) {
+    protected fun startTimeoutForStage(
+        stageName: String = state.value,
+        extendedTimeout: Boolean = false,
+    ) {
         currentTimeoutJob?.cancel()
         setTimeoutDialogVisible(false)
         setCurrentBootstrapStage(stageName)
@@ -124,34 +135,35 @@ abstract class ApplicationBootstrapFacade(
             return
         }
 
-        val timeoutDuration = if (extendedTimeout) {
-            BOOTSTRAP_STAGE_TIMEOUT_MS * 2 // 2x longer for extended wait
-        } else {
-            BOOTSTRAP_STAGE_TIMEOUT_MS //  Normal timeout
-        }
+        val timeoutDuration =
+            if (extendedTimeout) {
+                BOOTSTRAP_STAGE_TIMEOUT_MS * 2 // 2x longer for extended wait
+            } else {
+                BOOTSTRAP_STAGE_TIMEOUT_MS //  Normal timeout
+            }
 
         log.i { "Bootstrap: Starting timeout for stage: $stageName (${timeoutDuration / 1000}s)" }
 
-        currentTimeoutJob = serviceScope.launch {
-            if (bootstrapSuccessful) {
-                return@launch
-            }
-            try {
-                delay(timeoutDuration)
-                if (!bootstrapSuccessful) {
-                    log.w { "Bootstrap: Timeout reached for stage: $stageName" }
-                    setTimeoutDialogVisible(true)
+        currentTimeoutJob =
+            serviceScope.launch {
+                if (bootstrapSuccessful) {
+                    return@launch
                 }
-            } catch (e: Exception) {
-                if (e is CancellationException) {
-                    log.d { "Bootstrap: Timeout job cancelled for stage: $stageName" }
-                } else {
-                    log.e(e) { "Bootstrap: Error in Timeout job, cancelled for stage: $stageName" }
+                try {
+                    delay(timeoutDuration)
+                    if (!bootstrapSuccessful) {
+                        log.w { "Bootstrap: Timeout reached for stage: $stageName" }
+                        setTimeoutDialogVisible(true)
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) {
+                        log.d { "Bootstrap: Timeout job cancelled for stage: $stageName" }
+                    } else {
+                        log.e(e) { "Bootstrap: Error in Timeout job, cancelled for stage: $stageName" }
+                    }
                 }
             }
-        }
     }
-
 
     protected fun cancelTimeout(showProgressToast: Boolean = true) {
         currentTimeoutJob?.cancel()

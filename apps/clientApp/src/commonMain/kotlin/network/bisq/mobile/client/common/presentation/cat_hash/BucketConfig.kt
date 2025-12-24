@@ -23,13 +23,18 @@ abstract class BucketConfig {
 
     abstract val pathTemplates: Array<PathDetails>
 
-    internal class Bucket(val count: Int, val idx: Int)
-
-    class PathDetails @JvmOverloads constructor(
-        val path: String,
-        val itemIdx: Int,
-        val shapeIdx: Int? = null
+    internal class Bucket(
+        val count: Int,
+        val idx: Int,
     )
+
+    class PathDetails
+        @JvmOverloads
+        constructor(
+            val path: String,
+            val itemIdx: Int,
+            val shapeIdx: Int? = null,
+        )
 
     companion object {
         const val CURRENT_VERSION: Int = 0

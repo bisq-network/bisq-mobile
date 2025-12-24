@@ -59,18 +59,21 @@ import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollSc
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.rememberBlurTriggerSetup
 import network.bisq.mobile.presentation.common.ui.utils.setBlurTrigger
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
+fun TrustedNodeSetupScreen(
+    modifier: Modifier = Modifier,
+    isWorkflow: Boolean = true,
+) {
     val presenter: TrustedNodeSetupPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
@@ -99,13 +102,15 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     var showAdvancedOptions by remember { mutableStateOf(false) }
 
     // see BitcoinLnAddressField for reasoning
-    val validationLogic = remember {
-        { input: String ->
-            presenter.validateApiUrl(
-                input, selectedProxyOption,
-            )
+    val validationLogic =
+        remember {
+            { input: String ->
+                presenter.validateApiUrl(
+                    input,
+                    selectedProxyOption,
+                )
+            }
         }
-    }
     var validationError by remember {
         mutableStateOf({ input: String -> validationLogic(input) })
     }
@@ -114,32 +119,42 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     }
 
     BisqScrollScaffold(
-        topBar = if (!isWorkflow) {
-            { TopBar(title = "mobile.trustedNodeSetup.title".i18n()) }
-        } else null,
+        modifier = modifier,
+        topBar =
+            if (!isWorkflow) {
+                { TopBar(title = "mobile.trustedNodeSetup.title".i18n()) }
+            } else {
+                null
+            },
         snackbarHostState = presenter.getSnackState(),
         bottomBar = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = BisqUIConstants.ScreenPadding, horizontal = BisqUIConstants.ScreenPadding)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = BisqUIConstants.ScreenPadding, horizontal = BisqUIConstants.ScreenPadding),
             ) {
                 // Status and countdown (kept visible outside scroll)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    BisqText.largeRegular(
+                    BisqText.LargeRegular(
                         status,
-                        color = if (isNodeSetupInProgress) BisqTheme.colors.warning
-                        else if (connectionState is ConnectionState.Connected) BisqTheme.colors.primary
-                        else BisqTheme.colors.danger,
+                        color =
+                            if (isNodeSetupInProgress) {
+                                BisqTheme.colors.warning
+                            } else if (connectionState is ConnectionState.Connected) {
+                                BisqTheme.colors.primary
+                            } else {
+                                BisqTheme.colors.danger
+                            },
                     )
                     if (connectionState is ConnectionState.Connecting) {
-                        BisqText.largeRegular(
+                        BisqText.LargeRegular(
                             timeoutCounter.toString(),
-                            color = BisqTheme.colors.warning
+                            color = BisqTheme.colors.warning,
                         )
                     }
                 }
@@ -148,7 +163,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
                 Row(
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     BisqButton(
                         text = if (isNodeSetupInProgress) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
@@ -167,21 +182,21 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     )
                 }
             }
-        }
+        },
     ) {
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
+            modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp),
         ) {
             if (isWorkflow) {
-                BisqText.h2Light(
+                BisqText.H2Light(
                     "mobile.trustedNodeSetup.title".i18n(),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
                 BisqGap.V2()
             }
 
-            BisqText.largeRegular(text = "mobile.trustedNodeSetup.info".i18n())
+            BisqText.LargeRegular(text = "mobile.trustedNodeSetup.info".i18n())
             BisqGap.V2()
 
             Row(
@@ -204,12 +219,12 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         // a little hack to align the button with input
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            BisqText.baseLight(
+                            BisqText.BaseLight(
                                 text = " ",
                                 color = Color.Transparent,
-                                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
                             )
                         }
                         BisqGap.VQuarter()
@@ -227,8 +242,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
 
             AdvancedOptionsDrawer(
-                showAdvancedOptions,
-                { showAdvancedOptions = !showAdvancedOptions },
+                onToggle = { showAdvancedOptions = !showAdvancedOptions },
+                expanded = showAdvancedOptions,
             ) {
                 Column {
                     BisqSelect(
@@ -237,7 +252,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         selectedKey = selectedProxyOption.name,
                         optionLabel = { it.displayString },
                         optionKey = { it.name },
-                        onSelected = {
+                        onSelect = {
                             presenter.onProxyOptionChanged(it)
                             blurTriggerSetup.triggerBlur()
                         },
@@ -247,7 +262,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     BisqTextField(
                         label = "mobile.trustedNodeSetup.password".i18n(),
                         value = password,
-                        onValueChange = {value, _ -> presenter.onPasswordChanged(value)},
+                        onValueChange = { value, _ -> presenter.onPasswordChanged(value) },
                         keyboardType = KeyboardType.Password,
                         isPasswordField = true,
                         disabled = isNodeSetupInProgress || !isWorkflow,
@@ -258,10 +273,10 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
             if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState !is KmpTorService.TorState.Stopped) {
                 Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
-                    BisqText.baseRegular("mobile.trustedNodeSetup.torState".i18n())
-                    BisqText.baseRegular(torState.displayString)
+                    BisqText.BaseRegular("mobile.trustedNodeSetup.torState".i18n())
+                    BisqText.BaseRegular(torState.displayString)
                     if (torState is KmpTorService.TorState.Starting) {
-                        BisqText.baseRegular(" $torProgress%")
+                        BisqText.BaseRegular(" $torProgress%")
                     }
                 }
             }
@@ -299,60 +314,58 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             val error = (connectionState as? ConnectionState.Disconnected)?.error
             if (error is IncompatibleHttpApiVersionException) {
                 BisqGap.V3()
-                BisqText.baseRegular("mobile.trustedNodeSetup.version.expectedAPI".i18n(BuildConfig.BISQ_API_VERSION))
-                BisqText.baseRegular(
+                BisqText.BaseRegular("mobile.trustedNodeSetup.version.expectedAPI".i18n(BuildConfig.BISQ_API_VERSION))
+                BisqText.BaseRegular(
                     "mobile.trustedNodeSetup.version.nodeAPI".i18n(
-                        error.serverVersion
-                    )
+                        error.serverVersion,
+                    ),
                 )
             }
         }
 
         if (!isWorkflow) {
-            BisqText.baseRegular(
+            BisqText.BaseRegular(
                 "mobile.trustedNodeSetup.testConnection.message".i18n(),
-                BisqTheme.colors.warning
+                color = BisqTheme.colors.warning,
             )
         }
 
         BisqGap.V2()
-
-
     }
 
     // Add dialog component
     if (showConfirmDialog) {
         BisqDialog(
-            onDismissRequest = { showConfirmDialog = false }
+            onDismissRequest = { showConfirmDialog = false },
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = "mobile.trustedNodeSetup.warning".i18n(),
-                        tint = BisqTheme.colors.danger
+                        tint = BisqTheme.colors.danger,
                     )
                     BisqGap.H1()
-                    BisqText.largeRegular("mobile.trustedNodeSetup.warning".i18n())
+                    BisqText.LargeRegular("mobile.trustedNodeSetup.warning".i18n())
                 }
 
                 BisqGap.V2()
 
-                BisqText.baseRegular(
-                    "mobile.trustedNodeSetup.changeWarning".i18n()
+                BisqText.BaseRegular(
+                    "mobile.trustedNodeSetup.changeWarning".i18n(),
                 )
 
                 BisqGap.V2()
 
                 Row(
                     horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
-                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max)
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                 ) {
                     BisqButton(
                         modifier = Modifier.fillMaxHeight(),
                         text = "mobile.trustedNodeSetup.cancel".i18n(),
                         type = BisqButtonType.Grey,
-                        onClick = { showConfirmDialog = false }
+                        onClick = { showConfirmDialog = false },
                     )
 
                     BisqButton(
@@ -361,7 +374,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         onClick = {
                             showConfirmDialog = false
                             presenter.onTestAndSavePressed(isWorkflow)
-                        }
+                        },
                     )
                 }
             }
@@ -370,8 +383,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     if (showBarcodeView) {
         BarcodeScannerView(
-            onCanceled = presenter::onBarcodeViewDismiss,
-            onFailed = { presenter.onBarcodeFail() }
+            onCancel = presenter::onBarcodeViewDismiss,
+            onFail = { presenter.onBarcodeFail() },
         ) {
             presenter.onBarcodeResult(it.data)
         }
@@ -381,31 +394,34 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         BisqGeneralErrorDialog(
             errorTitle = "mobile.barcode.error.title".i18n(),
             errorMessage = "mobile.barcode.error.message".i18n(),
-            onClose = presenter::onBarcodeErrorClose
+            onClose = presenter::onBarcodeErrorClose,
         )
     }
 }
 
 @Composable
 fun AdvancedOptionsDrawer(
-    expanded: Boolean = false,
     onToggle: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
 
-    Column {
+    Column(modifier = modifier) {
         Row(
-            modifier = Modifier.clickable(onClick = onToggle).semantics(true) {
-                contentDescription =
-                    if (expanded) "mobile.action.hide".i18n() else "mobile.action.show".i18n()
-            },
+            modifier =
+                Modifier.clickable(onClick = onToggle).semantics(true) {
+                    contentDescription =
+                        if (expanded) "mobile.action.hide".i18n() else "mobile.action.show".i18n()
+                },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(
-                BisqUIConstants.ScreenPadding
-            ),
+            horizontalArrangement =
+                Arrangement.spacedBy(
+                    BisqUIConstants.ScreenPadding,
+                ),
         ) {
-            BisqText.smallRegularGrey("mobile.trustedNodeSetup.advancedOptions".i18n())
+            BisqText.SmallRegularGrey("mobile.trustedNodeSetup.advancedOptions".i18n())
             BisqHDivider(modifier = Modifier.weight(1f))
             OutlinedIconButton(
                 onClick = onToggle,
@@ -423,18 +439,18 @@ fun AdvancedOptionsDrawer(
 
 @Preview
 @Composable
-fun AdvancedOptionsDrawerCollapsedPreview() {
+private fun AdvancedOptionsDrawerCollapsedPreview() {
     BisqTheme.Preview {
-        AdvancedOptionsDrawer(false, {}) {}
+        AdvancedOptionsDrawer(onToggle = {}, expanded = false) {}
     }
 }
 
 @Preview
 @Composable
-fun AdvancedOptionsDrawerExpandedPreview() {
+private fun AdvancedOptionsDrawerExpandedPreview() {
     BisqTheme.Preview {
-        AdvancedOptionsDrawer(true, {}) {
-            BisqText.baseRegular("this is content")
+        AdvancedOptionsDrawer(onToggle = {}, expanded = true) {
+            BisqText.BaseRegular("this is content")
         }
     }
 }

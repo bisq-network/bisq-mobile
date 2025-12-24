@@ -15,196 +15,212 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SettingsRepositoryImplTest {
-
     private val mockDataStore = mockk<DataStore<Settings>>()
     private val repository = SettingsRepositoryImpl(mockDataStore)
 
     @Test
-    fun `data flow should return settings data from datastore`() = runTest {
-        // Given
-        val expectedSettings = Settings(
-            firstLaunch = false,
-            showChatRulesWarnBox = false,
-            selectedMarketCode = "BTC/EUR"
-        )
-        every { mockDataStore.data } returns flowOf(expectedSettings)
+    fun `data flow should return settings data from datastore`() =
+        runTest {
+            // Given
+            val expectedSettings =
+                Settings(
+                    firstLaunch = false,
+                    showChatRulesWarnBox = false,
+                    selectedMarketCode = "BTC/EUR",
+                )
+            every { mockDataStore.data } returns flowOf(expectedSettings)
 
-        // When
-        val result = repository.data.first()
+            // When
+            val result = repository.data.first()
 
-        // Then
-        assertEquals(expectedSettings, result)
-    }
-
-    @Test
-    fun `data flow should emit default settings on IOException and log error`() = runTest {
-        // Given
-        val ioException = IOException("Test IO error")
-        every { mockDataStore.data } returns kotlinx.coroutines.flow.flow {
-            throw ioException
+            // Then
+            assertEquals(expectedSettings, result)
         }
 
-        // When
-        val result = repository.data.first()
-
-        // Then
-        assertEquals(Settings(), result)
-    }
-
     @Test
-    fun `data flow should rethrow non-IOException`() = runTest {
-        // Given
-        val runtimeException = RuntimeException("Test runtime error")
-        every { mockDataStore.data } returns kotlinx.coroutines.flow.flow {
-            throw runtimeException
+    fun `data flow should emit default settings on IOException and log error`() =
+        runTest {
+            // Given
+            val ioException = IOException("Test IO error")
+            every { mockDataStore.data } returns
+                kotlinx.coroutines.flow.flow {
+                    throw ioException
+                }
+
+            // When
+            val result = repository.data.first()
+
+            // Then
+            assertEquals(Settings(), result)
         }
 
-        // When & Then
-        try {
-            repository.data.first()
-            kotlin.test.fail("Expected exception to be thrown")
-        } catch (e: RuntimeException) {
-            assertEquals("Test runtime error", e.message)
+    @Test
+    fun `data flow should rethrow non-IOException`() =
+        runTest {
+            // Given
+            val runtimeException = RuntimeException("Test runtime error")
+            every { mockDataStore.data } returns
+                kotlinx.coroutines.flow.flow {
+                    throw runtimeException
+                }
+
+            // When & Then
+            try {
+                repository.data.first()
+                kotlin.test.fail("Expected exception to be thrown")
+            } catch (e: RuntimeException) {
+                assertEquals("Test runtime error", e.message)
+            }
         }
-    }
 
     @Test
-    fun `setFirstLaunch should update first launch flag`() = runTest {
-        // Given
-        val updateSlot = slot<suspend (Settings) -> Settings>()
-        coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
-        
-        val originalSettings = Settings(
-            firstLaunch = true,
-            selectedMarketCode = "BTC/USD"
-        )
+    fun `setFirstLaunch should update first launch flag`() =
+        runTest {
+            // Given
+            val updateSlot = slot<suspend (Settings) -> Settings>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
 
-        // When
-        repository.setFirstLaunch(false)
+            val originalSettings =
+                Settings(
+                    firstLaunch = true,
+                    selectedMarketCode = "BTC/USD",
+                )
 
-        // Then
-        coVerify { mockDataStore.updateData(any()) }
-        
-        val updatedSettings = updateSlot.captured(originalSettings)
-        assertEquals(false, updatedSettings.firstLaunch)
-        // Verify other fields are preserved
-        assertEquals("BTC/USD", updatedSettings.selectedMarketCode)
-    }
+            // When
+            repository.setFirstLaunch(false)
 
-    @Test
-    fun `setShowChatRulesWarnBox should update chat rules warning flag`() = runTest {
-        // Given
-        val updateSlot = slot<suspend (Settings) -> Settings>()
-        coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
-        
-        val originalSettings = Settings(
-            showChatRulesWarnBox = true,
-            selectedMarketCode = "BTC/GBP"
-        )
+            // Then
+            coVerify { mockDataStore.updateData(any()) }
 
-        // When
-        repository.setShowChatRulesWarnBox(false)
-
-        // Then
-        coVerify { mockDataStore.updateData(any()) }
-        
-        val updatedSettings = updateSlot.captured(originalSettings)
-        assertEquals(false, updatedSettings.showChatRulesWarnBox)
-        // Verify other fields are preserved
-        assertEquals("BTC/GBP", updatedSettings.selectedMarketCode)
-    }
+            val updatedSettings = updateSlot.captured(originalSettings)
+            assertEquals(false, updatedSettings.firstLaunch)
+            // Verify other fields are preserved
+            assertEquals("BTC/USD", updatedSettings.selectedMarketCode)
+        }
 
     @Test
-    fun `setSelectedMarketCode should update selected market code`() = runTest {
-        // Given
-        val updateSlot = slot<suspend (Settings) -> Settings>()
-        coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
-        
-        val originalSettings = Settings(
-            firstLaunch = false,
-            selectedMarketCode = "BTC/USD"
-        )
-        val newMarketCode = "BTC/JPY"
+    fun `setShowChatRulesWarnBox should update chat rules warning flag`() =
+        runTest {
+            // Given
+            val updateSlot = slot<suspend (Settings) -> Settings>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
 
-        // When
-        repository.setSelectedMarketCode(newMarketCode)
+            val originalSettings =
+                Settings(
+                    showChatRulesWarnBox = true,
+                    selectedMarketCode = "BTC/GBP",
+                )
 
-        // Then
-        coVerify { mockDataStore.updateData(any()) }
-        
-        val updatedSettings = updateSlot.captured(originalSettings)
-        assertEquals(newMarketCode, updatedSettings.selectedMarketCode)
-        // Verify other fields are preserved
-        assertEquals(false, updatedSettings.firstLaunch)
-    }
+            // When
+            repository.setShowChatRulesWarnBox(false)
 
-    @Test
-    fun `clear should reset settings to default`() = runTest {
-        // Given
-        val updateSlot = slot<suspend (Settings) -> Settings>()
-        coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
-        
-        val originalSettings = Settings(
-            firstLaunch = false,
-            showChatRulesWarnBox = false,
-            selectedMarketCode = "BTC/EUR"
-        )
+            // Then
+            coVerify { mockDataStore.updateData(any()) }
 
-        // When
-        repository.clear()
-
-        // Then
-        coVerify { mockDataStore.updateData(any()) }
-        
-        val updatedSettings = updateSlot.captured(originalSettings)
-        assertEquals(Settings(), updatedSettings)
-    }
+            val updatedSettings = updateSlot.captured(originalSettings)
+            assertEquals(false, updatedSettings.showChatRulesWarnBox)
+            // Verify other fields are preserved
+            assertEquals("BTC/GBP", updatedSettings.selectedMarketCode)
+        }
 
     @Test
-    fun `fetch should return first item from data flow`() = runTest {
-        // Given
-        val expectedSettings = Settings(
-            firstLaunch = false
-        )
-        every { mockDataStore.data } returns flowOf(expectedSettings)
+    fun `setSelectedMarketCode should update selected market code`() =
+        runTest {
+            // Given
+            val updateSlot = slot<suspend (Settings) -> Settings>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
 
-        // When
-        val result = repository.fetch()
+            val originalSettings =
+                Settings(
+                    firstLaunch = false,
+                    selectedMarketCode = "BTC/USD",
+                )
+            val newMarketCode = "BTC/JPY"
 
-        // Then
-        assertEquals(expectedSettings, result)
-    }
+            // When
+            repository.setSelectedMarketCode(newMarketCode)
+
+            // Then
+            coVerify { mockDataStore.updateData(any()) }
+
+            val updatedSettings = updateSlot.captured(originalSettings)
+            assertEquals(newMarketCode, updatedSettings.selectedMarketCode)
+            // Verify other fields are preserved
+            assertEquals(false, updatedSettings.firstLaunch)
+        }
 
     @Test
-    fun `multiple updates should preserve unmodified fields`() = runTest {
-        // Given
-        val updateSlots = mutableListOf<suspend (Settings) -> Settings>()
-        coEvery { mockDataStore.updateData(capture(updateSlots)) } returns Settings()
-        
-        val originalSettings = Settings(
-            firstLaunch = true,
-            showChatRulesWarnBox = true,
-            selectedMarketCode = "BTC/USD"
-        )
+    fun `clear should reset settings to default`() =
+        runTest {
+            // Given
+            val updateSlot = slot<suspend (Settings) -> Settings>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
 
-        // When - perform multiple updates
-        repository.setFirstLaunch(false)
-        repository.setSelectedMarketCode("BTC/EUR")
+            val originalSettings =
+                Settings(
+                    firstLaunch = false,
+                    showChatRulesWarnBox = false,
+                    selectedMarketCode = "BTC/EUR",
+                )
 
-        // Then - verify each update preserves other fields
-        assertEquals(2, updateSlots.size)
+            // When
+            repository.clear()
 
-        // first update: setFirstLaunch
-        val afterFirstLaunchUpdate = updateSlots[0](originalSettings)
-        assertEquals(false, afterFirstLaunchUpdate.firstLaunch)
-        assertEquals(true, afterFirstLaunchUpdate.showChatRulesWarnBox) // preserved
-        assertEquals("BTC/USD", afterFirstLaunchUpdate.selectedMarketCode) // preserved
-        
-        // second update: setSelectedMarketCode
-        val afterMarketUpdate = updateSlots[1](afterFirstLaunchUpdate)
-        assertEquals(false, afterMarketUpdate.firstLaunch) // preserved
-        assertEquals(true, afterMarketUpdate.showChatRulesWarnBox) // preserved
-        assertEquals("BTC/EUR", afterMarketUpdate.selectedMarketCode)
-    }
+            // Then
+            coVerify { mockDataStore.updateData(any()) }
+
+            val updatedSettings = updateSlot.captured(originalSettings)
+            assertEquals(Settings(), updatedSettings)
+        }
+
+    @Test
+    fun `fetch should return first item from data flow`() =
+        runTest {
+            // Given
+            val expectedSettings =
+                Settings(
+                    firstLaunch = false,
+                )
+            every { mockDataStore.data } returns flowOf(expectedSettings)
+
+            // When
+            val result = repository.fetch()
+
+            // Then
+            assertEquals(expectedSettings, result)
+        }
+
+    @Test
+    fun `multiple updates should preserve unmodified fields`() =
+        runTest {
+            // Given
+            val updateSlots = mutableListOf<suspend (Settings) -> Settings>()
+            coEvery { mockDataStore.updateData(capture(updateSlots)) } returns Settings()
+
+            val originalSettings =
+                Settings(
+                    firstLaunch = true,
+                    showChatRulesWarnBox = true,
+                    selectedMarketCode = "BTC/USD",
+                )
+
+            // When - perform multiple updates
+            repository.setFirstLaunch(false)
+            repository.setSelectedMarketCode("BTC/EUR")
+
+            // Then - verify each update preserves other fields
+            assertEquals(2, updateSlots.size)
+
+            // first update: setFirstLaunch
+            val afterFirstLaunchUpdate = updateSlots[0](originalSettings)
+            assertEquals(false, afterFirstLaunchUpdate.firstLaunch)
+            assertEquals(true, afterFirstLaunchUpdate.showChatRulesWarnBox) // preserved
+            assertEquals("BTC/USD", afterFirstLaunchUpdate.selectedMarketCode) // preserved
+
+            // second update: setSelectedMarketCode
+            val afterMarketUpdate = updateSlots[1](afterFirstLaunchUpdate)
+            assertEquals(false, afterMarketUpdate.firstLaunch) // preserved
+            assertEquals(true, afterMarketUpdate.showChatRulesWarnBox) // preserved
+            assertEquals("BTC/EUR", afterMarketUpdate.selectedMarketCode)
+        }
 }
-

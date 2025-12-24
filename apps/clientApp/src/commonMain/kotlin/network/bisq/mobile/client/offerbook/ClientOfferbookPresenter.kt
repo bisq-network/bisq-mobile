@@ -7,8 +7,8 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
 
 class ClientOfferbookPresenter(
     mainPresenter: MainPresenter,
@@ -19,14 +19,14 @@ class ClientOfferbookPresenter(
     reputationServiceFacade: ReputationServiceFacade,
     private val userProfileServiceFacade: ClientUserProfileServiceFacade,
 ) : OfferbookPresenter(
-    mainPresenter,
-    offersServiceFacade,
-    takeOfferPresenter,
-    createOfferPresenter,
-    marketPriceServiceFacade,
-    userProfileServiceFacade,
-    reputationServiceFacade
-) {
+        mainPresenter,
+        offersServiceFacade,
+        takeOfferPresenter,
+        createOfferPresenter,
+        marketPriceServiceFacade,
+        userProfileServiceFacade,
+        reputationServiceFacade,
+    ) {
     override fun isOfferFromIgnoredUserCached(offer: BisqEasyOfferVO): Boolean {
         val makerUserProfileId = offer.makerNetworkId.pubKey.id
         return try {

@@ -19,4 +19,8 @@ package network.bisq.mobile.domain.data.replicated.user.reputation
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ReputationScoreVO(val totalScore: Long, val fiveSystemScore: Double, val ranking: Int)
+data class ReputationScoreVO(
+    val totalScore: Long,
+    val fiveSystemScore: Double,
+    val ranking: Int,
+)

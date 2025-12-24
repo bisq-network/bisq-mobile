@@ -66,23 +66,22 @@ import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.Tr
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.SELLER_STATE_MAIN_CHAIN3B
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.TradeStatesProvider
 
-
 class TradeFlowPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    val tradeStatesProvider: TradeStatesProvider
+    val tradeStatesProvider: TradeStatesProvider,
 ) : BasePresenter(mainPresenter) {
-
     val buyerState4Presenter = tradeStatesProvider.buyerState4Presenter
     val sellerState4Presenter = tradeStatesProvider.sellerState4Presenter
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
-    val steps = listOf(
-        TradeFlowStep.ACCOUNT_DETAILS,
-        TradeFlowStep.FIAT_PAYMENT,
-        TradeFlowStep.BITCOIN_TRANSFER,
-        TradeFlowStep.TRADE_COMPLETED
-    )
+    val steps =
+        listOf(
+            TradeFlowStep.ACCOUNT_DETAILS,
+            TradeFlowStep.FIAT_PAYMENT,
+            TradeFlowStep.BITCOIN_TRANSFER,
+            TradeFlowStep.TRADE_COMPLETED,
+        )
 
     private val _tradePhaseState: MutableStateFlow<TradePhaseState> = MutableStateFlow(TradePhaseState.INIT)
     val tradePhaseState: StateFlow<TradePhaseState> get() = _tradePhaseState.asStateFlow()
@@ -99,7 +98,7 @@ class TradeFlowPresenter(
         isMainChain = paymentMethod == "MAIN_CHAIN"
 
         presenterScope.launch {
-            openTradeItemModel.bisqEasyTradeModel.tradeState.collect {tradeState ->
+            openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
                 log.d { "Trade State Changed to: $tradeState" }
                 tradeStateChanged(tradeState)
             }
@@ -113,14 +112,13 @@ class TradeFlowPresenter(
         super.onViewUnattaching()
     }
 
-    fun presenterForPhase(phase: TradePhaseState): BasePresenter? {
-        return try {
+    fun presenterForPhase(phase: TradePhaseState): BasePresenter? =
+        try {
             tradeStatesProvider.presenterForPhase(phase)
         } catch (e: IllegalArgumentException) {
             log.e { e.message.toString() }
             null
         }
-    }
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
         if (state == null) {
@@ -132,20 +130,21 @@ class TradeFlowPresenter(
 
             TAKER_SENT_TAKE_OFFER_REQUEST,
 
-                // Seller
+            // Seller
             MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
             MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS_,
             MAKER_DID_NOT_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
-                // Buyer
+            // Buyer
             MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
             MAKER_DID_NOT_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
             MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
             MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA_,
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA -> {
+            TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
+            -> {
                 if (isSeller) {
                     _tradePhaseState.value = SELLER_STATE1
                 } else {
@@ -158,7 +157,8 @@ class TradeFlowPresenter(
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS_,
             TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
-            TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS -> {
+            TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
+            -> {
                 _tradePhaseState.value = SELLER_STATE2A
             }
 
@@ -179,11 +179,13 @@ class TradeFlowPresenter(
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA_,
             TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA ->
+            MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            ->
                 _tradePhaseState.value = BUYER_STATE1B
 
             TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
-            MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA ->
+            MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
+            ->
                 _tradePhaseState.value = BUYER_STATE2A
 
             BUYER_SENT_FIAT_SENT_CONFIRMATION ->
@@ -218,10 +220,12 @@ class TradeFlowPresenter(
         ACCOUNT_DETAILS,
         FIAT_PAYMENT,
         BITCOIN_TRANSFER,
-        TRADE_COMPLETED
+        TRADE_COMPLETED,
     }
 
-    enum class TradePhaseState(val index: Int) {
+    enum class TradePhaseState(
+        val index: Int,
+    ) {
         INIT(0),
         SELLER_STATE1(0),
         SELLER_STATE2A(1),
@@ -238,6 +242,6 @@ class TradeFlowPresenter(
         BUYER_STATE3A(2),
         BUYER_STATE_MAIN_CHAIN3B(2),
         BUYER_STATE_LIGHTNING3B(2),
-        BUYER_STATE4(3)
+        BUYER_STATE4(3),
     }
 }

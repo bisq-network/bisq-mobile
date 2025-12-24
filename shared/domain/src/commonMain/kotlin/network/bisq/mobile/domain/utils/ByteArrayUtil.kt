@@ -13,7 +13,10 @@ object ByteArrayAsBase64Serializer : KSerializer<ByteArray> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("ByteArrayAsBase64", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: ByteArray) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ByteArray,
+    ) {
         val base64String = value.toByteString().base64()
         encoder.encodeString(base64String)
     }
@@ -24,9 +27,7 @@ object ByteArrayAsBase64Serializer : KSerializer<ByteArray> {
     }
 }
 
-fun String.base64ToByteArray(): ByteArray? {
-    return decodeBase64()?.toByteArray()
-}
+fun String.base64ToByteArray(): ByteArray? = decodeBase64()?.toByteArray()
 
 fun String.hexToByteArray(): ByteArray {
     require(length % 2 == 0) { "Hex string must have an even length" }

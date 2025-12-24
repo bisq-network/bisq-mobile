@@ -10,5 +10,5 @@ enum class MessageDeliveryStatusEnum {
     TRY_ADD_TO_MAILBOX,
     ADDED_TO_MAILBOX,
     MAILBOX_MSG_RECEIVED,
-    FAILED;
+    FAILED,
 }

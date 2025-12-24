@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:compositionlocal-allowlist")
+
 package network.bisq.mobile.presentation.common.ui.theme
 
 import androidx.compose.material3.MaterialTheme
@@ -8,9 +10,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import network.bisq.mobile.i18n.I18nSupport
 
 object BisqTheme {
-    private val LocalBisqTypography = staticCompositionLocalOf<BisqTypography> {
-        error("BisqTypography not provided. Make sure to wrap your UI in BisqTheme { ... }")
-    }
+    private val LocalBisqTypography =
+        staticCompositionLocalOf<BisqTypography> {
+            error("BisqTypography not provided. Make sure to wrap your UI in BisqTheme { ... }")
+        }
 
     val typography: BisqTypography
         @Composable
@@ -21,7 +24,7 @@ object BisqTheme {
 
     @Composable
     operator fun invoke(
-        content: @Composable () -> Unit
+        content: @Composable () -> Unit,
     ) {
         val fontFamily = bisqFontFamily()
         val typography = remember(fontFamily) { BisqTypography(fontFamily) }
@@ -46,12 +49,11 @@ object BisqTheme {
     @Composable
     fun Preview(
         language: String = "en",
-        content: @Composable () -> Unit
+        content: @Composable () -> Unit,
     ) {
         I18nSupport.setLanguage(language)
         BisqTheme {
             content()
         }
     }
-
 }

@@ -4,6 +4,7 @@ import network.bisq.mobile.presentation.common.notification.model.android.Androi
 import network.bisq.mobile.presentation.common.notification.model.ios.IosNotificationConfig
 
 // extend the configuration api and implement each platform as needed
+
 /**
  * Configuration for displaying a notification
  */
@@ -18,7 +19,6 @@ data class NotificationConfig(
     val android: AndroidNotificationConfig? = null,
     val ios: IosNotificationConfig? = null,
 ) {
-
     init {
         if (id.isBlank()) {
             throw IllegalArgumentException("notification id cannot be blank")

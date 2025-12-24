@@ -24,7 +24,9 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
 /**
  * This model is used in the UI and will get the mutual fields updated from domain services.
  */
-class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentationDto) {
+class OfferItemPresentationModel(
+    offerItemPresentationDto: OfferItemPresentationDto,
+) {
     // Delegates
     val bisqEasyOffer = offerItemPresentationDto.bisqEasyOffer
     val isMyOffer = offerItemPresentationDto.isMyOffer
@@ -69,9 +71,7 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
         return bisqEasyOffer == other.bisqEasyOffer
     }
 
-    override fun hashCode(): Int {
-        return bisqEasyOffer.hashCode()
-    }
+    override fun hashCode(): Int = bisqEasyOffer.hashCode()
 
     // Updates from services
     fun updateFormattedPrice(value: String) {
@@ -86,7 +86,10 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
         }
     }
 
-    fun updateFormattedValues(price: String, baseAmount: String) {
+    fun updateFormattedValues(
+        price: String,
+        baseAmount: String,
+    ) {
         updateFormattedPrice(price)
         updateFormattedBaseAmount(baseAmount)
     }

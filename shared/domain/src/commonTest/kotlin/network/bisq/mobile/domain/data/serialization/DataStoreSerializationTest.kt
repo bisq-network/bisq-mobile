@@ -8,19 +8,20 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class DataStoreSerializationTest {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+        }
 
     @Test
     fun `User serialization should be stable and backwards compatible`() {
         // Given
-        val user = User(
-            tradeTerms = "Test terms with special chars: àáâãäåæçèéêë",
-            statement = "Test statement with emojis: 🚀💰📈",
-        )
+        val user =
+            User(
+                tradeTerms = "Test terms with special chars: àáâãäåæçèéêë",
+                statement = "Test statement with emojis: 🚀💰📈",
+            )
 
         // When - serialize and deserialize
         val serialized = json.encodeToString(User.serializer(), user)
@@ -48,11 +49,12 @@ class DataStoreSerializationTest {
     @Test
     fun `Settings serialization should preserve all fields`() {
         // Given
-        val settings = Settings(
-            firstLaunch = false,
-            showChatRulesWarnBox = true,
-            selectedMarketCode = "BTC/EUR"
-        )
+        val settings =
+            Settings(
+                firstLaunch = false,
+                showChatRulesWarnBox = true,
+                selectedMarketCode = "BTC/EUR",
+            )
 
         // When
         val serialized = json.encodeToString(Settings.serializer(), settings)
@@ -68,15 +70,16 @@ class DataStoreSerializationTest {
     @Test
     fun `TradeReadStateMap serialization should handle complex maps`() {
         // Given
-        val tradeMap = TradeReadStateMap(
-            mapOf(
-                "trade-with-dashes" to 5,
-                "trade_with_underscores" to 10,
-                "trade.with.dots" to 0,
-                "trade with spaces" to 999,
-                "trade-with-unicode-🚀" to 42
+        val tradeMap =
+            TradeReadStateMap(
+                mapOf(
+                    "trade-with-dashes" to 5,
+                    "trade_with_underscores" to 10,
+                    "trade.with.dots" to 0,
+                    "trade with spaces" to 999,
+                    "trade-with-unicode-🚀" to 42,
+                ),
             )
-        )
 
         // When
         val serialized = json.encodeToString(TradeReadStateMap.serializer(), tradeMap)
@@ -127,14 +130,16 @@ class DataStoreSerializationTest {
     fun `Large data should serialize without issues`() {
         // Given - large data structures
         val largeStatement = "x".repeat(10000) // 10KB string
-        val largeUser = User(
-            tradeTerms = "Large terms: $largeStatement",
-            statement = largeStatement,
-        )
+        val largeUser =
+            User(
+                tradeTerms = "Large terms: $largeStatement",
+                statement = largeStatement,
+            )
 
-        val largeTradeMap = TradeReadStateMap(
-            (1..1000).associate { "trade-$it" to it }
-        )
+        val largeTradeMap =
+            TradeReadStateMap(
+                (1..1000).associate { "trade-$it" to it },
+            )
 
         // When & Then - should not throw
         val userSerialized = json.encodeToString(User.serializer(), largeUser)

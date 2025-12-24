@@ -14,13 +14,13 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText.styledText
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText.StyledText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.SellerReputationWarningDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import org.koin.compose.koinInject
 
@@ -41,21 +41,24 @@ fun CreateOfferDirectionScreen() {
         shouldBlurBg = showSellerReputationWarning,
         showUserAvatar = false,
         closeAction = !showSellerReputationWarning,
-        onConfirmedClose = presenter::onClose
+        onConfirmedClose = presenter::onClose,
     ) {
         if (presenter.marketName != null) {
             val full = presenter.headline
             val name = presenter.marketName!!
             val start = full.indexOf(name)
             if (start >= 0) {
-                val annotated = buildAnnotatedString {
-                    append(full)
-                    addStyle(SpanStyle(color = BisqTheme.colors.primary), start, start + name.length)
-                }
-                styledText(text = annotated,
+                val annotated =
+                    buildAnnotatedString {
+                        append(full)
+                        addStyle(SpanStyle(color = BisqTheme.colors.primary), start, start + name.length)
+                    }
+                StyledText(
+                    text = annotated,
                     style = BisqTheme.typography.h3Light,
                     autoResize = true,
-                    maxLines = 2)
+                    maxLines = 2,
+                )
             } else {
                 AutoResizeText(
                     full,
@@ -80,10 +83,10 @@ fun CreateOfferDirectionScreen() {
             backgroundColor = BisqTheme.colors.primaryDim,
             modifier = Modifier.fillMaxWidth(),
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
-            textComponent = { BisqText.h4Light("bisqEasy.tradeWizard.directionAndMarket.buy".i18n()) }
+            textComponent = { BisqText.H4Light("bisqEasy.tradeWizard.directionAndMarket.buy".i18n()) },
         )
         BisqGap.VHalf()
-        BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.direction.buy.helpText".i18n(), textAlign = TextAlign.Center)
+        BisqText.LargeLightGrey("mobile.bisqEasy.tradeWizard.direction.buy.helpText".i18n(), textAlign = TextAlign.Center)
 
         BisqGap.V2()
 
@@ -92,10 +95,10 @@ fun CreateOfferDirectionScreen() {
             backgroundColor = BisqTheme.colors.dark_grey40,
             modifier = Modifier.fillMaxWidth(),
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
-            textComponent = { BisqText.h4Light("bisqEasy.tradeWizard.directionAndMarket.sell".i18n()) }
+            textComponent = { BisqText.H4Light("bisqEasy.tradeWizard.directionAndMarket.sell".i18n()) },
         )
         BisqGap.VHalf()
-        BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.direction.sell.helpText".i18n(), textAlign = TextAlign.Center)
+        BisqText.LargeLightGrey("mobile.bisqEasy.tradeWizard.direction.sell.helpText".i18n(), textAlign = TextAlign.Center)
     }
 
     if (showSellerReputationWarning) {

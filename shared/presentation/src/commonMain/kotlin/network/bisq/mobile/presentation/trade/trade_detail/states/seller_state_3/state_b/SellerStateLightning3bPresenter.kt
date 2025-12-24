@@ -15,9 +15,9 @@ class SellerStateLightning3bPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     private val _buyerHasConfirmedBitcoinReceipt: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val buyerHasConfirmedBitcoinReceipt: StateFlow<Boolean> get() = _buyerHasConfirmedBitcoinReceipt.asStateFlow()
+
     fun setBuyerHasConfirmedBitcoinReceipt(value: Boolean) {
         _buyerHasConfirmedBitcoinReceipt.value = value
     }
@@ -33,13 +33,15 @@ class SellerStateLightning3bPresenter(
                 for (message in messages) {
                     if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE && message.textString.isNotEmpty()) {
                         val encodedLogMessage = message.textString
-                        val encodedWithUserName = "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
-                            peersUserName
-                        )
+                        val encodedWithUserName =
+                            "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
+                                peersUserName,
+                            )
                         val encodedWithNickName = getEncodedWithNickName(bisqEasyOpenTradeChannelModel)
 
-                        if (encodedLogMessage.equals(encodedWithUserName) || encodedLogMessage.equals(
-                                encodedWithNickName
+                        if (encodedLogMessage.equals(encodedWithUserName) ||
+                            encodedLogMessage.equals(
+                                encodedWithNickName,
                             )
                         ) {
                             _buyerHasConfirmedBitcoinReceipt.value = true
@@ -62,9 +64,8 @@ class SellerStateLightning3bPresenter(
         skipWaiting()
     }
 
-    private fun getEncodedWithNickName(bisqEasyOpenTradeChannel: BisqEasyOpenTradeChannelModel): String {
-        return "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
-            bisqEasyOpenTradeChannel.getPeer().nickName
+    private fun getEncodedWithNickName(bisqEasyOpenTradeChannel: BisqEasyOpenTradeChannelModel): String =
+        "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
+            bisqEasyOpenTradeChannel.getPeer().nickName,
         )
-    }
 }

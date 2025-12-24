@@ -10,29 +10,30 @@ import platform.UIKit.navigationController
 import platform.darwin.NSObject
 
 @Composable
-actual fun BackHandler(onBackPressed: () -> Unit) {
+actual fun BackHandler(onBackPress: () -> Unit) {
     val viewController = LocalUIViewController.current
 
-    DisposableEffect(viewController) {
+    DisposableEffect(viewController, onBackPress) {
         val navigationController = viewController.navigationController
 
-        val backPressHandler = object : NSObject(), UINavigationControllerDelegateProtocol {
-            override fun navigationController(
-                navigationController: UINavigationController,
-                didShowViewController: UIViewController,
-                animated: Boolean
-            ) {
-                if (navigationController.viewControllers.contains(viewController).not()) {
-                    onBackPressed()
+        val backPressHandler =
+            object : NSObject(), UINavigationControllerDelegateProtocol {
+                override fun navigationController(
+                    navigationController: UINavigationController,
+                    didShowViewController: UIViewController,
+                    animated: Boolean,
+                ) {
+                    if (navigationController.viewControllers.contains(viewController).not()) {
+                        onBackPress()
+                    }
                 }
             }
-        }
 
         navigationController?.delegate = backPressHandler
 
         onDispose {
             if (navigationController?.delegate == backPressHandler) {
-                navigationController?.delegate = null
+                navigationController.delegate = null
             }
         }
     }

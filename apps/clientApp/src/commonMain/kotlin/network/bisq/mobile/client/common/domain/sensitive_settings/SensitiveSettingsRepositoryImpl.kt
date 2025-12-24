@@ -8,8 +8,8 @@ import network.bisq.mobile.domain.utils.Logging
 
 class SensitiveSettingsRepositoryImpl(
     private val sensitiveSettingsStore: DataStore<SensitiveSettings>,
-) : SensitiveSettingsRepository, Logging {
-
+) : SensitiveSettingsRepository,
+    Logging {
     override val data: Flow<SensitiveSettings>
         get() =
             sensitiveSettingsStore.data.catch { exception ->

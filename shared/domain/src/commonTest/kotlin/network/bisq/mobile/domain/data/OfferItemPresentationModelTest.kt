@@ -1,52 +1,54 @@
 package network.bisq.mobile.domain.data
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
+import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
-import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
+import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class OfferItemPresentationModelTest {
-
     private fun dummyDto(
         formattedPrice: String = "100 USD",
-        formattedBaseAmount: String = "0.003 BTC"
+        formattedBaseAmount: String = "0.003 BTC",
     ): OfferItemPresentationDto {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
         val amountSpec = QuoteSideFixedAmountSpecVO(100_00)
-        val priceSpec = FixPriceSpecVO(
-            PriceQuoteVOFactory.fromPrice(100_00L, market)
-        )
-        val makerNetworkId = NetworkIdVO(
-            AddressByTransportTypeMapVO(mapOf()),
-            PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id")
-        )
-        val offer = BisqEasyOfferVO(
-            id = "offer-1",
-            date = 0L,
-            makerNetworkId = makerNetworkId,
-            direction = DirectionEnum.BUY,
-            market = market,
-            amountSpec = amountSpec,
-            priceSpec = priceSpec,
-            protocolTypes = emptyList(),
-            baseSidePaymentMethodSpecs = emptyList(),
-            quoteSidePaymentMethodSpecs = emptyList(),
-            offerOptions = emptyList(),
-            supportedLanguageCodes = emptyList()
-        )
+        val priceSpec =
+            FixPriceSpecVO(
+                PriceQuoteVOFactory.fromPrice(100_00L, market),
+            )
+        val makerNetworkId =
+            NetworkIdVO(
+                AddressByTransportTypeMapVO(mapOf()),
+                PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"),
+            )
+        val offer =
+            BisqEasyOfferVO(
+                id = "offer-1",
+                date = 0L,
+                makerNetworkId = makerNetworkId,
+                direction = DirectionEnum.BUY,
+                market = market,
+                amountSpec = amountSpec,
+                priceSpec = priceSpec,
+                protocolTypes = emptyList(),
+                baseSidePaymentMethodSpecs = emptyList(),
+                quoteSidePaymentMethodSpecs = emptyList(),
+                offerOptions = emptyList(),
+                supportedLanguageCodes = emptyList(),
+            )
         val user = createMockUserProfile("Alice")
         val reputation = ReputationScoreVO(0, 0.0, 0)
         return OfferItemPresentationDto(
@@ -60,7 +62,7 @@ class OfferItemPresentationModelTest {
             formattedPriceSpec = "",
             quoteSidePaymentMethods = emptyList(),
             baseSidePaymentMethods = emptyList(),
-            reputationScore = reputation
+            reputationScore = reputation,
         )
     }
 

@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class KeyBundleVO(
     val keyId: String,
     val keyPair: KeyPairVO,
-    val torKeyPair: TorKeyPairVO
+    val torKeyPair: TorKeyPairVO,
 )

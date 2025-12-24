@@ -4,7 +4,10 @@ import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerResult
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 
-class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : ServiceFacade(), ExplorerServiceFacade {
+class ClientExplorerServiceFacade(
+    private val apiGateway: ExplorerApiGateway,
+) : ServiceFacade(),
+    ExplorerServiceFacade {
     private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
 
     override suspend fun activate() {
@@ -24,7 +27,10 @@ class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : 
         }
     }
 
-    override suspend fun requestTx(txId: String, address: String): ExplorerResult {
+    override suspend fun requestTx(
+        txId: String,
+        address: String,
+    ): ExplorerResult {
         if (cachedExplorerResults.containsKey(txId)) {
             return cachedExplorerResults[txId]!!
         }
@@ -45,6 +51,8 @@ class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : 
         }
     }
 
-    private fun filterOutputsByAddress(tx: ExplorerTxDto, address: String): List<Long> =
-        tx.outputs.filter { it.address == address }.map { it.value }
+    private fun filterOutputsByAddress(
+        tx: ExplorerTxDto,
+        address: String,
+    ): List<Long> = tx.outputs.filter { it.address == address }.map { it.value }
 }

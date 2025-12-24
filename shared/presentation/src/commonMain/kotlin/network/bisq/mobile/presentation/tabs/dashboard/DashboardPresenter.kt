@@ -17,12 +17,12 @@ import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.common.notification.NotificationController
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.main.MainPresenter
 
 open class DashboardPresenter(
     private val mainPresenter: MainPresenter,
@@ -51,20 +51,22 @@ open class DashboardPresenter(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val savedNotifPermissionState: StateFlow<PermissionState?> =
-        settingsRepository.data.mapLatest { it.notificationPermissionState }
+        settingsRepository.data
+            .mapLatest { it.notificationPermissionState }
             .stateIn(
                 presenterScope,
                 SharingStarted.Lazily,
-                null
+                null,
             )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val savedBatteryOptimizationState: StateFlow<BatteryOptimizationState?> =
-        settingsRepository.data.mapLatest { it.batteryOptimizationState }
+        settingsRepository.data
+            .mapLatest { it.batteryOptimizationState }
             .stateIn(
                 presenterScope,
                 SharingStarted.Lazily,
-                null
+                null,
             )
 
     val isForeground get() = foregroundDetector.isForeground

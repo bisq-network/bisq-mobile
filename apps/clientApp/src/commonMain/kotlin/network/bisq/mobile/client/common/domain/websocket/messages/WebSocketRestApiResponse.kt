@@ -10,11 +10,9 @@ import kotlinx.serialization.Serializable
 data class WebSocketRestApiResponse(
     override val requestId: String,
     val statusCode: Int, // Http Status code
-    val body: String // In error case the error message
+    val body: String, // In error case the error message
 ) : WebSocketResponse {
     val httpStatusCode: HttpStatusCode get() = HttpStatusCode.fromValue(statusCode)
-    fun isSuccess(): Boolean {
-        return httpStatusCode.isSuccess()
-    }
-}
 
+    fun isSuccess(): Boolean = httpStatusCode.isSuccess()
+}

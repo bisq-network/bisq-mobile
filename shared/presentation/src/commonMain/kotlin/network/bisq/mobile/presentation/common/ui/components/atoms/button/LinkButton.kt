@@ -19,21 +19,20 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 fun LinkButton(
     text: String,
     link: String,
+    modifier: Modifier = Modifier,
     type: BisqButtonType = BisqButtonType.Underline,
     color: Color = BisqTheme.colors.primary,
     padding: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPaddingHalf),
     onClick: (() -> Unit)? = null,
     fullWidth: Boolean = false,
     openConfirmation: Boolean = true,
-    modifier: Modifier = Modifier,
     leftIcon: (@Composable () -> Unit)? = null,
     rightIcon: (@Composable () -> Unit)? = null,
 ) {
-
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     BisqButton(
-        text,
+        text = text,
         color = color,
         type = type,
         padding = padding,
@@ -44,13 +43,11 @@ fun LinkButton(
             } else {
                 onClick?.invoke()
             }
-
         },
         modifier = modifier,
         leftIcon = leftIcon,
         rightIcon = rightIcon,
     )
-
 
     if (showConfirmDialog) {
         WebLinkConfirmationDialog(
@@ -61,7 +58,7 @@ fun LinkButton(
             },
             onDismiss = {
                 showConfirmDialog = false
-            }
+            },
         )
     }
 }

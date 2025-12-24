@@ -30,12 +30,13 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.button.CloseI
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SendIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 
 @Composable
 fun ChatInputField(
+    onMessageSend: (String) -> Unit,
     quotedMessage: BisqEasyOpenTradeMessageModel? = null,
-    placeholder: String = "",
-    onMessageSent: (String) -> Unit,
+    placeholder: String = EMPTY_STRING,
     resetScroll: () -> Unit = {},
     onCloseReply: () -> Unit = {},
 ) {
@@ -61,12 +62,12 @@ fun ChatInputField(
                 BisqIconButton(
                     onClick = {
                         if (text.isNotBlank() && isTextValid) {
-                            onMessageSent(text)
+                            onMessageSend(text)
                             resetScroll()
                             text = ""
                         }
                     },
-                    disabled = text.isBlank() || !isTextValid
+                    disabled = text.isBlank() || !isTextValid,
                 ) {
                     SendIcon()
                 }
@@ -82,7 +83,6 @@ fun ChatInputField(
             minLines = 1,
             textFieldAlignment = Alignment.CenterStart,
         )
-
     }
 }
 
@@ -93,31 +93,32 @@ fun QuotedMessage(
 ) {
     AnimatedVisibility(visible = quotedMessage.text != null) {
         Box(
-            modifier = Modifier
-                .padding(top = BisqUIConstants.ScreenPaddingHalf)
-                .clip(
-                    shape = RoundedCornerShape(
-                        topStart = BisqUIConstants.ScreenPaddingHalf,
-                        topEnd = BisqUIConstants.ScreenPaddingHalf,
-                    )
-                )
-                .background(BisqTheme.colors.dark_grey10)
-                .fillMaxWidth()
+            modifier =
+                Modifier
+                    .padding(top = BisqUIConstants.ScreenPaddingHalf)
+                    .clip(
+                        shape =
+                            RoundedCornerShape(
+                                topStart = BisqUIConstants.ScreenPaddingHalf,
+                                topEnd = BisqUIConstants.ScreenPaddingHalf,
+                            ),
+                    ).background(BisqTheme.colors.dark_grey10)
+                    .fillMaxWidth(),
         ) {
             Column(
                 modifier = Modifier.padding(BisqUIConstants.ScreenPadding),
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    //todo add profile icon
-                    BisqText.baseRegular(quotedMessage.senderUserName, color = BisqTheme.colors.light_grey10)
+                    // todo add profile icon
+                    BisqText.BaseRegular(quotedMessage.senderUserName, color = BisqTheme.colors.light_grey10)
                     CloseIconButton(onClick = onCloseReply)
                 }
-                BisqText.baseLight(quotedMessage.textString, color = BisqTheme.colors.light_grey30)
+                BisqText.BaseLight(quotedMessage.textString, color = BisqTheme.colors.light_grey30)
             }
         }
     }

@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.GreyCloseButton
@@ -20,13 +19,14 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ReputationBasedBuyerLimitsPopup(
     onDismiss: () -> Unit,
     onRepLinkClick: () -> Unit,
-    amountLimitInfoOverlayInfo: StateFlow<String>
+    amountLimitInfoOverlayInfo: StateFlow<String>,
 ) {
     val amountLimitInfo by amountLimitInfoOverlayInfo.collectAsState()
 
@@ -35,12 +35,11 @@ fun ReputationBasedBuyerLimitsPopup(
         padding = BisqUIConstants.ScreenPadding,
         onDismissRequest = onDismiss,
     ) {
-
-        BisqText.h6Light("bisqEasy.tradeWizard.amount.limitInfo.overlay.headline".i18n())
+        BisqText.H6Light("bisqEasy.tradeWizard.amount.limitInfo.overlay.headline".i18n())
 
         BisqGap.V1()
 
-        BisqText.baseLight(amountLimitInfo)
+        BisqText.BaseLight(amountLimitInfo)
 
         BisqGap.V1()
 
@@ -48,7 +47,7 @@ fun ReputationBasedBuyerLimitsPopup(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
             linkText = BisqLinks.REPUTATION_WIKI_URL,
             openConfirmation = true,
-            onLinkClick = onRepLinkClick
+            onLinkClick = onRepLinkClick,
         )
 
         BisqGap.V3()
@@ -59,13 +58,13 @@ fun ReputationBasedBuyerLimitsPopup(
 
 @Preview
 @Composable
-fun ReputationBasedBuyerLimitsPopupPreview() {
+private fun ReputationBasedBuyerLimitsPopupPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             ReputationBasedBuyerLimitsPopup(
                 onDismiss = {},
                 onRepLinkClick = {},
-                amountLimitInfoOverlayInfo = MutableStateFlow("bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.firstPart".i18n())
+                amountLimitInfoOverlayInfo = MutableStateFlow("bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.firstPart".i18n()),
             )
         }
     }

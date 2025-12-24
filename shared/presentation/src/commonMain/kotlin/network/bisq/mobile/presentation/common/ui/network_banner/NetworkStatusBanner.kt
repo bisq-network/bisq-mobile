@@ -32,11 +32,11 @@ import bisqapps.shared.presentation.generated.resources.check_circle
 import kotlinx.coroutines.delay
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerConstants.ANIMATION_DURATION_MS
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerConstants.HIDE_DELAY_MS
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -55,39 +55,39 @@ fun NetworkStatusBanner() {
         allDataReceived = allDataReceived,
         numConnections = numConnections,
         isMainContentVisible = isMainContentVisible,
-        inventoryRequestInfo = inventoryRequestInfo
+        inventoryRequestInfo = inventoryRequestInfo,
     )
 }
 
 @Composable
 private fun NetworkStatusBannerView(
     allDataReceived: Boolean,
-    inventoryRequestInfo: String
+    inventoryRequestInfo: String,
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = if (allDataReceived) BisqTheme.colors.primaryDim else BisqTheme.colors.yellow,
         animationSpec = tween(durationMillis = ANIMATION_DURATION_MS),
-        label = "bannerBgAnim"
+        label = "bannerBgAnim",
     )
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                // outer padding
-                start = BisqUIConstants.ScreenPadding,
-                end = BisqUIConstants.ScreenPadding,
-                top = 10.dp,
-                bottom = BisqUIConstants.ScreenPaddingQuarter,
-            )
-            .clip(RoundedCornerShape(BisqUIConstants.ScreenPadding4X))
-            .background(backgroundColor)
-            .padding(
-                // inner padding
-                vertical = BisqUIConstants.ScreenPadding,
-                horizontal = BisqUIConstants.ScreenPadding
-            )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    // outer padding
+                    start = BisqUIConstants.ScreenPadding,
+                    end = BisqUIConstants.ScreenPadding,
+                    top = 10.dp,
+                    bottom = BisqUIConstants.ScreenPaddingQuarter,
+                ).clip(RoundedCornerShape(BisqUIConstants.ScreenPadding4X))
+                .background(backgroundColor)
+                .padding(
+                    // inner padding
+                    vertical = BisqUIConstants.ScreenPadding,
+                    horizontal = BisqUIConstants.ScreenPadding,
+                ),
     ) {
         if (allDataReceived) {
             Image(
@@ -105,7 +105,7 @@ private fun NetworkStatusBannerView(
         }
 
         BisqGap.HHalfQuarter()
-        BisqText.baseRegular(
+        BisqText.BaseRegular(
             text = inventoryRequestInfo,
             color = BisqTheme.colors.white,
         )
@@ -120,7 +120,7 @@ private fun NetworkStatusBannerContent(
     allDataReceived: Boolean,
     numConnections: Int,
     isMainContentVisible: Boolean,
-    inventoryRequestInfo: String
+    inventoryRequestInfo: String,
 ) {
     var shouldBeVisible by remember { mutableStateOf(false) }
 
@@ -143,17 +143,20 @@ private fun NetworkStatusBannerContent(
 
     AnimatedVisibility(
         visible = shouldBeVisible,
-        enter = fadeIn(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)) +
+        enter =
+            fadeIn(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)) +
                 expandVertically(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)),
-        exit = fadeOut(
-            animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)
-        ) + shrinkVertically(
-            animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)
-        )
+        exit =
+            fadeOut(
+                animationSpec = tween(durationMillis = ANIMATION_DURATION_MS),
+            ) +
+                shrinkVertically(
+                    animationSpec = tween(durationMillis = ANIMATION_DURATION_MS),
+                ),
     ) {
         NetworkStatusBannerView(
             allDataReceived = allDataReceived,
-            inventoryRequestInfo = inventoryRequestInfo
+            inventoryRequestInfo = inventoryRequestInfo,
         )
     }
 }
@@ -169,32 +172,32 @@ private fun NetworkStatusBannerContent(
 @Composable
 private fun NetworkStatusBannerContentPreview(
     allDataReceived: Boolean,
-    inventoryRequestInfo: String
+    inventoryRequestInfo: String,
 ) {
     NetworkStatusBannerView(
         allDataReceived = allDataReceived,
-        inventoryRequestInfo = inventoryRequestInfo
+        inventoryRequestInfo = inventoryRequestInfo,
     )
 }
 
 @Preview
 @Composable
-private fun NetworkStatusBannerPreview_Loading() {
+private fun NetworkStatusBannerPreview_LoadingPreview() {
     BisqTheme.Preview {
         NetworkStatusBannerContentPreview(
             allDataReceived = false,
-            inventoryRequestInfo = "Requesting initial network data"
+            inventoryRequestInfo = "Requesting initial network data",
         )
     }
 }
 
 @Preview
 @Composable
-private fun NetworkStatusBannerPreview_Completed() {
+private fun NetworkStatusBannerPreview_CompletedPreview() {
     BisqTheme.Preview {
         NetworkStatusBannerContentPreview(
             allDataReceived = true,
-            inventoryRequestInfo = "Network data received"
+            inventoryRequestInfo = "Network data received",
         )
     }
 }

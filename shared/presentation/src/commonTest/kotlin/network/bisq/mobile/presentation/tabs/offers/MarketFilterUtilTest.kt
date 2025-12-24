@@ -6,22 +6,26 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class MarketFilterUtilTest {
-
-    private fun createTestMarket(quoteCurrency: String, quoteCurrencyName: String = "${quoteCurrency} Name"): MarketVO {
-        return MarketVO(
+    private fun createTestMarket(
+        quoteCurrency: String,
+        quoteCurrencyName: String = "$quoteCurrency Name",
+    ): MarketVO =
+        MarketVO(
             baseCurrencyCode = "BTC",
             quoteCurrencyCode = quoteCurrency,
             baseCurrencyName = "Bitcoin",
-            quoteCurrencyName = quoteCurrencyName
+            quoteCurrencyName = quoteCurrencyName,
         )
-    }
 
-    private fun createTestMarketListItem(quoteCurrency: String, numOffers: Int = 0, quoteCurrencyName: String = "${quoteCurrency} Name"): MarketListItem {
-        return MarketListItem.from(
+    private fun createTestMarketListItem(
+        quoteCurrency: String,
+        numOffers: Int = 0,
+        quoteCurrencyName: String = "$quoteCurrency Name",
+    ): MarketListItem =
+        MarketListItem.from(
             market = createTestMarket(quoteCurrency, quoteCurrencyName),
             numOffers = numOffers,
         )
-    }
 
     // Note: Tests for filterMarketsWithPriceData are skipped because they require
     // MarketPriceServiceFacade which has complex dependencies. The core filtering
@@ -30,11 +34,12 @@ class MarketFilterUtilTest {
     @Test
     fun `filterMarketsBySearch should return all markets when search is blank`() {
         // Given
-        val markets = listOf(
-            createTestMarketListItem("USD"),
-            createTestMarketListItem("EUR"),
-            createTestMarketListItem("GBP")
-        )
+        val markets =
+            listOf(
+                createTestMarketListItem("USD"),
+                createTestMarketListItem("EUR"),
+                createTestMarketListItem("GBP"),
+            )
 
         // When
         val result = MarketFilterUtil.filterMarketsBySearch(markets, "")
@@ -46,11 +51,12 @@ class MarketFilterUtilTest {
     @Test
     fun `filterMarketsBySearch should filter by currency code case insensitive`() {
         // Given
-        val markets = listOf(
-            createTestMarketListItem("USD"),
-            createTestMarketListItem("EUR"),
-            createTestMarketListItem("GBP")
-        )
+        val markets =
+            listOf(
+                createTestMarketListItem("USD"),
+                createTestMarketListItem("EUR"),
+                createTestMarketListItem("GBP"),
+            )
 
         // When
         val result = MarketFilterUtil.filterMarketsBySearch(markets, "usd")
@@ -63,11 +69,12 @@ class MarketFilterUtilTest {
     @Test
     fun `filterMarketsBySearch should filter by currency name case insensitive`() {
         // Given
-        val markets = listOf(
-            createTestMarketListItem("USD", quoteCurrencyName = "US Dollar"),
-            createTestMarketListItem("EUR", quoteCurrencyName = "Euro"),
-            createTestMarketListItem("GBP", quoteCurrencyName = "British Pound")
-        )
+        val markets =
+            listOf(
+                createTestMarketListItem("USD", quoteCurrencyName = "US Dollar"),
+                createTestMarketListItem("EUR", quoteCurrencyName = "Euro"),
+                createTestMarketListItem("GBP", quoteCurrencyName = "British Pound"),
+            )
 
         // When
         val result = MarketFilterUtil.filterMarketsBySearch(markets, "dollar")
@@ -80,11 +87,12 @@ class MarketFilterUtilTest {
     @Test
     fun `filterMarketsBySearch should return multiple matches`() {
         // Given
-        val markets = listOf(
-            createTestMarketListItem("USD", quoteCurrencyName = "US Dollar"),
-            createTestMarketListItem("CAD", quoteCurrencyName = "Canadian Dollar"),
-            createTestMarketListItem("EUR", quoteCurrencyName = "Euro")
-        )
+        val markets =
+            listOf(
+                createTestMarketListItem("USD", quoteCurrencyName = "US Dollar"),
+                createTestMarketListItem("CAD", quoteCurrencyName = "Canadian Dollar"),
+                createTestMarketListItem("EUR", quoteCurrencyName = "Euro"),
+            )
 
         // When
         val result = MarketFilterUtil.filterMarketsBySearch(markets, "dollar")

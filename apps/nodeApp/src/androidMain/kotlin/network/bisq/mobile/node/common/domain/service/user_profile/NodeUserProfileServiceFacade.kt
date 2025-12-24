@@ -23,8 +23,8 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.mapping.Mappings
+import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import java.security.KeyPair
 import java.util.Random
@@ -37,9 +37,10 @@ import kotlin.math.min
  * It uses in a in-memory model for the relevant data required for the presenter to reflect the domains state.
  * Persistence is done inside the Bisq Easy libraries.
  */
-class NodeUserProfileServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
-    ServiceFacade(), UserProfileServiceFacade {
-
+class NodeUserProfileServiceFacade(
+    private val applicationService: AndroidApplicationService.Provider,
+) : ServiceFacade(),
+    UserProfileServiceFacade {
     companion object {
         private const val AVATAR_VERSION = 0
     }
@@ -51,9 +52,10 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val userProfileService: UserProfileService by lazy { userService.userProfileService }
     private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
-    private val _ignoredProfileIds: MutableStateFlow<Set<String>> = MutableStateFlow(
-        emptySet()
-    )
+    private val _ignoredProfileIds: MutableStateFlow<Set<String>> =
+        MutableStateFlow(
+            emptySet(),
+        )
     override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredProfileIds.asStateFlow()
 
     // Properties
@@ -77,15 +79,15 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             getIgnoredUserProfileIds()
         }
 
-        numUserProfilesPin = userProfileService.numUserProfiles.addObserver { num ->
-            serviceScope.launch {
-                val value = num ?: 0
-                if (_numUserProfiles.value != value) {
-                    _numUserProfiles.value = value
+        numUserProfilesPin =
+            userProfileService.numUserProfiles.addObserver { num ->
+                serviceScope.launch {
+                    val value = num ?: 0
+                    if (_numUserProfiles.value != value) {
+                        _numUserProfiles.value = value
+                    }
                 }
             }
-        }
-
     }
 
     override suspend fun deactivate() {
@@ -96,11 +98,12 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     // API
-    override suspend fun hasUserProfile(): Boolean {
-        return userService.userIdentityService.userIdentities.isNotEmpty()
-    }
+    override suspend fun hasUserProfile(): Boolean = userService.userIdentityService.userIdentities.isNotEmpty()
 
-    override suspend fun generateKeyPair(imageSize: Int, result: (String, String, PlatformImage?) -> Unit) {
+    override suspend fun generateKeyPair(
+        imageSize: Int,
+        result: (String, String, PlatformImage?) -> Unit,
+    ) {
         keyPair = securityService.keyBundleService.generateKeyPair()
         pubKeyHash = DigestUtil.hash(keyPair!!.public.encoded)
 
@@ -113,17 +116,28 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val id = Hex.encode(pubKeyHash)
         val solution = proofOfWork!!.solution
         val nym = NymIdGenerator.generate(pubKeyHash, solution)
-        val profileIcon: PlatformImage = catHashService.getImage(
-            pubKeyHash, solution, 0, imageSize.toDouble()
-        )
+        val profileIcon: PlatformImage =
+            catHashService.getImage(
+                pubKeyHash,
+                solution,
+                0,
+                imageSize.toDouble(),
+            )
         result(id!!, nym!!, profileIcon)
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {
         withContext(Dispatchers.IO) {
-            userService.userIdentityService.createAndPublishNewUserProfile(
-                nickName, keyPair, pubKeyHash, proofOfWork, AVATAR_VERSION, "", ""
-            ).await()
+            userService.userIdentityService
+                .createAndPublishNewUserProfile(
+                    nickName,
+                    keyPair,
+                    pubKeyHash,
+                    proofOfWork,
+                    AVATAR_VERSION,
+                    "",
+                    "",
+                ).await()
         }
 
         pubKeyHash = null
@@ -134,14 +148,18 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun updateAndPublishUserProfile(
-        statement: String?, terms: String?
+        statement: String?,
+        terms: String?,
     ): Result<UserProfileVO> {
         try {
             val selectedUserIdentity = userService.userIdentityService.selectedUserIdentity
             withContext(Dispatchers.IO) {
-                userService.userIdentityService.editUserProfile(
-                    selectedUserIdentity, terms ?: "", statement ?: ""
-                ).await()
+                userService.userIdentityService
+                    .editUserProfile(
+                        selectedUserIdentity,
+                        terms ?: "",
+                        statement ?: "",
+                    ).await()
             }
 
             pubKeyHash = null
@@ -161,20 +179,17 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
     }
 
-    override suspend fun getUserIdentityIds(): List<String> {
-        return userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
-    }
+    override suspend fun getUserIdentityIds(): List<String> = userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
 
     override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
         val userProfile = getSelectedUserProfile()
         return Triple(userProfile?.nickName, userProfile?.nym, userProfile?.id)
     }
 
-    override suspend fun getSelectedUserProfile(): UserProfileVO? {
-        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
+    override suspend fun getSelectedUserProfile(): UserProfileVO? =
+        userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
             Mappings.UserProfileMapping.fromBisq2Model(it)
         }
-    }
 
     override suspend fun findUserProfile(profileId: String): UserProfileVO? {
         val userProfile = userProfileService.findUserProfile(profileId)
@@ -185,35 +200,34 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
     }
 
-    override suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO> {
-        return withContext(Dispatchers.Default) { ids.mapNotNull { id -> findUserProfile(id) } }
-    }
+    override suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO> = withContext(Dispatchers.Default) { ids.mapNotNull { id -> findUserProfile(id) } }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage {
-        return getUserProfileIcon(userProfile, AndroidNodeCatHashService.DEFAULT_SIZE)
-    }
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage = getUserProfileIcon(userProfile, AndroidNodeCatHashService.DEFAULT_SIZE)
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage {
-        return try {
+    override suspend fun getUserProfileIcon(
+        userProfile: UserProfileVO,
+        size: Number,
+    ): PlatformImage =
+        try {
             // In case we create the image we want to run it in IO context.
             // We cache the images in the catHashService if its <=120 px
             withContext(Dispatchers.IO) {
                 val ts = System.currentTimeMillis()
-                catHashService.getImage(
-                    Mappings.UserProfileMapping.toBisq2Model(userProfile),
-                    size.toDouble()
-                ).also {
-                    log.d { "Get userProfileIcon for ${userProfile.userName} took ${System.currentTimeMillis() - ts} ms. User profile ID=${userProfile.id}" }
-                }
+                catHashService
+                    .getImage(
+                        Mappings.UserProfileMapping.toBisq2Model(userProfile),
+                        size.toDouble(),
+                    ).also {
+                        log.d { "Get userProfileIcon for ${userProfile.userName} took ${System.currentTimeMillis() - ts} ms. User profile ID=${userProfile.id}" }
+                    }
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to get user profile icon; returning fallback" }
             fallbackProfileImage()
         }
-    }
 
-    private fun fallbackProfileImage(): PlatformImage {
-        return try {
+    private fun fallbackProfileImage(): PlatformImage =
+        try {
             // Try to decode a 1x1 transparent PNG
             val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
             val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
@@ -225,11 +239,8 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             bitmap.eraseColor(android.graphics.Color.TRANSPARENT)
             PlatformImage(bitmap.asImageBitmap())
         }
-    }
 
-    override suspend fun getUserPublishDate(): Long {
-        return userService.userIdentityService.selectedUserIdentity.userProfile.publishDate
-    }
+    override suspend fun getUserPublishDate(): Long = userService.userIdentityService.selectedUserIdentity.userProfile.publishDate
 
     override suspend fun userActivityDetected() {
         userService.republishUserProfileService.userActivityDetected()
@@ -251,8 +262,10 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override suspend fun ignoreUserProfile(profileId: String) {
         withContext(Dispatchers.Default) {
             require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
-            val userProfile = userProfileService.findUserProfile(profileId)
-                .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
+            val userProfile =
+                userProfileService
+                    .findUserProfile(profileId)
+                    .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
             userProfileService.ignoreUserProfile(userProfile)
             getIgnoredUserProfileIds() // updates ignoredUserIds
@@ -262,17 +275,17 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override suspend fun undoIgnoreUserProfile(profileId: String) {
         withContext(Dispatchers.Default) {
             require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
-            val userProfile = userProfileService.findUserProfile(profileId)
-                .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
+            val userProfile =
+                userProfileService
+                    .findUserProfile(profileId)
+                    .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
             userProfileService.undoIgnoreUserProfile(userProfile)
             getIgnoredUserProfileIds() // updates ignoredUserIds
         }
     }
 
-    override suspend fun isUserIgnored(profileId: String): Boolean {
-        return userProfileService.isChatUserIgnored(profileId)
-    }
+    override suspend fun isUserIgnored(profileId: String): Boolean = userProfileService.isChatUserIgnored(profileId)
 
     override suspend fun getIgnoredUserProfileIds(): Set<String> {
         val ids = userProfileService.ignoredUserProfileIds
@@ -282,7 +295,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     override suspend fun reportUserProfile(
         accusedUserProfile: UserProfileVO,
-        message: String
+        message: String,
     ): Result<Unit> {
         val trimmedMessage = message.trim()
         if (trimmedMessage.isBlank()) {

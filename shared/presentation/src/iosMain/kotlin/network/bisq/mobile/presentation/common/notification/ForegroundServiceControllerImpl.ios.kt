@@ -18,10 +18,10 @@ import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSBundle
 import platform.Foundation.NSDate
 
-
-class ForegroundServiceControllerImpl(private val notificationController: NotificationController) :
-    ForegroundServiceController, Logging {
-
+class ForegroundServiceControllerImpl(
+    private val notificationController: NotificationController,
+) : ForegroundServiceController,
+    Logging {
     companion object {
         val BACKGROUND_TASK_ID: String by lazy {
             val base = NSBundle.mainBundle.bundleIdentifier ?: "network.bisq.mobile.ios"
@@ -73,19 +73,22 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
         }
     }
 
-
-    override fun <T> registerObserver(flow: Flow<T>, onStateChange: suspend (T) -> Unit) {
+    override fun <T> registerObserver(
+        flow: Flow<T>,
+        onStateChange: suspend (T) -> Unit,
+    ) {
         if (observerJobs.contains(flow)) {
             log.w { "State flow observer already registered, skipping registration" }
             return
         }
-        val job = serviceScope.launch(Dispatchers.Default) {
-            try {
-                flow.collect { onStateChange(it) }
-            } catch (e: Exception) {
-                log.e(e) { "Error in flow observer, flow collection terminated" }
+        val job =
+            serviceScope.launch(Dispatchers.Default) {
+                try {
+                    flow.collect { onStateChange(it) }
+                } catch (e: Exception) {
+                    log.e(e) { "Error in flow observer, flow collection terminated" }
+                }
             }
-        }
         observerJobs[flow] = job
     }
 
@@ -126,20 +129,21 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
 
     @OptIn(ExperimentalForeignApi::class)
     private fun scheduleBackgroundTask() {
-        val request = BGProcessingTaskRequest(BACKGROUND_TASK_ID).apply {
-            requiresNetworkConnectivity = true
-            earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = 10.0)
-        }
+        val request =
+            BGProcessingTaskRequest(BACKGROUND_TASK_ID).apply {
+                requiresNetworkConnectivity = true
+                earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = 10.0)
+            }
         BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
         logDebug("Background task scheduled")
     }
 
     private fun logDebug(message: String) {
-        logScope.launch { // (Dispatchers.Main)
+        logScope.launch {
+            // (Dispatchers.Main)
             log.d { message }
         }
     }
-
 
     // in iOS this needs to be done on app init or it will throw exception
     fun registerBackgroundTask() {
@@ -151,7 +155,7 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
         runCatching {
             BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
                 identifier = BACKGROUND_TASK_ID,
-                usingQueue = null
+                usingQueue = null,
             ) { task ->
                 handleBackgroundTask(task as BGProcessingTask)
             }

@@ -42,7 +42,7 @@ object OfferItemPresentationVOFactory {
         userIdentityService: UserIdentityService,
         marketPriceService: MarketPriceService,
         reputationService: ReputationService,
-        bisqEasyOfferbookMessage: BisqEasyOfferbookMessage
+        bisqEasyOfferbookMessage: BisqEasyOfferbookMessage,
     ): OfferItemPresentationDto {
         val bisqEasyOffer = bisqEasyOfferbookMessage.bisqEasyOffer.get()
         val bisqEasyOfferVO = Mappings.BisqEasyOfferMapping.fromBisq2Model(bisqEasyOffer)
@@ -57,43 +57,55 @@ object OfferItemPresentationVOFactory {
         // For now, we get also the formatted values as we have not the complex formatters in mobile impl. yet.
         // We might need to replicate the formatters anyway later and then those fields could be removed
         val date = bisqEasyOfferbookMessage.date
-        val formattedDate = DateFormatter.formatDateTime(
-            Date(date), DateFormat.MEDIUM, DateFormat.SHORT,
-            true, " " + Res.get("temporal.at") + " "
-        )
+        val formattedDate =
+            DateFormatter.formatDateTime(
+                Date(date),
+                DateFormat.MEDIUM,
+                DateFormat.SHORT,
+                true,
+                " " + Res.get("temporal.at") + " ",
+            )
         val amountSpec = bisqEasyOffer.amountSpec
         val priceSpec = bisqEasyOffer.priceSpec
         val hasAmountRange = amountSpec is RangeAmountSpec
         val market = bisqEasyOffer.market
-        val formattedQuoteAmount = OfferAmountFormatter.formatQuoteAmount(
-            marketPriceService,
-            amountSpec,
-            priceSpec,
-            market,
-            hasAmountRange,
-            true
-        )
-        val formattedBaseAmount = OfferAmountFormatter.formatBaseAmount(
-            marketPriceService,
-            amountSpec,
-            priceSpec,
-            market,
-            hasAmountRange,
-            true,
-            false
-        )
-        val formattedPrice = PriceUtil.findQuote(marketPriceService, bisqEasyOffer)
-            .map { PriceFormatter.format(it) }
-            .orElse("")
+        val formattedQuoteAmount =
+            OfferAmountFormatter.formatQuoteAmount(
+                marketPriceService,
+                amountSpec,
+                priceSpec,
+                market,
+                hasAmountRange,
+                true,
+            )
+        val formattedBaseAmount =
+            OfferAmountFormatter.formatBaseAmount(
+                marketPriceService,
+                amountSpec,
+                priceSpec,
+                market,
+                hasAmountRange,
+                true,
+                false,
+            )
+        val formattedPrice =
+            PriceUtil
+                .findQuote(marketPriceService, bisqEasyOffer)
+                .map { PriceFormatter.format(it) }
+                .orElse("")
         val formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(priceSpec, false)
-        val quoteSidePaymentMethods: List<String> = PaymentMethodSpecUtil.getPaymentMethods(bisqEasyOffer.quoteSidePaymentMethodSpecs)
-            .stream()
-            .map { method: FiatPaymentMethod -> method.name }
-            .collect(Collectors.toList())
-        val baseSidePaymentMethods = PaymentMethodSpecUtil.getPaymentMethods(bisqEasyOffer.baseSidePaymentMethodSpecs)
-            .stream()
-            .map { method: BitcoinPaymentMethod -> method.name }
-            .collect(Collectors.toList())
+        val quoteSidePaymentMethods: List<String> =
+            PaymentMethodSpecUtil
+                .getPaymentMethods(bisqEasyOffer.quoteSidePaymentMethodSpecs)
+                .stream()
+                .map { method: FiatPaymentMethod -> method.name }
+                .collect(Collectors.toList())
+        val baseSidePaymentMethods =
+            PaymentMethodSpecUtil
+                .getPaymentMethods(bisqEasyOffer.baseSidePaymentMethodSpecs)
+                .stream()
+                .map { method: BitcoinPaymentMethod -> method.name }
+                .collect(Collectors.toList())
 
         val reputationScore = reputationService.getReputationScore(authorUserProfileId)
         val reputationScoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(reputationScore)
@@ -109,7 +121,7 @@ object OfferItemPresentationVOFactory {
             formattedPriceSpec,
             quoteSidePaymentMethods,
             baseSidePaymentMethods,
-            reputationScoreVO
+            reputationScoreVO,
         )
     }
 }

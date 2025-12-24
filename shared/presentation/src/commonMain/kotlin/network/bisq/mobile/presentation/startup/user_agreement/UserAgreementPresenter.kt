@@ -7,17 +7,16 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 
 open class UserAgreementPresenter(
     mainPresenter: MainPresenter,
     private val settingsServiceFacade: SettingsServiceFacade,
-) : BasePresenter(mainPresenter), IAgreementPresenter {
-
+) : BasePresenter(mainPresenter),
+    IAgreementPresenter {
     private val _accepted = MutableStateFlow(false)
     override val isAccepted: StateFlow<Boolean> get() = _accepted.asStateFlow()
-
 
     override fun onAccepted(accepted: Boolean) {
         _accepted.value = accepted

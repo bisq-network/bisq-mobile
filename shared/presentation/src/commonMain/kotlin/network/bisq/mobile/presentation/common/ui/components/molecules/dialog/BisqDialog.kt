@@ -26,26 +26,28 @@ fun BisqDialog(
     padding: Dp = BisqUIConstants.ScreenPadding2X,
     marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-    content: @Composable ColumnScope.() -> Unit = {}
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(dismissOnClickOutside = dismissOnClickOutside)
+        properties = DialogProperties(dismissOnClickOutside = dismissOnClickOutside),
     ) {
         Card(
             modifier = Modifier.wrapContentHeight(),
-            colors = CardColors(
-                containerColor = BisqTheme.colors.dark_grey30,
-                contentColor = Color.Unspecified,
-                disabledContainerColor = Color.Unspecified,
-                disabledContentColor = Color.Unspecified,
-            ),
+            colors =
+                CardColors(
+                    containerColor = BisqTheme.colors.dark_grey30,
+                    contentColor = Color.Unspecified,
+                    disabledContainerColor = Color.Unspecified,
+                    disabledContentColor = Color.Unspecified,
+                ),
             shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
         ) {
             Column(
-                modifier = Modifier
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState()),
+                modifier =
+                    Modifier
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState()),
                 horizontalAlignment = horizontalAlignment,
             ) {
                 content()

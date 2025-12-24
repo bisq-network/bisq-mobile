@@ -21,4 +21,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BaseSideFixedAmountSpec")
-data class BaseSideFixedAmountSpecVO(override val amount: Long) : FixedAmountSpecVO
+data class BaseSideFixedAmountSpecVO(
+    override val amount: Long,
+) : FixedAmountSpecVO

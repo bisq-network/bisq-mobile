@@ -11,13 +11,13 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 @Composable
 fun UnorderedList(text: String) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = "\u2022",
-            modifier = Modifier.padding(start = 20.dp, end = 10.dp)
+            modifier = Modifier.padding(start = 20.dp, end = 10.dp),
         )
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = text,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }

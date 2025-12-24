@@ -29,21 +29,19 @@ import java.security.GeneralSecurityException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-
 private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
-const val backupFileName = "bisq_db_from_backup"
-const val backupPrefix = "bisq2_mobile-backup-"
+const val BACKUP_FILE_NAME = "bisq_db_from_backup"
+const val BACKUP_PREFIX = "bisq2_mobile-backup-"
 
 data class RestorePreFlightResult(
     val errorMessage: String? = null,
-    val passwordRequired: Boolean = false
+    val passwordRequired: Boolean = false,
 )
 
 class NodeBackupServiceFacade(
     private val nodeApplicationLifecycleService: NodeApplicationLifecycleService,
-    private val context: Context
+    private val context: Context,
 ) : ServiceFacade() {
-
     fun backupDataDir(password: String?): Deferred<Throwable?> {
         return serviceScope.async(Dispatchers.IO) {
             try {
@@ -58,7 +56,7 @@ class NodeBackupServiceFacade(
                 copyDirectory(
                     sourceDir = dbDir,
                     destDir = destDir,
-                    excludedDirs = listOf("cache", "network_db")
+                    excludedDirs = listOf("cache", "network_db"),
                 )
 
                 val zipFile = File.createTempFile("bisq-backup-", ".zip", cacheDir)
@@ -68,7 +66,8 @@ class NodeBackupServiceFacade(
                 // Clean up any previously exported backups in the share directory
                 deleteFileInDirectory(
                     targetDir = shareDir,
-                    fileFilter = { it.name.startsWith(backupPrefix) })
+                    fileFilter = { it.name.startsWith(BACKUP_PREFIX) },
+                )
 
                 val sanitizedPassword = password?.trim()?.takeIf { it.isNotEmpty() }
                 val useEncryption = !sanitizedPassword.isNullOrEmpty()
@@ -117,7 +116,8 @@ class NodeBackupServiceFacade(
             try {
                 // Persist access across restarts
                 context.contentResolver.takePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
                 )
             } catch (e: SecurityException) {
                 log.e(e) { "takePersistableUriPermission failed" }
@@ -129,16 +129,18 @@ class NodeBackupServiceFacade(
                 val fileName = getFileName(context, uri)
                 passwordRequired = fileName.endsWith(".enc")
 
-
-                val isValid = fileName.startsWith(backupPrefix) &&
+                val isValid =
+                    fileName.startsWith(BACKUP_PREFIX) &&
                         (passwordRequired || fileName.endsWith(".zip"))
 
                 if (!isValid) {
                     throw IllegalStateException("mobile.resources.restore.error.invalidFileName".i18n())
                 }
 
-                val size = context.contentResolver.openFileDescriptor(uri, "r")
-                    .use { it?.statSize } ?: 0
+                val size =
+                    context.contentResolver
+                        .openFileDescriptor(uri, "r")
+                        .use { it?.statSize } ?: 0
                 if (size > MAX_BACKUP_SIZE_BYTES) {
                     throw IllegalStateException("mobile.resources.restore.error.fileSizeTooLarge".i18n())
                 } else if (size <= 0L) {
@@ -146,9 +148,10 @@ class NodeBackupServiceFacade(
                 }
 
                 // we just read a few bytes to ensure we can read it
-                val bytes = context.contentResolver.openInputStream(uri)?.use { input ->
-                    input.readNBytes(4)
-                }
+                val bytes =
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        input.readNBytes(4)
+                    }
                 if (bytes == null || bytes.isEmpty()) {
                     throw IllegalStateException("mobile.resources.restore.error.cannotReadFile".i18n())
                 }
@@ -159,7 +162,7 @@ class NodeBackupServiceFacade(
                 errorMessage = "mobile.resources.restore.error".i18n(e.message ?: e.toString())
                 return@withContext RestorePreFlightResult(
                     errorMessage = errorMessage,
-                    passwordRequired = passwordRequired
+                    passwordRequired = passwordRequired,
                 )
             }
         }
@@ -175,7 +178,7 @@ class NodeBackupServiceFacade(
             try {
                 val filesDir = context.filesDir
 
-                val backupDir = File(filesDir, backupFileName)
+                val backupDir = File(filesDir, BACKUP_FILE_NAME)
                 if (backupDir.exists()) backupDir.deleteRecursively()
 
                 inputStream = context.contentResolver.openInputStream(uri)
@@ -184,10 +187,10 @@ class NodeBackupServiceFacade(
                 var decryptedTempFile: File? = null
                 if (!password.isNullOrEmpty()) {
                     try {
-
-                        val decryptedFile = inputStream.use {
-                            decrypt(it, password)
-                        }
+                        val decryptedFile =
+                            inputStream.use {
+                                decrypt(it, password)
+                            }
                         decryptedTempFile = decryptedFile
                         inputStream = decryptedFile.inputStream()
                     } catch (e: Exception) {
@@ -246,10 +249,13 @@ class NodeBackupServiceFacade(
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
         val date = LocalDateTime.now().format(formatter)
         val postFix = if (useEncryption) ".enc" else ".zip"
-        return backupPrefix + date + postFix
+        return BACKUP_PREFIX + date + postFix
     }
 
-    private fun getFileName(context: Context, uri: Uri): String {
+    private fun getFileName(
+        context: Context,
+        uri: Uri,
+    ): String {
         var fileName = "unknown"
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)

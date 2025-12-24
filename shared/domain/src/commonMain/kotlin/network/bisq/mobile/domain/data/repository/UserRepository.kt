@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.first
 import network.bisq.mobile.domain.data.model.User
 
 interface UserRepository {
-
     val data: Flow<User>
 
     suspend fun fetch() = data.first()

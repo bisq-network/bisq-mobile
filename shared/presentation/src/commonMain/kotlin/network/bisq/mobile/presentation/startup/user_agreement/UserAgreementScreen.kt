@@ -20,8 +20,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.atoms.list.OrderedList
 import network.bisq.mobile.presentation.common.ui.components.atoms.list.UnorderedList
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 interface IAgreementPresenter : ViewPresenter {
@@ -45,26 +45,26 @@ fun UserAgreementScreen() {
         bottomBar = {
             Column(
                 modifier = Modifier.padding(all = BisqUIConstants.ScreenPaddingHalf),
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
             ) {
                 BisqCheckbox(
                     checked = isAccepted,
                     onCheckedChange = { presenter.onAccepted(it) },
                     label = "tac.confirm".i18n(),
-                    modifier = Modifier.semantics { contentDescription = "agreement_accept_checkbox" }
+                    modifier = Modifier.semantics { contentDescription = "agreement_accept_checkbox" },
                 )
                 BisqButton(
-                    "tac.accept".i18n(),
+                    text = "tac.accept".i18n(),
                     disabled = !isAccepted,
                     fullWidth = true,
                     onClick = { presenter.onAcceptTerms() },
-                    modifier = Modifier.semantics { contentDescription = "agreement_accept_button" }
+                    modifier = Modifier.semantics { contentDescription = "agreement_accept_button" },
                 )
             }
-        }
+        },
     ) {
         BisqGap.V1()
-        BisqText.h1Light("tac.headline".i18n())
+        BisqText.H1Light("tac.headline".i18n())
         BisqGap.V2()
 
         UserAgreementContent()
@@ -80,8 +80,9 @@ fun UserAgreementContent() {
         OrderedList("4.", "mobile.terms.point4".i18n())
         OrderedList("5.", "mobile.terms.point5".i18n())
         OrderedList(
-            "6.", "mobile.terms.point6".i18n(),
-            includeBottomPadding = false
+            "6.",
+            "mobile.terms.point6".i18n(),
+            includeBottomPadding = false,
         )
 
         BisqGap.V1()

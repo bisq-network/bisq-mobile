@@ -24,7 +24,7 @@ dependencyResolutionManagement {
         mavenCentral()
         // always, for faster builds
         mavenLocal()
-        
+
         // Check if we're running in CI environment
         val isCi = System.getenv("CI") == "true"
         val mavenUrl = System.getenv("MAVEN_URL")

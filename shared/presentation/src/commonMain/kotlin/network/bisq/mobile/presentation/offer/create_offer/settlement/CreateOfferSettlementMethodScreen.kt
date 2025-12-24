@@ -35,7 +35,7 @@ fun CreateOfferSettlementMethodScreen() {
         closeAction = true,
         onConfirmedClose = presenter::onClose,
     ) {
-        BisqText.h3Light("mobile.bisqEasy.createOffer.paymentMethods.headline.btc".i18n())
+        BisqText.H3Light("mobile.bisqEasy.createOffer.paymentMethods.headline.btc".i18n())
 
         BisqGap.V1()
 

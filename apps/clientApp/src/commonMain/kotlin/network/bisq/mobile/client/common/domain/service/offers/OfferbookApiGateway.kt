@@ -18,21 +18,13 @@ class OfferbookApiGateway(
     private val basePath = "offerbook"
 
     // Requests
-    suspend fun getMarkets(): Result<List<MarketVO>> {
-        return webSocketApiClient.get("$basePath/markets")
-    }
+    suspend fun getMarkets(): Result<List<MarketVO>> = webSocketApiClient.get("$basePath/markets")
 
-    suspend fun getNumOffersByMarketCode(): Result<Map<String, Int>> {
-        return webSocketApiClient.get("$basePath/markets/offers/count")
-    }
+    suspend fun getNumOffersByMarketCode(): Result<Map<String, Int>> = webSocketApiClient.get("$basePath/markets/offers/count")
 
-    suspend fun getOffers(code: String): Result<List<OfferItemPresentationDto>> {
-        return webSocketApiClient.get("$basePath/markets/$code/offers")
-    }
+    suspend fun getOffers(code: String): Result<List<OfferItemPresentationDto>> = webSocketApiClient.get("$basePath/markets/$code/offers")
 
-    suspend fun deleteOffer(offerId: String): Result<Unit> {
-        return webSocketApiClient.delete("$basePath/offers/$offerId")
-    }
+    suspend fun deleteOffer(offerId: String): Result<Unit> = webSocketApiClient.delete("$basePath/offers/$offerId")
 
     suspend fun publishOffer(
         direction: DirectionEnum,
@@ -41,32 +33,27 @@ class OfferbookApiGateway(
         fiatPaymentMethods: Set<String>,
         amountSpec: AmountSpecVO,
         priceSpec: PriceSpecVO,
-        supportedLanguageCodes: Set<String>
+        supportedLanguageCodes: Set<String>,
     ): Result<CreateOfferResponse> {
-        val createOfferRequest = CreateOfferRequest(
-            direction,
-            market,
-            bitcoinPaymentMethods,
-            fiatPaymentMethods,
-            amountSpec,
-            priceSpec,
-            supportedLanguageCodes
-        )
+        val createOfferRequest =
+            CreateOfferRequest(
+                direction,
+                market,
+                bitcoinPaymentMethods,
+                fiatPaymentMethods,
+                amountSpec,
+                priceSpec,
+                supportedLanguageCodes,
+            )
         return webSocketApiClient.post("$basePath/offers", createOfferRequest)
     }
 
-
     // Subscriptions
-    suspend fun subscribeNumOffers(): WebSocketEventObserver {
-        return webSocketClientService.subscribe(Topic.NUM_OFFERS)
-    }
+    suspend fun subscribeNumOffers(): WebSocketEventObserver = webSocketClientService.subscribe(Topic.NUM_OFFERS)
 
     /**
      * @param code  The quote currency code for which we want to receive updates.
      *              If null or empty string we receive for all markets the offer updates.
      */
-    suspend fun subscribeOffers(code: String? = null): WebSocketEventObserver {
-        return webSocketClientService.subscribe(Topic.OFFERS, code)
-    }
+    suspend fun subscribeOffers(code: String? = null): WebSocketEventObserver = webSocketClientService.subscribe(Topic.OFFERS, code)
 }
-

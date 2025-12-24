@@ -19,4 +19,7 @@ package network.bisq.mobile.client.common.domain.service.explorer
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ExplorerOutputDto(val address: String, val value: Long)
+data class ExplorerOutputDto(
+    val address: String,
+    val value: Long,
+)

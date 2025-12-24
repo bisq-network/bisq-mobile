@@ -7,7 +7,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
 private sealed class AwaitResult<T> {
-    data class Value<T>(val value: T) : AwaitResult<T>()
+    data class Value<T>(
+        val value: T,
+    ) : AwaitResult<T>()
+
     class Cancelled<T> : AwaitResult<T>()
 }
 
@@ -21,13 +24,13 @@ private sealed class AwaitResult<T> {
 suspend fun <T> awaitOrCancel(
     valueFlow: Flow<T>,
     cancelFlow: Flow<*>,
-    cancellationMessage: String = "Operation cancelled"
+    cancellationMessage: String = "Operation cancelled",
 ): T {
-
-    val result = merge(
-        valueFlow.map { AwaitResult.Value(it) },
-        cancelFlow.map { AwaitResult.Cancelled() }
-    ).first()
+    val result =
+        merge(
+            valueFlow.map { AwaitResult.Value(it) },
+            cancelFlow.map { AwaitResult.Cancelled() },
+        ).first()
 
     return when (result) {
         is AwaitResult.Value -> result.value
@@ -45,11 +48,11 @@ suspend fun <T> awaitOrNull(
     valueFlow: Flow<T>,
     cancelFlow: Flow<*>,
 ): T? {
-
-    val result = merge(
-        valueFlow.map { AwaitResult.Value(it) },
-        cancelFlow.map { AwaitResult.Cancelled() }
-    ).first()
+    val result =
+        merge(
+            valueFlow.map { AwaitResult.Value(it) },
+            cancelFlow.map { AwaitResult.Cancelled() },
+        ).first()
 
     return when (result) {
         is AwaitResult.Value -> result.value

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail
 
 import androidx.compose.animation.AnimatedVisibility
@@ -8,36 +10,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateLightning3bPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1a
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_b.BuyerState1b
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2a
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2aPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_b.BuyerState2b
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_b.BuyerState2bPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_a.BuyerState3a
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_a.BuyerState3aPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_4.BuyerState4
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateLightning3b
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateMainChain3b
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateMainChain3bPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_1.SellerState1
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_1.SellerState1Presenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_a.SellerState2a
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_a.SellerState2aPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_b.SellerState2b
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_b.SellerState2bPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_a.SellerState3a
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_a.SellerState3aPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_4.SellerState4
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateLightning3b
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateLightning3bPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateMainChain3b
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateMainChain3bPresenter
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.BUYER_STATE1A
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.BUYER_STATE1B
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.BUYER_STATE3A
@@ -51,6 +26,33 @@ import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.Tr
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.SELLER_STATE4
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.SELLER_STATE_LIGHTNING3B
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.SELLER_STATE_MAIN_CHAIN3B
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1a
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_b.BuyerState1b
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2a
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2aPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_b.BuyerState2b
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_b.BuyerState2bPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_a.BuyerState3a
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_a.BuyerState3aPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateLightning3b
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateLightning3bPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateMainChain3b
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b.BuyerStateMainChain3bPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_4.BuyerState4
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_1.SellerState1
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_1.SellerState1Presenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_a.SellerState2a
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_a.SellerState2aPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_b.SellerState2b
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_2.state_b.SellerState2bPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_a.SellerState3a
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_a.SellerState3aPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateLightning3b
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateLightning3bPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateMainChain3b
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b.SellerStateMainChain3bPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_4.SellerState4
 
 @Composable
 fun TradeFlowPane(presenter: TradeFlowPresenter) {
@@ -59,7 +61,7 @@ fun TradeFlowPane(presenter: TradeFlowPresenter) {
 
     val presenterForPhase = presenter.presenterForPhase(tradePhaseState)
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         when (tradePhaseState) {
             SELLER_STATE4 -> {
@@ -83,9 +85,9 @@ fun TradeFlowPane(presenter: TradeFlowPresenter) {
                         isLastIndex = isLastIndex,
                     ) { modifier ->
                         Column(modifier = modifier) {
-                            BisqText.baseRegular(
+                            BisqText.BaseRegular(
                                 text = title,
-                                color = titleColor
+                                color = titleColor,
                             )
 
                             AnimatedVisibility(visible = isActive) {
@@ -103,13 +105,15 @@ fun TradeFlowPane(presenter: TradeFlowPresenter) {
                                         when (tradePhaseState) {
                                             SELLER_STATE2A -> SellerState2a(presenterForPhase as SellerState2aPresenter)
                                             SELLER_STATE2B -> SellerState2b(presenterForPhase as SellerState2bPresenter)
-                                            TradeFlowPresenter.TradePhaseState.BUYER_STATE2A -> BuyerState2a(
-                                                presenterForPhase as BuyerState2aPresenter
-                                            )
+                                            TradeFlowPresenter.TradePhaseState.BUYER_STATE2A ->
+                                                BuyerState2a(
+                                                    presenterForPhase as BuyerState2aPresenter,
+                                                )
 
-                                            TradeFlowPresenter.TradePhaseState.BUYER_STATE2B -> BuyerState2b(
-                                                presenterForPhase as BuyerState2bPresenter
-                                            )
+                                            TradeFlowPresenter.TradePhaseState.BUYER_STATE2B ->
+                                                BuyerState2b(
+                                                    presenterForPhase as BuyerState2bPresenter,
+                                                )
 
                                             else -> {}
                                         }
@@ -118,22 +122,26 @@ fun TradeFlowPane(presenter: TradeFlowPresenter) {
                                     TradeFlowPresenter.TradeFlowStep.BITCOIN_TRANSFER -> {
                                         when (tradePhaseState) {
                                             SELLER_STATE3A -> SellerState3a(presenterForPhase as SellerState3aPresenter)
-                                            SELLER_STATE_MAIN_CHAIN3B -> SellerStateMainChain3b(
-                                                presenterForPhase as SellerStateMainChain3bPresenter
-                                            )
+                                            SELLER_STATE_MAIN_CHAIN3B ->
+                                                SellerStateMainChain3b(
+                                                    presenterForPhase as SellerStateMainChain3bPresenter,
+                                                )
 
-                                            SELLER_STATE_LIGHTNING3B -> SellerStateLightning3b(
-                                                presenterForPhase as SellerStateLightning3bPresenter
-                                            )
+                                            SELLER_STATE_LIGHTNING3B ->
+                                                SellerStateLightning3b(
+                                                    presenterForPhase as SellerStateLightning3bPresenter,
+                                                )
 
                                             BUYER_STATE3A -> BuyerState3a(presenterForPhase as BuyerState3aPresenter)
-                                            BUYER_STATE_MAIN_CHAIN3B -> BuyerStateMainChain3b(
-                                                presenterForPhase as BuyerStateMainChain3bPresenter
-                                            )
+                                            BUYER_STATE_MAIN_CHAIN3B ->
+                                                BuyerStateMainChain3b(
+                                                    presenterForPhase as BuyerStateMainChain3bPresenter,
+                                                )
 
-                                            BUYER_STATE_LIGHTNING3B -> BuyerStateLightning3b(
-                                                presenterForPhase as BuyerStateLightning3bPresenter
-                                            )
+                                            BUYER_STATE_LIGHTNING3B ->
+                                                BuyerStateLightning3b(
+                                                    presenterForPhase as BuyerStateLightning3bPresenter,
+                                                )
 
                                             else -> {}
                                         }

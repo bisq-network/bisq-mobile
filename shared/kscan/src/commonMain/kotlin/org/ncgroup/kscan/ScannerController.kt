@@ -1,6 +1,7 @@
 package org.ncgroup.kscan
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
@@ -21,9 +22,9 @@ import androidx.compose.runtime.setValue
 class ScannerController {
     var torchEnabled by mutableStateOf(false)
 
-    var zoomRatio by mutableStateOf(1f)
+    var zoomRatio by mutableFloatStateOf(1f)
 
-    var maxZoomRatio by mutableStateOf(1f)
+    var maxZoomRatio by mutableFloatStateOf(1f)
         internal set
 
     internal var onTorchChange: ((Boolean) -> Unit)? = null

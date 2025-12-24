@@ -19,12 +19,12 @@ fun GenericErrorOverlay() {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(BisqTheme.colors.backgroundColor.copy(alpha = 0.5f)) // Dim the background
+                .background(BisqTheme.colors.backgroundColor.copy(alpha = 0.5f)), // Dim the background
         ) {
             ReportBugPanel(
                 errorMessage = it,
                 isUncaughtException = isUncaughtException,
-                onClose = { GenericErrorHandler.clearGenericError() }
+                onClose = { GenericErrorHandler.clearGenericError() },
             )
         }
     }

@@ -19,7 +19,7 @@ interface CoroutineJobsManager {
      * Dispose all managed jobs.
      */
     suspend fun dispose()
-    
+
     /**
      * Get the coroutine scope. prefers Dispatchers.Main.immediate (or Dispatchers.Main), falling back to a platform-safe context when Main is unavailable
      */
@@ -36,22 +36,24 @@ interface CoroutineJobsManager {
 /**
  * Implementation of [CoroutineJobsManager] that manages coroutine jobs and their lifecycle.
  */
-class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
-    private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
-        log.e(exception) { "Uncaught coroutine exception" }
+class DefaultCoroutineJobsManager :
+    CoroutineJobsManager,
+    Logging {
+    private val exceptionHandler =
+        CoroutineExceptionHandler { _, exception ->
+            log.e(exception) { "Uncaught coroutine exception" }
 
-        // Handle the exception gracefully
-        try {
-            onCoroutineException?.invoke(exception)
-        } catch (e: Exception) {
-            log.e(e) { "Error in coroutine exception handler" }
+            // Handle the exception gracefully
+            try {
+                onCoroutineException?.invoke(exception)
+            } catch (e: Exception) {
+                log.e(e) { "Error in coroutine exception handler" }
+            }
         }
-    }
 
     // TODO we might need to make the whole manager platform-specific to cater for iOS properly
     // Platform-aware scope creation
     private val isIOS = getPlatformInfo().type == PlatformType.IOS
-
 
     private var scope: CoroutineScope = createScope()
 
@@ -117,11 +119,10 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
         }
     }
 
-    private fun createDispatcher(): MainCoroutineDispatcher {
-        return try {
+    private fun createDispatcher(): MainCoroutineDispatcher =
+        try {
             Dispatchers.Main.immediate
         } catch (_: UnsupportedOperationException) {
             Dispatchers.Main
         }
-    }
 }

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b
 
 import androidx.compose.foundation.layout.Arrangement
@@ -25,8 +27,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.CircularLoadi
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.TxConfirmationState.CONFIRMED
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.TxConfirmationState.FAILED
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.TxConfirmationState.IDLE
@@ -47,7 +49,7 @@ fun SellerStateMainChain3b(
     val blockExplorer by presenter.blockExplorer.collectAsState()
     val txId = selectedTrade?.bisqEasyTradeModel?.paymentProof?.value ?: "data.na".i18n()
     val waitingText =
-        "bisqEasy.tradeState.info.seller.phase3b.balance.prompt".i18n(txId)  // Waiting for blockchain data...
+        "bisqEasy.tradeState.info.seller.phase3b.balance.prompt".i18n(txId) // Waiting for blockchain data...
     val balanceLabel = "bisqEasy.tradeState.info.seller.phase3b.balance".i18n() // Bitcoin payment
     val skip by presenter.skip.collectAsState()
     val amountNotMatchingDialogText by presenter.amountNotMatchingDialogText.collectAsState()
@@ -56,19 +58,19 @@ fun SellerStateMainChain3b(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_bitcoin_confirmation,
-                isLoading = true
+                isLoading = true,
             )
             // Waiting for blockchain confirmation
-            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase3b.headline.MAIN_CHAIN".i18n())
+            BisqText.H5Light("bisqEasy.tradeState.info.seller.phase3b.headline.MAIN_CHAIN".i18n())
         }
 
         Column {
             BisqGap.V1()
-            BisqText.baseLightGrey(
+            BisqText.BaseLightGrey(
                 // The Bitcoin payment require at least 1 blockchain confirmation to be considered complete.
                 "bisqEasy.tradeState.info.seller.phase3b.info.MAIN_CHAIN".i18n(),
             )
@@ -79,15 +81,15 @@ fun SellerStateMainChain3b(
                 label = "bisqEasy.tradeState.info.phase3b.txId".i18n(),
                 value = txId,
                 disabled = true,
-                showCopy = true
+                showCopy = true,
             )
 
             BisqGap.VQuarter()
 
-
             when (confirmationState) {
                 IDLE,
-                REQUEST_STARTED -> {
+                REQUEST_STARTED,
+                -> {
                     BisqTextField(
                         label = balanceLabel,
                         placeholder = waitingText,
@@ -98,7 +100,7 @@ fun SellerStateMainChain3b(
                 }
 
                 IN_MEMPOOL -> {
-                    //todo
+                    // todo
                     BisqTextField(
                         label = balanceLabel,
                         value = btcBalance,
@@ -109,19 +111,19 @@ fun SellerStateMainChain3b(
                 }
 
                 CONFIRMED -> {
-                    //todo
+                    // todo
                     BisqTextField(
                         label = balanceLabel,
                         value = btcBalance,
                         keyboardType = KeyboardType.Decimal,
                         helperText = "bisqEasy.tradeState.info.phase3b.balance.help.confirmed".i18n(), // Transaction is confirmed
-                        //color = BisqTheme.colors.primary,
+                        // color = BisqTheme.colors.primary,
                         disabled = true,
                     )
                 }
 
                 FAILED -> {
-                    //todo
+                    // todo
                     BisqTextField(
                         label = balanceLabel,
                         placeholder = waitingText,
@@ -131,7 +133,7 @@ fun SellerStateMainChain3b(
                                 return@BisqTextField explorerRequestError
                             }
                             return@BisqTextField null
-                        }
+                        },
                     )
                 }
             }
@@ -145,7 +147,7 @@ fun SellerStateMainChain3b(
                     AutoResizeText(
                         text = buttonText,
                         color = contentColor,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 },
                 onClick = { presenter.onCtaClick() },
@@ -161,7 +163,7 @@ fun SellerStateMainChain3b(
                 dismissButtonText = "action.close".i18n(),
                 verticalButtonPlacement = true,
                 onConfirm = { presenter.onCompleteTrade() },
-                onDismiss = { presenter.onAmountNotMatchingDialogDismiss() }
+                onDismiss = { presenter.onAmountNotMatchingDialogDismiss() },
             )
         }
     }

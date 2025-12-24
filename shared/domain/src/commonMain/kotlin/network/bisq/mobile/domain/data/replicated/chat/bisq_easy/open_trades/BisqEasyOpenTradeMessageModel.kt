@@ -20,13 +20,13 @@ class BisqEasyOpenTradeMessageModel(
     myUserProfile: UserProfileVO,
     chatReactions: List<BisqEasyOpenTradeMessageReactionVO>,
 ) {
-
     val senderUserProfile: UserProfileVO = bisqEasyOpenTradeMessage.senderUserProfile
     private val myUserProfileId = myUserProfile.id
 
-    private val _chatReactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = MutableStateFlow(
-        chatReactions
-    )
+    private val _chatReactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> =
+        MutableStateFlow(
+            chatReactions,
+        )
     val chatReactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> get() = _chatReactions.asStateFlow()
 
     // Delegates of BisqEasyOpenTradeMessageDto
@@ -54,9 +54,7 @@ class BisqEasyOpenTradeMessageModel(
     private val _messageDeliveryStatus = MutableStateFlow<Map<String, MessageDeliveryInfoVO>>(emptyMap())
     val messageDeliveryStatus = _messageDeliveryStatus.asStateFlow()
 
-    fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean {
-        return myUserProfileId == reaction.senderUserProfile.id
-    }
+    fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean = myUserProfileId == reaction.senderUserProfile.id
 
     fun setReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) {
         _chatReactions.value = chatMessageReactions
@@ -67,8 +65,8 @@ class BisqEasyOpenTradeMessageModel(
     }
 
     fun addMessageDeliveryStatusObserver(messageDeliveryServiceFacade: MessageDeliveryServiceFacade) {
-        messageDeliveryServiceFacade.addMessageDeliveryStatusObserver(bisqEasyOpenTradeMessage.messageId) {
-            entry -> _messageDeliveryStatus.update { it + entry }
+        messageDeliveryServiceFacade.addMessageDeliveryStatusObserver(bisqEasyOpenTradeMessage.messageId) { entry ->
+            _messageDeliveryStatus.update { it + entry }
         }
     }
 }

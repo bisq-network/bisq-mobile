@@ -14,5 +14,5 @@ data class TradePropertiesDto(
     var errorMessage: String? = null,
     var errorStackTrace: String? = null,
     var peersErrorMessage: String? = null,
-    var peersErrorStackTrace: String? = null
+    var peersErrorStackTrace: String? = null,
 )

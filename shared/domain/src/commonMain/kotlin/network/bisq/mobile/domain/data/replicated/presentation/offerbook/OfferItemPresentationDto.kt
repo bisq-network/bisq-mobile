@@ -29,7 +29,7 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
 data class OfferItemPresentationDto(
     val bisqEasyOffer: BisqEasyOfferVO,
     val isMyOffer: Boolean,
-    val userProfile: UserProfileVO,  // The userName inside userProfile can change when multiple nicknames are in the network
+    val userProfile: UserProfileVO, // The userName inside userProfile can change when multiple nicknames are in the network
     val formattedDate: String,
     val formattedQuoteAmount: String,
     val formattedBaseAmount: String, // Can change by market price changes if float or market price is used
@@ -37,5 +37,5 @@ data class OfferItemPresentationDto(
     val formattedPriceSpec: String,
     val quoteSidePaymentMethods: List<String>,
     val baseSidePaymentMethods: List<String>,
-    val reputationScore: ReputationScoreVO // Can change by reputation changes
+    val reputationScore: ReputationScoreVO, // Can change by reputation changes
 )

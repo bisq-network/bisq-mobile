@@ -19,20 +19,21 @@ open class NetworkStatusBannerPresenter(
     mainPresenter: MainPresenter,
     networkServiceFacade: NetworkServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     val allDataReceived: StateFlow<Boolean> = networkServiceFacade.allDataReceived
     val numConnections: StateFlow<Int> = networkServiceFacade.numConnections
     val isMainContentVisible: StateFlow<Boolean> = mainPresenter.isMainContentVisible
 
-    val inventoryRequestInfo: StateFlow<String> = allDataReceived.map { isComplete ->
-        if (isComplete) {
-            "mobile.inventoryRequest.completed".i18n()
-        } else {
-            "mobile.inventoryRequest.requesting".i18n()
-        }
-    }.stateIn(
-        presenterScope,
-        SharingStarted.Lazily,
-        "data.na".i18n()
-    )
+    val inventoryRequestInfo: StateFlow<String> =
+        allDataReceived
+            .map { isComplete ->
+                if (isComplete) {
+                    "mobile.inventoryRequest.completed".i18n()
+                } else {
+                    "mobile.inventoryRequest.requesting".i18n()
+                }
+            }.stateIn(
+                presenterScope,
+                SharingStarted.Lazily,
+                "data.na".i18n(),
+            )
 }

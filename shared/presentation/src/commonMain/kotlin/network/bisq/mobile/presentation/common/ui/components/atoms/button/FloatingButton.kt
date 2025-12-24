@@ -31,11 +31,11 @@ fun FloatingButton(
 @Composable
 fun BisqFABAddButton(
     onClick: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ) {
     FloatingButton(
         onClick = onClick,
-        enabled = enabled
+        enabled = enabled,
     ) {
         AddIcon()
     }

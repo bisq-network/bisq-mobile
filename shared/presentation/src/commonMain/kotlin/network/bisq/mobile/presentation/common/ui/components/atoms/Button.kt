@@ -33,7 +33,7 @@ enum class BisqButtonType {
     GreyOutline,
     WarningOutline,
     Clear,
-    Underline
+    Underline,
 }
 
 /**
@@ -44,21 +44,22 @@ enum class BisqButtonType {
  */
 @Composable
 fun BisqButton(
+    modifier: Modifier = Modifier,
     text: String? = "Button",
     textAlign: TextAlign = TextAlign.Center,
     onClick: (() -> Unit)? = null,
     color: Color = BisqTheme.colors.white,
     backgroundColor: Color = BisqTheme.colors.primaryDim,
     fullWidth: Boolean = false,
-    padding: PaddingValues = PaddingValues(
-        horizontal = BisqUIConstants.ScreenPadding2X,
-        vertical = BisqUIConstants.ScreenPaddingHalf
-    ),
+    padding: PaddingValues =
+        PaddingValues(
+            horizontal = BisqUIConstants.ScreenPadding2X,
+            vertical = BisqUIConstants.ScreenPaddingHalf,
+        ),
     iconOnly: (@Composable () -> Unit)? = null,
     leftIcon: (@Composable () -> Unit)? = null,
     rightIcon: (@Composable () -> Unit)? = null,
     textComponent: (@Composable () -> Unit)? = null,
-    modifier: Modifier = Modifier,
     cornerRadius: Dp = BisqUIConstants.BorderRadius,
     disabled: Boolean = false,
     isLoading: Boolean = false,
@@ -66,43 +67,50 @@ fun BisqButton(
     type: BisqButtonType = BisqButtonType.Default,
     borderColor: Color = BisqTheme.colors.primaryDim,
 ) {
-
     val focusManager = LocalFocusManager.current
     val enabled = !disabled && !isLoading
     val grey2 = BisqTheme.colors.mid_grey20
 
-    val finalBackgroundColor = when (type) {
-        BisqButtonType.Default -> if (disabled) BisqTheme.colors.dark_grey50.copy(alpha = 0.75F) else backgroundColor
-        BisqButtonType.Grey -> if (disabled) BisqTheme.colors.dark_grey50.copy(alpha = 0.75F) else BisqTheme.colors.dark_grey50
-        BisqButtonType.Danger -> if (disabled) BisqTheme.colors.danger.copy(alpha = 0.75F) else BisqTheme.colors.danger
-        BisqButtonType.Outline -> Color.Transparent
-        BisqButtonType.GreyOutline -> Color.Transparent
-        BisqButtonType.WarningOutline -> Color.Transparent
-        BisqButtonType.Clear -> Color.Transparent
-        BisqButtonType.Underline -> Color.Transparent
-    }
+    val finalBackgroundColor =
+        when (type) {
+            BisqButtonType.Default -> if (disabled) BisqTheme.colors.dark_grey50.copy(alpha = 0.75F) else backgroundColor
+            BisqButtonType.Grey -> if (disabled) BisqTheme.colors.dark_grey50.copy(alpha = 0.75F) else BisqTheme.colors.dark_grey50
+            BisqButtonType.Danger -> if (disabled) BisqTheme.colors.danger.copy(alpha = 0.75F) else BisqTheme.colors.danger
+            BisqButtonType.Outline -> Color.Transparent
+            BisqButtonType.GreyOutline -> Color.Transparent
+            BisqButtonType.WarningOutline -> Color.Transparent
+            BisqButtonType.Clear -> Color.Transparent
+            BisqButtonType.Underline -> Color.Transparent
+        }
 
-    val finalBorder = when (type) {
-        BisqButtonType.Default -> border
-        BisqButtonType.Grey -> border
-        BisqButtonType.Danger -> null
-        BisqButtonType.Outline -> BorderStroke(1.dp, borderColor)
-        BisqButtonType.GreyOutline -> BorderStroke(1.dp, grey2)
-        BisqButtonType.WarningOutline -> BorderStroke(1.dp, if (disabled) BisqTheme.colors.mid_grey10 else BisqTheme.colors.warning)
-        BisqButtonType.Clear -> null
-        BisqButtonType.Underline -> null
-    }
+    val finalBorder =
+        when (type) {
+            BisqButtonType.Default -> border
+            BisqButtonType.Grey -> border
+            BisqButtonType.Danger -> null
+            BisqButtonType.Outline -> BorderStroke(1.dp, borderColor)
+            BisqButtonType.GreyOutline -> BorderStroke(1.dp, grey2)
+            BisqButtonType.WarningOutline ->
+                BorderStroke(
+                    1.dp,
+                    if (disabled) BisqTheme.colors.mid_grey10 else BisqTheme.colors.warning,
+                )
 
-    val finalContentColor = when (type) {
-        BisqButtonType.Default -> if (disabled) grey2 else color
-        BisqButtonType.Grey -> if (disabled) grey2 else color
-        BisqButtonType.Danger -> if (disabled) grey2 else color
-        BisqButtonType.Outline -> if (disabled) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
-        BisqButtonType.GreyOutline -> if (disabled) BisqTheme.colors.mid_grey10 else grey2
-        BisqButtonType.WarningOutline -> if (disabled) BisqTheme.colors.mid_grey10 else BisqTheme.colors.warning
-        BisqButtonType.Clear -> if (disabled) grey2 else color
-        BisqButtonType.Underline -> if (disabled) grey2 else color
-    }
+            BisqButtonType.Clear -> null
+            BisqButtonType.Underline -> null
+        }
+
+    val finalContentColor =
+        when (type) {
+            BisqButtonType.Default -> if (disabled) grey2 else color
+            BisqButtonType.Grey -> if (disabled) grey2 else color
+            BisqButtonType.Danger -> if (disabled) grey2 else color
+            BisqButtonType.Outline -> if (disabled) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
+            BisqButtonType.GreyOutline -> if (disabled) BisqTheme.colors.mid_grey10 else grey2
+            BisqButtonType.WarningOutline -> if (disabled) BisqTheme.colors.mid_grey10 else BisqTheme.colors.warning
+            BisqButtonType.Clear -> if (disabled) grey2 else color
+            BisqButtonType.Underline -> if (disabled) grey2 else color
+        }
 
     Button(
         onClick = {
@@ -110,19 +118,20 @@ fun BisqButton(
             onClick?.invoke()
         },
         contentPadding = if (iconOnly != null) PaddingValues(horizontal = 0.dp, vertical = 0.dp) else padding,
-        colors = ButtonColors(
-            containerColor = finalBackgroundColor,
-            disabledContainerColor = finalBackgroundColor.copy(alpha = 0.5f),
-            contentColor = finalContentColor,
-            disabledContentColor = finalContentColor.copy(alpha = 0.5f),
-        ),
+        colors =
+            ButtonColors(
+                containerColor = finalBackgroundColor,
+                disabledContainerColor = finalBackgroundColor.copy(alpha = 0.5f),
+                contentColor = finalContentColor,
+                disabledContentColor = finalContentColor.copy(alpha = 0.5f),
+            ),
         shape = RoundedCornerShape(cornerRadius),
         enabled = enabled,
         border = finalBorder,
-        modifier = if (fullWidth) modifier.fillMaxWidth() else modifier
+        modifier = if (fullWidth) modifier.fillMaxWidth() else modifier,
     ) {
         if (iconOnly == null && text == null && textComponent == null) {
-            BisqText.baseLight("mobile.components.button.passEitherTextOrCustomTextorIcon".i18n())
+            BisqText.BaseLight("mobile.components.button.passEitherTextOrCustomTextorIcon".i18n())
         }
 
         if (iconOnly != null) {
@@ -130,13 +139,13 @@ fun BisqButton(
         } else if (text != null) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         color = BisqTheme.colors.white,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
                     )
                     BisqGap.HHalf()
                 }
@@ -145,7 +154,7 @@ fun BisqButton(
                 if (textComponent != null) {
                     textComponent()
                 } else {
-                    BisqText.baseRegular(
+                    BisqText.BaseRegular(
                         text = text,
                         color = finalContentColor,
                         textAlign = textAlign,

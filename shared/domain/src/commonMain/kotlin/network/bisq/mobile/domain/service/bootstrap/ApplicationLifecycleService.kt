@@ -19,7 +19,10 @@ abstract class ApplicationLifecycleService(
      * Marks the app as terminating if not already started, returns true if this is the first call.
      * Use this as a one-shot guard.
      */
-    fun compareAndSetIsTerminating(expect: Boolean, update: Boolean): Boolean {
+    fun compareAndSetIsTerminating(
+        expect: Boolean,
+        update: Boolean,
+    ): Boolean {
         // this function is to avoid adding atomicfu dependency to node app for now
         return isTerminating.compareAndSet(expect, update)
     }
@@ -72,7 +75,10 @@ abstract class ApplicationLifecycleService(
         }
     }
 
-    fun restartApp(view: Any?, purgeTorDir: Boolean = true) {
+    fun restartApp(
+        view: Any?,
+        purgeTorDir: Boolean = true,
+    ) {
         if (getPlatformInfo().type != PlatformType.ANDROID) return
 
         if (!compareAndSetIsTerminating(expect = false, update = true)) {

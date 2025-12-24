@@ -26,12 +26,13 @@ import network.bisq.mobile.presentation.main.MainPresenter
 class UserProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
-    mainPresenter: MainPresenter
-) : BasePresenter(mainPresenter), IUserProfilePresenter {
-
+    mainPresenter: MainPresenter,
+) : BasePresenter(mainPresenter),
+    IUserProfilePresenter {
     companion object Companion {
         // We use 120.dp here, so we want the max size with 300 px for good resolution
-        const val iconSize = 300
+        const val ICON_SIZE = 300
+
         /**
          * Get localized "N/A" value
          */
@@ -41,64 +42,70 @@ class UserProfilePresenter(
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = userProfileServiceFacade.selectedUserProfile
     override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
         get() = { userProfile ->
-            userProfileServiceFacade.getUserProfileIcon(userProfile, iconSize)
+            userProfileServiceFacade.getUserProfileIcon(userProfile, ICON_SIZE)
         }
-
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val reputation: StateFlow<String> = selectedUserProfile
-        .distinctUntilChangedBy { it?.id }
-        .mapLatest {
-            it?.let { profile ->
-                reputationServiceFacade.getReputation(profile.id)
-                    .getOrNull()?.totalScore?.toString()
-            }
-        }
-        .catch { emit(null) }
-        .map { it ?: getLocalizedNA() }.stateIn(
-            presenterScope,
-            SharingStarted.Lazily,
-            getLocalizedNA(),
-        )
+    override val reputation: StateFlow<String> =
+        selectedUserProfile
+            .distinctUntilChangedBy { it?.id }
+            .mapLatest {
+                it?.let { profile ->
+                    reputationServiceFacade
+                        .getReputation(profile.id)
+                        .getOrNull()
+                        ?.totalScore
+                        ?.toString()
+                }
+            }.catch { emit(null) }
+            .map { it ?: getLocalizedNA() }
+            .stateIn(
+                presenterScope,
+                SharingStarted.Lazily,
+                getLocalizedNA(),
+            )
 
     override val lastUserActivity: StateFlow<String> =
-        TimeUtils.tickerFlow(1_000L)
+        TimeUtils
+            .tickerFlow(1_000L)
             .onStart { emit(Unit) }
             .map {
                 val ts: Long = userProfileServiceFacade.getUserPublishDate()
                 if (ts <= 0L) getLocalizedNA() else DateUtils.lastSeen(ts)
-            }
-            .catch { emit(getLocalizedNA()) }
+            }.catch { emit(getLocalizedNA()) }
             .stateIn(
                 scope = presenterScope,
                 started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
-                initialValue = getLocalizedNA()
+                initialValue = getLocalizedNA(),
             )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val profileAge: StateFlow<String> = selectedUserProfile
-        .distinctUntilChangedBy { it?.id }
-        .mapLatest {
-            it?.let { profile ->
-                reputationServiceFacade.getProfileAge(profile.id)
-                    .getOrNull()
-            }
-        }
-        .catch { emit(null) }
-        .map { age ->
-            if (age != null) {
-                DateUtils.formatProfileAge(age)
-            } else {
-                null
-            }
-        }.map { it ?: getLocalizedNA() }.stateIn(
-            presenterScope,
-            SharingStarted.Lazily,
-            getLocalizedNA(),
-        )
+    override val profileAge: StateFlow<String> =
+        selectedUserProfile
+            .distinctUntilChangedBy { it?.id }
+            .mapLatest {
+                it?.let { profile ->
+                    reputationServiceFacade
+                        .getProfileAge(profile.id)
+                        .getOrNull()
+                }
+            }.catch { emit(null) }
+            .map { age ->
+                if (age != null) {
+                    DateUtils.formatProfileAge(age)
+                } else {
+                    null
+                }
+            }.map { it ?: getLocalizedNA() }
+            .stateIn(
+                presenterScope,
+                SharingStarted.Lazily,
+                getLocalizedNA(),
+            )
 
     override val profileId: StateFlow<String> =
-        selectedUserProfile.map { it?.id ?: getLocalizedNA() }
+        selectedUserProfile
+            .map { it?.id ?: getLocalizedNA() }
             .stateIn(
                 presenterScope,
                 SharingStarted.Lazily,
@@ -106,7 +113,8 @@ class UserProfilePresenter(
             )
 
     override val nickname: StateFlow<String> =
-        selectedUserProfile.map { it?.nickName ?: getLocalizedNA() }
+        selectedUserProfile
+            .map { it?.nickName ?: getLocalizedNA() }
             .stateIn(
                 presenterScope,
                 SharingStarted.Lazily,
@@ -114,7 +122,8 @@ class UserProfilePresenter(
             )
 
     override val botId: StateFlow<String> =
-        selectedUserProfile.map { it?.nym ?: getLocalizedNA() }
+        selectedUserProfile
+            .map { it?.nym ?: getLocalizedNA() }
             .stateIn(
                 presenterScope,
                 SharingStarted.Lazily,
@@ -126,12 +135,12 @@ class UserProfilePresenter(
     private val _statement = MutableStateFlow("")
     override val statement: StateFlow<String> get() = _statement.asStateFlow()
 
-
     private val _showLoading = MutableStateFlow(false)
     override val showLoading: StateFlow<Boolean> get() = _showLoading.asStateFlow()
 
     private val _showDeleteOfferConfirmation = MutableStateFlow(false)
     override val showDeleteProfileConfirmation: StateFlow<Boolean> get() = _showDeleteOfferConfirmation.asStateFlow()
+
     override fun setShowDeleteProfileConfirmation(value: Boolean) {
         _showDeleteOfferConfirmation.value = value
     }
@@ -153,10 +162,11 @@ class UserProfilePresenter(
                 val na = getLocalizedNA()
                 val safeStatement = statement.value.takeUnless { it == na } ?: ""
                 val safeTerms = tradeTerms.value.takeUnless { it == na } ?: ""
-                val result = userProfileServiceFacade.updateAndPublishUserProfile(
-                    safeStatement,
-                    safeTerms
-                )
+                val result =
+                    userProfileServiceFacade.updateAndPublishUserProfile(
+                        safeStatement,
+                        safeTerms,
+                    )
                 if (result.isSuccess) {
                     showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
                 } else {

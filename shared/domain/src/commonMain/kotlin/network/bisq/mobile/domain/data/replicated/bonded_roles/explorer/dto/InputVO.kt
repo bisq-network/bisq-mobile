@@ -27,5 +27,5 @@ data class InputVO(
     val scriptSigAsm: String,
     val witness: List<String>,
     val isCoinbase: Boolean,
-    val sequence: Long
+    val sequence: Long,
 )

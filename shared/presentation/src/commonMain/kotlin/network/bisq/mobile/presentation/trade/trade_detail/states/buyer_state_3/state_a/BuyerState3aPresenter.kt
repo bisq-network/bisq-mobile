@@ -10,6 +10,5 @@ class BuyerState3aPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 }

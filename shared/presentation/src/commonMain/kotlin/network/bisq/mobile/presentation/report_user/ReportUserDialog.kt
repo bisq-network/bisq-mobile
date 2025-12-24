@@ -17,8 +17,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -27,21 +27,22 @@ fun ReportUserDialog(
     chatMessage: BisqEasyOpenTradeMessageModel,
     reportMessage: String? = null,
     onReportFailure: (String, String) -> Unit = { _, _ -> },
-    onDismiss: () -> Unit = {}
+    onDismiss: () -> Unit = {},
 ) {
     val presenter: ReportUserPresenter = koinInject()
     val state by presenter.uiState.collectAsState()
     RememberPresenterLifecycle(presenter)
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(Unit, onDismiss, onReportFailure) {
         presenter.initialize(chatMessage, reportMessage)
         presenter.effect.collect { event ->
             when (event) {
                 ReportUserEffect.ReportSuccess -> onDismiss()
-                is ReportUserEffect.ReportError -> onReportFailure(
-                    event.message,
-                    event.reportMessage
-                )
+                is ReportUserEffect.ReportError ->
+                    onReportFailure(
+                        event.message,
+                        event.reportMessage,
+                    )
             }
         }
     }
@@ -59,15 +60,15 @@ private fun ReportUserDialogContent(
     state: ReportUserUiState,
     onMessageChange: (String) -> Unit,
     onDismiss: () -> Unit,
-    onReportClick: () -> Unit
+    onReportClick: () -> Unit,
 ) {
     BisqDialog {
-        BisqText.h6Regular(
+        BisqText.H6Regular(
             text = "chat.reportToModerator.headline".i18n(),
-            color = BisqTheme.colors.white
+            color = BisqTheme.colors.white,
         )
         BisqGap.V2()
-        BisqText.baseRegularGrey(
+        BisqText.BaseRegularGrey(
             text = "chat.reportToModerator.info".i18n(),
         )
         BisqGap.V2()
@@ -80,27 +81,29 @@ private fun ReportUserDialogContent(
             minLines = 4,
             maxLines = Int.MAX_VALUE,
             showCharacterCounter = true,
-            maxLength = REPORT_USER_MAX_MESSAGE_LENGTH
+            maxLength = REPORT_USER_MAX_MESSAGE_LENGTH,
         )
         BisqGap.V2()
         if (state.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(32.dp),
                 color = BisqTheme.colors.white,
-                strokeWidth = 2.dp
+                strokeWidth = 2.dp,
             )
         } else {
             BisqButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(),
                 disabled = state.isReportButtonEnabled.not(),
                 text = "chat.reportToModerator.report".i18n(),
                 onClick = onReportClick,
             )
             BisqGap.VHalf()
             BisqButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(),
                 text = "action.cancel".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = onDismiss,
@@ -111,33 +114,35 @@ private fun ReportUserDialogContent(
 
 @Composable
 @Preview
-fun ReportUserDialogPreview() {
+private fun ReportUserDialogPreview() {
     BisqTheme.Preview {
         ReportUserDialogContent(
-            state = ReportUserUiState(
-                isReportButtonEnabled = true,
-                message = ""
-            ),
+            state =
+                ReportUserUiState(
+                    isReportButtonEnabled = true,
+                    message = "",
+                ),
             onMessageChange = {},
             onDismiss = {},
-            onReportClick = {}
+            onReportClick = {},
         )
     }
 }
 
 @Composable
 @Preview
-fun ReportUserDialogPreview_Loading() {
+private fun ReportUserDialogPreview_LoadingPreview() {
     BisqTheme.Preview {
         ReportUserDialogContent(
-            state = ReportUserUiState(
-                isReportButtonEnabled = true,
-                message = "",
-                isLoading = true
-            ),
+            state =
+                ReportUserUiState(
+                    isReportButtonEnabled = true,
+                    message = "",
+                    isLoading = true,
+                ),
             onMessageChange = {},
             onDismiss = {},
-            onReportClick = {}
+            onReportClick = {},
         )
     }
 }

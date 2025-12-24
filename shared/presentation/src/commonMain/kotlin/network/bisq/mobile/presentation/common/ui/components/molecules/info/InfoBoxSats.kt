@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.TextStyle
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
@@ -23,12 +23,12 @@ fun InfoBoxSats(
         valueComposable = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 BtcSatsText(value, textStyle = textStyle, noCode = true)
                 BisqGap.HHalf()
-                BisqText.baseRegularGrey("BTC")
+                BisqText.BaseRegularGrey("BTC")
             }
-        }
+        },
     )
 }

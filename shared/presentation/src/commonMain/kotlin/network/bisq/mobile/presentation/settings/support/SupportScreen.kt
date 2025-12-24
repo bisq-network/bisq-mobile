@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -25,11 +24,11 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
-
 
 @Composable
 fun SupportScreen() {
@@ -46,10 +45,10 @@ fun SupportScreen() {
         snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
     ) {
-        BisqText.h2Light("mobile.support.headline".i18n())
+        BisqText.H2Light("mobile.support.headline".i18n())
         BisqGap.V2()
 
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = "mobile.support.intro".i18n(),
             color = BisqTheme.colors.light_grey50,
         )
@@ -78,7 +77,7 @@ fun SupportScreen() {
 
         BisqGap.V2()
 
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = "mobile.support.learnMore".i18n(),
             color = BisqTheme.colors.light_grey50,
         )
@@ -94,6 +93,7 @@ fun SupportScreen() {
 
         // AI support
         // Not ready for release, but keep it for later
+
         /* BisqText.h3Light("mobile.support.ai.headline".i18n())
          BisqGap.V2()
          BisqText.baseLight(
@@ -111,9 +111,9 @@ fun SupportScreen() {
          BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))*/
 
         // troubleShooting
-        BisqText.h3Light("mobile.support.troubleShooting.headline".i18n())
+        BisqText.H3Light("mobile.support.troubleShooting.headline".i18n())
         BisqGap.V2()
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = "mobile.support.troubleShooting.report".i18n() + " ",
             color = BisqTheme.colors.light_grey50,
         )
@@ -130,30 +130,30 @@ fun SupportScreen() {
             BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
 
             // connectivity
-            BisqText.h3Light("mobile.support.connectivity.headline".i18n())
+            BisqText.H3Light("mobile.support.connectivity.headline".i18n())
             BisqGap.V2()
-            BisqText.baseLight(
+            BisqText.BaseLight(
                 text = "mobile.support.connectivity.info".i18n(),
                 color = BisqTheme.colors.light_grey50,
             )
             BisqGap.V1()
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    BisqUIConstants.ScreenPadding,
-                    Alignment.CenterHorizontally
-                )
+                horizontalArrangement =
+                    Arrangement.spacedBy(
+                        BisqUIConstants.ScreenPadding,
+                        Alignment.CenterHorizontally,
+                    ),
             ) {
                 BisqButton(
                     text = "mobile.support.connectivity.restart".i18n(),
                     onClick = { presenter.onRestartApp() },
-                    type = BisqButtonType.Outline
-
+                    type = BisqButtonType.Outline,
                 )
                 BisqButton(
                     text = "mobile.support.connectivity.shutdown".i18n(),
                     onClick = { presenter.onTerminateApp() },
-                    type = BisqButtonType.Outline
+                    type = BisqButtonType.Outline,
                 )
             }
         }
@@ -172,9 +172,10 @@ fun SupportWeblink(
         onClick = onClick,
         leftIcon = { WebLinkIcon(modifier = Modifier.size(16.dp).alpha(0.5f)) },
         color = BisqTheme.colors.mid_grey20,
-        padding = PaddingValues(
-            horizontal = BisqUIConstants.ScreenPaddingHalf,
-            vertical = BisqUIConstants.Zero
-        ),
+        padding =
+            PaddingValues(
+                horizontal = BisqUIConstants.ScreenPaddingHalf,
+                vertical = BisqUIConstants.Zero,
+            ),
     )
 }

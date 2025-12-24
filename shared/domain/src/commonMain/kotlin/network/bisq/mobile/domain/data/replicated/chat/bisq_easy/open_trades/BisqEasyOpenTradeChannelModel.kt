@@ -12,8 +12,10 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 
-//todo will get completed with work on chat
-class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTradeChannelDto) : Logging {
+// todo will get completed with work on chat
+class BisqEasyOpenTradeChannelModel(
+    bisqEasyOpenTradeChannelDto: BisqEasyOpenTradeChannelDto,
+) : Logging {
     // Delegates of bisqEasyOpenTradeChannelVO
     val id: String = bisqEasyOpenTradeChannelDto.id
     val tradeId: String = bisqEasyOpenTradeChannelDto.tradeId
@@ -56,9 +58,7 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
         _isInMediation.value = value
     }
 
-    fun isMediator(): Boolean {
-        return mediator != null && mediator.id == myUserIdentity.userProfile.id
-    }
+    fun isMediator(): Boolean = mediator != null && mediator.id == myUserIdentity.userProfile.id
 
     // For the trade peer use case we have only one UserProfileVO in traders.
     // Only for the mediator use case there are the 2 traders, but then getPeer() is not called

@@ -20,7 +20,8 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 class NotificationControllerImpl(
     private val appForegroundController: AppForegroundController,
     val activityClassForIntents: Class<*>,
-) : NotificationController, Logging {
+) : NotificationController,
+    Logging {
     companion object {
         // we use this to avoid linter errors, as it's handled internally by
         // ContextCompat.checkSelfPermission for different android versions
@@ -29,9 +30,7 @@ class NotificationControllerImpl(
 
     private val context get() = appForegroundController.context
 
-    override suspend fun hasPermission(): Boolean {
-        return hasPermissionSync()
-    }
+    override suspend fun hasPermission(): Boolean = hasPermissionSync()
 
     private fun hasPermissionSync(): Boolean {
         // ContextCompat.checkSelfPermission handles notifications permission for different versions
@@ -58,12 +57,15 @@ class NotificationControllerImpl(
 
         val notificationId = config.id.hashCode()
 
-        val channelId = config.android?.channelId
-            ?: throw IllegalArgumentException("android notification config should define channelId")
+        val channelId =
+            config.android?.channelId
+                ?: throw IllegalArgumentException("android notification config should define channelId")
 
-        val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(ResourceUtils.getNotifResId(context))
-            .setDefaults(NotificationCompat.DEFAULT_ALL) // for older platforms
+        val builder =
+            NotificationCompat
+                .Builder(context, channelId)
+                .setSmallIcon(ResourceUtils.getNotifResId(context))
+                .setDefaults(NotificationCompat.DEFAULT_ALL) // for older platforms
 
         config.title?.let { builder.setContentTitle(it) }
         config.subtitle?.let { builder.setSubText(it) }
@@ -73,8 +75,8 @@ class NotificationControllerImpl(
             // for older platforms
             ResourceUtils.getSoundUri(
                 context,
-                config.android.sound
-            )
+                config.android.sound,
+            ),
         )
         builder.setOngoing(config.android.ongoing)
         builder.setPriority(config.android.priority.toNotificationCompat())
@@ -92,13 +94,15 @@ class NotificationControllerImpl(
         } else {
             val action = config.android.pressAction
             when (action) {
-                is NotificationPressAction.Route -> builder.setContentIntent(
-                    createNavDeepLinkPendingIntent(action.route)
-                )
+                is NotificationPressAction.Route ->
+                    builder.setContentIntent(
+                        createNavDeepLinkPendingIntent(action.route),
+                    )
 
-                is NotificationPressAction.Default ->  builder.setContentIntent(
-                    createNavDeepLinkPendingIntent(NavRoute.TabOpenTradeList)
-                )
+                is NotificationPressAction.Default ->
+                    builder.setContentIntent(
+                        createNavDeepLinkPendingIntent(NavRoute.TabOpenTradeList),
+                    )
 
                 null -> {
                     builder.setContentIntent(null)
@@ -112,11 +116,12 @@ class NotificationControllerImpl(
                     val pressAction = action.pressAction
                     // for now only Route is supported, we will add broadcast handlers and
                     // different types of action when necessary in a cross platform way
-                    val pendingIntent = if (pressAction is NotificationPressAction.Route) {
-                        createNavDeepLinkPendingIntent(pressAction.route)
-                    } else {
-                        null
-                    }
+                    val pendingIntent =
+                        if (pressAction is NotificationPressAction.Route) {
+                            createNavDeepLinkPendingIntent(pressAction.route)
+                        } else {
+                            null
+                        }
                     pendingIntent?.let {
                         builder.addAction(NotificationCompat.Action(null, action.title, it))
                     }
@@ -135,29 +140,29 @@ class NotificationControllerImpl(
         NotificationManagerCompat.from(context).cancel(id.hashCode())
     }
 
-    override fun isAppInForeground(): Boolean {
-        return appForegroundController.isForeground.value
-    }
+    override fun isAppInForeground(): Boolean = appForegroundController.isForeground.value
 
     fun createNavDeepLinkPendingIntent(route: DeepLinkableRoute): PendingIntent {
         val link = route.toUriString()
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            link.toUri(),
-            context,
-            activityClassForIntents
-        ).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                link.toUri(),
+                context,
+                activityClassForIntents,
+            ).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
 
         val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            link.hashCode(),
-            intent,
-            pendingIntentFlags
-        )
+        val pendingIntent =
+            PendingIntent.getActivity(
+                context,
+                link.hashCode(),
+                intent,
+                pendingIntentFlags,
+            )
 
         return pendingIntent
     }

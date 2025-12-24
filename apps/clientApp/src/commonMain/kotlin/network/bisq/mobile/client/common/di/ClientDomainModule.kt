@@ -88,158 +88,161 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 // networking and services dependencies
-val clientDomainModule = module {
-    val json = Json {
-        prettyPrint = true
-        serializersModule = SerializersModule {
-            polymorphic(MonetaryVO::class) {
-                subclass(CoinVO::class, CoinVO.serializer())
-                subclass(FiatVO::class, FiatVO.serializer())
-            }
-            polymorphic(PriceSpecVO::class) {
-                subclass(FixPriceSpecVO::class, FixPriceSpecVO.serializer())
-                subclass(FloatPriceSpecVO::class, FloatPriceSpecVO.serializer())
-                subclass(MarketPriceSpecVO::class, MarketPriceSpecVO.serializer())
-            }
-            polymorphic(AmountSpecVO::class) {
-                subclass(QuoteSideFixedAmountSpecVO::class, QuoteSideFixedAmountSpecVO.serializer())
-                subclass(QuoteSideRangeAmountSpecVO::class, QuoteSideRangeAmountSpecVO.serializer())
-                subclass(BaseSideFixedAmountSpecVO::class, BaseSideFixedAmountSpecVO.serializer())
-                subclass(BaseSideRangeAmountSpecVO::class, BaseSideRangeAmountSpecVO.serializer())
-            }
-            polymorphic(OfferOptionVO::class) {
-                subclass(ReputationOptionVO::class, ReputationOptionVO.serializer())
-                subclass(
-                    TradeTermsOptionVO::class,
-                    TradeTermsOptionVO.serializer()
-                )
-            }
-            polymorphic(PaymentMethodSpecVO::class) {
-                subclass(
-                    BitcoinPaymentMethodSpecVO::class,
-                    BitcoinPaymentMethodSpecVO.serializer()
-                )
-                subclass(
-                    FiatPaymentMethodSpecVO::class,
-                    FiatPaymentMethodSpecVO.serializer()
-                )
+val clientDomainModule =
+    module {
+        val json =
+            Json {
+                prettyPrint = true
+                serializersModule =
+                    SerializersModule {
+                        polymorphic(MonetaryVO::class) {
+                            subclass(CoinVO::class, CoinVO.serializer())
+                            subclass(FiatVO::class, FiatVO.serializer())
+                        }
+                        polymorphic(PriceSpecVO::class) {
+                            subclass(FixPriceSpecVO::class, FixPriceSpecVO.serializer())
+                            subclass(FloatPriceSpecVO::class, FloatPriceSpecVO.serializer())
+                            subclass(MarketPriceSpecVO::class, MarketPriceSpecVO.serializer())
+                        }
+                        polymorphic(AmountSpecVO::class) {
+                            subclass(QuoteSideFixedAmountSpecVO::class, QuoteSideFixedAmountSpecVO.serializer())
+                            subclass(QuoteSideRangeAmountSpecVO::class, QuoteSideRangeAmountSpecVO.serializer())
+                            subclass(BaseSideFixedAmountSpecVO::class, BaseSideFixedAmountSpecVO.serializer())
+                            subclass(BaseSideRangeAmountSpecVO::class, BaseSideRangeAmountSpecVO.serializer())
+                        }
+                        polymorphic(OfferOptionVO::class) {
+                            subclass(ReputationOptionVO::class, ReputationOptionVO.serializer())
+                            subclass(
+                                TradeTermsOptionVO::class,
+                                TradeTermsOptionVO.serializer(),
+                            )
+                        }
+                        polymorphic(PaymentMethodSpecVO::class) {
+                            subclass(
+                                BitcoinPaymentMethodSpecVO::class,
+                                BitcoinPaymentMethodSpecVO.serializer(),
+                            )
+                            subclass(
+                                FiatPaymentMethodSpecVO::class,
+                                FiatPaymentMethodSpecVO.serializer(),
+                            )
+                        }
+
+                        polymorphic(WebSocketMessage::class) {
+                            subclass(WebSocketRestApiRequest::class)
+                            subclass(WebSocketRestApiResponse::class)
+                            subclass(SubscriptionRequest::class)
+                            subclass(SubscriptionResponse::class)
+                            subclass(WebSocketEvent::class)
+                        }
+                    }
+                classDiscriminator = "type"
+                ignoreUnknownKeys = true
             }
 
-            polymorphic(WebSocketMessage::class) {
-                subclass(WebSocketRestApiRequest::class)
-                subclass(WebSocketRestApiResponse::class)
-                subclass(SubscriptionRequest::class)
-                subclass(SubscriptionResponse::class)
-                subclass(WebSocketEvent::class)
-            }
+        single { json }
+
+        single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
+
+        single { EnvironmentController() }
+        single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
+        single(named("ApiPort")) { get<EnvironmentController>().getApiPort() }
+        single(named("WebSocketApiHost")) { get<EnvironmentController>().getWebSocketHost() }
+        single(named("WebSocketApiPort")) { get<EnvironmentController>().getWebSocketPort() }
+
+        single {
+            HttpClientService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(named("ApiHost")),
+                get(named("ApiPort")),
+            )
         }
-        classDiscriminator = "type"
-        ignoreUnknownKeys = true
+
+        single { WebSocketClientFactory(get()) }
+
+        single {
+            WebSocketClientService(
+                get(named("WebSocketApiHost")),
+                get(named("WebSocketApiPort")),
+                get(),
+                get(),
+            )
+        }
+
+        // single { WebSocketHttpClient(get()) }
+        single {
+            println("Running on simulator: ${get<EnvironmentController>().isSimulator()}")
+            WebSocketApiClient(
+                get(),
+                get(),
+                get(),
+            )
+        }
+
+        single { ClientConnectivityService(get()) } bind ConnectivityService::class
+
+        single<NetworkServiceFacade> { ClientNetworkServiceFacade(get(), get(), get(), get()) }
+
+        single { MarketPriceApiGateway(get(), get()) }
+        single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get(), get()) }
+
+        single { UserProfileApiGateway(get(), get()) }
+        single {
+            ClientUserProfileServiceFacade(
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        } bind UserProfileServiceFacade::class
+
+        single { OfferbookApiGateway(get(), get()) }
+        single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get(), get()) }
+
+        single { TradesApiGateway(get(), get()) }
+        single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
+
+        single { TradeChatMessagesApiGateway(get(), get()) }
+        single<TradeChatMessagesServiceFacade> {
+            ClientTradeChatMessagesServiceFacade(
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+
+        single { ExplorerApiGateway(get()) }
+        single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }
+
+        single { MediationApiGateway(get()) }
+        single<MediationServiceFacade> { ClientMediationServiceFacade(get()) }
+
+        single { SettingsApiGateway(get()) }
+        single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
+
+        single { AccountsApiGateway(get()) }
+        single<AccountsServiceFacade> { ClientAccountsServiceFacade(get()) }
+
+        single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
+
+        single { ReputationApiGateway(get(), get()) }
+        single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
+
+        single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
+
+        single<KmpTorService> { KmpTorService(getStorageDir().toPath(true)) }
+
+        single<SensitiveSettingsRepository> { SensitiveSettingsRepositoryImpl(get(named("SensitiveSettings"))) }
+        single<DataStore<SensitiveSettings>>(named("SensitiveSettings")) {
+            createDataStore(
+                "SensitiveSettings",
+                getStorageDir(),
+                SensitiveSettingsSerializer,
+                ReplaceFileCorruptionHandler { SensitiveSettings() },
+            )
+        }
     }
-
-    single { json }
-
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
-
-    single { EnvironmentController() }
-    single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
-    single(named("ApiPort")) { get<EnvironmentController>().getApiPort() }
-    single(named("WebSocketApiHost")) { get<EnvironmentController>().getWebSocketHost() }
-    single(named("WebSocketApiPort")) { get<EnvironmentController>().getWebSocketPort() }
-
-    single {
-        HttpClientService(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(named("ApiHost")),
-            get(named("ApiPort")),
-        )
-    }
-
-    single { WebSocketClientFactory(get()) }
-
-    single {
-        WebSocketClientService(
-            get(named("WebSocketApiHost")),
-            get(named("WebSocketApiPort")),
-            get(),
-            get(),
-        )
-    }
-
-    // single { WebSocketHttpClient(get()) }
-    single {
-        println("Running on simulator: ${get<EnvironmentController>().isSimulator()}")
-        WebSocketApiClient(
-            get(),
-            get(),
-            get(),
-        )
-    }
-
-    single { ClientConnectivityService(get()) } bind ConnectivityService::class
-
-    single<NetworkServiceFacade> { ClientNetworkServiceFacade(get(), get(), get(), get()) }
-
-    single { MarketPriceApiGateway(get(), get()) }
-    single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get(), get()) }
-
-    single { UserProfileApiGateway(get(), get()) }
-    single {
-        ClientUserProfileServiceFacade(
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    } bind UserProfileServiceFacade::class
-
-    single { OfferbookApiGateway(get(), get()) }
-    single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get(), get()) }
-
-    single { TradesApiGateway(get(), get()) }
-    single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
-
-    single { TradeChatMessagesApiGateway(get(), get()) }
-    single<TradeChatMessagesServiceFacade> {
-        ClientTradeChatMessagesServiceFacade(
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-
-    single { ExplorerApiGateway(get()) }
-    single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }
-
-    single { MediationApiGateway(get()) }
-    single<MediationServiceFacade> { ClientMediationServiceFacade(get()) }
-
-    single { SettingsApiGateway(get()) }
-    single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
-
-    single { AccountsApiGateway(get()) }
-    single<AccountsServiceFacade> { ClientAccountsServiceFacade(get()) }
-
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
-
-    single { ReputationApiGateway(get(), get()) }
-    single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
-
-    single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
-
-    single<KmpTorService> { KmpTorService(getStorageDir().toPath(true)) }
-
-    single<SensitiveSettingsRepository> { SensitiveSettingsRepositoryImpl(get(named("SensitiveSettings"))) }
-    single<DataStore<SensitiveSettings>>(named("SensitiveSettings")) {
-        createDataStore(
-            "SensitiveSettings",
-            getStorageDir(),
-            SensitiveSettingsSerializer,
-            ReplaceFileCorruptionHandler { SensitiveSettings() },
-        )
-    }
-}

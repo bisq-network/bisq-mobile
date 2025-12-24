@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -26,21 +25,18 @@ class ClientTradeChatMessagesServiceFacade(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val apiGateway: TradeChatMessagesApiGateway,
-    private val json: Json
-) : ServiceFacade(), TradeChatMessagesServiceFacade {
-
+    private val json: Json,
+) : ServiceFacade(),
+    TradeChatMessagesServiceFacade {
     // Properties
     private val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
     private val selectedUserProfileId: StateFlow<UserProfileVO?> get() = userProfileServiceFacade.selectedUserProfile
 
-    private val _allBisqEasyOpenTradeMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageDto>> =
+    private val allBisqEasyOpenTradeMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageDto>> =
         MutableStateFlow(emptySet())
-    private val allBisqEasyOpenTradeMessages: StateFlow<Set<BisqEasyOpenTradeMessageDto>>
-        get() = _allBisqEasyOpenTradeMessages.asStateFlow()
 
-    private val _allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> =
+    private val allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> =
         MutableStateFlow(emptySet())
-    private val allChatReactions: StateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> get() = _allChatReactions.asStateFlow()
 
     private var jobs: MutableSet<Job> = mutableSetOf()
 
@@ -48,27 +44,35 @@ class ClientTradeChatMessagesServiceFacade(
     override suspend fun activate() {
         super<ServiceFacade>.activate()
 
-        jobs.add(serviceScope.launch(Dispatchers.Default) {
-            selectedTrade.collect {
-                if (it != null) {
-                    updateChatMessages(tradeId = it.tradeId)
+        jobs.add(
+            serviceScope.launch(Dispatchers.Default) {
+                selectedTrade.collect {
+                    if (it != null) {
+                        updateChatMessages(tradeId = it.tradeId)
+                    }
                 }
-            }
-        })
-        jobs.add(serviceScope.launch(Dispatchers.Default) {
-            selectedUserProfileId.collect { _ ->
-                if (selectedTrade.value != null) {
-                    updateChatMessages(tradeId = selectedTrade.value!!.tradeId)
+            },
+        )
+        jobs.add(
+            serviceScope.launch(Dispatchers.Default) {
+                selectedUserProfileId.collect { _ ->
+                    if (selectedTrade.value != null) {
+                        updateChatMessages(tradeId = selectedTrade.value!!.tradeId)
+                    }
                 }
-            }
-        })
+            },
+        )
 
-        jobs.add(serviceScope.launch {
-            subscribeTradeChats()
-        })
-        jobs.add(serviceScope.launch {
-            subscribeChatReactions()
-        })
+        jobs.add(
+            serviceScope.launch {
+                subscribeTradeChats()
+            },
+        )
+        jobs.add(
+            serviceScope.launch {
+                subscribeChatReactions()
+            },
+        )
     }
 
     override suspend fun deactivate() {
@@ -86,7 +90,7 @@ class ClientTradeChatMessagesServiceFacade(
             val webSocketEventPayload: WebSocketEventPayload<List<BisqEasyOpenTradeMessageDto>> =
                 WebSocketEventPayload.from(json, webSocketEvent)
             val payload = webSocketEventPayload.payload
-            _allBisqEasyOpenTradeMessages.update { it + payload }
+            allBisqEasyOpenTradeMessages.update { it + payload }
             // To update bisqEasyOpenTradeChannelModel of the trades
             val updatedTradeIds = payload.map { it.tradeId }.toSet()
             updatedTradeIds.forEach { tradeId ->
@@ -108,23 +112,24 @@ class ClientTradeChatMessagesServiceFacade(
                 // We cannot just remove it from the set as the removed reaction has a difference id.
                 // We lookup instead the matching reaction and remove that.
                 if (reaction.isRemoved) {
-                    _allChatReactions.value
+                    allChatReactions.value
                         .filter {
                             it.chatMessageId == reaction.chatMessageId &&
-                                    it.senderUserProfile.id == reaction.senderUserProfile.id &&
-                                    it.reactionId == reaction.reactionId
-                        }
-                        .let { toRemove ->
-                            _allChatReactions.update { it - toRemove.toSet() }
+                                it.senderUserProfile.id == reaction.senderUserProfile.id &&
+                                it.reactionId == reaction.reactionId
+                        }.let { toRemove ->
+                            allChatReactions.update { it - toRemove.toSet() }
                         }
                 } else {
-                    _allChatReactions.update { it + reaction }
+                    allChatReactions.update { it + reaction }
                 }
                 // To update bisqEasyOpenTradeChannelModel of the trades
                 try {
-                    val tradeId = _allBisqEasyOpenTradeMessages.value.find {
-                        it.messageId == reaction.chatMessageId
-                    }?.tradeId
+                    val tradeId =
+                        allBisqEasyOpenTradeMessages.value
+                            .find {
+                                it.messageId == reaction.chatMessageId
+                            }?.tradeId
                     if (tradeId == null) {
                         log.d { "No message found for reaction: messageId=${reaction.chatMessageId}" }
                     } else {
@@ -139,22 +144,26 @@ class ClientTradeChatMessagesServiceFacade(
 
     private fun updateChatMessages(tradeId: String) {
         val myUserProfile = selectedUserProfileId.value ?: return
-        val bisqEasyOpenTradeChannelModel = tradesServiceFacade.openTradeItems.value
-            .find { it.tradeId == tradeId }
-            ?.bisqEasyOpenTradeChannelModel ?: return
-        val messages = allBisqEasyOpenTradeMessages.value
-            .asSequence()
-            .filter { it.tradeId == tradeId }
-            .map { message ->
-                val chatReactions =
-                    allChatReactions.value.filter { it.chatMessageId == message.messageId && !it.isRemoved }
-                BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions)
-            }
-            .toSet()
+        val bisqEasyOpenTradeChannelModel =
+            tradesServiceFacade.openTradeItems.value
+                .find { it.tradeId == tradeId }
+                ?.bisqEasyOpenTradeChannelModel ?: return
+        val messages =
+            allBisqEasyOpenTradeMessages.value
+                .asSequence()
+                .filter { it.tradeId == tradeId }
+                .map { message ->
+                    val chatReactions =
+                        allChatReactions.value.filter { it.chatMessageId == message.messageId && !it.isRemoved }
+                    BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions)
+                }.toSet()
         bisqEasyOpenTradeChannelModel.setAllChatMessages(messages)
     }
 
-    override suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit> {
+    override suspend fun sendChatMessage(
+        text: String,
+        citationVO: CitationVO?,
+    ): Result<Unit> {
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->
             val apiResult = apiGateway.sendTextMessage(channelId, text, citationVO)
@@ -166,7 +175,10 @@ class ClientTradeChatMessagesServiceFacade(
         }
     }
 
-    override suspend fun addChatMessageReaction(messageId: String, reactionEnum: ReactionEnum): Result<Unit> {
+    override suspend fun addChatMessageReaction(
+        messageId: String,
+        reactionEnum: ReactionEnum,
+    ): Result<Unit> {
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->
             val apiResult = apiGateway.addChatMessageReaction(channelId, messageId, reactionEnum)
@@ -181,7 +193,7 @@ class ClientTradeChatMessagesServiceFacade(
     // Returns true if we could remove the reaction (if it was created by ourself)
     override suspend fun removeChatMessageReaction(
         messageId: String,
-        reactionVO: BisqEasyOpenTradeMessageReactionVO
+        reactionVO: BisqEasyOpenTradeMessageReactionVO,
     ): Result<Boolean> {
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->

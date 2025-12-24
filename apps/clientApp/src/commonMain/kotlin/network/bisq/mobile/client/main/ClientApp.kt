@@ -12,6 +12,6 @@ fun ClientApp() {
         rootNavController = rootNavController,
         navGraphContent = {
             ClientRootNavGraph(rootNavController)
-        }
+        },
     )
 }

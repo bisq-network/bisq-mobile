@@ -134,11 +134,10 @@ object PriceParser {
      * Safe version of parse that returns null instead of throwing exceptions.
      * Uses locale-aware parsing to handle different decimal and thousands separators correctly.
      */
-    fun parseOrNull(value: String): Double? {
-        return try {
+    fun parseOrNull(value: String): Double? =
+        try {
             parse(value)
         } catch (e: Exception) {
             null
         }
-    }
 }

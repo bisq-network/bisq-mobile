@@ -16,8 +16,8 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class SplashPresenter(
     mainPresenter: MainPresenter,
@@ -27,7 +27,6 @@ abstract class SplashPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val versionProvider: VersionProvider,
 ) : BasePresenter(mainPresenter) {
-
     abstract val state: StateFlow<String>
 
     val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
@@ -51,7 +50,6 @@ abstract class SplashPresenter(
                 log.d { "Splash State: $value" }
             }
         }
-
 
         presenterScope.launch {
             progress.collect { value ->

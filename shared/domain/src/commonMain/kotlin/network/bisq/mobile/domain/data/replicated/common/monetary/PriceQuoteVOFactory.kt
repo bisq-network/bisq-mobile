@@ -25,43 +25,69 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.decimalMode
 
 object PriceQuoteVOFactory {
+    fun PriceQuoteVOFactory.fromPrice(
+        priceValue: Double,
+        market: MarketVO,
+    ): PriceQuoteVO = fromPrice(priceValue, market.baseCurrencyCode, market.quoteCurrencyCode)
 
-    fun PriceQuoteVOFactory.fromPrice(priceValue: Double, market: MarketVO): PriceQuoteVO {
-        return fromPrice(priceValue, market.baseCurrencyCode, market.quoteCurrencyCode)
-    }
+    fun PriceQuoteVOFactory.fromPrice(
+        priceValue: Long,
+        market: MarketVO,
+    ): PriceQuoteVO = fromPrice(priceValue, market.baseCurrencyCode, market.quoteCurrencyCode)
 
-    fun PriceQuoteVOFactory.fromPrice(priceValue: Long, market: MarketVO): PriceQuoteVO {
-        return fromPrice(priceValue, market.baseCurrencyCode, market.quoteCurrencyCode)
-    }
-
-    fun PriceQuoteVOFactory.fromPrice(priceValue: Double, baseCurrencyCode: String, quoteCurrencyCode: String): PriceQuoteVO {
+    fun PriceQuoteVOFactory.fromPrice(
+        priceValue: Double,
+        baseCurrencyCode: String,
+        quoteCurrencyCode: String,
+    ): PriceQuoteVO {
         val baseSideMonetary: MonetaryVO =
-            if (isFiat(baseCurrencyCode)) FiatVOFactory.fromFaceValue(1.0, baseCurrencyCode)
-            else CoinVOFactory.fromFaceValue(1.0, baseCurrencyCode)
+            if (isFiat(baseCurrencyCode)) {
+                FiatVOFactory.fromFaceValue(1.0, baseCurrencyCode)
+            } else {
+                CoinVOFactory.fromFaceValue(1.0, baseCurrencyCode)
+            }
         val quoteSideMonetary: MonetaryVO =
-            if (isFiat(quoteCurrencyCode)) FiatVOFactory.fromFaceValue(priceValue, quoteCurrencyCode)
-            else CoinVOFactory.fromFaceValue(priceValue, quoteCurrencyCode)
+            if (isFiat(quoteCurrencyCode)) {
+                FiatVOFactory.fromFaceValue(priceValue, quoteCurrencyCode)
+            } else {
+                CoinVOFactory.fromFaceValue(priceValue, quoteCurrencyCode)
+            }
 
         return from(baseSideMonetary, quoteSideMonetary)
     }
 
-    fun PriceQuoteVOFactory.fromPrice(priceValue: Long, baseCurrencyCode: String, quoteCurrencyCode: String): PriceQuoteVO {
+    fun PriceQuoteVOFactory.fromPrice(
+        priceValue: Long,
+        baseCurrencyCode: String,
+        quoteCurrencyCode: String,
+    ): PriceQuoteVO {
         val baseSideMonetary: MonetaryVO =
-            if (isFiat(baseCurrencyCode)) FiatVOFactory.fromFaceValue(1.0, baseCurrencyCode)
-            else CoinVOFactory.fromFaceValue(1.0, baseCurrencyCode)
+            if (isFiat(baseCurrencyCode)) {
+                FiatVOFactory.fromFaceValue(1.0, baseCurrencyCode)
+            } else {
+                CoinVOFactory.fromFaceValue(1.0, baseCurrencyCode)
+            }
         val quoteSideMonetary: MonetaryVO =
-            if (isFiat(quoteCurrencyCode)) FiatVOFactory.from(priceValue, quoteCurrencyCode)
-            else CoinVOFactory.from(priceValue, quoteCurrencyCode)
+            if (isFiat(quoteCurrencyCode)) {
+                FiatVOFactory.from(priceValue, quoteCurrencyCode)
+            } else {
+                CoinVOFactory.from(priceValue, quoteCurrencyCode)
+            }
 
         return from(baseSideMonetary, quoteSideMonetary)
     }
 
-    fun PriceQuoteVOFactory.from(baseSideMonetary: MonetaryVO, quoteSideMonetary: MonetaryVO): PriceQuoteVO {
+    fun PriceQuoteVOFactory.from(
+        baseSideMonetary: MonetaryVO,
+        quoteSideMonetary: MonetaryVO,
+    ): PriceQuoteVO {
         require(baseSideMonetary.value != 0L) { "baseSideMonetary.value must not be 0" }
-        val value: Long = BigDecimal.fromLong(quoteSideMonetary.value)
-            .moveDecimalPoint(baseSideMonetary.precision)
-            .divide(BigDecimal.fromLong(baseSideMonetary.value), baseSideMonetary.decimalMode)
-            .longValue(false)
+        val value: Long =
+            BigDecimal
+                .fromLong(quoteSideMonetary.value)
+                .moveDecimalPoint(baseSideMonetary.precision)
+                .divide(BigDecimal.fromLong(baseSideMonetary.value), baseSideMonetary.decimalMode)
+                .longValue(false)
         val marketVO = MarketVO(baseSideMonetary.code, quoteSideMonetary.code)
         return PriceQuoteVO(
             value,
@@ -69,16 +95,11 @@ object PriceQuoteVOFactory {
             quoteSideMonetary.lowPrecision,
             marketVO,
             baseSideMonetary,
-            quoteSideMonetary
+            quoteSideMonetary,
         )
     }
 
-    private fun isFiat(code: String): Boolean {
-        return !isCoin(code)
-    }
+    private fun isFiat(code: String): Boolean = !isCoin(code)
 
-    private fun isCoin(code: String): Boolean {
-        return code == "BTC"
-    }
+    private fun isCoin(code: String): Boolean = code == "BTC"
 }
-

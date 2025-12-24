@@ -11,5 +11,5 @@ data class BisqEasyOfferbookMessageReactionVO(
     val chatChannelDomain: ChatChannelDomainEnum,
     val chatMessageId: String,
     val reactionId: Int,
-    val date: Long
+    val date: Long,
 )

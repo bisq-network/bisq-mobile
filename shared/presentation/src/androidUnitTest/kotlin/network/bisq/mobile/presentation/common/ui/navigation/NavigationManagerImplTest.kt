@@ -15,7 +15,6 @@ import kotlin.test.assertFalse
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NavigationManagerImplTest {
-
     private val testDispatcher = StandardTestDispatcher()
 
     // We cannot easily instantiate a real NavHostController in pure JVM tests without
@@ -23,17 +22,21 @@ class NavigationManagerImplTest {
     // absence of any controller / graph instead of constructing controllers here.
 
     @Test
-    fun showBackButton_false_whenNoControllerOrGraph() = runTest(testDispatcher) {
-        val jobsManager = TestCoroutineJobsManager(testDispatcher)
-        val navigationManager = NavigationManagerImpl(jobsManager)
+    fun showBackButton_false_whenNoControllerOrGraph() =
+        runTest(testDispatcher) {
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
 
-        // No controller set -> should safely report false without throwing
-        assertFalse(navigationManager.showBackButton())
-    }
+            // No controller set -> should safely report false without throwing
+            assertFalse(navigationManager.showBackButton())
+        }
 
     // Minimal TestCoroutineJobsManager mirroring the pattern used in OfferbookPresenterFilterTest
-    private class TestCoroutineJobsManager(private val dispatcher: CoroutineDispatcher) : CoroutineJobsManager {
+    private class TestCoroutineJobsManager(
+        private val dispatcher: CoroutineDispatcher,
+    ) : CoroutineJobsManager {
         private val scope = CoroutineScope(dispatcher + SupervisorJob())
+
         override suspend fun dispose() {
             scope.cancel()
         }

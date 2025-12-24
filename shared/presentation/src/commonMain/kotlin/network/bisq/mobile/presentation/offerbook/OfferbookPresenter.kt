@@ -35,13 +35,13 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
-import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
-import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 
 open class OfferbookPresenter(
     private val mainPresenter: MainPresenter,
@@ -50,9 +50,8 @@ open class OfferbookPresenter(
     private val createOfferPresenter: CreateOfferPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
-    private val reputationServiceFacade: ReputationServiceFacade
+    private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
     val selectedDirection: StateFlow<DirectionEnum> get() = _selectedDirection.asStateFlow()
 
@@ -73,14 +72,15 @@ open class OfferbookPresenter(
     val availableSettlementMethodIds: StateFlow<Set<String>> get() = _availableSettlementMethodIds.asStateFlow()
 
     // Presenter-provided UI state for the filter controller
-    private val _filterUiState = MutableStateFlow(
-        OfferbookFilterUiState(
-            payment = emptyList(),
-            settlement = emptyList(),
-            onlyMyOffers = false,
-            hasActiveFilters = false,
+    private val _filterUiState =
+        MutableStateFlow(
+            OfferbookFilterUiState(
+                payment = emptyList(),
+                settlement = emptyList(),
+                onlyMyOffers = false,
+                hasActiveFilters = false,
+            ),
         )
-    )
     val filterUiState: StateFlow<OfferbookFilterUiState> = _filterUiState.asStateFlow()
 
     // Track availability deltas and whether user customized filters
@@ -107,7 +107,6 @@ open class OfferbookPresenter(
 
     val selectedUserProfile get() = userProfileServiceFacade.selectedUserProfile
     val isLoading get() = offersServiceFacade.isOfferbookLoading
-
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {
@@ -136,83 +135,82 @@ open class OfferbookPresenter(
                     settlements = values[6] as Set<String>,
                     onlyMine = values[7] as Boolean,
                 )
-            }
-                .mapLatest { inp ->
-                    val offers = inp.offers
-                    val direction = inp.direction
-                    val selectedMarket = inp.selectedMarket
-                    val selectedProfile = inp.selectedProfile
-                    val payments = inp.payments
-                    val settlements = inp.settlements
-                    val onlyMine = inp.onlyMine
+            }.mapLatest { inp ->
+                val offers = inp.offers
+                val direction = inp.direction
+                val selectedMarket = inp.selectedMarket
+                val selectedProfile = inp.selectedProfile
+                val payments = inp.payments
+                val settlements = inp.settlements
+                val onlyMine = inp.onlyMine
 
-                    log.d { "OfferbookPresenter filtering - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir: $direction, In: ${offers.size}, paySel=${payments.size}, setSel=${settlements.size}, onlyMine=$onlyMine" }
+                log.d { "OfferbookPresenter filtering - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir: $direction, In: ${offers.size}, paySel=${payments.size}, setSel=${settlements.size}, onlyMine=$onlyMine" }
 
-                    val filtered = mutableListOf<OfferItemPresentationModel>()
-                    if (selectedProfile == null) return@mapLatest null
-                    var directionFilteredCount = 0
-                    var ignoredUserFilteredCount = 0
-                    var methodFilteredCount = 0
-                    var onlyMyFilteredCount = 0
+                val filtered = mutableListOf<OfferItemPresentationModel>()
+                if (selectedProfile == null) return@mapLatest null
+                var directionFilteredCount = 0
+                var ignoredUserFilteredCount = 0
+                var methodFilteredCount = 0
+                var onlyMyFilteredCount = 0
 
-                    // Baseline availability (direction + ignored-user + only-my if enabled), independent of method selections
-                    val availablePayments = mutableSetOf<String>()
-                    val availableSettlements = mutableSetOf<String>()
+                // Baseline availability (direction + ignored-user + only-my if enabled), independent of method selections
+                val availablePayments = mutableSetOf<String>()
+                val availableSettlements = mutableSetOf<String>()
 
-                    for (item in offers) {
-                        val offerCurrency = item.bisqEasyOffer.market.quoteCurrencyCode
-                        val offerDirection = item.bisqEasyOffer.direction.mirror
-                        val isIgnoredUser = isOfferFromIgnoredUserCached(item.bisqEasyOffer)
+                for (item in offers) {
+                    val offerCurrency = item.bisqEasyOffer.market.quoteCurrencyCode
+                    val offerDirection = item.bisqEasyOffer.direction.mirror
+                    val isIgnoredUser = isOfferFromIgnoredUserCached(item.bisqEasyOffer)
 
-                        log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser, isMy=${item.isMyOffer}" }
+                    log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser, isMy=${item.isMyOffer}" }
 
-                        if (offerDirection != direction) {
-                            log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
-                            continue
-                        }
-                        directionFilteredCount++
+                    if (offerDirection != direction) {
+                        log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
+                        continue
+                    }
+                    directionFilteredCount++
 
-                        if (isIgnoredUser) {
-                            ignoredUserFilteredCount++
-                            log.v { "Offer ${item.offerId} filtered out (ignored user)" }
-                            continue
-                        }
-
-                        if (onlyMine && !item.isMyOffer) {
-                            onlyMyFilteredCount++
-                            log.v { "Offer ${item.offerId} filtered out (only my offers enabled)" }
-                            continue
-                        }
-
-                        // Contribute to baseline availability regardless of current method selections
-                        availablePayments.addAll(item.quoteSidePaymentMethods)
-                        availableSettlements.addAll(item.baseSidePaymentMethods)
-
-                        // Method filter: empty selections mean "no filter" unless the user manually customized this filter
-                        val paymentOk = if (payments.isEmpty() && !hasManualPaymentFilter) true else item.quoteSidePaymentMethods.any { it in payments }
-                        val settlementOk = if (settlements.isEmpty() && !hasManualSettlementFilter) true else item.baseSidePaymentMethods.any { it in settlements }
-                        if (!paymentOk || !settlementOk) {
-                            methodFilteredCount++
-                            log.v { "Offer ${item.offerId} filtered out (methods) payOk=$paymentOk setOk=$settlementOk" }
-                            continue
-                        }
-
-                        filtered += item
-                        log.v { "Offer ${item.offerId} included - Currency: $offerCurrency, Amount: ${item.formattedQuoteAmount}" }
+                    if (isIgnoredUser) {
+                        ignoredUserFilteredCount++
+                        log.v { "Offer ${item.offerId} filtered out (ignored user)" }
+                        continue
                     }
 
+                    if (onlyMine && !item.isMyOffer) {
+                        onlyMyFilteredCount++
+                        log.v { "Offer ${item.offerId} filtered out (only my offers enabled)" }
+                        continue
+                    }
 
-                    // Publish baseline availability independent of current method selections
-                    _availablePaymentMethodIds.value = availablePayments
-                    _availableSettlementMethodIds.value = availableSettlements
+                    // Contribute to baseline availability regardless of current method selections
+                    availablePayments.addAll(item.quoteSidePaymentMethods)
+                    availableSettlements.addAll(item.baseSidePaymentMethods)
 
-                    log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, OnlyMy: $onlyMyFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
-                    val processed = filtered.map { offer -> processOffer(offer, selectedProfile) }
-                    val sorted = processed.sortedWith(
-                        compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
-                    sorted
+                    // Method filter: empty selections mean "no filter" unless the user manually customized this filter
+                    val paymentOk =
+                        if (payments.isEmpty() && !hasManualPaymentFilter) true else item.quoteSidePaymentMethods.any { it in payments }
+                    val settlementOk =
+                        if (settlements.isEmpty() && !hasManualSettlementFilter) true else item.baseSidePaymentMethods.any { it in settlements }
+                    if (!paymentOk || !settlementOk) {
+                        methodFilteredCount++
+                        log.v { "Offer ${item.offerId} filtered out (methods) payOk=$paymentOk setOk=$settlementOk" }
+                        continue
+                    }
+
+                    filtered += item
+                    log.v { "Offer ${item.offerId} included - Currency: $offerCurrency, Amount: ${item.formattedQuoteAmount}" }
                 }
-                .flowOn(Dispatchers.Default)
+
+                // Publish baseline availability independent of current method selections
+                _availablePaymentMethodIds.value = availablePayments
+                _availableSettlementMethodIds.value = availableSettlements
+
+                log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, OnlyMy: $onlyMyFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
+                val processed = filtered.map { offer -> processOffer(offer, selectedProfile) }
+                val sorted =
+                    processed.sortedWith(compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                sorted
+            }.flowOn(Dispatchers.Default)
                 .collectLatest { sorted ->
                     if (sorted != null) {
                         _sortedFilteredOffers.value = sorted
@@ -230,23 +228,25 @@ open class OfferbookPresenter(
                 selectedSettlementMethodIds,
                 onlyMyOffers,
             ) { payAvail, setAvail, paySel, setSel, onlyMine ->
-                val paymentUi = payAvail.toList().sorted().map { id ->
-                    MethodIconState(
-                        id = id,
-                        label = humanizePaymentId(id),
-                        iconPath = paymentIconPath(id),
-                        selected = id in paySel
-                    )
-                }
-                val settlementUi = setAvail.toList().sorted().map { id ->
-                    val label = settlementLabelFor(id)
-                    MethodIconState(
-                        id = id,
-                        label = label,
-                        iconPath = settlementIconPath(id),
-                        selected = id in setSel
-                    )
-                }
+                val paymentUi =
+                    payAvail.toList().sorted().map { id ->
+                        MethodIconState(
+                            id = id,
+                            label = humanizePaymentId(id),
+                            iconPath = paymentIconPath(id),
+                            selected = id in paySel,
+                        )
+                    }
+                val settlementUi =
+                    setAvail.toList().sorted().map { id ->
+                        val label = settlementLabelFor(id)
+                        MethodIconState(
+                            id = id,
+                            label = label,
+                            iconPath = settlementIconPath(id),
+                            selected = id in setSel,
+                        )
+                    }
                 val hasActive = onlyMine || paymentUi.any { !it.selected } || settlementUi.any { !it.selected }
                 OfferbookFilterUiState(
                     payment = paymentUi,
@@ -265,11 +265,11 @@ open class OfferbookPresenter(
                 val current = _selectedPaymentMethodIds.value
                 val newlyAdded = avail - prevAvailPayment
                 val newSelection = (current intersect avail) + (if (hasManualPaymentFilter) emptySet() else newlyAdded)
-				// If the user has never customized this filter, default to selecting all
-				// available methods when we first obtain availability. Once a manual
-				// filter is applied (including clearing all methods), we keep the
-				// user's selection stable across availability changes.
-				val finalSelection = if (current.isEmpty() && !hasManualPaymentFilter) avail else newSelection
+                // If the user has never customized this filter, default to selecting all
+                // available methods when we first obtain availability. Once a manual
+                // filter is applied (including clearing all methods), we keep the
+                // user's selection stable across availability changes.
+                val finalSelection = if (current.isEmpty() && !hasManualPaymentFilter) avail else newSelection
                 if (finalSelection != current) {
                     _selectedPaymentMethodIds.value = finalSelection
                 }
@@ -281,55 +281,61 @@ open class OfferbookPresenter(
                 val current = _selectedSettlementMethodIds.value
                 val newlyAdded = avail - prevAvailSettlement
                 val newSelection = (current intersect avail) + (if (hasManualSettlementFilter) emptySet() else newlyAdded)
-				// Mirror payment-method behavior: only auto-select all when there is
-				// no manual filter yet. Manual filters (including empty selection)
-				// should remain stable when availability changes.
-				val finalSelection = if (current.isEmpty() && !hasManualSettlementFilter) avail else newSelection
+                // Mirror payment-method behavior: only auto-select all when there is
+                // no manual filter yet. Manual filters (including empty selection)
+                // should remain stable when availability changes.
+                val finalSelection = if (current.isEmpty() && !hasManualSettlementFilter) avail else newSelection
                 if (finalSelection != current) {
                     _selectedSettlementMethodIds.value = finalSelection
                 }
                 prevAvailSettlement = avail
             }
         }
-
     }
 
     private suspend fun processOffer(
         item: OfferItemPresentationModel,
-        userProfile: UserProfileVO
+        userProfile: UserProfileVO,
     ): OfferItemPresentationModel {
         val offer = item.bisqEasyOffer
 
         // todo: Reformatting should ideally only happen with language change
-        val formattedQuoteAmount = when (val amountSpec = offer.amountSpec) {
-            is FixedAmountSpecVO -> {
-                val fiatVO = FiatVOFactory.from(amountSpec.amount, offer.market.quoteCurrencyCode)
-                AmountFormatter.formatAmount(fiatVO, true, true)
-            }
+        val formattedQuoteAmount =
+            when (val amountSpec = offer.amountSpec) {
+                is FixedAmountSpecVO -> {
+                    val fiatVO = FiatVOFactory.from(amountSpec.amount, offer.market.quoteCurrencyCode)
+                    AmountFormatter.formatAmount(fiatVO, true, true)
+                }
 
-            is RangeAmountSpecVO -> {
-                val minFiatVO = FiatVOFactory.from(
-                    amountSpec.minAmount, offer.market.quoteCurrencyCode
-                )
-                val maxFiatVO = FiatVOFactory.from(
-                    amountSpec.maxAmount, offer.market.quoteCurrencyCode
-                )
-                AmountFormatter.formatRangeAmount(minFiatVO, maxFiatVO, true, true)
+                is RangeAmountSpecVO -> {
+                    val minFiatVO =
+                        FiatVOFactory.from(
+                            amountSpec.minAmount,
+                            offer.market.quoteCurrencyCode,
+                        )
+                    val maxFiatVO =
+                        FiatVOFactory.from(
+                            amountSpec.maxAmount,
+                            offer.market.quoteCurrencyCode,
+                        )
+                    AmountFormatter.formatRangeAmount(minFiatVO, maxFiatVO, true, true)
+                }
             }
-        }
 
         val formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(offer.priceSpec)
 
-        val isInvalid = if (offer.direction == DirectionEnum.BUY) {
-            BisqEasyTradeAmountLimits.isBuyOfferInvalid(
-                item = item,
-                useCache = true,
-                marketPriceServiceFacade = marketPriceServiceFacade,
-                reputationServiceFacade = reputationServiceFacade,
-                userProfileId = userProfile.id
-            )
-        } else false
-
+        val isInvalid =
+            if (offer.direction == DirectionEnum.BUY) {
+                BisqEasyTradeAmountLimits.isBuyOfferInvalid(
+                    item = item,
+                    useCache = true,
+                    marketPriceServiceFacade = marketPriceServiceFacade,
+                    reputationServiceFacade = reputationServiceFacade,
+                    userProfileId = userProfile.id,
+                )
+            } else {
+                false
+            }
 
         // Not doing copyWith of item to assign these properties.
         // Because `OfferItemPresentationModel` class has StateFlow props
@@ -362,12 +368,12 @@ open class OfferbookPresenter(
         }
     }
 
-    private fun settlementLabelFor(id: String): String = when (id.uppercase()) {
-        "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "mobile.settlement.bitcoin".i18n()
-        "LIGHTNING", "LN" -> "mobile.settlement.lightning".i18n()
-        else -> id
-    }
-
+    private fun settlementLabelFor(id: String): String =
+        when (id.uppercase()) {
+            "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "mobile.settlement.bitcoin".i18n()
+            "LIGHTNING", "LN" -> "mobile.settlement.lightning".i18n()
+            else -> id
+        }
 
     fun onConfirmedDeleteOffer() {
         val selectedOffer = this.selectedOffer
@@ -381,8 +387,10 @@ open class OfferbookPresenter(
             require(selectedOffer.isMyOffer)
             presenterScope.launch {
                 showLoading()
-                val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
-                    .getOrDefault(false)
+                val result =
+                    offersServiceFacade
+                        .deleteOffer(selectedOffer.offerId)
+                        .getOrDefault(false)
                 log.d { "delete offer success $result" }
                 hideLoading()
                 if (result) {
@@ -391,8 +399,9 @@ open class OfferbookPresenter(
                     log.w { "Failed to delete offer ${selectedOffer.offerId}" }
                     showSnackbar(
                         "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
-                            selectedOffer.offerId
-                        ), true
+                            selectedOffer.offerId,
+                        ),
+                        true,
                     )
                 }
             }
@@ -401,7 +410,7 @@ open class OfferbookPresenter(
             log.e(it) { "Failed to delete offer ${selectedOffer.offerId}" }
             showSnackbar(
                 "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer.offerId),
-                true
+                true,
             )
             deselectOffer()
         }
@@ -443,44 +452,54 @@ open class OfferbookPresenter(
             log.e(it) { "Failed to take offer ${selectedOffer?.offerId}" }
             showSnackbar(
                 "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(selectedOffer?.offerId ?: ""),
-                true
+                true,
             )
             deselectOffer()
         }
     }
 
-    private suspend fun canTakeOffer(item: OfferItemPresentationModel, userProfile: UserProfileVO): Boolean {
-        return withContext(Dispatchers.Default) {
+    private suspend fun canTakeOffer(
+        item: OfferItemPresentationModel,
+        userProfile: UserProfileVO,
+    ): Boolean =
+        withContext(Dispatchers.Default) {
             val bisqEasyOffer = item.bisqEasyOffer
-            val requiredReputationScoreForMaxOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
-                marketPriceServiceFacade, bisqEasyOffer
-            )
+            val requiredReputationScoreForMaxOrFixed =
+                BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
+                    marketPriceServiceFacade,
+                    bisqEasyOffer,
+                )
             require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
-            val requiredReputationScoreForMinOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
-                marketPriceServiceFacade, bisqEasyOffer
-            )
+            val requiredReputationScoreForMinOrFixed =
+                BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
+                    marketPriceServiceFacade,
+                    bisqEasyOffer,
+                )
             require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
 
             val market = bisqEasyOffer.market
             val quoteCurrencyCode = market.quoteCurrencyCode
-            val minFiatAmount: String = AmountFormatter.formatAmount(
-                FiatVOFactory.from(bisqEasyOffer.getFixedOrMinAmount(), quoteCurrencyCode),
-                useLowPrecision = true,
-                withCode = true
-            )
-            val maxFiatAmount: String = AmountFormatter.formatAmount(
-                FiatVOFactory.from(bisqEasyOffer.getFixedOrMaxAmount(), quoteCurrencyCode),
-                useLowPrecision = true,
-                withCode = true
-            )
+            val minFiatAmount: String =
+                AmountFormatter.formatAmount(
+                    FiatVOFactory.from(bisqEasyOffer.getFixedOrMinAmount(), quoteCurrencyCode),
+                    useLowPrecision = true,
+                    withCode = true,
+                )
+            val maxFiatAmount: String =
+                AmountFormatter.formatAmount(
+                    FiatVOFactory.from(bisqEasyOffer.getFixedOrMaxAmount(), quoteCurrencyCode),
+                    useLowPrecision = true,
+                    withCode = true,
+                )
 
             // For BUY offers: The maker wants to buy Bitcoin, so the taker (me) becomes the seller
             // For SELL offers: The maker wants to sell Bitcoin, so the maker becomes the seller
-            val userProfileId = if (bisqEasyOffer.direction == DirectionEnum.SELL) {
-                bisqEasyOffer.makerNetworkId.pubKey.id // Offer maker is seller (wants to sell Bitcoin)
-            } else {
-                userProfile.id // I am seller (taker selling to maker who wants to buy)
-            }
+            val userProfileId =
+                if (bisqEasyOffer.direction == DirectionEnum.SELL) {
+                    bisqEasyOffer.makerNetworkId.pubKey.id // Offer maker is seller (wants to sell Bitcoin)
+                } else {
+                    userProfile.id // I am seller (taker selling to maker who wants to buy)
+                }
 
             val reputationResult: Result<ReputationScoreVO> = reputationServiceFacade.getReputation(userProfileId)
 
@@ -507,31 +526,38 @@ open class OfferbookPresenter(
                     // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
                     val learnMore = "mobile.reputation.learnMoreAtWiki".i18n()
                     notEnoughReputationHeadline = "chat.message.takeOffer.buyer.invalidOffer.headline".i18n()
-                    val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.buyer.invalidOffer.rangeAmount.text"
-                    else "chat.message.takeOffer.buyer.invalidOffer.fixedAmount.text"
+                    val warningKey =
+                        if (isAmountRangeOffer) {
+                            "chat.message.takeOffer.buyer.invalidOffer.rangeAmount.text"
+                        } else {
+                            "chat.message.takeOffer.buyer.invalidOffer.fixedAmount.text"
+                        }
 
                     notEnoughReputationMessage = warningKey.i18n(
                         sellersScore,
                         if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
-                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
+                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount,
                     ) + "\n\n" + learnMore + "\n\n" + link
                 } else {
                     // BUY offer: Maker wants to buy Bitcoin, so taker becomes the seller
                     // Taker (me) wants to sell Bitcoin - checking if I have enough reputation
                     notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
-                    val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
-                    else "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
+                    val warningKey =
+                        if (isAmountRangeOffer) {
+                            "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
+                        } else {
+                            "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
+                        }
                     notEnoughReputationMessage = warningKey.i18n(
                         sellersScore,
                         if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
-                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
+                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount,
                     ) + "\n\n" + "mobile.reputation.warning.navigateToReputation".i18n()
                 }
             }
 
             canBuyerTakeOffer
         }
-    }
 
     private fun deselectOffer() {
         selectedOffer = null
@@ -618,7 +644,7 @@ open class OfferbookPresenter(
             enableInteractive()
             log.e(e) { "Failed to create offer" }
             showSnackbar(
-                if (isDemo()) "mobile.bisqEasy.offerbook.createOfferDisabledInDemoMode".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n()
+                if (isDemo()) "mobile.bisqEasy.offerbook.createOfferDisabledInDemoMode".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n(),
             )
         }
     }
@@ -626,8 +652,9 @@ open class OfferbookPresenter(
     fun showReputationRequirementInfo(item: OfferItemPresentationModel) {
         presenterScope.launch {
             try {
-                val selectedProfile = selectedUserProfile.value
-                    ?: throw IllegalStateException("selectedUserProfile is null")
+                val selectedProfile =
+                    selectedUserProfile.value
+                        ?: throw IllegalStateException("selectedUserProfile is null")
                 // Set up the dialog content
                 setupReputationDialogContent(item, selectedProfile)
 
@@ -653,7 +680,10 @@ open class OfferbookPresenter(
         navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
     }
 
-    private suspend fun setupReputationDialogContent(item: OfferItemPresentationModel, userProfile: UserProfileVO) {
+    private suspend fun setupReputationDialogContent(
+        item: OfferItemPresentationModel,
+        userProfile: UserProfileVO,
+    ) {
         canTakeOffer(item, userProfile)
     }
 
@@ -676,5 +706,4 @@ open class OfferbookPresenter(
      * This method is safe to call from hot paths like offer filtering.
      */
     open fun isOfferFromIgnoredUserCached(offer: BisqEasyOfferVO): Boolean = false
-
 }

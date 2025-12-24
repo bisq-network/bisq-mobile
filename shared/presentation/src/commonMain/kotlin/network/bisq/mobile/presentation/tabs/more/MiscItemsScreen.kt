@@ -16,9 +16,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ArrowRightIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticLayout
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -46,14 +46,17 @@ fun MiscItemsScreen() {
     }
 }
 
-
 @Composable
-private fun Menu(menuItem: MiscItemsPresenter.MenuItem, onNavigate: (MiscItemsPresenter.MenuItem) -> Unit) {
+private fun Menu(
+    menuItem: MiscItemsPresenter.MenuItem,
+    onNavigate: (MiscItemsPresenter.MenuItem) -> Unit,
+) {
     when (menuItem) {
-        is MiscItemsPresenter.MenuItem.Parent -> menuItem.children.forEach { child ->
-            ItemButton(label = child.label, icon = child.icon, onClick = { onNavigate(child) })
-            BisqGap.VHalf()
-        }
+        is MiscItemsPresenter.MenuItem.Parent ->
+            menuItem.children.forEach { child ->
+                ItemButton(label = child.label, icon = child.icon, onClick = { onNavigate(child) })
+                BisqGap.VHalf()
+            }
 
         else -> {
             ItemButton(label = menuItem.label, icon = menuItem.icon, onClick = { onNavigate(menuItem) })
@@ -66,10 +69,10 @@ private fun Menu(menuItem: MiscItemsPresenter.MenuItem, onNavigate: (MiscItemsPr
 private fun ItemButton(
     label: String,
     icon: DrawableResource? = null,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     BisqButton(
-        label,
+        text = label,
         onClick = onClick,
         fullWidth = true,
         backgroundColor = BisqTheme.colors.dark_grey40,
@@ -78,14 +81,13 @@ private fun ItemButton(
                 Image(
                     painter = painterResource(icon),
                     contentDescription = label,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
             }
         },
-
         rightIcon = { ArrowRightIcon() },
         textAlign = TextAlign.Start,
-        padding = PaddingValues(all = BisqUIConstants.ScreenPadding)
+        padding = PaddingValues(all = BisqUIConstants.ScreenPadding),
     )
 }
 

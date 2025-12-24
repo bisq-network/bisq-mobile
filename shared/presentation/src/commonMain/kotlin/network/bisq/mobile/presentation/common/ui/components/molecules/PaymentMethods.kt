@@ -12,11 +12,11 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage
 @Composable
 fun PaymentMethods(
     baseSidePaymentMethods: List<String>,
-    quoteSidePaymentMethods: List<String>
+    quoteSidePaymentMethods: List<String>,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             quoteSidePaymentMethods.forEach { paymentMethod ->
@@ -29,7 +29,7 @@ fun PaymentMethods(
         }
         DynamicImage(
             "drawable/payment/interchangeable_grey.png",
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             baseSidePaymentMethods.forEach { settlementMethod ->

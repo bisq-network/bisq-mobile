@@ -13,7 +13,6 @@ class NodeOnboardingPresenter(
     userProfileService: UserProfileServiceFacade,
 ) : OnboardingPresenter(mainPresenter, settingsRepository, userProfileService),
     IOnboardingPresenter {
-
     override val indexesToShow = listOf(0, 1)
 
     override val headline: String = "mobile.onboarding.fullMode.headline".i18n()

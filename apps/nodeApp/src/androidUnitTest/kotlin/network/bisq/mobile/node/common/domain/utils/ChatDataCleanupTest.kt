@@ -19,7 +19,6 @@ import kotlin.test.assertTrue
  * 4. The cleanup handles missing directories gracefully
  */
 class ChatDataCleanupTest {
-
     private lateinit var testRoot: File
     private lateinit var bisqDir: File
     private lateinit var dbDir: File
@@ -118,7 +117,7 @@ class ChatDataCleanupTest {
         assertTrue(cleanFile.exists(), "Clean file should be preserved")
         assertTrue(
             cleanFile.readText(Charsets.UTF_8).contains("valid data"),
-            "Clean file content should be intact"
+            "Clean file content should be intact",
         )
     }
 
@@ -156,7 +155,7 @@ class ChatDataCleanupTest {
         assertTrue(privateFile.exists(), "Private directory files must never be deleted")
         assertTrue(
             privateFile.readText(Charsets.UTF_8).contains("trade chat data"),
-            "Private file content must be intact"
+            "Private file content must be intact",
         )
     }
 
@@ -207,28 +206,31 @@ class ChatDataCleanupTest {
                 return
             }
 
-            val deprecatedEnumValues = listOf(
-                "EVENTS_CONFERENCES",
-                "EVENTS_MEETUPS",
-                "EVENTS_PODCASTS",
-                "EVENTS_TRADE_EVENTS",
-                "ChatChannelDomain.EVENTS"
-            )
+            val deprecatedEnumValues =
+                listOf(
+                    "EVENTS_CONFERENCES",
+                    "EVENTS_MEETUPS",
+                    "EVENTS_PODCASTS",
+                    "EVENTS_TRADE_EVENTS",
+                    "ChatChannelDomain.EVENTS",
+                )
 
-            val publicChatFiles = listOf(
-                "CommonPublicChatChannelStore",
-                "DiscussionChannelStore",
-                "EventsChannelStore",
-                "SupportChannelStore"
-            )
+            val publicChatFiles =
+                listOf(
+                    "CommonPublicChatChannelStore",
+                    "DiscussionChannelStore",
+                    "EventsChannelStore",
+                    "SupportChannelStore",
+                )
 
             publicChatFiles.forEach { fileName ->
                 val file = File(cacheDir, fileName)
                 if (file.exists() && file.isFile) {
                     try {
-                        val containsDeprecatedValue = file.readText(Charsets.UTF_8).let { content ->
-                            deprecatedEnumValues.any { deprecated -> content.contains(deprecated) }
-                        }
+                        val containsDeprecatedValue =
+                            file.readText(Charsets.UTF_8).let { content ->
+                                deprecatedEnumValues.any { deprecated -> content.contains(deprecated) }
+                            }
 
                         if (containsDeprecatedValue) {
                             file.delete()

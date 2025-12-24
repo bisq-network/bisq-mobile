@@ -35,48 +35,52 @@ object OfferFormattingUtil {
             // 1) Price
             runCatching {
                 val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-                val newFormattedPrice = PriceQuoteFormatter.format(
-                    priceQuoteVO,
-                    useLowPrecision = true,
-                    withCode = true
-                )
+                val newFormattedPrice =
+                    PriceQuoteFormatter.format(
+                        priceQuoteVO,
+                        useLowPrecision = true,
+                        withCode = true,
+                    )
                 model.updateFormattedPrice(newFormattedPrice)
             }
 
             // 2) Base amount
             runCatching {
                 val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-                val newFormattedBaseAmount = when (val amountSpec = offerVO.amountSpec) {
-                    is QuoteSideFixedAmountSpecVO -> {
-                        val quoteMonetary = FiatVOFactory.run {
-                            from(amountSpec.amount, offerVO.market.quoteCurrencyCode)
+                val newFormattedBaseAmount =
+                    when (val amountSpec = offerVO.amountSpec) {
+                        is QuoteSideFixedAmountSpecVO -> {
+                            val quoteMonetary =
+                                FiatVOFactory.run {
+                                    from(amountSpec.amount, offerVO.market.quoteCurrencyCode)
+                                }
+                            val baseMonetary = priceQuoteVO.toBaseSideMonetary(quoteMonetary)
+                            AmountFormatter.formatAmount(
+                                baseMonetary,
+                                useLowPrecision = false,
+                                withCode = true,
+                            )
                         }
-                        val baseMonetary = priceQuoteVO.toBaseSideMonetary(quoteMonetary)
-                        AmountFormatter.formatAmount(
-                            baseMonetary,
-                            useLowPrecision = false,
-                            withCode = true
-                        )
-                    }
 
-                    is QuoteSideRangeAmountSpecVO -> {
-                        val minQuote = FiatVOFactory.run { from(amountSpec.minAmount, offerVO.market.quoteCurrencyCode) }
-                        val maxQuote = FiatVOFactory.run { from(amountSpec.maxAmount, offerVO.market.quoteCurrencyCode) }
-                        val minBase = priceQuoteVO.toBaseSideMonetary(minQuote)
-                        val maxBase = priceQuoteVO.toBaseSideMonetary(maxQuote)
-                        AmountFormatter.formatRangeAmount(
-                            minBase,
-                            maxBase,
-                            useLowPrecision = false,
-                            withCode = true
-                        )
-                    }
+                        is QuoteSideRangeAmountSpecVO -> {
+                            val minQuote =
+                                FiatVOFactory.run { from(amountSpec.minAmount, offerVO.market.quoteCurrencyCode) }
+                            val maxQuote =
+                                FiatVOFactory.run { from(amountSpec.maxAmount, offerVO.market.quoteCurrencyCode) }
+                            val minBase = priceQuoteVO.toBaseSideMonetary(minQuote)
+                            val maxBase = priceQuoteVO.toBaseSideMonetary(maxQuote)
+                            AmountFormatter.formatRangeAmount(
+                                minBase,
+                                maxBase,
+                                useLowPrecision = false,
+                                withCode = true,
+                            )
+                        }
 
-                    else -> model.formattedBaseAmount.value // Base-side specs unaffected by market price
-                }
+                        else -> model.formattedBaseAmount.value // Base-side specs unaffected by market price
+                    }
                 model.updateFormattedBaseAmount(newFormattedBaseAmount)
             }
         }
     }
 }
-

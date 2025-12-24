@@ -8,14 +8,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
+import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
-fun ClientRootNavGraph(rootNavController: NavHostController) {
+fun ClientRootNavGraph(
+    rootNavController: NavHostController,
+    modifier: Modifier = Modifier,
+) {
     NavHost(
-        modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
+        modifier = modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
         startDestination = NavRoute.Splash,
     ) {
@@ -25,6 +28,6 @@ fun ClientRootNavGraph(rootNavController: NavHostController) {
 }
 
 fun NavGraphBuilder.addClientAppRoutes() {
-    addScreen<TrustedNodeSetupSettings> { TrustedNodeSetupScreen(false) }
+    addScreen<TrustedNodeSetupSettings> { TrustedNodeSetupScreen(isWorkflow = false) }
     addScreen<TrustedNodeSetup> { TrustedNodeSetupScreen() }
 }

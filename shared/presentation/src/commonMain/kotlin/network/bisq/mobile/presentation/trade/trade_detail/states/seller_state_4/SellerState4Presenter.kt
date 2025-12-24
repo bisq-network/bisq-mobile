@@ -11,7 +11,6 @@ class SellerState4Presenter(
     tradesServiceFacade: TradesServiceFacade,
     tradeReadStateRepository: TradeReadStateRepository,
 ) : State4Presenter(mainPresenter, tradesServiceFacade, tradeReadStateRepository) {
-
     override fun getMyDirectionString(): String {
         return "bisqEasy.tradeCompleted.header.myDirection.seller".i18n() // I sold
     }

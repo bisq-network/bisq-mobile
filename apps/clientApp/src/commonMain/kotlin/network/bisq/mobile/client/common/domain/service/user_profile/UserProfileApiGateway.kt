@@ -14,38 +14,39 @@ class UserProfileApiGateway(
     private val basePath = "user-identities"
     private val profileBasePath = "user-profiles"
 
-    suspend fun ping(): Result<KeyMaterialResponse> {
-        return webSocketApiClient.get("$basePath/ping")
-    }
+    suspend fun ping(): Result<KeyMaterialResponse> = webSocketApiClient.get("$basePath/ping")
 
-    suspend fun getKeyMaterial(): Result<KeyMaterialResponse> {
-        return webSocketApiClient.get("$basePath/key-material")
-    }
+    suspend fun getKeyMaterial(): Result<KeyMaterialResponse> = webSocketApiClient.get("$basePath/key-material")
 
     suspend fun createAndPublishNewUserProfile(
-        nickName: String, keyMaterialResponse: KeyMaterialResponse
+        nickName: String,
+        keyMaterialResponse: KeyMaterialResponse,
     ): Result<CreateUserIdentityResponse> {
-        val createUserIdentityRequest = CreateUserIdentityRequest(
-            nickName, "", "", keyMaterialResponse
-        )
+        val createUserIdentityRequest =
+            CreateUserIdentityRequest(
+                nickName,
+                "",
+                "",
+                keyMaterialResponse,
+            )
         return webSocketApiClient.post(basePath, createUserIdentityRequest)
     }
 
-    suspend fun updateUserProfile(statement: String, terms: String): Result<CreateUserIdentityResponse> {
-        val request = UpdateUserIdentityRequest(
-            terms = terms,
-            statement = statement
-        )
+    suspend fun updateUserProfile(
+        statement: String,
+        terms: String,
+    ): Result<CreateUserIdentityResponse> {
+        val request =
+            UpdateUserIdentityRequest(
+                terms = terms,
+                statement = statement,
+            )
         return webSocketApiClient.patch(basePath, request)
     }
 
-    suspend fun getUserIdentityIds(): Result<List<String>> {
-        return webSocketApiClient.get("$basePath/ids")
-    }
+    suspend fun getUserIdentityIds(): Result<List<String>> = webSocketApiClient.get("$basePath/ids")
 
-    suspend fun getSelectedUserProfile(): Result<UserProfileVO> {
-        return webSocketApiClient.get("$basePath/selected/user-profile")
-    }
+    suspend fun getSelectedUserProfile(): Result<UserProfileVO> = webSocketApiClient.get("$basePath/selected/user-profile")
 
     suspend fun findUserProfiles(ids: List<String>): Result<List<UserProfileVO>> {
         if (ids.isEmpty()) {
@@ -54,29 +55,21 @@ class UserProfileApiGateway(
         return webSocketApiClient.get("$profileBasePath?ids=${ids.joinToString(",")}")
     }
 
-    suspend fun getIgnoredUserIds(): Result<List<String>> {
-        return webSocketApiClient.get("$profileBasePath/ignored")
-    }
+    suspend fun getIgnoredUserIds(): Result<List<String>> = webSocketApiClient.get("$profileBasePath/ignored")
 
-    suspend fun ignoreUser(userId: String): Result<Unit> {
-        return webSocketApiClient.post("$profileBasePath/ignore/$userId", "")
-    }
+    suspend fun ignoreUser(userId: String): Result<Unit> = webSocketApiClient.post("$profileBasePath/ignore/$userId", "")
 
-    suspend fun undoIgnoreUser(userId: String): Result<Unit> {
-        return webSocketApiClient.delete("$profileBasePath/ignore/${userId.encodeURLPath()}")
-    }
+    suspend fun undoIgnoreUser(userId: String): Result<Unit> = webSocketApiClient.delete("$profileBasePath/ignore/${userId.encodeURLPath()}")
 
-    suspend fun subscribeNumUserProfiles(): WebSocketEventObserver {
-        return webSocketClientService.subscribe(Topic.NUM_USER_PROFILES)
-    }
+    suspend fun subscribeNumUserProfiles(): WebSocketEventObserver = webSocketClientService.subscribe(Topic.NUM_USER_PROFILES)
 
-    suspend fun reportUserProfile(userId: String, message: String): Result<Unit> {
+    suspend fun reportUserProfile(
+        userId: String,
+        message: String,
+    ): Result<Unit> {
         val body = ReportUserProfileRequest(message)
         return webSocketApiClient.post("$profileBasePath/report/${userId.encodeURLPath()}", body)
     }
 
-    suspend fun triggerUserActivityDetection(): Result<Unit> {
-        return webSocketApiClient.post("$profileBasePath/activity", "")
-    }
-
+    suspend fun triggerUserActivityDetection(): Result<Unit> = webSocketApiClient.post("$profileBasePath/activity", "")
 }

@@ -18,10 +18,9 @@ package network.bisq.mobile.domain.data.replicated.account.payment_method
 
 import network.bisq.mobile.domain.data.replicated.account.payment_method.FiatPaymentRailEnumExtensions.supportsCurrency
 
-
 object FiatPaymentRailUtil {
-    fun getPaymentRails(currencyCode: String): List<FiatPaymentRailEnum> {
-        return FiatPaymentRailEnum.entries.filter { fiatPaymentRail ->
+    fun getPaymentRails(currencyCode: String): List<FiatPaymentRailEnum> =
+        FiatPaymentRailEnum.entries.filter { fiatPaymentRail ->
             when {
                 // For EUR, we don't add NATIONAL_BANK as SEPA is the common payment rail for EUR
                 // SWIFT is added to support non-EUR countries offering EUR accounts like Switzerland
@@ -39,30 +38,94 @@ object FiatPaymentRailUtil {
                 else -> fiatPaymentRail.supportsCurrency(currencyCode)
             }
         }
-    }
 
-    fun getPaymentRailNames(currencyCode: String): List<String> {
-        return getPaymentRails(currencyCode).map { it.name }
-    }
-
+    fun getPaymentRailNames(currencyCode: String): List<String> = getPaymentRails(currencyCode).map { it.name }
 
     val sepaEuroCountries: List<String>
-        get() = listOf(
-            "AT", "BE", "CY", "DE", "EE", "FI", "FR", "GR", "IE",
-            "IT", "LV", "LT", "LU", "MC", "MT", "NL", "PT", "SK", "SI", "ES", "AD", "SM", "VA"
-        )
+        get() =
+            listOf(
+                "AT",
+                "BE",
+                "CY",
+                "DE",
+                "EE",
+                "FI",
+                "FR",
+                "GR",
+                "IE",
+                "IT",
+                "LV",
+                "LT",
+                "LU",
+                "MC",
+                "MT",
+                "NL",
+                "PT",
+                "SK",
+                "SI",
+                "ES",
+                "AD",
+                "SM",
+                "VA",
+            )
 
     val wiseCountries: List<String>
         // https://wise.com/help/articles/2571907/what-currencies-can-i-send-to-and-from?origin=related-article-2571942
         get() {
-            val list: MutableList<String> = ArrayList(
-                listOf(
-                    "AR", "AU", "BD", "BR", "BG", "CA", "CL", "CN", "CO", "CR", "CZ", "DK", "EG",
-                    "GE", "GH", "HK", "HU", "IN", "ID", "IL", "JP", "KE", "MY", "MX", "MA", "NP", "NZ", "NO",
-                    "PK", "PH", "PL", "RO", "SG", "ZA", "KR", "LK", "SE", "CH", "TZ", "TH", "TR", "UG", "UA", "AE",
-                    "GB", "US", "UY", "VN", "ZM"
+            val list: MutableList<String> =
+                ArrayList(
+                    listOf(
+                        "AR",
+                        "AU",
+                        "BD",
+                        "BR",
+                        "BG",
+                        "CA",
+                        "CL",
+                        "CN",
+                        "CO",
+                        "CR",
+                        "CZ",
+                        "DK",
+                        "EG",
+                        "GE",
+                        "GH",
+                        "HK",
+                        "HU",
+                        "IN",
+                        "ID",
+                        "IL",
+                        "JP",
+                        "KE",
+                        "MY",
+                        "MX",
+                        "MA",
+                        "NP",
+                        "NZ",
+                        "NO",
+                        "PK",
+                        "PH",
+                        "PL",
+                        "RO",
+                        "SG",
+                        "ZA",
+                        "KR",
+                        "LK",
+                        "SE",
+                        "CH",
+                        "TZ",
+                        "TH",
+                        "TR",
+                        "UG",
+                        "UA",
+                        "AE",
+                        "GB",
+                        "US",
+                        "UY",
+                        "VN",
+                        "ZM",
+                    ),
                 )
-            )
             list.addAll(sepaEuroCountries)
             return list
         }
@@ -121,7 +184,7 @@ object FiatPaymentRailUtil {
                 "UYU",
                 "VND",
                 "ZAR",
-                "ZMW"
+                "ZMW",
             )
         }
 
@@ -129,10 +192,42 @@ object FiatPaymentRailUtil {
         // https://help.revolut.com/help/wealth/exchanging-money/what-currencies-are-available/what-currencies-are-supported-for-holding-and-exchange/
         get() {
             return listOf(
-                "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
-                "DE", "GR", "HU", "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MT", "NL",
-                "NO", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "GB",
-                "AU", "CA", "SG", "CH", "US"
+                "AT",
+                "BE",
+                "BG",
+                "HR",
+                "CY",
+                "CZ",
+                "DK",
+                "EE",
+                "FI",
+                "FR",
+                "DE",
+                "GR",
+                "HU",
+                "IS",
+                "IE",
+                "IT",
+                "LV",
+                "LI",
+                "LT",
+                "LU",
+                "MT",
+                "NL",
+                "NO",
+                "PL",
+                "PT",
+                "RO",
+                "SK",
+                "SI",
+                "ES",
+                "SE",
+                "GB",
+                "AU",
+                "CA",
+                "SG",
+                "CH",
+                "US",
             )
         }
 
@@ -168,7 +263,7 @@ object FiatPaymentRailUtil {
                 "THB",
                 "TRY",
                 "USD",
-                "ZAR"
+                "ZAR",
             )
         }
 }

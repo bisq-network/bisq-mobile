@@ -33,5 +33,5 @@ data class TradeItemPresentationDto(
     val fiatPaymentMethodDisplayString: String,
     val isFiatPaymentMethodCustom: Boolean,
     val formattedMyRole: String,
-    val peersReputationScore: ReputationScoreVO // We do not support updates of reputation score as that happens rather rarely
+    val peersReputationScore: ReputationScoreVO, // We do not support updates of reputation score as that happens rather rarely
 )

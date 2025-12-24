@@ -21,4 +21,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FiatPaymentMethodSpec")
-data class FiatPaymentMethodSpecVO(override val paymentMethod: String, override val saltedMakerAccountId: String?) : PaymentMethodSpecVO
+data class FiatPaymentMethodSpecVO(
+    override val paymentMethod: String,
+    override val saltedMakerAccountId: String?,
+) : PaymentMethodSpecVO

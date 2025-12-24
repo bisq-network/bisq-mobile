@@ -36,7 +36,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            // put your multiplatform dependencies here
             implementation(project(":shared:domain"))
             implementation(project(":shared:kscan"))
 
@@ -118,9 +118,15 @@ compose.resources {
 
 android {
     namespace = "network.bisq.mobile.shared.presentation"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk =
+        libs.versions.android.compileSdk
+            .get()
+            .toInt()
     defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
@@ -140,12 +146,13 @@ afterEvaluate {
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
             dependsOn(generateResourceBundlesTask)
         }
-        tasks.matching { task ->
-            task.name.contains("compile", ignoreCase = true) ||
-            task.name.contains("build", ignoreCase = true)
-        }.configureEach {
-            dependsOn(generateResourceBundlesTask)
-        }
+        tasks
+            .matching { task ->
+                task.name.contains("compile", ignoreCase = true) ||
+                    task.name.contains("build", ignoreCase = true)
+            }.configureEach {
+                dependsOn(generateResourceBundlesTask)
+            }
     }
 }
 
@@ -153,32 +160,31 @@ afterEvaluate {
  * Helper class to setup Swift bridge interops
  */
 class SwiftBridgeConfiguration {
-
     /**
      * Discover all bridge modules in the specified interop directory.
      *
      * @param interopDir The directory containing Swift bridge .def files
      * @return List of bridge module names
      */
-    private fun discoverBridgeModules(interopDir: File): List<String> {
-        return interopDir.listFiles()?.filter { it.extension == "def" }
+    private fun discoverBridgeModules(interopDir: File): List<String> =
+        interopDir
+            .listFiles()
+            ?.filter { it.extension == "def" }
             ?.map { it.nameWithoutExtension }
             ?: emptyList()
-    }
 
     /**
      * Get Swift library path without spawning external processes (config cache friendly).
      */
     private fun getSwiftLibPath(): String {
-        val developerPath = System.getenv("DEVELOPER_DIR")
-            ?: "/Applications/Xcode.app/Contents/Developer"
+        val developerPath =
+            System.getenv("DEVELOPER_DIR")
+                ?: "/Applications/Xcode.app/Contents/Developer"
         // Swift libraries are in the toolchain, not the SDK
         return "$developerPath/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator"
     }
 
-    private fun getSwiftBridgeOutputDir(): Directory {
-        return layout.buildDirectory.dir("swift-bridge").get()
-    }
+    private fun getSwiftBridgeOutputDir(): Directory = layout.buildDirectory.dir("swift-bridge").get()
 
     /**
      * Configure cinterops for all discovered bridge modules. this is required for discovering the bridge in both test and main.
@@ -191,19 +197,19 @@ class SwiftBridgeConfiguration {
     private fun configureSwiftBridgeCinterops(
         targets: List<KotlinNativeTarget>,
         interopDir: File,
-        bridgeModules: List<String>
+        bridgeModules: List<String>,
     ) {
         targets.forEach { target ->
             bridgeModules.forEach { moduleName ->
                 target.compilations.getByName("main") {
                     cinterops.create(moduleName) {
-                        definitionFile.set(project.file("${interopDir.absolutePath}/${moduleName}.def"))
+                        definitionFile.set(project.file("${interopDir.absolutePath}/$moduleName.def"))
                         includeDirs.allHeaders(interopDir.absolutePath)
                     }
                 }
                 target.compilations.getByName("test") {
                     cinterops.create(moduleName) {
-                        definitionFile.set(project.file("${interopDir.absolutePath}/${moduleName}.def"))
+                        definitionFile.set(project.file("${interopDir.absolutePath}/$moduleName.def"))
                         includeDirs.allHeaders(interopDir.absolutePath)
                     }
                 }
@@ -219,13 +225,14 @@ class SwiftBridgeConfiguration {
      */
     private fun configureSwiftBridgeLinking(
         targets: List<KotlinNativeTarget>,
-        bridgeModules: List<String>
+        bridgeModules: List<String>,
     ) {
         targets.forEach { target ->
             target.binaries.all {
-                val objectFiles = bridgeModules.map {
-                    getSwiftBridgeOutputDir().file("${it}.o").asFile.absolutePath
-                }
+                val objectFiles =
+                    bridgeModules.map {
+                        getSwiftBridgeOutputDir().file("$it.o").asFile.absolutePath
+                    }
 
                 val isMac = System.getProperty("os.name").lowercase().contains("mac")
 
@@ -240,7 +247,7 @@ class SwiftBridgeConfiguration {
                             "-lswiftDispatch",
                             "-lswiftObjectiveC",
                             "-lswiftDarwin",
-                            "-lswiftCoreFoundation"
+                            "-lswiftCoreFoundation",
                         )
                     } catch (e: Exception) {
                         project.logger.warn("Could not determine Swift library path: ${e.message}")
@@ -259,71 +266,77 @@ class SwiftBridgeConfiguration {
 
         val bridgeModules = discoverBridgeModules(interopDir)
 
-
         // Detect the current architecture for simulator builds
-        val simulatorArch = System.getProperty("os.arch").let { arch ->
-            when {
-                arch == "aarch64" || arch == "arm64" -> "arm64"
-                arch == "x86_64" || arch == "amd64" -> "x86_64"
-                else -> "arm64" // default to arm64 for Apple Silicon
+        val simulatorArch =
+            System.getProperty("os.arch").let { arch ->
+                when {
+                    arch == "aarch64" || arch == "arm64" -> "arm64"
+                    arch == "x86_64" || arch == "amd64" -> "x86_64"
+                    else -> "arm64" // default to arm64 for Apple Silicon
+                }
             }
-        }
 
         // Create a compile task for each Swift bridge module
-        val compileSwiftBridgeTasks = bridgeModules.map { bridgeModuleName ->
-            tasks.register<Exec>("compileSwiftBridge_${bridgeModuleName}") {
-                group = "build"
-                description = "Compile Swift bridge module: $bridgeModuleName for iOS tests"
-                notCompatibleWithConfigurationCache("Swift bridge compile Exec is not configuration cache friendly")
+        val compileSwiftBridgeTasks =
+            bridgeModules.map { bridgeModuleName ->
+                tasks.register<Exec>("compileSwiftBridge_$bridgeModuleName") {
+                    group = "build"
+                    description = "Compile Swift bridge module: $bridgeModuleName for iOS tests"
+                    notCompatibleWithConfigurationCache("Swift bridge compile Exec is not configuration cache friendly")
 
+                    val swiftFile = file("$interopDir/$bridgeModuleName.swift")
+                    val headerFile = file("$interopDir/$bridgeModuleName.h")
+                    val objectFile = swiftOutputDir.file("$bridgeModuleName.o").asFile
 
-                val swiftFile = file("${interopDir}/${bridgeModuleName}.swift")
-                val headerFile = file("${interopDir}/${bridgeModuleName}.h")
-                val objectFile = swiftOutputDir.file("${bridgeModuleName}.o").asFile
+                    inputs.files(swiftFile, headerFile)
+                    outputs.file(objectFile)
 
-                inputs.files(swiftFile, headerFile)
-                outputs.file(objectFile)
-
-                // Only run on macOS
-                onlyIf {
-                    val isMac = System.getProperty("os.name").lowercase().contains("mac")
-                    if (!isMac) {
-                        logger.info("Skipping Swift bridge compilation on non-macOS platform")
+                    // Only run on macOS
+                    onlyIf {
+                        val isMac = System.getProperty("os.name").lowercase().contains("mac")
+                        if (!isMac) {
+                            logger.info("Skipping Swift bridge compilation on non-macOS platform")
+                        }
+                        isMac
                     }
-                    isMac
-                }
 
-                doFirst {
-                    swiftOutputDir.asFile.mkdirs()
-                    logger.info("Compiling Swift bridge for architecture: $simulatorArch")
-                }
+                    doFirst {
+                        swiftOutputDir.asFile.mkdirs()
+                        logger.info("Compiling Swift bridge for architecture: $simulatorArch")
+                    }
 
-                // Compile Swift to object file for simulator with dynamic SDK path
-                commandLine(
-                    "xcrun",
-                    "-sdk", "iphonesimulator",
-                    "swiftc",
-                    "-emit-object",
-                    "-parse-as-library",
-                    "-o", objectFile.absolutePath,
-                    "-module-name", bridgeModuleName,
-                    "-import-objc-header", headerFile.absolutePath,
-                    "-target", "${simulatorArch}-apple-ios13.0-simulator",
-                    swiftFile.absolutePath
-                )
+                    // Compile Swift to object file for simulator with dynamic SDK path
+                    commandLine(
+                        "xcrun",
+                        "-sdk",
+                        "iphonesimulator",
+                        "swiftc",
+                        "-emit-object",
+                        "-parse-as-library",
+                        "-o",
+                        objectFile.absolutePath,
+                        "-module-name",
+                        bridgeModuleName,
+                        "-import-objc-header",
+                        headerFile.absolutePath,
+                        "-target",
+                        "$simulatorArch-apple-ios13.0-simulator",
+                        swiftFile.absolutePath,
+                    )
 
-                doLast {
-                    logger.info("Successfully compiled $bridgeModuleName Swift bridge for $simulatorArch")
+                    doLast {
+                        logger.info("Successfully compiled $bridgeModuleName Swift bridge for $simulatorArch")
+                    }
                 }
             }
-        }
 
         // Create an aggregate task that compiles all Swift bridges
-        val compileSwiftBridge = tasks.register("compileSwiftBridge") {
-            group = "build"
-            description = "Compile all Swift bridge modules for iOS tests"
-            dependsOn(compileSwiftBridgeTasks)
-        }
+        val compileSwiftBridge =
+            tasks.register("compileSwiftBridge") {
+                group = "build"
+                description = "Compile all Swift bridge modules for iOS tests"
+                dependsOn(compileSwiftBridgeTasks)
+            }
 
         // Ensure Swift bridge objects are built before linking iOS test binaries
         tasks.matching { it.name.startsWith("link") && it.name.contains("TestIosSimulatorArm64") }.configureEach {
@@ -338,7 +351,7 @@ class SwiftBridgeConfiguration {
             configureSwiftBridgeCinterops(
                 listOf(iosX64(), iosArm64(), iosSimulatorArm64()),
                 interopDir,
-                bridgeModules
+                bridgeModules,
             )
 
             configureSwiftBridgeLinking(

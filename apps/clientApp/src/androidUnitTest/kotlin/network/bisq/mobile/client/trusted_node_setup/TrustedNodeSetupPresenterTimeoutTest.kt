@@ -18,11 +18,11 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.test_utils.TestDoubles
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
@@ -40,7 +40,6 @@ import org.koin.dsl.module
 
 @ExperimentalCoroutinesApi
 class TrustedNodeSetupPresenterTimeoutTest {
-
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var wsClientService: WebSocketClientService
@@ -62,21 +61,38 @@ class TrustedNodeSetupPresenterTimeoutTest {
         mainPresenter = mockk(relaxed = true)
 
         // Minimal repositories
-        sensitiveSettingsRepository = object : SensitiveSettingsRepository {
-            private val _data = MutableStateFlow(SensitiveSettings())
-            override val data = _data
-            override suspend fun fetch(): SensitiveSettings = _data.value
-            override suspend fun update(transform: suspend (t: SensitiveSettings) -> SensitiveSettings) { _data.value = transform(_data.value) }
-            override suspend fun clear() { _data.value = SensitiveSettings() }
-        }
-        userRepository = object : UserRepository {
-            private val _data = MutableStateFlow(User())
-            override val data = _data
-            override suspend fun updateTerms(value: String) {}
-            override suspend fun updateStatement(value: String) {}
-            override suspend fun update(value: User) { _data.value = value }
-            override suspend fun clear() { _data.value = User() }
-        }
+        sensitiveSettingsRepository =
+            object : SensitiveSettingsRepository {
+                private val _data = MutableStateFlow(SensitiveSettings())
+                override val data = _data
+
+                override suspend fun fetch(): SensitiveSettings = _data.value
+
+                override suspend fun update(transform: suspend (t: SensitiveSettings) -> SensitiveSettings) {
+                    _data.value = transform(_data.value)
+                }
+
+                override suspend fun clear() {
+                    _data.value = SensitiveSettings()
+                }
+            }
+        userRepository =
+            object : UserRepository {
+                private val _data = MutableStateFlow(User())
+                override val data = _data
+
+                override suspend fun updateTerms(value: String) {}
+
+                override suspend fun updateStatement(value: String) {}
+
+                override suspend fun update(value: User) {
+                    _data.value = value
+                }
+
+                override suspend fun clear() {
+                    _data.value = User()
+                }
+            }
 
         // IMPORTANT: mock object before stubbing to avoid global leakage across tests
         mockkObject(WebSocketClient)
@@ -112,36 +128,38 @@ class TrustedNodeSetupPresenterTimeoutTest {
 
     @Ignore("Flaky under current test jobs manager; will enable after injecting test jobs manager here")
     @Test
-    fun `timeout during connection is routed to error handler (not silent cancel)`() = runTest {
-        val presenter = TrustedNodeSetupPresenter(
-            mainPresenter,
-            userRepository,
-            sensitiveSettingsRepository,
-            kmpTorService,
-            appBootstrap,
-        )
+    fun `timeout during connection is routed to error handler (not silent cancel)`() =
+        runTest {
+            val presenter =
+                TrustedNodeSetupPresenter(
+                    mainPresenter,
+                    userRepository,
+                    sensitiveSettingsRepository,
+                    kmpTorService,
+                    appBootstrap,
+                )
 
-        // Set valid inputs
-        presenter.onApiUrlChanged("http://127.0.0.1:8090")
-        presenter.onProxyOptionChanged(BisqProxyOption.NONE)
+            // Set valid inputs
+            presenter.onApiUrlChanged("http://127.0.0.1:8090")
+            presenter.onProxyOptionChanged(BisqProxyOption.NONE)
 
-        // Start validators (lazy flows)
-        val validators = backgroundScope.launch {
-            launch { presenter.isApiUrlValid.collect { } }
-            launch { presenter.isProxyUrlValid.collect { } }
+            // Start validators (lazy flows)
+            val validators =
+                backgroundScope.launch {
+                    launch { presenter.isApiUrlValid.collect { } }
+                    launch { presenter.isProxyUrlValid.collect { } }
+                }
+
+            // Act
+            presenter.onTestAndSavePressed(isWorkflow = true)
+
+            // Run all scheduled tasks/timeouts
+            advanceUntilIdle()
+            validators.cancel()
+
+            // Assert: we reached Disconnected(error=TimeoutCancellationException)
+            val state = presenter.wsClientConnectionState.value
+            println("STATE=" + state)
+            assertTrue(state is ConnectionState.Disconnected && state.error is TimeoutCancellationException)
         }
-
-        // Act
-        presenter.onTestAndSavePressed(isWorkflow = true)
-
-        // Run all scheduled tasks/timeouts
-        advanceUntilIdle()
-        validators.cancel()
-
-        // Assert: we reached Disconnected(error=TimeoutCancellationException)
-        val state = presenter.wsClientConnectionState.value
-        println("STATE=" + state)
-        assertTrue(state is ConnectionState.Disconnected && state.error is TimeoutCancellationException)
-    }
 }
-

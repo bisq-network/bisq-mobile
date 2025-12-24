@@ -20,19 +20,21 @@ fun CircularLoadingImage(
     isLoading: Boolean,
 ) {
     Box(
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Image(
-            painterResource(image), "",
-            modifier = Modifier.height(36.dp).width(30.dp)
+            painterResource(image),
+            "",
+            modifier = Modifier.height(36.dp).width(30.dp),
         )
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(60.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.Center)
+                        .size(60.dp),
                 color = BisqTheme.colors.primary,
-                strokeWidth = 1.dp
+                strokeWidth = 1.dp,
             )
         }
     }

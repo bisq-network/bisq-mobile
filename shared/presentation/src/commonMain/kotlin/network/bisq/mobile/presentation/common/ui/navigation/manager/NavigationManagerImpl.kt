@@ -23,8 +23,8 @@ import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 
 class NavigationManagerImpl(
     val coroutineJobsManager: CoroutineJobsManager,
-) : NavigationManager, Logging {
-
+) : NavigationManager,
+    Logging {
     private var rootNavControllerFlow = MutableStateFlow<NavHostController?>(null)
     private var tabNavControllerFlow = MutableStateFlow<NavHostController?>(null)
 
@@ -76,12 +76,13 @@ class NavigationManagerImpl(
 
             if (navController != null) {
                 runCatching {
-                    NavController.OnDestinationChangedListener { _, destination, _ ->
-                        _currentTab.value = destination.getTabNavRoute()
-                    }.let { listener ->
-                        tabDestinationListener = listener
-                        navController.addOnDestinationChangedListener(listener)
-                    }
+                    NavController
+                        .OnDestinationChangedListener { _, destination, _ ->
+                            _currentTab.value = destination.getTabNavRoute()
+                        }.let { listener ->
+                            tabDestinationListener = listener
+                            navController.addOnDestinationChangedListener(listener)
+                        }
                     _currentTab.value = navController.currentDestination?.getTabNavRoute()
                 }.onFailure { e ->
                     log.e(e) { "Failed to initialize tab nav controller (graph may not be ready yet)" }
@@ -108,19 +109,19 @@ class NavigationManagerImpl(
 
     override fun isAtHomeTab(): Boolean {
         val navController = tabNavControllerFlow.value ?: return false
-        val isHomeTab = runCatching {
-            val currentBackStackEntry = navController.currentBackStackEntry
-            val hasTabHomeRoute =
-                currentBackStackEntry?.destination?.hasRoute<NavRoute.TabHome>() ?: false
-            val route = currentBackStackEntry?.destination?.route
-            log.d { "Current tab $route" }
-            hasTabHomeRoute
-        }.onFailure { e ->
-            log.e(e) { "Failed to determine if at home tab (nav graph may not be ready yet)" }
-        }.getOrNull() ?: false
+        val isHomeTab =
+            runCatching {
+                val currentBackStackEntry = navController.currentBackStackEntry
+                val hasTabHomeRoute =
+                    currentBackStackEntry?.destination?.hasRoute<NavRoute.TabHome>() ?: false
+                val route = currentBackStackEntry?.destination?.route
+                log.d { "Current tab $route" }
+                hasTabHomeRoute
+            }.onFailure { e ->
+                log.e(e) { "Failed to determine if at home tab (nav graph may not be ready yet)" }
+            }.getOrNull() ?: false
         return isAtMainScreen() && isHomeTab
     }
-
 
     override fun navigate(
         destination: NavRoute,
@@ -159,9 +160,10 @@ class NavigationManagerImpl(
                     val rootNav = getRootNavController()
                     runCatching {
                         if (!isAtMainScreen()) {
-                            val isTabContainerInBackStack = rootNav.currentBackStack.value.any {
-                                it.destination.hasRoute(NavRoute.TabContainer::class)
-                            }
+                            val isTabContainerInBackStack =
+                                rootNav.currentBackStack.value.any {
+                                    it.destination.hasRoute(NavRoute.TabContainer::class)
+                                }
                             if (isTabContainerInBackStack) {
                                 rootNav.popBackStack(NavRoute.TabContainer, inclusive = false)
                             } else {
@@ -226,9 +228,10 @@ class NavigationManagerImpl(
                     val rootNavController = getRootNavController()
                     if (rootNavController.graph.hasDeepLink(navUri)) {
                         runCatching {
-                            val navOptions = navOptions {
-                                launchSingleTop = true
-                            }
+                            val navOptions =
+                                navOptions {
+                                    launchSingleTop = true
+                                }
                             rootNavController.navigate(navUri, navOptions)
                         }.onFailure { e ->
                             log.e(e) { "Failed to navigate from uri $uri via root graph" }
@@ -237,13 +240,14 @@ class NavigationManagerImpl(
                         val tabNavController = getTabNavController()
                         if (tabNavController.graph.hasDeepLink(navUri)) {
                             runCatching {
-                                val navOptions = navOptions {
-                                    popUpTo(NavRoute.HomeScreenGraphKey) {
-                                        saveState = true
+                                val navOptions =
+                                    navOptions {
+                                        popUpTo(NavRoute.HomeScreenGraphKey) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
                                 tabNavController.navigate(navUri, navOptions)
                             }.onFailure { e ->
                                 log.e(e) { "Failed to navigate from uri $uri via tab graph" }
@@ -301,21 +305,22 @@ class NavigationManagerImpl(
         delayMs: Long = 16L,
     ) {
         repeat(maxAttempts) { attemptIndex ->
-            val isReady = try {
-                // Touching `graph` is enough to trigger the internal readiness checks.
-                @Suppress("UNUSED_VARIABLE")
-                val ignored = this.graph
-                true
-            } catch (e: IllegalStateException) {
-                val message = e.message ?: ""
-                if (message.contains("setGraph() before calling getGraph()")) {
-                    false
-                } else {
-                    // Different IllegalStateException – propagate it, as it's not the
-                    // expected transient "graph not ready" condition.
-                    throw e
+            val isReady =
+                try {
+                    // Touching `graph` is enough to trigger the internal readiness checks.
+                    @Suppress("UNUSED_VARIABLE")
+                    val ignored = this.graph
+                    true
+                } catch (e: IllegalStateException) {
+                    val message = e.message ?: ""
+                    if (message.contains("setGraph() before calling getGraph()")) {
+                        false
+                    } else {
+                        // Different IllegalStateException – propagate it, as it's not the
+                        // expected transient "graph not ready" condition.
+                        throw e
+                    }
                 }
-            }
 
             if (isReady) return
 
@@ -331,14 +336,12 @@ class NavigationManagerImpl(
         }
     }
 
-    private fun NavDestination.getTabNavRoute(): TabNavRoute? {
-        return when {
+    private fun NavDestination.getTabNavRoute(): TabNavRoute? =
+        when {
             this.hasRoute<NavRoute.TabHome>() -> NavRoute.TabHome
             this.hasRoute<NavRoute.TabOpenTradeList>() -> NavRoute.TabOpenTradeList
             this.hasRoute<NavRoute.TabOfferbookMarket>() -> NavRoute.TabOfferbookMarket
             this.hasRoute<NavRoute.TabMiscItems>() -> NavRoute.TabMiscItems
             else -> null
         }
-    }
 }
-

@@ -19,35 +19,37 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 @Composable
 fun ChatReactionInput(
     onAddReaction: (ReactionEnum) -> Unit,
-    onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit
+    onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-        modifier = Modifier
-            .padding(
-                top = BisqUIConstants.ScreenPaddingHalfQuarter,
-                start = BisqUIConstants.ScreenPadding,
-                end = BisqUIConstants.ScreenPadding,
-                bottom = BisqUIConstants.ScreenPadding,
-            )
+        modifier =
+            Modifier
+                .padding(
+                    top = BisqUIConstants.ScreenPaddingHalfQuarter,
+                    start = BisqUIConstants.ScreenPadding,
+                    end = BisqUIConstants.ScreenPadding,
+                    bottom = BisqUIConstants.ScreenPadding,
+                ),
     ) {
         ReactionEnum.entries.forEach { reaction ->
             // todo make a toggle button with calling onRemoveReaction if it was selected
             DynamicImage(
                 path = reaction.imagePath(),
-                modifier = Modifier.size(20.dp).clickable(
-                    onClick = { onAddReaction(reaction) },
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                )
+                modifier =
+                    Modifier.size(20.dp).clickable(
+                        onClick = { onAddReaction(reaction) },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ),
             )
         }
     }
 }
 
-fun ReactionEnum.imagePath(): String {
-    return when (this) {
+fun ReactionEnum.imagePath(): String =
+    when (this) {
         ReactionEnum.THUMBS_UP -> "drawable/icon_reaction_thumbs_up.png"
         ReactionEnum.THUMBS_DOWN -> "drawable/icon_reaction_thumbs_down.png"
         ReactionEnum.HAPPY -> "drawable/icon_reaction_happy.png"
@@ -55,10 +57,9 @@ fun ReactionEnum.imagePath(): String {
         ReactionEnum.HEART -> "drawable/icon_reaction_heart.png"
         ReactionEnum.PARTY -> "drawable/icon_reaction_party.png"
     }
-}
 
-fun BisqEasyOpenTradeMessageReactionVO.imagePath(): String {
-    return when (ReactionEnum.entries[this.reactionId]) {
+fun BisqEasyOpenTradeMessageReactionVO.imagePath(): String =
+    when (ReactionEnum.entries[this.reactionId]) {
         ReactionEnum.THUMBS_UP -> "drawable/icon_reaction_thumbs_up.png"
         ReactionEnum.THUMBS_DOWN -> "drawable/icon_reaction_thumbs_down.png"
         ReactionEnum.HAPPY -> "drawable/icon_reaction_happy.png"
@@ -66,13 +67,8 @@ fun BisqEasyOpenTradeMessageReactionVO.imagePath(): String {
         ReactionEnum.HEART -> "drawable/icon_reaction_heart.png"
         ReactionEnum.PARTY -> "drawable/icon_reaction_party.png"
     }
-}
 
 private fun mapReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) =
     chatMessageReactions
         .filter { !it.isRemoved }
         .map { ReactionEnum.entries[it.reactionId] }
-
-
-
-

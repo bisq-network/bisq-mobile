@@ -10,31 +10,31 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class PriceUtilTest {
-
-    private fun createTestMarket(): MarketVO {
-        return MarketVO(
+    private fun createTestMarket(): MarketVO =
+        MarketVO(
             baseCurrencyCode = "BTC",
             quoteCurrencyCode = "USD",
             baseCurrencyName = "Bitcoin",
-            quoteCurrencyName = "US Dollar"
+            quoteCurrencyName = "US Dollar",
         )
-    }
 
-    private fun createTestPriceQuote(value: Long, market: MarketVO = createTestMarket()): PriceQuoteVO {
-        return PriceQuoteVO(
+    private fun createTestPriceQuote(
+        value: Long,
+        market: MarketVO = createTestMarket(),
+    ): PriceQuoteVO =
+        PriceQuoteVO(
             value = value,
             precision = 4,
             lowPrecision = 2,
             market = market,
             baseSideMonetary = CoinVO("BTC", 1, "BTC", 8, 4),
-            quoteSideMonetary = FiatVO("USD", value, "USD", 4, 2)
+            quoteSideMonetary = FiatVO("USD", value, "USD", 4, 2),
         )
-    }
 
     @Test
     fun `getPercentageToMarketPrice should calculate correct percentage for equal prices`() {
         val marketPrice = createTestPriceQuote(50000) // $50,000
-        val priceQuote = createTestPriceQuote(50000)  // $50,000
+        val priceQuote = createTestPriceQuote(50000) // $50,000
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
         assertEquals(0.0, result, 0.0001) // 0% difference
@@ -43,7 +43,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should calculate correct percentage for higher price`() {
         val marketPrice = createTestPriceQuote(50000) // $50,000
-        val priceQuote = createTestPriceQuote(55000)  // $55,000 (10% higher)
+        val priceQuote = createTestPriceQuote(55000) // $55,000 (10% higher)
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
         assertEquals(0.1, result, 0.0001) // 10% higher
@@ -52,7 +52,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should calculate correct percentage for lower price`() {
         val marketPrice = createTestPriceQuote(50000) // $50,000
-        val priceQuote = createTestPriceQuote(45000)  // $45,000 (10% lower)
+        val priceQuote = createTestPriceQuote(45000) // $45,000 (10% lower)
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
         assertEquals(-0.1, result, 0.0001) // 10% lower
@@ -61,7 +61,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should handle small differences without crashing`() {
         val marketPrice = createTestPriceQuote(50000) // $50,000
-        val priceQuote = createTestPriceQuote(50001)  // $50,001 (0.002% higher)
+        val priceQuote = createTestPriceQuote(50001) // $50,001 (0.002% higher)
 
         // The main goal is to ensure it doesn't crash
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
@@ -74,7 +74,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should round to 4 decimal places`() {
         val marketPrice = createTestPriceQuote(50000) // $50,000
-        val priceQuote = createTestPriceQuote(50001)  // $50,001
+        val priceQuote = createTestPriceQuote(50001) // $50,001
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
 
@@ -90,7 +90,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should throw exception for zero market price`() {
         val marketPrice = createTestPriceQuote(0) // $0
-        val priceQuote = createTestPriceQuote(50000)  // $50,000
+        val priceQuote = createTestPriceQuote(50000) // $50,000
 
         assertFailsWith<IllegalArgumentException> {
             PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
@@ -100,7 +100,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should throw exception for negative market price`() {
         val marketPrice = createTestPriceQuote(-1000) // -$1,000
-        val priceQuote = createTestPriceQuote(50000)   // $50,000
+        val priceQuote = createTestPriceQuote(50000) // $50,000
 
         assertFailsWith<IllegalArgumentException> {
             PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
@@ -110,7 +110,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should throw exception for negative price quote`() {
         val marketPrice = createTestPriceQuote(50000) // $50,000
-        val priceQuote = createTestPriceQuote(-1000)   // -$1,000
+        val priceQuote = createTestPriceQuote(-1000) // -$1,000
 
         assertFailsWith<IllegalArgumentException> {
             PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
@@ -120,7 +120,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should handle zero price quote`() {
         val marketPrice = createTestPriceQuote(50000) // $50,000
-        val priceQuote = createTestPriceQuote(0)       // $0
+        val priceQuote = createTestPriceQuote(0) // $0
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
         assertEquals(-1.0, result, 0.0001) // -100% (complete discount)
@@ -129,7 +129,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should handle very large numbers`() {
         val marketPrice = createTestPriceQuote(1000000000) // $1 billion
-        val priceQuote = createTestPriceQuote(1100000000)  // $1.1 billion (10% higher)
+        val priceQuote = createTestPriceQuote(1100000000) // $1.1 billion (10% higher)
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
         assertEquals(0.1, result, 0.0001) // 10% higher
@@ -138,7 +138,7 @@ class PriceUtilTest {
     @Test
     fun `getPercentageToMarketPrice should handle very small numbers`() {
         val marketPrice = createTestPriceQuote(1) // $0.0001
-        val priceQuote = createTestPriceQuote(2)  // $0.0002 (100% higher)
+        val priceQuote = createTestPriceQuote(2) // $0.0002 (100% higher)
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
         assertEquals(1.0, result, 0.0001) // 100% higher
@@ -181,7 +181,7 @@ class PriceUtilTest {
     fun `getPercentageToMarketPrice should handle precision edge cases without crashing`() {
         // Test with numbers that might cause precision issues
         val marketPrice = createTestPriceQuote(333333) // $33.3333
-        val priceQuote = createTestPriceQuote(333334)  // $33.3334
+        val priceQuote = createTestPriceQuote(333334) // $33.3334
 
         // The main goal is crash prevention
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
@@ -220,12 +220,13 @@ class PriceUtilTest {
         val marketPrice = createTestPriceQuote(980503482, usdMarket)
 
         // Price quote from a different market (e.g., BTC/EUR), intentionally mis-scaled by 100x
-        val eurMarket = MarketVO(
-            baseCurrencyCode = "BTC",
-            quoteCurrencyCode = "EUR",
-            baseCurrencyName = "Bitcoin",
-            quoteCurrencyName = "Euro"
-        )
+        val eurMarket =
+            MarketVO(
+                baseCurrencyCode = "BTC",
+                quoteCurrencyCode = "EUR",
+                baseCurrencyName = "Bitcoin",
+                quoteCurrencyName = "Euro",
+            )
         val misScaledDifferentMarket = createTestPriceQuote(99177870000, eurMarket)
 
         val result = PriceUtil.getPercentageToMarketPrice(marketPrice, misScaledDifferentMarket)
@@ -233,6 +234,4 @@ class PriceUtilTest {
         // Expect raw ratio (no auto-correction across markets): ~100.1499%
         assertEquals(100.1499, result, 0.01)
     }
-
 }
-

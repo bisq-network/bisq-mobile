@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
+import network.bisq.mobile.presentation.main.MainPresenter
 
 /**
  * Client-specific TopBar presenter: relaxes connectivity mapping so the shine animation
@@ -20,12 +20,11 @@ class ClientTopBarPresenter(
     connectivityService: ConnectivityService,
     mainPresenter: MainPresenter,
 ) : TopBarPresenter(
-    userProfileServiceFacade,
-    settingsServiceFacade,
-    connectivityService,
-    mainPresenter,
-) {
-
+        userProfileServiceFacade,
+        settingsServiceFacade,
+        connectivityService,
+        mainPresenter,
+    ) {
     private val mappedConnectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =
         connectivityService.status
             .map { status ->
@@ -34,11 +33,10 @@ class ClientTopBarPresenter(
                 } else {
                     status
                 }
-            }
-            .stateIn(
+            }.stateIn(
                 presenterScope,
                 SharingStarted.Eagerly,
-                connectivityService.status.value
+                connectivityService.status.value,
             )
 
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>

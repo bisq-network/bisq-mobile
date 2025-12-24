@@ -6,10 +6,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
  * These are pure helpers so they are easy to unit test.
  */
 object OfferbookFilterDerivations {
-    fun paymentMethodIds(offers: List<OfferItemPresentationModel>): Set<String> =
-        offers.asSequence().flatMap { it.quoteSidePaymentMethods.asSequence() }.toSet()
+    fun paymentMethodIds(offers: List<OfferItemPresentationModel>): Set<String> = offers.asSequence().flatMap { it.quoteSidePaymentMethods.asSequence() }.toSet()
 
-    fun settlementMethodIds(offers: List<OfferItemPresentationModel>): Set<String> =
-        offers.asSequence().flatMap { it.baseSidePaymentMethods.asSequence() }.toSet()
+    fun settlementMethodIds(offers: List<OfferItemPresentationModel>): Set<String> = offers.asSequence().flatMap { it.baseSidePaymentMethods.asSequence() }.toSet()
 }
-

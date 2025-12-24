@@ -10,43 +10,54 @@ import kotlin.test.assertTrue
  * and that the source properties files use Unicode escape sequences for Java properties compatibility.
  */
 class SpanishResourceEncodingTest {
-
     /**
      * Common mojibake patterns that indicate encoding issues
      */
-    private val mojibakePatterns = listOf(
-        "Ã¡", "Ã©", "Ã­", "Ã³", "Ãº", "Ã±", "Ã¼", // á, é, í, ó, ú, ñ, ü encoded as ISO-8859-1
-        "Â¿", "Â¡", // ¿, ¡ encoded as ISO-8859-1
-        "ÃÂ", // Double-encoded patterns
-        "Ã", "Â" // General mojibake markers
-    )
+    private val mojibakePatterns =
+        listOf(
+            "Ã¡",
+            "Ã©",
+            "Ã­",
+            "Ã³",
+            "Ãº",
+            "Ã±",
+            "Ã¼", // á, é, í, ó, ú, ñ, ü encoded as ISO-8859-1
+            "Â¿",
+            "Â¡", // ¿, ¡ encoded as ISO-8859-1
+            "ÃÂ", // Double-encoded patterns
+            "Ã",
+            "Â", // General mojibake markers
+        )
 
     @Test
     fun `generated Spanish resource bundle should contain proper Spanish characters`() {
         // Import the generated Spanish resource bundle
-        val spanishBundle: Map<String,String> = network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["mobile"]!!
+        val spanishBundle: Map<String, String> =
+            network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["mobile"]!!
 
         // Verify the bundle contains proper Spanish characters (not escape sequences or mojibake)
         val expectedSpanishChars = listOf("ó", "á", "é", "í", "ú", "ñ", "¿", "¡")
 
         // Check a few key entries that should contain Spanish characters
-        val testEntries = listOf(
-            spanishBundle["error.exception"] ?: "",
-            spanishBundle["confirmation.areYouSure"] ?: "",
-            spanishBundle["min"] ?: "",
-            spanishBundle["max"] ?: "",
-            spanishBundle["mobile.components.marketFilter.sortBy.mostOffers"] ?: "",
-            spanishBundle["mobile.validations.amountValidator.invalidNumber"] ?: ""
-        )
+        val testEntries =
+            listOf(
+                spanishBundle["error.exception"] ?: "",
+                spanishBundle["confirmation.areYouSure"] ?: "",
+                spanishBundle["min"] ?: "",
+                spanishBundle["max"] ?: "",
+                spanishBundle["mobile.components.marketFilter.sortBy.mostOffers"] ?: "",
+                spanishBundle["mobile.validations.amountValidator.invalidNumber"] ?: "",
+            )
 
         // Verify at least some entries contain Spanish characters
-        val hasSpanishChars = testEntries.any { entry ->
-            expectedSpanishChars.any { char -> entry.contains(char) }
-        }
+        val hasSpanishChars =
+            testEntries.any { entry ->
+                expectedSpanishChars.any { char -> entry.contains(char) }
+            }
 
         assertTrue(
             hasSpanishChars,
-            "Generated Spanish bundle should contain Spanish characters like ó, á, é, í, ú, ñ, ¿, ¡"
+            "Generated Spanish bundle should contain Spanish characters like ó, á, é, í, ú, ñ, ¿, ¡",
         )
 
         // Verify no mojibake patterns in any of the test entries
@@ -54,7 +65,7 @@ class SpanishResourceEncodingTest {
             mojibakePatterns.forEach { pattern ->
                 assertFalse(
                     entry.contains(pattern),
-                    "Generated bundle entry '$entry' should not contain mojibake pattern: $pattern"
+                    "Generated bundle entry '$entry' should not contain mojibake pattern: $pattern",
                 )
             }
         }
@@ -62,15 +73,17 @@ class SpanishResourceEncodingTest {
 
     @Test
     fun `Spanish bundle should contain expected translations`() {
-        val spanishBundle: Map<String,String> = network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["mobile"]!!
+        val spanishBundle: Map<String, String> =
+            network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["mobile"]!!
 
         // Test specific key translations that should be in Spanish
-        val expectedTranslations = mapOf(
-            "mobile.error.exception" to "Excepción",
-            "mobile.confirmation.areYouSure" to "¿Estás seguro?",
-            "mobile.min" to "Mín",
-            "mobile.max" to "Máx"
-        )
+        val expectedTranslations =
+            mapOf(
+                "mobile.error.exception" to "Excepción",
+                "mobile.confirmation.areYouSure" to "¿Estás seguro?",
+                "mobile.min" to "Mín",
+                "mobile.max" to "Máx",
+            )
 
         expectedTranslations.forEach { (key, expectedSpanish) ->
             val actualValue = spanishBundle[key]
@@ -80,7 +93,8 @@ class SpanishResourceEncodingTest {
 
     @Test
     fun `Spanish bundle should not contain mojibake patterns`() {
-        val spanishBundle: Map<String,String> = network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["default"]!!
+        val spanishBundle: Map<String, String> =
+            network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["default"]!!
 
         // Get all values from the bundle
         val allValues = spanishBundle.values
@@ -91,7 +105,7 @@ class SpanishResourceEncodingTest {
                 assertFalse(
                     value.contains(pattern),
                     "Spanish bundle value '$value' contains mojibake pattern '$pattern'. " +
-                    "This indicates encoding corruption in the source properties file."
+                        "This indicates encoding corruption in the source properties file.",
                 )
             }
         }
@@ -99,7 +113,8 @@ class SpanishResourceEncodingTest {
 
     @Test
     fun `Spanish bundle should contain accented characters`() {
-        val spanishBundle: Map<String,String> = network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["default"]!!
+        val spanishBundle: Map<String, String> =
+            network.bisq.mobile.i18n.GeneratedResourceBundles_es.bundles["default"]!!
 
         // Get all values from the bundle
         val allValues = spanishBundle.values
@@ -113,8 +128,8 @@ class SpanishResourceEncodingTest {
         assertTrue(
             foundChars.isNotEmpty(),
             "Spanish bundle should contain at least some Spanish accented characters. " +
-            "Found: ${foundChars.joinToString(", ")}. " +
-            "This indicates the Unicode escape sequences in the source properties are working correctly."
+                "Found: ${foundChars.joinToString(", ")}. " +
+                "This indicates the Unicode escape sequences in the source properties are working correctly.",
         )
     }
 }

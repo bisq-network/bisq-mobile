@@ -45,7 +45,10 @@ object PlatformImageSerializer : KSerializer<PlatformImage> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("PlatformImage", PrimitiveKind.STRING)
 
     @OptIn(ExperimentalEncodingApi::class)
-    override fun serialize(encoder: Encoder, value: PlatformImage) {
+    override fun serialize(
+        encoder: Encoder,
+        value: PlatformImage,
+    ) {
         val byteArray = value.serialize()
         encoder.encodeString(Base64.encode(byteArray))
     }
@@ -58,13 +61,18 @@ object PlatformImageSerializer : KSerializer<PlatformImage> {
 }
 
 interface DecimalFormatter {
-    fun format(value: Double, precision: Int): String
+    fun format(
+        value: Double,
+        precision: Int,
+    ): String
 }
 
 expect val decimalFormatter: DecimalFormatter
 
 expect fun setDefaultLocale(language: String)
+
 expect fun getDecimalSeparator(): Char
+
 expect fun getGroupingSeparator(): Char
 
 expect fun String.toDoubleOrNullLocaleAware(): Double?
@@ -77,6 +85,7 @@ expect fun getLocaleCurrencyName(currencyCode: String): String
 
 // Scope is Koin's scope
 // This is to allow getting androidContext in implementation
+
 /**
  * careful to only call this inside a Koin context on android
  */

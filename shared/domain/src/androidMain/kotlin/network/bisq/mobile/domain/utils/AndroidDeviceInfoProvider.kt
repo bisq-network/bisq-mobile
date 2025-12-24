@@ -12,9 +12,9 @@ import android.os.StatFs
 import network.bisq.mobile.i18n.i18n
 
 class AndroidDeviceInfoProvider(
-    private var context: Context
-) : DeviceInfoProvider, Logging {
-
+    private var context: Context,
+) : DeviceInfoProvider,
+    Logging {
     private var deviceMemInfo: ActivityManager.MemoryInfo = ActivityManager.MemoryInfo()
     private val appMemInfo: Debug.MemoryInfo = Debug.MemoryInfo()
     private val runtime = Runtime.getRuntime()
@@ -53,7 +53,6 @@ class AndroidDeviceInfoProvider(
         } catch (e: Exception) {
         }
 
-
         // Battery info
         val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         val batteryStatus = context.registerReceiver(null, intentFilter)
@@ -67,12 +66,17 @@ class AndroidDeviceInfoProvider(
 
         val manufacturer = Build.MANUFACTURER.replaceFirstChar { it.uppercaseChar() }
         return "mobile.resources.deviceInfo.android".i18n(
-            manufacturer, Build.MODEL,
-            Build.VERSION.RELEASE, Build.VERSION.SDK_INT.toString(),
-            deviceAvailMB, deviceUsedMB, deviceTotalMB,
+            manufacturer,
+            Build.MODEL,
+            Build.VERSION.RELEASE,
+            Build.VERSION.SDK_INT.toString(),
+            deviceAvailMB,
+            deviceUsedMB,
+            deviceTotalMB,
             appUsedMB,
-            availStorage, totalStorage,
-            batteryLevel
+            availStorage,
+            totalStorage,
+            batteryLevel,
         )
     }
 }

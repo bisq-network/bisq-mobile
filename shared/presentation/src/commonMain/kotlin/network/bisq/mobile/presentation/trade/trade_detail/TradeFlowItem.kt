@@ -32,7 +32,7 @@ fun TradeFlowItem(
     isActive: Boolean = false,
     isLastIndex: Boolean = false,
     contentStartOffset: Dp = 32.dp,
-    content: @Composable BoxScope.(modifier: Modifier) -> Unit
+    content: @Composable BoxScope.(modifier: Modifier) -> Unit,
 ) {
     val textColor = if (isActive) BisqTheme.colors.white else BisqTheme.colors.mid_grey20
     val lineColor = BisqTheme.colors.dark_grey50
@@ -40,90 +40,95 @@ fun TradeFlowItem(
     val stepNumber = 1 + index
 
     Box(
-        modifier = Modifier.wrapContentSize().drawBehind {
-            drawLine(
-                color = lineColor,
-                start = Offset(x = 12.dp.toPx(), y = 12.dp.toPx() * 2),
-                end = Offset(x = 12.dp.toPx(), y = this.size.height),
-                strokeWidth = 1.dp.toPx()
-            )
-        },
+        modifier =
+            Modifier.wrapContentSize().drawBehind {
+                drawLine(
+                    color = lineColor,
+                    start = Offset(x = 12.dp.toPx(), y = 12.dp.toPx() * 2),
+                    end = Offset(x = 12.dp.toPx(), y = this.size.height),
+                    strokeWidth = 1.dp.toPx(),
+                )
+            },
     ) {
         Box(
             modifier = Modifier.wrapContentSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
-
             val modifier = Modifier.size(24.dp)
             if (isVisited) {
                 Image(
-                    painterResource(Res.drawable.trade_step_visited), "trade step visited",
-                    modifier = modifier
+                    painterResource(Res.drawable.trade_step_visited),
+                    "trade step visited",
+                    modifier = modifier,
                 )
-
             } else if (isActive) {
                 when (stepNumber) {
                     1 -> {
                         Image(
-                            painterResource(Res.drawable.trade_step_active_1), "trade step 1",
-                            modifier = modifier
+                            painterResource(Res.drawable.trade_step_active_1),
+                            "trade step 1",
+                            modifier = modifier,
                         )
                     }
 
                     2 -> {
                         Image(
-                            painterResource(Res.drawable.trade_step_active_2), "trade step 2",
-                            modifier = modifier
+                            painterResource(Res.drawable.trade_step_active_2),
+                            "trade step 2",
+                            modifier = modifier,
                         )
                     }
 
                     3 -> {
                         Image(
-                            painterResource(Res.drawable.trade_step_active_3), "trade step 3",
-                            modifier = modifier
+                            painterResource(Res.drawable.trade_step_active_3),
+                            "trade step 3",
+                            modifier = modifier,
                         )
                     }
                 }
                 // Step 4 active is never shown as we move to the completed screen
-
             } else {
                 when (stepNumber) {
                     1 -> {
                         Image(
-                            painterResource(Res.drawable.trade_step_inactive_1), "trade step inactive 1",
-                            modifier = modifier
+                            painterResource(Res.drawable.trade_step_inactive_1),
+                            "trade step inactive 1",
+                            modifier = modifier,
                         )
                     }
 
                     2 -> {
                         Image(
-                            painterResource(Res.drawable.trade_step_inactive_2), "trade step inactive 2",
-                            modifier = modifier
+                            painterResource(Res.drawable.trade_step_inactive_2),
+                            "trade step inactive 2",
+                            modifier = modifier,
                         )
                     }
 
                     3 -> {
                         Image(
-                            painterResource(Res.drawable.trade_step_inactive_3), "trade step inactive 3",
-                            modifier = modifier
+                            painterResource(Res.drawable.trade_step_inactive_3),
+                            "trade step inactive 3",
+                            modifier = modifier,
                         )
                     }
 
                     4 -> {
                         Image(
-                            painterResource(Res.drawable.trade_step_inactive_4), "trade step inactive 4",
-                            modifier = modifier
+                            painterResource(Res.drawable.trade_step_inactive_4),
+                            "trade step inactive 4",
+                            modifier = modifier,
                         )
                     }
                 }
             }
-
         }
         content(
             Modifier.padding(
                 start = contentStartOffset,
-                bottom = spacerBetweenNodes
-            )
+                bottom = spacerBetweenNodes,
+            ),
         )
     }
 }

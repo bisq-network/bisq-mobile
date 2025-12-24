@@ -10,18 +10,17 @@ class AccountsApiGateway(
 ) : Logging {
     private val basePath = "payment-accounts"
 
-    suspend fun getPaymentAccounts(): Result<List<UserDefinedFiatAccountVO>> {
-        return webSocketApiClient.get<List<UserDefinedFiatAccountVO>>(basePath)
-    }
+    suspend fun getPaymentAccounts(): Result<List<UserDefinedFiatAccountVO>> = webSocketApiClient.get<List<UserDefinedFiatAccountVO>>(basePath)
 
     suspend fun addAccount(
         accountName: String,
         accountData: String,
     ): Result<AddAccountResponse> {
-        val addAccountRequest = AddAccountRequest(
-            accountName = accountName,
-            accountData = accountData,
-        )
+        val addAccountRequest =
+            AddAccountRequest(
+                accountName = accountName,
+                accountData = accountData,
+            )
         return webSocketApiClient.post(basePath, addAccountRequest)
     }
 
@@ -30,13 +29,7 @@ class AccountsApiGateway(
         return webSocketApiClient.delete("$basePath/$parsedAccountName")
     }
 
-    suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO): Result<Unit> {
-        return webSocketApiClient.patch("$basePath/selected", PaymentAccountChangeRequest(account))
-    }
+    suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO): Result<Unit> = webSocketApiClient.patch("$basePath/selected", PaymentAccountChangeRequest(account))
 
-    suspend fun getSelectedAccount(): Result<UserDefinedFiatAccountVO> {
-        return webSocketApiClient.get("$basePath/selected")
-    }
-
-
+    suspend fun getSelectedAccount(): Result<UserDefinedFiatAccountVO> = webSocketApiClient.get("$basePath/selected")
 }

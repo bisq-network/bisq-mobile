@@ -19,5 +19,5 @@ data class BisqEasyContractVO(
     val quoteSidePaymentMethodSpec: FiatPaymentMethodSpecVO,
     val mediator: UserProfileVO?,
     val priceSpec: PriceSpecVO,
-    val marketPrice: Long
+    val marketPrice: Long,
 )

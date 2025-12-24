@@ -17,7 +17,7 @@ object SettingsSerializer : OkioSerializer<Settings> {
         return try {
             dataStoreJson.decodeFromString(
                 Settings.serializer(),
-                source.readUtf8()
+                source.readUtf8(),
             )
         } catch (e: SerializationException) {
             throw CorruptionException("Cannot deserialize Settings", e)
@@ -26,7 +26,10 @@ object SettingsSerializer : OkioSerializer<Settings> {
         }
     }
 
-    override suspend fun writeTo(t: Settings, sink: BufferedSink) {
+    override suspend fun writeTo(
+        t: Settings,
+        sink: BufferedSink,
+    ) {
         val payload = dataStoreJson.encodeToString(Settings.serializer(), t)
         sink.writeUtf8(payload)
     }

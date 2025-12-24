@@ -10,8 +10,10 @@ import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCause
 import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCauseMessage
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
-
-class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), ExplorerServiceFacade {
+class NodeExplorerServiceFacade(
+    applicationService: AndroidApplicationService.Provider,
+) : ServiceFacade(),
+    ExplorerServiceFacade {
     // Dependencies
     private val explorerService: ExplorerService by lazy { applicationService.bondedRolesService.get().explorerService }
     private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
@@ -29,7 +31,10 @@ class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Pr
         return Result.success(explorerService.selectedProvider.get().baseUrl)
     }
 
-    override suspend fun requestTx(txId: String, address: String): ExplorerResult {
+    override suspend fun requestTx(
+        txId: String,
+        address: String,
+    ): ExplorerResult {
         log.i { "requestTx $txId $address" }
         try {
             if (cachedExplorerResults.containsKey(txId)) {
@@ -52,6 +57,8 @@ class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Pr
         }
     }
 
-    private fun filterOutputsByAddress(tx: Tx, address: String): List<Long> =
-        tx.outputs.filter { it.address == address }.map { it.value }
+    private fun filterOutputsByAddress(
+        tx: Tx,
+        address: String,
+    ): List<Long> = tx.outputs.filter { it.address == address }.map { it.value }
 }

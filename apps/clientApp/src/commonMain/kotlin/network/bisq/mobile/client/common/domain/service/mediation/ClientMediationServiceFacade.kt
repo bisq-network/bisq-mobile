@@ -6,9 +6,10 @@ import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 
-class ClientMediationServiceFacade(val apiGateway: MediationApiGateway) :
-    ServiceFacade(), MediationServiceFacade {
-
+class ClientMediationServiceFacade(
+    val apiGateway: MediationApiGateway,
+) : ServiceFacade(),
+    MediationServiceFacade {
     override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
@@ -17,8 +18,8 @@ class ClientMediationServiceFacade(val apiGateway: MediationApiGateway) :
         super<ServiceFacade>.deactivate()
     }
 
-    override suspend fun reportToMediator(value: TradeItemPresentationModel): Result<Unit> {
-        return try {
+    override suspend fun reportToMediator(value: TradeItemPresentationModel): Result<Unit> =
+        try {
             val result = apiGateway.reportToMediator(value.tradeId)
             result.fold(
                 onSuccess = { Result.success(it) },
@@ -30,10 +31,9 @@ class ClientMediationServiceFacade(val apiGateway: MediationApiGateway) :
 
                         else -> Result.failure(exception)
                     }
-                }
+                },
             )
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
 }

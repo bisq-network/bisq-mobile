@@ -10,20 +10,20 @@ import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.InfoGreenIcon
-import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 
 @Composable
 fun WebLinkConfirmationDialog(
     link: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
     headline: String = "hyperlinks.openInBrowser.attention.headline".i18n(),
     headlineColor: Color = BisqTheme.colors.primary,
     headlineLeftIcon: (@Composable () -> Unit)? = { InfoGreenIcon() },
     message: String = "hyperlinks.openInBrowser.attention".i18n(link),
     confirmButtonText: String = "confirmation.yes".i18n(),
     dismissButtonText: String = "hyperlinks.openInBrowser.no".i18n(),
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
 ) {
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -49,6 +49,6 @@ fun WebLinkConfirmationDialog(
         },
         closeButton = true,
         horizontalAlignment = Alignment.Start,
-        verticalButtonPlacement = true
+        verticalButtonPlacement = true,
     )
 }

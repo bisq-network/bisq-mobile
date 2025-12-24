@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.common.ui.utils
 
-import platform.Foundation.*
+import platform.Foundation.NSDate
+import platform.Foundation.NSDateFormatter
 
 class IOSCurrentTimeProvider : TimeProvider {
     override fun getCurrentTime(): String {

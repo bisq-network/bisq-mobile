@@ -36,6 +36,7 @@ class ClientOffersServiceFacade(
     private companion object {
         private const val LOADING_TIMEOUT_MS = 12000L
     }
+
     private var marketPriceUpdateJob: Job? = null
 
     private var loadingTimeoutJob: Job? = null
@@ -46,7 +47,6 @@ class ClientOffersServiceFacade(
     private var hasSubscribedToOffers = atomic(false)
 
     private var getMarketsJob: Job? = null
-
 
     // Life cycle
     override suspend fun activate() {
@@ -110,11 +110,18 @@ class ClientOffersServiceFacade(
         fiatPaymentMethods: Set<String>,
         amountSpec: AmountSpecVO,
         priceSpec: PriceSpecVO,
-        supportedLanguageCodes: Set<String>
+        supportedLanguageCodes: Set<String>,
     ): Result<String> {
-        val apiResult = apiGateway.publishOffer(
-            direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes
-        )
+        val apiResult =
+            apiGateway.publishOffer(
+                direction,
+                market,
+                bitcoinPaymentMethods,
+                fiatPaymentMethods,
+                amountSpec,
+                priceSpec,
+                supportedLanguageCodes,
+            )
         if (apiResult.isSuccess) {
             return Result.success(apiResult.getOrThrow().offerId)
         } else {
@@ -126,23 +133,25 @@ class ClientOffersServiceFacade(
         serviceScope.launch {
             offersMutex.withLock {
                 getMarketsJob?.cancel()
-                getMarketsJob = serviceScope.launch(Dispatchers.Default) {
-                    webSocketClientService.connectionState.collect { state ->
-                        if (state is ConnectionState.Connected) {
-                            val result = apiGateway.getMarkets()
-                            if (result.isFailure) {
-                                result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
-                                log.w { "GetMarkets failed, market list will remain empty" }
-                            } else {
-                                val markets = result.getOrThrow()
-                                fillMarketListItems(markets)
-                                subscribeNumOffers()
-                                getMarketsJob?.cancel() // we only need this once
+                getMarketsJob =
+                    serviceScope.launch(Dispatchers.Default) {
+                        webSocketClientService.connectionState.collect { state ->
+                            if (state is ConnectionState.Connected) {
+                                val result = apiGateway.getMarkets()
+                                if (result.isFailure) {
+                                    result
+                                        .exceptionOrNull()
+                                        ?.let { log.e { "GetMarkets request failed with exception $it" } }
+                                    log.w { "GetMarkets failed, market list will remain empty" }
+                                } else {
+                                    val markets = result.getOrThrow()
+                                    fillMarketListItems(markets)
+                                    subscribeNumOffers()
+                                    getMarketsJob?.cancel() // we only need this once
+                                }
                             }
-
                         }
                     }
-                }
             }
         }
     }
@@ -171,17 +180,18 @@ class ClientOffersServiceFacade(
             }
 
             try {
-                val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> = WebSocketEventPayload.from(
-                    json,
-                    webSocketEvent
-                )
+                val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> =
+                    WebSocketEventPayload.from(
+                        json,
+                        webSocketEvent,
+                    )
                 val numOffersByMarketCode = webSocketEventPayload.payload
 
                 _offerbookMarketItems.update { list ->
                     list.map { marketListItem ->
                         numOffersByMarketCode[marketListItem.market.quoteCurrencyCode]
                             ?.let { marketListItem.copy(numOffers = it) }
-                                ?: marketListItem
+                            ?: marketListItem
                     }
                 }
             } catch (e: Exception) {
@@ -200,10 +210,11 @@ class ClientOffersServiceFacade(
                 }
 
                 runCatching {
-                    val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> = WebSocketEventPayload.from(
-                        json,
-                        webSocketEvent
-                    )
+                    val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
+                        WebSocketEventPayload.from(
+                            json,
+                            webSocketEvent,
+                        )
                     val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
                     log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
                     updateOffersByMarket(webSocketEvent, payload)
@@ -219,15 +230,17 @@ class ClientOffersServiceFacade(
 
     private suspend fun updateOffersByMarket(
         webSocketEvent: WebSocketEvent,
-        payload: List<OfferItemPresentationDto>
+        payload: List<OfferItemPresentationDto>,
     ) {
-        val modelsByMarket = payload.groupBy { it.bisqEasyOffer.market.quoteCurrencyCode }
-            .mapValues { (_, items) ->
-                items.associate { item ->
-                    val model = OfferItemPresentationModel(item)
-                    model.offerId to model
+        val modelsByMarket =
+            payload
+                .groupBy { it.bisqEasyOffer.market.quoteCurrencyCode }
+                .mapValues { (_, items) ->
+                    items.associate { item ->
+                        val model = OfferItemPresentationModel(item)
+                        model.offerId to model
+                    }
                 }
-            }
 
         offersMutex.withLock {
             when (webSocketEvent.modificationType) {
@@ -266,13 +279,14 @@ class ClientOffersServiceFacade(
     }
 
     private suspend fun applyOffersToSelectedMarket() {
-        val (selectedCurrency, availableMarkets, list) = offersMutex.withLock {
-            val sc = selectedOfferbookMarket.value.market.quoteCurrencyCode
-            val am = offerbookListItemsByMarket.keys.toList()
-            val ofm = offerbookListItemsByMarket[sc]
-            val l = ofm?.values?.toList()
-            Triple(sc, am, l)
-        }
+        val (selectedCurrency, availableMarkets, list) =
+            offersMutex.withLock {
+                val sc = selectedOfferbookMarket.value.market.quoteCurrencyCode
+                val am = offerbookListItemsByMarket.keys.toList()
+                val ofm = offerbookListItemsByMarket[sc]
+                val l = ofm?.values?.toList()
+                Triple(sc, am, l)
+            }
 
         log.d { "Applying offers to selected market - Selected: $selectedCurrency" }
         log.d { "Available markets in cache: $availableMarkets" }
@@ -291,15 +305,16 @@ class ClientOffersServiceFacade(
 
     private fun scheduleOffersPriceRefresh() {
         marketPriceUpdateJob?.cancel()
-        marketPriceUpdateJob = serviceScope.launch(Dispatchers.Default) {
-            try {
-                // Debounce to avoid UI churn during high-frequency price ticks
-                delay(MARKET_TICK_DEBOUNCE_MS)
-                refreshOffersFormattedValues()
-            } catch (e: Exception) {
-                log.e(e) { "Error scheduling offers price refresh (client)" }
+        marketPriceUpdateJob =
+            serviceScope.launch(Dispatchers.Default) {
+                try {
+                    // Debounce to avoid UI churn during high-frequency price ticks
+                    delay(MARKET_TICK_DEBOUNCE_MS)
+                    refreshOffersFormattedValues()
+                } catch (e: Exception) {
+                    log.e(e) { "Error scheduling offers price refresh (client)" }
+                }
             }
-        }
     }
 
     private fun refreshOffersFormattedValues() {
@@ -312,23 +327,25 @@ class ClientOffersServiceFacade(
 
     private fun startLoadingTimeout() {
         loadingTimeoutJob?.cancel()
-        loadingTimeoutJob = serviceScope.launch {
-            try {
-                delay(LOADING_TIMEOUT_MS)
-            } catch (_: Exception) {
-                // job cancelled
+        loadingTimeoutJob =
+            serviceScope.launch {
+                try {
+                    delay(LOADING_TIMEOUT_MS)
+                } catch (_: Exception) {
+                    // job cancelled
+                }
+                if (_isOfferbookLoading.value) {
+                    log.w { "Offerbook loading timed out for market ${selectedOfferbookMarket.value.market.quoteCurrencyCode}" }
+                    _isOfferbookLoading.value = false
+                }
             }
-            if (_isOfferbookLoading.value) {
-                log.w { "Offerbook loading timed out for market ${selectedOfferbookMarket.value.market.quoteCurrencyCode}" }
-                _isOfferbookLoading.value = false
-            }
-        }
     }
 
     private fun fillMarketListItems(markets: List<MarketVO>) {
-        val marketListItems = markets.map { marketVO ->
-            MarketListItem.from(marketVO)
-        }
+        val marketListItems =
+            markets.map { marketVO ->
+                MarketListItem.from(marketVO)
+            }
 
         _offerbookMarketItems.value = marketListItems
     }

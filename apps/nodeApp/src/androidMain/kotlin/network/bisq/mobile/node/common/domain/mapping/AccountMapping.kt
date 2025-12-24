@@ -6,33 +6,29 @@ import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccount
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 
 object UserDefinedFiatAccountMapping {
-    fun toBisq2Model(value: UserDefinedFiatAccountVO): UserDefinedFiatAccount {
-        return UserDefinedFiatAccount(
+    fun toBisq2Model(value: UserDefinedFiatAccountVO): UserDefinedFiatAccount =
+        UserDefinedFiatAccount(
             value.accountName,
-            value.accountPayload.accountData
+            value.accountPayload.accountData,
         )
-    }
 
-    fun fromBisq2Model(value: UserDefinedFiatAccount): UserDefinedFiatAccountVO {
-        return UserDefinedFiatAccountVO(
+    fun fromBisq2Model(value: UserDefinedFiatAccount): UserDefinedFiatAccountVO =
+        UserDefinedFiatAccountVO(
             value.accountName,
-            UserDefinedFiatAccountPayloadMapping.fromBisq2Model(value.accountPayload)
+            UserDefinedFiatAccountPayloadMapping.fromBisq2Model(value.accountPayload),
         )
-    }
 }
 
 object UserDefinedFiatAccountPayloadMapping {
-    fun toBisq2Model(value: UserDefinedFiatAccountPayloadVO): UserDefinedFiatAccountPayload {
-        return UserDefinedFiatAccountPayload(
+    fun toBisq2Model(value: UserDefinedFiatAccountPayloadVO): UserDefinedFiatAccountPayload =
+        UserDefinedFiatAccountPayload(
             "",
             "",
-            value.accountData
+            value.accountData,
         )
-    }
 
-    fun fromBisq2Model(value: UserDefinedFiatAccountPayload): UserDefinedFiatAccountPayloadVO {
-        return UserDefinedFiatAccountPayloadVO(
-            value.accountData
+    fun fromBisq2Model(value: UserDefinedFiatAccountPayload): UserDefinedFiatAccountPayloadVO =
+        UserDefinedFiatAccountPayloadVO(
+            value.accountData,
         )
-    }
 }

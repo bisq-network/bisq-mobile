@@ -8,10 +8,6 @@ actual fun provideIsSimulator(): Boolean {
     return deviceModel != null
 }
 
-actual fun provideApiHost(): String {
-    return BuildConfig.WS_IOS_HOST.takeIf { it.isNotEmpty() } ?: "localhost"
-}
+actual fun provideApiHost(): String = BuildConfig.WS_IOS_HOST.takeIf { it.isNotEmpty() } ?: "localhost"
 
-actual fun provideApiPort(): Int {
-    return (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt()
-}
+actual fun provideApiPort(): Int = (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt()

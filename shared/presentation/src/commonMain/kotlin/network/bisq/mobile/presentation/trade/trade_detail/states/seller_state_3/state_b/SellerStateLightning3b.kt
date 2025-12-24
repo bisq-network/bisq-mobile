@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_b
 
 import androidx.compose.foundation.layout.Arrangement
@@ -17,8 +19,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CheckCircleIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 
 @Composable
 fun SellerStateLightning3b(
@@ -43,19 +45,19 @@ private fun SellerStateLightning3bWaitingForPayment(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_bitcoin_confirmation,
-                isLoading = true
+                isLoading = true,
             )
             // Wait for buyer confirming Bitcoin receipt
-            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase3b.headline.ln".i18n())
+            BisqText.H5Light("bisqEasy.tradeState.info.seller.phase3b.headline.ln".i18n())
         }
 
         Column {
             BisqGap.V1()
-            BisqText.baseLightGrey(
+            BisqText.BaseLightGrey(
                 // Transfers via the Lightning Network are usually near-instant and reliable....
                 "bisqEasy.tradeState.info.seller.phase3b.info.ln".i18n(),
             )
@@ -65,7 +67,7 @@ private fun SellerStateLightning3bWaitingForPayment(
                 // Skip waiting for buyer's confirmation
                 text = "bisqEasy.tradeState.info.seller.phase3b.confirmButton.skipWaitForConfirmation.ln".i18n(),
                 type = BisqButtonType.Grey,
-                onClick = presenter::skipWaiting
+                onClick = presenter::skipWaiting,
             )
         }
     }
@@ -79,22 +81,22 @@ private fun SellerStateLightning3bPaymentConfirmed(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         ) {
             CheckCircleIcon()
 
             // The buyer has confirmed the Bitcoin receipt
-            BisqText.baseLightGrey("bisqEasy.tradeState.info.seller.phase3b.receiptConfirmed.ln".i18n())
+            BisqText.BaseLightGrey("bisqEasy.tradeState.info.seller.phase3b.receiptConfirmed.ln".i18n())
         }
 
         BisqGap.V1()
-        BisqText.h5Light(
+        BisqText.H5Light(
             // Your Bitcoin transfer has been confirmed
             "bisqEasy.tradeState.info.seller.phase3b.receiptConfirmed.headline.ln".i18n(),
         )
         BisqGap.VHalf()
         // You can now move forward to finalize your trade and view a complete summary of the transaction.
-        BisqText.baseLightGrey("bisqEasy.tradeState.info.seller.phase3b.receiptConfirmed.info.ln".i18n())
+        BisqText.BaseLightGrey("bisqEasy.tradeState.info.seller.phase3b.receiptConfirmed.info.ln".i18n())
 
         BisqGap.V1()
         BisqButton(

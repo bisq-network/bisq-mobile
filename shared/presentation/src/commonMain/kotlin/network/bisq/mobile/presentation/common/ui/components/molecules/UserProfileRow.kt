@@ -21,17 +21,17 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 fun UserProfileRow(
     userProfile: UserProfileVO,
     reputation: ReputationScoreVO,
-    showUserName: Boolean = true,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
-    badgeCount: Int = 0,
     modifier: Modifier = Modifier,
+    showUserName: Boolean = true,
+    badgeCount: Int = 0,
 ) {
     val fiveSystemScore = reputation.fiveSystemScore
 
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         BadgedBox(
             modifier = Modifier.graphicsLayer(clip = false),
@@ -40,16 +40,16 @@ fun UserProfileRow(
                     AnimatedBadge(
                         text = badgeCount.toString(),
                         xOffset = 3.dp,
-                        yOffset = 35.dp
+                        yOffset = 35.dp,
                     )
                 }
-            }) {
-
+            },
+        ) {
             UserProfileIcon(userProfile, userProfileIconProvider)
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (showUserName) {
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = userProfile.userName,
                     singleLine = true,
                 )

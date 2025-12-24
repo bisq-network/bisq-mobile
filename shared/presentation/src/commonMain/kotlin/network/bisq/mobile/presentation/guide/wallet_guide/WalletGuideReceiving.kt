@@ -52,53 +52,49 @@ fun WalletGuideReceiving() {
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
-        BisqText.h3Light("bisqEasy.walletGuide.receive.headline".i18n())
+        BisqText.H3Light("bisqEasy.walletGuide.receive.headline".i18n())
 
         BisqGap.V2()
 
-        BisqText.baseLight("bisqEasy.walletGuide.receive.content".i18n())
+        BisqText.BaseLight("bisqEasy.walletGuide.receive.content".i18n())
 
         BisqGap.V2()
 
         LinkButton(
             "bisqEasy.walletGuide.receive.link1".i18n(),
             link = BisqLinks.BLUE_WALLET_TUTORIAL_1_URL,
-            onClick = { presenter.navigateToBlueWalletTutorial1() }
+            onClick = { presenter.navigateToBlueWalletTutorial1() },
         )
 
         LinkButton(
             "bisqEasy.walletGuide.receive.link2".i18n(),
             link = BisqLinks.BLUE_WALLET_TUTORIAL_2_URL,
-            onClick = { presenter.navigateToBlueWalletTutorial2() }
+            onClick = { presenter.navigateToBlueWalletTutorial2() },
         )
 
         BisqGap.V2()
 
         Box(
             modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             DynamicImage(
                 "drawable/wallet_guide/blue_wallet_qr.png",
                 contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             androidx.compose.animation.AnimatedVisibility(
                 visible = showSecondImage,
                 enter = fadeIn(animationSpec = tween(1000)),
-                exit = fadeOut(animationSpec = tween(1000))
+                exit = fadeOut(animationSpec = tween(1000)),
             ) {
                 DynamicImage(
                     "drawable/wallet_guide/blue_wallet_tx.png",
                     contentScale = ContentScale.FillWidth,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-
         }
-
     }
 }
-
-

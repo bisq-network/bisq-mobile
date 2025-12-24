@@ -2,4 +2,8 @@ package network.bisq.mobile.presentation.common.ui.components.organisms.pager_vi
 
 import org.jetbrains.compose.resources.DrawableResource
 
-data class PagerViewItem(val title: String, val image: DrawableResource, val desc: String)
+data class PagerViewItem(
+    val title: String,
+    val image: DrawableResource,
+    val desc: String,
+)

@@ -43,7 +43,7 @@ kotlin {
 
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
+        iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = clientFrameworkBaseName
@@ -147,7 +147,10 @@ localProperties.load(File(rootDir, "local.properties").inputStream())
 // -------------------- Android Configuration --------------------
 android {
     namespace = "network.bisq.mobile.client"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk =
+        libs.versions.android.compileSdk
+            .get()
+            .toInt()
 
     signingConfigs {
         create("release") {
@@ -162,8 +165,14 @@ android {
 
     defaultConfig {
         applicationId = "network.bisq.mobile.client"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
+        targetSdk =
+            libs.versions.android.targetSdk
+                .get()
+                .toInt()
         versionCode = versionCodeValue
         versionName = version.toString()
 
@@ -183,29 +192,32 @@ android {
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
 
-            pickFirsts += listOf(
-                "META-INF/LICENSE*",
-                "META-INF/NOTICE*",
-                "META-INF/services/**",
-                "META-INF/*.version"
-            )
+            pickFirsts +=
+                listOf(
+                    "META-INF/LICENSE*",
+                    "META-INF/NOTICE*",
+                    "META-INF/services/**",
+                    "META-INF/*.version",
+                )
         }
         jniLibs {
             // For apk release builds after tor inclusion
             // If multiple .so files exist across dependencies, pick the first and avoid conflicts
-            pickFirsts += listOf(
-                "lib/**/libtor.so",
-                "lib/**/libcrypto.so",
-                "lib/**/libevent*.so",
-                "lib/**/libssl.so",
-                "lib/**/libsqlite*.so",
-                "lib/**/libdatastore_shared_counter.so"
-            )
+            pickFirsts +=
+                listOf(
+                    "lib/**/libtor.so",
+                    "lib/**/libcrypto.so",
+                    "lib/**/libevent*.so",
+                    "lib/**/libssl.so",
+                    "lib/**/libsqlite*.so",
+                    "lib/**/libdatastore_shared_counter.so",
+                )
             // Exclude problematic native libraries
-            excludes += listOf(
-                "**/libmagtsync.so",
-                "**/libMEOW*.so"
-            )
+            excludes +=
+                listOf(
+                    "**/libmagtsync.so",
+                    "**/libMEOW*.so",
+                )
             // Required for kmp-tor exec resources - helps prevent EOCD corruption
             useLegacyPackaging = true
         }
@@ -218,7 +230,7 @@ android {
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             dependenciesInfo {
                 includeInApk = false
@@ -268,21 +280,20 @@ dependencies {
 afterEvaluate {
     val generateResourceBundlesTask = project(sharedDomainModule).tasks.findByName("generateResourceBundles")
     if (generateResourceBundlesTask != null) {
-        tasks.matching { task ->
-            task.name.startsWith("compile") ||
-            task.name.startsWith("assemble") ||
-            task.name.startsWith("bundle") ||
-            task.name.contains("Build")
-        }.configureEach {
-            dependsOn(generateResourceBundlesTask)
-        }
+        tasks
+            .matching { task ->
+                task.name.startsWith("compile") ||
+                    task.name.startsWith("assemble") ||
+                    task.name.startsWith("bundle") ||
+                    task.name.contains("Build")
+            }.configureEach {
+                dependsOn(generateResourceBundlesTask)
+            }
     }
 }
 
 // -------------------- Helper Functions --------------------
-fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
-    return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
-}
+fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 
 // -------------------- ProGuard Mapping Configuration --------------------
 extra["moduleName"] = clientAppModuleName

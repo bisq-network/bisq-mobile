@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.offer.take_offer.settlement
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -29,10 +31,12 @@ fun TakeOfferSettlementMethodScreen() {
 
     val takeOffer = takeOfferPresenter.takeOfferModel
     var stepIndex = 1
-    if (takeOffer.hasAmountRange)
+    if (takeOffer.hasAmountRange) {
         stepIndex++
-    if (takeOffer.hasMultipleQuoteSidePaymentMethods)
+    }
+    if (takeOffer.hasMultipleQuoteSidePaymentMethods) {
         stepIndex++
+    }
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.takeOffer.progress.baseSidePaymentMethod".i18n(),
@@ -45,16 +49,21 @@ fun TakeOfferSettlementMethodScreen() {
         closeAction = true,
         onConfirmedClose = presenter::onClose,
     ) {
-
-        BisqText.h3Light("mobile.bisqEasy.takeOffer.paymentMethods.headline.btc".i18n())
+        BisqText.H3Light("mobile.bisqEasy.takeOffer.paymentMethods.headline.btc".i18n())
 
         if (presenter.hasMultipleBaseSidePaymentMethods) {
             BisqGap.V2()
             BisqGap.V2()
 
             PaymentMethodCard(
-                title = (if (presenter.isTakerBtcBuyer) "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller"
-                else "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer").i18n(),
+                title =
+                    (
+                        if (presenter.isTakerBtcBuyer) {
+                            "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller"
+                        } else {
+                            "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer"
+                        }
+                    ).i18n(),
                 imagePaths = presenter.getBaseSidePaymentMethodsImagePaths(),
                 availablePaymentMethods = presenter.baseSidePaymentMethods.toMutableSet(),
                 selectedPaymentMethods = baseSidePaymentMethod,
@@ -63,5 +72,4 @@ fun TakeOfferSettlementMethodScreen() {
             )
         }
     }
-
 }

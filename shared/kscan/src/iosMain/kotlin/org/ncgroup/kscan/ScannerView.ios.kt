@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -24,8 +25,8 @@ import platform.AVFoundation.torchMode
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun ScannerView(
-    modifier: Modifier,
     codeTypes: List<BarcodeFormat>,
+    modifier: Modifier,
     colors: ScannerColors,
     scannerUiOptions: ScannerUiOptions?,
     scannerController: ScannerController?,
@@ -33,8 +34,8 @@ actual fun ScannerView(
     result: (BarcodeResult) -> Unit,
 ) {
     var torchEnabled by remember { mutableStateOf(false) }
-    var zoomRatio by remember { mutableStateOf(1f) }
-    var maxZoomRatio by remember { mutableStateOf(1f) }
+    var zoomRatio by remember { mutableFloatStateOf(1f) }
+    var maxZoomRatio by remember { mutableFloatStateOf(1f) }
     val captureDevice: AVCaptureDevice? =
         remember {
             AVCaptureDevice.defaultDeviceWithDeviceType(
@@ -70,9 +71,10 @@ actual fun ScannerView(
                         result(
                             BarcodeResult.OnFailed(
                                 RuntimeException(
-                                    e.message ?: "Torch toggle failed", e
-                                )
-                            )
+                                    e.message ?: "Torch toggle failed",
+                                    e,
+                                ),
+                            ),
                         )
                     } finally {
                         if (locked) {
@@ -85,25 +87,26 @@ actual fun ScannerView(
 
     scannerController?.onTorchChange = onTorchChange
 
-    val cameraViewController = remember {
-        CameraViewController(
-            device = captureDevice,
-            codeTypes = codeTypes,
-            filter = filter,
-            onBarcodeSuccess = { scannedBarcodes ->
-                result(BarcodeResult.OnSuccess(scannedBarcodes.first()))
-            },
-            onBarcodeFailed = { error ->
-                result(BarcodeResult.OnFailed(error))
-            },
-            onBarcodeCanceled = {
-                result(BarcodeResult.OnCanceled)
-            },
-            onMaxZoomRatioAvailable = { maxRatio ->
-                maxZoomRatio = maxRatio
-            }
-        )
-    }
+    val cameraViewController =
+        remember {
+            CameraViewController(
+                device = captureDevice,
+                codeTypes = codeTypes,
+                filter = filter,
+                onBarcodeSuccess = { scannedBarcodes ->
+                    result(BarcodeResult.OnSuccess(scannedBarcodes.first()))
+                },
+                onBarcodeFailed = { error ->
+                    result(BarcodeResult.OnFailed(error))
+                },
+                onBarcodeCanceled = {
+                    result(BarcodeResult.OnCanceled)
+                },
+                onMaxZoomRatioAvailable = { maxRatio ->
+                    maxZoomRatio = maxRatio
+                },
+            )
+        }
 
     scannerController?.onZoomChange = { ratio ->
         cameraViewController.setZoom(ratio)
@@ -126,7 +129,7 @@ actual fun ScannerView(
                     cameraViewController.dispose()
                 },
                 torchEnabled = torchEnabled,
-                onTorchEnabled = onTorchChange,
+                onTorchEnable = onTorchChange,
                 zoomRatio = zoomRatio,
                 zoomRatioOnChange = { ratio ->
                     cameraViewController.setZoom(ratio)

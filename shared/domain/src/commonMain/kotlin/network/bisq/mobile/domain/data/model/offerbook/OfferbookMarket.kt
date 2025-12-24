@@ -6,11 +6,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 
+// TODO: Not used yet, maybe we can remove it later
+
 /**
  * Provides data for the offerbook header showing the selected market data
  */
-// todo Not used yet, maybe we can remove it later
-data class OfferbookMarket(val market: MarketVO) {
+data class OfferbookMarket(
+    val market: MarketVO,
+) {
     private val _formattedPrice = MutableStateFlow("")
     val formattedPrice: StateFlow<String> get() = _formattedPrice.asStateFlow()
 
@@ -18,12 +21,11 @@ data class OfferbookMarket(val market: MarketVO) {
         _formattedPrice.value = value
     }
 
-    override fun toString(): String {
-        return "OfferbookMarket(\n" +
-                "market='$market'\n" +
-                "formattedPrice='${formattedPrice.value}'\n" +
-                ")"
-    }
+    override fun toString(): String =
+        "OfferbookMarket(\n" +
+            "market='$market'\n" +
+            "formattedPrice='${formattedPrice.value}'\n" +
+            ")"
 
     companion object {
         val EMPTY: OfferbookMarket = OfferbookMarket(MarketVOFactory.EMPTY)

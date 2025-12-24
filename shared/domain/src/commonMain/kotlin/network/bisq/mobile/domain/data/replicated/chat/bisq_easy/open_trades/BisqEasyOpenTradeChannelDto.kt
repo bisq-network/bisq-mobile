@@ -5,8 +5,8 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
-//todo will get completed with work on chat
-//todo missing dto on Bisq Easy side, missing fields for initial value of mutable data
+// todo will get completed with work on chat
+// todo missing dto on Bisq Easy side, missing fields for initial value of mutable data
 @Serializable
 data class BisqEasyOpenTradeChannelDto(
     val id: String,

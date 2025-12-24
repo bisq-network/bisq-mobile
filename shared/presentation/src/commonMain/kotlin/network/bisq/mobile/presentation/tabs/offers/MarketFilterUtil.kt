@@ -10,7 +10,6 @@ import network.bisq.mobile.domain.utils.Logging
  * Shared utility for filtering markets across different screens
  */
 object MarketFilterUtil : Logging {
-
     /**
      * Filters markets to only include those with available price data
      * @param markets List of markets to filter
@@ -19,9 +18,9 @@ object MarketFilterUtil : Logging {
      */
     fun filterMarketsWithPriceData(
         markets: List<MarketListItem>,
-        marketPriceServiceFacade: MarketPriceServiceFacade
-    ): List<MarketListItem> {
-        return markets.filter { marketListItem ->
+        marketPriceServiceFacade: MarketPriceServiceFacade,
+    ): List<MarketListItem> =
+        markets.filter { marketListItem ->
             val hasPriceData = marketPriceServiceFacade.findMarketPriceItem(marketListItem.market) != null
             if (!hasPriceData) {
                 log.d { "Filtering out market ${marketListItem.market.quoteCurrencyCode} (${marketListItem.market.quoteCurrencyName}) - no price data available" }
@@ -30,7 +29,6 @@ object MarketFilterUtil : Logging {
             }
             hasPriceData
         }
-    }
 
     /**
      * Applies search filtering to markets
@@ -40,18 +38,17 @@ object MarketFilterUtil : Logging {
      */
     fun filterMarketsBySearch(
         markets: List<MarketListItem>,
-        searchText: String
-    ): List<MarketListItem> {
-        return if (searchText.isBlank()) {
+        searchText: String,
+    ): List<MarketListItem> =
+        if (searchText.isBlank()) {
             markets
         } else {
             markets.filter { marketListItem ->
                 marketListItem.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
-                        marketListItem.market.quoteCurrencyName.contains(searchText, ignoreCase = true) ||
-                        marketListItem.localeFiatCurrencyName.contains(searchText, ignoreCase = true)
+                    marketListItem.market.quoteCurrencyName.contains(searchText, ignoreCase = true) ||
+                    marketListItem.localeFiatCurrencyName.contains(searchText, ignoreCase = true)
             }
         }
-    }
 
     /**
      * Complete market filtering pipeline for Create Offer flow
@@ -60,11 +57,18 @@ object MarketFilterUtil : Logging {
     fun filterAndSortMarketsForCreateOffer(
         markets: List<MarketListItem>,
         searchText: String,
-        marketPriceServiceFacade: MarketPriceServiceFacade
+        marketPriceServiceFacade: MarketPriceServiceFacade,
     ): List<MarketListItem> {
-        val translatedMarkets = markets.map { item ->
-            item.copy(localeFiatCurrencyName = CurrencyUtils.getLocaleFiatCurrencyName(item.market.quoteCurrencyCode, item.market.quoteCurrencyName))
-        }
+        val translatedMarkets =
+            markets.map { item ->
+                item.copy(
+                    localeFiatCurrencyName =
+                        CurrencyUtils.getLocaleFiatCurrencyName(
+                            item.market.quoteCurrencyCode,
+                            item.market.quoteCurrencyName,
+                        ),
+                )
+            }
         log.d { "CreateOffer filtering pipeline - input: ${translatedMarkets.size} markets, search: '$searchText'" }
 
         val withPriceData = filterMarketsWithPriceData(translatedMarkets, marketPriceServiceFacade)
@@ -86,15 +90,16 @@ object MarketFilterUtil : Logging {
      * @param markets List of markets to sort
      * @return Sorted list by number of offers (desc), then main currencies first, then alphabetically for non-main currencies
      */
-    internal fun sortMarketsStandard(markets: List<MarketListItem>): List<MarketListItem> {
-        return markets.sortedWith(
+    internal fun sortMarketsStandard(markets: List<MarketListItem>): List<MarketListItem> =
+        markets.sortedWith(
             compareByDescending<MarketListItem> { it.numOffers }
                 .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
                 .thenBy { item ->
                     if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) {
                         item.localeFiatCurrencyName
-                    } else null
-                }
+                    } else {
+                        null
+                    }
+                },
         )
-    }
 }

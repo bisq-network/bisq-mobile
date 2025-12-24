@@ -32,43 +32,44 @@ fun BottomNavigation(
     currentRoute: TabNavRoute?,
     unreadTradeCount: Int,
     showAnimation: Boolean,
-    onItemClick: (BottomNavigationItem) -> Unit
+    onItemClick: (BottomNavigationItem) -> Unit,
 ) {
-
     //  MaterialTheme v3 use a background for selected item and by that has a larger spacing between icon an text.
     // As we do not use a bag for selection the large space looks weird. As it does not allow customization we
     // add use a Column for icon, packing in the text there and leave the text empty
     // Default spacing between icon and label: ~4.dp.
     NavigationBar(
-        containerColor = BisqTheme.colors.backgroundColor
+        containerColor = BisqTheme.colors.backgroundColor,
     ) {
         items.forEachIndexed { index, navigationItem ->
             NavigationBarItem(
-                colors = NavigationBarItemColors(
-                    selectedIndicatorColor = BisqTheme.colors.backgroundColor,
-                    selectedIconColor = BisqTheme.colors.primary,
-                    selectedTextColor = BisqTheme.colors.primary,
-                    unselectedIconColor = BisqTheme.colors.white,
-                    unselectedTextColor = BisqTheme.colors.white,
-                    disabledIconColor = BisqTheme.colors.danger,
-                    disabledTextColor = BisqTheme.colors.danger
-                ),
+                colors =
+                    NavigationBarItemColors(
+                        selectedIndicatorColor = BisqTheme.colors.backgroundColor,
+                        selectedIconColor = BisqTheme.colors.primary,
+                        selectedTextColor = BisqTheme.colors.primary,
+                        unselectedIconColor = BisqTheme.colors.white,
+                        unselectedTextColor = BisqTheme.colors.white,
+                        disabledIconColor = BisqTheme.colors.danger,
+                        disabledTextColor = BisqTheme.colors.danger,
+                    ),
                 interactionSource = remember { MutableInteractionSource() },
                 selected = currentRoute == navigationItem.route,
                 onClick = { onItemClick(navigationItem) },
                 icon = {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         val icon = @Composable {
                             Image(
                                 painter = painterResource(navigationItem.icon),
                                 contentDescription = navigationItem.title,
-                                modifier = Modifier.size(24.dp),  // 24.dp is standard on Android
-                                colorFilter = ColorFilter.tint(
-                                    color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White
-                                )
+                                modifier = Modifier.size(24.dp), // 24.dp is standard on Android
+                                colorFilter =
+                                    ColorFilter.tint(
+                                        color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White,
+                                    ),
                             )
                         }
 
@@ -78,7 +79,7 @@ fun BottomNavigation(
                                     AnimatedBadge(
                                         text = unreadTradeCount.toString(),
                                     )
-                                }
+                                },
                             ) {
                                 icon()
                             }
@@ -92,11 +93,11 @@ fun BottomNavigation(
                             textStyle = BisqTheme.typography.xsmallRegular, // 12.dp is standard on Android
                             textAlign = TextAlign.Center,
                             maxLines = 1,
-                            minimumFontSize = 8.sp
+                            minimumFontSize = 8.sp,
                         )
                     }
                 },
-                label = {}
+                label = {},
             )
         }
     }

@@ -25,17 +25,17 @@ fun SellerReputationWarningDialog(
         padding = BisqUIConstants.ScreenPadding,
         onDismissRequest = onDismiss,
     ) {
-        BisqText.h6Light(
+        BisqText.H6Light(
             text = "bisqEasy.tradeWizard.directionAndMarket.feedback.headline".i18n(),
-            color = BisqTheme.colors.warning
+            color = BisqTheme.colors.warning,
         )
 
         BisqGap.V1()
 
-        BisqText.baseLight(
+        BisqText.BaseLight(
             "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle1".i18n() + "\n\n" +
-                    "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle2".i18n() + "\n\n" +
-                    "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle3".i18n()
+                "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle2".i18n() + "\n\n" +
+                "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle3".i18n(),
         )
         BisqGap.V2()
         BisqButton(
@@ -44,7 +44,7 @@ fun SellerReputationWarningDialog(
             color = BisqTheme.colors.white,
             onClick = onClick,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-            fullWidth = true
+            fullWidth = true,
         )
         BisqGap.VHalf()
         BisqButton(
@@ -52,7 +52,7 @@ fun SellerReputationWarningDialog(
             type = BisqButtonType.Grey,
             onClick = onDismiss,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-            fullWidth = true
+            fullWidth = true,
         )
     }
 }

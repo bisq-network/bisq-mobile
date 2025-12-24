@@ -23,8 +23,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonTyp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
 
 private const val MAX_ACCOUNT_FIELD_LENGTH = 1024
 
@@ -39,19 +39,21 @@ fun AppPaymentAccountCard(
     var accountDescriptionValid by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.padding(
-            horizontal = BisqUIConstants.ScreenPadding,
-        ), verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+        modifier =
+            Modifier.padding(
+                horizontal = BisqUIConstants.ScreenPadding,
+            ),
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
     ) {
         BisqGap.VQuarter()
-        BisqText.h5Light(
+        BisqText.H5Light(
             text = "paymentAccounts.legacy.createAccount.headline".i18n(),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
-        BisqText.smallLightGrey(
+        BisqText.SmallLightGrey(
             text = "paymentAccounts.legacy.createAccount.subtitle".i18n(),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
         BisqGap.VHalf()
@@ -75,7 +77,7 @@ fun AppPaymentAccountCard(
                     return@BisqTextField "paymentAccounts.legacy.createAccount.validations.name.maxLength".i18n()
                 }
                 return@BisqTextField null
-            }
+            },
         )
         BisqTextField(
             value = accountDescription,
@@ -98,25 +100,25 @@ fun AppPaymentAccountCard(
                     return@BisqTextField "paymentAccounts.legacy.createAccount.validations.accountData.maxLength".i18n()
                 }
                 return@BisqTextField null
-            }
+            },
         )
         Row(
             horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max)
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
         ) {
             BisqButton(
                 modifier = Modifier.fillMaxHeight(),
                 text = "action.cancel".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = onCancel,
-                padding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                padding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
             )
             BisqButton(
                 modifier = Modifier.fillMaxHeight(),
                 text = "action.save".i18n(),
                 onClick = { onConfirm(accountName.trim(), accountDescription.trim()) },
                 padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
-                disabled = !accountNameValid || !accountDescriptionValid
+                disabled = !accountNameValid || !accountDescriptionValid,
             )
         }
     }

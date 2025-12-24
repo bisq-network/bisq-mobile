@@ -12,6 +12,7 @@ class SellerState2bPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
+
     fun onConfirmFiatReceipt() {
         presenterScope.launch {
             showLoading()

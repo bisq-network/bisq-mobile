@@ -5,14 +5,14 @@ import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 
 class CreateOfferPaymentMethodPresenter(
-    mainPresenter: MainPresenter, private val createOfferPresenter: CreateOfferPresenter
+    mainPresenter: MainPresenter,
+    private val createOfferPresenter: CreateOfferPresenter,
 ) : BasePresenter(mainPresenter) {
-
     val quoteSideHeadline: String
     val baseSideHeadline: String
     val availableQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
@@ -24,15 +24,24 @@ class CreateOfferPaymentMethodPresenter(
 
     init {
 
-        val quoteCurrencyCode = createOfferModel.market?.quoteCurrencyCode
-            ?: throw IllegalStateException("Market must be initialized before creating payment method presenter")
+        val quoteCurrencyCode =
+            createOfferModel.market?.quoteCurrencyCode
+                ?: throw IllegalStateException("Market must be initialized before creating payment method presenter")
 
         val isBuy = createOfferModel.direction.isBuy
-        quoteSideHeadline = if (isBuy) "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(quoteCurrencyCode)
-        else "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.seller".i18n(quoteCurrencyCode)
+        quoteSideHeadline =
+            if (isBuy) {
+                "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(quoteCurrencyCode)
+            } else {
+                "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.seller".i18n(quoteCurrencyCode)
+            }
 
-        baseSideHeadline = if (isBuy) "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer".i18n()
-        else "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller".i18n()
+        baseSideHeadline =
+            if (isBuy) {
+                "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer".i18n()
+            } else {
+                "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller".i18n()
+            }
 
         // availableQuoteSidePaymentMethods.value = createOfferModel.availableQuoteSidePaymentMethods.subList(0, 3).toSet()  // for dev testing to avoid scroll
         availableQuoteSidePaymentMethods.value = createOfferModel.availableQuoteSidePaymentMethods.toSet()
@@ -49,16 +58,13 @@ class CreateOfferPaymentMethodPresenter(
         super.onViewUnattaching()
     }
 
-    fun getQuoteSidePaymentMethodsImagePaths(): List<String> {
-        return getPaymentMethodsImagePaths(availableQuoteSidePaymentMethods.value.toList(), "fiat")
-    }
+    fun getQuoteSidePaymentMethodsImagePaths(): List<String> = getPaymentMethodsImagePaths(availableQuoteSidePaymentMethods.value.toList(), "fiat")
 
-    fun getBaseSidePaymentMethodsImagePaths(): List<String> {
-        return getPaymentMethodsImagePaths(
+    fun getBaseSidePaymentMethodsImagePaths(): List<String> =
+        getPaymentMethodsImagePaths(
             availableBaseSidePaymentMethods.value.toList(),
-            "bitcoin"
+            "bitcoin",
         )
-    }
 
     fun onToggleQuoteSidePaymentMethod(value: String) {
         if (selectedQuoteSidePaymentMethods.value.contains(value)) {
@@ -94,9 +100,10 @@ class CreateOfferPaymentMethodPresenter(
 
     fun removeCustomPayment(value: String) {
         val normalized = value.trim()
-        val target = availableQuoteSidePaymentMethods.value
-            .firstOrNull { it.equals(normalized, ignoreCase = true) }
-            ?: return
+        val target =
+            availableQuoteSidePaymentMethods.value
+                .firstOrNull { it.equals(normalized, ignoreCase = true) }
+                ?: return
         availableQuoteSidePaymentMethods.update { it - target }
         if (selectedQuoteSidePaymentMethods.value.contains(target)) {
             selectedQuoteSidePaymentMethods.update { it - target }
@@ -136,7 +143,7 @@ class CreateOfferPaymentMethodPresenter(
     private fun commitPaymentToModel() {
         if (isQuoteSideValid()) {
             createOfferPresenter.commitPaymentMethod(
-                selectedQuoteSidePaymentMethods.value
+                selectedQuoteSidePaymentMethods.value,
             )
         }
     }
@@ -144,17 +151,20 @@ class CreateOfferPaymentMethodPresenter(
     private fun commitSettlementToModel() {
         if (isBaseSideValid()) {
             createOfferPresenter.commitSettlementMethod(
-                selectedBaseSidePaymentMethods.value
+                selectedBaseSidePaymentMethods.value,
             )
         }
     }
 
     private fun isQuoteSideValid() = selectedQuoteSidePaymentMethods.value.isNotEmpty()
+
     private fun isBaseSideValid() = selectedBaseSidePaymentMethods.value.isNotEmpty()
 
-    private fun getPaymentMethodsImagePaths(list: List<String>, directory: String) =
-        list.map { paymentMethod ->
-            val fileName = paymentMethod.lowercase().replace("-", "_")
-            "drawable/payment/$directory/$fileName.png"
-        }
+    private fun getPaymentMethodsImagePaths(
+        list: List<String>,
+        directory: String,
+    ) = list.map { paymentMethod ->
+        val fileName = paymentMethod.lowercase().replace("-", "_")
+        "drawable/payment/$directory/$fileName.png"
+    }
 }

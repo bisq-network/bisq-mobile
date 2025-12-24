@@ -22,8 +22,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
@@ -38,40 +38,42 @@ fun InterruptedTradePane() {
     val reportToMediatorButtonVisible by presenter.reportToMediatorButtonVisible.collectAsState()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .fillMaxWidth()
-            .clip(shape = RoundedCornerShape(12.dp))
-            .background(color = BisqTheme.colors.dark_grey40)
-    ) {
-
-        Row(
-            modifier = Modifier
+        modifier =
+            Modifier
+                .fillMaxSize()
                 .fillMaxWidth()
-                .padding(12.dp),
+                .clip(shape = RoundedCornerShape(12.dp))
+                .background(color = BisqTheme.colors.dark_grey40),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
             horizontalArrangement = Arrangement.Start,
         ) {
             if (interruptionInfoVisible) {
                 // TODO: Add orange warn icon
-                BisqText.baseMedium(
+                BisqText.BaseMedium(
                     text = interruptedTradeInfo,
-                    color = BisqTheme.colors.warning
+                    color = BisqTheme.colors.warning,
                 )
             }
             if (errorMessageVisible) {
                 // TODO: Add red warn icon
-                BisqText.baseMedium(
+                BisqText.BaseMedium(
                     text = presenter.errorMessage,
-                    color = BisqTheme.colors.danger
+                    color = BisqTheme.colors.danger,
                 )
             }
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-                .height(IntrinsicSize.Max),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+                    .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.End,
         ) {
             if (!isInMediation && reportToMediatorButtonVisible) {
@@ -93,4 +95,3 @@ fun InterruptedTradePane() {
         }
     }
 }
-

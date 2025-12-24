@@ -1,15 +1,14 @@
 package network.bisq.mobile.domain
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
 class UncaughtExceptionHandlerTest {
-
     private var previousHandler: Thread.UncaughtExceptionHandler? = null
 
     @BeforeTest
@@ -30,10 +29,11 @@ class UncaughtExceptionHandlerTest {
         val latch = CountDownLatch(1)
 
         // Install a fake original handler that only records invocation
-        val fakeOriginal = Thread.UncaughtExceptionHandler { _, _ ->
-            originalCalled.set(true)
-            latch.countDown()
-        }
+        val fakeOriginal =
+            Thread.UncaughtExceptionHandler { _, _ ->
+                originalCalled.set(true)
+                latch.countDown()
+            }
         Thread.setDefaultUncaughtExceptionHandler(fakeOriginal)
 
         // Now install our handler under test
@@ -51,4 +51,3 @@ class UncaughtExceptionHandlerTest {
         assertTrue(originalCalled.get(), "Expected original handler to be delegated to")
     }
 }
-

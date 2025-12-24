@@ -8,13 +8,14 @@ import network.bisq.mobile.client.common.domain.httpclient.BisqProxyConfig
 
 actual fun createHttpClient(
     proxyConfig: BisqProxyConfig?,
-    config: HttpClientConfig<*>.() -> Unit
-): HttpClient = HttpClient(Darwin) {
-    config(this)
-    install(WebSockets) {
-        pingIntervalMillis = 15_000 // not supported by okhttp engine
+    config: HttpClientConfig<*>.() -> Unit,
+): HttpClient =
+    HttpClient(Darwin) {
+        config(this)
+        install(WebSockets) {
+            pingIntervalMillis = 15_000 // not supported by okhttp engine
+        }
+        engine {
+            proxy = proxyConfig?.config
+        }
     }
-    engine {
-        proxy = proxyConfig?.config
-    }
-}

@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
@@ -44,18 +45,16 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.common.ui.error.GenericErrorOverlay
 import network.bisq.mobile.presentation.common.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBanner
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.error.GenericErrorOverlay
-import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBanner
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 interface AppPresenter : ViewPresenter {
-
     // Observables for state
     val isMainContentVisible: StateFlow<Boolean>
 
@@ -97,20 +96,23 @@ fun WindowInsets.bottomPaddingDp(): Dp {
 
 @Composable
 fun SafeInsetsContainer(
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     // Outer container consumes insets and paints the background
     Box(
-        modifier = Modifier.fillMaxSize()
-            .consumeWindowInsets(WindowInsets.systemBars) // Eat insets, so no white stripes
-            .background(BisqTheme.colors.backgroundColor)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .consumeWindowInsets(WindowInsets.systemBars) // Eat insets, so no white stripes
+                .background(BisqTheme.colors.backgroundColor),
     ) {
         // Inner container adds padding for content
         Box(
-            modifier = Modifier.fillMaxSize().padding(
-                top = WindowInsets.statusBars.topPaddingDp(),
-                bottom = WindowInsets.navigationBars.bottomPaddingDp()
-            )
+            modifier =
+                Modifier.fillMaxSize().padding(
+                    top = WindowInsets.statusBars.topPaddingDp(),
+                    bottom = WindowInsets.navigationBars.bottomPaddingDp(),
+                ),
         ) {
             content()
         }
@@ -123,7 +125,7 @@ fun SafeInsetsContainer(
 @Composable
 fun App(
     rootNavController: NavHostController,
-    navGraphContent: @Composable () -> Unit
+    navGraphContent: @Composable () -> Unit,
 ) {
     val presenter: AppPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
@@ -179,7 +181,7 @@ fun App(
                     message = "mobile.connectivity.disconnected.message".i18n(),
                     confirmButtonText = "mobile.connectivity.disconnected.restart".i18n(),
                     onConfirm = { presenter.onRestartApp() },
-                    onDismiss = { presenter.onCloseConnectionLostDialogue() }
+                    onDismiss = { presenter.onCloseConnectionLostDialogue() },
                 )
             } else if (showReconnectOverlay) {
                 ReconnectingOverlay(onClick = { presenter.onRestartApp() })
@@ -196,61 +198,65 @@ fun App(
 @Composable
 fun ReconnectingOverlay(onClick: (() -> Unit)? = null) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BisqTheme.colors.backgroundColor.copy(alpha = 0.85f))
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) { /* consume clicks */ }
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(BisqTheme.colors.backgroundColor.copy(alpha = 0.85f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) { /* consume clicks */ },
     ) {
         Surface(
             shape = RoundedCornerShape(BisqUIConstants.ScreenPadding),
             color = BisqTheme.colors.dark_grey40,
-            modifier = Modifier.align(Alignment.Center)
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding4X,
-                    vertical = BisqUIConstants.ScreenPadding2X
-                ),
+            modifier =
+                Modifier
+                    .align(Alignment.Center)
+                    .padding(
+                        horizontal = BisqUIConstants.ScreenPadding4X,
+                        vertical = BisqUIConstants.ScreenPadding2X,
+                    ),
         ) {
             Column(
-                modifier = Modifier.padding(
-                    horizontal = BisqUIConstants.ScreenPadding2X,
-                    vertical = BisqUIConstants.ScreenPadding4X
-                ),
+                modifier =
+                    Modifier.padding(
+                        horizontal = BisqUIConstants.ScreenPadding2X,
+                        vertical = BisqUIConstants.ScreenPadding4X,
+                    ),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqText.h3Light(
+                BisqText.H3Light(
                     text = "mobile.connectivity.reconnecting.title".i18n(),
                     color = BisqTheme.colors.white,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 BisqGap.VQuarter()
                 CircularProgressIndicator(
                     color = BisqTheme.colors.primary,
                     modifier = Modifier.size(70.dp),
-                    strokeWidth = 1.dp
+                    strokeWidth = 1.dp,
                 )
                 BisqGap.VQuarter()
 
-                BisqText.largeLight(
+                BisqText.LargeLight(
                     text = "mobile.connectivity.reconnecting.info".i18n(),
                     color = BisqTheme.colors.light_grey50,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = "mobile.connectivity.reconnecting.details".i18n(),
                     color = BisqTheme.colors.light_grey50,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
                 BisqGap.VHalf()
                 BisqButton(
                     text = "mobile.connectivity.reconnecting.restart".i18n(),
                     type = BisqButtonType.Outline,
-                    onClick = onClick
+                    onClick = onClick,
                 )
             }
         }

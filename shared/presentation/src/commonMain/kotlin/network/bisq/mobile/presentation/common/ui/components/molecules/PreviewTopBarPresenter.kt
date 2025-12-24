@@ -15,7 +15,6 @@ import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
  * so TopBar and scaffolds can render without real DI/navigation.
  */
 class PreviewTopBarPresenter : ITopBarPresenter {
-
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> get() = _isInteractive
 
@@ -31,28 +30,45 @@ class PreviewTopBarPresenter : ITopBarPresenter {
     private val snackbar = SnackbarHostState()
 
     override fun avatarEnabled(currentTab: TabNavRoute?): Boolean = false
+
     override fun navigateToUserProfile() {}
 
     override fun isDemo(): Boolean = false
+
     override fun isSmallScreen(): Boolean = false
+
     override fun onCloseGenericErrorPanel() {}
+
     override fun navigateToReportError() {}
+
     override fun isIOS(): Boolean = false
 
     override fun getSnackState(): SnackbarHostState = snackbar
-    override fun showSnackbar(message: String, isError: Boolean, duration: SnackbarDuration) {}
+
+    override fun showSnackbar(
+        message: String,
+        isError: Boolean,
+        duration: SnackbarDuration,
+    ) {
+    }
+
     override fun dismissSnackbar() {}
+
     override fun isAtHomeTab(): Boolean = true
+
     override fun navigateToTab(
         destination: TabNavRoute,
         saveStateOnPopUp: Boolean,
         shouldLaunchSingleTop: Boolean,
-        shouldRestoreState: Boolean
+        shouldRestoreState: Boolean,
     ) {}
 
     override fun onMainBackNavigation() {}
+
     override fun onViewAttached() {}
+
     override fun onViewUnattaching() {}
+
     override fun onDestroying() {}
 
     fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage {
@@ -61,4 +77,3 @@ class PreviewTopBarPresenter : ITopBarPresenter {
         throw UnsupportedOperationException("getUserProfileIcon method in PreviewTopBarPresenter is not supported")
     }
 }
-

@@ -6,10 +6,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.presentation.common.notification.model.ios.IosNotificationCategory
 import network.bisq.mobile.presentation.common.notification.model.NotificationButton
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.notification.model.NotificationPressAction
+import network.bisq.mobile.presentation.common.notification.model.ios.IosNotificationCategory
 import network.bisq.mobile.presentation.common.notification.model.toPlatformEnum
 import network.bisq.mobile.presentation.common.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -37,21 +37,24 @@ import kotlin.coroutines.suspendCoroutine
 
 class NotificationControllerImpl(
     private val appForegroundController: AppForegroundController,
-) : NotificationController, Logging {
+) : NotificationController,
+    Logging {
     private val logScope = CoroutineScope(Dispatchers.Main)
 
     // strong reference to delegate to keep it in memory and working
     private var notificationDelegate: NSObject? = null
 
     @OptIn(ExperimentalForeignApi::class)
-    override suspend fun hasPermission(): Boolean = suspendCoroutine { continuation ->
-        UNUserNotificationCenter.currentNotificationCenter()
-            .getNotificationSettingsWithCompletionHandler { settings ->
-                val status = settings?.authorizationStatus
-                val isGranted = status == UNAuthorizationStatusAuthorized
-                continuation.resume(isGranted)
-            }
-    }
+    override suspend fun hasPermission(): Boolean =
+        suspendCoroutine { continuation ->
+            UNUserNotificationCenter
+                .currentNotificationCenter()
+                .getNotificationSettingsWithCompletionHandler { settings ->
+                    val status = settings?.authorizationStatus
+                    val isGranted = status == UNAuthorizationStatusAuthorized
+                    continuation.resume(isGranted)
+                }
+        }
 
     override fun notify(config: NotificationConfig) {
         log.i { "iOS pushNotification called - title: '$config.title', body: '$config.body'" }
@@ -61,44 +64,47 @@ class NotificationControllerImpl(
             return
         }
 
-        val content = UNMutableNotificationContent().apply {
-            config.title?.let { setTitle(it) }
-            config.subtitle?.let { setSubtitle(it) }
-            config.body?.let { setBody(it) }
-            config.badgeCount?.let { setBadge(NSNumber(it)) }
-            configureSound(this, config)
-            config.ios?.interruptionLevel?.let {
-                setInterruptionLevel(it.toPlatformEnum())
-            }
-            config.ios?.categoryId?.let {
-                val actions = config.ios.actions
-                if (actions.isNullOrEmpty()) {
-                    throw IllegalArgumentException("When setting categoryId, notification actions must be provided to behave correctly")
+        val content =
+            UNMutableNotificationContent().apply {
+                config.title?.let { setTitle(it) }
+                config.subtitle?.let { setSubtitle(it) }
+                config.body?.let { setBody(it) }
+                config.badgeCount?.let { setBadge(NSNumber(it)) }
+                configureSound(this, config)
+                config.ios?.interruptionLevel?.let {
+                    setInterruptionLevel(it.toPlatformEnum())
                 }
-                setCategoryIdentifier(it)
-                configureActions(this, actions)
-            }
-            config.ios?.actions?.let {
-                if (config.ios.categoryId == null) {
-                    throw IllegalArgumentException("When setting actions, notification categoryId must be provided to behave correctly")
+                config.ios?.categoryId?.let {
+                    val actions = config.ios.actions
+                    if (actions.isNullOrEmpty()) {
+                        throw IllegalArgumentException("When setting categoryId, notification actions must be provided to behave correctly")
+                    }
+                    setCategoryIdentifier(it)
+                    configureActions(this, actions)
                 }
-            }
-            config.ios?.pressAction?.let {
-                addActionUserInfo(this, it, "default")
-            }
+                config.ios?.actions?.let {
+                    if (config.ios.categoryId == null) {
+                        throw IllegalArgumentException("When setting actions, notification categoryId must be provided to behave correctly")
+                    }
+                }
+                config.ios?.pressAction?.let {
+                    addActionUserInfo(this, it, "default")
+                }
 
-            if (config.skipInForeground) {
-                setUserInfo(this.userInfo + ("skipForeground" to 1))
+                if (config.skipInForeground) {
+                    setUserInfo(this.userInfo + ("skipForeground" to 1))
+                }
             }
-        }
 
         val requestId = config.id
-        val request = UNNotificationRequest.requestWithIdentifier(
-            requestId,
-            content,
-            null,
-        )
-        UNUserNotificationCenter.currentNotificationCenter()
+        val request =
+            UNNotificationRequest.requestWithIdentifier(
+                requestId,
+                content,
+                null,
+            )
+        UNUserNotificationCenter
+            .currentNotificationCenter()
             .addNotificationRequest(request) { error ->
                 if (error != null) {
                     logDebug("Error adding notification request: ${error.localizedDescription}")
@@ -116,7 +122,6 @@ class NotificationControllerImpl(
         logDebug("Notification $id cancelled")
     }
 
-
     override fun isAppInForeground(): Boolean {
         // for iOS we handle this inside delegate
         // but wouldn't hurt to return early when possible
@@ -124,12 +129,16 @@ class NotificationControllerImpl(
     }
 
     private fun logDebug(message: String) {
-        logScope.launch { // (Dispatchers.Main)
+        logScope.launch {
+            // (Dispatchers.Main)
             log.d { message }
         }
     }
 
-    private fun configureSound(content: UNMutableNotificationContent, config: NotificationConfig) {
+    private fun configureSound(
+        content: UNMutableNotificationContent,
+        config: NotificationConfig,
+    ) {
         val soundName = config.ios?.sound
         val isCritical = config.ios?.critical == true
         val criticalVolume = config.ios?.criticalVolume
@@ -139,8 +148,8 @@ class NotificationControllerImpl(
                     if (criticalVolume != null) {
                         content.setSound(
                             UNNotificationSound.defaultCriticalSoundWithAudioVolume(
-                                criticalVolume
-                            )
+                                criticalVolume,
+                            ),
                         )
                     } else {
                         content.setSound(UNNotificationSound.defaultCriticalSound())
@@ -160,8 +169,8 @@ class NotificationControllerImpl(
                         content.setSound(
                             UNNotificationSound.criticalSoundNamed(
                                 soundName,
-                                criticalVolume
-                            )
+                                criticalVolume,
+                            ),
                         )
                     } else {
                         content.setSound(UNNotificationSound.criticalSoundNamed(soundName))
@@ -175,7 +184,7 @@ class NotificationControllerImpl(
 
     private fun configureActions(
         content: UNMutableNotificationContent,
-        actions: List<NotificationButton>
+        actions: List<NotificationButton>,
     ) {
         for (action in actions) {
             val pressAction = action.pressAction
@@ -192,13 +201,13 @@ class NotificationControllerImpl(
         when (pressAction) {
             is NotificationPressAction.Route -> {
                 content.setUserInfo(
-                    content.userInfo + (id to pressAction.route.toUriString())
+                    content.userInfo + (id to pressAction.route.toUriString()),
                 )
             }
 
             is NotificationPressAction.Default -> {
                 content.setUserInfo(
-                    content.userInfo + (id to NavRoute.TabOpenTradeList.toUriString())
+                    content.userInfo + (id to NavRoute.TabOpenTradeList.toUriString()),
                 )
             }
         }
@@ -212,78 +221,84 @@ class NotificationControllerImpl(
                 val pressAction = action.pressAction
                 when (pressAction) {
                     is NotificationPressAction.Route,
-                    is NotificationPressAction.Default -> {
-                        val unAction = UNNotificationAction.actionWithIdentifier(
-                            action.pressAction.id,
-                            action.title,
-                            UNNotificationActionOptionForeground
-                        )
+                    is NotificationPressAction.Default,
+                    -> {
+                        val unAction =
+                            UNNotificationAction.actionWithIdentifier(
+                                action.pressAction.id,
+                                action.title,
+                                UNNotificationActionOptionForeground,
+                            )
                         actions.add(unAction)
                     }
                 }
             }
             if (actions.isNotEmpty()) {
                 // create category with actions
-                val category = UNNotificationCategory.categoryWithIdentifier(
-                    cat.id,
-                    actions,
-                    emptyList<String>(),
-                    UNNotificationCategoryOptionNone,
-                )
+                val category =
+                    UNNotificationCategory.categoryWithIdentifier(
+                        cat.id,
+                        actions,
+                        emptyList<String>(),
+                        UNNotificationCategoryOptionNone,
+                    )
                 resultCategories.add(category)
             }
         }
 
         if (resultCategories.isNotEmpty()) {
-            UNUserNotificationCenter.currentNotificationCenter()
+            UNUserNotificationCenter
+                .currentNotificationCenter()
                 .setNotificationCategories(resultCategories)
         }
     }
 
     private fun setupDelegate() {
-        val delegate = object : NSObject(), UNUserNotificationCenterDelegateProtocol {
-            // Handle user actions on the notification
-            override fun userNotificationCenter(
-                center: UNUserNotificationCenter,
-                didReceiveNotificationResponse: UNNotificationResponse,
-                withCompletionHandler: () -> Unit
-            ) {
-                // Handle the response when the user taps the notification
-                val userInfo = didReceiveNotificationResponse.notification.request.content.userInfo
-                val actionId =
-                    didReceiveNotificationResponse.actionIdentifier.let {
-                        if (it == UNNotificationDefaultActionIdentifier) "default" else it
-                    }
-                when (actionId) {
-                    "default",
-                    "route" -> {
-                        val userInfoMap = userInfo as? Map<*, *>
-                        val uri = userInfoMap?.get(actionId) as? String
-                        if (uri != null) {
-                            ExternalUriHandler.onNewUri(uri)
+        val delegate =
+            object : NSObject(), UNUserNotificationCenterDelegateProtocol {
+                // Handle user actions on the notification
+                override fun userNotificationCenter(
+                    center: UNUserNotificationCenter,
+                    didReceiveNotificationResponse: UNNotificationResponse,
+                    withCompletionHandler: () -> Unit,
+                ) {
+                    // Handle the response when the user taps the notification
+                    val userInfo = didReceiveNotificationResponse.notification.request.content.userInfo
+                    val actionId =
+                        didReceiveNotificationResponse.actionIdentifier.let {
+                            if (it == UNNotificationDefaultActionIdentifier) "default" else it
+                        }
+                    when (actionId) {
+                        "default",
+                        "route",
+                        -> {
+                            val userInfoMap = userInfo as? Map<*, *>
+                            val uri = userInfoMap?.get(actionId) as? String
+                            if (uri != null) {
+                                ExternalUriHandler.onNewUri(uri)
+                            }
                         }
                     }
+                    withCompletionHandler()
                 }
-                withCompletionHandler()
-            }
 
-            // Asks the delegate how to handle a notification that arrived while
-            // the app was running in the foreground.
-            override fun userNotificationCenter(
-                center: UNUserNotificationCenter,
-                willPresentNotification: UNNotification,
-                withCompletionHandler: (UNNotificationPresentationOptions) -> Unit
-            ) {
-                val userInfo = willPresentNotification.request.content.userInfo
+                // Asks the delegate how to handle a notification that arrived while
+                // the app was running in the foreground.
+                override fun userNotificationCenter(
+                    center: UNUserNotificationCenter,
+                    willPresentNotification: UNNotification,
+                    withCompletionHandler: (UNNotificationPresentationOptions) -> Unit,
+                ) {
+                    val userInfo = willPresentNotification.request.content.userInfo
 
-                if (!userInfo.contains("skipForeground")) {
-                    // Display alert, sound, or badge when the app is in the foreground
-                    withCompletionHandler(
-                        UNNotificationPresentationOptionAlert or UNNotificationPresentationOptionSound or UNNotificationPresentationOptionBadge
-                    )
+                    if (!userInfo.contains("skipForeground")) {
+                        // Display alert, sound, or badge when the app is in the foreground
+                        withCompletionHandler(
+                            UNNotificationPresentationOptionAlert or UNNotificationPresentationOptionSound or UNNotificationPresentationOptionBadge,
+                        )
+                    }
                 }
             }
-        }
         notificationDelegate = delegate
         UNUserNotificationCenter.currentNotificationCenter().delegate = delegate
         logDebug("Notification center delegate applied")
@@ -304,14 +319,13 @@ class NotificationControllerImpl(
 //                        )
 //                    )
 //                ),
-            )
+            ),
         )
     }
 
-    @Suppress("unused")  // Called from iosClient.swift
+    @Suppress("unused") // Called from iosClient.swift
     fun setup() {
         setupDelegate()
         setupNotificationCategories()
     }
 }
-

@@ -8,7 +8,6 @@ import network.bisq.mobile.i18n.i18n
     val error: Pair<String, String>? = null,
 )*/
 
-
 data class ExplorerResult(
     val isConfirmed: Boolean = false,
     val outputValues: List<Long> = emptyList(),
@@ -19,7 +18,7 @@ data class ExplorerResult(
         isConfirmed,
         outputValues,
         exceptionName = error?.first,
-        errorMessage = error?.second
+        errorMessage = error?.second,
     )
 
     val isSuccess

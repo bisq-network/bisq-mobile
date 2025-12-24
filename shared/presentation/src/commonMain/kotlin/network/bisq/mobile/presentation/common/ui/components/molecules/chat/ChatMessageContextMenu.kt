@@ -25,23 +25,23 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun ChatMessageContextMenu(
     message: BisqEasyOpenTradeMessageModel,
-    showMenu: Boolean = false,
+    isIgnored: Boolean,
     onSetShowMenu: (Boolean) -> Unit,
     onAddReaction: (ReactionEnum) -> Unit,
     onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit,
+    showMenu: Boolean = false,
     onReply: () -> Unit = {},
     onCopy: () -> Unit = {},
     onIgnoreUser: () -> Unit = {},
     onUndoIgnoreUser: () -> Unit = {},
     onReportUser: () -> Unit = {},
-    isIgnored: Boolean,
 ) {
     val isPeersMessage = !message.isMyMessage
     Surface {
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { onSetShowMenu(false) },
-            containerColor = BisqTheme.colors.dark_grey40
+            containerColor = BisqTheme.colors.dark_grey40,
         ) {
             ChatReactionInput(
                 onAddReaction = { reaction ->
@@ -51,59 +51,59 @@ fun ChatMessageContextMenu(
                 onRemoveReaction = { reaction ->
                     onRemoveReaction(reaction)
                     onSetShowMenu(false)
-                }
+                },
             )
 
             HorizontalDivider(
                 color = BisqTheme.colors.dark_grey50,
-                thickness = 2.dp
+                thickness = 2.dp,
             )
 
             if (isPeersMessage) {
                 DropdownMenuItem(
-                    text = { BisqText.smallRegular("chat.message.reply".i18n()) },
+                    text = { BisqText.SmallRegular("chat.message.reply".i18n()) },
                     leadingIcon = { ReplyIcon() },
                     onClick = {
                         onReply()
                         onSetShowMenu(false)
-                    }
+                    },
                 )
             }
             DropdownMenuItem(
-                text = { BisqText.smallRegular("action.copyToClipboard".i18n()) },
+                text = { BisqText.SmallRegular("action.copyToClipboard".i18n()) },
                 leadingIcon = { CopyIcon() },
                 onClick = {
                     onCopy()
-                }
+                },
             )
             if (isPeersMessage) {
                 if (isIgnored) {
                     DropdownMenuItem(
-                        text = { BisqText.smallRegular("user.profileCard.userActions.undoIgnore".i18n()) },
+                        text = { BisqText.SmallRegular("user.profileCard.userActions.undoIgnore".i18n()) },
                         leadingIcon = { EyeIcon() },
                         onClick = {
                             onUndoIgnoreUser()
                             onSetShowMenu(false)
-                        }
+                        },
                     )
                 } else {
                     DropdownMenuItem(
-                        text = { BisqText.smallRegular("chat.message.contextMenu.ignoreUser".i18n()) },
+                        text = { BisqText.SmallRegular("chat.message.contextMenu.ignoreUser".i18n()) },
                         leadingIcon = { ClosedEyeIcon() },
                         onClick = {
                             onIgnoreUser()
                             onSetShowMenu(false)
-                        }
+                        },
                     )
                 }
 
                 DropdownMenuItem(
-                    text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },
+                    text = { BisqText.SmallRegular("chat.message.contextMenu.reportUser".i18n()) },
                     leadingIcon = { FlagIcon() },
                     onClick = {
                         onReportUser()
                         onSetShowMenu(false)
-                    }
+                    },
                 )
             }
         }
@@ -120,7 +120,7 @@ private fun ChatMessageContextMenuPreview() {
             onSetShowMenu = {},
             onAddReaction = {},
             onRemoveReaction = {},
-            isIgnored = false
+            isIgnored = false,
         )
     }
 }
@@ -135,7 +135,7 @@ private fun ChatMessageContextMenuIgnoredPreview() {
             onSetShowMenu = {},
             onAddReaction = {},
             onRemoveReaction = {},
-            isIgnored = true
+            isIgnored = true,
         )
     }
 }
@@ -144,26 +144,27 @@ private val mockMessage by lazy {
     val myUserProfile = createMockUserProfile("Bob")
     val peerUserProfile = createMockUserProfile("Alice")
 
-    val dto = BisqEasyOpenTradeMessageDto(
-        tradeId = "trade123",
-        messageId = "msg456",
-        channelId = "channel123",
-        senderUserProfile = peerUserProfile,
-        receiverUserProfileId = myUserProfile.networkId.pubKey.id,
-        receiverNetworkId = myUserProfile.networkId,
-        text = "Sure! Let's proceed with the payment.",
-        citation = null,
-        date = 1234567890000L,
-        mediator = null,
-        chatMessageType = ChatMessageTypeEnum.TEXT,
-        bisqEasyOffer = null,
-        chatMessageReactions = emptySet(),
-        citationAuthorUserProfile = null
-    )
+    val dto =
+        BisqEasyOpenTradeMessageDto(
+            tradeId = "trade123",
+            messageId = "msg456",
+            channelId = "channel123",
+            senderUserProfile = peerUserProfile,
+            receiverUserProfileId = myUserProfile.networkId.pubKey.id,
+            receiverNetworkId = myUserProfile.networkId,
+            text = "Sure! Let's proceed with the payment.",
+            citation = null,
+            date = 1234567890000L,
+            mediator = null,
+            chatMessageType = ChatMessageTypeEnum.TEXT,
+            bisqEasyOffer = null,
+            chatMessageReactions = emptySet(),
+            citationAuthorUserProfile = null,
+        )
 
     BisqEasyOpenTradeMessageModel(
         dto,
         myUserProfile,
-        emptyList()
+        emptyList(),
     )
 }

@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.httpclient
 
 import io.ktor.client.engine.ProxyBuilder
-import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.getPlatformInfo
 
@@ -14,7 +14,10 @@ data class HttpClientSettings(
     val password: String? = null,
 ) {
     companion object {
-        fun from(settings: SensitiveSettings, kmpTorSocksPort: Int?): HttpClientSettings {
+        fun from(
+            settings: SensitiveSettings,
+            kmpTorSocksPort: Int?,
+        ): HttpClientSettings {
             val selectedProxyOption = settings.selectedProxyOption
             var proxyUrl: String?
             val isTorProxy: Boolean
@@ -50,14 +53,13 @@ data class HttpClientSettings(
         }
     }
 
-    private fun normalizeProxyHost(value: String): String {
-        return if (getPlatformInfo().type == PlatformType.IOS && value == "127.0.0.1") {
+    private fun normalizeProxyHost(value: String): String =
+        if (getPlatformInfo().type == PlatformType.IOS && value == "127.0.0.1") {
             // see https://github.com/iCepa/Tor.framework/blob/a02fe7b71737041a231f7412e0c9d4a305cd4524/Tor/Classes/Core/TORController.m#L629-L632
             "localhost"
         } else {
             value
         }
-    }
 
     fun bisqProxyConfig(): BisqProxyConfig? {
         if (!proxyUrl.isNullOrBlank()) {
@@ -65,7 +67,7 @@ data class HttpClientSettings(
             if (address != null) {
                 return BisqProxyConfig(
                     ProxyBuilder.socks(normalizeProxyHost(address.host), address.port),
-                    isTorProxy
+                    isTorProxy,
                 )
             }
         }

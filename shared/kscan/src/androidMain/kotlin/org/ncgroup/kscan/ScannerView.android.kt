@@ -17,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,14 +31,19 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 actual fun ScannerView(
-    modifier: Modifier,
     codeTypes: List<BarcodeFormat>,
+    modifier: Modifier,
     colors: ScannerColors,
     scannerUiOptions: ScannerUiOptions?,
     scannerController: ScannerController?,
     filter: (Barcode) -> Boolean,
     result: (BarcodeResult) -> Unit,
 ) {
+    // Use rememberUpdatedState to always capture the latest result callback without restarting
+    // effects or reinitializing the camera. This prevents stale callback references in the
+    // BarcodeAnalyzer and LaunchedEffects while avoiding expensive camera reinitialization.
+    val currentResult by rememberUpdatedState(result)
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -61,8 +68,8 @@ actual fun ScannerView(
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
 
     var torchEnabled by remember { mutableStateOf(false) }
-    var zoomRatio by remember { mutableStateOf(1f) }
-    var maxZoomRatio by remember { mutableStateOf(1f) }
+    var zoomRatio by remember { mutableFloatStateOf(1f) }
+    var maxZoomRatio by remember { mutableFloatStateOf(1f) }
 
     LaunchedEffect(camera) {
         camera?.cameraInfo?.torchState?.observe(lifecycleOwner) {
@@ -92,7 +99,7 @@ actual fun ScannerView(
         when {
             initializationError != null -> {
                 LaunchedEffect(initializationError) {
-                    result(BarcodeResult.OnFailed(Exception(initializationError)))
+                    currentResult(BarcodeResult.OnFailed(Exception(initializationError)))
                 }
             }
 
@@ -103,25 +110,26 @@ actual fun ScannerView(
                         val previewView = PreviewView(ctx)
                         val preview = Preview.Builder().build()
                         val selector =
-                            CameraSelector.Builder()
+                            CameraSelector
+                                .Builder()
                                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                                 .build()
 
                         preview.surfaceProvider = previewView.surfaceProvider
 
                         val imageAnalysis =
-                            ImageAnalysis.Builder()
+                            ImageAnalysis
+                                .Builder()
                                 .setResolutionSelector(
-                                    ResolutionSelector.Builder()
+                                    ResolutionSelector
+                                        .Builder()
                                         .setResolutionStrategy(
                                             ResolutionStrategy(
                                                 Size(1280, 720),
-                                                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
-                                            )
-                                        )
-                                        .build()
-                                )
-                                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER,
+                                            ),
+                                        ).build(),
+                                ).setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                 .build()
 
                         imageAnalysis.setAnalyzer(
@@ -130,12 +138,12 @@ actual fun ScannerView(
                                 camera = camera,
                                 codeTypes = codeTypes,
                                 onSuccess = { scannedBarcodes ->
-                                    result(BarcodeResult.OnSuccess(scannedBarcodes.first()))
+                                    currentResult(BarcodeResult.OnSuccess(scannedBarcodes.first()))
                                     cameraProvider?.unbind(imageAnalysis)
                                 },
-                                onFailed = { result(BarcodeResult.OnFailed(Exception(it))) },
-                                onCanceled = { result(BarcodeResult.OnCanceled) },
-                                filter = filter
+                                onFailed = { currentResult(BarcodeResult.OnFailed(Exception(it))) },
+                                onCanceled = { currentResult(BarcodeResult.OnCanceled) },
+                                filter = filter,
                             ),
                         )
 
@@ -162,9 +170,9 @@ actual fun ScannerView(
 
         if (scannerUiOptions != null) {
             ScannerUI(
-                onCancel = { result(BarcodeResult.OnCanceled) },
+                onCancel = { currentResult(BarcodeResult.OnCanceled) },
                 torchEnabled = torchEnabled,
-                onTorchEnabled = { cameraControl?.enableTorch(it) },
+                onTorchEnable = { cameraControl?.enableTorch(it) },
                 zoomRatio = zoomRatio,
                 zoomRatioOnChange = { ratio -> cameraControl?.setZoomRatio(ratio) },
                 maxZoomRatio = maxZoomRatio,
@@ -191,19 +199,19 @@ internal fun bindCamera(
     imageAnalysis: ImageAnalysis,
     result: (BarcodeResult) -> Unit,
     cameraControl: (CameraControl?) -> Unit,
-): Camera? {
-    return runCatching {
+): Camera? =
+    runCatching {
         cameraProviderFuture?.unbindAll()
-        cameraProviderFuture?.bindToLifecycle(
-            lifecycleOwner,
-            selector,
-            preview,
-            imageAnalysis,
-        ).also {
-            cameraControl(it?.cameraControl)
-        }
+        cameraProviderFuture
+            ?.bindToLifecycle(
+                lifecycleOwner,
+                selector,
+                preview,
+                imageAnalysis,
+            ).also {
+                cameraControl(it?.cameraControl)
+            }
     }.getOrElse {
         result(BarcodeResult.OnFailed(Exception(it)))
         null
     }
-}

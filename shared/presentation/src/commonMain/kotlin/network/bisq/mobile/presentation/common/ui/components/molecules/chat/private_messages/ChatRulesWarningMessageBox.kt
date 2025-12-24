@@ -28,27 +28,28 @@ fun ChatRulesWarningMessageBox(
     onDontShowAgainChatRulesWarningBox: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .background(BisqTheme.colors.dark_grey30)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
+        modifier =
+            Modifier
+                .background(BisqTheme.colors.dark_grey30)
+                .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
     ) {
         Column(
             modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                WarningIconLightGrey(modifier= Modifier.size(20.dp))
-                BisqText.h6Regular(
+                WarningIconLightGrey(modifier = Modifier.size(20.dp))
+                BisqText.H6Regular(
                     "chat.private.chatRulesWarningMessage.headline".i18n(),
-                    color = BisqTheme.colors.mid_grey20
+                    color = BisqTheme.colors.mid_grey20,
                 )
             }
-            BisqText.baseLightGrey("chat.private.chatRulesWarningMessage.text".i18n())
+            BisqText.BaseLightGrey("chat.private.chatRulesWarningMessage.text".i18n())
 
             LinkButton(
                 text = "action.learnMore".i18n(),

@@ -32,51 +32,56 @@ fun ReactionDisplay(
     message: BisqEasyOpenTradeMessageModel,
     onAddReaction: (ReactionEnum) -> Unit,
     onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val reactions by message.chatReactions.collectAsState()
-    val groupedReactions = remember(reactions) {
-        reactions.groupBy { it.reactionId }.entries.sortedBy { it.key }.toList()
-    }
+    val groupedReactions =
+        remember(reactions) {
+            reactions
+                .groupBy { it.reactionId }
+                .entries
+                .sortedBy { it.key }
+                .toList()
+        }
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
+        modifier = modifier,
     ) {
         items(groupedReactions, key = { it.key }) { (reactionId, group) ->
             val firstReaction = group.first()
             val myReaction = group.firstOrNull { message.isMyChatReaction(it) }
             val count = group.size
             Box(
-                modifier = Modifier.clickable {
-                    if (myReaction != null) {
-                        onRemoveReaction(myReaction)
-                    } else {
-                        onAddReaction(ReactionEnum.entries[reactionId])
-                    }
-                },
+                modifier =
+                    Modifier.clickable {
+                        if (myReaction != null) {
+                            onRemoveReaction(myReaction)
+                        } else {
+                            onAddReaction(ReactionEnum.entries[reactionId])
+                        }
+                    },
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .background(
-                            BisqTheme.colors.dark_grey30,
-                            shape = RoundedCornerShape(BisqUIConstants.ScreenPadding2X),
-                        )
-                        .border(
-                            1.dp,
-                            BisqTheme.colors.mid_grey10,
-                            RoundedCornerShape(BisqUIConstants.ScreenPadding2X)
-                        )
-                        .padding(all = BisqUIConstants.ScreenPaddingHalfQuarter)
+                    modifier =
+                        Modifier
+                            .background(
+                                BisqTheme.colors.dark_grey30,
+                                shape = RoundedCornerShape(BisqUIConstants.ScreenPadding2X),
+                            ).border(
+                                1.dp,
+                                BisqTheme.colors.mid_grey10,
+                                RoundedCornerShape(BisqUIConstants.ScreenPadding2X),
+                            ).padding(all = BisqUIConstants.ScreenPaddingHalfQuarter),
                 ) {
                     DynamicImage(
                         firstReaction.imagePath(),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                     if (count > 1) {
-                        BisqText.baseLight(
+                        BisqText.BaseLight(
                             text = count.toString(),
                             modifier = Modifier.offset(x = 2.dp),
                         )

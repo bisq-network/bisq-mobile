@@ -8,8 +8,8 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
+import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class State4Presenter(
     mainPresenter: MainPresenter,
@@ -20,7 +20,6 @@ abstract class State4Presenter(
 
     private val _showCloseTradeDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showCloseTradeDialog: StateFlow<Boolean> get() = _showCloseTradeDialog.asStateFlow()
-
 
     override fun onViewUnattaching() {
         _showCloseTradeDialog.value = false
@@ -37,18 +36,20 @@ abstract class State4Presenter(
 
     fun onConfirmCloseTrade() {
         presenterScope.launch {
-            val tradeId = selectedTrade.value?.tradeId ?: run {
-                _showCloseTradeDialog.value = false
-                GenericErrorHandler.handleGenericError("No trade selected for closure")
-                return@launch
-            }
+            val tradeId =
+                selectedTrade.value?.tradeId ?: run {
+                    _showCloseTradeDialog.value = false
+                    GenericErrorHandler.handleGenericError("No trade selected for closure")
+                    return@launch
+                }
             showLoading()
             val result = tradesServiceFacade.closeTrade()
 
             when {
                 result.isFailure -> {
                     _showCloseTradeDialog.value = false
-                    result.exceptionOrNull()
+                    result
+                        .exceptionOrNull()
                         ?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
                         ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
                 }

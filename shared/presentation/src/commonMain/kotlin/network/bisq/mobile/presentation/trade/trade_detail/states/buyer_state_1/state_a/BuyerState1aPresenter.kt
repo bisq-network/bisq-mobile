@@ -7,16 +7,15 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
-import network.bisq.mobile.presentation.common.ui.utils.BitcoinLightningNormalization
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.BitcoinLightningNormalization
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class BuyerState1aPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     private var _headline = MutableStateFlow("")
     val headline: StateFlow<String> get() = _headline.asStateFlow()
 
@@ -44,7 +43,6 @@ class BuyerState1aPresenter(
     private val _triggerBitcoinLnAddressValidation = MutableStateFlow(0)
     val triggerBitcoinLnAddressValidation = _triggerBitcoinLnAddressValidation.asStateFlow()
 
-
     fun setShowInvalidAddressDialog(value: Boolean) {
         _showInvalidAddressDialog.value = value
     }
@@ -59,14 +57,18 @@ class BuyerState1aPresenter(
             "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.headline.$paymentMethod".i18n()
         _description.value =
             "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.description.$paymentMethod".i18n()
-        _bitcoinAddressFieldType.value = if (openTradeItemModel.bitcoinSettlementMethod == "LN")
-            BitcoinLnAddressFieldType.Lightning
-        else
-            BitcoinLnAddressFieldType.Bitcoin
+        _bitcoinAddressFieldType.value =
+            if (openTradeItemModel.bitcoinSettlementMethod == "LN") {
+                BitcoinLnAddressFieldType.Lightning
+            } else {
+                BitcoinLnAddressFieldType.Bitcoin
+            }
     }
 
-
-    fun onBitcoinPaymentDataInput(value: String, isValid: Boolean) {
+    fun onBitcoinPaymentDataInput(
+        value: String,
+        isValid: Boolean,
+    ) {
         _bitcoinPaymentData.value = value.trim()
         _bitcoinPaymentDataValid.value = isValid
     }

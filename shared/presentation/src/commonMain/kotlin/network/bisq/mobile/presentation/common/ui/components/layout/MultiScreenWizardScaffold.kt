@@ -19,11 +19,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -66,14 +66,15 @@ fun MultiScreenWizardScaffold(
     extraActions: @Composable (RowScope.() -> Unit)? = null,
     closeAction: Boolean = false,
     onConfirmedClose: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-
     val confirmClose = rememberConfirmCloseState()
     val extraActionsFinal: (@Composable RowScope.() -> Unit)? =
         extraActions ?: if (closeAction) {
             { ConfirmCloseAction(confirmClose) }
-        } else null
+        } else {
+            null
+        }
 
     val scaffold: @Composable (
         topBar: @Composable (() -> Unit)?,
@@ -83,31 +84,35 @@ fun MultiScreenWizardScaffold(
         snackbarHostState: SnackbarHostState?,
         jumpToBottom: Boolean,
         shouldBlurBg: Boolean,
-        content: @Composable ColumnScope.() -> Unit
+        content: @Composable ColumnScope.() -> Unit,
     ) -> Unit =
-        if (useStaticScaffold) { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
-            BisqStaticScaffold(
-                topBar = topBar,
-                bottomBar = bottomBar,
-                horizontalAlignment = hAlignment,
-                verticalArrangement = verticalArrangement,
-                snackbarHostState = snackState,
-                isInteractive = isInteractive && !confirmClose.visible,
-                shouldBlurBg = _shouldBlurBg || confirmClose.visible,
-                content = innerContent
-            )
-        } else { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
-            BisqScrollScaffold(
-                topBar = topBar,
-                bottomBar = bottomBar,
-                horizontalAlignment = hAlignment,
-                verticalArrangement = verticalArrangement,
-                snackbarHostState = snackState,
-                isInteractive = isInteractive && !confirmClose.visible,
-                showJumpToBottom = _showJumpToBottom,
-                shouldBlurBg = _shouldBlurBg || confirmClose.visible,
-                content = innerContent
-            )
+        if (useStaticScaffold) {
+            { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
+                BisqStaticScaffold(
+                    topBar = topBar,
+                    bottomBar = bottomBar,
+                    horizontalAlignment = hAlignment,
+                    verticalArrangement = verticalArrangement,
+                    snackbarHostState = snackState,
+                    isInteractive = isInteractive && !confirmClose.visible,
+                    shouldBlurBg = _shouldBlurBg || confirmClose.visible,
+                    content = innerContent,
+                )
+            }
+        } else {
+            { topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
+                BisqScrollScaffold(
+                    topBar = topBar,
+                    bottomBar = bottomBar,
+                    horizontalAlignment = hAlignment,
+                    verticalArrangement = verticalArrangement,
+                    snackbarHostState = snackState,
+                    isInteractive = isInteractive && !confirmClose.visible,
+                    showJumpToBottom = _showJumpToBottom,
+                    shouldBlurBg = _shouldBlurBg || confirmClose.visible,
+                    content = innerContent,
+                )
+            }
         }
 
     scaffold(
@@ -128,15 +133,16 @@ fun MultiScreenWizardScaffold(
             if (showNextPrevButtons) {
                 BottomAppBar(
                     containerColor = BisqTheme.colors.backgroundColor,
-                    contentPadding = PaddingValues(
-                        horizontal = BisqUIConstants.ScreenPadding2X,
-                        vertical = 0.dp
-                    ),
-                    windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp)
+                    contentPadding =
+                        PaddingValues(
+                            horizontal = BisqUIConstants.ScreenPadding2X,
+                            vertical = 0.dp,
+                        ),
+                    windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         // Lock controls when global interactivity is off or confirm dialog is open.
                         val controlsLocked = !isInteractive || confirmClose.visible
@@ -172,12 +178,13 @@ fun MultiScreenWizardScaffold(
                                     prevOnClick()
                                 }
                             },
-                            padding = PaddingValues(
-                                horizontal = BisqUIConstants.ScreenPaddingHalf,
-                                vertical = BisqUIConstants.ScreenPaddingHalf
-                            ),
+                            padding =
+                                PaddingValues(
+                                    horizontal = BisqUIConstants.ScreenPaddingHalf,
+                                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                                ),
                             disabled = prevOnClick == null || prevDisabled || controlsLocked,
-                            modifier = Modifier.weight(1.0F).fillMaxHeight()
+                            modifier = Modifier.weight(1.0F).fillMaxHeight(),
                         )
                         BisqGap.H1()
                         BisqButton(
@@ -188,12 +195,13 @@ fun MultiScreenWizardScaffold(
                                     nextOnClick()
                                 }
                             },
-                            padding = PaddingValues(
-                                horizontal = BisqUIConstants.ScreenPaddingHalf,
-                                vertical = BisqUIConstants.ScreenPaddingHalf
-                            ),
+                            padding =
+                                PaddingValues(
+                                    horizontal = BisqUIConstants.ScreenPaddingHalf,
+                                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                                ),
                             disabled = nextOnClick == null || nextDisabled || controlsLocked,
-                            modifier = Modifier.weight(1.0F).fillMaxHeight()
+                            modifier = Modifier.weight(1.0F).fillMaxHeight(),
                         )
                     }
                 }
@@ -205,7 +213,6 @@ fun MultiScreenWizardScaffold(
         showJumpToBottom,
         shouldBlurBg,
     ) {
-
         // TODO: Should pass these values to the column deep inside BisqScrollLayout
         // as BissScrollScaffold's params, rather than creating a column here?
 
@@ -216,16 +223,10 @@ fun MultiScreenWizardScaffold(
         ) {
             content()
         }
-
     }
 
     ConfirmCloseOverlay(
         state = confirmClose,
-        onConfirmedClose = { onConfirmedClose?.invoke() }
+        onConfirmedClose = { onConfirmedClose?.invoke() },
     )
 }
-
-
-
-
-

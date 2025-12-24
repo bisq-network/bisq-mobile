@@ -7,10 +7,12 @@ import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
-import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.mapping.Mappings
+import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
-class NodeReputationServiceFacade(private val applicationService: AndroidApplicationService.Provider) : ServiceFacade(),
+class NodeReputationServiceFacade(
+    private val applicationService: AndroidApplicationService.Provider,
+) : ServiceFacade(),
     ReputationServiceFacade {
     private val reputationService: ReputationService by lazy { applicationService.reputationService.get() }
 
@@ -26,8 +28,8 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     }
 
     // API
-    override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> =
+        withContext(Dispatchers.Default) {
             try {
                 val score: ReputationScore = reputationService.getReputationScore(userProfileId)
                 val scoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(score)
@@ -37,10 +39,9 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun getProfileAge(userProfileId: String): Result<Long?> =
+        withContext(Dispatchers.Default) {
             try {
                 val userService = applicationService.userService.get()
                 val userProfile = userService.userProfileService.findUserProfile(userProfileId)
@@ -63,5 +64,4 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
                 Result.failure(e)
             }
         }
-    }
 }

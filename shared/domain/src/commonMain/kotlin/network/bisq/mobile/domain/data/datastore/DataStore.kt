@@ -19,20 +19,21 @@ fun <T> createDataStore(
     serializer: OkioSerializer<T>,
     corruptionHandler: ReplaceFileCorruptionHandler<T>,
     migrations: List<DataMigration<T>> = emptyList(),
-): DataStore<T> {
-    return DataStoreFactory.create(
-        storage = OkioStorage(
-            fileSystem = FileSystem.SYSTEM,
-            producePath = { baseDirPath.toPath().resolve("${name}$FILE_EXTENSION") },
-            serializer = serializer,
-        ),
+): DataStore<T> =
+    DataStoreFactory.create(
+        storage =
+            OkioStorage(
+                fileSystem = FileSystem.SYSTEM,
+                producePath = { baseDirPath.toPath().resolve("${name}$FILE_EXTENSION") },
+                serializer = serializer,
+            ),
         corruptionHandler = corruptionHandler,
         migrations = migrations,
     )
-}
 
-val dataStoreJson = Json {
-    ignoreUnknownKeys = true
-    encodeDefaults = true
-    explicitNulls = false
-}
+val dataStoreJson =
+    Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        explicitNulls = false
+    }

@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserDefinedFiatAccountVO(
     val accountName: String,
-    val accountPayload: UserDefinedFiatAccountPayloadVO
+    val accountPayload: UserDefinedFiatAccountPayloadVO,
 )
-//data class UserDefinedFiatAccountVO(
+// data class UserDefinedFiatAccountVO(
 //    override val accountName: String,
 //    override val paymentMethod: FiatPaymentMethodVO,
 //    override val accountPayload: UserDefinedFiatAccountPayloadVO
-//) : AccountVO<UserDefinedFiatAccountPayloadVO, FiatPaymentMethodVO>(accountName, paymentMethod, accountPayload)
+// ) : AccountVO<UserDefinedFiatAccountPayloadVO, FiatPaymentMethodVO>(accountName, paymentMethod, accountPayload)

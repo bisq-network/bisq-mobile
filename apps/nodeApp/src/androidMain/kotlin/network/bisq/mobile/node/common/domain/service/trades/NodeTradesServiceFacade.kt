@@ -42,9 +42,9 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.TradeItemPresentationDtoFactory
+import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.seconds
@@ -74,9 +74,9 @@ import kotlin.time.Duration.Companion.seconds
  * - Maintains backward compatibility with existing trade flow
  */
 class NodeTradesServiceFacade(
-    applicationService: AndroidApplicationService.Provider
-) : ServiceFacade(), TradesServiceFacade {
-
+    applicationService: AndroidApplicationService.Provider,
+) : ServiceFacade(),
+    TradesServiceFacade {
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
     private val bisqEasyOfferbookChannelService: BisqEasyOfferbookChannelService by lazy {
@@ -110,41 +110,47 @@ class NodeTradesServiceFacade(
     override suspend fun activate() {
         super<ServiceFacade>.activate()
 
-        tradesPin = bisqEasyTradeService.trades.addObserver(object : CollectionObserver<BisqEasyTrade?> {
-            override fun add(trade: BisqEasyTrade?) {
-                if (trade != null) {
-                    handleTradeAdded(trade)
-                }
-            }
+        tradesPin =
+            bisqEasyTradeService.trades.addObserver(
+                object : CollectionObserver<BisqEasyTrade?> {
+                    override fun add(trade: BisqEasyTrade?) {
+                        if (trade != null) {
+                            handleTradeAdded(trade)
+                        }
+                    }
 
-            override fun remove(element: Any) {
-                if (element is BisqEasyTrade) {
-                    handleTradeRemoved(element)
-                }
-            }
+                    override fun remove(element: Any) {
+                        if (element is BisqEasyTrade) {
+                            handleTradeRemoved(element)
+                        }
+                    }
 
-            override fun clear() {
-                handleTradesCleared()
-            }
-        })
+                    override fun clear() {
+                        handleTradesCleared()
+                    }
+                },
+            )
 
-        channelsPin = bisqEasyOpenTradeChannelService.channels.addObserver(object : CollectionObserver<BisqEasyOpenTradeChannel?> {
-            override fun add(channel: BisqEasyOpenTradeChannel?) {
-                if (channel != null) {
-                    handleChannelAdded(channel)
-                }
-            }
+        channelsPin =
+            bisqEasyOpenTradeChannelService.channels.addObserver(
+                object : CollectionObserver<BisqEasyOpenTradeChannel?> {
+                    override fun add(channel: BisqEasyOpenTradeChannel?) {
+                        if (channel != null) {
+                            handleChannelAdded(channel)
+                        }
+                    }
 
-            override fun remove(element: Any) {
-                if (element is BisqEasyOpenTradeChannel) {
-                    handleChannelRemoved(element)
-                }
-            }
+                    override fun remove(element: Any) {
+                        if (element is BisqEasyOpenTradeChannel) {
+                            handleChannelRemoved(element)
+                        }
+                    }
 
-            override fun clear() {
-                handleChannelsCleared()
-            }
-        })
+                    override fun clear() {
+                        handleChannelsCleared()
+                    }
+                },
+            )
     }
 
     override suspend fun deactivate() {
@@ -167,20 +173,21 @@ class NodeTradesServiceFacade(
         bitcoinPaymentMethod: String,
         fiatPaymentMethod: String,
         takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
-        takeOfferErrorMessage: MutableStateFlow<String?>
+        takeOfferErrorMessage: MutableStateFlow<String?>,
     ): Result<String> {
         try {
-            val tradeId = withContext(Dispatchers.Default) {
-                doTakeOffer(
-                    Mappings.BisqEasyOfferMapping.toBisq2Model(bisqEasyOffer),
-                    Mappings.MonetaryMapping.toBisq2Model(takersBaseSideAmount),
-                    Mappings.MonetaryMapping.toBisq2Model(takersQuoteSideAmount),
-                    BitcoinPaymentMethodSpec(PaymentMethodSpecUtil.getBitcoinPaymentMethod(bitcoinPaymentMethod)),
-                    FiatPaymentMethodSpec(PaymentMethodSpecUtil.getFiatPaymentMethod(fiatPaymentMethod)),
-                    takeOfferStatus,
-                    takeOfferErrorMessage
-                )
-            }
+            val tradeId =
+                withContext(Dispatchers.Default) {
+                    doTakeOffer(
+                        Mappings.BisqEasyOfferMapping.toBisq2Model(bisqEasyOffer),
+                        Mappings.MonetaryMapping.toBisq2Model(takersBaseSideAmount),
+                        Mappings.MonetaryMapping.toBisq2Model(takersQuoteSideAmount),
+                        BitcoinPaymentMethodSpec(PaymentMethodSpecUtil.getBitcoinPaymentMethod(bitcoinPaymentMethod)),
+                        FiatPaymentMethodSpec(PaymentMethodSpecUtil.getFiatPaymentMethod(fiatPaymentMethod)),
+                        takeOfferStatus,
+                        takeOfferErrorMessage,
+                    )
+                }
             return Result.success(tradeId)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -188,12 +195,13 @@ class NodeTradesServiceFacade(
     }
 
     override fun selectOpenTrade(tradeId: String) {
-        _selectedTrade.value = openTradeItems.value
-            .firstOrNull { it.tradeId == tradeId }
+        _selectedTrade.value =
+            openTradeItems.value
+                .firstOrNull { it.tradeId == tradeId }
     }
 
-    override suspend fun rejectTrade(): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun rejectTrade(): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String =
@@ -205,10 +213,9 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun cancelTrade(): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun cancelTrade(): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
@@ -219,10 +226,9 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun closeTrade(): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun closeTrade(): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 bisqEasyTradeService.removeTrade(trade)
@@ -233,17 +239,17 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                val encoded = Res.encode(
-                    "bisqEasy.tradeState.info.seller.phase1.tradeLogMessage",
-                    channel.myUserIdentity.userName,
-                    paymentAccountData
-                )
+                val encoded =
+                    Res.encode(
+                        "bisqEasy.tradeState.info.seller.phase1.tradeLogMessage",
+                        channel.myUserIdentity.userName,
+                        paymentAccountData,
+                    )
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 bisqEasyTradeService.sellerSendsPaymentAccount(trade, paymentAccountData)
                 Result.success(Unit)
@@ -251,19 +257,19 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val paymentRailName = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail.name
                 val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentRailName"
-                val encoded = Res.encode(
-                    key,
-                    userName,
-                    bitcoinPaymentData
-                )
+                val encoded =
+                    Res.encode(
+                        key,
+                        userName,
+                        bitcoinPaymentData,
+                    )
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, bitcoinPaymentData)
                 Result.success(Unit)
@@ -271,18 +277,18 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun sellerConfirmFiatReceipt(): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val selectedTradeSnapshot = selectedTrade.value
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                val encoded = Res.encode(
-                    "bisqEasy.tradeState.info.seller.phase2b.tradeLogMessage",
-                    userName,
-                    selectedTradeSnapshot!!.formattedQuoteAmount
-                )
+                val encoded =
+                    Res.encode(
+                        "bisqEasy.tradeState.info.seller.phase2b.tradeLogMessage",
+                        userName,
+                        selectedTradeSnapshot!!.formattedQuoteAmount,
+                    )
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
                 Result.success(Unit)
@@ -290,18 +296,18 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun buyerConfirmFiatSent(): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun buyerConfirmFiatSent(): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val selectedTradeSnapshot = selectedTrade.value
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                val encoded = Res.encode(
-                    "bisqEasy.tradeState.info.buyer.phase2a.tradeLogMessage",
-                    userName,
-                    selectedTradeSnapshot!!.quoteCurrencyCode
-                )
+                val encoded =
+                    Res.encode(
+                        "bisqEasy.tradeState.info.buyer.phase2a.tradeLogMessage",
+                        userName,
+                        selectedTradeSnapshot!!.quoteCurrencyCode,
+                    )
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 bisqEasyTradeService.buyerConfirmFiatSent(trade)
                 Result.success(Unit)
@@ -309,29 +315,29 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String
                 val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
                 val paymentRailName = paymentMethod.paymentRail.name
                 val proofType = Res.get("bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.paymentProof.$paymentRailName")
-                encoded = if (paymentProof == null) {
-                    Res.encode(
-                        "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.noProofProvided",
-                        userName
-                    )
-                } else {
-                    Res.encode(
-                        "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage",
-                        userName,
-                        proofType,
-                        paymentProof
-                    )
-                }
+                encoded =
+                    if (paymentProof == null) {
+                        Res.encode(
+                            "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.noProofProvided",
+                            userName,
+                        )
+                    } else {
+                        Res.encode(
+                            "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage",
+                            userName,
+                            proofType,
+                            paymentProof,
+                        )
+                    }
 
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 bisqEasyTradeService.sellerConfirmBtcSent(trade, Optional.ofNullable(paymentProof))
@@ -340,18 +346,18 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
-    override suspend fun btcConfirmed(): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+    override suspend fun btcConfirmed(): Result<Unit> =
+        withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val paymentRail = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail
                 if (paymentRail == BitcoinPaymentRail.LN && trade.isBuyer) {
-                    val encoded = Res.encode(
-                        "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
-                        userName
-                    )
+                    val encoded =
+                        Res.encode(
+                            "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
+                            userName,
+                        )
                     bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 }
                 bisqEasyTradeService.btcConfirmed(trade)
@@ -360,10 +366,9 @@ class NodeTradesServiceFacade(
                 Result.failure(e)
             }
         }
-    }
 
     override suspend fun exportTradeDate(): Result<Unit> {
-        //todo
+        // todo
         return Result.success(Unit)
     }
 
@@ -379,7 +384,7 @@ class NodeTradesServiceFacade(
         bitcoinPaymentMethodSpec: BitcoinPaymentMethodSpec,
         fiatPaymentMethodSpec: FiatPaymentMethodSpec,
         takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
-        takeOfferErrorMessage: MutableStateFlow<String?>
+        takeOfferErrorMessage: MutableStateFlow<String?>,
     ): String {
         var errorMessagePin: Pin? = null
         var peersErrorMessagePin: Pin? = null
@@ -391,40 +396,45 @@ class NodeTradesServiceFacade(
             val mediator = mediationRequestService.selectMediator(bisqEasyOffer.makersUserProfileId, takerIdentity.id, bisqEasyOffer.id)
             val priceSpec = bisqEasyOffer.priceSpec
             val marketPrice: Long = marketPriceService.findMarketPrice(bisqEasyOffer.market).map { it.priceQuote.value }.orElse(0)
-            val bisqEasyProtocol: BisqEasyProtocol = bisqEasyTradeService.createBisqEasyProtocol(
-                takerIdentity.identity,
-                bisqEasyOffer,
-                takersBaseSideAmount,
-                takersQuoteSideAmount,
-                bitcoinPaymentMethodSpec,
-                fiatPaymentMethodSpec,
-                mediator,
-                priceSpec,
-                marketPrice
-            )
+            val bisqEasyProtocol: BisqEasyProtocol =
+                bisqEasyTradeService.createBisqEasyProtocol(
+                    takerIdentity.identity,
+                    bisqEasyOffer,
+                    takersBaseSideAmount,
+                    takersQuoteSideAmount,
+                    bitcoinPaymentMethodSpec,
+                    fiatPaymentMethodSpec,
+                    mediator,
+                    priceSpec,
+                    marketPrice,
+                )
             val bisqEasyTrade: BisqEasyTrade = bisqEasyProtocol.model
             log.i { "Selected mediator for trade ${bisqEasyTrade.shortId}: ${mediator.map(UserProfile::getUserName).orElse("N/A")}" }
 
             val tradeId = bisqEasyTrade.id
 
-            errorMessagePin = bisqEasyTrade.errorMessageObservable().addObserver { message: String? ->
-                if (message != null) {
-                    takeOfferErrorMessage.value = Res.get(
-                        "bisqEasy.openTrades.failed.popup",
-                        message,
-                        bisqEasyTrade.errorStackTrace.take(500)
-                    )
+            errorMessagePin =
+                bisqEasyTrade.errorMessageObservable().addObserver { message: String? ->
+                    if (message != null) {
+                        takeOfferErrorMessage.value =
+                            Res.get(
+                                "bisqEasy.openTrades.failed.popup",
+                                message,
+                                bisqEasyTrade.errorStackTrace.take(500),
+                            )
+                    }
                 }
-            }
-            peersErrorMessagePin = bisqEasyTrade.peersErrorMessageObservable().addObserver { peersErrorMessage: String? ->
-                if (peersErrorMessage != null) {
-                    takeOfferErrorMessage.value = Res.get(
-                        "bisqEasy.openTrades.failedAtPeer.popup",
-                        peersErrorMessage,
-                        bisqEasyTrade.peersErrorStackTrace.take(500)
-                    )
+            peersErrorMessagePin =
+                bisqEasyTrade.peersErrorMessageObservable().addObserver { peersErrorMessage: String? ->
+                    if (peersErrorMessage != null) {
+                        takeOfferErrorMessage.value =
+                            Res.get(
+                                "bisqEasy.openTrades.failedAtPeer.popup",
+                                peersErrorMessage,
+                                bisqEasyTrade.peersErrorStackTrace.take(500),
+                            )
+                    }
                 }
-            }
 
             bisqEasyTradeService.takeOffer(bisqEasyTrade)
             takeOfferStatus.value = TakeOfferStatus.SENT
@@ -432,23 +442,27 @@ class NodeTradesServiceFacade(
 
             // We have 120 seconds socket timeout, so we should never get triggered here, as the message will be sent as mailbox message
             withTimeout(150.seconds) {
-                this@NodeTradesServiceFacade.bisqEasyOpenTradeChannelService.sendTakeOfferMessage(tradeId, bisqEasyOffer, contract.mediator)
+                this@NodeTradesServiceFacade
+                    .bisqEasyOpenTradeChannelService
+                    .sendTakeOfferMessage(tradeId, bisqEasyOffer, contract.mediator)
                     .thenAccept { result ->
                         // In case the user has switched to another market we want to select that market in the offer book
                         val chatChannelSelectionService: ChatChannelSelectionService =
                             chatService.getChatChannelSelectionService(ChatChannelDomain.BISQ_EASY_OFFERBOOK)
-                        bisqEasyOfferbookChannelService.findChannel(contract.offer.market)
+                        bisqEasyOfferbookChannelService
+                            .findChannel(contract.offer.market)
                             .ifPresent { chatChannel: BisqEasyOfferbookChannel? -> chatChannelSelectionService.selectChannel(chatChannel) }
                         takeOfferStatus.value = TakeOfferStatus.SUCCESS
-                        this@NodeTradesServiceFacade.bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId)
+                        this@NodeTradesServiceFacade
+                            .bisqEasyOpenTradeChannelService
+                            .findChannelByTradeId(tradeId)
                             .ifPresent { channel ->
                                 val taker = userIdentityService.selectedUserIdentity.userProfile.userName
                                 val maker: String = channel.peer.userName
                                 val encoded = Res.encode("bisqEasy.takeOffer.tradeLogMessage", taker, maker)
                                 this@NodeTradesServiceFacade.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                             }
-                    }
-                    .await()
+                    }.await()
             }
             return tradeId
         } catch (e: Exception) {
@@ -480,12 +494,12 @@ class NodeTradesServiceFacade(
             if (!findListItem(trade).isPresent) {
                 log.w {
                     "Trade with id $tradeId was removed but associated channel and listItem is not found. " +
-                            "We ignore that call."
+                        "We ignore that call."
                 }
             } else {
                 log.w {
                     "Trade with id $tradeId was removed but associated channel is not found but a listItem with that trade is still present." +
-                            "We call handleTradeAndChannelRemoved."
+                        "We call handleTradeAndChannelRemoved."
                 }
                 handleTradeAndChannelRemoved(trade)
             }
@@ -517,12 +531,12 @@ class NodeTradesServiceFacade(
             if (!trade.isPresent) {
                 log.d {
                     "Channel with tradeId $tradeId was removed but associated trade and the listItem is not found. " +
-                            "This is expected as we first remove the trade and then the channel."
+                        "This is expected as we first remove the trade and then the channel."
                 }
             } else {
                 log.w {
                     "Channel with tradeId $tradeId was removed but associated trade is not found but we still have the listItem with that trade. " +
-                            "We call handleTradeAndChannelRemoved."
+                        "We call handleTradeAndChannelRemoved."
                 }
                 handleTradeAndChannelRemoved(trade.get())
             }
@@ -534,11 +548,14 @@ class NodeTradesServiceFacade(
     }
 
     // TradeAndChannel
-    private fun handleTradeAndChannelAdded(trade: BisqEasyTrade, channel: BisqEasyOpenTradeChannel) {
+    private fun handleTradeAndChannelAdded(
+        trade: BisqEasyTrade,
+        channel: BisqEasyOpenTradeChannel,
+    ) {
         if (findListItem(trade).isPresent) {
             log.d {
                 "We got called handleTradeAndChannelAdded but we have that trade list item already. " +
-                        "This is expected as we get called both when a trade is added and the associated channel."
+                    "This is expected as we get called both when a trade is added and the associated channel."
             }
             return
         }
@@ -552,57 +569,67 @@ class NodeTradesServiceFacade(
         val pins = mutableSetOf<Pin>()
         pinsByTradeId[tradeId] = pins
 
-        //openTradeItems
-        pins += trade.tradeStateObservable().addObserver { tradeState ->
-            openTradeItem.bisqEasyTradeModel.tradeState.value = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(tradeState)
-        }
-        pins += trade.interruptTradeInitiator.addObserver { interruptTradeInitiator ->
-            if (interruptTradeInitiator != null) {
-                openTradeItem.bisqEasyTradeModel.interruptTradeInitiator.value =
-                    Mappings.RoleMapping.fromBisq2Model(interruptTradeInitiator)
+        // openTradeItems
+        pins +=
+            trade.tradeStateObservable().addObserver { tradeState ->
+                openTradeItem.bisqEasyTradeModel.tradeState.value = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(tradeState)
             }
-        }
-        pins += trade.paymentAccountData.addObserver { value ->
-            if (value != null) {
-                openTradeItem.bisqEasyTradeModel.paymentAccountData.value = value
+        pins +=
+            trade.interruptTradeInitiator.addObserver { interruptTradeInitiator ->
+                if (interruptTradeInitiator != null) {
+                    openTradeItem.bisqEasyTradeModel.interruptTradeInitiator.value =
+                        Mappings.RoleMapping.fromBisq2Model(interruptTradeInitiator)
+                }
             }
-        }
-        pins += trade.bitcoinPaymentData.addObserver { value ->
-            if (value != null) {
-                openTradeItem.bisqEasyTradeModel.bitcoinPaymentData.value = value
+        pins +=
+            trade.paymentAccountData.addObserver { value ->
+                if (value != null) {
+                    openTradeItem.bisqEasyTradeModel.paymentAccountData.value = value
+                }
             }
-        }
-        pins += trade.paymentProof.addObserver { value ->
-            if (value != null) {
-                openTradeItem.bisqEasyTradeModel.paymentProof.value = value
+        pins +=
+            trade.bitcoinPaymentData.addObserver { value ->
+                if (value != null) {
+                    openTradeItem.bisqEasyTradeModel.bitcoinPaymentData.value = value
+                }
             }
-        }
-        pins += trade.errorMessageObservable().addObserver { value ->
-            if (value != null) {
-                openTradeItem.bisqEasyTradeModel.errorMessage.value = value
+        pins +=
+            trade.paymentProof.addObserver { value ->
+                if (value != null) {
+                    openTradeItem.bisqEasyTradeModel.paymentProof.value = value
+                }
             }
-        }
-        pins += trade.errorStackTraceObservable().addObserver { value ->
-            if (value != null) {
-                openTradeItem.bisqEasyTradeModel.errorStackTrace.value = value
+        pins +=
+            trade.errorMessageObservable().addObserver { value ->
+                if (value != null) {
+                    openTradeItem.bisqEasyTradeModel.errorMessage.value = value
+                }
             }
-        }
-        pins += trade.peersErrorMessageObservable().addObserver { value ->
-            if (value != null) {
-                openTradeItem.bisqEasyTradeModel.peersErrorMessage.value = value
+        pins +=
+            trade.errorStackTraceObservable().addObserver { value ->
+                if (value != null) {
+                    openTradeItem.bisqEasyTradeModel.errorStackTrace.value = value
+                }
             }
-        }
-        pins += trade.peersErrorStackTraceObservable().addObserver { value ->
-            if (value != null) {
-                openTradeItem.bisqEasyTradeModel.peersErrorStackTrace.value = value
+        pins +=
+            trade.peersErrorMessageObservable().addObserver { value ->
+                if (value != null) {
+                    openTradeItem.bisqEasyTradeModel.peersErrorMessage.value = value
+                }
             }
-        }
+        pins +=
+            trade.peersErrorStackTraceObservable().addObserver { value ->
+                if (value != null) {
+                    openTradeItem.bisqEasyTradeModel.peersErrorStackTrace.value = value
+                }
+            }
 
-        pins += channel.isInMediationObservable().addObserver { isInMediation ->
-            if (isInMediation != null) {
-                openTradeItem.bisqEasyOpenTradeChannelModel.setIsMediator(isInMediation)
+        pins +=
+            channel.isInMediationObservable().addObserver { isInMediation ->
+                if (isInMediation != null) {
+                    openTradeItem.bisqEasyOpenTradeChannelModel.setIsMediator(isInMediation)
+                }
             }
-        }
     }
 
     private fun handleTradeAndChannelRemoved(trade: BisqEasyTrade) {
@@ -625,15 +652,13 @@ class NodeTradesServiceFacade(
     }
 
     // Misc
-    private fun findListItem(trade: BisqEasyTrade): Optional<TradeItemPresentationModel> {
-        return findListItem(trade.id)
-    }
+    private fun findListItem(trade: BisqEasyTrade): Optional<TradeItemPresentationModel> = findListItem(trade.id)
 
-    private fun findListItem(tradeId: String): Optional<TradeItemPresentationModel> {
-        return openTradeItems.value.stream()
+    private fun findListItem(tradeId: String): Optional<TradeItemPresentationModel> =
+        openTradeItems.value
+            .stream()
             .filter { it.bisqEasyTradeModel.id == tradeId }
             .findAny()
-    }
 
     private fun unbindPinByTradeId(tradeId: String) {
         if (pinsByTradeId.containsKey(tradeId)) {

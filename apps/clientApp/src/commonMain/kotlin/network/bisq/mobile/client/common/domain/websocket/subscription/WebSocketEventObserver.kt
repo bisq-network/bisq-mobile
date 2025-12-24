@@ -29,7 +29,7 @@ class WebSocketEventObserver : Logging {
             if (sequenceNumber.value >= value.sequenceNumber) {
                 log.w {
                     "Sequence number is larger or equal than the one we " +
-                            "received from the backend. We ignore that event."
+                        "received from the backend. We ignore that event."
                 }
                 return
             }

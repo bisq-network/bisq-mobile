@@ -14,14 +14,6 @@ import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
-import network.bisq.mobile.presentation.tabs.tab.TabContainerScreen
-import network.bisq.mobile.presentation.offer.create_offer.amount.CreateOfferAmountScreen
-import network.bisq.mobile.presentation.offer.create_offer.direction.CreateOfferDirectionScreen
-import network.bisq.mobile.presentation.offer.create_offer.market.CreateOfferMarketScreen
-import network.bisq.mobile.presentation.offer.create_offer.payment_method.CreateOfferPaymentMethodScreen
-import network.bisq.mobile.presentation.offer.create_offer.price.CreateOfferPriceScreen
-import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewOfferScreen
-import network.bisq.mobile.presentation.offer.create_offer.settlement.CreateOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideOverview
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideProcess
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideSecurity
@@ -30,10 +22,18 @@ import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideDownload
 import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideIntro
 import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideNewWallet
 import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideReceiving
+import network.bisq.mobile.presentation.offer.create_offer.amount.CreateOfferAmountScreen
+import network.bisq.mobile.presentation.offer.create_offer.direction.CreateOfferDirectionScreen
+import network.bisq.mobile.presentation.offer.create_offer.market.CreateOfferMarketScreen
+import network.bisq.mobile.presentation.offer.create_offer.payment_method.CreateOfferPaymentMethodScreen
+import network.bisq.mobile.presentation.offer.create_offer.price.CreateOfferPriceScreen
+import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewOfferScreen
+import network.bisq.mobile.presentation.offer.create_offer.settlement.CreateOfferSettlementMethodScreen
+import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferTradeAmountScreen
+import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodScreen
+import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewTradeScreen
+import network.bisq.mobile.presentation.offer.take_offer.settlement.TakeOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.offerbook.OfferbookScreen
-import network.bisq.mobile.presentation.trade.trade_detail.OpenTradeScreen
-import network.bisq.mobile.presentation.trade.trade_chat.ChatRulesScreen
-import network.bisq.mobile.presentation.trade.trade_chat.TradeChatScreen
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersScreen
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsScreen
 import network.bisq.mobile.presentation.settings.reputation.ReputationScreen
@@ -46,10 +46,10 @@ import network.bisq.mobile.presentation.startup.onboarding.OnboardingScreen
 import network.bisq.mobile.presentation.startup.splash.SplashScreen
 import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementDisplayScreen
 import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementScreen
-import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodScreen
-import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewTradeScreen
-import network.bisq.mobile.presentation.offer.take_offer.settlement.TakeOfferSettlementMethodScreen
-import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferTradeAmountScreen
+import network.bisq.mobile.presentation.tabs.tab.TabContainerScreen
+import network.bisq.mobile.presentation.trade.trade_chat.ChatRulesScreen
+import network.bisq.mobile.presentation.trade.trade_chat.TradeChatScreen
+import network.bisq.mobile.presentation.trade.trade_detail.OpenTradeScreen
 
 const val NAV_ANIM_MS = 300
 
@@ -61,19 +61,21 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     addScreen<NavRoute.CreateProfile> { CreateProfileScreen() }
 
     addScreen<NavRoute.TabContainer>(
-        deepLinks = listOf(
-            navDeepLink<NavRoute.TabContainer>(
-                basePath = getDeepLinkBasePath<NavRoute.TabContainer>()
+        deepLinks =
+            listOf(
+                navDeepLink<NavRoute.TabContainer>(
+                    basePath = getDeepLinkBasePath<NavRoute.TabContainer>(),
+                ),
             ),
-        )
     ) { TabContainerScreen() }
 
     addScreen<NavRoute.OpenTrade>(
-        deepLinks = listOf(
-            navDeepLink<NavRoute.OpenTrade>(
-                basePath = getDeepLinkBasePath<NavRoute.OpenTrade>()
-            )
-        ),
+        deepLinks =
+            listOf(
+                navDeepLink<NavRoute.OpenTrade>(
+                    basePath = getDeepLinkBasePath<NavRoute.OpenTrade>(),
+                ),
+            ),
     ) { backStackEntry ->
         val openTrade: NavRoute.OpenTrade = backStackEntry.toRoute()
         OpenTradeScreen(openTrade.tradeId)
@@ -81,11 +83,12 @@ fun NavGraphBuilder.addCommonAppRoutes() {
 
     addScreen<NavRoute.TradeChat>(
         navAnimation = NavAnimation.FADE_IN,
-        deepLinks = listOf(
-            navDeepLink<NavRoute.TradeChat>(
-                basePath = getDeepLinkBasePath<NavRoute.TradeChat>()
-            )
-        ),
+        deepLinks =
+            listOf(
+                navDeepLink<NavRoute.TradeChat>(
+                    basePath = getDeepLinkBasePath<NavRoute.TradeChat>(),
+                ),
+            ),
     ) { backStackEntry ->
         val tradeChat: NavRoute.TradeChat = backStackEntry.toRoute()
         TradeChatScreen(tradeChat.tradeId)
@@ -141,22 +144,24 @@ inline fun <reified T : NavRoute> NavGraphBuilder.addScreen(
     deepLinks: List<NavDeepLink> = emptyList(),
     wizardTransition: Boolean = false,
     navAnimation: NavAnimation = if (wizardTransition) NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
-    noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
+    noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
 ) {
     composable<T>(
         deepLinks = deepLinks,
         // 'enter' animation for the 'destination' screen
         enterTransition = {
             when (navAnimation) {
-                NavAnimation.SLIDE_IN_FROM_RIGHT -> slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(NAV_ANIM_MS)
-                )
+                NavAnimation.SLIDE_IN_FROM_RIGHT ->
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(NAV_ANIM_MS),
+                    )
 
-                NavAnimation.SLIDE_IN_FROM_BOTTOM -> slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Up,
-                    animationSpec = tween(NAV_ANIM_MS)
-                )
+                NavAnimation.SLIDE_IN_FROM_BOTTOM ->
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Up,
+                        animationSpec = tween(NAV_ANIM_MS),
+                    )
 
                 NavAnimation.FADE_IN -> fadeIn(animationSpec = tween(NAV_ANIM_MS))
             }
@@ -171,19 +176,21 @@ inline fun <reified T : NavRoute> NavGraphBuilder.addScreen(
         },
         popExitTransition = {
             when (navAnimation) {
-                NavAnimation.SLIDE_IN_FROM_RIGHT -> slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(NAV_ANIM_MS)
-                )
+                NavAnimation.SLIDE_IN_FROM_RIGHT ->
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(NAV_ANIM_MS),
+                    )
 
-                NavAnimation.SLIDE_IN_FROM_BOTTOM -> slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Down,
-                    animationSpec = tween(NAV_ANIM_MS)
-                )
+                NavAnimation.SLIDE_IN_FROM_BOTTOM ->
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Down,
+                        animationSpec = tween(NAV_ANIM_MS),
+                    )
 
                 NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(NAV_ANIM_MS))
             }
-        }
+        },
     ) { backStackEntry ->
         content(backStackEntry)
     }

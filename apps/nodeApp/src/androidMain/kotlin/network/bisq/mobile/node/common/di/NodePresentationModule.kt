@@ -14,6 +14,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPre
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
+import network.bisq.mobile.presentation.settings.resources.ResourcesPresenter
 import network.bisq.mobile.presentation.settings.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
 import network.bisq.mobile.presentation.startup.onboarding.IOnboardingPresenter
@@ -24,76 +25,77 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-val androidNodePresentationModule = module {
-    factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
+val androidNodePresentationModule =
+    module {
+        factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    factory<IOnboardingPresenter> {
-        NodeOnboardingPresenter(
-            get(),
-            get(),
-            get()
-        )
-    } bind IOnboardingPresenter::class
+        factory<IOnboardingPresenter> {
+            NodeOnboardingPresenter(
+                get(),
+                get(),
+                get(),
+            )
+        } bind IOnboardingPresenter::class
 
-    single<OfferbookPresenter> {
-        OfferbookPresenter(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
+        single<OfferbookPresenter> {
+            OfferbookPresenter(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+
+        single<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
+
+        factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
+
+        factory<BackupPresenter> { BackupPresenter(get(), get()) }
+
+        single<MainPresenter> {
+            NodeMainPresenter(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        } bind AppPresenter::class
+
+        factory<SplashPresenter> {
+            NodeSplashPresenter(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+
+        factory<DashboardPresenter> {
+            NodeDashboardPresenter(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+
+        single<PlatformSettingsManager> {
+            PlatformSettingsManagerImpl(androidContext())
+        }
     }
-
-    single<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
-
-    factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
-
-    factory<BackupPresenter> { BackupPresenter(get(), get()) }
-
-    single<MainPresenter> {
-        NodeMainPresenter(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    } bind AppPresenter::class
-
-    factory<SplashPresenter> {
-        NodeSplashPresenter(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-
-    factory<DashboardPresenter> {
-        NodeDashboardPresenter(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-        )
-    }
-
-    single<PlatformSettingsManager> {
-        PlatformSettingsManagerImpl(androidContext())
-    }
-}

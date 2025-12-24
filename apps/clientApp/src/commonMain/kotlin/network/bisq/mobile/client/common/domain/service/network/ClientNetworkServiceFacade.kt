@@ -2,13 +2,13 @@ package network.bisq.mobile.client.common.domain.service.network
 
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
-import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
-import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
+import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 
@@ -18,9 +18,9 @@ class ClientNetworkServiceFacade(
     private val webSocketClientService: WebSocketClientService,
     kmpTorService: KmpTorService,
 ) : NetworkServiceFacade(kmpTorService) {
-
     override val numConnections: StateFlow<Int> =
-        webSocketClientService.connectionState.map { if (it is ConnectionState.Connected) 1 else -1 }
+        webSocketClientService.connectionState
+            .map { if (it is ConnectionState.Connected) 1 else -1 }
             .stateIn(
                 serviceScope,
                 SharingStarted.Lazily,
@@ -34,9 +34,7 @@ class ClientNetworkServiceFacade(
             false,
         )
 
-    override suspend fun isTorEnabled(): Boolean {
-        return sensitiveSettingsRepository.fetch().selectedProxyOption == BisqProxyOption.INTERNAL_TOR
-    }
+    override suspend fun isTorEnabled(): Boolean = sensitiveSettingsRepository.fetch().selectedProxyOption == BisqProxyOption.INTERNAL_TOR
 
     override suspend fun activate() {
         super.activate()

@@ -21,7 +21,6 @@ package network.bisq.mobile.domain.service.offers
  * Exception thrown when a mediator is not available for offer creation within the specified timeout period.
  */
 class MediatorNotAvailableException : Exception(MESSAGE) {
-
     companion object {
         private const val MESSAGE = "No mediator found"
     }

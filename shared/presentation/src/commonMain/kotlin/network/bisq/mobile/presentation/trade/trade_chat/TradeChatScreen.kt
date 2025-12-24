@@ -18,10 +18,10 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.chat.Chat
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.chat.ChatMessageList
 import network.bisq.mobile.presentation.common.ui.components.organisms.chat.UndoIgnoreDialog
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.report_user.ReportUserDialog
 import org.koin.compose.koinInject
 
@@ -55,15 +55,15 @@ fun TradeChatScreen(tradeId: String) {
     BisqStaticScaffold(
         topBar = {
             TopBar(
-                title = "mobile.tradeChat.title".i18n(
-                    selectedTrade?.shortTradeId ?: ""
-                )
+                title =
+                    "mobile.tradeChat.title".i18n(
+                        selectedTrade?.shortTradeId ?: "",
+                    ),
             )
         },
         isInteractive = isInteractive,
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
     ) {
-
         if (readCount == -1) {
             // empty placeholder until we know the readCount
             // this helps simplify logic inside the ChatMessageList
@@ -98,8 +98,8 @@ fun TradeChatScreen(tradeId: String) {
         ChatInputField(
             quotedMessage = quotedMessage,
             placeholder = "chat.message.input.prompt".i18n(),
-            onMessageSent = presenter::sendChatMessage,
-            onCloseReply = { presenter.onReply(null) }
+            onMessageSend = presenter::sendChatMessage,
+            onCloseReply = { presenter.onReply(null) },
         )
 
         reportUserTradeMessage?.let { message ->
@@ -108,7 +108,7 @@ fun TradeChatScreen(tradeId: String) {
                     chatMessage = message,
                     reportMessage = reportUserMessage,
                     onReportFailure = presenter::onReportUserError,
-                    onDismiss = presenter::onDismissReportUserDialog
+                    onDismiss = presenter::onDismissReportUserDialog,
                 )
             }
         }
@@ -123,14 +123,14 @@ fun TradeChatScreen(tradeId: String) {
                 dismissButtonText = "action.cancel".i18n(),
                 verticalButtonPlacement = true,
                 onConfirm = { presenter.onConfirmedIgnoreUser(ignoreUserId) },
-                onDismiss = { presenter.onDismissIgnoreUser() }
+                onDismiss = { presenter.onDismissIgnoreUser() },
             )
         }
 
         if (showUndoIgnoreUserWarnBox) {
             UndoIgnoreDialog(
                 onConfirm = { presenter.onConfirmedUndoIgnoreUser(undoIgnoreUserId) },
-                onDismiss = { presenter.onDismissUndoIgnoreUser() }
+                onDismiss = { presenter.onDismissUndoIgnoreUser() },
             )
         }
 
@@ -140,7 +140,7 @@ fun TradeChatScreen(tradeId: String) {
                 message = "mobile.openTrades.tradeNotFoundDialog.text".i18n(),
                 confirmButtonText = "confirmation.ok".i18n(),
                 dismissButtonText = EMPTY_STRING,
-                onConfirm = presenter::onTradeNotFoundDialogDismiss
+                onConfirm = presenter::onTradeNotFoundDialogDismiss,
             )
         }
     }

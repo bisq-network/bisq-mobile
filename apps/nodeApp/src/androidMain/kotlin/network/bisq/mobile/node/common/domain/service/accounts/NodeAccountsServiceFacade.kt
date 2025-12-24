@@ -8,10 +8,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
-import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.mapping.UserDefinedFiatAccountMapping
+import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
-class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), AccountsServiceFacade {
+class NodeAccountsServiceFacade(
+    applicationService: AndroidApplicationService.Provider,
+) : ServiceFacade(),
+    AccountsServiceFacade {
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
 
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
@@ -28,14 +31,13 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
         super<ServiceFacade>.deactivate()
     }
 
-    override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
-        return accountService
+    override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> =
+        accountService
             .accountByNameMap
             .values
             .map { UserDefinedFiatAccountMapping.fromBisq2Model(it as UserDefinedFiatAccount) }
             .sortedBy { it.accountName }
             .also { _accounts.value = it }
-    }
 
     override suspend fun addAccount(account: UserDefinedFiatAccountVO) {
         val bisq2Account = UserDefinedFiatAccountMapping.toBisq2Model(account)
@@ -51,7 +53,10 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
         setSelectedAccount(account)
     }
 
-    override suspend fun removeAccount(account: UserDefinedFiatAccountVO, updateSelectedAccount: Boolean) {
+    override suspend fun removeAccount(
+        account: UserDefinedFiatAccountVO,
+        updateSelectedAccount: Boolean,
+    ) {
         accountService.removePaymentAccount(UserDefinedFiatAccountMapping.toBisq2Model(account))
         getAccounts()
         if (updateSelectedAccount) {
@@ -64,13 +69,13 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     override suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO) {
         accountService.setSelectedAccount(UserDefinedFiatAccountMapping.toBisq2Model(account))
-       _selectedAccount.value = account
+        _selectedAccount.value = account
     }
 
     override suspend fun getSelectedAccount() {
         if (accountService.selectedAccount.isPresent) {
             val bisq2Account = accountService.selectedAccount.get() as UserDefinedFiatAccount
-            val account: UserDefinedFiatAccountVO  = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
+            val account: UserDefinedFiatAccountVO = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
             _selectedAccount.value = account
         }
     }

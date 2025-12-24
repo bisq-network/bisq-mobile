@@ -21,8 +21,8 @@ object BitcoinLightningNormalization {
                 "lightning:" + raw.substring(10).lowercase()
             }
             raw.startsWith("lnbc", ignoreCase = true) ||
-            raw.startsWith("lntb", ignoreCase = true) ||
-            raw.startsWith("lnbcrt", ignoreCase = true) -> raw.lowercase()
+                raw.startsWith("lntb", ignoreCase = true) ||
+                raw.startsWith("lnbcrt", ignoreCase = true) -> raw.lowercase()
 
             // bitcoin:BIP21 (preserve query case; only lowercase bech32 address part)
             raw.startsWith("bitcoin:", ignoreCase = true) -> {
@@ -55,14 +55,13 @@ object BitcoinLightningNormalization {
     fun cleanForValidation(input: String): String {
         val normalized = normalizeScan(input)
         val s = normalized.trim()
-        val afterScheme = when {
-            s.startsWith("bitcoin:", ignoreCase = true) -> s.substringAfter(":")
-            s.startsWith("lightning:", ignoreCase = true) -> s.substringAfter(":")
-            else -> s
-        }
+        val afterScheme =
+            when {
+                s.startsWith("bitcoin:", ignoreCase = true) -> s.substringAfter(":")
+                s.startsWith("lightning:", ignoreCase = true) -> s.substringAfter(":")
+                else -> s
+            }
         val withoutSlashes = afterScheme.trim().trimStart('/')
         return withoutSlashes.substringBefore('?').substringBefore('#')
     }
-
 }
-

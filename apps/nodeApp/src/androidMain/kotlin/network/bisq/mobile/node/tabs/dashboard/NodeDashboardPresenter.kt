@@ -7,10 +7,10 @@ import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.notification.NotificationController
-import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
+import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 
 class NodeDashboardPresenter(
     mainPresenter: MainPresenter,
@@ -24,16 +24,16 @@ class NodeDashboardPresenter(
     foregroundDetector: ForegroundDetector,
     platformSettingsManager: PlatformSettingsManager,
 ) : DashboardPresenter(
-    mainPresenter,
-    userProfileServiceFacade,
-    marketPriceServiceFacade,
-    offersServiceFacade,
-    settingsServiceFacade,
-    networkServiceFacade,
-    settingsRepository,
-    notificationController,
-    foregroundDetector,
-    platformSettingsManager,
-) {
+        mainPresenter,
+        userProfileServiceFacade,
+        marketPriceServiceFacade,
+        offersServiceFacade,
+        settingsServiceFacade,
+        networkServiceFacade,
+        settingsRepository,
+        notificationController,
+        foregroundDetector,
+        platformSettingsManager,
+    ) {
     override val showNumConnections: Boolean = true
 }

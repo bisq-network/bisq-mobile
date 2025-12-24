@@ -9,24 +9,27 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
-class PlatformSettingsManagerImpl(private val context: Context) : PlatformSettingsManager {
+class PlatformSettingsManagerImpl(
+    private val context: Context,
+) : PlatformSettingsManager {
     @Composable
     override fun rememberBatteryOptimizationsLauncher(onResult: (Boolean) -> Unit): RequestLauncher {
-        val launcher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult(),
-        ) {
-            onResult(isIgnoringBatteryOptimizations())
-        }
-        val requestLauncher = remember(launcher) {
-            object : RequestLauncher {
-                override fun launch() {
-                    launcher.launch(
-                        Intent().setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                    )
-                }
-
+        val launcher =
+            rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.StartActivityForResult(),
+            ) {
+                onResult(isIgnoringBatteryOptimizations())
             }
-        }
+        val requestLauncher =
+            remember(launcher) {
+                object : RequestLauncher {
+                    override fun launch() {
+                        launcher.launch(
+                            Intent().setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+                        )
+                    }
+                }
+            }
         return requestLauncher
     }
 

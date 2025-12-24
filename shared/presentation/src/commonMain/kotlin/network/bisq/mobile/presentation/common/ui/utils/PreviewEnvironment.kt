@@ -31,10 +31,9 @@ fun PreviewEnvironment(content: @Composable () -> Unit) {
         modules(
             module {
                 single<ITopBarPresenter> { PreviewTopBarPresenter() }
-            }
+            },
         )
     }) {
         content()
     }
 }
-

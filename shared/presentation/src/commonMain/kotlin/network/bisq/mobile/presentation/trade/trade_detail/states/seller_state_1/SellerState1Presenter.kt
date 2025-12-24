@@ -15,7 +15,6 @@ class SellerState1Presenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val accountsServiceFacade: AccountsServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = accountsServiceFacade.accounts
 
     private var _paymentAccountData = MutableStateFlow("")
@@ -26,7 +25,6 @@ class SellerState1Presenter(
 
     private var _paymentAccountName = MutableStateFlow("")
     val paymentAccountName: StateFlow<String> get() = _paymentAccountName.asStateFlow()
-
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -46,7 +44,10 @@ class SellerState1Presenter(
         super.onViewUnattaching()
     }
 
-    fun onPaymentDataInput(value: String, isValid: Boolean) {
+    fun onPaymentDataInput(
+        value: String,
+        isValid: Boolean,
+    ) {
         _paymentAccountData.value = value.trim()
         _paymentAccountDataValid.value = isValid
     }

@@ -9,8 +9,9 @@ import platform.UIKit.UIDevice
 import kotlin.math.pow
 import kotlin.math.round
 
-class IosDeviceInfoProvider(
-) : DeviceInfoProvider, Logging {
+class IosDeviceInfoProvider :
+    DeviceInfoProvider,
+    Logging {
     @OptIn(ExperimentalForeignApi::class)
     override fun getDeviceInfo(): String {
         val na = "N/A"
@@ -27,11 +28,12 @@ class IosDeviceInfoProvider(
             // Storage info
             val home = NSHomeDirectory()
             val fileManager = NSFileManager.Companion.defaultManager
-            val attrs = try {
-                fileManager.attributesOfFileSystemForPath(home, null) ?: emptyMap<Any?, Any?>()
-            } catch (e: Exception) {
-                emptyMap()
-            }
+            val attrs =
+                try {
+                    fileManager.attributesOfFileSystemForPath(home, null) ?: emptyMap<Any?, Any?>()
+                } catch (e: Exception) {
+                    emptyMap()
+                }
 
             val totalStorageBytes = (attrs["NSFileSystemSize"] as? NSNumber)?.doubleValue ?: 0.0
             val availStorageBytes = (attrs["NSFileSystemFreeSize"] as? NSNumber)?.doubleValue ?: 0.0
@@ -39,22 +41,24 @@ class IosDeviceInfoProvider(
             val availStorage = formatBytesPrecise(availStorageBytes.toLong())
 
             // Battery info
-            val batteryLevel = try {
-                device.setBatteryMonitoringEnabled(true)
-                if (device.batteryLevel >= 0.0) {
-                    (device.batteryLevel * 100).toInt().toString() + "%"
-                } else {
+            val batteryLevel =
+                try {
+                    device.setBatteryMonitoringEnabled(true)
+                    if (device.batteryLevel >= 0.0) {
+                        (device.batteryLevel * 100).toInt().toString() + "%"
+                    } else {
+                        na
+                    }
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to get battery info" }
                     na
                 }
-            } catch (e: Exception) {
-                log.e(e) { "Failed to get battery info" }
-                na
-            }
             return "mobile.resources.deviceInfo.ios".i18n(
                 model,
                 systemVersion,
-                availStorage, totalStorage,
-                batteryLevel
+                availStorage,
+                totalStorage,
+                batteryLevel,
             )
         } catch (e: Exception) {
             log.e(e) { "Failed to get device info" }
@@ -62,7 +66,10 @@ class IosDeviceInfoProvider(
         }
     }
 
-    fun formatBytesPrecise(bytes: Long, decimals: Int = 2): String {
+    fun formatBytesPrecise(
+        bytes: Long,
+        decimals: Int = 2,
+    ): String {
         if (bytes < 1024) return "$bytes B"
         val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB")
         var value = bytes.toDouble()

@@ -13,14 +13,15 @@ class BackupPresenter(
     private val mainPresenter: MainPresenter,
     private val nodeBackupServiceFacade: NodeBackupServiceFacade,
 ) : BasePresenter(mainPresenter) {
-    private val _uiState = MutableStateFlow(
-        BackupUiState(
-            showBackupDialog = false,
-            showWorkingDialog = false,
-            showRestorePasswordDialogForUri = null,
-            errorMessage = null,
+    private val _uiState =
+        MutableStateFlow(
+            BackupUiState(
+                showBackupDialog = false,
+                showWorkingDialog = false,
+                showRestorePasswordDialogForUri = null,
+                errorMessage = null,
+            ),
         )
-    )
 
     val uiState = _uiState.asStateFlow()
 
@@ -45,9 +46,11 @@ class BackupPresenter(
                             showWorkingDialog = true,
                         )
                     }
-                    val t = nodeBackupServiceFacade.backupDataDir(
-                        action.password
-                    ).await()
+                    val t =
+                        nodeBackupServiceFacade
+                            .backupDataDir(
+                                action.password,
+                            ).await()
                     if (t != null) {
                         _uiState.update {
                             it.copy(
@@ -79,8 +82,8 @@ class BackupPresenter(
                             onAction(
                                 BackupUiActions.OnStartRestore(
                                     selectedUri,
-                                    null
-                                )
+                                    null,
+                                ),
                             )
                         }
                     }
@@ -121,11 +124,13 @@ class BackupPresenter(
                     )
                 }
                 presenterScope.launch {
-                    val t = nodeBackupServiceFacade.restoreBackup(
-                        action.uri,
-                        action.password,
-                        mainPresenter.view,
-                    ).await()
+                    val t =
+                        nodeBackupServiceFacade
+                            .restoreBackup(
+                                action.uri,
+                                action.password,
+                                mainPresenter.view,
+                            ).await()
                     if (t != null) {
                         _uiState.update {
                             it.copy(

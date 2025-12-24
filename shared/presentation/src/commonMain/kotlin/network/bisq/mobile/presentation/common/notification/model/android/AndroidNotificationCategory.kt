@@ -81,30 +81,30 @@ enum class AndroidNotificationCategory {
     /**
      * Notification category: ongoing information about device or contextual status.
      */
-    CATEGORY_STATUS ,
+    CATEGORY_STATUS,
 
     /**
      * Notification category: tracking a user's workout.
      */
-    CATEGORY_WORKOUT ,
+    CATEGORY_WORKOUT,
 
     /**
      * Notification category: temporarily sharing location.
      */
-    CATEGORY_LOCATION_SHARING ,
+    CATEGORY_LOCATION_SHARING,
 
     /**
      * Notification category: running stopwatch.
      */
-    CATEGORY_STOPWATCH ,
+    CATEGORY_STOPWATCH,
 
     /**
      * Notification category: missed call.
      */
-    CATEGORY_MISSED_CALL ,
+    CATEGORY_MISSED_CALL,
 
     /**
      * Notification category: voicemail.
      */
-    CATEGORY_VOICEMAIL ,
+    CATEGORY_VOICEMAIL,
 }

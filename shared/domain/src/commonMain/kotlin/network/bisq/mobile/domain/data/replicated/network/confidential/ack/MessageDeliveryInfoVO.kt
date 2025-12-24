@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class MessageDeliveryInfoVO(
     val messageDeliveryStatus: MessageDeliveryStatusEnum,
     val ackRequestingMessageId: String,
-    val canManuallyResendMessage: Boolean
+    val canManuallyResendMessage: Boolean,
 )

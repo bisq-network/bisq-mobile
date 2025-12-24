@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 enum class RoleEnum {
     MAKER,
     TAKER,
-    ESCROW_AGENT;
+    ESCROW_AGENT,
 }

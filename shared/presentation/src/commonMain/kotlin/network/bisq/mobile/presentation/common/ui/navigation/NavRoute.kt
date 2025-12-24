@@ -6,7 +6,6 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLin
 const val NAV_BASE_PATH = "bisq://"
 
 interface NavRoute {
-
     @Serializable
     data object HomeScreenGraphKey : NavRoute
 
@@ -27,9 +26,7 @@ interface NavRoute {
 
     @Serializable
     data object TabContainer : NavRoute, DeepLinkableRoute {
-        override fun toUriString(): String {
-            return getDeepLinkBasePath(this)
-        }
+        override fun toUriString(): String = getDeepLinkBasePath(this)
     }
 
     // --- Home Tabs ---
@@ -41,9 +38,7 @@ interface NavRoute {
 
     @Serializable
     data object TabOpenTradeList : NavRoute, TabNavRoute, DeepLinkableRoute {
-        override fun toUriString(): String {
-            return getDeepLinkBasePath(this)
-        }
+        override fun toUriString(): String = getDeepLinkBasePath(this)
     }
 
     @Serializable
@@ -88,17 +83,19 @@ interface NavRoute {
     data object Offerbook : NavRoute
 
     @Serializable
-    data class OpenTrade(val tradeId: String) : NavRoute, DeepLinkableRoute {
-        override fun toUriString(): String {
-            return getDeepLinkBasePath(this) + "/$tradeId"
-        }
+    data class OpenTrade(
+        val tradeId: String,
+    ) : NavRoute,
+        DeepLinkableRoute {
+        override fun toUriString(): String = getDeepLinkBasePath(this) + "/$tradeId"
     }
 
     @Serializable
-    data class TradeChat(val tradeId: String) : NavRoute, DeepLinkableRoute {
-        override fun toUriString(): String {
-            return getDeepLinkBasePath(this) + "/$tradeId"
-        }
+    data class TradeChat(
+        val tradeId: String,
+    ) : NavRoute,
+        DeepLinkableRoute {
+        override fun toUriString(): String = getDeepLinkBasePath(this) + "/$tradeId"
     }
 
     // --- Settings Sub-screens ---
@@ -154,7 +151,6 @@ interface NavRoute {
 
     @Serializable
     data object WalletGuideReceiving : NavRoute
-
 }
 
 interface TabNavRoute
@@ -170,15 +166,10 @@ object NavUtils {
     /**
      * Gets the deep link base path for a given route instance.
      */
-    fun getDeepLinkBasePath(route: DeepLinkableRoute): String {
-        return NAV_BASE_PATH + route::class.simpleName
-    }
+    fun getDeepLinkBasePath(route: DeepLinkableRoute): String = NAV_BASE_PATH + route::class.simpleName
 
     /**
      * Gets the deep link base path for a route type (no instance needed).
      */
-    inline fun <reified T : DeepLinkableRoute> getDeepLinkBasePath(): String {
-        return NAV_BASE_PATH + T::class.simpleName
-    }
+    inline fun <reified T : DeepLinkableRoute> getDeepLinkBasePath(): String = NAV_BASE_PATH + T::class.simpleName
 }
-

@@ -29,9 +29,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.inputfiel
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketSortBy
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -61,7 +61,7 @@ fun OfferbookMarketScreen() {
         onSearchTextChange = presenter::setSearchText,
         onMarketSelect = presenter::onSelectMarket,
         onSortByFilterChange = presenter::setSortBy,
-        onFilterChange = presenter::setFilter
+        onFilterChange = presenter::setFilter,
     )
 }
 
@@ -88,7 +88,7 @@ private fun OfferbookMarketScreenContent(
     ) {
         BisqSearchField(
             value = searchText,
-            onValueChanged = { text, _ -> onSearchTextChange(text) },
+            onValueChange = { text, _ -> onSearchTextChange(text) },
             rightSuffix = {
                 // TODO: Height to be reduced with Icon only buttons
                 BisqButton(
@@ -103,7 +103,7 @@ private fun OfferbookMarketScreenContent(
                     type = BisqButtonType.Clear,
                     modifier = Modifier.weight(1f),
                 )
-            }
+            },
         )
 
         BisqGap.V1()
@@ -123,7 +123,7 @@ private fun OfferbookMarketScreenContent(
                     MarketCard(
                         item = item,
                         hasIgnoredUsers = hasIgnoredUsers,
-                        onClick = { onMarketSelect(item) }
+                        onClick = { onMarketSelect(item) },
                     )
                 }
             }
@@ -135,7 +135,7 @@ private fun OfferbookMarketScreenContent(
                     sortBy = sortBy,
                     filter = filter,
                     onSortByChange = onSortByFilterChange,
-                    onFilterChange = onFilterChange
+                    onFilterChange = onFilterChange,
                 )
             }
         }
@@ -150,18 +150,18 @@ private fun OfferbookMarketScreenContentPreview() {
             MarketListItem(
                 market = MarketVO(baseCurrencyCode = "BTC", quoteCurrencyCode = "USD"),
                 localeFiatCurrencyName = "US Dollar",
-                numOffers = 12
+                numOffers = 12,
             ),
             MarketListItem(
                 market = MarketVO(baseCurrencyCode = "BTC", quoteCurrencyCode = "EUR"),
                 localeFiatCurrencyName = "Euro",
-                numOffers = 8
+                numOffers = 8,
             ),
             MarketListItem(
                 market = MarketVO(baseCurrencyCode = "BTC", quoteCurrencyCode = "BRL"),
                 localeFiatCurrencyName = "Brazilian Real",
-                numOffers = 0
-            )
+                numOffers = 0,
+            ),
         )
     BisqTheme.Preview {
         OfferbookMarketScreenContent(
@@ -177,7 +177,7 @@ private fun OfferbookMarketScreenContentPreview() {
             onMarketSelect = {},
             onDismissFilterDialog = {},
             onSortByFilterChange = {},
-            onFilterChange = {}
+            onFilterChange = {},
         )
     }
 }

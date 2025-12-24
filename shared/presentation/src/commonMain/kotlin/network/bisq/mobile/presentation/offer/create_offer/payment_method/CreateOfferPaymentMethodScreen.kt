@@ -35,7 +35,7 @@ fun CreateOfferPaymentMethodScreen() {
         closeAction = true,
         onConfirmedClose = presenter::onClose,
     ) {
-        BisqText.h3Light("mobile.bisqEasy.createOffer.paymentMethods.headline.fiat".i18n())
+        BisqText.H3Light("mobile.bisqEasy.createOffer.paymentMethods.headline.fiat".i18n())
 
         BisqGap.V1()
 
@@ -52,7 +52,7 @@ fun CreateOfferPaymentMethodScreen() {
             },
             onRemoveCustomPayment = { customPayment ->
                 presenter.removeCustomPayment(customPayment)
-            }
+            },
         )
     }
 }

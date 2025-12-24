@@ -13,7 +13,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
 fun StarRating(rating: Double) {
-
     val fullStars = rating.toInt()
     val hasHalfStar = rating - fullStars >= 0.5
     val emptyStars = 5 - fullStars - if (hasHalfStar) 1 else 0
@@ -22,7 +21,7 @@ fun StarRating(rating: Double) {
         repeat(fullStars) {
             StarFillIcon(modifier = Modifier.size(BisqUIConstants.ScreenPadding))
         }
-        if(hasHalfStar) {
+        if (hasHalfStar) {
             StarHalfFilledIcon(modifier = Modifier.size(BisqUIConstants.ScreenPadding))
         }
         repeat(emptyStars) {

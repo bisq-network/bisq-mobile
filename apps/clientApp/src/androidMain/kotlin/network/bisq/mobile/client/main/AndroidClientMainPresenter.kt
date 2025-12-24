@@ -20,14 +20,14 @@ class AndroidClientMainPresenter(
     tradeReadStateRepository: TradeReadStateRepository,
     openTradesNotificationService: OpenTradesNotificationService,
     applicationLifecycleService: ApplicationLifecycleService,
-    urlLauncher: UrlLauncher
+    urlLauncher: UrlLauncher,
 ) : ClientMainPresenter(
-    connectivityService,
-    settingsServiceFacade,
-    tradesServiceFacade,
-    userProfileServiceFacade,
-    openTradesNotificationService,
-    tradeReadStateRepository,
-    applicationLifecycleService,
-    urlLauncher
-)
+        connectivityService,
+        settingsServiceFacade,
+        tradesServiceFacade,
+        userProfileServiceFacade,
+        openTradesNotificationService,
+        tradeReadStateRepository,
+        applicationLifecycleService,
+        urlLauncher,
+    )

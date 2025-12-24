@@ -12,8 +12,8 @@ import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class InterruptedTradePresenter(
     mainPresenter: MainPresenter,
@@ -21,7 +21,6 @@ class InterruptedTradePresenter(
     private var mediationServiceFacade: MediationServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter) {
-
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _interruptedTradeInfo: MutableStateFlow<String> = MutableStateFlow("")
@@ -39,7 +38,6 @@ class InterruptedTradePresenter(
 
     private val _reportToMediatorButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val reportToMediatorButtonVisible: StateFlow<Boolean> get() = _reportToMediatorButtonVisible.asStateFlow()
-
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -79,7 +77,8 @@ class InterruptedTradePresenter(
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
+            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            -> {
             }
 
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
@@ -104,7 +103,8 @@ class InterruptedTradePresenter(
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
             BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION,
             BisqEasyTradeStateEnum.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION,
-            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
+            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION,
+            -> {
             }
 
             BisqEasyTradeStateEnum.BTC_CONFIRMED -> {
@@ -113,10 +113,12 @@ class InterruptedTradePresenter(
             BisqEasyTradeStateEnum.REJECTED,
             BisqEasyTradeStateEnum.PEER_REJECTED,
             BisqEasyTradeStateEnum.CANCELLED,
-            BisqEasyTradeStateEnum.PEER_CANCELLED -> {
+            BisqEasyTradeStateEnum.PEER_CANCELLED,
+            -> {
                 _interruptionInfoVisible.value = true
 
-                val wasTradeCancelled = state == BisqEasyTradeStateEnum.CANCELLED ||
+                val wasTradeCancelled =
+                    state == BisqEasyTradeStateEnum.CANCELLED ||
                         state == BisqEasyTradeStateEnum.PEER_CANCELLED
                 val trade = selectedTrade.value!!.bisqEasyTradeModel
                 val isMaker: Boolean = trade.isMaker
@@ -137,14 +139,24 @@ class InterruptedTradePresenter(
             BisqEasyTradeStateEnum.FAILED -> {
                 _reportToMediatorButtonVisible.value = false
                 errorMessage =
-                    "mobile.bisqEasy.openTrades.failed".i18n(selectedTrade.value?.bisqEasyTradeModel?.errorMessage?.value ?: "")
+                    "mobile.bisqEasy.openTrades.failed".i18n(
+                        selectedTrade.value
+                            ?.bisqEasyTradeModel
+                            ?.errorMessage
+                            ?.value ?: "",
+                    )
                 _errorMessageVisible.value = true
             }
 
             BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
                 _reportToMediatorButtonVisible.value = false
                 errorMessage =
-                    "mobile.bisqEasy.openTrades.failedAtPeer".i18n(selectedTrade.value?.bisqEasyTradeModel?.peersErrorMessage?.value ?: "")
+                    "mobile.bisqEasy.openTrades.failedAtPeer".i18n(
+                        selectedTrade.value
+                            ?.bisqEasyTradeModel
+                            ?.peersErrorMessage
+                            ?.value ?: "",
+                    )
                 _errorMessageVisible.value = true
             }
         }
@@ -158,7 +170,7 @@ class InterruptedTradePresenter(
             if (result.isFailure) {
                 val msg = result.exceptionOrNull()?.message ?: ""
                 GenericErrorHandler.handleGenericError(
-                    "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg)
+                    "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg),
                 )
                 hideLoading()
                 return@launch
@@ -168,7 +180,7 @@ class InterruptedTradePresenter(
             runCatching { tradeReadStateRepository.clearId(trade.tradeId) }
                 .onFailure { ex ->
                     GenericErrorHandler.handleGenericError(
-                        "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: "")
+                        "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: ""),
                     )
                 }
 
@@ -195,4 +207,3 @@ class InterruptedTradePresenter(
         _reportToMediatorButtonVisible.value = false
     }
 }
-

@@ -8,18 +8,19 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.ToggleTab
 @Composable
 fun DirectionToggle(
     selectedDirection: DirectionEnum,
-    onStateChange: (DirectionEnum) -> Unit
+    onStateChange: (DirectionEnum) -> Unit,
 ) {
     // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
-    val directions = listOf(
-        DirectionEnum.BUY,
-        DirectionEnum.SELL,
-    )
+    val directions =
+        listOf(
+            DirectionEnum.BUY,
+            DirectionEnum.SELL,
+        )
 
     ToggleTab(
         options = directions,
         selectedOption = selectedDirection,
-        onOptionSelected = onStateChange,
+        onOptionSelect = onStateChange,
         singleLine = true,
         getDisplayString = {
             if (it == DirectionEnum.BUY) {

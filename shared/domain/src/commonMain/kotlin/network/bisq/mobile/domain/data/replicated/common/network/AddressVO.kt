@@ -19,12 +19,16 @@ package network.bisq.mobile.domain.data.replicated.common.network
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AddressVO(val host: String, val port: Int) {
+data class AddressVO(
+    val host: String,
+    val port: Int,
+) {
     companion object {
         // Regex to parse URLs in formats: host:port, schema://host:port, schema://host
-        private val URL_REGEX = Regex(
-            """^(?:[a-zA-Z][a-zA-Z0-9+.-]*://)?([^/:]+)(?::(\d+))?(?:/.*)?$"""
-        )
+        private val URL_REGEX =
+            Regex(
+                """^(?:[a-zA-Z][a-zA-Z0-9+.-]*://)?([^/:]+)(?::(\d+))?(?:/.*)?$""",
+            )
 
         fun from(url: String): AddressVO? {
             val trimmed = url.trim()
@@ -42,7 +46,5 @@ data class AddressVO(val host: String, val port: Int) {
         }
     }
 
-    override fun toString(): String {
-        return "$host:$port"
-    }
+    override fun toString(): String = "$host:$port"
 }

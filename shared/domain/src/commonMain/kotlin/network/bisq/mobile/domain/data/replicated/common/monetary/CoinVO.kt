@@ -31,8 +31,8 @@ data class CoinVO(
     override val lowPrecision: Int,
 ) : MonetaryVO {
     override fun round(roundPrecision: Int): MonetaryVO {
-        val rounded: Double = roundDouble(toDouble(), roundPrecision);
-        val shifted: Long = BigDecimal.fromDouble(rounded).moveDecimalPoint(precision).longValue();
-        return CoinVO(code, shifted, code, precision, precision);
+        val rounded: Double = roundDouble(toDouble(), roundPrecision)
+        val shifted: Long = BigDecimal.fromDouble(rounded).moveDecimalPoint(precision).longValue()
+        return CoinVO(code, shifted, code, precision, precision)
     }
 }

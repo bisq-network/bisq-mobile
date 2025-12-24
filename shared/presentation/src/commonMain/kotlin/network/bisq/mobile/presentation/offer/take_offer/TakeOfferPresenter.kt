@@ -28,7 +28,6 @@ class TakeOfferPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     class TakeOfferModel {
         lateinit var offerItemPresentationVO: OfferItemPresentationModel
         var hasMultipleQuoteSidePaymentMethods: Boolean = false
@@ -98,33 +97,25 @@ class TakeOfferPresenter(
             baseSidePaymentMethod = offerListItem.baseSidePaymentMethods[0]
         } else {
             totalSteps = totalSteps + 1
-
         }
         takeOfferModel.baseSidePaymentMethod = baseSidePaymentMethod
     }
 
-    fun showPaymentMethodsScreen(): Boolean {
-        return takeOfferModel.hasMultipleQuoteSidePaymentMethods
-    }
+    fun showPaymentMethodsScreen(): Boolean = takeOfferModel.hasMultipleQuoteSidePaymentMethods
 
-    fun showSettlementMethodsScreen(): Boolean {
-        return takeOfferModel.hasMultipleBaseSidePaymentMethods
-    }
+    fun showSettlementMethodsScreen(): Boolean = takeOfferModel.hasMultipleBaseSidePaymentMethods
 
-    fun showAmountScreen(): Boolean {
-        return takeOfferModel.hasAmountRange
-    }
+    fun showAmountScreen(): Boolean = takeOfferModel.hasAmountRange
 
     fun commitAmount(
         priceQuote: PriceQuoteVO,
         quoteAmount: FiatVO,
-        baseAmount: CoinVO
+        baseAmount: CoinVO,
     ) {
         takeOfferModel.priceQuote = priceQuote
         takeOfferModel.quoteAmount = quoteAmount
         takeOfferModel.baseAmount = baseAmount
     }
-
 
     fun commitPaymentMethod(quoteSidePaymentMethod: String) {
         takeOfferModel.quoteSidePaymentMethod = quoteSidePaymentMethod
@@ -138,15 +129,16 @@ class TakeOfferPresenter(
         val takeOfferStatus = MutableStateFlow<TakeOfferStatus?>(null)
         val takeOfferErrorMessage = MutableStateFlow<String?>(null)
 
-        val result = tradesServiceFacade.takeOffer(
-            takeOfferModel.offerItemPresentationVO.bisqEasyOffer,
-            takeOfferModel.baseAmount,
-            takeOfferModel.quoteAmount,
-            takeOfferModel.baseSidePaymentMethod,
-            takeOfferModel.quoteSidePaymentMethod,
-            takeOfferStatus,
-            takeOfferErrorMessage
-        )
+        val result =
+            tradesServiceFacade.takeOffer(
+                takeOfferModel.offerItemPresentationVO.bisqEasyOffer,
+                takeOfferModel.baseAmount,
+                takeOfferModel.quoteAmount,
+                takeOfferModel.baseSidePaymentMethod,
+                takeOfferModel.quoteSidePaymentMethod,
+                takeOfferStatus,
+                takeOfferErrorMessage,
+            )
         if (result.isSuccess) {
             tradesServiceFacade.selectOpenTrade(result.getOrThrow())
         } else {
@@ -168,16 +160,15 @@ class TakeOfferPresenter(
             val item: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
             return PriceQuoteVO(
                 0,
-                4, 2,
+                4,
+                2,
                 marketVO,
                 CoinVOFactory.bitcoinFrom(1),
                 FiatVOFactory.from(
                     item?.priceQuote?.value ?: 0L,
-                    item?.market?.quoteCurrencyCode ?: "USD"
-                )
-
+                    item?.market?.quoteCurrencyCode ?: "USD",
+                ),
             )
         }
     }
 }
-

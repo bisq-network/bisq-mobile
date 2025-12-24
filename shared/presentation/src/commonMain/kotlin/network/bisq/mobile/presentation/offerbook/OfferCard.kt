@@ -44,7 +44,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 fun OfferCard(
     item: OfferItemPresentationModel,
     onSelectOffer: () -> Unit,
-    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
 ) {
     val userName by item.userName.collectAsState()
     val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f)
@@ -72,29 +72,31 @@ fun OfferCard(
 
     val myOfferBackgroundColor = BisqTheme.colors.primary.copy(alpha = 0.15f)
     val invalidOfferBackgroundColor = BisqTheme.colors.dark_grey50.copy(alpha = 0.4f)
-    val backgroundColor = when {
-        isMyOffer -> myOfferBackgroundColor
-        item.isInvalidDueToReputation -> invalidOfferBackgroundColor
-        else -> BisqTheme.colors.dark_grey50.copy(alpha = 0.9f)
-    }
+    val backgroundColor =
+        when {
+            isMyOffer -> myOfferBackgroundColor
+            item.isInvalidDueToReputation -> invalidOfferBackgroundColor
+            else -> BisqTheme.colors.dark_grey50.copy(alpha = 0.9f)
+        }
 
     val height = 150.dp
     val maxUsernameChars = 24
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape = RoundedCornerShape(8.dp))
-            .background(color = backgroundColor)
-            .height(height)
-            .padding(BisqUIConstants.ScreenPadding)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onSelectOffer
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(8.dp))
+                .background(color = backgroundColor)
+                .height(height)
+                .padding(BisqUIConstants.ScreenPadding)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onSelectOffer,
+                ),
         verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.Start
+        horizontalArrangement = Arrangement.Start,
     ) {
         UserProfile(
             userProfile = item.makersUserProfile,
@@ -102,7 +104,7 @@ fun OfferCard(
             reputation = item.makersReputationScore,
             supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
             showUserName = false,
-            modifier = Modifier.weight(1.0F)
+            modifier = Modifier.weight(1.0F),
         )
 
         BisqGap.H1()
@@ -110,23 +112,23 @@ fun OfferCard(
         BisqGap.H1()
 
         Column(
-            modifier = Modifier.weight(3.0F).fillMaxHeight()
+            modifier = Modifier.weight(3.0F).fillMaxHeight(),
         ) {
             Row(
-                modifier = Modifier.height(32.dp) // Fixed height to prevent pushing content down
+                modifier = Modifier.height(32.dp), // Fixed height to prevent pushing content down
             ) {
                 if (isMyOffer) {
-                    BisqText.baseRegular(
+                    BisqText.BaseRegular(
                         text = directionalLabel,
                         color = directionalLabelColor,
                         singleLine = true,
-                        modifier = Modifier.align(Alignment.CenterVertically)
+                        modifier = Modifier.align(Alignment.CenterVertically),
                     )
                 } else {
-                    BisqText.baseRegular(
+                    BisqText.BaseRegular(
                         text = directionalLabel,
                         color = directionalLabelColor,
-                        modifier = Modifier.align(Alignment.CenterVertically)
+                        modifier = Modifier.align(Alignment.CenterVertically),
                     )
 
                     BisqGap.HHalf()
@@ -140,20 +142,21 @@ fun OfferCard(
                         color = directionalLabelColor,
                         textStyle = BisqTheme.typography.smallRegular,
                         maxLines = 2,
-                        modifier = BisqModifier
-                            .textHighlight(
-                                BisqTheme.colors.dark_grey10
-                                    .copy(alpha = 0.4f), BisqTheme.colors.mid_grey10
-                            )
-                            .padding(top = 4.dp, bottom = 2.dp)
-                            .align(Alignment.CenterVertically),
+                        modifier =
+                            BisqModifier
+                                .textHighlight(
+                                    BisqTheme.colors.dark_grey10
+                                        .copy(alpha = 0.4f),
+                                    BisqTheme.colors.mid_grey10,
+                                ).padding(top = 4.dp, bottom = 2.dp)
+                                .align(Alignment.CenterVertically),
                     )
                 }
             }
 
             BisqGap.VHalf()
 
-            BisqText.baseLight(item.formattedQuoteAmount)
+            BisqText.BaseLight(item.formattedQuoteAmount)
 
             BisqGap.VHalf()
 
@@ -163,12 +166,11 @@ fun OfferCard(
                 maxLines = 1,
             )
 
-
             Spacer(modifier = Modifier.weight(1f))
 
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
 
@@ -178,7 +180,6 @@ fun OfferCard(
             }
 
             BisqGap.VHalf()
-
         }
     }
 }

@@ -34,44 +34,46 @@ class WebSocketApiClient(
     // So we use httpClient instead.
     val useHttpClient = true
 
-    suspend inline fun <reified T> get(path: String): Result<T> {
-        return request<T>("GET", path)
-    }
+    suspend inline fun <reified T> get(path: String): Result<T> = request<T>("GET", path)
 
-    suspend inline fun <reified T> delete(path: String): Result<T> {
-        return request<T>("DELETE", path)
-    }
+    suspend inline fun <reified T> delete(path: String): Result<T> = request<T>("DELETE", path)
 
-    suspend inline fun <reified T, reified R> delete(path: String, requestBody: R): Result<T> {
+    suspend inline fun <reified T, reified R> delete(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
         val bodyAsJson = json.encodeToString(requestBody)
         return request<T>("DELETE", path, bodyAsJson)
     }
 
-    suspend inline fun <reified T> put(path: String): Result<T> {
-        return request<T>("PUT", path)
-    }
+    suspend inline fun <reified T> put(path: String): Result<T> = request<T>("PUT", path)
 
-    suspend inline fun <reified T, reified R> put(path: String, requestBody: R): Result<T> {
+    suspend inline fun <reified T, reified R> put(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
         val bodyAsJson = json.encodeToString(requestBody)
         return request<T>("PUT", path, bodyAsJson)
     }
 
-    suspend inline fun <reified T> patch(path: String): Result<T> {
-        return request<T>("PATCH", path)
-    }
+    suspend inline fun <reified T> patch(path: String): Result<T> = request<T>("PATCH", path)
 
-    suspend inline fun <reified T, reified R> patch(path: String, requestBody: R): Result<T> {
+    suspend inline fun <reified T, reified R> patch(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
         if (useHttpClient) {
             log.d { "HTTP PATCH to ${apiPath + path}" }
             try {
-                val response: HttpResponse = httpClientService.patch {
-                    url {
-                        path(apiPath + path)
+                val response: HttpResponse =
+                    httpClientService.patch {
+                        url {
+                            path(apiPath + path)
+                        }
+                        contentType(ContentType.Application.Json)
+                        accept(ContentType.Application.Json)
+                        setBody(requestBody)
                     }
-                    contentType(ContentType.Application.Json)
-                    accept(ContentType.Application.Json)
-                    setBody(requestBody)
-                }
                 log.d { "HTTP PATCH done status=${response.status}" }
                 return getResultFromHttpResponse<T>(response)
             } catch (e: Exception) {
@@ -85,19 +87,23 @@ class WebSocketApiClient(
         }
     }
 
-    suspend inline fun <reified T, reified R> post(path: String, requestBody: R): Result<T> {
+    suspend inline fun <reified T, reified R> post(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
         if (useHttpClient) {
             log.d { "HTTP POST to ${apiPath + path}" }
             log.d { "Request body: $requestBody" }
             try {
-                val response: HttpResponse = httpClientService.post {
-                    url{
-                        path(apiPath + path)
+                val response: HttpResponse =
+                    httpClientService.post {
+                        url {
+                            path(apiPath + path)
+                        }
+                        contentType(ContentType.Application.Json)
+                        accept(ContentType.Application.Json)
+                        setBody(requestBody)
                     }
-                    contentType(ContentType.Application.Json)
-                    accept(ContentType.Application.Json)
-                    setBody(requestBody)
-                }
                 log.d { "HTTP POST done status=${response.status}" }
                 return getResultFromHttpResponse<T>(response)
             } catch (e: Exception) {
@@ -118,12 +124,13 @@ class WebSocketApiClient(
     ): Result<T> {
         val requestId = Uuid.random().toString()
         val fullPath = apiPath + path
-        val webSocketRestApiRequest = WebSocketRestApiRequest(
-            requestId,
-            method,
-            fullPath,
-            bodyAsJson
-        )
+        val webSocketRestApiRequest =
+            WebSocketRestApiRequest(
+                requestId,
+                method,
+                fullPath,
+                bodyAsJson,
+            )
         try {
             val startTime = DateUtils.now()
             val response = webSocketClientService.sendRequestAndAwaitResponse(webSocketRestApiRequest)
@@ -165,13 +172,11 @@ class WebSocketApiClient(
         }
     }
 
-
-    suspend inline fun <reified T> getResultFromHttpResponse(response: HttpResponse): Result<T> {
-        return if (response.status.isSuccess()) {
+    suspend inline fun <reified T> getResultFromHttpResponse(response: HttpResponse): Result<T> =
+        if (response.status.isSuccess()) {
             Result.success(response.body<T>())
         } else {
             val errorText = response.bodyAsText()
             Result.failure(WebSocketRestApiException(response.status, errorText))
         }
-    }
 }

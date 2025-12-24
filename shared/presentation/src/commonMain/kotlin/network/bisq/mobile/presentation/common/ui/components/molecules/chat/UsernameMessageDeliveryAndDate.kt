@@ -38,23 +38,26 @@ fun UsernameMessageDeliveryAndDate(
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .semantics(mergeDescendants = true) {}
-                .clickable(message.isMyMessage) { showInfo = true },
+            modifier =
+                Modifier
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(message.isMyMessage) { showInfo = true },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val date = @Composable {
-                BisqText.xsmallLightGrey(
-                    modifier = Modifier
-                        .widthIn(max = this@BoxWithConstraints.maxWidth * 0.4f),
+                BisqText.XSmallLightGrey(
+                    modifier =
+                        Modifier
+                            .widthIn(max = this@BoxWithConstraints.maxWidth * 0.4f),
                     text = message.dateString,
                 )
             }
             val username = @Composable {
-                BisqText.baseRegular(
-                    modifier = Modifier
-                        .widthIn(max = this@BoxWithConstraints.maxWidth * 0.6f),
-                    text = message.senderUserName
+                BisqText.BaseRegular(
+                    modifier =
+                        Modifier
+                            .widthIn(max = this@BoxWithConstraints.maxWidth * 0.6f),
+                    text = message.senderUserName,
                 )
             }
 
@@ -69,7 +72,7 @@ fun UsernameMessageDeliveryAndDate(
                     showInfo,
                     onDismissMenu = {
                         showInfo = false
-                    }
+                    },
                 )
                 username()
             } else {
@@ -83,80 +86,84 @@ fun UsernameMessageDeliveryAndDate(
 
 @Preview
 @Composable
-private fun UsernameMessageDeliveryAndDatePreview_MyMessage() {
+private fun UsernameMessageDeliveryAndDatePreview_MyMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob [Marvelously-Extraneous-Elephant-234345435]")
         val peerUserProfile =
             createMockUserProfile("Alice [Marvelously-Extraneous-Elephant-234345435]")
 
-        val dto = BisqEasyOpenTradeMessageDto(
-            tradeId = "trade123",
-            messageId = "msg123",
-            channelId = "channel123",
-            senderUserProfile = myUserProfile,
-            receiverUserProfileId = peerUserProfile.networkId.pubKey.id,
-            receiverNetworkId = peerUserProfile.networkId,
-            text = "Hello!",
-            citation = null,
-            date = 1234567890000L,
-            mediator = null,
-            chatMessageType = ChatMessageTypeEnum.TEXT,
-            bisqEasyOffer = null,
-            chatMessageReactions = emptySet(),
-            citationAuthorUserProfile = null
-        )
+        val dto =
+            BisqEasyOpenTradeMessageDto(
+                tradeId = "trade123",
+                messageId = "msg123",
+                channelId = "channel123",
+                senderUserProfile = myUserProfile,
+                receiverUserProfileId = peerUserProfile.networkId.pubKey.id,
+                receiverNetworkId = peerUserProfile.networkId,
+                text = "Hello!",
+                citation = null,
+                date = 1234567890000L,
+                mediator = null,
+                chatMessageType = ChatMessageTypeEnum.TEXT,
+                bisqEasyOffer = null,
+                chatMessageReactions = emptySet(),
+                citationAuthorUserProfile = null,
+            )
 
-        val message = BisqEasyOpenTradeMessageModel(
-            dto,
-            myUserProfile,
-            emptyList()
-        )
+        val message =
+            BisqEasyOpenTradeMessageModel(
+                dto,
+                myUserProfile,
+                emptyList(),
+            )
 
         UsernameMessageDeliveryAndDate(
             message = message,
             onResendMessage = {},
             userNameProvider = { it },
-            messageDeliveryInfoByPeersProfileId = MutableStateFlow(emptyMap())
+            messageDeliveryInfoByPeersProfileId = MutableStateFlow(emptyMap()),
         )
     }
 }
 
 @Preview
 @Composable
-private fun UsernameMessageDeliveryAndDatePreview_PeerMessage() {
+private fun UsernameMessageDeliveryAndDatePreview_PeerMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob [Marvelously-Extraneous-Elephant-234345435]")
         val peerUserProfile =
             createMockUserProfile("Alice")
 
-        val dto = BisqEasyOpenTradeMessageDto(
-            tradeId = "trade123",
-            messageId = "msg456",
-            channelId = "channel123",
-            senderUserProfile = peerUserProfile,
-            receiverUserProfileId = myUserProfile.networkId.pubKey.id,
-            receiverNetworkId = myUserProfile.networkId,
-            text = "Hi there!",
-            citation = null,
-            date = 1234567890000L,
-            mediator = null,
-            chatMessageType = ChatMessageTypeEnum.TEXT,
-            bisqEasyOffer = null,
-            chatMessageReactions = emptySet(),
-            citationAuthorUserProfile = null
-        )
+        val dto =
+            BisqEasyOpenTradeMessageDto(
+                tradeId = "trade123",
+                messageId = "msg456",
+                channelId = "channel123",
+                senderUserProfile = peerUserProfile,
+                receiverUserProfileId = myUserProfile.networkId.pubKey.id,
+                receiverNetworkId = myUserProfile.networkId,
+                text = "Hi there!",
+                citation = null,
+                date = 1234567890000L,
+                mediator = null,
+                chatMessageType = ChatMessageTypeEnum.TEXT,
+                bisqEasyOffer = null,
+                chatMessageReactions = emptySet(),
+                citationAuthorUserProfile = null,
+            )
 
-        val message = BisqEasyOpenTradeMessageModel(
-            dto,
-            myUserProfile,
-            emptyList()
-        )
+        val message =
+            BisqEasyOpenTradeMessageModel(
+                dto,
+                myUserProfile,
+                emptyList(),
+            )
 
         UsernameMessageDeliveryAndDate(
             message = message,
             onResendMessage = {},
             userNameProvider = { it },
-            messageDeliveryInfoByPeersProfileId = MutableStateFlow(emptyMap())
+            messageDeliveryInfoByPeersProfileId = MutableStateFlow(emptyMap()),
         )
     }
 }

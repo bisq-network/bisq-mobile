@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  * Uses its own coroutine scope for UI operations.
  */
 class GlobalUiManager(
-    dispatcher: CoroutineDispatcher = Dispatchers.Main
+    dispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
@@ -34,10 +34,11 @@ class GlobalUiManager(
      */
     fun scheduleShowLoading() {
         loadingJob?.cancel()
-        loadingJob = scope.launch {
-            delay(LOADING_DIALOG_GRACE_MS)
-            _showLoadingDialog.value = true
-        }
+        loadingJob =
+            scope.launch {
+                delay(LOADING_DIALOG_GRACE_MS)
+                _showLoadingDialog.value = true
+            }
     }
 
     /**

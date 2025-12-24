@@ -20,19 +20,20 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.getPlat
 fun UserProfileIcon(
     userProfile: UserProfileVO,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
-    size: Dp = 50.dp
+    size: Dp = 50.dp,
 ) {
     val userProfileIcon by produceState<PlatformImage?>(initialValue = null, key1 = userProfile) {
         value = userProfileIconProvider.invoke(userProfile)
     }
 
-    val painter = remember(userProfileIcon) {
-        userProfileIcon?.let { getPlatformImagePainter(it) } ?: ColorPainter(Color.Transparent)
-    }
+    val painter =
+        remember(userProfileIcon) {
+            userProfileIcon?.let { getPlatformImagePainter(it) } ?: ColorPainter(Color.Transparent)
+        }
 
     Image(
         painter = painter,
         contentDescription = "mobile.createProfile.iconGenerated".i18n(),
-        modifier = Modifier.size(size)
+        modifier = Modifier.size(size),
     )
 }

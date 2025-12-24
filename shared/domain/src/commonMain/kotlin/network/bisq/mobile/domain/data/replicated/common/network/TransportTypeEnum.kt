@@ -22,5 +22,5 @@ import kotlinx.serialization.Serializable
 enum class TransportTypeEnum {
     TOR,
     I2P,
-    CLEAR
+    CLEAR,
 }

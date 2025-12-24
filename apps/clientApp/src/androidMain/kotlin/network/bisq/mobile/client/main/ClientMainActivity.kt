@@ -9,7 +9,6 @@ import network.bisq.mobile.presentation.main.MainActivity
  * Android Bisq Connect Main Activity
  */
 class ClientMainActivity : MainActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 

@@ -14,7 +14,6 @@ import kotlin.test.assertTrue
 
 @Ignore("JDK mismatch compilation issues to be addressed")
 class AndroidMemoryReportServiceTest {
-
     private lateinit var memoryReportService: AndroidMemoryReportService
     private val activityManager = mockk<ActivityManager>(relaxed = true)
 
@@ -32,10 +31,12 @@ class AndroidMemoryReportServiceTest {
     @Test
     fun `logReport should log memory usage without crashing`() {
         val memoryInfo = mockk<ActivityManager.MemoryInfo>()
-        every { activityManager.getMemoryInfo(any()) } answers { firstArg<ActivityManager.MemoryInfo>().apply {
-            totalMem = 1024L * 1024L * 1024L  // 1 GB
-            availMem = 512L * 1024L * 1024L    // 512 MB free
-        }}
+        every { activityManager.getMemoryInfo(any()) } answers {
+            firstArg<ActivityManager.MemoryInfo>().apply {
+                totalMem = 1024L * 1024L * 1024L // 1 GB
+                availMem = 512L * 1024L * 1024L // 512 MB free
+            }
+        }
 
         memoryReportService.logReport()
 
@@ -45,10 +46,12 @@ class AndroidMemoryReportServiceTest {
     @Test
     fun `getUsedMemoryInBytes should return correct used memory`() {
         val memoryInfo = mockk<ActivityManager.MemoryInfo>()
-        every { activityManager.getMemoryInfo(any()) } answers { firstArg<ActivityManager.MemoryInfo>().apply {
-            totalMem = 1024L * 1024L * 1024L  // 1 GB
-            availMem = 512L * 1024L * 1024L    // 512 MB free
-        }}
+        every { activityManager.getMemoryInfo(any()) } answers {
+            firstArg<ActivityManager.MemoryInfo>().apply {
+                totalMem = 1024L * 1024L * 1024L // 1 GB
+                availMem = 512L * 1024L * 1024L // 512 MB free
+            }
+        }
 
         val usedMemory = memoryReportService.getUsedMemoryInBytes()
 
@@ -57,10 +60,12 @@ class AndroidMemoryReportServiceTest {
 
     @Test
     fun `getUsedMemoryInMB should return correct used memory in MB`() {
-        every { activityManager.getMemoryInfo(any()) } answers { firstArg<ActivityManager.MemoryInfo>().apply {
-            totalMem = 1024L * 1024L * 1024L  // 1 GB
-            availMem = 512L * 1024L * 1024L    // 512 MB free
-        }}
+        every { activityManager.getMemoryInfo(any()) } answers {
+            firstArg<ActivityManager.MemoryInfo>().apply {
+                totalMem = 1024L * 1024L * 1024L // 1 GB
+                availMem = 512L * 1024L * 1024L // 512 MB free
+            }
+        }
 
         val usedMemoryMB = memoryReportService.getUsedMemoryInMB()
 
@@ -69,9 +74,11 @@ class AndroidMemoryReportServiceTest {
 
     @Test
     fun `getFreeMemoryInMB should return correct free memory in MB`() {
-        every { activityManager.getMemoryInfo(any()) } answers { firstArg<ActivityManager.MemoryInfo>().apply {
-            availMem = 512L * 1024L * 1024L    // 512 MB free
-        }}
+        every { activityManager.getMemoryInfo(any()) } answers {
+            firstArg<ActivityManager.MemoryInfo>().apply {
+                availMem = 512L * 1024L * 1024L // 512 MB free
+            }
+        }
 
         val freeMemoryMB = memoryReportService.getFreeMemoryInMB()
 
@@ -80,9 +87,11 @@ class AndroidMemoryReportServiceTest {
 
     @Test
     fun `getTotalMemoryInMB should return correct total memory in MB`() {
-        every { activityManager.getMemoryInfo(any()) } answers { firstArg<ActivityManager.MemoryInfo>().apply {
-            totalMem = 1024L * 1024L * 1024L  // 1 GB
-        }}
+        every { activityManager.getMemoryInfo(any()) } answers {
+            firstArg<ActivityManager.MemoryInfo>().apply {
+                totalMem = 1024L * 1024L * 1024L // 1 GB
+            }
+        }
 
         val totalMemoryMB = memoryReportService.getTotalMemoryInMB()
 

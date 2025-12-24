@@ -8,15 +8,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.OrderedTextList
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
@@ -40,17 +40,17 @@ fun TradeGuideTradeRules() {
         nextDisabled = !localUserAgreed,
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
-        showJumpToBottom = true
+        showJumpToBottom = true,
     ) {
-        BisqText.h3Light("bisqEasy.tradeGuide.rules.headline".i18n())
+        BisqText.H3Light("bisqEasy.tradeGuide.rules.headline".i18n())
 
         BisqGap.V2()
 
         OrderedTextList(
             "bisqEasy.tradeGuide.rules.content".i18n(),
-            regex=  "- ",
+            regex = "- ",
             style = { t, m ->
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = t,
                     modifier = m,
                     color = BisqTheme.colors.light_grey40,
@@ -63,20 +63,19 @@ fun TradeGuideTradeRules() {
         LinkButton(
             "action.learnMore".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
-            onClick = { presenter.navigateSecurityLearnMore() }
+            onClick = { presenter.navigateSecurityLearnMore() },
         )
 
         BisqGap.V1()
 
-        if (!userAgreed)
+        if (!userAgreed) {
             BisqCheckbox(
-                "tac.confirm".i18n(),
+                label = "tac.confirm".i18n(),
                 checked = localUserAgreed,
                 onCheckedChange = {
                     localUserAgreed = it
-                }
+                },
             )
-
+        }
     }
 }
-

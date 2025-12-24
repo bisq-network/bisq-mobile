@@ -3,21 +3,24 @@ package network.bisq.mobile.domain.utils
 import kotlin.random.Random
 
 object StringUtils {
-    private val allowedEncoding = BooleanArray(256).apply {
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
-            .forEach { this[it.code] = true }
-    }
+    private val allowedEncoding =
+        BooleanArray(256).apply {
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
+                .forEach { this[it.code] = true }
+        }
 
     private val ALLOWED_CHARS = ('A'..'Z') + ('a'..'z') + ('0'..'9')
     private val random = Random.Default
 
-    fun String.truncate(maxLength: Int, ellipsis: String = "..."): String {
-        return if (this.length > maxLength) {
+    fun String.truncate(
+        maxLength: Int,
+        ellipsis: String = "...",
+    ): String =
+        if (this.length > maxLength) {
             this.take(maxLength - ellipsis.length) + ellipsis
         } else {
             this
         }
-    }
 
     fun String.urlEncode(): String {
         val bytes = this.encodeToByteArray()
@@ -58,11 +61,10 @@ object StringUtils {
         return c in '0'..'9' || c in 'A'..'F' || c in 'a'..'f'
     }
 
-    fun randomAlphaNum(length: Int = 20): String {
-        return buildString {
+    fun randomAlphaNum(length: Int = 20): String =
+        buildString {
             repeat(length) {
                 append(ALLOWED_CHARS.random(random))
             }
         }
-    }
 }

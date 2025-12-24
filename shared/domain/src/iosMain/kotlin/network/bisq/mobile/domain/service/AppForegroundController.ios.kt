@@ -9,7 +9,9 @@ import platform.UIKit.UIApplicationDidEnterBackgroundNotification
 import platform.UIKit.UIApplicationWillEnterForegroundNotification
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class AppForegroundController : ForegroundDetector, Logging {
+actual class AppForegroundController :
+    ForegroundDetector,
+    Logging {
     private val _isForeground = MutableStateFlow(true)
     override val isForeground: StateFlow<Boolean> get() = _isForeground.asStateFlow()
 
@@ -18,27 +20,26 @@ actual class AppForegroundController : ForegroundDetector, Logging {
         notificationCenter.addObserverForName(
             name = UIApplicationDidEnterBackgroundNotification,
             `object` = null,
-            queue = null
+            queue = null,
         ) { notification ->
             onAppDidEnterBackground()
         }
         notificationCenter.addObserverForName(
             name = UIApplicationWillEnterForegroundNotification,
             `object` = null,
-            queue = null
+            queue = null,
         ) { notification ->
             onAppWillEnterForeground()
         }
     }
 
     private fun onAppDidEnterBackground() {
-        log.d {"App is in foreground -> false" }
+        log.d { "App is in foreground -> false" }
         _isForeground.value = false
-
     }
 
     private fun onAppWillEnterForeground() {
-        log.d {"App is in foreground -> true" }
+        log.d { "App is in foreground -> true" }
         _isForeground.value = true
     }
 }

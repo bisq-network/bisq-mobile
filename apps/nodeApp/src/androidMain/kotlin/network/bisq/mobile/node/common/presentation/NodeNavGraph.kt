@@ -13,9 +13,12 @@ import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
-fun NodeNavGraph(rootNavController: NavHostController) {
+fun NodeNavGraph(
+    rootNavController: NavHostController,
+    modifier: Modifier = Modifier,
+) {
     NavHost(
-        modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
+        modifier = modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
         startDestination = NavRoute.Splash,
     ) {

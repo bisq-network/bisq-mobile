@@ -1,12 +1,14 @@
+@file:Suppress("ktlint:standard:no-empty-file")
+
 package network.bisq.mobile.domain.data.replicated.account.payment_method
 
 // Not used now
-//data class FiatPaymentMethodVO(
+// data class FiatPaymentMethodVO(
 //    override val name: String,
 //    override val paymentRail: FiatPaymentRailEnum,
 //    override val displayString: String = name,
 //    override val shortDisplayString: String = name
-//) : PaymentMethodVO<FiatPaymentRailEnum>(name, paymentRail, displayString, shortDisplayString) {
+// ) : PaymentMethodVO<FiatPaymentRailEnum>(name, paymentRail, displayString, shortDisplayString) {
 //
 //    companion object {
 //        fun fromPaymentRail(paymentRail: FiatPaymentRailEnum): FiatPaymentMethodVO {
@@ -17,4 +19,4 @@ package network.bisq.mobile.domain.data.replicated.account.payment_method
 //            return FiatPaymentMethodVO(customName, FiatPaymentRailEnum.CUSTOM)
 //        }
 //    }
-//}
+// }

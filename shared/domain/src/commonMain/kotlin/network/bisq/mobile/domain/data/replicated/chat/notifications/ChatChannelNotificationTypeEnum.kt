@@ -4,5 +4,5 @@ enum class ChatChannelNotificationTypeEnum {
     GLOBAL_DEFAULT, // As defined in settings
     ALL,
     MENTION,
-    OFF
+    OFF,
 }

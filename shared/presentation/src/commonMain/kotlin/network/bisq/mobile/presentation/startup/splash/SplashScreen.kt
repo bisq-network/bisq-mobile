@@ -20,8 +20,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.BisqLogoGrey
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
@@ -40,29 +40,30 @@ fun SplashScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         BisqStaticScaffold(
             verticalArrangement = Arrangement.SpaceBetween,
-            snackbarHostState = presenter.getSnackState()
+            snackbarHostState = presenter.getSnackState(),
         ) {
             Box(
                 modifier = Modifier.fillMaxSize().weight(1f),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 BisqLogoGrey(modifier = Modifier.size(155.dp))
             }
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqText.baseLight(
+                BisqText.BaseLight(
                     text = appNameAndVersion,
                     color = BisqTheme.colors.mid_grey20,
-                    modifier = Modifier.padding(bottom = 20.dp)
+                    modifier = Modifier.padding(bottom = 20.dp),
                 )
 
                 BisqProgressBar(progress)
 
-                BisqText.baseRegularGrey(
+                BisqText.BaseRegularGrey(
                     text = state,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
@@ -136,7 +137,6 @@ fun SplashScreen() {
                     dismissOnClickOutside = false,
                 )
             }
-
         }
     }
 }

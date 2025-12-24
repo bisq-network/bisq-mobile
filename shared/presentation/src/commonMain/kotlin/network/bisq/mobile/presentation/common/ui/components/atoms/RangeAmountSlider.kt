@@ -14,35 +14,35 @@ fun RangeAmountSlider(
     maxValue: Float? = null,
     leftMarkerValue: Float? = null,
     rightMarkerValue: Float? = null,
-    onRangeChangeFinished: (() -> Unit)? = null,
+    onRangeChangeFinish: (() -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         AmountSlider(
             value = minRangeValue,
-            max= maxValue ?: 1f,
-            leftMarker= leftMarkerValue,
-            rightMarker= rightMarkerValue,
+            max = maxValue ?: 1f,
+            leftMarker = leftMarkerValue,
+            rightMarker = rightMarkerValue,
             onValueChange = { value ->
                 if (value > maxRangeValue) {
                     onMaxRangeValueChange(value)
                 }
                 onMinRangeValueChange(value)
             },
-            onValueChangeFinished = onRangeChangeFinished
+            onValueChangeFinished = onRangeChangeFinish,
         )
 
         AmountSlider(
             value = maxRangeValue,
-            max= maxValue ?: 1f,
-            leftMarker= leftMarkerValue,
-            rightMarker= rightMarkerValue,
+            max = maxValue ?: 1f,
+            leftMarker = leftMarkerValue,
+            rightMarker = rightMarkerValue,
             onValueChange = { value ->
                 if (value < minRangeValue) {
                     onMinRangeValueChange(value)
                 }
                 onMaxRangeValueChange(value)
             },
-            onValueChangeFinished = onRangeChangeFinished
+            onValueChangeFinished = onRangeChangeFinish,
         )
     }
 }

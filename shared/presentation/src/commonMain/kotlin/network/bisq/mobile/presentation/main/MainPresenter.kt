@@ -46,8 +46,8 @@ open class MainPresenter(
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val urlLauncher: UrlLauncher,
     private val applicationLifecycleService: ApplicationLifecycleService,
-) : BasePresenter(null), AppPresenter {
-
+) : BasePresenter(null),
+    AppPresenter {
     // Observable state
     private val _isMainContentVisible = MutableStateFlow(false)
     override val isMainContentVisible: StateFlow<Boolean> get() = _isMainContentVisible.asStateFlow()
@@ -70,37 +70,39 @@ open class MainPresenter(
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> =
         tradesServiceFacade.openTradeItems
             .flatMapLatest { openTradeItems ->
-                val flowsList: List<Flow<Pair<String, Int>>> = openTradeItems.map { trade ->
-                    combine(
-                        trade.bisqEasyOpenTradeChannelModel.chatMessages,
-                        tradeReadStateRepository.data.map { it.map },
-                        userProfileServiceFacade.ignoredProfileIds,
-                    ) { messages, readStates, ignoredIds ->
-                        // TODO: refactor to filter visible messages based on ignore at trade.bisqEasyOpenTradeChannelModel.chatMessages for consistency
-                        // this is a duplicated logic from OpenTradePresenter msgCount collection
-                        val visibleMessages = messages.filter {
-                            when (it.chatMessageType) {
-                                ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId !in ignoredIds
-                                else -> true
-                            }
+                val flowsList: List<Flow<Pair<String, Int>>> =
+                    openTradeItems.map { trade ->
+                        combine(
+                            trade.bisqEasyOpenTradeChannelModel.chatMessages,
+                            tradeReadStateRepository.data.map { it.map },
+                            userProfileServiceFacade.ignoredProfileIds,
+                        ) { messages, readStates, ignoredIds ->
+                            // TODO: refactor to filter visible messages based on ignore at trade.bisqEasyOpenTradeChannelModel.chatMessages for consistency
+                            // this is a duplicated logic from OpenTradePresenter msgCount collection
+                            val visibleMessages =
+                                messages.filter {
+                                    when (it.chatMessageType) {
+                                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId !in ignoredIds
+                                        else -> true
+                                    }
+                                }
+                            val unread =
+                                (visibleMessages.size - readStates.getOrElse(trade.tradeId) { 0 }).coerceAtLeast(
+                                    0,
+                                )
+                            trade.tradeId to unread
                         }
-                        val unread =
-                            (visibleMessages.size - readStates.getOrElse(trade.tradeId) { 0 }).coerceAtLeast(
-                                0
-                            )
-                        trade.tradeId to unread
                     }
-                }
                 if (flowsList.isEmpty()) {
                     flowOf(emptyMap())
                 } else {
                     combine(flowsList) { pairs: Array<Pair<String, Int>> ->
-                        pairs.filter { it.second > 0 }
+                        pairs
+                            .filter { it.second > 0 }
                             .associate { it.first to it.second }
                     }
                 }
-            }
-            .stateIn(
+            }.stateIn(
                 presenterScope,
                 SharingStarted.Lazily,
                 emptyMap(),
@@ -140,9 +142,12 @@ open class MainPresenter(
 
         log.i { "Lifecycle: View ${if (view != null) view!!::class.simpleName else ""} attached to presenter ${this::class.simpleName}" }
 
-        languageCode.filter { it.isNotEmpty() }.onEach {
-            settingsService.setLanguageCode(it)
-        }.take(1).launchIn(presenterScope)
+        languageCode
+            .filter { it.isNotEmpty() }
+            .onEach {
+                settingsService.setLanguageCode(it)
+            }.take(1)
+            .launchIn(presenterScope)
     }
 
     @CallSuper
@@ -189,13 +194,13 @@ open class MainPresenter(
      */
     protected fun handleInitializationError(
         exception: Throwable,
-        context: String = "Initialization"
+        context: String = "Initialization",
     ) {
         // Use the existing error handling infrastructure
         presenterScope.launch {
             GenericErrorHandler.handleGenericError(
                 "Initialization process failed during: $context",
-                exception
+                exception,
             )
         }
     }

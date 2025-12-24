@@ -3,4 +3,7 @@ package network.bisq.mobile.client.common.domain.service.trades
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TradeEventVO(val tradeEventType: TradeEventTypeEnum, val data: String? = null)
+data class TradeEventVO(
+    val tradeEventType: TradeEventTypeEnum,
+    val data: String? = null,
+)

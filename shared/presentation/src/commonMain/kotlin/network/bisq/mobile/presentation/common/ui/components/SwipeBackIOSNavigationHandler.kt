@@ -2,7 +2,12 @@ package network.bisq.mobile.presentation.common.ui.components
 
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -18,7 +23,7 @@ import org.koin.compose.koinInject
 @Composable
 fun SwipeBackIOSNavigationHandler(
     navController: NavController,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val presenter: AppPresenter = koinInject()
 
@@ -30,40 +35,41 @@ fun SwipeBackIOSNavigationHandler(
     val screenWidthPx = with(density) { screenWidthDp.toPx() }
     val threshold = screenWidthPx / 3
 
-    var cumulativeDrag by remember { mutableStateOf(0f) }
+    var cumulativeDrag by remember { mutableFloatStateOf(0f) }
 
     Box(
-        modifier = if (presenter.isIOS()) {
-            Modifier.pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        cumulativeDrag = 0f
-                    },
-                    onDragEnd = {
-                        cumulativeDrag = 0f
-                    },
-                    onDragCancel = {
-                    },
-                    onHorizontalDrag = { change, dragAmount ->
-                        cumulativeDrag += dragAmount.takeIf { it > 0 } ?: 0f
-
-                        if (cumulativeDrag >= threshold) {
-                            if (navController.currentBackStackEntry != null) {
-                                if (presenter.isIOS()) {
-                                    presenter.onMainBackNavigation()
-                                } else {
-                                    navController.popBackStack()
-                                }
-                            }
+        modifier =
+            if (presenter.isIOS()) {
+                Modifier.pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragStart = {
                             cumulativeDrag = 0f
-                        }
-                    }
-                )
-            }
-        } else {
-            // Empty box if its android (these days native Android implements both swipe directions meaning "go back")
-            Modifier
-        }
+                        },
+                        onDragEnd = {
+                            cumulativeDrag = 0f
+                        },
+                        onDragCancel = {
+                        },
+                        onHorizontalDrag = { change, dragAmount ->
+                            cumulativeDrag += dragAmount.takeIf { it > 0 } ?: 0f
+
+                            if (cumulativeDrag >= threshold) {
+                                if (navController.currentBackStackEntry != null) {
+                                    if (presenter.isIOS()) {
+                                        presenter.onMainBackNavigation()
+                                    } else {
+                                        navController.popBackStack()
+                                    }
+                                }
+                                cumulativeDrag = 0f
+                            }
+                        },
+                    )
+                }
+            } else {
+                // Empty box if its android (these days native Android implements both swipe directions meaning "go back")
+                Modifier
+            },
     ) {
         content()
     }

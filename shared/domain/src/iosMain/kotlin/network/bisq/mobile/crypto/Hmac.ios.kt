@@ -8,7 +8,10 @@ import platform.CoreCrypto.CC_SHA256_DIGEST_LENGTH
 import platform.CoreCrypto.kCCHmacAlgSHA256
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun hmacSha256(key: ByteArray, data: ByteArray): ByteArray {
+actual fun hmacSha256(
+    key: ByteArray,
+    data: ByteArray,
+): ByteArray {
     val result = ByteArray(CC_SHA256_DIGEST_LENGTH)
 
     key.usePinned { keyPinned ->
@@ -20,7 +23,7 @@ actual fun hmacSha256(key: ByteArray, data: ByteArray): ByteArray {
                     key.size.toULong(),
                     dataPinned.addressOf(0),
                     data.size.toULong(),
-                    resultPinned.addressOf(0)
+                    resultPinned.addressOf(0),
                 )
             }
         }

@@ -13,7 +13,9 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 
-abstract class MarketPriceServiceFacade(private val settingsRepository: SettingsRepository) : ServiceFacade() {
+abstract class MarketPriceServiceFacade(
+    private val settingsRepository: SettingsRepository,
+) : ServiceFacade() {
     protected val _selectedMarketPriceItem: MutableStateFlow<MarketPriceItem?> = MutableStateFlow(null)
     val selectedMarketPriceItem: StateFlow<MarketPriceItem?> get() = _selectedMarketPriceItem
 
@@ -26,8 +28,11 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
 
     // Abstract methods that must be implemented by concrete classes
     abstract fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem?
+
     abstract fun findUSDMarketPriceItem(): MarketPriceItem?
+
     abstract fun refreshSelectedFormattedMarketPrice()
+
     abstract fun selectMarket(marketListItem: MarketListItem)
 
     /**
@@ -39,7 +44,7 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
         _globalPriceUpdate.value = timestamp
         log.d { "Global price update triggered at timestamp: $timestamp" }
     }
-    
+
     protected fun persistSelectedMarketToSettings(marketListItem: MarketListItem) {
         serviceScope.launch {
             try {
@@ -56,7 +61,7 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
             }
         }
     }
-    
+
     protected fun restoreSelectedMarketFromSettings(onMarketRestored: (MarketVO) -> Unit) {
         // onMarketRestored is Blocking on client (runBlocking waits for mutex)
         serviceScope.launch(Dispatchers.IO) {
@@ -71,7 +76,6 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
                         runCatching { onMarketRestored(marketVO) }.onFailure {
                             log.e(it) { "Failed callback on restore selected market" }
                         }
-
                     }
                 }
             } catch (e: Exception) {

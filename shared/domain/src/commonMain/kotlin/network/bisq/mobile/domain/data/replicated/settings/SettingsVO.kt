@@ -29,15 +29,18 @@ data class SettingsVO(
     val maxTradePriceDeviation: Double,
     val useAnimations: Boolean = true,
     val selectedMarket: MarketVO,
-    val numDaysAfterRedactingTradeData: Int
+    val numDaysAfterRedactingTradeData: Int,
 )
 
-val settingsVODemoObj = SettingsVO(true,
-    true,
-    true,
-    "EN",
-    setOf("EN", "SP"),
-    1.0,
-    true,
-    MarketVO("AUD", "AUD"),
-    1)
+val settingsVODemoObj =
+    SettingsVO(
+        true,
+        true,
+        true,
+        "EN",
+        setOf("EN", "SP"),
+        1.0,
+        true,
+        MarketVO("AUD", "AUD"),
+        1,
+    )

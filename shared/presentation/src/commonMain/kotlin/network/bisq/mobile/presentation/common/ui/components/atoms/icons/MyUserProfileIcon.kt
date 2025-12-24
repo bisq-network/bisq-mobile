@@ -25,17 +25,17 @@ import org.jetbrains.compose.resources.painterResource
 fun MyUserProfileIcon(
     userProfile: UserProfileVO,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
-    modifier: Modifier = Modifier,
     connectivityStatus: ConnectivityStatus,
-    showAnimations: Boolean
+    showAnimations: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val useAnimation = showAnimations && connectivityStatus == CONNECTED_AND_DATA_RECEIVED
     Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
-        if (useAnimation)
+        if (useAnimation) {
             ShineOverlay {
                 UserProfileIcon(userProfile, userProfileIconProvider, BisqUIConstants.topBarAvatarSize)
             }
-        else {
+        } else {
             UserProfileIcon(userProfile, userProfileIconProvider, BisqUIConstants.topBarAvatarSize)
         }
         ConnectivityIndicator(connectivityStatus)
@@ -44,19 +44,20 @@ fun MyUserProfileIcon(
 
 @Composable
 fun ConnectivityIndicator(connectivityStatus: ConnectivityStatus) {
-    val (iconRes, description) = when (connectivityStatus) {
-        CONNECTED_AND_DATA_RECEIVED ->
-            Res.drawable.connected_and_data_received to "Connected and data received"
+    val (iconRes, description) =
+        when (connectivityStatus) {
+            CONNECTED_AND_DATA_RECEIVED ->
+                Res.drawable.connected_and_data_received to "Connected and data received"
 
-        REQUESTING_INVENTORY ->
-            Res.drawable.requesting_inventory to "Requesting inventory data"
+            REQUESTING_INVENTORY ->
+                Res.drawable.requesting_inventory to "Requesting inventory data"
 
-        else ->
-            Res.drawable.no_connections to "No connections"
-    }
+            else ->
+                Res.drawable.no_connections to "No connections"
+        }
 
     Image(
         painter = painterResource(iconRes),
-        contentDescription = description
+        contentDescription = description,
     )
 }

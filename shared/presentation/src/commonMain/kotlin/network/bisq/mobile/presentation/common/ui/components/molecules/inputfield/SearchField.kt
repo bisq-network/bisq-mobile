@@ -17,25 +17,26 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
 fun BisqSearchField(
-    label: String = "",
     value: String,
-    onValueChanged: (String, Boolean) -> Unit,
+    onValueChange: (String, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "",
     placeholder: String = "action.search".i18n(),
     rightSuffix: (@Composable () -> Unit)? = null,
     disabled: Boolean = false,
-    modifier: Modifier = Modifier
 ) {
-
     BisqTextField(
         label = label,
         value = value,
-        onValueChange = onValueChanged,
+        onValueChange = onValueChange,
         placeholder = placeholder,
         leftSuffix = { SearchIcon() },
-        rightSuffixModifier = if (rightSuffix == null)
-            Modifier.width(50.dp)
-        else
-            Modifier.width(80.dp),
+        rightSuffixModifier =
+            if (rightSuffix == null) {
+                Modifier.width(50.dp)
+            } else {
+                Modifier.width(80.dp)
+            },
         rightSuffix = {
             Row(horizontalArrangement = Arrangement.End) {
                 if (value.isNotEmpty()) {
@@ -43,7 +44,7 @@ fun BisqSearchField(
                         iconOnly = {
                             CloseIcon(color = BisqTheme.colors.mid_grey20)
                         },
-                        onClick = { onValueChanged("", true) },
+                        onClick = { onValueChange("", true) },
                         type = BisqButtonType.Clear,
                         modifier = Modifier.weight(1f),
                     )
@@ -65,5 +66,4 @@ fun BisqSearchField(
         disabled = disabled,
         modifier = modifier,
     )
-
 }

@@ -18,17 +18,16 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter.PriceType
 
 class CreateOfferPricePresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter
+    private val createOfferPresenter: CreateOfferPresenter,
 ) : BasePresenter(mainPresenter) {
-
     var priceTypeTitle: String
     var fixPriceDescription: String
     var priceTypes: List<PriceType> = PriceType.entries.toList()
@@ -55,6 +54,7 @@ class CreateOfferPricePresenter(
 
     private val _showWhyPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showWhyPopup: StateFlow<Boolean> get() = _showWhyPopup.asStateFlow()
+
     fun setShowWhyPopup(newValue: Boolean) {
         _showWhyPopup.value = newValue
     }
@@ -67,10 +67,12 @@ class CreateOfferPricePresenter(
         percentagePriceValue = createOfferModel.percentagePriceValue
         _formattedPercentagePrice.value = PercentageFormatter.format(percentagePriceValue, false)
         _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
-        priceTypeTitle = if (priceType.value == PriceType.PERCENTAGE)
-            "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage".i18n()
-        else
-            "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed".i18n()
+        priceTypeTitle =
+            if (priceType.value == PriceType.PERCENTAGE) {
+                "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage".i18n()
+            } else {
+                "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed".i18n()
+            }
 
         fixPriceDescription = "bisqEasy.price.tradePrice.inputBoxText".i18n(createOfferModel.market!!.marketCodes)
 
@@ -127,24 +129,26 @@ class CreateOfferPricePresenter(
                     onFixPriceChanged(currentFixedPriceString, true)
                 }
             }
-
         } catch (e: Exception) {
             log.e(e) { "Failed to revalidate prices after market price change: ${e.message}" }
         }
     }
 
-    fun getPriceTypeDisplayString(priceType: PriceType): String {
-        return if (priceType == PriceType.PERCENTAGE)
+    fun getPriceTypeDisplayString(priceType: PriceType): String =
+        if (priceType == PriceType.PERCENTAGE) {
             "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage".i18n()
-        else
+        } else {
             "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed".i18n()
-    }
+        }
 
     fun onSelectPriceType(value: PriceType) {
         _priceType.value = value
     }
 
-    fun onPercentagePriceChanged(value: String, isValid: Boolean) {
+    fun onPercentagePriceChanged(
+        value: String,
+        isValid: Boolean,
+    ) {
         try {
             percentagePriceValue = PercentageParser.parse(value)
             _formattedPercentagePrice.value = PercentageFormatter.format(this.percentagePriceValue, false)
@@ -166,7 +170,10 @@ class CreateOfferPricePresenter(
         }
     }
 
-    fun onFixPriceChanged(value: String, isValid: Boolean) {
+    fun onFixPriceChanged(
+        value: String,
+        isValid: Boolean,
+    ) {
         try {
             // Validate input and market
             if (value.isBlank()) {
@@ -225,11 +232,12 @@ class CreateOfferPricePresenter(
             _formattedPriceValid.value = isValid
 
             if (isBuy.value) {
-                val percentageValue = PriceUtil.findPercentFromMarketPrice(
-                    marketPriceServiceFacade,
-                    FixPriceSpecVO(priceQuote),
-                    market,
-                )
+                val percentageValue =
+                    PriceUtil.findPercentFromMarketPrice(
+                        marketPriceServiceFacade,
+                        FixPriceSpecVO(priceQuote),
+                        market,
+                    )
 
                 updateHintText(percentageValue)
             }
@@ -282,18 +290,18 @@ class CreateOfferPricePresenter(
     }
 
     private fun updateHintText(percentageValue: Double) {
-
-        val feedbackRating = if (percentageValue < -0.05) {
-            "bisqEasy.price.feedback.sentence.veryLow".i18n()
-        } else if (percentageValue < 0) {
-            "bisqEasy.price.feedback.sentence.low".i18n()
-        } else if (percentageValue < 0.05) {
-            "bisqEasy.price.feedback.sentence.some".i18n()
-        } else if (percentageValue < 0.15) {
-            "bisqEasy.price.feedback.sentence.good".i18n()
-        } else {
-            "bisqEasy.price.feedback.sentence.veryGood".i18n()
-        }
+        val feedbackRating =
+            if (percentageValue < -0.05) {
+                "bisqEasy.price.feedback.sentence.veryLow".i18n()
+            } else if (percentageValue < 0) {
+                "bisqEasy.price.feedback.sentence.low".i18n()
+            } else if (percentageValue < 0.05) {
+                "bisqEasy.price.feedback.sentence.some".i18n()
+            } else if (percentageValue < 0.15) {
+                "bisqEasy.price.feedback.sentence.good".i18n()
+            } else {
+                "bisqEasy.price.feedback.sentence.veryGood".i18n()
+            }
 
         _hintText.value = "bisqEasy.price.feedback.buyOffer.sentence".i18n(feedbackRating)
     }
@@ -304,7 +312,6 @@ class CreateOfferPricePresenter(
         }
         navigateBack()
     }
-
 
     fun onClose() {
         if (isValid(percentagePriceValue)) {
@@ -322,12 +329,11 @@ class CreateOfferPricePresenter(
 
     private fun commitToModel() {
         createOfferPresenter.commitPrice(
-            priceType.value, percentagePriceValue, priceQuote
+            priceType.value,
+            percentagePriceValue,
+            priceQuote,
         )
     }
 
-    private fun isValid(percentagePriceValue: Double): Boolean {
-        return percentagePriceValue >= -0.1 && percentagePriceValue <= 0.5
-    }
-
+    private fun isValid(percentagePriceValue: Double): Boolean = percentagePriceValue >= -0.1 && percentagePriceValue <= 0.5
 }

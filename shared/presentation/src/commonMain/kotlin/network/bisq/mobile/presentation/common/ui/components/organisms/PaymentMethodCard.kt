@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:mutable-params-check")
+
 package network.bisq.mobile.presentation.common.ui.components.organisms
 
 import androidx.compose.foundation.layout.Arrangement
@@ -14,8 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentTypeCard
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.CustomPaymentField
-import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -30,35 +32,34 @@ fun PaymentMethodCard(
     onRemoveCustomPayment: ((String) -> Unit)? = null,
     isPaymentMethod: Boolean = true,
 ) {
-
     val selected by selectedPaymentMethods.collectAsState()
 
     data class Entry(
         val key: String,
         val imagePath: String,
         val displayName: String,
-        val isCustom: Boolean
+        val isCustom: Boolean,
     )
 
-    val entries = availablePaymentMethods.toList()
-        .mapIndexed { idx, key ->
-            val (displayName, hasNoEntry) = i18NPaymentMethod(key)
-            Entry(key, imagePaths.getOrElse(idx) { "" }, displayName, hasNoEntry)
-        }
-        .sortedBy { it.displayName }
+    val entries =
+        availablePaymentMethods
+            .toList()
+            .mapIndexed { idx, key ->
+                val (displayName, hasNoEntry) = i18NPaymentMethod(key)
+                Entry(key, imagePaths.getOrElse(idx) { "" }, displayName, hasNoEntry)
+            }.sortedBy { it.displayName }
 
     Column(
         modifier = Modifier.padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        BisqText.largeLightGrey(title)
+        BisqText.LargeLightGrey(title)
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-
             entries.forEachIndexed { index, entry ->
                 PaymentTypeCard(
                     image = entry.imagePath,
@@ -68,24 +69,23 @@ fun PaymentMethodCard(
                     isSelected = selected.contains(entry.key),
                     isCustomPaymentMethod = entry.isCustom,
                     showRemoveCustom = showCustomPayment,
-                    isPaymentMethod = isPaymentMethod
+                    isPaymentMethod = isPaymentMethod,
                 )
             }
 
             if (showCustomPayment) {
                 CustomPaymentField(onAddCustomPayment = onAddCustomPayment)
             }
-
         }
     }
 }
 
 @Composable
 private fun PaymentMethodCardContent(
-    language: String = "en",
     imagePaths: List<String>,
     availablePaymentMethods: Set<String>,
     selectedPaymentMethods: MutableStateFlow<Set<String>>,
+    language: String = "en",
 ) {
     BisqTheme.Preview(language = language) {
         PaymentMethodCard(
@@ -101,16 +101,19 @@ private fun PaymentMethodCardContent(
 
 @Preview
 @Composable
-private fun PaymentMethodCard_En() = PaymentMethodCardContent(
-    imagePaths = emptyList(),
-    availablePaymentMethods = emptySet(),
-    selectedPaymentMethods =  MutableStateFlow(emptySet())
-)
+private fun PaymentMethodCard_EnPreview() =
+    PaymentMethodCardContent(
+        imagePaths = emptyList(),
+        availablePaymentMethods = emptySet(),
+        selectedPaymentMethods = MutableStateFlow(emptySet()),
+    )
+
 @Preview
 @Composable
-private fun PaymentMethodCard_Ru() = PaymentMethodCardContent(
-    language = "ru",
-    imagePaths = emptyList(),
-    availablePaymentMethods = emptySet(),
-    selectedPaymentMethods =  MutableStateFlow(emptySet())
-)
+private fun PaymentMethodCard_RuPreview() =
+    PaymentMethodCardContent(
+        language = "ru",
+        imagePaths = emptyList(),
+        availablePaymentMethods = emptySet(),
+        selectedPaymentMethods = MutableStateFlow(emptySet()),
+    )

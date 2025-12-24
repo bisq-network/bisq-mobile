@@ -11,8 +11,8 @@ import network.bisq.mobile.domain.utils.Logging
 
 open class SettingsRepositoryImpl(
     private val settingsStore: DataStore<Settings>,
-) : SettingsRepository, Logging {
-
+) : SettingsRepository,
+    Logging {
     override val data: Flow<Settings>
         get() =
             settingsStore.data.catch { exception ->

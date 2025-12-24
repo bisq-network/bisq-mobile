@@ -53,38 +53,40 @@ fun BackupScreen() {
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
-
-        BisqText.smallLight(
+        BisqText.SmallLight(
             text = "mobile.resources.backup.info".i18n(),
             color = BisqTheme.colors.mid_grey20,
-            modifier = Modifier
-                .padding(
-                    vertical = BisqUIConstants.ScreenPaddingHalf,
-                    horizontal = BisqUIConstants.ScreenPadding2X
-                )
+            modifier =
+                Modifier
+                    .padding(
+                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                        horizontal = BisqUIConstants.ScreenPadding2X,
+                    ),
         )
         BisqButton(
             text = "mobile.resources.backup.button".i18n(),
             onClick = { presenter.onAction(BackupUiActions.ShowBackupDialog) },
             type = BisqButtonType.Outline,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    vertical = BisqUIConstants.ScreenPaddingHalf,
-                    horizontal = BisqUIConstants.ScreenPadding2X
-                )
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                        horizontal = BisqUIConstants.ScreenPadding2X,
+                    ),
         )
 
         BisqGap.V2()
 
-        BisqText.smallLight(
+        BisqText.SmallLight(
             text = "mobile.resources.restore.info".i18n(),
             color = BisqTheme.colors.mid_grey20,
-            modifier = Modifier
-                .padding(
-                    vertical = BisqUIConstants.ScreenPaddingHalf,
-                    horizontal = BisqUIConstants.ScreenPadding2X
-                )
+            modifier =
+                Modifier
+                    .padding(
+                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                        horizontal = BisqUIConstants.ScreenPadding2X,
+                    ),
         )
 
         RestoreBackupButton(presenter::onAction)
@@ -109,7 +111,7 @@ fun BackupScreen() {
                 },
                 onDismissOverlay = {
                     presenter.onAction(BackupUiActions.DismissRestorePasswordDialog)
-                }
+                },
             )
         }
     }
@@ -128,36 +130,37 @@ private fun BackupPasswordDialog(
 
     val encryptAndBackup by remember {
         derivedStateOf {
-            if (password.isBlank())
+            if (password.isBlank()) {
                 "mobile.resources.backup.password.button.backup".i18n()
-            else
+            } else {
                 "mobile.resources.backup.password.button.encryptAndBackup".i18n()
+            }
         }
     }
     LaunchedEffect(password, confirmedPassword) {
-        validationError = when {
-            password.isBlank() && confirmedPassword.isBlank() -> null
-            password.length < 8 -> "validation.password.tooShort".i18n()
-            confirmedPassword.isNotBlank() && confirmedPassword != password -> "validation.password.notMatching".i18n()
-            else -> null
-        }
+        validationError =
+            when {
+                password.isBlank() && confirmedPassword.isBlank() -> null
+                password.length < 8 -> "validation.password.tooShort".i18n()
+                confirmedPassword.isNotBlank() && confirmedPassword != password -> "validation.password.notMatching".i18n()
+                else -> null
+            }
         arePasswordsValidOrEmpty =
             password.isBlank() && confirmedPassword.isBlank() ||
-                    (password.isNotBlank() && confirmedPassword == password && password.length >= 8)
-
+            (password.isNotBlank() && confirmedPassword == password && password.length >= 8)
     }
 
     BisqDialog(
         horizontalAlignment = Alignment.CenterHorizontally,
         marginTop = BisqUIConstants.ScreenPadding,
-        onDismissRequest = { onDismissBackupOverlay() }
+        onDismissRequest = { onDismissBackupOverlay() },
     ) {
-        BisqText.h4Regular(
+        BisqText.H4Regular(
             "mobile.resources.backup.password.headline".i18n(),
-            color = BisqTheme.colors.primary
+            color = BisqTheme.colors.primary,
         )
         BisqGap.V2()
-        BisqText.baseLight("mobile.resources.backup.password.info".i18n())
+        BisqText.BaseLight("mobile.resources.backup.password.info".i18n())
         BisqGap.V2()
         BisqTextField(
             value = password,
@@ -166,7 +169,7 @@ private fun BackupPasswordDialog(
                 password = newValue
             },
             isPasswordField = true,
-            validation = { validationError }
+            validation = { validationError },
         )
         BisqGap.V1()
         BisqTextField(
@@ -175,9 +178,8 @@ private fun BackupPasswordDialog(
             onValueChange = { newValue, isValid ->
                 confirmedPassword = newValue
             },
-
             isPasswordField = true,
-            validation = { validationError }
+            validation = { validationError },
         )
         BisqGap.V2()
         Column {
@@ -216,7 +218,7 @@ private fun BackupPasswordDialog(
                 showNoPasswordConfirm = false
                 onBackupDataDir("")
             },
-            onDismiss = { showNoPasswordConfirm = false }
+            onDismiss = { showNoPasswordConfirm = false },
         )
     }
 }
@@ -231,11 +233,11 @@ private fun RestorePasswordDialog(
     BisqDialog(
         horizontalAlignment = Alignment.CenterHorizontally,
         marginTop = BisqUIConstants.ScreenPadding,
-        onDismissRequest = { onDismissOverlay() }
+        onDismissRequest = { onDismissOverlay() },
     ) {
-        BisqText.h4Regular("mobile.resources.restore.password.headline".i18n(), color = BisqTheme.colors.primary)
+        BisqText.H4Regular("mobile.resources.restore.password.headline".i18n(), color = BisqTheme.colors.primary)
         BisqGap.V2()
-        BisqText.baseLight("mobile.resources.restore.password.info".i18n())
+        BisqText.BaseLight("mobile.resources.restore.password.info".i18n())
         BisqGap.V2()
         BisqTextField(
             value = password,
@@ -271,33 +273,37 @@ private fun WorkingDialog() {
     BisqDialog(
         horizontalAlignment = Alignment.CenterHorizontally,
         marginTop = BisqUIConstants.ScreenPadding,
-        onDismissRequest = { /* non-dismissable while restoring */ }
+        onDismissRequest = { /* non-dismissable while restoring */ },
     ) {
         CircularProgressIndicator()
     }
 }
 
 private class OpenDocumentWithPersist : ActivityResultContract<Array<String>, Uri?>() {
-    override fun createIntent(context: Context, input: Array<String>): Intent {
-        return Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+    override fun createIntent(
+        context: Context,
+        input: Array<String>,
+    ): Intent =
+        Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = if (input.isNotEmpty()) input.first() else "*/*"
             putExtra(Intent.EXTRA_MIME_TYPES, input)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
         }
-    }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
-        return if (resultCode == Activity.RESULT_OK) intent?.data else null
-    }
+    override fun parseResult(
+        resultCode: Int,
+        intent: Intent?,
+    ): Uri? = if (resultCode == Activity.RESULT_OK) intent?.data else null
 }
 
 @Composable
 private fun RestoreBackupButton(onAction: (BackupUiActions) -> Unit) {
-    val launcher = rememberLauncherForActivityResult(
-        contract = OpenDocumentWithPersist(),
-        onResult = { onAction(BackupUiActions.OnRestoreFromFileActivityResult(it)) },
-    )
+    val launcher =
+        rememberLauncherForActivityResult(
+            contract = OpenDocumentWithPersist(),
+            onResult = { onAction(BackupUiActions.OnRestoreFromFileActivityResult(it)) },
+        )
 
     BisqButton(
         text = "mobile.resources.restore.button".i18n(),
@@ -307,17 +313,18 @@ private fun RestoreBackupButton(onAction: (BackupUiActions) -> Unit) {
                 arrayOf(
                     "application/zip",
                     "application/octet-stream",
-                    "*/*"
-                )
+                    "*/*",
+                ),
             )
         },
         type = BisqButtonType.Outline,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                vertical = BisqUIConstants.ScreenPaddingHalf,
-                horizontal = BisqUIConstants.ScreenPadding2X
-            )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                    horizontal = BisqUIConstants.ScreenPadding2X,
+                ),
     )
 }
 
@@ -331,23 +338,22 @@ private fun ErrorDialog(
         onDismissRequest = onDismissRequest,
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ExclamationRedIcon()
             BisqGap.HQuarter()
-            BisqText.h4Regular("mobile.genericError.headline".i18n())
+            BisqText.H4Regular("mobile.genericError.headline".i18n())
         }
 
         BisqGap.V1()
 
-        BisqText.baseLight(errorMessage)
+        BisqText.BaseLight(errorMessage)
     }
 }
 
-
 @Preview
 @Composable
-fun BackupPasswordDialogPreview() {
+private fun BackupPasswordDialogPreview() {
     BisqTheme.Preview {
         BackupPasswordDialog({}, {})
     }

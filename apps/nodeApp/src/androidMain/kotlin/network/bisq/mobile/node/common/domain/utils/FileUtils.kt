@@ -14,7 +14,7 @@ import java.util.zip.ZipOutputStream
 fun copyDirectory(
     sourceDir: File,
     destDir: File,
-    excludedDirs: List<String>
+    excludedDirs: List<String>,
 ) {
     require(sourceDir.exists() && sourceDir.isDirectory) { "Source dir does not exist or is not a directory: ${sourceDir.absolutePath}" }
     if (!destDir.exists()) {
@@ -36,7 +36,10 @@ fun copyDirectory(
     }
 }
 
-fun zipDirectory(sourceDir: File, zipFile: File) {
+fun zipDirectory(
+    sourceDir: File,
+    zipFile: File,
+) {
     require(sourceDir.exists() && sourceDir.isDirectory) { "Source dir does not exist: ${sourceDir.absolutePath}" }
 
     zipFile.outputStream().use { fos ->
@@ -61,15 +64,19 @@ fun zipDirectory(sourceDir: File, zipFile: File) {
     }
 }
 
-fun unzipToDirectory(inputStream: InputStream, targetDir: File) {
+private const val MAX_TOTAL_UNCOMPRESSED_BYTES = 200L * 1024 * 1024 // 200 MiB
+private const val MAX_ENTRY_UNCOMPRESSED_BYTES = 50L * 1024 * 1024 // 50 MiB per file
+private const val MAX_ENTRIES = 10_000
+private const val MAX_DEPTH = 10
+private const val MAX_COMPRESSION_RATIO = 200.0 // uncompressed/compressed
+
+fun unzipToDirectory(
+    inputStream: InputStream,
+    targetDir: File,
+) {
     val logger = getLogger("unzipToDirectory")
 
     val allowedTopLevel = setOf("private", "settings")
-    val MAX_TOTAL_UNCOMPRESSED_BYTES = 200L * 1024 * 1024 // 200 MiB
-    val MAX_ENTRY_UNCOMPRESSED_BYTES = 50L * 1024 * 1024  // 50 MiB per file
-    val MAX_ENTRIES = 10_000
-    val MAX_DEPTH = 10
-    val MAX_COMPRESSION_RATIO = 200.0 // uncompressed/compressed
 
     ZipInputStream(BufferedInputStream(inputStream)).use { zis ->
         var entry: ZipEntry? = zis.nextEntry
@@ -154,9 +161,13 @@ fun unzipToDirectory(inputStream: InputStream, targetDir: File) {
     }
 }
 
-fun deleteFileInDirectory(targetDir: File, fileFilter: (File) -> Boolean = { true }) {
+fun deleteFileInDirectory(
+    targetDir: File,
+    fileFilter: (File) -> Boolean = { true },
+) {
     if (!targetDir.exists() || !targetDir.isDirectory) return
-    targetDir.listFiles()
+    targetDir
+        .listFiles()
         ?.filter { fileFilter.invoke(it) }
         ?.forEach { file ->
             if (file.isDirectory) {
@@ -167,7 +178,10 @@ fun deleteFileInDirectory(targetDir: File, fileFilter: (File) -> Boolean = { tru
         }
 }
 
-fun moveDirReplace(sourceDir: File, targetDir: File) {
+fun moveDirReplace(
+    sourceDir: File,
+    targetDir: File,
+) {
     require(sourceDir.exists() && sourceDir.isDirectory) { "Source dir does not exist or is not a directory: ${sourceDir.absolutePath}" }
 
     val logger = getLogger("moveDirReplace")

@@ -10,13 +10,14 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.inputfiel
 fun InvalidPaymentProofConfirmationDialog(
     paymentProofType: PaymentProofType,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
 ) {
-    val warningText = if (paymentProofType == PaymentProofType.BitcoinTx) {
+    val warningText =
+        if (paymentProofType == PaymentProofType.BitcoinTx) {
             "bisqEasy.tradeState.info.seller.phase3a.paymentProof.warning.MAIN_CHAIN".i18n()
         } else {
             "bisqEasy.tradeState.info.seller.phase3a.paymentProof.warning.LN".i18n()
-    }
+        }
 
     WarningConfirmationDialog(
         message = warningText,
@@ -27,5 +28,4 @@ fun InvalidPaymentProofConfirmationDialog(
         horizontalAlignment = Alignment.Start,
         verticalButtonPlacement = true,
     )
-
 }

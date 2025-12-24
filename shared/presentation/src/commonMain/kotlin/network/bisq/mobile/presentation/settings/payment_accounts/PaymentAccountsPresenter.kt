@@ -13,9 +13,9 @@ import network.bisq.mobile.presentation.main.MainPresenter
 
 open class PaymentAccountsPresenter(
     private val accountsServiceFacade: AccountsServiceFacade,
-    mainPresenter: MainPresenter
-) : BasePresenter(mainPresenter), IPaymentAccountSettingsPresenter {
-
+    mainPresenter: MainPresenter,
+) : BasePresenter(mainPresenter),
+    IPaymentAccountSettingsPresenter {
     override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = accountsServiceFacade.accounts
 
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = accountsServiceFacade.selectedAccount
@@ -47,7 +47,10 @@ open class PaymentAccountsPresenter(
         }
     }
 
-    override fun addAccount(newName: String, newDescription: String) {
+    override fun addAccount(
+        newName: String,
+        newDescription: String,
+    ) {
         if (accounts.value.find { it.accountName == newName } != null) {
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             return
@@ -55,12 +58,13 @@ open class PaymentAccountsPresenter(
         showLoading()
         presenterScope.launch {
             try {
-                val newAccount = UserDefinedFiatAccountVO(
-                    accountName = newName,
-                    UserDefinedFiatAccountPayloadVO(
-                        accountData = newDescription
+                val newAccount =
+                    UserDefinedFiatAccountVO(
+                        accountName = newName,
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = newDescription,
+                        ),
                     )
-                )
                 accountsServiceFacade.addAccount(newAccount)
                 showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n())
             } finally {
@@ -69,7 +73,10 @@ open class PaymentAccountsPresenter(
         }
     }
 
-    override fun saveAccount(newName: String, newDescription: String) {
+    override fun saveAccount(
+        newName: String,
+        newDescription: String,
+    ) {
         if (selectedAccount.value?.accountName != newName && accounts.value.find { it.accountName == newName } != null) {
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             return
@@ -78,12 +85,13 @@ open class PaymentAccountsPresenter(
         if (selectedAccount.value != null) {
             presenterScope.launch {
                 try {
-                    val newAccount = UserDefinedFiatAccountVO(
-                        accountName = newName,
-                        UserDefinedFiatAccountPayloadVO(
-                            accountData = newDescription
+                    val newAccount =
+                        UserDefinedFiatAccountVO(
+                            accountName = newName,
+                            UserDefinedFiatAccountPayloadVO(
+                                accountData = newDescription,
+                            ),
                         )
-                    )
                     accountsServiceFacade.saveAccount(newAccount)
                     showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n())
                 } finally {
@@ -105,12 +113,10 @@ open class PaymentAccountsPresenter(
                 } catch (e: Exception) {
                     log.e { "Couldn't remove account ${selectedAccount.value?.accountName}" }
                     showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(selectedAccount.value?.accountName ?: ""))
-
                 } finally {
                     hideLoading()
                 }
             }
         }
     }
-
 }

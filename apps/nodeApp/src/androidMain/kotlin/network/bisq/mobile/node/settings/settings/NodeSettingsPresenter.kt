@@ -11,10 +11,8 @@ import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
 class NodeSettingsPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
-    mainPresenter: MainPresenter
+    mainPresenter: MainPresenter,
 ) : SettingsPresenter(settingsServiceFacade, languageServiceFacade, mainPresenter) {
-
     private val _shouldShowPoWAdjustmentFactor = MutableStateFlow(true)
     override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> get() = _shouldShowPoWAdjustmentFactor.asStateFlow()
-
 }

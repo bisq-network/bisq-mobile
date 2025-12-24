@@ -26,7 +26,9 @@ import org.koin.android.ext.android.get
  *
  * android docs: https://developer.android.com/develop/background-work/services/foreground-services
  */
-open class ForegroundService : Service(), Logging {
+open class ForegroundService :
+    Service(),
+    Logging {
     companion object {
         const val SERVICE_NOTIF_ID = 1
         const val DEFAULT_NOTIFICATION_TITLE = "Bisq"
@@ -36,14 +38,15 @@ open class ForegroundService : Service(), Logging {
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(serviceJob + Dispatchers.Default)
 
-    private fun getServiceNotification(): Notification {
-        return try {
+    private fun getServiceNotification(): Notification =
+        try {
             val notificationController: NotificationControllerImpl = get()
 
             val contentPendingIntent =
                 notificationController.createNavDeepLinkPendingIntent(NavRoute.TabOpenTradeList)
 
-            NotificationCompat.Builder(this, NotificationChannels.BISQ_SERVICE)
+            NotificationCompat
+                .Builder(this, NotificationChannels.BISQ_SERVICE)
                 .setContentTitle("mobile.bisqService.title".i18n())
                 .setContentText("mobile.bisqService.subTitle".i18n())
                 .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))
@@ -53,32 +56,34 @@ open class ForegroundService : Service(), Logging {
         } catch (e: Exception) {
             log.e(e) { "Failed to create full service notification, falling back to minimal" }
             // Return a minimal notification as fallback
-            NotificationCompat.Builder(this, NotificationChannels.BISQ_SERVICE)
+            NotificationCompat
+                .Builder(this, NotificationChannels.BISQ_SERVICE)
                 .setContentTitle("Bisq")
                 .setContentText("Service running")
                 .setSmallIcon(R.drawable.ic_dialog_info)
                 .setOngoing(true)
                 .build()
         }
-    }
 
     @SuppressLint("InlinedApi")
     override fun onCreate() {
         super.onCreate()
         try {
             // Promote immediately with a minimal notification (no DI/i18n/deep links)
-            val minimal = NotificationCompat.Builder(this, NotificationChannels.BISQ_SERVICE)
-                .setContentTitle(DEFAULT_NOTIFICATION_TITLE)
-                .setContentText(DEFAULT_NOTIFICATION_TEXT)
-                .setSmallIcon(R.drawable.ic_dialog_info)
-                .setOngoing(true)
-                .build()
+            val minimal =
+                NotificationCompat
+                    .Builder(this, NotificationChannels.BISQ_SERVICE)
+                    .setContentTitle(DEFAULT_NOTIFICATION_TITLE)
+                    .setContentText(DEFAULT_NOTIFICATION_TEXT)
+                    .setSmallIcon(R.drawable.ic_dialog_info)
+                    .setOngoing(true)
+                    .build()
 
             ServiceCompat.startForeground(
                 this,
                 SERVICE_NOTIF_ID,
                 minimal,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING,
             )
             log.i { "Foreground service promoted with minimal notification" }
 
@@ -96,7 +101,7 @@ open class ForegroundService : Service(), Logging {
                         this@ForegroundService,
                         SERVICE_NOTIF_ID,
                         full,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING,
                     )
                     log.d { "Foreground service notification upgraded via startForeground" }
                 }.onFailure { e ->
@@ -110,7 +115,11 @@ open class ForegroundService : Service(), Logging {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         log.i { "Service starting sticky" }
         return START_STICKY
     }

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:content-slot-reused")
+
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
 import androidx.compose.foundation.layout.Arrangement
@@ -24,13 +26,13 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 @Composable
 fun TextList(
     text: String,
-    style: @Composable (String, Modifier) -> Unit = { t, m -> BisqText.baseRegular(text = t, modifier = m) },
+    regex: String,
+    modifier: Modifier = Modifier,
+    style: @Composable (String, Modifier) -> Unit = { t, m -> BisqText.BaseRegular(text = t, modifier = m) },
     gap: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
     vSpacing: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
-    regex: String,
     mark: String? = null,
     getMark: (Int) -> String = { "$it. " },
-    modifier: Modifier = Modifier,
 ) {
     val compiledRegex = remember(regex) { regex.toRegex() }
     val list = text.split(compiledRegex).filter { it.isNotBlank() }
@@ -41,7 +43,7 @@ fun TextList(
     }
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(vSpacing)
+        verticalArrangement = Arrangement.spacedBy(vSpacing),
     ) {
         var i = 0
         for (item in list) {
@@ -60,23 +62,23 @@ fun TextList(
 
 @Composable
 fun UnorderedTextList(
-  text: String,
-  style: @Composable (String, Modifier) -> Unit = { t, m -> BisqText.baseRegular(text = t, modifier = m) },
-  gap: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
-  vSpacing: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
-  regex: String = "- ",
-  mark: String = "\u2022", // Unicode bullet
-  modifier: Modifier = Modifier,
+    text: String,
+    modifier: Modifier = Modifier,
+    style: @Composable (String, Modifier) -> Unit = { t, m -> BisqText.BaseRegular(text = t, modifier = m) },
+    gap: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
+    vSpacing: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
+    regex: String = "- ",
+    mark: String = "\u2022", // Unicode bullet
 ) {
-  TextList(
-    text = text,
-    style = style,
-    gap = gap,
-    vSpacing = vSpacing,
-    regex = regex,
-    mark = mark,
-    modifier = modifier
-  )
+    TextList(
+        text = text,
+        style = style,
+        gap = gap,
+        vSpacing = vSpacing,
+        regex = regex,
+        mark = mark,
+        modifier = modifier,
+    )
 }
 
 /**
@@ -84,20 +86,20 @@ fun UnorderedTextList(
  */
 @Composable
 fun OrderedTextList(
-  text: String,
-  style: @Composable (String, Modifier) -> Unit = { t, m -> BisqText.baseRegular(text = t, modifier = m) },
-  gap: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
-  vSpacing: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
-  regex: String = "\\d+\\.\\s*",
-  modifier: Modifier = Modifier,
+    text: String,
+    modifier: Modifier = Modifier,
+    style: @Composable (String, Modifier) -> Unit = { t, m -> BisqText.BaseRegular(text = t, modifier = m) },
+    gap: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
+    vSpacing: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
+    regex: String = "\\d+\\.\\s*",
 ) {
-  TextList(
-    text = text,
-    style = style,
-    gap = gap,
-    vSpacing = vSpacing,
-    regex = regex,
-    mark = null,
-    modifier = modifier
-  )
+    TextList(
+        text = text,
+        style = style,
+        gap = gap,
+        vSpacing = vSpacing,
+        regex = regex,
+        mark = null,
+        modifier = modifier,
+    )
 }

@@ -12,16 +12,17 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-val androidClientDomainModule = module {
-    single { AppForegroundController(androidContext()) } bind ForegroundDetector::class
-    single {
-        NotificationControllerImpl(
-            get(),
-            ClientMainActivity::class.java
-        )
-    } bind NotificationController::class
-    single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
-    single {
-        OpenTradesNotificationService(get(), get(), get(), get(), get())
+val androidClientDomainModule =
+    module {
+        single { AppForegroundController(androidContext()) } bind ForegroundDetector::class
+        single {
+            NotificationControllerImpl(
+                get(),
+                ClientMainActivity::class.java,
+            )
+        } bind NotificationController::class
+        single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
+        single {
+            OpenTradesNotificationService(get(), get(), get(), get(), get())
+        }
     }
-}

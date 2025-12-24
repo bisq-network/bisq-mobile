@@ -8,15 +8,14 @@ import network.bisq.mobile.domain.utils.StringUtils.urlEncode
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class SupportPresenter(
     mainPresenter: MainPresenter,
     private var versionProvider: VersionProvider,
-    private val deviceInfoProvider: DeviceInfoProvider
+    private val deviceInfoProvider: DeviceInfoProvider,
 ) : BasePresenter(mainPresenter) {
-
     protected val _reportUrl: MutableStateFlow<String> = MutableStateFlow("")
     val reportUrl: StateFlow<String> get() = _reportUrl.asStateFlow()
 

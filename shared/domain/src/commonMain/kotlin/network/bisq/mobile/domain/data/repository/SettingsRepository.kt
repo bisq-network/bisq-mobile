@@ -7,7 +7,6 @@ import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 
 interface SettingsRepository {
-
     val data: Flow<Settings>
 
     suspend fun fetch() = data.first()

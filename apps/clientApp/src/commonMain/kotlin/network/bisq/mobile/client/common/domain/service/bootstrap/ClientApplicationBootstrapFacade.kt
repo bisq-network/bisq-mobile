@@ -2,8 +2,8 @@ package network.bisq.mobile.client.common.domain.service.bootstrap
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
-import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
@@ -13,7 +13,6 @@ class ClientApplicationBootstrapFacade(
     private val webSocketClientService: WebSocketClientService,
     kmpTorService: KmpTorService,
 ) : ApplicationBootstrapFacade(kmpTorService) {
-
     override suspend fun activate() {
         super.activate()
 

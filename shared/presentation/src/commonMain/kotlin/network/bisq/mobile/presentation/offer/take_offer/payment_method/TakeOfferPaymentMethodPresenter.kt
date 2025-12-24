@@ -4,15 +4,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 
 class TakeOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
-    private val takeOfferPresenter: TakeOfferPresenter
+    private val takeOfferPresenter: TakeOfferPresenter,
 ) : BasePresenter(mainPresenter) {
-
     var hasMultipleQuoteSidePaymentMethods: Boolean = false
     var hasMultipleBaseSidePaymentMethods: Boolean = false
     lateinit var quoteSidePaymentMethods: List<String>
@@ -118,17 +117,17 @@ class TakeOfferPaymentMethodPresenter(
     }
 
     private fun isQuoteSideValid() = quoteSidePaymentMethod.value != null
+
     private fun isBaseSideValid() = baseSidePaymentMethod.value != null
 
-    fun getQuoteSidePaymentMethodsImagePaths(): List<String> {
-        return getPaymentMethodsImagePaths(quoteSidePaymentMethods, "fiat")
-    }
+    fun getQuoteSidePaymentMethodsImagePaths(): List<String> = getPaymentMethodsImagePaths(quoteSidePaymentMethods, "fiat")
 
-    fun getBaseSidePaymentMethodsImagePaths(): List<String> {
-        return getPaymentMethodsImagePaths(baseSidePaymentMethods, "bitcoin")
-    }
+    fun getBaseSidePaymentMethodsImagePaths(): List<String> = getPaymentMethodsImagePaths(baseSidePaymentMethods, "bitcoin")
 
-    private fun getPaymentMethodsImagePaths(list: List<String>, directory: String) = list
+    private fun getPaymentMethodsImagePaths(
+        list: List<String>,
+        directory: String,
+    ) = list
         .map { paymentMethod ->
             val fileName = paymentMethod.lowercase().replace("-", "_")
             "drawable/payment/$directory/$fileName.png"

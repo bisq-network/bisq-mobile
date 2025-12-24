@@ -21,58 +21,58 @@ enum class BisqChipType {
 
 @Composable
 fun BisqChip(
+    modifier: Modifier = Modifier,
     label: String = "",
     showRemove: Boolean = true,
     onClick: ((String) -> Unit)? = null,
     onRemove: ((String) -> Unit)? = null,
-    modifier: Modifier = Modifier,
     type: BisqChipType = BisqChipType.Default,
 ) {
-
-    val chipColors = if (type == BisqChipType.Outline) {
-        SelectableChipColors(
-            containerColor = Color.Transparent,
-            labelColor = BisqTheme.colors.primary,
-            leadingIconColor = BisqTheme.colors.primary,
-            trailingIconColor = BisqTheme.colors.primary,
-            selectedLabelColor = BisqTheme.colors.primary,
-            selectedLeadingIconColor = BisqTheme.colors.primary,
-            selectedTrailingIconColor = BisqTheme.colors.primary,
-            selectedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            disabledLabelColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
-            disabledLeadingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
-            disabledTrailingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
-            disabledSelectedContainerColor = Color.Transparent,
-        )
-    } else {
-        SelectableChipColors(
-            containerColor = BisqTheme.colors.dark_grey40,
-            labelColor = BisqTheme.colors.light_grey10,
-            leadingIconColor = BisqTheme.colors.light_grey10,
-            trailingIconColor = BisqTheme.colors.light_grey10,
-            selectedLabelColor = BisqTheme.colors.light_grey10,
-            selectedLeadingIconColor = BisqTheme.colors.primary,
-            selectedTrailingIconColor = BisqTheme.colors.primary,
-            selectedContainerColor = BisqTheme.colors.secondary,
-            disabledContainerColor = BisqTheme.colors.secondary,
-            disabledLabelColor = BisqTheme.colors.light_grey10.copy(alpha = 0.4f),
-            disabledLeadingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
-            disabledTrailingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
-            disabledSelectedContainerColor = BisqTheme.colors.secondary,
-        )
-    }
+    val chipColors =
+        if (type == BisqChipType.Outline) {
+            SelectableChipColors(
+                containerColor = Color.Transparent,
+                labelColor = BisqTheme.colors.primary,
+                leadingIconColor = BisqTheme.colors.primary,
+                trailingIconColor = BisqTheme.colors.primary,
+                selectedLabelColor = BisqTheme.colors.primary,
+                selectedLeadingIconColor = BisqTheme.colors.primary,
+                selectedTrailingIconColor = BisqTheme.colors.primary,
+                selectedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                disabledLabelColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+                disabledLeadingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+                disabledTrailingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+                disabledSelectedContainerColor = Color.Transparent,
+            )
+        } else {
+            SelectableChipColors(
+                containerColor = BisqTheme.colors.dark_grey40,
+                labelColor = BisqTheme.colors.light_grey10,
+                leadingIconColor = BisqTheme.colors.light_grey10,
+                trailingIconColor = BisqTheme.colors.light_grey10,
+                selectedLabelColor = BisqTheme.colors.light_grey10,
+                selectedLeadingIconColor = BisqTheme.colors.primary,
+                selectedTrailingIconColor = BisqTheme.colors.primary,
+                selectedContainerColor = BisqTheme.colors.secondary,
+                disabledContainerColor = BisqTheme.colors.secondary,
+                disabledLabelColor = BisqTheme.colors.light_grey10.copy(alpha = 0.4f),
+                disabledLeadingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+                disabledTrailingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+                disabledSelectedContainerColor = BisqTheme.colors.secondary,
+            )
+        }
 
     InputChip(
         onClick = {
             onClick?.invoke(label)
         },
-        label = { BisqText.baseLight(label, modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding)) },
+        label = { BisqText.BaseLight(label, modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding)) },
         selected = false,
         trailingIcon = {
             if (showRemove) {
                 IconButton(
-                    onClick = { onRemove?.invoke(label) }
+                    onClick = { onRemove?.invoke(label) },
                 ) {
                     CloseIcon(modifier = Modifier.size(InputChipDefaults.AvatarSize))
                 }
@@ -80,16 +80,17 @@ fun BisqChip(
         },
         modifier = modifier,
         colors = chipColors,
-        border = if (type == BisqChipType.Outline) {
-            InputChipDefaults.inputChipBorder(
-                borderColor = BisqTheme.colors.primary,
-                selectedBorderColor = BisqTheme.colors.primary,
-                enabled = true,
-                selected = false,
-            )
-        } else {
-            null
-        },
+        border =
+            if (type == BisqChipType.Outline) {
+                InputChipDefaults.inputChipBorder(
+                    borderColor = BisqTheme.colors.primary,
+                    selectedBorderColor = BisqTheme.colors.primary,
+                    enabled = true,
+                    selected = false,
+                )
+            } else {
+                null
+            },
         shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
     )
 }

@@ -12,7 +12,9 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 @Serializable
-enum class Topic(val typeOf: KType) {
+enum class Topic(
+    val typeOf: KType,
+) {
     MARKET_PRICE(typeOf<Map<String, PriceQuoteVO>>()),
     NUM_OFFERS(typeOf<Map<String, Int>>()),
     NUM_USER_PROFILES(typeOf<Int>()),

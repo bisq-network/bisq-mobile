@@ -40,8 +40,8 @@ fun scannerColors(
     zoomControllerContainerColor: Color = Color(0xFF291544),
     zoomControllerContentColor: Color = Color.White,
     barcodeFrameColor: Color = Color(0xFFF050F8),
-): ScannerColors {
-    return ScannerColors(
+): ScannerColors =
+    ScannerColors(
         headerContainerColor = headerContainerColor,
         headerNavigationIconColor = headerNavigationIconColor,
         headerTitleColor = headerTitleColor,
@@ -50,4 +50,3 @@ fun scannerColors(
         zoomControllerContentColor = zoomControllerContentColor,
         barcodeFrameColor = barcodeFrameColor,
     )
-}

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail
 
 import androidx.compose.animation.AnimatedVisibility
@@ -43,9 +45,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
@@ -64,29 +66,34 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
     val rightAmount by presenter.rightAmount.collectAsState()
     val rightCode by presenter.rightCode.collectAsState()
 
-    val enterTransition = remember {
-        expandVertically(
-            expandFrom = Alignment.Top,
-            animationSpec = tween(300)
-        ) + fadeIn(
-            initialAlpha = 0.3f,
-            animationSpec = tween(300)
-        )
-    }
-    val exitTransition = remember {
-        shrinkVertically(
-            shrinkTowards = Alignment.Top,
-            animationSpec = tween(300)
-        ) + fadeOut(
-            animationSpec = tween(300)
-        )
-    }
-
-    val transitionState = remember {
-        MutableTransitionState(showDetails).apply {
-            targetState = !showDetails
+    val enterTransition =
+        remember {
+            expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(300),
+            ) +
+                fadeIn(
+                    initialAlpha = 0.3f,
+                    animationSpec = tween(300),
+                )
         }
-    }
+    val exitTransition =
+        remember {
+            shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(300),
+            ) +
+                fadeOut(
+                    animationSpec = tween(300),
+                )
+        }
+
+    val transitionState =
+        remember {
+            MutableTransitionState(showDetails).apply {
+                targetState = !showDetails
+            }
+        }
     val transition = rememberTransition(transitionState)
     val arrowRotationDegree by transition.animateFloat({
         tween(durationMillis = 300)
@@ -99,22 +106,24 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
     item?.let { item ->
         Row(modifier = Modifier.clip(RoundedCornerShape(BisqUIConstants.BorderRadius))) {
             Column(
-                modifier = Modifier.fillMaxWidth()
-                    .background(color = BisqTheme.colors.dark_grey40)
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(color = BisqTheme.colors.dark_grey40)
+                        .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
-                        BisqText.baseRegular(
+                        BisqText.BaseRegular(
                             text = item.directionalTitle.uppercase(), // 'Buying from:' or 'Selling to:'
                         )
 
@@ -137,13 +146,13 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                     } else {
                         InfoBoxCurrency(
                             label = presenter.leftAmountDescription,
-                            value = "$leftAmount $leftCode"
+                            value = "$leftAmount $leftCode",
                         )
                     }
                     if (isSell) {
                         InfoBoxCurrency(
                             label = presenter.rightAmountDescription,
-                            value = "$rightAmount $rightCode"
+                            value = "$rightAmount $rightCode",
                         )
                     } else {
                         InfoBoxSats(label = presenter.rightAmountDescription, value = rightAmount)
@@ -155,20 +164,20 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                         } else {
                             InfoBoxCurrency(
                                 label = presenter.leftAmountDescription,
-                                value = "$leftAmount $leftCode"
+                                value = "$leftAmount $leftCode",
                             )
                         }
                         if (isSell) {
                             InfoBoxCurrency(
                                 label = presenter.rightAmountDescription,
                                 value = "$rightAmount $rightCode",
-                                rightAlign = true
+                                rightAlign = true,
                             )
                         } else {
                             InfoBoxSats(
                                 label = presenter.rightAmountDescription,
                                 value = rightAmount,
-                                rightAlign = true
+                                rightAlign = true,
                             )
                         }
                     }
@@ -177,13 +186,12 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                 AnimatedVisibility(
                     visible = showDetails,
                     enter = enterTransition,
-                    exit = exitTransition
+                    exit = exitTransition,
                 ) {
-
                     Column(
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.weight(2f)
+                        modifier = Modifier.weight(2f),
                     ) {
                         if (presenter.isSmallScreen()) {
                             InfoBox(
@@ -230,7 +238,7 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 if (showInterruptTradeButton) {
                                     BisqButton(
@@ -258,18 +266,19 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     IconButton(
                         onClick = { presenter.onToggleHeader() },
                         enabled = isInteractive,
                     ) {
                         UpIcon(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(shape = RoundedCornerShape(16.dp))
-                                .rotate(arrowRotationDegree)
-                                .background(color = BisqTheme.colors.primary)
+                            modifier =
+                                Modifier
+                                    .size(32.dp)
+                                    .clip(shape = RoundedCornerShape(16.dp))
+                                    .rotate(arrowRotationDegree)
+                                    .background(color = BisqTheme.colors.primary),
                         )
                     }
                 }

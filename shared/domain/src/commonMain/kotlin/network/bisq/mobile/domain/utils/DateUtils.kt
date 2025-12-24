@@ -11,7 +11,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 
 object DateUtils {
-
     // Allow clock injection for testing
     internal var clock: Clock = Clock.System
 
@@ -45,9 +44,10 @@ object DateUtils {
         val lastActivityInstant = Instant.fromEpochMilliseconds(epochMillis)
         val currentInstant = clock.now()
 
-        val durationInSeconds = lastActivityInstant
-            .until(currentInstant, DateTimeUnit.SECOND)
-            .coerceAtLeast(0)
+        val durationInSeconds =
+            lastActivityInstant
+                .until(currentInstant, DateTimeUnit.SECOND)
+                .coerceAtLeast(0)
 
         // Treat "now" as online instead of "0 sec ago"
         if (durationInSeconds == 0L) return "temporal.online".i18n()
@@ -62,7 +62,10 @@ object DateUtils {
         }
     }
 
-    fun toDateTime(epochMillis: Long, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
+    fun toDateTime(
+        epochMillis: Long,
+        timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    ): String {
         val instant = Instant.fromEpochMilliseconds(epochMillis)
         val localDateTime = instant.toLocalDateTime(timeZone)
         return formatDateTime(localDateTime)
@@ -76,12 +79,13 @@ object DateUtils {
     fun formatProfileAge(profileAgeTimestamp: Long): String {
         val (years, months, days) = periodFrom(profileAgeTimestamp)
 
-        val parts = listOfNotNull(
-            if (years > 0) "temporal.year".i18nPlural(years) else null,
-            // months not avail in default properties
-            if (months > 0) "mobile.temporal.month".i18nPlural(months) else null,
-            if (days > 0) "temporal.day".i18nPlural(days) else null
-        )
+        val parts =
+            listOfNotNull(
+                if (years > 0) "temporal.year".i18nPlural(years) else null,
+                // months not avail in default properties
+                if (months > 0) "mobile.temporal.month".i18nPlural(months) else null,
+                if (days > 0) "temporal.day".i18nPlural(days) else null,
+            )
 
         return if (parts.isEmpty()) {
             "mobile.temporal.lessThanADay".i18n()

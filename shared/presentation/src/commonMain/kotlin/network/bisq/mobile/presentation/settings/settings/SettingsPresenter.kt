@@ -21,9 +21,9 @@ import network.bisq.mobile.presentation.main.MainPresenter
 open class SettingsPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
-    private val mainPresenter: MainPresenter
-) : BasePresenter(mainPresenter), IGeneralSettingsPresenter {
-
+    private val mainPresenter: MainPresenter,
+) : BasePresenter(mainPresenter),
+    IGeneralSettingsPresenter {
     override val i18nPairs get() = languageServiceFacade.i18nPairs
     override val allLanguagePairs get() = languageServiceFacade.allPairs
     override val blockInteractivityOnAttached: Boolean = true
@@ -31,6 +31,7 @@ open class SettingsPresenter(
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
+
     override fun setLanguageCode(langCode: String) {
         disableInteractive()
         presenterScope.launch {
@@ -56,6 +57,7 @@ open class SettingsPresenter(
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(setOf("en"))
     override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes.asStateFlow()
+
     override fun setSupportedLanguageCodes(langCodes: Set<String>) {
         disableInteractive()
         presenterScope.launch {
@@ -71,6 +73,7 @@ open class SettingsPresenter(
     private val _chatNotification: MutableStateFlow<String> =
         MutableStateFlow("chat.notificationsSettingsMenu.all".i18n())
     override val chatNotification: StateFlow<String> get() = _chatNotification.asStateFlow()
+
     override fun setChatNotification(value: String) {
         disableInteractive()
         presenterScope.launch {
@@ -84,6 +87,7 @@ open class SettingsPresenter(
 
     private val _closeOfferWhenTradeTaken: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val closeOfferWhenTradeTaken: StateFlow<Boolean> get() = _closeOfferWhenTradeTaken.asStateFlow()
+
     override fun setCloseOfferWhenTradeTaken(value: Boolean) {
         disableInteractive()
         presenterScope.launch {
@@ -100,7 +104,11 @@ open class SettingsPresenter(
     // Hence the 100 multiplier and divider
     private val _tradePriceTolerance: MutableStateFlow<String> = MutableStateFlow("5")
     override val tradePriceTolerance: StateFlow<String> get() = _tradePriceTolerance.asStateFlow()
-    override fun setTradePriceTolerance(value: String, isValid: Boolean) {
+
+    override fun setTradePriceTolerance(
+        value: String,
+        isValid: Boolean,
+    ) {
         disableInteractive()
         presenterScope.launch {
             try {
@@ -119,7 +127,11 @@ open class SettingsPresenter(
 
     private val _numDaysAfterRedactingTradeData = MutableStateFlow("90")
     override val numDaysAfterRedactingTradeData: StateFlow<String> get() = _numDaysAfterRedactingTradeData.asStateFlow()
-    override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
+
+    override fun setNumDaysAfterRedactingTradeData(
+        value: String,
+        isValid: Boolean,
+    ) {
         disableInteractive()
         presenterScope.launch {
             try {
@@ -138,6 +150,7 @@ open class SettingsPresenter(
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val useAnimations: StateFlow<Boolean> get() = _useAnimations.asStateFlow()
+
     override fun setUseAnimations(value: Boolean) {
         disableInteractive()
         presenterScope.launch {
@@ -152,7 +165,11 @@ open class SettingsPresenter(
 
     private val _powFactor: MutableStateFlow<String> = MutableStateFlow("1")
     override val powFactor: StateFlow<String> get() = _powFactor.asStateFlow()
-    override fun setPowFactor(value: String, isValid: Boolean) {
+
+    override fun setPowFactor(
+        value: String,
+        isValid: Boolean,
+    ) {
         disableInteractive()
         presenterScope.launch {
             try {
@@ -169,6 +186,7 @@ open class SettingsPresenter(
 
     private val _ignorePow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignorePow: StateFlow<Boolean> get() = _ignorePow.asStateFlow()
+
     override fun setIgnorePow(value: Boolean) {
         disableInteractive()
         presenterScope.launch {
@@ -236,7 +254,10 @@ open class SettingsPresenter(
         _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
         _useAnimations.value = settings.useAnimations
         _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
-        _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value.toInt().toString()
+        _powFactor.value =
+            settingsServiceFacade.difficultyAdjustmentFactor.value
+                .toInt()
+                .toString()
         _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
     }
 }

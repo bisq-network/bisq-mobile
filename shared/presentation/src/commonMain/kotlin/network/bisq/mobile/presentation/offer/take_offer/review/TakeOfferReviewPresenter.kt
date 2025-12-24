@@ -21,9 +21,9 @@ import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 import kotlin.math.abs
 
@@ -32,7 +32,6 @@ class TakeOfferReviewPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferPresenter: TakeOfferPresenter,
 ) : BasePresenter(mainPresenter) {
-
     var headLine: String
     var quoteSidePaymentMethodDisplayString: String
     var baseSidePaymentMethodDisplayString: String
@@ -56,12 +55,14 @@ class TakeOfferReviewPresenter(
 
     private val _showTakeOfferProgressDialog = MutableStateFlow(false)
     val showTakeOfferProgressDialog: StateFlow<Boolean> get() = _showTakeOfferProgressDialog.asStateFlow()
+
     private fun setShowTakeOfferProgressDialog(value: Boolean) {
         _showTakeOfferProgressDialog.value = value
     }
 
     private val _showTakeOfferSuccessDialog = MutableStateFlow(false)
     val showTakeOfferSuccessDialog: StateFlow<Boolean> get() = _showTakeOfferSuccessDialog.asStateFlow()
+
     private fun setShowTakeOfferSuccessDialog(value: Boolean) {
         _showTakeOfferSuccessDialog.value = value
     }
@@ -112,7 +113,6 @@ class TakeOfferReviewPresenter(
         applyPriceDetails()
     }
 
-
     override fun onViewUnattaching() {
         super.onViewUnattaching()
     }
@@ -141,7 +141,7 @@ class TakeOfferReviewPresenter(
                         statusFlow.collect { takeOfferStatus.value = it }
                     }
                     presenterScope.launch {
-                        errorFlow.collect {takeOfferErrorMessage.value = it }
+                        errorFlow.collect { takeOfferErrorMessage.value = it }
                     }
                 }
             } catch (e: Exception) {
@@ -168,7 +168,7 @@ class TakeOfferReviewPresenter(
             PriceUtil.findPercentFromMarketPrice(
                 marketPriceServiceFacade,
                 priceSpec,
-                takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market
+                takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market,
             )
         if ((priceSpec is FloatPriceSpecVO || priceSpec is MarketPriceSpecVO) && percent == 0.0) {
             priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
@@ -176,20 +176,22 @@ class TakeOfferReviewPresenter(
             val priceWithCode = PriceQuoteFormatter.format(takeOfferModel.originalPriceQuote, true, true)
             val percentagePrice = PercentageFormatter.format(abs(percent), true)
             val aboveOrBelow: String = if (percent > 0) "mobile.general.above".i18n() else "mobile.general.below".i18n()
-            priceDetails = if (priceSpec is FloatPriceSpecVO) {
-                "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
-            } else {
-                if (percent == 0.0) {
-                    "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
+            priceDetails =
+                if (priceSpec is FloatPriceSpecVO) {
+                    "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
                 } else {
-                    "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
+                    if (percent == 0.0) {
+                        "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
+                    } else {
+                        "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(
+                            percentagePrice,
+                            aboveOrBelow,
+                            priceWithCode,
+                        )
+                    }
                 }
-            }
         }
     }
 
-    private fun translatedDirection(): String {
-        return takersDirection.displayString.uppercase()
-    }
-
+    private fun translatedDirection(): String = takersDirection.displayString.uppercase()
 }

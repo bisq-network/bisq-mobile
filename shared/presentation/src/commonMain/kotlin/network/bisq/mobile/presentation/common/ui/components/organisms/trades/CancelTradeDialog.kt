@@ -6,34 +6,35 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
-
 @Composable
 fun CancelTradeDialog(
     onCancelConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    isBuyer: Boolean = true,
     isRejection: Boolean,
+    isBuyer: Boolean = true,
 ) {
-
     val part2: String = "bisqEasy.openTrades.cancelTrade.warning.part2".i18n()
-    val warningText1 = if (isRejection) {
-        "bisqEasy.openTrades.rejectTrade.warning".i18n()
-    } else {
-        if (isBuyer)
-            "bisqEasy.openTrades.cancelTrade.warning.buyer".i18n(part2)
-        else
-            "bisqEasy.openTrades.cancelTrade.warning.seller".i18n(part2)
-    }
+    val warningText1 =
+        if (isRejection) {
+            "bisqEasy.openTrades.rejectTrade.warning".i18n()
+        } else {
+            if (isBuyer) {
+                "bisqEasy.openTrades.cancelTrade.warning.buyer".i18n(part2)
+            } else {
+                "bisqEasy.openTrades.cancelTrade.warning.seller".i18n(part2)
+            }
+        }
 
     WarningConfirmationDialog(
         message = warningText1,
         horizontalAlignment = Alignment.Start,
-        marginTop = if (isRejection)
-            BisqUIConstants.ScreenPadding8X
-        else
-            BisqUIConstants.ScreenPaddingHalf,
+        marginTop =
+            if (isRejection) {
+                BisqUIConstants.ScreenPadding8X
+            } else {
+                BisqUIConstants.ScreenPaddingHalf
+            },
         onDismiss = onDismiss,
-        onConfirm = onCancelConfirm
+        onConfirm = onCancelConfirm,
     )
-
 }

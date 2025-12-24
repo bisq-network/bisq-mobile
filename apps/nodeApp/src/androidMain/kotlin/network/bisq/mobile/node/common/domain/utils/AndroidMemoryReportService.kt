@@ -20,9 +20,9 @@ class AndroidMemoryReportService(
     private val deviceMemInfo: ActivityManager.MemoryInfo,
     private val appMemInfo: Debug.MemoryInfo,
     private val runtime: Runtime,
-    val isDebugBuild: Boolean
-) : MemoryReportService, Logging {
-
+    val isDebugBuild: Boolean,
+) : MemoryReportService,
+    Logging {
     private var reportJob: Job? = null
     private val intervalMs: Long = if (isDebugBuild) 10_000L else 60_000L
     private var lastTotalPssMB: Long? = null
@@ -31,21 +31,23 @@ class AndroidMemoryReportService(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var peakTotalPssMB = -1L
+
     private fun bytesToMb(bytes: Long) = bytes / 1024 / 1024
 
     override fun initialize(): CompletableFuture<Boolean> {
         // Start/Restart periodic reporting tied to scope
         reportJob?.cancel()
-        reportJob = scope.launch {
-            while (isActive) {
-                if (isDebugBuild) {
-                    logReport()
-                } else {
-                    logConditionalReport()
+        reportJob =
+            scope.launch {
+                while (isActive) {
+                    if (isDebugBuild) {
+                        logReport()
+                    } else {
+                        logConditionalReport()
+                    }
+                    delay(intervalMs)
                 }
-                delay(intervalMs)
             }
-        }
         return CompletableFuture.completedFuture(true)
     }
 
@@ -103,7 +105,7 @@ class AndroidMemoryReportService(
 
             log.i {
                 "Memory: Device Used=$deviceUsedMB MB (${"%.1f".format(deviceUsedPct)}%), Avail=$deviceAvailMB MB, Total=$deviceTotalMB MB; " +
-                        "App PSS=$totalPssMB MB (peak=$peakTotalPssMB MB); Java heap Used=$javaUsedMB MB Max=$javaMaxMB MB; Native heap Used=$nativeUsedMB MB Free=$nativeFreeMB MB"
+                    "App PSS=$totalPssMB MB (peak=$peakTotalPssMB MB); Java heap Used=$javaUsedMB MB Max=$javaMaxMB MB; Native heap Used=$nativeUsedMB MB Free=$nativeFreeMB MB"
             }
         }.onFailure { exception ->
             log.e(exception) { "Failed to log memory report" }
@@ -118,9 +120,7 @@ class AndroidMemoryReportService(
         }
     }
 
-    override fun getUsedMemoryInMB(): Long {
-        return bytesToMb(getUsedMemoryInBytes())
-    }
+    override fun getUsedMemoryInMB(): Long = bytesToMb(getUsedMemoryInBytes())
 
     override fun getFreeMemoryInMB(): Long {
         synchronized(memLock) {

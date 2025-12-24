@@ -6,5 +6,5 @@ import org.jetbrains.compose.resources.DrawableResource
 data class BottomNavigationItem(
     val title: String,
     val route: TabNavRoute,
-    val icon: DrawableResource
+    val icon: DrawableResource,
 )

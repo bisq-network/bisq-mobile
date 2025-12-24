@@ -32,9 +32,8 @@ object TradeItemPresentationDtoFactory {
         trade: BisqEasyTrade,
         channel: BisqEasyOpenTradeChannel,
         userProfileService: UserProfileService,
-        reputationService: ReputationService
+        reputationService: ReputationService,
     ): TradeItemPresentationDto {
-
         val myUserProfile = userProfileService.getManagedUserProfile(channel.myUserIdentity.userProfile)
         val myUserProfileVO = Mappings.UserProfileMapping.fromBisq2Model(myUserProfile)
         val peersUserProfile = userProfileService.getManagedUserProfile(channel.peer)
@@ -61,7 +60,6 @@ object TradeItemPresentationDtoFactory {
         val channelVO = Mappings.BisqEasyOpenTradeChannelVOMapping.fromBisq2Model(channel)
         val tradeVO = Mappings.BisqEasyTradeVOMapping.fromBisq2Model(trade)
         val contractVO = Mappings.BisqEasyContractMapping.fromBisq2Model(trade.contract)
-
 
         val makerUserProfile: UserProfileVO
         val takerUserProfile: UserProfileVO
@@ -99,7 +97,7 @@ object TradeItemPresentationDtoFactory {
             fiatPaymentMethodDisplayString,
             isFiatPaymentMethodCustom,
             myRole,
-            peersRReputationScoreVO
+            peersRReputationScoreVO,
         )
     }
 }

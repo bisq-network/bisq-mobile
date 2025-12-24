@@ -20,17 +20,20 @@ fun ProfileIconAndText(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(
-            vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding
-        ), horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            Modifier.padding(
+                vertical = BisqUIConstants.ScreenPaddingHalf,
+                horizontal = BisqUIConstants.ScreenPadding,
+            ),
+        horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
     ) {
-
         val icon = @Composable {
             UserProfileIcon(message.senderUserProfile, userProfileIconProvider, 30.dp)
         }
 
         val text = @Composable {
-            BisqText.baseRegular(message.textString)
+            BisqText.BaseRegular(message.textString)
         }
 
         if (message.isMyMessage) {

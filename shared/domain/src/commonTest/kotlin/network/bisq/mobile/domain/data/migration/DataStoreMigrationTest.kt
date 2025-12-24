@@ -12,23 +12,24 @@ import kotlin.test.assertNotNull
  * in different formats by the previous multiplatform-settings implementation
  */
 class DataStoreMigrationTest {
-
-    private val json = Json {
-        ignoreUnknownKeys = true // Critical for migration compatibility
-        encodeDefaults = true
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true // Critical for migration compatibility
+            encodeDefaults = true
+        }
 
     @Test
     fun `should handle legacy User data with extra fields`() {
         // Given - JSON that might have been stored by multiplatform-settings with extra fields
-        val legacyUserJson = """
-        {
-            "tradeTerms": "Legacy terms",
-            "statement": "Legacy statement", 
-            "legacyField": "should be ignored",
-            "anotherLegacyField": 42
-        }
-        """.trimIndent()
+        val legacyUserJson =
+            """
+            {
+                "tradeTerms": "Legacy terms",
+                "statement": "Legacy statement", 
+                "legacyField": "should be ignored",
+                "anotherLegacyField": 42
+            }
+            """.trimIndent()
 
         // When
         val user = json.decodeFromString(User.serializer(), legacyUserJson)
@@ -41,11 +42,12 @@ class DataStoreMigrationTest {
     @Test
     fun `should handle legacy Settings data with missing new fields`() {
         // Given - Settings JSON that might be missing newer fields
-        val legacySettingsJson = """
-        {
-            "firstLaunch": true
-        }
-        """.trimIndent()
+        val legacySettingsJson =
+            """
+            {
+                "firstLaunch": true
+            }
+            """.trimIndent()
 
         // When
         val settings = json.decodeFromString(Settings.serializer(), legacySettingsJson)
@@ -59,10 +61,11 @@ class DataStoreMigrationTest {
     @Test
     fun `should handle boolean variations in Settings`() {
         // Given - different boolean representations
-        val testCases = listOf(
-            """{"firstLaunch": true, "showChatRulesWarnBox": false}""",
-            """{"firstLaunch": "true", "showChatRulesWarnBox": "false"}""", // String booleans
-        )
+        val testCases =
+            listOf(
+                """{"firstLaunch": true, "showChatRulesWarnBox": false}""",
+                """{"firstLaunch": "true", "showChatRulesWarnBox": "false"}""", // String booleans
+            )
 
         // When & Then
         testCases.forEachIndexed { index, json ->
@@ -85,17 +88,18 @@ class DataStoreMigrationTest {
     @Test
     fun `should handle completely empty or minimal JSON`() {
         // Given - minimal JSON that might exist from fresh installs
-        val testCases = listOf(
-            "{}",
-            """{"tradeTerms": ""}""",
-            """{"bisqApiUrl": ""}"""
-        )
+        val testCases =
+            listOf(
+                "{}",
+                """{"tradeTerms": ""}""",
+                """{"bisqApiUrl": ""}""",
+            )
 
         // When & Then - should not throw exceptions
         testCases.forEach { json ->
             val user = this.json.decodeFromString(User.serializer(), json)
             assertNotNull(user)
-            
+
             val settings = this.json.decodeFromString(Settings.serializer(), json)
             assertNotNull(settings)
         }
@@ -104,19 +108,21 @@ class DataStoreMigrationTest {
     @Test
     fun `should handle null values gracefully`() {
         // Given - JSON with explicit null values for User (nullable fields)
-        val userWithNulls = """
-        {
-            "tradeTerms": null,
-            "statement": null
-        }
-        """.trimIndent()
+        val userWithNulls =
+            """
+            {
+                "tradeTerms": null,
+                "statement": null
+            }
+            """.trimIndent()
 
         // Settings has non-nullable fields with defaults, so we test missing fields instead
-        val settingsWithMissingFields = """
-        {
-            "firstLaunch": true
-        }
-        """.trimIndent()
+        val settingsWithMissingFields =
+            """
+            {
+                "firstLaunch": true
+            }
+            """.trimIndent()
 
         // When & Then - should handle nulls and missing fields
         val user = json.decodeFromString(User.serializer(), userWithNulls)
@@ -131,12 +137,13 @@ class DataStoreMigrationTest {
     @Test
     fun `should handle corrupted or malformed JSON gracefully`() {
         // Given - various malformed JSON scenarios
-        val malformedJsonCases = listOf(
-            """{"tradeTerms": "unclosed string""",
-            """{"firstLaunch": "not-a-boolean"}""",
-            """{"extraComma": true,}""",
-            """{"missingQuotes": value}"""
-        )
+        val malformedJsonCases =
+            listOf(
+                """{"tradeTerms": "unclosed string""",
+                """{"firstLaunch": "not-a-boolean"}""",
+                """{"extraComma": true,}""",
+                """{"missingQuotes": value}""",
+            )
 
         // When & Then - should either parse with defaults or throw predictable exceptions
         malformedJsonCases.forEach { malformedJson ->
@@ -155,16 +162,18 @@ class DataStoreMigrationTest {
     @Test
     fun `should maintain data integrity after round-trip serialization`() {
         // Given - data that represents a typical user's stored data
-        val originalUser = User(
-            tradeTerms = "My trading terms",
-            statement = "My statement",
-        )
+        val originalUser =
+            User(
+                tradeTerms = "My trading terms",
+                statement = "My statement",
+            )
 
-        val originalSettings = Settings(
-            firstLaunch = false,
-            showChatRulesWarnBox = true,
-            selectedMarketCode = "BTC/USD"
-        )
+        val originalSettings =
+            Settings(
+                firstLaunch = false,
+                showChatRulesWarnBox = true,
+                selectedMarketCode = "BTC/USD",
+            )
 
         // When - serialize and deserialize multiple times
         var currentUser = originalUser

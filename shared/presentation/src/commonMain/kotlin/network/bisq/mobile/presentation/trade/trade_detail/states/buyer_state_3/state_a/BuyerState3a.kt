@@ -32,18 +32,18 @@ fun BuyerState3a(
         BisqGap.V1()
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularLoadingImage(
                 image = Res.drawable.trade_bitcoin_payment,
-                isLoading = true
+                isLoading = true,
             )
             // Wait for the seller's Bitcoin settlement
-            BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase3a.headline".i18n(quoteCurrencyCode))
+            BisqText.H5Light("bisqEasy.tradeState.info.buyer.phase3a.headline".i18n(quoteCurrencyCode))
         }
         Column {
             BisqGap.V2()
-            BisqText.baseLightGrey(
+            BisqText.BaseLightGrey(
                 // Once the seller has received your payment of {0}, they will start the Bitcoin transfer to your provided {1}.
                 "bisqEasy.tradeState.info.buyer.phase3a.info".i18n(bitcoinPaymentData),
             )

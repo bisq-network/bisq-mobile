@@ -16,9 +16,8 @@ const val REPORT_USER_MAX_MESSAGE_LENGTH = 1000
 
 class ReportUserPresenter(
     mainPresenter: MainPresenter,
-    private val userProfileServiceFacade: UserProfileServiceFacade
+    private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     private val _uiState = MutableStateFlow(ReportUserUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -27,7 +26,10 @@ class ReportUserPresenter(
 
     private lateinit var chatMessage: BisqEasyOpenTradeMessageModel
 
-    fun initialize(chatMessage: BisqEasyOpenTradeMessageModel, reportMessage: String?) {
+    fun initialize(
+        chatMessage: BisqEasyOpenTradeMessageModel,
+        reportMessage: String?,
+    ) {
         this.chatMessage = chatMessage
         reportMessage?.let { onMessageChange(it) }
     }
@@ -36,7 +38,7 @@ class ReportUserPresenter(
         _uiState.update {
             it.copy(
                 message = message,
-                isReportButtonEnabled = message.isNotBlank() && message.length <= REPORT_USER_MAX_MESSAGE_LENGTH
+                isReportButtonEnabled = message.isNotBlank() && message.length <= REPORT_USER_MAX_MESSAGE_LENGTH,
             )
         }
     }
@@ -49,26 +51,26 @@ class ReportUserPresenter(
                 _effect.emit(
                     ReportUserEffect.ReportError(
                         "mobile.chat.reportToModerator.error".i18n(),
-                        message
-                    )
+                        message,
+                    ),
                 )
                 return@launch
             }
             _uiState.update { it.copy(isLoading = true) }
-            userProfileServiceFacade.reportUserProfile(
-                chatMessage.senderUserProfile,
-                message
-            ).onSuccess {
-                _effect.emit(ReportUserEffect.ReportSuccess)
-            }.onFailure {
-                _effect.emit(
-                    ReportUserEffect.ReportError(
-                        "mobile.chat.reportToModerator.error".i18n(),
-                        message
+            userProfileServiceFacade
+                .reportUserProfile(
+                    chatMessage.senderUserProfile,
+                    message,
+                ).onSuccess {
+                    _effect.emit(ReportUserEffect.ReportSuccess)
+                }.onFailure {
+                    _effect.emit(
+                        ReportUserEffect.ReportError(
+                            "mobile.chat.reportToModerator.error".i18n(),
+                            message,
+                        ),
                     )
-                )
-            }
+                }
         }
     }
-
 }

@@ -10,6 +10,8 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
 fun InformationConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
     headline: String = "popup.headline.information".i18n(),
     message: String = "",
     confirmButtonText: String = "confirmation.ok".i18n(),
@@ -17,8 +19,6 @@ fun InformationConfirmationDialog(
     marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     verticalButtonPlacement: Boolean = true,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
 ) {
     ConfirmationDialog(
         headline = headline,
@@ -31,6 +31,6 @@ fun InformationConfirmationDialog(
         onDismiss = { onDismiss() },
         marginTop = marginTop,
         horizontalAlignment = horizontalAlignment,
-        verticalButtonPlacement = verticalButtonPlacement
+        verticalButtonPlacement = verticalButtonPlacement,
     )
 }

@@ -40,8 +40,7 @@ data class BisqEasyOfferVO(
     val baseSidePaymentMethodSpecs: List<BitcoinPaymentMethodSpecVO>,
     val quoteSidePaymentMethodSpecs: List<FiatPaymentMethodSpecVO>,
     val offerOptions: List<OfferOptionVO>,
-    val supportedLanguageCodes: List<String>
-
+    val supportedLanguageCodes: List<String>,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

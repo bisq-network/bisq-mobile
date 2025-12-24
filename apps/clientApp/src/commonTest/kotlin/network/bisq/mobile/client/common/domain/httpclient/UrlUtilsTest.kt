@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class UrlUtilsTest {
-
     private val defaultPort = 8090
 
     @Test

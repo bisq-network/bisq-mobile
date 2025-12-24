@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:compositionlocal-allowlist")
+
 package network.bisq.mobile.presentation.common.ui.components.context
 
 import androidx.compose.runtime.compositionLocalOf

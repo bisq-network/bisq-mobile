@@ -28,7 +28,10 @@ interface IOnboardingPresenter : ViewPresenter {
 
     val indexesToShow: List<Int>
 
-    fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState)
+    fun onNextButtonClick(
+        coroutineScope: CoroutineScope,
+        pagerState: PagerState,
+    )
 }
 
 @Composable
@@ -43,18 +46,20 @@ fun OnboardingScreen() {
         BisqGap.VHalf()
         BisqLogo()
         BisqGap.V3()
-        BisqText.h2Light(presenter.headline, textAlign = TextAlign.Center)
+        BisqText.H2Light(presenter.headline, textAlign = TextAlign.Center)
         BisqGap.V2()
         BisqPagerView(pagerState, presenter.filteredPages)
         BisqGap.V2()
 
         BisqButton(
-            text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex)
-                "mobile.onboarding.createProfile".i18n()
-            else
-                "action.next".i18n(),
+            text =
+                if (pagerState.currentPage == presenter.indexesToShow.lastIndex) {
+                    "mobile.onboarding.createProfile".i18n()
+                } else {
+                    "action.next".i18n()
+                },
             onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) },
-            modifier = Modifier.semantics { contentDescription = "onboarding_next_button" }
+            modifier = Modifier.semantics { contentDescription = "onboarding_next_button" },
         )
     }
 }

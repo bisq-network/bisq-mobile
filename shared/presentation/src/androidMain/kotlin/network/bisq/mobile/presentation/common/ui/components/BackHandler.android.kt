@@ -1,11 +1,11 @@
 package network.bisq.mobile.presentation.common.ui.components
 
-import androidx.activity.compose.BackHandler as AndroidBackHandler
 import androidx.compose.runtime.Composable
+import androidx.activity.compose.BackHandler as AndroidBackHandler
 
 @Composable
-actual fun BackHandler(onBackPressed: () -> Unit) {
+actual fun BackHandler(onBackPress: () -> Unit) {
     AndroidBackHandler {
-        onBackPressed()
+        onBackPress()
     }
 }

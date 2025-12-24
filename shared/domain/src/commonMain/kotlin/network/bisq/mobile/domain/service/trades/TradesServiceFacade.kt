@@ -18,7 +18,7 @@ interface TradesServiceFacade : LifeCycleAware {
         bitcoinPaymentMethod: String,
         fiatPaymentMethod: String,
         takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
-        takeOfferErrorMessage: MutableStateFlow<String?>
+        takeOfferErrorMessage: MutableStateFlow<String?>,
     ): Result<String>
 
     fun selectOpenTrade(tradeId: String)

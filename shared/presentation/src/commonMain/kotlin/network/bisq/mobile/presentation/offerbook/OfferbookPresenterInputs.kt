@@ -15,4 +15,3 @@ data class OfferbookPresenterInputs(
     val settlements: Set<String>,
     val onlyMine: Boolean,
 )
-

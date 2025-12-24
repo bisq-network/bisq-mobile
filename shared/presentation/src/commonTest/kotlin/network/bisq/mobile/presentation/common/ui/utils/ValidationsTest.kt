@@ -9,7 +9,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ValidationsTest {
-
     @BeforeTest
     fun setupI18n() {
         I18nSupport.Companion.initialize()
@@ -87,8 +86,8 @@ class ValidationsTest {
             AmountValidator.validate(
                 "10",
                 5 * 10000,
-                100 * 10000
-            )
+                100 * 10000,
+            ),
         ) // 10 is between 5 and 100
         assertNull(AmountValidator.validate("5", 5 * 10000, 100 * 10000)) // Equal to min
         assertNull(AmountValidator.validate("100", 5 * 10000, 100 * 10000)) // Equal to max
@@ -96,11 +95,11 @@ class ValidationsTest {
         // Invalid amounts - assuming the conversion works correctly
         assertEquals(
             "Should be greater than 5.0",
-            AmountValidator.validate("4", 5 * 10000, 100 * 10000)
+            AmountValidator.validate("4", 5 * 10000, 100 * 10000),
         )
         assertEquals(
             "Should be less than 100.0",
-            AmountValidator.validate("101", 5 * 10000, 100 * 10000)
+            AmountValidator.validate("101", 5 * 10000, 100 * 10000),
         )
 
         // The "Invalid number" case is harder to test without mocking the extension function

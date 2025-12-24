@@ -36,11 +36,13 @@ class CreateOfferPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
 ) : BasePresenter(mainPresenter) {
     enum class PriceType {
-        PERCENTAGE, FIXED,
+        PERCENTAGE,
+        FIXED,
     }
 
     enum class AmountType {
-        FIXED_AMOUNT, RANGE_AMOUNT,
+        FIXED_AMOUNT,
+        RANGE_AMOUNT,
     }
 
     class CreateOfferModel {
@@ -123,7 +125,11 @@ class CreateOfferPresenter(
         createOfferModel.baseSideMaxRangeAmount = baseSideMaxRangeAmount
     }
 
-    fun commitPrice(priceType: PriceType, percentagePrice: Double, priceQuote: PriceQuoteVO) {
+    fun commitPrice(
+        priceType: PriceType,
+        percentagePrice: Double,
+        priceQuote: PriceQuoteVO,
+    ) {
         createOfferModel.priceType = priceType
         createOfferModel.percentagePriceValue = percentagePrice
         createOfferModel.priceQuote = priceQuote
@@ -132,34 +138,37 @@ class CreateOfferPresenter(
         val quoteCode = createOfferModel.quoteSideFixedAmount?.code
 
         if (quoteAmount != null && quoteCode != null && createOfferModel.baseSideFixedAmount != null) {
-            createOfferModel.baseSideFixedAmount = priceQuote.toBaseSideMonetary(
-                FiatVOFactory.from(
-                    quoteAmount,
-                    quoteCode
-                )
-            ) as CoinVO
+            createOfferModel.baseSideFixedAmount =
+                priceQuote.toBaseSideMonetary(
+                    FiatVOFactory.from(
+                        quoteAmount,
+                        quoteCode,
+                    ),
+                ) as CoinVO
         }
 
         val quoteMinRangeAmount = createOfferModel.quoteSideMinRangeAmount?.value
 
         if (quoteMinRangeAmount != null && quoteCode != null && createOfferModel.baseSideMinRangeAmount != null) {
-            createOfferModel.baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(
-                FiatVOFactory.from(
-                    quoteMinRangeAmount,
-                    quoteCode
-                )
-            ) as CoinVO
+            createOfferModel.baseSideMinRangeAmount =
+                priceQuote.toBaseSideMonetary(
+                    FiatVOFactory.from(
+                        quoteMinRangeAmount,
+                        quoteCode,
+                    ),
+                ) as CoinVO
         }
 
         val quoteMaxRangeAmount = createOfferModel.quoteSideMaxRangeAmount?.value
 
         if (quoteMaxRangeAmount != null && quoteCode != null && createOfferModel.baseSideMaxRangeAmount != null) {
-            createOfferModel.baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(
-                FiatVOFactory.from(
-                    quoteMaxRangeAmount,
-                    quoteCode
-                )
-            ) as CoinVO
+            createOfferModel.baseSideMaxRangeAmount =
+                priceQuote.toBaseSideMonetary(
+                    FiatVOFactory.from(
+                        quoteMaxRangeAmount,
+                        quoteCode,
+                    ),
+                ) as CoinVO
         }
     }
 
@@ -178,7 +187,7 @@ class CreateOfferPresenter(
         val fiatPaymentMethods: Set<String>,
         val amountSpec: AmountSpecVO,
         val priceSpec: PriceSpecVO,
-        val supportedLanguageCodes: Set<String>
+        val supportedLanguageCodes: Set<String>,
     )
 
     private suspend fun prepareOfferParameters(): OfferParameters {
@@ -192,54 +201,70 @@ class CreateOfferPresenter(
         val bitcoinPaymentMethods: Set<String> = createOfferModel.selectedBaseSidePaymentMethods
         val fiatPaymentMethods: Set<String> = createOfferModel.selectedQuoteSidePaymentMethods
 
-        val amountSpec = if (createOfferModel.amountType == AmountType.FIXED_AMOUNT) {
-            QuoteSideFixedAmountSpecVO(createOfferModel.quoteSideFixedAmount!!.value)
-        } else {
-            QuoteSideRangeAmountSpecVO(
-                createOfferModel.quoteSideMinRangeAmount!!.value, createOfferModel.quoteSideMaxRangeAmount!!.value
-            )
-        }
-        val priceSpec = if (createOfferModel.priceType == PriceType.FIXED) {
-            FixPriceSpecVO(createOfferModel.priceQuote)
-        } else {
-            if (createOfferModel.percentagePriceValue == 0.0) MarketPriceSpecVO()
-            else FloatPriceSpecVO(createOfferModel.percentagePriceValue)
-        }
+        val amountSpec =
+            if (createOfferModel.amountType == AmountType.FIXED_AMOUNT) {
+                QuoteSideFixedAmountSpecVO(createOfferModel.quoteSideFixedAmount!!.value)
+            } else {
+                QuoteSideRangeAmountSpecVO(
+                    createOfferModel.quoteSideMinRangeAmount!!.value,
+                    createOfferModel.quoteSideMaxRangeAmount!!.value,
+                )
+            }
+        val priceSpec =
+            if (createOfferModel.priceType == PriceType.FIXED) {
+                FixPriceSpecVO(createOfferModel.priceQuote)
+            } else {
+                if (createOfferModel.percentagePriceValue == 0.0) {
+                    MarketPriceSpecVO()
+                } else {
+                    FloatPriceSpecVO(createOfferModel.percentagePriceValue)
+                }
+            }
 
-        val supportedLanguageCodes = runCatching {
-            settingsServiceFacade.getSettings().getOrThrow().supportedLanguageCodes
-        }.getOrElse {
-            log.w(it) { "Failed to fetch settings, defaulting to English" }
-            setOf("en")
-        }
+        val supportedLanguageCodes =
+            runCatching {
+                settingsServiceFacade.getSettings().getOrThrow().supportedLanguageCodes
+            }.getOrElse {
+                log.w(it) { "Failed to fetch settings, defaulting to English" }
+                setOf("en")
+            }
 
         return OfferParameters(
-            direction, market, bitcoinPaymentMethods, fiatPaymentMethods,
-            amountSpec, priceSpec, supportedLanguageCodes
+            direction,
+            market,
+            bitcoinPaymentMethods,
+            fiatPaymentMethods,
+            amountSpec,
+            priceSpec,
+            supportedLanguageCodes,
         )
     }
 
-    suspend fun createOffer(): Result<String> {
-        return try {
+    suspend fun createOffer(): Result<String> =
+        try {
             withTimeout(30.seconds) {
                 val params = prepareOfferParameters()
                 offersServiceFacade.createOffer(
-                    params.direction, params.market, params.bitcoinPaymentMethods,
-                    params.fiatPaymentMethods, params.amountSpec, params.priceSpec,
-                    params.supportedLanguageCodes
+                    params.direction,
+                    params.market,
+                    params.bitcoinPaymentMethods,
+                    params.fiatPaymentMethods,
+                    params.amountSpec,
+                    params.priceSpec,
+                    params.supportedLanguageCodes,
                 )
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
 
     fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
         if (isDemo()) {
             val marketVO = marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
             return PriceQuoteVO(
                 100,
-                4, 2,
+                4,
+                2,
                 marketVO!!,
                 CoinVO("BTC", 1, "BTC", 8, 4),
                 FiatVO("USD", 80000, "USD", 4, 2),

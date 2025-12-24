@@ -28,18 +28,18 @@ fun RangeAmountSelector(
     onMinRangeSliderValueChange: (Float) -> Unit,
     maxRangeSliderValue: Float,
     onMaxRangeSliderValueChange: (Float) -> Unit,
-    maxSliderValue: Float? = null,
-    leftMarkerSliderValue: Float? = null,
-    rightMarkerSliderValue: Float? = null,
     formattedQuoteSideMinRangeAmount: String,
     formattedBaseSideMinRangeAmount: String,
     formattedQuoteSideMaxRangeAmount: String,
     formattedBaseSideMaxRangeAmount: String,
     onMinAmountTextValueChange: (String) -> Unit,
     onMaxAmountTextValueChange: (String) -> Unit,
+    maxSliderValue: Float? = null,
+    leftMarkerSliderValue: Float? = null,
+    rightMarkerSliderValue: Float? = null,
     validateRangeMinTextField: ((String) -> String?)? = null,
     validateRangeMaxTextField: ((String) -> String?)? = null,
-    onRangeSliderChangeFinished: (() -> Unit)? = null,
+    onRangeSliderChangeFinish: (() -> Unit)? = null,
 ) {
     val decimalSeparator = getDecimalSeparator()
     val quoteSideMinRangeAmountWithoutDecimal = formattedQuoteSideMinRangeAmount.substringBefore(decimalSeparator)
@@ -49,12 +49,12 @@ fun RangeAmountSelector(
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Column(
                 horizontalAlignment = Alignment.Start,
-                modifier = Modifier.weight(1.0F)
+                modifier = Modifier.weight(1.0F),
             ) {
-                BisqText.smallRegularGrey("mobile.min".i18n())
+                BisqText.SmallRegularGrey("mobile.min".i18n())
                 FiatInputField(
                     text = quoteSideMinRangeAmountWithoutDecimal,
-                    onValueChanged = { onMinAmountTextValueChange.invoke(it) },
+                    onValueChange = { onMinAmountTextValueChange.invoke(it) },
                     currency = quoteCurrencyCode,
                     textAlign = TextAlign.Start,
                     validation = {
@@ -63,19 +63,19 @@ fun RangeAmountSelector(
                         }
                         return@FiatInputField null
                     },
-                    smallFont = true
+                    smallFont = true,
                 )
                 BtcSatsText(formattedBaseSideMinRangeAmount)
             }
             BisqGap.H1()
             Column(
                 horizontalAlignment = Alignment.End,
-                modifier = Modifier.weight(1.0F)
+                modifier = Modifier.weight(1.0F),
             ) {
-                BisqText.smallRegularGrey("mobile.max".i18n())
+                BisqText.SmallRegularGrey("mobile.max".i18n())
                 FiatInputField(
                     text = quoteSideMaxRangeAmountWithoutDecimal,
-                    onValueChanged = { onMaxAmountTextValueChange.invoke(it) },
+                    onValueChange = { onMaxAmountTextValueChange.invoke(it) },
                     currency = quoteCurrencyCode,
                     textAlign = TextAlign.Start,
                     validation = {
@@ -84,7 +84,7 @@ fun RangeAmountSelector(
                         }
                         return@FiatInputField null
                     },
-                    smallFont = true
+                    smallFont = true,
                 )
                 BtcSatsText(formattedBaseSideMaxRangeAmount)
             }
@@ -101,7 +101,7 @@ fun RangeAmountSelector(
                 maxValue = maxSliderValue,
                 leftMarkerValue = leftMarkerSliderValue,
                 rightMarkerValue = rightMarkerSliderValue,
-                onRangeChangeFinished = onRangeSliderChangeFinished,
+                onRangeChangeFinish = onRangeSliderChangeFinish,
             )
 
             BisqGap.V1()
@@ -109,10 +109,10 @@ fun RangeAmountSelector(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
             ) {
-                BisqText.smallLightGrey(formattedMinAmount)
-                BisqText.smallLightGrey(formattedMaxAmount)
+                BisqText.SmallLightGrey(formattedMinAmount)
+                BisqText.SmallLightGrey(formattedMaxAmount)
             }
         }
     }

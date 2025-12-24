@@ -14,28 +14,27 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
 fun TakeOfferSuccessDialog(
-    onShowTrades: () -> Unit
+    onShowTrades: () -> Unit,
 ) {
-
     BisqDialog(dismissOnClickOutside = false) {
-        BisqText.h4Light(
+        BisqText.H4Light(
             text = "bisqEasy.takeOffer.review.takeOfferSuccess.headline".i18n(),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         BisqGap.V2()
 
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = "bisqEasy.tradeWizard.review.takeOfferSuccess.subTitle".i18n(),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         BisqGap.V2()
 
         BisqButton(
-            "bisqEasy.takeOffer.review.takeOfferSuccessButton".i18n(),
+            text = "bisqEasy.takeOffer.review.takeOfferSuccessButton".i18n(),
             padding = PaddingValues(all = BisqUIConstants.ScreenPadding),
             onClick = onShowTrades,
             fullWidth = true,

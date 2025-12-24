@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
  *
  * @param onCancel A callback function that is invoked when the cancel button is clicked.
  * @param torchEnabled A boolean value that indicates whether the torch is enabled.
- * @param onTorchEnabled A callback function that is invoked when the torch button is clicked.
+ * @param onTorchEnable A callback function that is invoked when the torch button is clicked.
  * @param zoomRatio A float value that represents the current zoom ratio.
  * @param zoomRatioOnChange A callback function that is invoked when the zoom ratio changes.
  * @param maxZoomRatio A float value that represents the maximum zoom ratio.
@@ -25,22 +25,23 @@ import androidx.compose.ui.unit.dp
 fun ScannerUI(
     onCancel: () -> Unit,
     torchEnabled: Boolean,
-    onTorchEnabled: (Boolean) -> Unit,
+    onTorchEnable: (Boolean) -> Unit,
     zoomRatio: Float,
     zoomRatioOnChange: (Float) -> Unit,
     maxZoomRatio: Float,
+    modifier: Modifier = Modifier,
     colors: ScannerColors = scannerColors(),
     options: ScannerUiOptions = ScannerUiOptions(),
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ScannerHeader(
             onCancel = onCancel,
             showTorch = options.showTorch,
             torchEnabled = torchEnabled,
-            onTorchEnabled = onTorchEnabled,
+            onTorchEnable = onTorchEnable,
             title = options.headerTitle,
             containerColor = colors.headerContainerColor,
             navigationIconColor = colors.headerNavigationIconColor,

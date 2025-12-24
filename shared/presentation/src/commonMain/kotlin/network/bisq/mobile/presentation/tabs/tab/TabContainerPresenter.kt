@@ -3,8 +3,8 @@ package network.bisq.mobile.presentation.tabs.tab
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 
 /**
@@ -14,8 +14,8 @@ class TabContainerPresenter(
     private val mainPresenter: MainPresenter,
     private val createOfferPresenter: CreateOfferPresenter,
     private val settingsServiceFacade: SettingsServiceFacade,
-) : BasePresenter(mainPresenter), ITabContainerPresenter {
-
+) : BasePresenter(mainPresenter),
+    ITabContainerPresenter {
     override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = mainPresenter.tradesWithUnreadMessages
 

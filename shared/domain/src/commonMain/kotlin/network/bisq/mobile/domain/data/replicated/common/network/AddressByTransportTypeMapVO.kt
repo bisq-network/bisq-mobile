@@ -19,4 +19,6 @@ package network.bisq.mobile.domain.data.replicated.common.network
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AddressByTransportTypeMapVO(val map: Map<TransportTypeEnum, AddressVO>)
+data class AddressByTransportTypeMapVO(
+    val map: Map<TransportTypeEnum, AddressVO>,
+)

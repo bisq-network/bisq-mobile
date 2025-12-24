@@ -5,7 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class MonetarySliderTest {
-
     private val min = 0L
     private val max = 100_000L // 10.0000 units
     private val step = 10_000L
@@ -30,4 +29,3 @@ class MonetarySliderTest {
         assertTrue(a < b && b < c)
     }
 }
-

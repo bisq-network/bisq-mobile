@@ -28,7 +28,5 @@ class MarketPriceSpecVO : PriceSpecVO {
         return true
     }
 
-    override fun hashCode(): Int {
-        return this::class.hashCode()
-    }
+    override fun hashCode(): Int = this::class.hashCode()
 }

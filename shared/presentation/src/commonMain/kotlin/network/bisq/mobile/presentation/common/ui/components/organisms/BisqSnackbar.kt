@@ -23,7 +23,7 @@ data class BisqSnackbarVisuals(
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = true,
     override val duration: SnackbarDuration = SnackbarDuration.Short,
-    val isError: Boolean = true
+    val isError: Boolean = true,
 ) : SnackbarVisuals
 
 @Composable
@@ -32,17 +32,19 @@ fun BisqSnackbar(snackbarHostState: SnackbarHostState) {
         hostState = snackbarHostState,
         snackbar = { data ->
             val isError = (data.visuals as? BisqSnackbarVisuals)?.isError ?: false
-            val containerColor = if (isError) {
-                BisqTheme.colors.danger
-            } else {
-                BisqTheme.colors.secondary
-            }.copy(alpha = 0.95f)
+            val containerColor =
+                if (isError) {
+                    BisqTheme.colors.danger
+                } else {
+                    BisqTheme.colors.secondary
+                }.copy(alpha = 0.95f)
 
-            val contentColor = if (isError) {
-                BisqTheme.colors.dark_grey10
-            } else {
-                BisqTheme.colors.mid_grey20
-            }
+            val contentColor =
+                if (isError) {
+                    BisqTheme.colors.dark_grey10
+                } else {
+                    BisqTheme.colors.mid_grey20
+                }
 
             Snackbar(
                 snackbarData = data,
@@ -52,7 +54,7 @@ fun BisqSnackbar(snackbarHostState: SnackbarHostState) {
                 modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPadding2X),
                 shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
             )
-        }
+        },
     )
 }
 
@@ -67,8 +69,8 @@ private fun BisqSnackbarPreview() {
                 BisqSnackbarVisuals(
                     message = "This is a sample message with dismiss action",
                     withDismissAction = true,
-                    isError = false
-                )
+                    isError = false,
+                ),
             )
         }
 
@@ -78,7 +80,7 @@ private fun BisqSnackbarPreview() {
 
 @Preview
 @Composable
-private fun BisqSnackbarPreview_NoDismissAction() {
+private fun BisqSnackbarPreview_NoDismissActionPreview() {
     BisqTheme.Preview {
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -87,8 +89,8 @@ private fun BisqSnackbarPreview_NoDismissAction() {
                 BisqSnackbarVisuals(
                     message = "This is a sample message",
                     withDismissAction = false,
-                    isError = false
-                )
+                    isError = false,
+                ),
             )
         }
 
@@ -98,7 +100,7 @@ private fun BisqSnackbarPreview_NoDismissAction() {
 
 @Preview
 @Composable
-private fun BisqSnackbarPreview_LongMessage() {
+private fun BisqSnackbarPreview_LongMessagePreview() {
     BisqTheme.Preview {
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -107,8 +109,8 @@ private fun BisqSnackbarPreview_LongMessage() {
                 BisqSnackbarVisuals(
                     message = "This is a longer snackbar message that demonstrates how the component handles multi-line text content",
                     withDismissAction = true,
-                    isError = false
-                )
+                    isError = false,
+                ),
             )
         }
 
@@ -118,7 +120,7 @@ private fun BisqSnackbarPreview_LongMessage() {
 
 @Preview
 @Composable
-private fun BisqSnackbarPreview_Error() {
+private fun BisqSnackbarPreview_ErrorPreview() {
     BisqTheme.Preview {
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -127,8 +129,8 @@ private fun BisqSnackbarPreview_Error() {
                 BisqSnackbarVisuals(
                     message = "This is a longer snackbar message that demonstrates how the component handles multi-line text content",
                     withDismissAction = true,
-                    isError = true
-                )
+                    isError = true,
+                ),
             )
         }
 

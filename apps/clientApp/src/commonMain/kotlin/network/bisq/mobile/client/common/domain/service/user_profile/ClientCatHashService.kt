@@ -12,8 +12,11 @@ interface ClientCatHashService<T> {
         pubKeyHash: ByteArray,
         powSolution: ByteArray,
         avatarVersion: Int,
-        size: Int
+        size: Int,
     ): T
 
-    fun getImage(userProfile: UserProfileVO, size: Int): T
+    fun getImage(
+        userProfile: UserProfileVO,
+        size: Int,
+    ): T
 }

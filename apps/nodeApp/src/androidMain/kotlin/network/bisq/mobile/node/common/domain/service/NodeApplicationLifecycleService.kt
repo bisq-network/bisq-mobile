@@ -22,8 +22,8 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.restartProcess
-import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
+import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import java.io.File
 
@@ -52,7 +52,6 @@ class NodeApplicationLifecycleService(
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val connectivityService: NodeConnectivityService,
 ) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
-
     fun restartForRestoreDataDirectory(view: Any?) {
         val activity =
             view as? Activity ?: throw IllegalStateException("Passed view is not an Activity")

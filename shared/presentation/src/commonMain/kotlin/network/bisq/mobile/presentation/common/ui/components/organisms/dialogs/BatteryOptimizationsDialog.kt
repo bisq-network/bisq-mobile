@@ -24,7 +24,7 @@ fun BatteryOptimizationsDialog(
 
 @Preview
 @Composable
-fun BatteryOptimizationsDialogPreview() {
+private fun BatteryOptimizationsDialogPreview() {
     BisqTheme.Preview {
         BatteryOptimizationsDialog(
             onConfirm = {},

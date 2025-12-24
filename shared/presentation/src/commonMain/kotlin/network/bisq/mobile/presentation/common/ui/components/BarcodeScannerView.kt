@@ -20,8 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.utils.rememberCameraPermissionLauncher
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.rememberCameraPermissionLauncher
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ncgroup.kscan.Barcode
 import org.ncgroup.kscan.BarcodeFormat
@@ -33,22 +33,24 @@ import org.ncgroup.kscan.ScannerView
 
 @Composable
 fun BarcodeScannerView(
-    codeTypes: List<BarcodeFormat> = listOf(
-        BarcodeFormats.FORMAT_QR_CODE,
-    ),
-    onCanceled: () -> Unit = {},
-    onFailed: (e: Throwable) -> Unit = {},
+    codeTypes: List<BarcodeFormat> =
+        listOf(
+            BarcodeFormats.FORMAT_QR_CODE,
+        ),
+    onCancel: () -> Unit = {},
+    onFail: (e: Throwable) -> Unit = {},
     onResult: (barcode: Barcode) -> Unit,
 ) {
     var showScanner by remember { mutableStateOf(false) }
 
-    val permissionRequestLauncher = rememberCameraPermissionLauncher { isCameraPermissionGranted ->
-        if (isCameraPermissionGranted) {
-            showScanner = true
-        } else {
-            onCanceled()
+    val permissionRequestLauncher =
+        rememberCameraPermissionLauncher { isCameraPermissionGranted ->
+            if (isCameraPermissionGranted) {
+                showScanner = true
+            } else {
+                onCancel()
+            }
         }
-    }
 
     LaunchedEffect(Unit) {
         permissionRequestLauncher.launch()
@@ -56,33 +58,39 @@ fun BarcodeScannerView(
 
     if (showScanner) {
         Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .fillMaxSize(),
+            contentAlignment = Alignment.Center,
         ) {
             Surface(
                 color = Color.Black.copy(alpha = 0.6f),
-                modifier = Modifier.fillMaxSize().clickable(
-                    onClick = onCanceled,
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                )) {}
+                modifier =
+                    Modifier.fillMaxSize().clickable(
+                        onClick = onCancel,
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                    ),
+            ) {}
             ScannerView(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(28.dp)
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp)),
                 codeTypes = codeTypes,
-                scannerUiOptions = ScannerUiOptions(
-                    headerTitle = "mobile.barcode.header".i18n(),
-                    showZoom = false,
-                ),
-                colors = ScannerColors(
-                    headerContainerColor = BisqTheme.colors.dark_grey10,
-                    barcodeFrameColor = BisqTheme.colors.primary,
-                    zoomControllerContainerColor = BisqTheme.colors.dark_grey10,
-                )
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(28.dp)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(8.dp)),
+                colors =
+                    ScannerColors(
+                        headerContainerColor = BisqTheme.colors.dark_grey10,
+                        barcodeFrameColor = BisqTheme.colors.primary,
+                        zoomControllerContainerColor = BisqTheme.colors.dark_grey10,
+                    ),
+                scannerUiOptions =
+                    ScannerUiOptions(
+                        headerTitle = "mobile.barcode.header".i18n(),
+                        showZoom = false,
+                    ),
             ) { result ->
                 when (result) {
                     is BarcodeResult.OnSuccess -> {
@@ -90,11 +98,11 @@ fun BarcodeScannerView(
                     }
 
                     is BarcodeResult.OnFailed -> {
-                        onFailed(result.exception)
+                        onFail(result.exception)
                     }
 
                     BarcodeResult.OnCanceled -> {
-                        onCanceled()
+                        onCancel()
                     }
                 }
             }
@@ -104,9 +112,8 @@ fun BarcodeScannerView(
 
 @Composable
 @Preview
-fun BarcodeScannerViewPreview() {
+private fun BarcodeScannerViewPreview() {
     BisqTheme.Preview {
         BarcodeScannerView {}
     }
 }
-

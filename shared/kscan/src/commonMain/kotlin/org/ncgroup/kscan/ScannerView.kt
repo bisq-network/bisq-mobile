@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
  */
 @Composable
 expect fun ScannerView(
-    modifier: Modifier = Modifier.fillMaxSize(),
     codeTypes: List<BarcodeFormat>,
+    modifier: Modifier = Modifier.fillMaxSize(),
     colors: ScannerColors = scannerColors(),
     scannerUiOptions: ScannerUiOptions? = ScannerUiOptions(),
     scannerController: ScannerController? = null,

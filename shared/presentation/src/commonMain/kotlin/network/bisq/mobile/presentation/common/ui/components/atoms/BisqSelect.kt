@@ -33,23 +33,24 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ExpandAllIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet.BisqBottomSheet
-import network.bisq.mobile.presentation.common.ui.utils.rememberBlurTriggerSetup
-import network.bisq.mobile.presentation.common.ui.utils.setBlurTrigger
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
+import network.bisq.mobile.presentation.common.ui.utils.rememberBlurTriggerSetup
+import network.bisq.mobile.presentation.common.ui.utils.setBlurTrigger
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun <T> BisqMultiSelect(
+    options: Iterable<T>,
+    onSelectionChange: ((option: T, selected: Boolean) -> Unit),
+    modifier: Modifier = Modifier,
     label: String = "",
     helpText: String = "",
-    options: Iterable<T>,
     optionKey: ((T) -> String) = { it.toString() },
     optionLabel: ((T) -> String) = { it.toString() },
     selectedKeys: Set<String> = setOf(),
-    onSelectionChanged: ((option: T, selected: Boolean) -> Unit),
-    modifier: Modifier = Modifier,
     placeholder: String = "mobile.components.select.placeholder".i18n(),
     searchable: Boolean = false,
     maxSelectionLimit: Int = Int.MAX_VALUE,
@@ -60,16 +61,17 @@ fun <T> BisqMultiSelect(
     val coroutineScope = rememberCoroutineScope()
     var errorText by remember { mutableStateOf<String?>(null) }
     var errorDismissJob by remember { mutableStateOf<Job?>(null) }
-    val menuItemColors = remember {
-        MenuItemColors(
-            textColor = BisqTheme.colors.white,
-            trailingIconColor = BisqTheme.colors.primary,
-            disabledTextColor = BisqTheme.colors.mid_grey20,
-            disabledTrailingIconColor = BisqTheme.colors.mid_grey20,
-            leadingIconColor = BisqTheme.colors.white,
-            disabledLeadingIconColor = BisqTheme.colors.mid_grey20
-        )
-    }
+    val menuItemColors =
+        remember {
+            MenuItemColors(
+                textColor = BisqTheme.colors.white,
+                trailingIconColor = BisqTheme.colors.primary,
+                disabledTextColor = BisqTheme.colors.mid_grey20,
+                disabledTrailingIconColor = BisqTheme.colors.mid_grey20,
+                leadingIconColor = BisqTheme.colors.white,
+                disabledLeadingIconColor = BisqTheme.colors.mid_grey20,
+            )
+        }
 
     BisqSelect(
         label = label,
@@ -83,17 +85,18 @@ fun <T> BisqMultiSelect(
         placeholder = placeholder,
         searchable = searchable,
         disabled = disabled,
-        onTriggerClicked = {
+        onTriggerClick = {
             val limitReached = selectedKeys.size >= maxSelectionLimit
             if (limitReached) {
                 errorText =
                     "mobile.components.dropdown.maxSelection".i18n(maxSelectionLimit.toString()) // "Maximum of {0} items can be selected"
 
                 errorDismissJob?.cancel()
-                errorDismissJob = coroutineScope.launch {
-                    delay(3000)
-                    errorText = null
-                }
+                errorDismissJob =
+                    coroutineScope.launch {
+                        delay(3000)
+                        errorText = null
+                    }
 
                 false
             } else {
@@ -103,12 +106,12 @@ fun <T> BisqMultiSelect(
         itemContent = { keyOptionLabelEntry, onDismiss ->
             val isSelected = selectedKeys.contains(keyOptionLabelEntry.key)
             DropdownMenuItem(
-                text = { BisqText.local(keyOptionLabelEntry.value.second, maxLines = 1) },
+                text = { BisqText.Local(keyOptionLabelEntry.value.second, maxLines = 1) },
                 onClick = {
                     errorText = null
                     if (selectedKeys.size >= maxSelectionLimit && !isSelected) return@DropdownMenuItem
                     if (selectedKeys.size - 1 < minSelectionLimit && isSelected) return@DropdownMenuItem
-                    onSelectionChanged(
+                    onSelectionChange(
                         keyOptionLabelEntry.value.first,
                         !isSelected, // simply toggling
                     )
@@ -121,55 +124,56 @@ fun <T> BisqMultiSelect(
                     SegmentedButtonDefaults.Icon(isSelected)
                 },
                 colors = menuItemColors,
-                enabled = isSelected || (selectedKeys.size < maxSelectionLimit)
+                enabled = isSelected || (selectedKeys.size < maxSelectionLimit),
             )
         },
         extraContent = { keyLabelOptionEntries ->
             BisqGap.VHalf()
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
             ) {
                 keyLabelOptionEntries.entries.filter { it.key in selectedKeys }.forEach {
                     val optionLabelPair = it.value
-                    key(it.key) { // key is for proper detection of changes & animations
+                    key(it.key) {
+                        // key is for proper detection of changes & animations
                         BisqChip(
                             label = optionLabelPair.second,
                             showRemove = selectedKeys.size > minSelectionLimit,
                             type = chipType,
                             onRemove = {
                                 errorText = null
-                                onSelectionChanged(optionLabelPair.first, false)
-                            }
+                                onSelectionChange(optionLabelPair.first, false)
+                            },
                         )
                     }
                 }
             }
-        }
+        },
     )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun <T> BisqSelect(
-    label: String = "",
-    helpText: String = "",
-    errorText: String? = null,
     options: Iterable<T>,
+    selectedKey: String?,
+    modifier: Modifier = Modifier,
+    label: String = EMPTY_STRING,
+    helpText: String = EMPTY_STRING,
+    errorText: String? = null,
     optionKey: ((T) -> String) = { it.hashCode().toString() },
     optionLabel: ((T) -> String) = { it.toString() },
-    selectedKey: String?,
-    onSelected: (T) -> Unit = {},
-    modifier: Modifier = Modifier,
+    onSelect: (T) -> Unit = {},
     placeholder: String = "mobile.components.select.placeholder".i18n(),
     searchable: Boolean = false,
     disabled: Boolean = false,
-    onTriggerClicked: () -> Boolean? = { null },
+    onTriggerClick: () -> Boolean? = { null },
     itemContent: @Composable (Map.Entry<String, Pair<T, String>>, () -> Unit) -> Unit = { option, onDismiss ->
         DropdownMenuItem(
-            text = { BisqText.baseLight(option.value.second, singleLine = true) },
+            text = { BisqText.BaseLight(option.value.second, singleLine = true) },
             onClick = {
-                onSelected(option.value.first)
+                onSelect(option.value.first)
                 onDismiss()
             },
         )
@@ -178,36 +182,41 @@ fun <T> BisqSelect(
 ) {
     var expanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    val onDismiss = remember {
-        {
-            expanded = false
-            searchText = ""
-        }
-    }
-
-    val keyLabelOptionEntries = remember(
-        options,
-        optionKey,
-        optionLabel,
-    ) { options.associate { optionKey(it) to Pair(it, optionLabel(it)) } }
-
-    val filteredOptions = remember(searchable, searchText, keyLabelOptionEntries) {
-        if (searchable && searchText.isNotEmpty()) {
-            keyLabelOptionEntries.filter {
-                it.value.second.contains(
-                    searchText,
-                    ignoreCase = true
-                )
+    val onDismiss =
+        remember {
+            {
+                expanded = false
+                searchText = ""
             }
-        } else {
-            keyLabelOptionEntries
         }
-    }
 
-    val selectedLabel = remember(optionKey, selectedKey, keyLabelOptionEntries) {
-        keyLabelOptionEntries.filter { it.key == selectedKey }
-            .let { if (it.isNotEmpty()) it.values.first().second else "" }
-    }
+    val keyLabelOptionEntries =
+        remember(
+            options,
+            optionKey,
+            optionLabel,
+        ) { options.associate { optionKey(it) to Pair(it, optionLabel(it)) } }
+
+    val filteredOptions =
+        remember(searchable, searchText, keyLabelOptionEntries) {
+            if (searchable && searchText.isNotEmpty()) {
+                keyLabelOptionEntries.filter {
+                    it.value.second.contains(
+                        searchText,
+                        ignoreCase = true,
+                    )
+                }
+            } else {
+                keyLabelOptionEntries
+            }
+        }
+
+    val selectedLabel =
+        remember(optionKey, selectedKey, keyLabelOptionEntries) {
+            keyLabelOptionEntries
+                .filter { it.key == selectedKey }
+                .let { if (it.isNotEmpty()) it.values.first().second else "" }
+        }
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
 
@@ -225,12 +234,12 @@ fun <T> BisqSelect(
             disabled = disabled,
             modifier = Modifier.setBlurTrigger(blurTriggerSetup),
             onFocus = {
-                val newExpand = onTriggerClicked() ?: true
+                val newExpand = onTriggerClick() ?: true
                 expanded = newExpand
                 if (!newExpand) {
                     blurTriggerSetup.triggerBlur()
                 }
-            }
+            },
         )
         extraContent(keyLabelOptionEntries)
     }
@@ -247,8 +256,10 @@ fun <T> BisqSelect(
                     value = searchText,
                     onValueChange = { it, _ -> searchText = it },
                     placeholder = "mobile.components.dropdown.searchPlaceholder".i18n(),
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(BisqUIConstants.ScreenPaddingHalfQuarter)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(BisqUIConstants.ScreenPaddingHalfQuarter),
                 )
             }
 
@@ -266,9 +277,9 @@ fun <T> BisqSelect(
                 ) {
                     Box(
                         Modifier.fillMaxWidth().height(130.dp),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
-                        BisqText.largeRegular("mobile.components.select.empty".i18n())
+                        BisqText.LargeRegular("mobile.components.select.empty".i18n())
                     }
                 }
             }
@@ -286,10 +297,11 @@ private fun BisqSelectPreview() {
             optionKey = { it },
             optionLabel = { it },
             selectedKey = "English",
-            helpText = "random help text"
+            helpText = "random help text",
         )
     }
 }
+
 @Preview
 @Composable
 private fun BisqSelectPlaceholderPreview() {
@@ -301,7 +313,7 @@ private fun BisqSelectPlaceholderPreview() {
             optionKey = { it },
             optionLabel = { it },
             selectedKey = "",
-            helpText = "random help text"
+            helpText = "random help text",
         )
     }
 }
@@ -317,8 +329,7 @@ private fun BisqSelectErrorPreview() {
             optionLabel = { it },
             selectedKey = "English",
             helpText = "random help text",
-            errorText = "random error text"
+            errorText = "random error text",
         )
     }
 }
-

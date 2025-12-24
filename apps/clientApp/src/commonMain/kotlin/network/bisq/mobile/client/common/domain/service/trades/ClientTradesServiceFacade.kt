@@ -40,9 +40,9 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 class ClientTradesServiceFacade(
     private val apiGateway: TradesApiGateway,
     webSocketClientService: WebSocketClientService,
-    json: Json
-) : ServiceFacade(), TradesServiceFacade {
-
+    json: Json,
+) : ServiceFacade(),
+    TradesServiceFacade {
     companion object {
         private const val MAX_CACHED_TRADE_PROPERTIES = 500
         private const val TRADE_STATE_SYNC_DELAY = 2000L
@@ -88,15 +88,16 @@ class ClientTradesServiceFacade(
         bitcoinPaymentMethod: String,
         fiatPaymentMethod: String,
         takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
-        takeOfferErrorMessage: MutableStateFlow<String?>
+        takeOfferErrorMessage: MutableStateFlow<String?>,
     ): Result<String> {
-        val apiResult = apiGateway.takeOffer(
-            bisqEasyOffer.id,
-            takersBaseSideAmount.value,
-            takersQuoteSideAmount.value,
-            bitcoinPaymentMethod,
-            fiatPaymentMethod,
-        )
+        val apiResult =
+            apiGateway.takeOffer(
+                bisqEasyOffer.id,
+                takersBaseSideAmount.value,
+                takersQuoteSideAmount.value,
+                bitcoinPaymentMethod,
+                fiatPaymentMethod,
+            )
         if (apiResult.isSuccess) {
             takeOfferStatus.value = TakeOfferStatus.SUCCESS
             return Result.success(apiResult.getOrThrow().tradeId)
@@ -109,13 +110,9 @@ class ClientTradesServiceFacade(
         _selectedTrade.value = findOpenTradeItemModel(tradeId)
     }
 
-    override suspend fun rejectTrade(): Result<Unit> {
-        return apiGateway.rejectTrade(requireNotNull(tradeId))
-    }
+    override suspend fun rejectTrade(): Result<Unit> = apiGateway.rejectTrade(requireNotNull(tradeId))
 
-    override suspend fun cancelTrade(): Result<Unit> {
-        return apiGateway.cancelTrade(requireNotNull(tradeId))
-    }
+    override suspend fun cancelTrade(): Result<Unit> = apiGateway.cancelTrade(requireNotNull(tradeId))
 
     override suspend fun closeTrade(): Result<Unit> {
         val result = apiGateway.closeTrade(requireNotNull(tradeId))
@@ -156,7 +153,7 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun exportTradeDate(): Result<Unit> {
-        //todo
+        // todo
         return Result.success(Unit)
     }
 
@@ -165,7 +162,10 @@ class ClientTradesServiceFacade(
     }
 
     // Private
-    private fun handleTradeItemPresentationChange(payload: List<TradeItemPresentationDto>, modificationType: ModificationType) {
+    private fun handleTradeItemPresentationChange(
+        payload: List<TradeItemPresentationDto>,
+        modificationType: ModificationType,
+    ) {
         when (modificationType) {
             ModificationType.REPLACE -> {
                 // Server is sending a full snapshot; replace our current list to avoid duplicates.
@@ -207,9 +207,10 @@ class ClientTradesServiceFacade(
         val shortTradeId = trade.shortTradeId
 
         // Check for pending properties using both full and short trade IDs
-        val pendingData = pendingTradeProperties[tradeId]
-            ?: pendingTradeProperties[shortTradeId]
-            ?: pendingTradeProperties.entries.find { it.key.take(8) == shortTradeId }?.value
+        val pendingData =
+            pendingTradeProperties[tradeId]
+                ?: pendingTradeProperties[shortTradeId]
+                ?: pendingTradeProperties.entries.find { it.key.take(8) == shortTradeId }?.value
 
         if (pendingData != null) {
             log.i { "Applying pending trade properties for $tradeId" }
@@ -222,10 +223,14 @@ class ClientTradesServiceFacade(
         }
     }
 
-    private fun handleTradePropertiesChange(payload: List<Map<String, TradePropertiesDto>>, modificationType: ModificationType) {
+    private fun handleTradePropertiesChange(
+        payload: List<Map<String, TradePropertiesDto>>,
+        modificationType: ModificationType,
+    ) {
         log.i { "handleTradePropertiesChange called with ${payload.size} items, modificationType: $modificationType" }
 
-        payload.flatMap { it.entries }
+        payload
+            .flatMap { it.entries }
             .forEach { (tradeId, data) ->
                 log.i { "Processing trade properties for $tradeId - state: ${data.tradeState}" }
 
@@ -248,7 +253,11 @@ class ClientTradesServiceFacade(
     /**
      * Applies trade properties to a trade model.
      */
-    private fun applyTradeProperties(trade: TradeItemPresentationModel, tradeId: String, data: TradePropertiesDto) {
+    private fun applyTradeProperties(
+        trade: TradeItemPresentationModel,
+        tradeId: String,
+        data: TradePropertiesDto,
+    ) {
         log.i { "Apply mutable data to trade with ID $tradeId - new state: ${data.tradeState}" }
         data.tradeState?.let {
             log.i { "Updating trade $tradeId state from ${trade.bisqEasyTradeModel.tradeState.value} to $it" }
@@ -309,5 +318,4 @@ class ClientTradesServiceFacade(
             log.e(e) { "Error refreshing WebSocket subscriptions" }
         }
     }
-
 }

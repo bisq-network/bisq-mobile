@@ -15,11 +15,11 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
 fun BisqCheckbox(
+    checked: Boolean,
+    modifier: Modifier = Modifier,
     label: String = "",
     disabled: Boolean = false,
-    checked: Boolean,
     onCheckedChange: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     val grey2Color = BisqTheme.colors.mid_grey20
     val whiteColor = BisqTheme.colors.white
@@ -29,7 +29,7 @@ fun BisqCheckbox(
                 grey2Color
             } else {
                 whiteColor
-            }
+            },
         )
     }
 
@@ -38,38 +38,37 @@ fun BisqCheckbox(
             checked = checked,
             onCheckedChange = onCheckedChange,
             enabled = !disabled,
-            colors = CheckboxColors(
-                uncheckedBoxColor = BisqTheme.colors.secondary,
-                uncheckedBorderColor = BisqTheme.colors.mid_grey20,
-                uncheckedCheckmarkColor = BisqTheme.colors.secondary,
-
-                checkedBoxColor = BisqTheme.colors.secondary,
-                checkedBorderColor = BisqTheme.colors.primaryDim,
-                checkedCheckmarkColor = BisqTheme.colors.primary,
-
-                disabledBorderColor = BisqTheme.colors.backgroundColor,
-                disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
-                disabledIndeterminateBorderColor = BisqTheme.colors.backgroundColor,
-
-                disabledCheckedBoxColor = BisqTheme.colors.secondary,
-                disabledUncheckedBoxColor = BisqTheme.colors.secondary,
-                disabledIndeterminateBoxColor = BisqTheme.colors.secondary,
-            )
+            colors =
+                CheckboxColors(
+                    uncheckedBoxColor = BisqTheme.colors.secondary,
+                    uncheckedBorderColor = BisqTheme.colors.mid_grey20,
+                    uncheckedCheckmarkColor = BisqTheme.colors.secondary,
+                    checkedBoxColor = BisqTheme.colors.secondary,
+                    checkedBorderColor = BisqTheme.colors.primaryDim,
+                    checkedCheckmarkColor = BisqTheme.colors.primary,
+                    disabledBorderColor = BisqTheme.colors.backgroundColor,
+                    disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
+                    disabledIndeterminateBorderColor = BisqTheme.colors.backgroundColor,
+                    disabledCheckedBoxColor = BisqTheme.colors.secondary,
+                    disabledUncheckedBoxColor = BisqTheme.colors.secondary,
+                    disabledIndeterminateBoxColor = BisqTheme.colors.secondary,
+                ),
         )
-        BisqText.baseRegular(
+        BisqText.BaseRegular(
             label,
             color = finalLabelColor,
-            modifier = Modifier
-                .clickable(
-                    enabled = !disabled,
-                    onClick = {
-                        if (onCheckedChange != null) {
-                            onCheckedChange(!checked)
-                        }
-                    },
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                )
+            modifier =
+                Modifier
+                    .clickable(
+                        enabled = !disabled,
+                        onClick = {
+                            if (onCheckedChange != null) {
+                                onCheckedChange(!checked)
+                            }
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ),
         )
     }
 }

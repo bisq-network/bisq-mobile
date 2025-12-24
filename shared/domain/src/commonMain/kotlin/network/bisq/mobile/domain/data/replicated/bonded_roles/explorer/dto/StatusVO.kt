@@ -23,5 +23,5 @@ data class StatusVO(
     val confirmed: Boolean,
     val blockHeight: Int,
     val blockHash: String,
-    val blockTime: Long
+    val blockTime: Long,
 )

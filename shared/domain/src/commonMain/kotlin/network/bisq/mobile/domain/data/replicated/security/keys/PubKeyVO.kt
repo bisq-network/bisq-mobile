@@ -22,6 +22,6 @@ import kotlinx.serialization.Serializable
 data class PubKeyVO(
     val publicKey: PublicKeyVO,
     val keyId: String,
-    val hash: String,  // Base64 encoded
-    val id: String
+    val hash: String, // Base64 encoded
+    val id: String,
 )

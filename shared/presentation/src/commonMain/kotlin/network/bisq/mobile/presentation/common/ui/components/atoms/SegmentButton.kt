@@ -13,57 +13,61 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
 fun <T> BisqSegmentButton(
-    label: String = "",
-    disabled: Boolean = false,
     value: T,
     items: List<Pair<T, String>>,
-    onValueChange: ((Pair<T, String>) -> Unit)? = null,
     modifier: Modifier = Modifier.fillMaxWidth(),
+    label: String = "",
+    disabled: Boolean = false,
+    onValueChange: ((Pair<T, String>) -> Unit)? = null,
 ) {
-    val selectedIndex = items.indexOfFirst{ it.first == value }.coerceAtLeast(0)
+    val selectedIndex = items.indexOfFirst { it.first == value }.coerceAtLeast(0)
 
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {
-            BisqText.baseRegular(label)
+            BisqText.BaseRegular(label)
             BisqGap.VQuarter()
         }
         SingleChoiceSegmentedButtonRow(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             items.forEachIndexed { index, pair ->
                 SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = items.size
-                    ),
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = items.size,
+                        ),
                     onClick = {
                         onValueChange?.invoke(items[index])
                     },
                     selected = index == selectedIndex,
                     enabled = !disabled,
                     label = {
-                        BisqText.baseRegular(
+                        BisqText.BaseRegular(
                             pair.second,
-                            color = if(disabled)
-                                BisqTheme.colors.mid_grey20
-                            else
-                                BisqTheme.colors.white
+                            color =
+                                if (disabled) {
+                                    BisqTheme.colors.mid_grey20
+                                } else {
+                                    BisqTheme.colors.white
+                                },
                         )
                     },
-                    colors = SegmentedButtonColors(
-                        activeContainerColor = BisqTheme.colors.primary,
-                        activeContentColor = BisqTheme.colors.light_grey50,
-                        activeBorderColor = BisqTheme.colors.backgroundColor,
-                        inactiveContainerColor = BisqTheme.colors.secondaryDisabled,
-                        inactiveContentColor = BisqTheme.colors.light_grey50,
-                        inactiveBorderColor = BisqTheme.colors.backgroundColor,
-                        disabledActiveContainerColor = BisqTheme.colors.primaryDisabled,
-                        disabledActiveContentColor = BisqTheme.colors.mid_grey30,
-                        disabledActiveBorderColor = BisqTheme.colors.backgroundColor,
-                        disabledInactiveContainerColor = BisqTheme.colors.secondaryDisabled,
-                        disabledInactiveContentColor = BisqTheme.colors.mid_grey30,
-                        disabledInactiveBorderColor = BisqTheme.colors.backgroundColor,
-                    )
+                    colors =
+                        SegmentedButtonColors(
+                            activeContainerColor = BisqTheme.colors.primary,
+                            activeContentColor = BisqTheme.colors.light_grey50,
+                            activeBorderColor = BisqTheme.colors.backgroundColor,
+                            inactiveContainerColor = BisqTheme.colors.secondaryDisabled,
+                            inactiveContentColor = BisqTheme.colors.light_grey50,
+                            inactiveBorderColor = BisqTheme.colors.backgroundColor,
+                            disabledActiveContainerColor = BisqTheme.colors.primaryDisabled,
+                            disabledActiveContentColor = BisqTheme.colors.mid_grey30,
+                            disabledActiveBorderColor = BisqTheme.colors.backgroundColor,
+                            disabledInactiveContainerColor = BisqTheme.colors.secondaryDisabled,
+                            disabledInactiveContentColor = BisqTheme.colors.mid_grey30,
+                            disabledInactiveBorderColor = BisqTheme.colors.backgroundColor,
+                        ),
                 )
             }
         }

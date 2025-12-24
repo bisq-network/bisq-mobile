@@ -12,13 +12,12 @@ interface WebSocketClient {
         const val CLEARNET_CONNECT_TIMEOUT = 15_000L
         const val TOR_CONNECT_TIMEOUT = 60_000L
 
-        fun determineTimeout(host: String): Long {
-            return if (host.endsWith(".onion")) {
+        fun determineTimeout(host: String): Long =
+            if (host.endsWith(".onion")) {
                 TOR_CONNECT_TIMEOUT
             } else {
                 CLEARNET_CONNECT_TIMEOUT
             }
-        }
     }
 
     val apiUrl: Url
@@ -45,7 +44,10 @@ interface WebSocketClient {
         webSocketEventObserver: WebSocketEventObserver = WebSocketEventObserver(),
     ): WebSocketEventObserver
 
-    suspend fun unSubscribe(topic: Topic, requestId: String)
+    suspend fun unSubscribe(
+        topic: Topic,
+        requestId: String,
+    )
 
     suspend fun dispose()
 }

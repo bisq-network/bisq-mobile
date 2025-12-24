@@ -18,9 +18,10 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 fun BisqStepProgressBar(
     stepIndex: Int,
     stepsLength: Int,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .height(BisqUIConstants.ScreenPadding2),
+    modifier: Modifier =
+        Modifier
+            .fillMaxWidth()
+            .height(BisqUIConstants.ScreenPadding2),
     gapSize: Dp = 3.dp,
     barHeight: Dp = BisqUIConstants.ScreenPadding2,
 ) {
@@ -30,10 +31,11 @@ fun BisqStepProgressBar(
     Row(modifier = modifier) {
         for (index in 1..stepsLength) {
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(barHeight)
-                    .background(if (index <= stepIndex) activeColor else inactiveColor)
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .height(barHeight)
+                        .background(if (index <= stepIndex) activeColor else inactiveColor),
             )
             if (index < stepsLength) {
                 Spacer(modifier = Modifier.width(gapSize))

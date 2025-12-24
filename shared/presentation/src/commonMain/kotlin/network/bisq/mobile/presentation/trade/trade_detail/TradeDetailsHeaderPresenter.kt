@@ -27,11 +27,10 @@ class TradeDetailsHeaderPresenter(
     var mediationServiceFacade: MediationServiceFacade,
     val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     enum class TradeCloseType {
         REJECT,
         CANCEL,
-        COMPLETED
+        COMPLETED,
     }
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
@@ -148,7 +147,8 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            -> {
                 // Before account data are exchange we use `Report to mediator`, after that `Request mediation`
                 _openMediationButtonText.value = "bisqEasy.tradeState.reportToMediator".i18n() // Report to mediator
             }
@@ -179,8 +179,9 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.SELLER_CONFIRMED_FIAT_RECEIPT,
             BisqEasyTradeStateEnum.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION,
             BisqEasyTradeStateEnum.SELLER_SENT_BTC_SENT_CONFIRMATION,
-            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
-                _openMediationButtonText.value = "bisqEasy.tradeState.requestMediation".i18n() //Request mediator
+            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION,
+            -> {
+                _openMediationButtonText.value = "bisqEasy.tradeState.requestMediation".i18n() // Request mediator
             }
 
             BisqEasyTradeStateEnum.BTC_CONFIRMED,
@@ -189,7 +190,8 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.CANCELLED,
             BisqEasyTradeStateEnum.PEER_CANCELLED,
             BisqEasyTradeStateEnum.FAILED,
-            BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
+            BisqEasyTradeStateEnum.FAILED_AT_PEER,
+            -> {
             }
         }
 
@@ -203,7 +205,8 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
+            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            -> {
                 _tradeCloseType.value = TradeCloseType.REJECT
                 _interruptTradeButtonText.value = "bisqEasy.openTrades.rejectTrade".i18n() // Reject trade
             }
@@ -230,7 +233,8 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
             BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION,
             BisqEasyTradeStateEnum.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION,
-            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
+            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION,
+            -> {
                 _tradeCloseType.value = TradeCloseType.CANCEL
                 _interruptTradeButtonText.value = "bisqEasy.openTrades.cancelTrade".i18n()
             }
@@ -244,7 +248,8 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.CANCELLED,
             BisqEasyTradeStateEnum.PEER_CANCELLED,
             BisqEasyTradeStateEnum.FAILED,
-            BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
+            BisqEasyTradeStateEnum.FAILED_AT_PEER,
+            -> {
             }
         }
     }
@@ -297,7 +302,8 @@ class TradeDetailsHeaderPresenter(
         _showMediationConfirmationDialog.value = false
         presenterScope.launch {
             showLoading()
-            mediationServiceFacade.reportToMediator(trade)
+            mediationServiceFacade
+                .reportToMediator(trade)
                 .onFailure { exception ->
                     when (exception) {
                         is MediatorNotAvailableException -> {
@@ -326,7 +332,6 @@ class TradeDetailsHeaderPresenter(
     }
 
     private fun reset() {
-
         direction = ""
         leftAmountDescription = ""
         _leftAmount.value = ""

@@ -12,25 +12,22 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.Bi
 fun WhyHighPricePopup(
     onDismiss: () -> Unit,
 ) {
-
     BisqDialog(
         horizontalAlignment = Alignment.Start,
         onDismissRequest = onDismiss,
     ) {
-
-        BisqText.h6Light("bisqEasy.price.feedback.learnWhySection.title".i18n())
-
-        BisqGap.V1()
-
-        BisqText.baseLight("bisqEasy.price.feedback.learnWhySection.description.intro".i18n())
+        BisqText.H6Light("bisqEasy.price.feedback.learnWhySection.title".i18n())
 
         BisqGap.V1()
 
-        BisqText.baseLight("bisqEasy.price.feedback.learnWhySection.description.exposition".i18n())
+        BisqText.BaseLight("bisqEasy.price.feedback.learnWhySection.description.intro".i18n())
+
+        BisqGap.V1()
+
+        BisqText.BaseLight("bisqEasy.price.feedback.learnWhySection.description.exposition".i18n())
 
         BisqGap.V1()
 
         GreyCloseButton(onClick = onDismiss)
-
     }
 }

@@ -28,7 +28,11 @@ private val HEADER: ByteArray = "BISQENC|AES256GCM|PBKDF2|v1\n".toByteArray(Char
 
 private fun getCipher(): Cipher = Cipher.getInstance("AES/GCM/NoPadding")
 
-suspend fun encrypt(input: File, output: File, password: String) {
+suspend fun encrypt(
+    input: File,
+    output: File,
+    password: String,
+) {
     // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
     withContext(Dispatchers.Default) {
         val secureRandom = SecureRandom()
@@ -66,7 +70,10 @@ suspend fun encrypt(input: File, output: File, password: String) {
  * @return A temporary file containing the decrypted content.
  * Caller must delete this file after use.
  */
-suspend fun decrypt(inputStream: InputStream, password: String): File {
+suspend fun decrypt(
+    inputStream: InputStream,
+    password: String,
+): File {
     // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
     return withContext(Dispatchers.Default) {
         val src = if (inputStream is BufferedInputStream) inputStream else BufferedInputStream(inputStream, 8 * 1024)
@@ -103,7 +110,10 @@ suspend fun decrypt(inputStream: InputStream, password: String): File {
     }
 }
 
-private fun deriveKey(password: String, salt: ByteArray): ByteArray {
+private fun deriveKey(
+    password: String,
+    salt: ByteArray,
+): ByteArray {
     val passwordChars = password.toCharArray()
     return try {
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
@@ -126,4 +136,3 @@ private fun InputStream.readChunk(chunk: ByteArray) {
         bytesRead += n
     }
 }
-

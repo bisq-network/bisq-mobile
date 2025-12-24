@@ -32,35 +32,40 @@ import java.nio.file.Path
  */
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
-class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
-    CatHashService<PlatformImage>(baseDir) {
+class AndroidNodeCatHashService(
+    private val context: Context,
+    baseDir: Path?,
+) : CatHashService<PlatformImage>(baseDir) {
     companion object {
         // We use 40.dp at offers, to get a 3x resolution we use 120
         const val DEFAULT_SIZE = 120.0
     }
 
-    override fun composeImage(paths: Array<String>, size: Double): PlatformImage {
-        return PlatformImage(
+    override fun composeImage(
+        paths: Array<String>,
+        size: Double,
+    ): PlatformImage =
+        PlatformImage(
             AndroidImageUtil.composeImage(
                 context,
                 CAT_HASH_PATH,
                 paths,
                 size.toInt(),
-                size.toInt()
-            )
+                size.toInt(),
+            ),
         )
-    }
 
-    override fun getSizeOfCachedIcons(): Double {
-        return DEFAULT_SIZE * 2
-    }
+    override fun getSizeOfCachedIcons(): Double = DEFAULT_SIZE * 2
 
     override fun getMaxCacheSize(): Int {
         // One 60 px image has about 3-4 kb. With 500 we get about 1.5-2 MB on total cache file size
         return 500
     }
 
-    override fun writeRawImage(image: PlatformImage, file: File) {
+    override fun writeRawImage(
+        image: PlatformImage,
+        file: File,
+    ) {
         val bitmap: Bitmap = image.bitmap.asAndroidBitmap()
         AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
     }

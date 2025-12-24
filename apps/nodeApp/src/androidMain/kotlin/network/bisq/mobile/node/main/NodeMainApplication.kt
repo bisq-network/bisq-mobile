@@ -16,7 +16,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.node.common.di.androidNodeDomainModule
 import network.bisq.mobile.node.common.di.androidNodePresentationModule
 import network.bisq.mobile.node.common.domain.utils.moveDirReplace
-import network.bisq.mobile.node.settings.backup.domain.backupFileName
+import network.bisq.mobile.node.settings.backup.domain.BACKUP_FILE_NAME
 import network.bisq.mobile.presentation.common.di.presentationModule
 import network.bisq.mobile.presentation.main.MainApplication
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -29,10 +29,7 @@ import java.security.Security
  * Bisq Android Node Application definition
  */
 class NodeMainApplication : MainApplication() {
-
-    override fun getKoinModules(): List<Module> {
-        return listOf(domainModule, androidNodeDomainModule, presentationModule, androidNodePresentationModule)
-    }
+    override fun getKoinModules(): List<Module> = listOf(domainModule, androidNodeDomainModule, presentationModule, androidNodePresentationModule)
 
     override fun onCreated() {
         // Use runBlocking for essential system initialization that must complete before app continues
@@ -80,30 +77,33 @@ class NodeMainApplication : MainApplication() {
             }
 
             // Deprecated SubDomain enum values that cause crashes
-            val deprecatedEnumValues = listOf(
-                "EVENTS_CONFERENCES",
-                "EVENTS_MEETUPS",
-                "EVENTS_PODCASTS",
-                "EVENTS_TRADE_EVENTS",
-                "ChatChannelDomain.EVENTS"  // The domain itself
-            )
+            val deprecatedEnumValues =
+                listOf(
+                    "EVENTS_CONFERENCES",
+                    "EVENTS_MEETUPS",
+                    "EVENTS_PODCASTS",
+                    "EVENTS_TRADE_EVENTS",
+                    "ChatChannelDomain.EVENTS", // The domain itself
+                )
 
             // Only check public chat channel files (not private trade chats)
-            val publicChatFiles = listOf(
-                "CommonPublicChatChannelStore",
-                "DiscussionChannelStore",
-                "EventsChannelStore",
-                "SupportChannelStore"
-            )
+            val publicChatFiles =
+                listOf(
+                    "CommonPublicChatChannelStore",
+                    "DiscussionChannelStore",
+                    "EventsChannelStore",
+                    "SupportChannelStore",
+                )
 
             publicChatFiles.forEach { fileName ->
                 val file = File(cacheDir, fileName)
                 if (file.exists() && file.isFile) {
                     try {
                         // Check if file contains any deprecated enum values
-                        val containsDeprecatedValue = file.readText(Charsets.UTF_8).let { content ->
-                            deprecatedEnumValues.any { deprecated -> content.contains(deprecated) }
-                        }
+                        val containsDeprecatedValue =
+                            file.readText(Charsets.UTF_8).let { content ->
+                                deprecatedEnumValues.any { deprecated -> content.contains(deprecated) }
+                            }
 
                         if (containsDeprecatedValue) {
                             val deleted = file.delete()
@@ -130,7 +130,7 @@ class NodeMainApplication : MainApplication() {
     }
 
     private fun maybeRestoreDataDirectory() {
-        val backupDir = File(filesDir, backupFileName)
+        val backupDir = File(filesDir, BACKUP_FILE_NAME)
         if (backupDir.exists()) {
             log.i { "Restore from backup" }
             val dbDir = File(filesDir, "Bisq2_mobile/db")
@@ -174,17 +174,16 @@ class NodeMainApplication : MainApplication() {
         // do nth - Required by ComponentCallbacks2 interface
     }
 
-    override fun isDebug(): Boolean {
-        return BuildNodeConfig.IS_DEBUG
-    }
+    override fun isDebug(): Boolean = BuildNodeConfig.IS_DEBUG
 
     private fun setupBisqCoreStatics() {
         val isEmulator = isEmulator()
-        val clearNetFacade = if (isEmulator) {
-            AndroidEmulatorAddressTypeFacade()
-        } else {
-            LANAddressTypeFacade()
-        }
+        val clearNetFacade =
+            if (isEmulator) {
+                AndroidEmulatorAddressTypeFacade()
+            } else {
+                LANAddressTypeFacade()
+            }
         FacadeProvider.setClearNetAddressTypeFacade(clearNetFacade)
         FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
         FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
@@ -196,14 +195,13 @@ class NodeMainApplication : MainApplication() {
         log.d { "Configured bisq2 for Android${if (isEmulator) " emulator" else ""}" }
     }
 
-    private fun isEmulator(): Boolean {
-        return Build.FINGERPRINT.startsWith("generic")
-                || Build.FINGERPRINT.startsWith("unknown")
-                || Build.MODEL.contains("google_sdk")
-                || Build.MODEL.contains("Emulator")
-                || Build.MODEL.contains("Android SDK built for x86")
-                || Build.MANUFACTURER.contains("Genymotion")
-                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
-                || "google_sdk".equals(Build.PRODUCT);
-    }
+    private fun isEmulator(): Boolean =
+        Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for x86") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
+            "google_sdk".equals(Build.PRODUCT)
 }

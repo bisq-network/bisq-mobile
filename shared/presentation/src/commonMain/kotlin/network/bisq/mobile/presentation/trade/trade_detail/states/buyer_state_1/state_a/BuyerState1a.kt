@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:vm-forwarding-check")
+
 package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a
 
 import androidx.compose.foundation.layout.Arrangement
@@ -18,13 +20,13 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonTyp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressField
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
-import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
 fun BuyerState1a(
-    presenter: BuyerState1aPresenter
+    presenter: BuyerState1aPresenter,
 ) {
     RememberPresenterLifecycle(presenter)
 
@@ -38,25 +40,25 @@ fun BuyerState1a(
     Column {
         BisqGap.V1()
         // Fill in your Bitcoin address / Fill in your Lightning invoice
-        BisqText.h5Light(headline)
+        BisqText.H5Light(headline)
 
         BisqGap.V1()
         BitcoinLnAddressField(
-            label = description,  // Bitcoin address / Lightning invoice
+            label = description, // Bitcoin address / Lightning invoice
             value = bitcoinPaymentData,
             onValueChange = { it, isValid ->
                 presenter.onBitcoinPaymentDataInput(it, isValid)
             },
             type = addressFieldType,
             onBarcodeClick = presenter::onBarcodeClick,
-            triggerValidation = triggerBitcoinLnAddressValidation
+            triggerValidation = triggerBitcoinLnAddressValidation,
         )
 
         BisqGap.V1()
 
         Row(
             horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max)
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
         ) {
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.send".i18n(), // Send to seller
@@ -69,13 +71,13 @@ fun BuyerState1a(
                 disabled = !isInteractive,
                 onClick = { presenter.onOpenWalletGuide() },
                 type = BisqButtonType.Outline,
-                padding = PaddingValues(
-                    horizontal = BisqUIConstants.ScreenPadding,
-                    vertical = BisqUIConstants.ScreenPaddingHalf
-                ),
+                padding =
+                    PaddingValues(
+                        horizontal = BisqUIConstants.ScreenPadding,
+                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                    ),
                 modifier = Modifier.fillMaxHeight(),
             )
         }
     }
-
 }

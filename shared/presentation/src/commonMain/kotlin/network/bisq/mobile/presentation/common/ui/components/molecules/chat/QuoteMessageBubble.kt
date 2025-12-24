@@ -23,46 +23,45 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 fun QuoteMessageBubble(
     message: BisqEasyOpenTradeMessageModel,
     onClick: () -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val sideBorderColor = BisqTheme.colors.mid_grey20
     val isMyMessage = message.isMyMessage
     val bgColor = if (isMyMessage) BisqTheme.colors.dark_grey50 else BisqTheme.colors.dark_grey20
 
     Column(
-        modifier = Modifier
-            .padding(
-                top = BisqUIConstants.ScreenPaddingHalf,
-                start = BisqUIConstants.ScreenPaddingHalf,
-                end = BisqUIConstants.ScreenPaddingHalf
-            )
-            .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
+        modifier =
+            Modifier
+                .padding(
+                    top = BisqUIConstants.ScreenPaddingHalf,
+                    start = BisqUIConstants.ScreenPaddingHalf,
+                    end = BisqUIConstants.ScreenPaddingHalf,
+                ).clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf)),
     ) {
         Column(
-            modifier = Modifier
-                .background(bgColor)
-                .clickable(
-                    onClick = onClick,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                )
-                .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
-                .drawBehind {
-                    drawLine(
-                        color = sideBorderColor,
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, size.height),
-                        strokeWidth = 4.dp.toPx()
-                    )
-                }
-                .padding(
-                    vertical = BisqUIConstants.ScreenPaddingHalf,
-                    horizontal = BisqUIConstants.ScreenPadding
-                ),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
+            modifier =
+                Modifier
+                    .background(bgColor)
+                    .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
+                    .clickable(
+                        onClick = onClick,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ).drawBehind {
+                        drawLine(
+                            color = sideBorderColor,
+                            start = Offset(0f, 0f),
+                            end = Offset(0f, size.height),
+                            strokeWidth = 4.dp.toPx(),
+                        )
+                    }.padding(
+                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                        horizontal = BisqUIConstants.ScreenPadding,
+                    ),
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter),
         ) {
-            BisqText.baseMedium(message.citationAuthorUserName ?: "", color = BisqTheme.colors.mid_grey20)
-            BisqText.baseRegular(message.citationString, color = BisqTheme.colors.mid_grey30) // TODO: Trim this to max 2 lines
+            BisqText.BaseMedium(message.citationAuthorUserName ?: "", color = BisqTheme.colors.mid_grey20)
+            BisqText.BaseRegular(message.citationString, color = BisqTheme.colors.mid_grey30) // TODO: Trim this to max 2 lines
         }
 
         content()

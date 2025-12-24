@@ -28,7 +28,10 @@ class GenericErrorHandler : Logging {
             _genericErrorMessage.value = value
         }
 
-        fun handleGenericError(errorMessage: String, exception: Throwable) {
+        fun handleGenericError(
+            errorMessage: String,
+            exception: Throwable,
+        ) {
             getLogger("GenericErrorHandler").e(errorMessage, exception)
             handleGenericError(errorMessage + "\nException: " + exception.message)
         }

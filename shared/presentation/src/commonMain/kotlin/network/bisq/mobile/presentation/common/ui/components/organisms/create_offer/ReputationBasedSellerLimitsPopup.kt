@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.NoteText
@@ -19,6 +18,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -27,20 +27,18 @@ fun ReputationBasedSellerLimitsPopup(
     onBuildRepLinkClick: () -> Unit,
     onRepLinkClick: () -> Unit,
     reputationScore: String,
-    maxSellAmount: String
+    maxSellAmount: String,
 ) {
-
     BisqDialog(
         horizontalAlignment = Alignment.Start,
         padding = BisqUIConstants.ScreenPadding,
         onDismissRequest = onDismiss,
     ) {
-
-        BisqText.h6Light("bisqEasy.tradeWizard.amount.limitInfo.overlay.headline".i18n())
+        BisqText.H6Light("bisqEasy.tradeWizard.amount.limitInfo.overlay.headline".i18n())
 
         BisqGap.V1()
 
-        BisqText.baseLight("bisqEasy.tradeWizard.amount.seller.limitInfo.overlay".i18n(reputationScore, maxSellAmount))
+        BisqText.BaseLight("bisqEasy.tradeWizard.amount.seller.limitInfo.overlay".i18n(reputationScore, maxSellAmount))
 
         BisqGap.V3()
 
@@ -50,7 +48,7 @@ fun ReputationBasedSellerLimitsPopup(
             type = BisqButtonType.Outline,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             fullWidth = true,
-            onClick = onBuildRepLinkClick
+            onClick = onBuildRepLinkClick,
         )
 
         BisqGap.V1()
@@ -59,7 +57,7 @@ fun ReputationBasedSellerLimitsPopup(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
             linkText = BisqLinks.REPUTATION_WIKI_URL,
             openConfirmation = true,
-            onLinkClick = onRepLinkClick
+            onLinkClick = onRepLinkClick,
         )
 
         BisqGap.V3()
@@ -70,7 +68,7 @@ fun ReputationBasedSellerLimitsPopup(
 
 @Preview
 @Composable
-fun ReputationBasedSellerLimitsPopupPreview() {
+private fun ReputationBasedSellerLimitsPopupPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             ReputationBasedSellerLimitsPopup(
@@ -78,7 +76,7 @@ fun ReputationBasedSellerLimitsPopupPreview() {
                 onBuildRepLinkClick = {},
                 onRepLinkClick = {},
                 reputationScore = "100",
-                maxSellAmount = "1000"
+                maxSellAmount = "1000",
             )
         }
     }

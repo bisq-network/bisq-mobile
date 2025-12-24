@@ -60,120 +60,120 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-val androidNodeDomainModule = module {
-    // System services for memory reporting
-    single<ActivityManager> { androidContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager }
-    single { ActivityManager.MemoryInfo() }
-    single { Debug.MemoryInfo() }
-    single { Runtime.getRuntime() }
+val androidNodeDomainModule =
+    module {
+        // System services for memory reporting
+        single<ActivityManager> { androidContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager }
+        single { ActivityManager.MemoryInfo() }
+        single { Debug.MemoryInfo() }
+        single { Runtime.getRuntime() }
 
-    single<AndroidMemoryReportService> {
-        val isDebug = BuildConfig.DEBUG
-        AndroidMemoryReportService(get(), get(), get(), get(), isDebug)
+        single<AndroidMemoryReportService> {
+            val isDebug = BuildConfig.DEBUG
+            AndroidMemoryReportService(get(), get(), get(), get(), isDebug)
+        }
+
+        single<AndroidNodeCatHashService> {
+            val context = androidContext()
+            AndroidNodeCatHashService(context, context.filesDir.toPath())
+        }
+
+        single<AndroidApplicationService> {
+            AndroidApplicationService(get(), androidContext(), androidContext().filesDir.toPath())
+        }
+
+        single {
+            val provider = AndroidApplicationService.Provider()
+            provider.applicationService = get<AndroidApplicationService>()
+            provider
+        }
+
+        single<MessageDeliveryServiceFacade> { NodeMessageDeliveryServiceFacade(get()) }
+
+        single { NodeNetworkServiceFacade(get(), get()) } bind NetworkServiceFacade::class
+
+        single<KmpTorService> {
+            val applicationService = get<AndroidApplicationService>()
+            KmpTorService(applicationService.config.baseDir.toOkioPath(true))
+        }
+
+        single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
+
+        single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
+
+        single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
+
+        single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get(), get()) }
+
+        single<ExplorerServiceFacade> { NodeExplorerServiceFacade(get()) }
+
+        single<TradesServiceFacade> { NodeTradesServiceFacade(get()) }
+
+        single<TradeChatMessagesServiceFacade> {
+            NodeTradeChatMessagesServiceFacade(
+                get(),
+                get(),
+                get(),
+            )
+        }
+
+        single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
+
+        single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
+
+        single<AccountsServiceFacade> { NodeAccountsServiceFacade(get()) }
+
+        single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
+
+        single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get()) }
+
+        single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
+
+        single { NodeConnectivityService(get()) } bind ConnectivityService::class
+
+        single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
+
+        single<NodeApplicationLifecycleService> {
+            NodeApplicationLifecycleService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        } bind ApplicationLifecycleService::class
+
+        single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
+
+        single<VersionProvider> { NodeVersionProvider() }
+
+        single { AppForegroundController(androidContext()) } bind ForegroundDetector::class
+
+        single {
+            NotificationControllerImpl(
+                get(),
+                NodeMainActivity::class.java,
+            )
+        } bind NotificationController::class
+
+        single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
+
+        single {
+            OpenTradesNotificationService(get(), get(), get(), get(), get())
+        }
     }
-
-    single<AndroidNodeCatHashService> {
-        val context = androidContext()
-        AndroidNodeCatHashService(context, context.filesDir.toPath())
-    }
-
-    single<AndroidApplicationService> {
-        AndroidApplicationService(get(), androidContext(), androidContext().filesDir.toPath())
-    }
-
-    single {
-        val provider = AndroidApplicationService.Provider()
-        provider.applicationService = get<AndroidApplicationService>()
-        provider
-    }
-
-    single<MessageDeliveryServiceFacade> { NodeMessageDeliveryServiceFacade(get()) }
-
-    single { NodeNetworkServiceFacade(get(), get()) } bind NetworkServiceFacade::class
-
-    single<KmpTorService> {
-        val applicationService = get<AndroidApplicationService>()
-        KmpTorService(applicationService.config.baseDir.toOkioPath(true))
-    }
-
-    single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
-
-    single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
-
-    single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
-
-    single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get(), get()) }
-
-    single<ExplorerServiceFacade> { NodeExplorerServiceFacade(get()) }
-
-    single<TradesServiceFacade> { NodeTradesServiceFacade(get()) }
-
-    single<TradeChatMessagesServiceFacade> {
-        NodeTradeChatMessagesServiceFacade(
-            get(),
-            get(),
-            get()
-        )
-    }
-
-    single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
-
-    single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
-
-    single<AccountsServiceFacade> { NodeAccountsServiceFacade(get()) }
-
-    single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
-
-    single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get()) }
-
-    single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
-
-    single { NodeConnectivityService(get()) } bind ConnectivityService::class
-
-    single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
-
-    single<NodeApplicationLifecycleService> {
-        NodeApplicationLifecycleService(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    } bind ApplicationLifecycleService::class
-
-    single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
-
-    single<VersionProvider> { NodeVersionProvider() }
-
-    single { AppForegroundController(androidContext()) } bind ForegroundDetector::class
-
-    single {
-        NotificationControllerImpl(
-            get(),
-            NodeMainActivity::class.java
-        )
-    } bind NotificationController::class
-
-    single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
-
-    single {
-        OpenTradesNotificationService(get(), get(), get(), get(), get())
-    }
-
-}

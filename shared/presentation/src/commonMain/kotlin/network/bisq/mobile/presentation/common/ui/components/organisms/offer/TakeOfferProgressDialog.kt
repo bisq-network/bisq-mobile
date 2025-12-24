@@ -20,40 +20,39 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun TakeOfferProgressDialog() {
-
     BisqDialog(dismissOnClickOutside = false) {
         val imageSize = BisqUIConstants.ScreenPadding8X
         Box {
             RotatingImage(
                 painterResource(Res.drawable.bisq_easy_circle),
-                modifier = Modifier.size(imageSize)
+                modifier = Modifier.size(imageSize),
             )
             Image(
                 painterResource(Res.drawable.bisq_easy),
                 contentDescription = null,
-                modifier = Modifier.size(imageSize)
+                modifier = Modifier.size(imageSize),
             )
         }
-        BisqText.h4Light(
+        BisqText.H4Light(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.headline".i18n(),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         BisqGap.V2()
 
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.subTitle".i18n(),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         BisqGap.V1()
 
-        BisqText.baseLightGrey(
+        BisqText.BaseLightGrey(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.info".i18n(),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

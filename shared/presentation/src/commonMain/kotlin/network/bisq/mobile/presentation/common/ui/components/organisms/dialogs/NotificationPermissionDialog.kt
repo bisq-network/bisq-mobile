@@ -15,9 +15,12 @@ fun NotificationPermissionDialog(
     val platform = remember { getPlatformInfo().type }
     ConfirmationDialog(
         headline = "",
-        message = if (platform == PlatformType.ANDROID)
-            "mobile.permissions.notifications.explanation.android".i18n()
-        else "mobile.permissions.notifications.explanation".i18n(),
+        message =
+            if (platform == PlatformType.ANDROID) {
+                "mobile.permissions.notifications.explanation.android".i18n()
+            } else {
+                "mobile.permissions.notifications.explanation".i18n()
+            },
         confirmButtonText = "mobile.action.grantPermission".i18n(),
         dismissButtonText = "mobile.action.dontAskAgain".i18n(),
         verticalButtonPlacement = true,

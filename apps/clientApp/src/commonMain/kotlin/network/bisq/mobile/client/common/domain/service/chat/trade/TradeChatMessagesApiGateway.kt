@@ -17,14 +17,22 @@ class TradeChatMessagesApiGateway(
     private val basePath = "trade-chat-channels"
 
     // Rest API calls
-    suspend fun sendTextMessage(channelId: String, text: String, citationVO: CitationVO?): Result<Unit> {
+    suspend fun sendTextMessage(
+        channelId: String,
+        text: String,
+        citationVO: CitationVO?,
+    ): Result<Unit> {
         val request = SendChatMessageRequest(text, citationVO)
         // ChannelId does not contain characters which require url path encoding according to RFC 3986
         val path = "$basePath/$channelId/messages"
         return webSocketApiClient.post<Unit, SendChatMessageRequest>(path, request)
     }
 
-    suspend fun addChatMessageReaction(channelId: String, messageId: String, reactionEnum: ReactionEnum): Result<Unit> {
+    suspend fun addChatMessageReaction(
+        channelId: String,
+        messageId: String,
+        reactionEnum: ReactionEnum,
+    ): Result<Unit> {
         // ChannelId and messageId do not contain characters which require url path encoding according to RFC 3986
         val path = "$basePath/$channelId/$messageId/reactions"
         val request = SendChatMessageReactionRequest(reactionEnum.ordinal, false, null)
@@ -34,25 +42,21 @@ class TradeChatMessagesApiGateway(
     suspend fun removeChatMessageReaction(
         channelId: String,
         messageId: String,
-        bisqEasyOpenTradeMessageReaction: BisqEasyOpenTradeMessageReactionVO
+        bisqEasyOpenTradeMessageReaction: BisqEasyOpenTradeMessageReactionVO,
     ): Result<Unit> {
         // ChannelId and messageId do not contain characters which require url path encoding according to RFC 3986
         val path = "$basePath/$channelId/$messageId/reactions"
-        val request = SendChatMessageReactionRequest(
-            bisqEasyOpenTradeMessageReaction.reactionId,
-            true,
-            bisqEasyOpenTradeMessageReaction.senderUserProfile.id
-        )
+        val request =
+            SendChatMessageReactionRequest(
+                bisqEasyOpenTradeMessageReaction.reactionId,
+                true,
+                bisqEasyOpenTradeMessageReaction.senderUserProfile.id,
+            )
         return webSocketApiClient.post<Unit, SendChatMessageReactionRequest>(path, request)
     }
 
     // Subscriptions
-    suspend fun subscribeTradeChats(): WebSocketEventObserver {
-        return webSocketClientService.subscribe(Topic.TRADE_CHATS)
-    }
+    suspend fun subscribeTradeChats(): WebSocketEventObserver = webSocketClientService.subscribe(Topic.TRADE_CHATS)
 
-    suspend fun subscribeChatReactions(): WebSocketEventObserver {
-        return webSocketClientService.subscribe(Topic.CHAT_REACTIONS)
-    }
+    suspend fun subscribeChatReactions(): WebSocketEventObserver = webSocketClientService.subscribe(Topic.CHAT_REACTIONS)
 }
-

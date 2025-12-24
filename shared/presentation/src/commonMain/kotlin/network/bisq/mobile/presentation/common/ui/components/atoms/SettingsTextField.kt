@@ -9,7 +9,7 @@ fun SettingsTextField(
     editable: Boolean = true,
     isTextArea: Boolean = false,
     onValueChange: ((String, Boolean) -> Unit)? = null,
-    trailingIcon: (@Composable () -> Unit)? = null
+    trailingIcon: (@Composable () -> Unit)? = null,
 ) {
     BisqTextField(
         label = label,
@@ -22,6 +22,6 @@ fun SettingsTextField(
                 onValueChange(newValue, isValid)
             }
         },
-        rightSuffix = trailingIcon
+        rightSuffix = trailingIcon,
     )
 }

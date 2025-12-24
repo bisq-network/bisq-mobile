@@ -17,6 +17,6 @@ fun BisqVDivider(
     VerticalDivider(
         thickness = thickness,
         color = color,
-        modifier = modifier
+        modifier = modifier,
     )
 }

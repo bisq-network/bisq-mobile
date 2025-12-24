@@ -1,36 +1,32 @@
 package network.bisq.mobile.presentation.offerbook
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.background
-
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.ui.unit.dp
-
-
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqFABAddButton
@@ -40,9 +36,10 @@ import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticSc
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
@@ -62,24 +59,27 @@ fun OfferbookScreen() {
 
     BisqStaticScaffold(
         topBar = {
-            val quoteCode = selectedMarket?.market?.quoteCurrencyCode
-                ?.takeIf { it.isNotBlank() }
-                ?.uppercase()
+            val quoteCode =
+                selectedMarket
+                    ?.market
+                    ?.quoteCurrencyCode
+                    ?.takeIf { it.isNotBlank() }
+                    ?.uppercase()
             TopBar(title = "mobile.offerbook.title".i18n(quoteCode ?: "—"))
         },
         floatingButton = {
             BisqFABAddButton(
                 onClick = { presenter.createOffer() },
-                enabled = !presenter.isDemo()
+                enabled = !presenter.isDemo(),
             )
         },
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog,
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
     ) {
         DirectionToggle(
             selectedDirection,
-            onStateChange = { direction -> presenter.onSelectDirection(direction) }
+            onStateChange = { direction -> presenter.onSelectDirection(direction) },
         )
 
         val filterUi by presenter.filterUiState.collectAsState()
@@ -105,7 +105,6 @@ fun OfferbookScreen() {
             )
         }
 
-
         if (sortedFilteredOffers.isEmpty() && !showLoading) {
             NoOffersSection(presenter)
             return@BisqStaticScaffold
@@ -115,13 +114,17 @@ fun OfferbookScreen() {
 
         // Vertical edge fades on the offers list to hint scrollability
         val listState = rememberLazyListState()
-        val canScrollUp by derivedStateOf {
-            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+        val canScrollUp by remember {
+            derivedStateOf {
+                listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+            }
         }
-        val canScrollDown by derivedStateOf {
-            val info = listState.layoutInfo
-            val last = info.visibleItemsInfo.lastOrNull()
-            last != null && (last.index < info.totalItemsCount - 1 || (last.offset + last.size) > info.viewportEndOffset)
+        val canScrollDown by remember {
+            derivedStateOf {
+                val info = listState.layoutInfo
+                val last = info.visibleItemsInfo.lastOrNull()
+                last != null && (last.index < info.totalItemsCount - 1 || (last.offset + last.size) > info.viewportEndOffset)
+            }
         }
 
         Box {
@@ -129,7 +132,7 @@ fun OfferbookScreen() {
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 items(items = sortedFilteredOffers, key = { it.offerId }) { item ->
                     OfferCard(
@@ -137,7 +140,7 @@ fun OfferbookScreen() {
                         onSelectOffer = {
                             presenter.onOfferSelected(item)
                         },
-                        userProfileIconProvider = presenter.userProfileIconProvider
+                        userProfileIconProvider = presenter.userProfileIconProvider,
                     )
                 }
             }
@@ -146,28 +149,32 @@ fun OfferbookScreen() {
             val fadeHeight = 12.dp
             if (sortedFilteredOffers.isNotEmpty() && canScrollUp) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(fadeHeight)
-                        .align(Alignment.TopCenter)
-                        .background(
-                            brush = verticalGradient(
-                                colors = listOf(BisqTheme.colors.dark_grey20, Color.Transparent)
-                            )
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(fadeHeight)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                brush =
+                                    verticalGradient(
+                                        colors = listOf(BisqTheme.colors.dark_grey20, Color.Transparent),
+                                    ),
+                            ),
                 )
             }
             if (sortedFilteredOffers.isNotEmpty() && canScrollDown) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(fadeHeight)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            brush = verticalGradient(
-                                colors = listOf(Color.Transparent, BisqTheme.colors.dark_grey40)
-                            )
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(fadeHeight)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                brush =
+                                    verticalGradient(
+                                        colors = listOf(Color.Transparent, BisqTheme.colors.dark_grey40),
+                                    ),
+                            ),
                 )
             }
         }
@@ -175,7 +182,7 @@ fun OfferbookScreen() {
         if (showLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(color = BisqTheme.colors.primary)
             }
@@ -186,7 +193,7 @@ fun OfferbookScreen() {
         ConfirmationDialog(
             headline = if (presenter.isDemo()) "Delete disabled on demo mode" else "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
             onConfirm = { presenter.onConfirmedDeleteOffer() },
-            onDismiss = { presenter.onDismissDeleteOffer() }
+            onDismiss = { presenter.onDismissDeleteOffer() },
         )
     }
 
@@ -200,7 +207,7 @@ fun OfferbookScreen() {
                 confirmButtonText = "confirmation.yes".i18n(),
                 dismissButtonText = "action.cancel".i18n(),
                 onConfirm = { presenter.onNavigateToReputation() },
-                onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
+                onDismiss = { presenter.onDismissNotEnoughReputationDialog() },
             )
         } else {
             WebLinkConfirmationDialog(
@@ -212,7 +219,7 @@ fun OfferbookScreen() {
                 confirmButtonText = "confirmation.yes".i18n(),
                 dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
                 onConfirm = { presenter.onOpenReputationWiki() },
-                onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
+                onDismiss = { presenter.onDismissNotEnoughReputationDialog() },
             )
         }
     }
@@ -223,16 +230,16 @@ fun NoOffersSection(presenter: OfferbookPresenter) {
     Column(
         modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding4X).fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
-        BisqText.h4LightGrey(
+        BisqText.H4LightGrey(
             text = "mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n(), // There are no offers
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
         BisqGap.V4()
         BisqButton(
             text = "offer.create".i18n(),
-            onClick = presenter::createOffer
+            onClick = presenter::createOffer,
         )
     }
 }

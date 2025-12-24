@@ -8,9 +8,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -24,14 +24,14 @@ fun TradeGuideOverview() {
     TradeGuideOverviewContent(
         isInteractive = isInteractive,
         prevClick = presenter::prevClick,
-        nextClick = presenter::overviewNextClick
+        nextClick = presenter::overviewNextClick,
     )
 }
 
 @Composable fun TradeGuideOverviewContent(
     isInteractive: Boolean,
     prevClick: () -> Unit,
-    nextClick: () -> Unit
+    nextClick: () -> Unit,
 ) {
     val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.welcome".i18n()
 
@@ -44,11 +44,11 @@ fun TradeGuideOverview() {
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
-        BisqText.h3Light("bisqEasy.tradeGuide.welcome.headline".i18n())
+        BisqText.H3Light("bisqEasy.tradeGuide.welcome.headline".i18n())
 
         BisqGap.V2()
 
-        BisqText.baseLight("bisqEasy.tradeGuide.welcome.content".i18n())
+        BisqText.BaseLight("bisqEasy.tradeGuide.welcome.content".i18n())
     }
 }
 
@@ -60,14 +60,14 @@ private fun TradeGuideOverviewContentPreview(
         TradeGuideOverviewContent(
             isInteractive = true,
             prevClick = {},
-            nextClick = {}
+            nextClick = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun TradeGuideOverviewContentPreview_En() {
+private fun TradeGuideOverviewContentPreview_EnPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             TradeGuideOverviewContentPreview()
@@ -77,4 +77,4 @@ private fun TradeGuideOverviewContentPreview_En() {
 
 @Preview
 @Composable
-private fun TradeGuideOverviewContentPreview_Ru() = TradeGuideOverviewContentPreview(language = "ru")
+private fun TradeGuideOverviewContentPreview_RuPreview() = TradeGuideOverviewContentPreview(language = "ru")

@@ -12,6 +12,6 @@ fun NodeApp() {
         rootNavController = rootNavController,
         navGraphContent = {
             NodeNavGraph(rootNavController)
-        }
+        },
     )
 }

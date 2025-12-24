@@ -1,14 +1,13 @@
 package network.bisq.mobile.domain.utils
 
+import network.bisq.mobile.domain.utils.StringUtils.randomAlphaNum
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.domain.utils.StringUtils.urlEncode
-import network.bisq.mobile.domain.utils.StringUtils.randomAlphaNum
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class StringUtilsTest {
-
     /** truncate tests **/
     @Test
     fun `truncate returns original string when shorter than maxLength`() {

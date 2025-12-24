@@ -19,9 +19,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -36,8 +36,8 @@ import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.component.inject
 
 /**
@@ -48,9 +48,8 @@ class TrustedNodeSetupPresenter(
     private val userRepository: UserRepository,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val kmpTorService: KmpTorService,
-    private val applicationBootstrapFacade: ApplicationBootstrapFacade
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
 ) : BasePresenter(mainPresenter) {
-
     companion object {
         const val LOCALHOST = "localhost"
         const val ANDROID_LOCALHOST = "10.0.2.2"
@@ -100,45 +99,51 @@ class TrustedNodeSetupPresenter(
             validateApiUrl(apiUrl, proxyOption) == null
         }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
-    val isProxyUrlValid: StateFlow<Boolean> = combine(
-        proxyHost,
-        proxyPort,
-        selectedProxyOption
-    ) { h, p, proxyOption ->
-        if (proxyOption == BisqProxyOption.EXTERNAL_TOR || proxyOption == BisqProxyOption.SOCKS_PROXY)
-            validateProxyHost(h) == null &&
+    val isProxyUrlValid: StateFlow<Boolean> =
+        combine(
+            proxyHost,
+            proxyPort,
+            selectedProxyOption,
+        ) { h, p, proxyOption ->
+            if (proxyOption == BisqProxyOption.EXTERNAL_TOR || proxyOption == BisqProxyOption.SOCKS_PROXY) {
+                validateProxyHost(h) == null &&
                     validatePort(p) == null
-        else true
-    }.stateIn(presenterScope, SharingStarted.Lazily, false)
-
-    val apiUrlPrompt: StateFlow<String> = selectedProxyOption.map {
-        when (it) {
-            BisqProxyOption.INTERNAL_TOR, BisqProxyOption.EXTERNAL_TOR ->
-                "mobile.trustedNodeSetup.host.prompt".i18n()
-
-            else -> if (BuildConfig.IS_DEBUG) {
-                "http://${localHost()}:8090"
             } else {
-                "http://$IPV4_EXAMPLE:8090"
+                true
             }
-        }
-    }.stateIn(presenterScope, SharingStarted.Lazily, "")
+        }.stateIn(presenterScope, SharingStarted.Lazily, false)
+
+    val apiUrlPrompt: StateFlow<String> =
+        selectedProxyOption
+            .map {
+                when (it) {
+                    BisqProxyOption.INTERNAL_TOR, BisqProxyOption.EXTERNAL_TOR ->
+                        "mobile.trustedNodeSetup.host.prompt".i18n()
+
+                    else ->
+                        if (BuildConfig.IS_DEBUG) {
+                            "http://${localHost()}:8090"
+                        } else {
+                            "http://$IPV4_EXAMPLE:8090"
+                        }
+                }
+            }.stateIn(presenterScope, SharingStarted.Lazily, "")
 
     val torState: StateFlow<KmpTorService.TorState> =
         kmpTorService.state.stateIn(
             presenterScope,
             SharingStarted.Lazily,
-            KmpTorService.TorState.Stopped()
+            KmpTorService.TorState.Stopped(),
         )
 
     val torProgress: StateFlow<Int> =
         kmpTorService.bootstrapProgress.stateIn(
             presenterScope,
             SharingStarted.Lazily,
-            0
+            0,
         )
 
-    private val _userExplicitlyChangedProxy = MutableStateFlow(false)
+    private val userExplicitlyChangedProxy = MutableStateFlow(false)
 
     private val _timeoutCounter = MutableStateFlow(0L)
     val timeoutCounter = _timeoutCounter.asStateFlow()
@@ -213,7 +218,7 @@ class TrustedNodeSetupPresenter(
 
     fun onProxyOptionChanged(value: BisqProxyOption) {
         _selectedProxyOption.value = value
-        _userExplicitlyChangedProxy.value = true
+        userExplicitlyChangedProxy.value = true
     }
 
     fun onTestAndSavePressed(isWorkflow: Boolean) {
@@ -237,151 +242,161 @@ class TrustedNodeSetupPresenter(
         log.d { "Test: $newApiUrlString isWorkflow $isWorkflow" }
         val newApiUrl = parseAndNormalizeUrl(newApiUrlString)
 
-        connectJob = presenterScope.launch {
-            if (newApiUrl == null) {
-                onConnectionError(
-                    IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
-                    newApiUrlString
-                )
-                _isNodeSetupInProgress.value = false
-                connectJob = null
-                return@launch
-            }
-            try {
-                val newProxyHost: String?
-                val newProxyPort: Int?
-                val newProxyIsTor: Boolean
-                val newProxyOption = selectedProxyOption.value
-                val password = _password.value
-                when (newProxyOption) {
-                    BisqProxyOption.INTERNAL_TOR -> {
-                        if (kmpTorService.state.value !is KmpTorService.TorState.Started) {
-                            val started = kmpTorService.startTor()
-                            if (!started) {
-                                val startError =
-                                    (kmpTorService.state.value as? KmpTorService.TorState.Stopped)?.error
-                                        ?: IllegalStateException("Failed to start Tor")
-                                throw startError
+        connectJob =
+            presenterScope.launch {
+                if (newApiUrl == null) {
+                    onConnectionError(
+                        IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
+                        newApiUrlString,
+                    )
+                    _isNodeSetupInProgress.value = false
+                    connectJob = null
+                    return@launch
+                }
+                try {
+                    val newProxyHost: String?
+                    val newProxyPort: Int?
+                    val newProxyIsTor: Boolean
+                    val newProxyOption = selectedProxyOption.value
+                    val password = _password.value
+                    when (newProxyOption) {
+                        BisqProxyOption.INTERNAL_TOR -> {
+                            if (kmpTorService.state.value !is KmpTorService.TorState.Started) {
+                                val started = kmpTorService.startTor()
+                                if (!started) {
+                                    val startError =
+                                        (kmpTorService.state.value as? KmpTorService.TorState.Stopped)?.error
+                                            ?: IllegalStateException("Failed to start Tor")
+                                    throw startError
+                                }
                             }
+                            newProxyHost = "127.0.0.1"
+                            newProxyPort = kmpTorService.awaitSocksPort()
+                            newProxyIsTor = true
                         }
-                        newProxyHost = "127.0.0.1"
-                        newProxyPort = kmpTorService.awaitSocksPort()
-                        newProxyIsTor = true
-                    }
 
-                    BisqProxyOption.EXTERNAL_TOR -> {
-                        newProxyHost = proxyHost.value
-                        newProxyPort = proxyPort.value.toIntOrNull()
-                        newProxyIsTor = true
-                    }
+                        BisqProxyOption.EXTERNAL_TOR -> {
+                            newProxyHost = proxyHost.value
+                            newProxyPort = proxyPort.value.toIntOrNull()
+                            newProxyIsTor = true
+                        }
 
-                    BisqProxyOption.SOCKS_PROXY -> {
-                        newProxyHost = proxyHost.value
-                        newProxyPort = proxyPort.value.toIntOrNull()
-                        newProxyIsTor = false
-                    }
+                        BisqProxyOption.SOCKS_PROXY -> {
+                            newProxyHost = proxyHost.value
+                            newProxyPort = proxyPort.value.toIntOrNull()
+                            newProxyIsTor = false
+                        }
 
-                    BisqProxyOption.NONE -> {
-                        newProxyHost = null
-                        newProxyPort = null
-                        newProxyIsTor = false
-                    }
-                }
-
-                val isExternalProxy =
-                    newProxyOption == BisqProxyOption.EXTERNAL_TOR || newProxyOption == BisqProxyOption.SOCKS_PROXY
-
-                val error = if (isExternalProxy && newProxyPort == null) {
-                    IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
-                } else {
-                    val timeoutSecs = WebSocketClient.determineTimeout(newApiUrl.host) / 1000
-                    countdownJob = presenterScope.launch {
-                        for (i in timeoutSecs downTo 0) {
-                            _timeoutCounter.value = i
-                            delay(1000)
+                        BisqProxyOption.NONE -> {
+                            newProxyHost = null
+                            newProxyPort = null
+                            newProxyIsTor = false
                         }
                     }
-                    _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
-                    _wsClientConnectionState.value = ConnectionState.Connecting
-                    val result = wsClientService.testConnection(
-                        newApiUrl,
-                        newProxyHost,
-                        newProxyPort,
-                        newProxyIsTor,
-                        password,
-                    )
-                    countdownJob?.cancel()
-                    result
-                }
 
-                if (error != null) {
-                    _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                    throw error
-                } else {
-                    // we only dispose client if we are sure new settings differ from the old one
-                    // because it wont emit if they are the same, and new clients wont be instantiated
-                    val currentSettings = sensitiveSettingsRepository.fetch()
-                    val updatedSettings = currentSettings.copy(
-                        bisqApiUrl = newApiUrl.toString(),
-                        externalProxyUrl = when (newProxyOption) {
-                            BisqProxyOption.EXTERNAL_TOR,
-                            BisqProxyOption.SOCKS_PROXY -> "$newProxyHost:$newProxyPort"
-                            else -> ""
-                        },
-                        selectedProxyOption = newProxyOption,
-                        bisqApiPassword = password,
-                    )
-                    if (currentSettings != updatedSettings) {
-                        wsClientService.disposeClient()
-                        // we need to do it in 1 update to not trigger unnecessary flow emits
-                        sensitiveSettingsRepository.update { updatedSettings }
-                    }
-                    val error = wsClientService.connect() // waits till new clients are initialized
+                    val isExternalProxy =
+                        newProxyOption == BisqProxyOption.EXTERNAL_TOR || newProxyOption == BisqProxyOption.SOCKS_PROXY
+
+                    val error =
+                        if (isExternalProxy && newProxyPort == null) {
+                            IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
+                        } else {
+                            val timeoutSecs = WebSocketClient.determineTimeout(newApiUrl.host) / 1000
+                            countdownJob =
+                                presenterScope.launch {
+                                    for (i in timeoutSecs downTo 0) {
+                                        _timeoutCounter.value = i
+                                        delay(1000)
+                                    }
+                                }
+                            _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
+                            _wsClientConnectionState.value = ConnectionState.Connecting
+                            val result =
+                                wsClientService.testConnection(
+                                    newApiUrl,
+                                    newProxyHost,
+                                    newProxyPort,
+                                    newProxyIsTor,
+                                    password,
+                                )
+                            countdownJob?.cancel()
+                            result
+                        }
+
                     if (error != null) {
                         _wsClientConnectionState.value = ConnectionState.Disconnected(error)
                         throw error
-                    }
-                    // wait till connectionState is changed to a final state
-                    wsClientService.connectionState.filter { it !is ConnectionState.Connecting }
-                        .first()
-                    _wsClientConnectionState.value = ConnectionState.Connected // successful test regardless of final state
-                    _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
-                    if (currentSettings.bisqApiUrl != updatedSettings.bisqApiUrl) {
-                        log.d { "user setup a new trusted node $newApiUrl" }
-                        userRepository.clear()
-                    }
+                    } else {
+                        // we only dispose client if we are sure new settings differ from the old one
+                        // because it wont emit if they are the same, and new clients wont be instantiated
+                        val currentSettings = sensitiveSettingsRepository.fetch()
+                        val updatedSettings =
+                            currentSettings.copy(
+                                bisqApiUrl = newApiUrl.toString(),
+                                externalProxyUrl =
+                                    when (newProxyOption) {
+                                        BisqProxyOption.EXTERNAL_TOR,
+                                        BisqProxyOption.SOCKS_PROXY,
+                                        -> "$newProxyHost:$newProxyPort"
 
-                    if (newProxyOption != BisqProxyOption.INTERNAL_TOR) {
-                        try {
-                            kmpTorService.stopTor()
-                        } catch (e: Exception) {
-                            log.w(e) { "Failed to stop Tor after switching proxy option" }
+                                        else -> ""
+                                    },
+                                selectedProxyOption = newProxyOption,
+                                bisqApiPassword = password,
+                            )
+                        if (currentSettings != updatedSettings) {
+                            wsClientService.disposeClient()
+                            // we need to do it in 1 update to not trigger unnecessary flow emits
+                            sensitiveSettingsRepository.update { updatedSettings }
                         }
-                    }
+                        val error = wsClientService.connect() // waits till new clients are initialized
+                        if (error != null) {
+                            _wsClientConnectionState.value = ConnectionState.Disconnected(error)
+                            throw error
+                        }
+                        // wait till connectionState is changed to a final state
+                        wsClientService.connectionState
+                            .filter { it !is ConnectionState.Connecting }
+                            .first()
+                        _wsClientConnectionState.value =
+                            ConnectionState.Connected // successful test regardless of final state
+                        _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
+                        if (currentSettings.bisqApiUrl != updatedSettings.bisqApiUrl) {
+                            log.d { "user setup a new trusted node $newApiUrl" }
+                            userRepository.clear()
+                        }
 
-                    // change the states before going back
-                    applicationBootstrapFacade.setState("mobile.bootstrap.connectedToTrustedNode".i18n())
-                    applicationBootstrapFacade.setProgress(1.0f)
-                    navigateToSplashScreen() // to trigger navigateToNextScreen again
+                        if (newProxyOption != BisqProxyOption.INTERNAL_TOR) {
+                            try {
+                                kmpTorService.stopTor()
+                            } catch (e: Exception) {
+                                log.w(e) { "Failed to stop Tor after switching proxy option" }
+                            }
+                        }
+
+                        // change the states before going back
+                        applicationBootstrapFacade.setState("mobile.bootstrap.connectedToTrustedNode".i18n())
+                        applicationBootstrapFacade.setProgress(1.0f)
+                        navigateToSplashScreen() // to trigger navigateToNextScreen again
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    // timeout should be handled as an error (not a user cancellation)
+                    onConnectionError(e, newApiUrl.toNormalizedString())
+                    currentCoroutineContext().ensureActive()
+                } catch (e: CancellationException) {
+                    // user cancelled: do not show error, just reset state
+                    _wsClientConnectionState.value = ConnectionState.Disconnected()
+                    _status.value = ""
+                } catch (e: Throwable) {
+                    onConnectionError(e, newApiUrl.toNormalizedString())
+                    currentCoroutineContext().ensureActive()
+                } finally {
+                    countdownJob?.cancel()
+                    countdownJob = null
+                    _isNodeSetupInProgress.value = false
+                    connectJob = null
                 }
-            } catch (e: TimeoutCancellationException) {
-                // timeout should be handled as an error (not a user cancellation)
-                onConnectionError(e, newApiUrl.toNormalizedString())
-                currentCoroutineContext().ensureActive()
-            } catch (e: CancellationException) {
-                // user cancelled: do not show error, just reset state
-                _wsClientConnectionState.value = ConnectionState.Disconnected()
-                _status.value = ""
-            } catch (e: Throwable) {
-                onConnectionError(e, newApiUrl.toNormalizedString())
-                currentCoroutineContext().ensureActive()
-            } finally {
-                countdownJob?.cancel()
-                countdownJob = null
-                _isNodeSetupInProgress.value = false
-                connectJob = null
             }
-        }
     }
 
     fun onCancelPressed() {
@@ -407,11 +422,12 @@ class TrustedNodeSetupPresenter(
         connectJob = null
     }
 
-    private fun Url.toNormalizedString(): String {
-        return "${this.protocol.name}://${this.host}:${this.port}"
-    }
+    private fun Url.toNormalizedString(): String = "${this.protocol.name}://${this.host}:${this.port}"
 
-    private fun onConnectionError(error: Throwable, newApiUrl: String) {
+    private fun onConnectionError(
+        error: Throwable,
+        newApiUrl: String,
+    ) {
         when (error) {
             is TimeoutCancellationException -> {
                 log.e(error) { "Connection test timed out" }
@@ -433,16 +449,16 @@ class TrustedNodeSetupPresenter(
                 if (error::class.simpleName == "ConnectException" || error::class.simpleName == "SocketException") {
                     showSnackbar(
                         "mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(
-                            newApiUrl
-                        )
+                            newApiUrl,
+                        ),
                     )
                 } else {
                     val errorMessage = error.message
                     if (errorMessage != null) {
                         showSnackbar(
                             "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
-                                errorMessage
-                            )
+                                errorMessage,
+                            ),
                         )
                     } else {
                         showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
@@ -468,18 +484,22 @@ class TrustedNodeSetupPresenter(
         // Detect if user explicitly provided a port in input
         val hasExplicitPort = Regex("^https?://[^/]+:\\d+").containsMatchIn(withScheme)
         val host = first.host
-        val needsDefaultPort = !hasExplicitPort && (
-            host == LOCALHOST || host.isValidIpv4() || host.endsWith(".onion", ignoreCase = true)
-        )
+        val needsDefaultPort =
+            !hasExplicitPort && (
+                host == LOCALHOST || host.isValidIpv4() || host.endsWith(".onion", ignoreCase = true)
+            )
         val port = if (needsDefaultPort) 8090 else first.port
         // Normalize to protocol://host:port (drop any path/query as before)
         val normalized = "${first.protocol.name}://$host:$port"
         return parseUrl(normalized)
     }
 
-    fun validateApiUrl(value: String, proxyOption: BisqProxyOption): String? {
+    fun validateApiUrl(
+        value: String,
+        proxyOption: BisqProxyOption,
+    ): String? {
         if (value.isEmpty()) {
-            if (!_userExplicitlyChangedProxy.value && proxyOption == BisqProxyOption.INTERNAL_TOR) {
+            if (!userExplicitlyChangedProxy.value && proxyOption == BisqProxyOption.INTERNAL_TOR) {
                 _selectedProxyOption.value = BisqProxyOption.NONE
             }
             return "mobile.trustedNodeSetup.apiUrl.invalid.empty".i18n()
@@ -511,7 +531,7 @@ class TrustedNodeSetupPresenter(
             } else {
                 null
             }
-        } else if (!_userExplicitlyChangedProxy.value && proxyOption == BisqProxyOption.INTERNAL_TOR) {
+        } else if (!userExplicitlyChangedProxy.value && proxyOption == BisqProxyOption.INTERNAL_TOR) {
             _selectedProxyOption.value = BisqProxyOption.NONE
         }
 
@@ -540,9 +560,7 @@ class TrustedNodeSetupPresenter(
         return null
     }
 
-    private fun localHost(): String {
-        return if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
-    }
+    private fun localHost(): String = if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
 
     fun validateProxyHost(value: String): String? {
         if (value.isEmpty()) {

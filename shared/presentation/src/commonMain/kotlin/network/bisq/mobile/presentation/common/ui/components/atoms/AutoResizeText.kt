@@ -27,6 +27,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTypography
 @Composable
 fun AutoResizeText(
     text: String,
+    modifier: Modifier = Modifier,
     color: Color = BisqTheme.colors.white,
     textStyle: TextStyle = BisqTheme.typography.baseRegular,
     textAlign: TextAlign = TextAlign.Start,
@@ -34,7 +35,6 @@ fun AutoResizeText(
     maxLines: Int = 1,
     overflow: TextOverflow = TextOverflow.Clip,
     minimumFontSize: TextUnit = 10.sp,
-    modifier: Modifier = Modifier,
 ) {
     val inPreview = LocalInspectionMode.current
     var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow) {
@@ -55,13 +55,14 @@ fun AutoResizeText(
 
     Text(
         text = text,
-        modifier = modifier.drawWithContent {
-            // During previews, the `onTextLayout` recomposition loop may not complete,
-            // which would leave `readyToDraw` as false and result in an empty render.
-            // Bypassing the check in preview mode ensures the component is always visible
-            // for development, without affecting runtime behavior.
-            if (readyToDraw || inPreview) drawContent()
-        },
+        modifier =
+            modifier.drawWithContent {
+                // During previews, the `onTextLayout` recomposition loop may not complete,
+                // which would leave `readyToDraw` as false and result in an empty render.
+                // Bypassing the check in preview mode ensures the component is always visible
+                // for development, without affecting runtime behavior.
+                if (readyToDraw || inPreview) drawContent()
+            },
         color = color,
         style = textStyle.copy(fontSize = determinedFontSize),
         textAlign = textAlign,
@@ -79,10 +80,10 @@ fun AutoResizeText(
     )
 }
 
-
 @Composable
 fun AutoResizeText(
     text: AnnotatedString,
+    modifier: Modifier = Modifier,
     color: Color = BisqTheme.colors.white,
     textStyle: TextStyle = BisqTheme.typography.baseRegular,
     textAlign: TextAlign = TextAlign.Start,
@@ -90,7 +91,6 @@ fun AutoResizeText(
     maxLines: Int = 1,
     overflow: TextOverflow = TextOverflow.Clip,
     minimumFontSize: TextUnit = 10.sp,
-    modifier: Modifier = Modifier,
 ) {
     val inPreview = LocalInspectionMode.current
     var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow) {
@@ -111,9 +111,10 @@ fun AutoResizeText(
 
     Text(
         text = text,
-        modifier = modifier.drawWithContent {
-            if (readyToDraw || inPreview) drawContent()
-        },
+        modifier =
+            modifier.drawWithContent {
+                if (readyToDraw || inPreview) drawContent()
+            },
         color = color,
         style = textStyle.copy(fontSize = determinedFontSize),
         textAlign = textAlign,
@@ -128,7 +129,5 @@ fun AutoResizeText(
                 readyToDraw = true
             }
         },
-
-
     )
 }

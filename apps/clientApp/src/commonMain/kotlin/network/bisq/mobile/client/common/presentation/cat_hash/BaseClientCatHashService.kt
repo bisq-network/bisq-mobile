@@ -21,8 +21,11 @@ import okio.Path.Companion.toPath
 import okio.SYSTEM
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-abstract class BaseClientCatHashService(private val baseDirPath: String) :
-    BaseService(), ClientCatHashService<PlatformImage?>, Logging {
+abstract class BaseClientCatHashService(
+    private val baseDirPath: String,
+) : BaseService(),
+    ClientCatHashService<PlatformImage?>,
+    Logging {
     companion object {
         const val MAX_CACHE_SIZE = 500
         const val CATHASH_ICONS_PATH = "db/cache/cat_hash_icons"
@@ -35,22 +38,39 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     private val cacheLock = Mutex()
     private val cache = mutableMapOf<String, PlatformImage>()
 
-    protected abstract fun composeImage(paths: Array<String>, size: Int): PlatformImage?
-    protected abstract fun writeRawImage(image: PlatformImage, iconFilePath: String)
+    protected abstract fun composeImage(
+        paths: Array<String>,
+        size: Int,
+    ): PlatformImage?
+
+    protected abstract fun writeRawImage(
+        image: PlatformImage,
+        iconFilePath: String,
+    )
+
     protected abstract fun readRawImage(iconFilePath: String): PlatformImage?
 
     @OptIn(ExperimentalEncodingApi::class)
-    override fun getImage(userProfile: UserProfileVO, size: Int): PlatformImage? {
+    override fun getImage(
+        userProfile: UserProfileVO,
+        size: Int,
+    ): PlatformImage? {
         // We get the data Base 64 encoded form the Webservice/Rest API backend
         // As the data are verified at the network layer, the decodeBase64() cannot return null,
         // but to cover the case we fall back to 0.
-        val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()?.toByteArray() ?: ByteArray(0)
-        val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()?.toByteArray() ?: ByteArray(0)
+        val pubKeyHash =
+            userProfile.networkId.pubKey.hash
+                .decodeBase64()
+                ?.toByteArray() ?: ByteArray(0)
+        val powSolution =
+            userProfile.proofOfWork.solutionEncoded
+                .decodeBase64()
+                ?.toByteArray() ?: ByteArray(0)
         return getImage(
             pubKeyHash,
             powSolution,
             userProfile.avatarVersion,
-            size
+            size,
         )
     }
 
@@ -58,7 +78,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         pubKeyHash: ByteArray,
         powSolution: ByteArray,
         avatarVersion: Int,
-        size: Int
+        size: Int,
     ): PlatformImage? {
         try {
             val combined = concat(powSolution, pubKeyHash)
@@ -137,11 +157,12 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         }
     }
 
-    open fun getSizeOfCachedIcons(): Int {
-        return ClientCatHashService.DEFAULT_SIZE
-    }
+    open fun getSizeOfCachedIcons(): Int = ClientCatHashService.DEFAULT_SIZE
 
-    private fun writeAsync(image: PlatformImage, iconFilePath: Path) {
+    private fun writeAsync(
+        image: PlatformImage,
+        iconFilePath: Path,
+    ) {
         serviceScope.launch(Dispatchers.IO) {
             try {
                 writeRawImage(image, iconFilePath.toString())
@@ -180,11 +201,9 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         }
     }
 
-    private fun getBucketConfig(avatarVersion: Int): BucketConfig {
-        return when (avatarVersion) {
+    private fun getBucketConfig(avatarVersion: Int): BucketConfig =
+        when (avatarVersion) {
             0 -> BucketConfigV0()
             else -> throw IllegalArgumentException("Unsupported avatarVersion: $avatarVersion")
         }
-    }
 }
-

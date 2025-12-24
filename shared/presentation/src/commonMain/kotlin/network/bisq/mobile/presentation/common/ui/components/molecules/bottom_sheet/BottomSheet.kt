@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:content-slot-reused")
+
 package network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet
 
 import androidx.compose.foundation.background
@@ -27,10 +29,10 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import network.bisq.mobile.presentation.common.ui.platform.isAffectedBottomSheetDevice
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketSortBy
+import network.bisq.mobile.presentation.common.ui.platform.isAffectedBottomSheetDevice
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -42,7 +44,7 @@ const val MAX_SHEET_HEIGHT = 500
 fun BisqBottomSheet(
     onDismissRequest: () -> Unit,
     containerColor: Color = BisqTheme.colors.dark_grey50,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val inPreview = LocalInspectionMode.current
     if (inPreview) {
@@ -65,14 +67,15 @@ fun BisqBottomSheet(
         ModalBottomSheet(
             onDismissRequest = onDismissRequest,
             shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true,
-            ),
+            sheetState =
+                rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true,
+                ),
             containerColor = containerColor,
-            dragHandle = { DragHandle() }
+            dragHandle = { DragHandle() },
         ) {
             Column(
-                Modifier.heightIn(max = MAX_SHEET_HEIGHT.dp)
+                Modifier.heightIn(max = MAX_SHEET_HEIGHT.dp),
             ) {
                 content()
             }
@@ -83,12 +86,17 @@ fun BisqBottomSheet(
 @Composable
 private fun DragHandle() {
     Box(
-        modifier = Modifier.padding(top = 20.dp)
-            .clip(shape = RoundedCornerShape(4.dp))
+        modifier =
+            Modifier
+                .padding(top = 20.dp)
+                .clip(shape = RoundedCornerShape(4.dp)),
     ) {
         Box(
-            modifier = Modifier.height(4.dp).width(60.dp)
-                .background(Color(0xFF6F6F6F))
+            modifier =
+                Modifier
+                    .height(4.dp)
+                    .width(60.dp)
+                    .background(Color(0xFF6F6F6F)),
         )
     }
 }
@@ -97,29 +105,33 @@ private fun DragHandle() {
 private fun NonDialogBottomSheet(
     onDismissRequest: () -> Unit,
     containerColor: Color,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Popup(
         onDismissRequest = onDismissRequest,
-        properties = PopupProperties(
-            focusable = true,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            clippingEnabled = false
-        )
+        properties =
+            PopupProperties(
+                focusable = true,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                clippingEnabled = false,
+            ),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Scrim
             Box(
-                modifier = Modifier.fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable(onClick = onDismissRequest)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable(onClick = onDismissRequest),
             )
             // Sheet content
             Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp, top = 12.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(start = 16.dp, end = 16.dp, bottom = 24.dp, top = 12.dp),
             ) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -127,12 +139,13 @@ private fun NonDialogBottomSheet(
                     shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
                 ) {
                     Column(
-                        modifier = Modifier.heightIn(max = MAX_SHEET_HEIGHT.dp)
-                            .padding(bottom = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier =
+                            Modifier
+                                .heightIn(max = MAX_SHEET_HEIGHT.dp)
+                                .padding(bottom = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         DragHandle()
-
 
                         Spacer(modifier = Modifier.height(8.dp))
                         content()
@@ -149,14 +162,15 @@ private fun NonDialogBottomSheet(
 private fun ModalBottomSheetPreview() {
     BisqTheme.Preview {
         ModalBottomSheet(
-            {}, containerColor = BisqTheme.colors.dark_grey50,
+            {},
+            containerColor = BisqTheme.colors.dark_grey50,
             shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
         ) {
             MarketFilters(
                 sortBy = MarketSortBy.MostOffers,
                 filter = MarketFilter.All,
                 onSortByChange = {},
-                onFilterChange = {}
+                onFilterChange = {},
             )
         }
     }
@@ -176,7 +190,7 @@ private fun ModalBottomSheetMaxHeightPreview() {
                 sortBy = MarketSortBy.MostOffers,
                 filter = MarketFilter.All,
                 onSortByChange = {},
-                onFilterChange = {}
+                onFilterChange = {},
             )
             Spacer(Modifier.fillMaxHeight())
         }
@@ -192,19 +206,18 @@ private fun NonDialogBottomSheetPreview() {
                 sortBy = MarketSortBy.MostOffers,
                 filter = MarketFilter.All,
                 onSortByChange = {},
-                onFilterChange = {}
+                onFilterChange = {},
             )
             Spacer(Modifier.fillMaxHeight())
         }
     }
 }
 
-
 @Composable
 private fun InlinePreviewBottomSheet(
     onDismissRequest: () -> Unit,
     containerColor: Color,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     // Inline preview: render sheet content directly (no Popup) so Compose Preview shows it
     Box(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
@@ -215,7 +228,7 @@ private fun InlinePreviewBottomSheet(
         ) {
             Column(
                 modifier = Modifier.heightIn(max = MAX_SHEET_HEIGHT.dp).padding(bottom = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 DragHandle()
                 Spacer(modifier = Modifier.height(8.dp))

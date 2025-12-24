@@ -13,16 +13,15 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.main.MainPresenter
 
 class OpenTradeListPresenter(
     private val mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val userProfileServiceFacade: UserProfileServiceFacade
+    private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     private val _sortedOpenTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
     val sortedOpenTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = _sortedOpenTradeItems.asStateFlow()
 
@@ -45,7 +44,7 @@ class OpenTradeListPresenter(
             combine(
                 mainPresenter.tradesWithUnreadMessages,
                 tradesServiceFacade.openTradeItems,
-                mainPresenter.languageCode
+                mainPresenter.languageCode,
             ) { _, openTrades, _ ->
                 openTrades
             }.collect { openTrades ->

@@ -14,9 +14,9 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardScreen
+import network.bisq.mobile.presentation.tabs.more.MiscItemsScreen
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketScreen
 import network.bisq.mobile.presentation.tabs.open_trades.OpenTradeListScreen
-import network.bisq.mobile.presentation.tabs.more.MiscItemsScreen
 
 @Composable
 fun TabNavGraph(navController: NavHostController) {
@@ -41,11 +41,12 @@ fun TabNavGraph(navController: NavHostController) {
             }
 
             composable<NavRoute.TabOpenTradeList>(
-                deepLinks = listOf(
-                    navDeepLink<NavRoute.TabOpenTradeList>(
-                        basePath = NavUtils.getDeepLinkBasePath<NavRoute.TabOpenTradeList>()
-                    )
-                ),
+                deepLinks =
+                    listOf(
+                        navDeepLink<NavRoute.TabOpenTradeList>(
+                            basePath = NavUtils.getDeepLinkBasePath<NavRoute.TabOpenTradeList>(),
+                        ),
+                    ),
             ) {
                 OpenTradeListScreen()
             }

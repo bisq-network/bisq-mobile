@@ -5,5 +5,5 @@ import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 
 data class TakeOfferFlowResult(
     val statusFlow: Flow<TakeOfferStatus?>,
-    val errorMessageFlow: Flow<String?>
+    val errorMessageFlow: Flow<String?>,
 )

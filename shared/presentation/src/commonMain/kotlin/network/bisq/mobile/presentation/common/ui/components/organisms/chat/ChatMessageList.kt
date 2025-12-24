@@ -1,3 +1,6 @@
+// TODO: remove and fix the issue
+@file:Suppress("ktlint:compose:lambda-param-in-effect")
+
 package network.bisq.mobile.presentation.common.ui.components.organisms.chat
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -17,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +54,9 @@ fun ChatMessageList(
     showChatRulesWarnBox: Boolean,
     readCount: Int,
     userProfileIconProvider: () -> suspend (UserProfileVO) -> PlatformImage,
+    onResendMessage: (String) -> Unit,
+    userNameProvider: suspend (String) -> String,
+    modifier: Modifier = Modifier,
     onAddReaction: (BisqEasyOpenTradeMessageModel, ReactionEnum) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum -> },
     onRemoveReaction: (BisqEasyOpenTradeMessageModel, BisqEasyOpenTradeMessageReactionVO) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO -> },
     onReply: (BisqEasyOpenTradeMessageModel) -> Unit = {},
@@ -60,18 +67,17 @@ fun ChatMessageList(
     onOpenChatRules: () -> Unit = {},
     onDontShowAgainChatRulesWarningBox: () -> Unit = {},
     onUpdateReadCount: (Int) -> Unit = {},
-    modifier: Modifier = Modifier,
-    onResendMessage: (String) -> Unit,
-    userNameProvider: suspend (String) -> String,
 ) {
     val scope = rememberCoroutineScope()
     var jumpToBottomVisible by remember { mutableStateOf(false) }
-    val unreadCount = remember(messages, readCount) {
-        (messages.size - readCount).coerceAtLeast(0)
-    }
-    val scrollState = rememberLazyListState(
-        initialFirstVisibleItemIndex = unreadCount.coerceIn(0, messages.size)
-    )
+    val unreadCount =
+        remember(messages, readCount) {
+            (messages.size - readCount).coerceAtLeast(0)
+        }
+    val scrollState =
+        rememberLazyListState(
+            initialFirstVisibleItemIndex = unreadCount.coerceIn(0, messages.size),
+        )
     val canScrollDown by remember {
         derivedStateOf { scrollState.canScrollBackward }
     }
@@ -79,15 +85,16 @@ fun ChatMessageList(
         derivedStateOf { scrollState.firstVisibleItemIndex }
     }
 
-    var initialReadCount by remember { mutableStateOf(readCount) }
+    var initialReadCount by remember { mutableIntStateOf(readCount) }
 
-    val unreadMarkerIndex = remember(messages, initialReadCount, canScrollDown) {
-        if (canScrollDown) {
-            (messages.size - initialReadCount).coerceIn(0, messages.size)
-        } else {
-            0
+    val unreadMarkerIndex =
+        remember(messages, initialReadCount, canScrollDown) {
+            if (canScrollDown) {
+                (messages.size - initialReadCount).coerceIn(0, messages.size)
+            } else {
+                0
+            }
         }
-    }
 
     LaunchedEffect(canScrollDown) {
         // effect will be cancelled as canScrollDown changes
@@ -118,7 +125,7 @@ fun ChatMessageList(
 
     Box(modifier = modifier) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
         ) {
             if (showChatRulesWarnBox) {
                 ChatRulesWarningMessageBox(
@@ -127,15 +134,17 @@ fun ChatMessageList(
                 )
             }
 
-            val placementAnimSpec: FiniteAnimationSpec<IntOffset> = tween(
-                durationMillis = 100,
-                easing = FastOutSlowInEasing
-            )
+            val placementAnimSpec: FiniteAnimationSpec<IntOffset> =
+                tween(
+                    durationMillis = 100,
+                    easing = FastOutSlowInEasing,
+                )
 
-            val fadeAnimSpec: FiniteAnimationSpec<Float> = tween(
-                durationMillis = 100,
-                easing = FastOutSlowInEasing
-            )
+            val fadeAnimSpec: FiniteAnimationSpec<Float> =
+                tween(
+                    durationMillis = 100,
+                    easing = FastOutSlowInEasing,
+                )
 
             val userProfileIconProvider = remember(userProfileIconProvider) { userProfileIconProvider() }
 
@@ -143,7 +152,7 @@ fun ChatMessageList(
                 reverseLayout = true,
                 state = scrollState,
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
             ) {
                 item { }
 
@@ -157,17 +166,17 @@ fun ChatMessageList(
                             HorizontalDivider(
                                 modifier = Modifier.weight(1f).padding(vertical = BisqUIConstants.ScreenPadding),
                                 thickness = 2.dp,
-                                color = BisqTheme.colors.primary
+                                color = BisqTheme.colors.primary,
                             )
-                            BisqText.baseRegular(
+                            BisqText.BaseRegular(
                                 text = "mobile.chat.unreadMessages".i18n(),
                                 color = BisqTheme.colors.primary,
-                                modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPaddingHalf)
+                                modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPaddingHalf),
                             )
                             HorizontalDivider(
                                 modifier = Modifier.weight(1f).padding(vertical = BisqUIConstants.ScreenPadding),
                                 thickness = 2.dp,
-                                color = BisqTheme.colors.primary
+                                color = BisqTheme.colors.primary,
                             )
                         }
                     }
@@ -175,11 +184,12 @@ fun ChatMessageList(
                         ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE -> {
                             ProtocolLogMessageBox(
                                 message,
-                                Modifier.animateItem(
-                                    fadeInSpec = fadeAnimSpec,
-                                    fadeOutSpec = fadeAnimSpec,
-                                    placementSpec = placementAnimSpec
-                                ),
+                                modifier =
+                                    Modifier.animateItem(
+                                        fadeInSpec = fadeAnimSpec,
+                                        fadeOutSpec = fadeAnimSpec,
+                                        placementSpec = placementAnimSpec,
+                                    ),
                                 onResendMessage = onResendMessage,
                                 userNameProvider = userNameProvider,
                             )
@@ -191,8 +201,8 @@ fun ChatMessageList(
                                 Modifier.animateItem(
                                     fadeInSpec = fadeAnimSpec,
                                     fadeOutSpec = fadeAnimSpec,
-                                    placementSpec = placementAnimSpec
-                                )
+                                    placementSpec = placementAnimSpec,
+                                ),
                             )
                         }
 
@@ -213,7 +223,7 @@ fun ChatMessageList(
                                 onRemoveReaction = { reaction ->
                                     onRemoveReaction(
                                         message,
-                                        reaction
+                                        reaction,
                                     )
                                 },
                                 onReply = { onReply(message) },
@@ -222,11 +232,12 @@ fun ChatMessageList(
                                 onUndoIgnoreUser = { onUndoIgnoreUser(message.senderUserProfileId) },
                                 onReportUser = { onReportUser(message) },
                                 isIgnored = ignoredUserIds.contains(message.senderUserProfileId),
-                                modifier = Modifier.animateItem(
-                                    fadeInSpec = fadeAnimSpec,
-                                    fadeOutSpec = fadeAnimSpec,
-                                    placementSpec = placementAnimSpec
-                                ),
+                                modifier =
+                                    Modifier.animateItem(
+                                        fadeInSpec = fadeAnimSpec,
+                                        fadeOutSpec = fadeAnimSpec,
+                                        placementSpec = placementAnimSpec,
+                                    ),
                                 onResendMessage = onResendMessage,
                                 userNameProvider = userNameProvider,
                             )
@@ -238,7 +249,7 @@ fun ChatMessageList(
 
         JumpToBottomFloatingButton(
             visible = jumpToBottomVisible,
-            onClicked = {
+            onClick = {
                 scope.launch {
                     if (scrollState.firstVisibleItemIndex == unreadMarkerIndex) {
                         scrollState.animateScrollToItem(0)

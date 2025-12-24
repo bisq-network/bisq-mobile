@@ -4,12 +4,12 @@ import network.bisq.mobile.presentation.common.notification.model.NotificationBu
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 
 interface NotificationController {
-
     suspend fun hasPermission(): Boolean
 
-    fun notify(builder: NotificationBuilder.() -> Unit) = notify(
-        NotificationBuilder().apply(builder).build()
-    )
+    fun notify(builder: NotificationBuilder.() -> Unit) =
+        notify(
+            NotificationBuilder().apply(builder).build(),
+        )
 
     fun notify(config: NotificationConfig)
 

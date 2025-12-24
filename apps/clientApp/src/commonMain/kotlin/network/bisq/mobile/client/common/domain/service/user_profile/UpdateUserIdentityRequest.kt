@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UpdateUserIdentityRequest(
     val terms: String = "",
-    val statement: String = ""
+    val statement: String = "",
 )

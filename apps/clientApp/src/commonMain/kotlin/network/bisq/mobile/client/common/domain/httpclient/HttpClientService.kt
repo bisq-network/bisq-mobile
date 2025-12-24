@@ -58,7 +58,6 @@ class HttpClientService(
     private val defaultHost: String,
     private val defaultPort: Int,
 ) : ServiceFacade() {
-
     companion object {
         private const val MAX_BODY_SIZE_BYTES: Long = 5 * 1024 * 1024 // 5 MB limit
     }
@@ -69,11 +68,11 @@ class HttpClientService(
     private var _httpClient: MutableStateFlow<HttpClient?> = MutableStateFlow(null)
     private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
-    private val stopFlow = MutableSharedFlow<Unit>(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    ) // signal to cancel waiters
-
+    private val stopFlow =
+        MutableSharedFlow<Unit>(
+            replay = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        ) // signal to cancel waiters
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun activate() {
@@ -106,14 +105,15 @@ class HttpClientService(
         // if BisqProxyOption.INTERNAL_TOR proxy option is used
         return combine(
             sensitiveSettingsRepository.data,
-            kmpTorService.state
+            kmpTorService.state,
         ) { settings, state -> settings to state }
             .mapLatest { (settings, state) ->
                 if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
                     if (state is KmpTorService.TorState.Stopped) {
                         null
                     } else {
-                        kmpTorService.awaitSocksPort()
+                        kmpTorService
+                            .awaitSocksPort()
                             ?.let { HttpClientSettings.from(settings, it) }
                     }
                 } else {
@@ -126,12 +126,11 @@ class HttpClientService(
      * Do not use this to send requests. this is only intended to be used by web socket service
      * to instantiate it's websocket client.
      */
-    suspend fun getClient(): HttpClient {
-        return awaitOrCancel(
+    suspend fun getClient(): HttpClient =
+        awaitOrCancel(
             _httpClient.filterNotNull(),
             stopFlow,
         )
-    }
 
     fun disposeClient() {
         _httpClient.value?.close()
@@ -139,40 +138,37 @@ class HttpClientService(
         lastConfig = null
     }
 
-    suspend fun get(block: HttpRequestBuilder.() -> Unit): HttpResponse {
-        return getClient().get {
+    suspend fun get(block: HttpRequestBuilder.() -> Unit): HttpResponse =
+        getClient().get {
             block(this)
         }
-    }
 
-    suspend fun post(block: HttpRequestBuilder.() -> Unit): HttpResponse {
-        return getClient().post {
+    suspend fun post(block: HttpRequestBuilder.() -> Unit): HttpResponse =
+        getClient().post {
             block(this)
         }
-    }
 
-    suspend fun patch(block: HttpRequestBuilder.() -> Unit): HttpResponse {
-        return getClient().patch {
+    suspend fun patch(block: HttpRequestBuilder.() -> Unit): HttpResponse =
+        getClient().patch {
             block(this)
         }
-    }
 
-    suspend fun delete(block: HttpRequestBuilder.() -> Unit): HttpResponse {
-        return getClient().delete {
+    suspend fun delete(block: HttpRequestBuilder.() -> Unit): HttpResponse =
+        getClient().delete {
             block(this)
         }
-    }
 
     fun createNewInstance(clientSettings: HttpClientSettings): HttpClient {
         val proxy = clientSettings.bisqProxyConfig()
         if (proxy != null) {
             log.d { "Using proxy from settings: $proxy" }
         }
-        val rawBase = if (!clientSettings.apiUrl.isNullOrBlank()) {
-            clientSettings.apiUrl
-        } else {
-            "http://$defaultHost:$defaultPort"
-        }
+        val rawBase =
+            if (!clientSettings.apiUrl.isNullOrBlank()) {
+                clientSettings.apiUrl
+            } else {
+                "http://$defaultHost:$defaultPort"
+            }
         val baseUrl = sanitizeBaseUrl(rawBase, defaultPort)
         if (baseUrl != rawBase) {
             log.w { "Sanitized baseUrl from '$rawBase' to '$baseUrl'" }
@@ -181,10 +177,11 @@ class HttpClientService(
         val password = clientSettings.password
         return createHttpClient(proxy) {
             install(UserAgent) {
-                agent = versionProvider.getAppNameAndVersion(
-                    false,
-                    getPlatformInfo().type == PlatformType.IOS
-                )
+                agent =
+                    versionProvider.getAppNameAndVersion(
+                        false,
+                        getPlatformInfo().type == PlatformType.IOS,
+                    )
             }
             install(ContentNegotiation) {
                 json(jsonConfig)
@@ -208,91 +205,101 @@ class HttpClientService(
                     }
                 }
             }
-            install(createClientPlugin("HttpApiAuthPlugin") {
-                transformRequestBody { request, content, bodyType ->
-                    var reconstructedBody: ByteArrayContent? = null
-                    if (!password.isNullOrBlank()) {
-                        val method = request.method.value
-                        val timestamp = Clock.System.now().toEpochMilliseconds().toString()
-                        val nonce = AuthUtils.generateNonce()
-                        val normalizedPathAndQuery =
-                            AuthUtils.getNormalizedPathAndQuery(request.url.build())
-                        val bodySha256Hex = when (content) {
-                            is OutgoingContent.ByteArrayContent -> {
-                                val bytes = content.bytes()
-                                if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                    throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
-                                }
-                                getSha256(bytes).toHexString()
-                            }
-
-                            is OutgoingContent.ReadChannelContent -> {
-                                val bytes = content.readFrom()
-                                    .readRemaining(MAX_BODY_SIZE_BYTES + 1) // + 1 to detect if max size has reached
-                                    .readByteArray()
-                                if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                    throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
-                                }
-                                reconstructedBody =
-                                    ByteArrayContent(bytes, content.contentType, content.status)
-                                getSha256(bytes).toHexString()
-                            }
-
-                            is OutgoingContent.WriteChannelContent -> {
-                                val channel = ByteChannel(autoFlush = true)
-                                try {
-                                    content.writeTo(channel)
-                                    val bytes =
-                                        channel.readRemaining(MAX_BODY_SIZE_BYTES + 1)
-                                            .readByteArray()
-                                    if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                        throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
+            install(
+                createClientPlugin("HttpApiAuthPlugin") {
+                    transformRequestBody { request, content, bodyType ->
+                        var reconstructedBody: ByteArrayContent? = null
+                        if (!password.isNullOrBlank()) {
+                            val method = request.method.value
+                            val timestamp =
+                                Clock.System
+                                    .now()
+                                    .toEpochMilliseconds()
+                                    .toString()
+                            val nonce = AuthUtils.generateNonce()
+                            val normalizedPathAndQuery =
+                                AuthUtils.getNormalizedPathAndQuery(request.url.build())
+                            val bodySha256Hex =
+                                when (content) {
+                                    is OutgoingContent.ByteArrayContent -> {
+                                        val bytes = content.bytes()
+                                        if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                            throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
+                                        }
+                                        getSha256(bytes).toHexString()
                                     }
-                                    reconstructedBody =
-                                        ByteArrayContent(bytes, content.contentType, content.status)
-                                    getSha256(bytes).toHexString()
-                                } finally {
-                                    channel.close()
-                                }
-                            }
 
-                            is String -> {
-                                if (content.isEmpty()) {
-                                    null
-                                } else {
-                                    val bytes = content.encodeToByteArray()
-                                    if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                        throw IllegalArgumentException(
-                                            "Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes"
-                                        )
+                                    is OutgoingContent.ReadChannelContent -> {
+                                        val bytes =
+                                            content
+                                                .readFrom()
+                                                .readRemaining(MAX_BODY_SIZE_BYTES + 1) // + 1 to detect if max size has reached
+                                                .readByteArray()
+                                        if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                            throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
+                                        }
+                                        reconstructedBody =
+                                            ByteArrayContent(bytes, content.contentType, content.status)
+                                        getSha256(bytes).toHexString()
                                     }
-                                    getSha256(bytes).toHexString()
-                                }
-                            }
 
-                            else -> null
+                                    is OutgoingContent.WriteChannelContent -> {
+                                        val channel = ByteChannel(autoFlush = true)
+                                        try {
+                                            content.writeTo(channel)
+                                            val bytes =
+                                                channel
+                                                    .readRemaining(MAX_BODY_SIZE_BYTES + 1)
+                                                    .readByteArray()
+                                            if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                                throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
+                                            }
+                                            reconstructedBody =
+                                                ByteArrayContent(bytes, content.contentType, content.status)
+                                            getSha256(bytes).toHexString()
+                                        } finally {
+                                            channel.close()
+                                        }
+                                    }
+
+                                    is String -> {
+                                        if (content.isEmpty()) {
+                                            null
+                                        } else {
+                                            val bytes = content.encodeToByteArray()
+                                            if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                                throw IllegalArgumentException(
+                                                    "Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes",
+                                                )
+                                            }
+                                            getSha256(bytes).toHexString()
+                                        }
+                                    }
+
+                                    else -> null
+                                }
+
+                            val hash =
+                                AuthUtils.generateAuthHash(
+                                    password,
+                                    nonce,
+                                    timestamp,
+                                    method,
+                                    normalizedPathAndQuery,
+                                    bodySha256Hex,
+                                )
+
+                            request.headers.append("AUTH-TOKEN", hash)
+                            request.headers.append("AUTH-TS", timestamp)
+                            request.headers.append("AUTH-NONCE", nonce)
                         }
-
-                        val hash =
-                            AuthUtils.generateAuthHash(
-                                password,
-                                nonce,
-                                timestamp,
-                                method,
-                                normalizedPathAndQuery,
-                                bodySha256Hex,
-                            )
-
-                        request.headers.append("AUTH-TOKEN", hash)
-                        request.headers.append("AUTH-TS", timestamp)
-                        request.headers.append("AUTH-NONCE", nonce)
+                        reconstructedBody ?: when (content) {
+                            is OutgoingContent -> content
+                            else -> null // transformation not applicable
+                        }
                     }
-                    reconstructedBody ?: when (content) {
-                        is OutgoingContent -> content
-                        else -> null // transformation not applicable
-                    }
-                }
-            })
+                },
+            )
         }
     }
 }

@@ -21,4 +21,7 @@ import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransp
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 
 @Serializable
-data class NetworkIdVO(val addressByTransportTypeMap: AddressByTransportTypeMapVO, val pubKey: PubKeyVO)
+data class NetworkIdVO(
+    val addressByTransportTypeMap: AddressByTransportTypeMapVO,
+    val pubKey: PubKeyVO,
+)

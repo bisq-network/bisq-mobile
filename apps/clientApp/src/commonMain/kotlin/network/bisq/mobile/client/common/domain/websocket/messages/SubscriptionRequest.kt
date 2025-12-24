@@ -12,4 +12,3 @@ data class SubscriptionRequest(
     val parameter: String? = null,
     override val requestId: String = createUuid(),
 ) : WebSocketRequest
-

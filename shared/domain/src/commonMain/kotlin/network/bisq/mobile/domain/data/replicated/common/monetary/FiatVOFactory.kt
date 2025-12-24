@@ -19,24 +19,37 @@ package network.bisq.mobile.domain.data.replicated.common.monetary
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 object FiatVOFactory {
-    fun FiatVOFactory.from(id: String, value: Long, code: String, precision: Int, lowPrecision: Int): FiatVO {
-        return FiatVO(id, value, code, precision, lowPrecision)
-    }
+    fun FiatVOFactory.from(
+        id: String,
+        value: Long,
+        code: String,
+        precision: Int,
+        lowPrecision: Int,
+    ): FiatVO = FiatVO(id, value, code, precision, lowPrecision)
 
-    fun FiatVOFactory.from(value: Long, code: String): FiatVO {
-        return FiatVO(code, value, code, 4, 2)
-    }
+    fun FiatVOFactory.from(
+        value: Long,
+        code: String,
+    ): FiatVO = FiatVO(code, value, code, 4, 2)
 
-    fun FiatVOFactory.from(value: Long, code: String, precision: Int): FiatVO {
-        return FiatVO(code, value, code, precision, 2)
-    }
+    fun FiatVOFactory.from(
+        value: Long,
+        code: String,
+        precision: Int,
+    ): FiatVO = FiatVO(code, value, code, precision, 2)
 
-    fun FiatVOFactory.fromFaceValue(faceValue: Double, code: String): FiatVO {
+    fun FiatVOFactory.fromFaceValue(
+        faceValue: Double,
+        code: String,
+    ): FiatVO {
         val value = FiatVOFactory.faceValueToLong(faceValue)
         return FiatVOFactory.from(value, code)
     }
 
-    fun FiatVOFactory.faceValueToLong(faceValue: Double, precision: Int = 4): Long {
+    fun FiatVOFactory.faceValueToLong(
+        faceValue: Double,
+        precision: Int = 4,
+    ): Long {
         val maxValue: Double = BigDecimal.fromLong(Long.MAX_VALUE).moveDecimalPoint(-precision).doubleValue(false)
         if (faceValue > maxValue) {
             throw RuntimeException("Provided value would lead to an overflow")
@@ -44,4 +57,3 @@ object FiatVOFactory {
         return BigDecimal.fromDouble(faceValue).moveDecimalPoint(precision).longValue(false)
     }
 }
-

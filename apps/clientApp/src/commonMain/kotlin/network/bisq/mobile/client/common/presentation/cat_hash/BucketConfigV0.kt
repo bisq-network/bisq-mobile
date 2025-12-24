@@ -32,69 +32,71 @@ class BucketConfigV0 : BucketConfig() {
         private val CHEST_SHAPE = Bucket(2, 11)
         private val EARS_SHAPE = Bucket(2, 12)
         private val FACE_SHAPE = Bucket(5, 13)
-        var bucketSizes: IntArray = intArrayOf(
-            BG.count,
-            BG_OVERLAY.count,
-            BODY_AND_FACE.count,
-            CHEST_AND_EARS.count,
-            CHEST_OVERLAY.count,
-            EARS_OVERLAY.count,
-            FACE_OVERLAY.count,
-            EYES.count,
-            NOSE.count,
-            WHISKERS.count,
-            BODY_SHAPE.count,
-            CHEST_SHAPE.count,
-            EARS_SHAPE.count,
-            FACE_SHAPE.count
-        )
+        var bucketSizes: IntArray =
+            intArrayOf(
+                BG.count,
+                BG_OVERLAY.count,
+                BODY_AND_FACE.count,
+                CHEST_AND_EARS.count,
+                CHEST_OVERLAY.count,
+                EARS_OVERLAY.count,
+                FACE_OVERLAY.count,
+                EYES.count,
+                NOSE.count,
+                WHISKERS.count,
+                BODY_SHAPE.count,
+                CHEST_SHAPE.count,
+                EARS_SHAPE.count,
+                FACE_SHAPE.count,
+            )
         var pathTemplates: Array<PathDetails>
 
         init {
 
             val postFix = ".png"
-            pathTemplates = arrayOf(
-                PathDetails("bg/bg_0/" + DIGIT + postFix, BG.idx),
-                PathDetails("bg/bg_1/" + DIGIT + postFix, BG_OVERLAY.idx),
-                PathDetails(
-                    "body/body" + SHAPE_NUMBER + "/" + DIGIT + postFix,
-                    BODY_AND_FACE.idx,
-                    BODY_SHAPE.idx
-                ),
-                PathDetails(
-                    "chest/chest" + SHAPE_NUMBER + "_0/" + DIGIT + postFix,
-                    CHEST_AND_EARS.idx,
-                    CHEST_SHAPE.idx
-                ),
-                PathDetails(
-                    "chest/chest" + SHAPE_NUMBER + "_1/" + DIGIT + postFix,
-                    CHEST_OVERLAY.idx,
-                    CHEST_SHAPE.idx
-                ),
-                PathDetails(
-                    "ears/ears" + SHAPE_NUMBER + "_0/" + DIGIT + postFix,
-                    CHEST_AND_EARS.idx,
-                    EARS_SHAPE.idx
-                ),
-                PathDetails(
-                    "ears/ears" + SHAPE_NUMBER + "_1/" + DIGIT + postFix,
-                    EARS_OVERLAY.idx,
-                    EARS_SHAPE.idx
-                ),
-                PathDetails(
-                    "face/face" + SHAPE_NUMBER + "_0/" + DIGIT + postFix,
-                    BODY_AND_FACE.idx,
-                    FACE_SHAPE.idx
-                ),
-                PathDetails(
-                    "face/face" + SHAPE_NUMBER + "_1/" + DIGIT + postFix,
-                    FACE_OVERLAY.idx,
-                    FACE_SHAPE.idx
-                ),
-                PathDetails("eyes/" + DIGIT + postFix, EYES.idx),
-                PathDetails("nose/" + DIGIT + postFix, NOSE.idx),
-                PathDetails("whiskers/" + DIGIT + postFix, WHISKERS.idx)
-            )
+            pathTemplates =
+                arrayOf(
+                    PathDetails("bg/bg_0/" + DIGIT + postFix, BG.idx),
+                    PathDetails("bg/bg_1/" + DIGIT + postFix, BG_OVERLAY.idx),
+                    PathDetails(
+                        "body/body" + SHAPE_NUMBER + "/" + DIGIT + postFix,
+                        BODY_AND_FACE.idx,
+                        BODY_SHAPE.idx,
+                    ),
+                    PathDetails(
+                        "chest/chest" + SHAPE_NUMBER + "_0/" + DIGIT + postFix,
+                        CHEST_AND_EARS.idx,
+                        CHEST_SHAPE.idx,
+                    ),
+                    PathDetails(
+                        "chest/chest" + SHAPE_NUMBER + "_1/" + DIGIT + postFix,
+                        CHEST_OVERLAY.idx,
+                        CHEST_SHAPE.idx,
+                    ),
+                    PathDetails(
+                        "ears/ears" + SHAPE_NUMBER + "_0/" + DIGIT + postFix,
+                        CHEST_AND_EARS.idx,
+                        EARS_SHAPE.idx,
+                    ),
+                    PathDetails(
+                        "ears/ears" + SHAPE_NUMBER + "_1/" + DIGIT + postFix,
+                        EARS_OVERLAY.idx,
+                        EARS_SHAPE.idx,
+                    ),
+                    PathDetails(
+                        "face/face" + SHAPE_NUMBER + "_0/" + DIGIT + postFix,
+                        BODY_AND_FACE.idx,
+                        FACE_SHAPE.idx,
+                    ),
+                    PathDetails(
+                        "face/face" + SHAPE_NUMBER + "_1/" + DIGIT + postFix,
+                        FACE_OVERLAY.idx,
+                        FACE_SHAPE.idx,
+                    ),
+                    PathDetails("eyes/" + DIGIT + postFix, EYES.idx),
+                    PathDetails("nose/" + DIGIT + postFix, NOSE.idx),
+                    PathDetails("whiskers/" + DIGIT + postFix, WHISKERS.idx),
+                )
         }
     }
 

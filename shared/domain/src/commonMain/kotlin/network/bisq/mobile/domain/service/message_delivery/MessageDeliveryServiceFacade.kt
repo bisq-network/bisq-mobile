@@ -5,8 +5,16 @@ import network.bisq.mobile.domain.data.replicated.network.confidential.ack.Messa
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
-abstract class MessageDeliveryServiceFacade : ServiceFacade(), LifeCycleAware, Logging {
+abstract class MessageDeliveryServiceFacade :
+    ServiceFacade(),
+    LifeCycleAware,
+    Logging {
     abstract fun onResendMessage(messageId: String)
-    abstract fun addMessageDeliveryStatusObserver(tradeMessageId: String, onNewStatus: (entry: Pair<String, MessageDeliveryInfoVO>) -> Unit)
+
+    abstract fun addMessageDeliveryStatusObserver(
+        tradeMessageId: String,
+        onNewStatus: (entry: Pair<String, MessageDeliveryInfoVO>) -> Unit,
+    )
+
     abstract fun removeMessageDeliveryStatusObserver(tradeMessageId: String)
 }

@@ -21,4 +21,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("TradeTermsOption")
-data class TradeTermsOptionVO(val makersTradeTerms: String) : OfferOptionVO
+data class TradeTermsOptionVO(
+    val makersTradeTerms: String,
+) : OfferOptionVO

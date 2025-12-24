@@ -35,20 +35,20 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatTextMessageBox(
-    message: BisqEasyOpenTradeMessageModel,
-    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
-    onScrollToMessage: (String) -> Unit = {},
+    isIgnored: Boolean,
     onAddReaction: (ReactionEnum) -> Unit,
     onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit,
+    message: BisqEasyOpenTradeMessageModel,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
+    onResendMessage: (String) -> Unit,
+    userNameProvider: suspend (String) -> String,
+    modifier: Modifier = Modifier,
+    onScrollToMessage: (String) -> Unit = {},
     onReply: () -> Unit = {},
     onCopy: () -> Unit = {},
     onIgnoreUser: () -> Unit = {},
     onUndoIgnoreUser: () -> Unit = {},
     onReportUser: () -> Unit = {},
-    isIgnored: Boolean,
-    modifier: Modifier = Modifier,
-    onResendMessage: (String) -> Unit,
-    userNameProvider: suspend (String) -> String,
 ) {
     val isMyMessage = message.isMyMessage
     val chatAlign = if (isMyMessage) Alignment.End else Alignment.Start
@@ -59,6 +59,7 @@ fun ChatTextMessageBox(
         if (isMyMessage) PaddingValues(start = BisqUIConstants.ScreenPadding) else PaddingValues(end = BisqUIConstants.ScreenPadding)
 
     var showMenu by remember { mutableStateOf(false) }
+
     fun setShowMenu(value: Boolean) {
         showMenu = value
     }
@@ -86,7 +87,8 @@ fun ChatTextMessageBox(
                         if (chatMessageId != null) {
                             onScrollToMessage(message.citation!!.chatMessageId!!)
                         }
-                    }) {
+                    },
+                ) {
                 }
                 ProfileIconAndText(message, userProfileIconProvider)
             }
@@ -98,10 +100,11 @@ fun ChatTextMessageBox(
                 Surface(
                     color = bubbleBGColor,
                     shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
-                    modifier = Modifier
-                        .padding(chatPadding)
-                        .wrapContentSize(contentAlign)
-                        .combinedClickable(onLongClick = { showMenu = true }, onClick = {}),
+                    modifier =
+                        Modifier
+                            .padding(chatPadding)
+                            .wrapContentSize(contentAlign)
+                            .combinedClickable(onLongClick = { showMenu = true }, onClick = {}),
                 ) {
                     if (message.citation != null) {
                         quoteAndProfileIconAndText()
@@ -117,7 +120,7 @@ fun ChatTextMessageBox(
                 message,
                 onAddReaction = onAddReaction,
                 onRemoveReaction = onRemoveReaction,
-                modifier = Modifier.wrapContentSize(contentAlign)
+                modifier = Modifier.wrapContentSize(contentAlign),
             )
         }
 
@@ -138,7 +141,7 @@ fun ChatTextMessageBox(
         } else {
             Column(
                 horizontalAlignment = chatAlign,
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
             ) {
                 messageBox()
                 reactions()
@@ -163,33 +166,35 @@ fun ChatTextMessageBox(
 
 @Preview
 @Composable
-private fun ChatTextMessageBoxPreview_MyMessage() {
+private fun ChatTextMessageBoxPreview_MyMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob")
         val peerUserProfile = createMockUserProfile("Alice")
 
-        val dto = BisqEasyOpenTradeMessageDto(
-            tradeId = "trade123",
-            messageId = "msg123",
-            channelId = "channel123",
-            senderUserProfile = myUserProfile,
-            receiverUserProfileId = peerUserProfile.networkId.pubKey.id,
-            receiverNetworkId = peerUserProfile.networkId,
-            text = "Hello! I'm interested in this trade.",
-            citation = null,
-            date = 1234567890000L,
-            mediator = null,
-            chatMessageType = ChatMessageTypeEnum.TEXT,
-            bisqEasyOffer = null,
-            chatMessageReactions = emptySet(),
-            citationAuthorUserProfile = null
-        )
+        val dto =
+            BisqEasyOpenTradeMessageDto(
+                tradeId = "trade123",
+                messageId = "msg123",
+                channelId = "channel123",
+                senderUserProfile = myUserProfile,
+                receiverUserProfileId = peerUserProfile.networkId.pubKey.id,
+                receiverNetworkId = peerUserProfile.networkId,
+                text = "Hello! I'm interested in this trade.",
+                citation = null,
+                date = 1234567890000L,
+                mediator = null,
+                chatMessageType = ChatMessageTypeEnum.TEXT,
+                bisqEasyOffer = null,
+                chatMessageReactions = emptySet(),
+                citationAuthorUserProfile = null,
+            )
 
-        val message = BisqEasyOpenTradeMessageModel(
-            dto,
-            myUserProfile,
-            emptyList()
-        )
+        val message =
+            BisqEasyOpenTradeMessageModel(
+                dto,
+                myUserProfile,
+                emptyList(),
+            )
 
         ChatTextMessageBox(
             message = message,
@@ -205,33 +210,35 @@ private fun ChatTextMessageBoxPreview_MyMessage() {
 
 @Preview
 @Composable
-private fun ChatTextMessageBoxPreview_PeerMessage() {
+private fun ChatTextMessageBoxPreview_PeerMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob")
         val peerUserProfile = createMockUserProfile("Alice")
 
-        val dto = BisqEasyOpenTradeMessageDto(
-            tradeId = "trade123",
-            messageId = "msg456",
-            channelId = "channel123",
-            senderUserProfile = peerUserProfile,
-            receiverUserProfileId = myUserProfile.networkId.pubKey.id,
-            receiverNetworkId = myUserProfile.networkId,
-            text = "Sure! Let's proceed with the payment.",
-            citation = null,
-            date = 1234567890000L,
-            mediator = null,
-            chatMessageType = ChatMessageTypeEnum.TEXT,
-            bisqEasyOffer = null,
-            chatMessageReactions = emptySet(),
-            citationAuthorUserProfile = null
-        )
+        val dto =
+            BisqEasyOpenTradeMessageDto(
+                tradeId = "trade123",
+                messageId = "msg456",
+                channelId = "channel123",
+                senderUserProfile = peerUserProfile,
+                receiverUserProfileId = myUserProfile.networkId.pubKey.id,
+                receiverNetworkId = myUserProfile.networkId,
+                text = "Sure! Let's proceed with the payment.",
+                citation = null,
+                date = 1234567890000L,
+                mediator = null,
+                chatMessageType = ChatMessageTypeEnum.TEXT,
+                bisqEasyOffer = null,
+                chatMessageReactions = emptySet(),
+                citationAuthorUserProfile = null,
+            )
 
-        val message = BisqEasyOpenTradeMessageModel(
-            dto,
-            myUserProfile,
-            emptyList()
-        )
+        val message =
+            BisqEasyOpenTradeMessageModel(
+                dto,
+                myUserProfile,
+                emptyList(),
+            )
 
         ChatTextMessageBox(
             message = message,
@@ -240,40 +247,42 @@ private fun ChatTextMessageBoxPreview_PeerMessage() {
             onRemoveReaction = {},
             isIgnored = false,
             onResendMessage = {},
-            userNameProvider = { it }
+            userNameProvider = { it },
         )
     }
 }
 
 @Preview
 @Composable
-private fun ChatTextMessageBoxPreview_LongMessage() {
+private fun ChatTextMessageBoxPreview_LongMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob")
         val peerUserProfile = createMockUserProfile("Alice")
 
-        val dto = BisqEasyOpenTradeMessageDto(
-            tradeId = "trade123",
-            messageId = "msg789",
-            channelId = "channel123",
-            senderUserProfile = peerUserProfile,
-            receiverUserProfileId = myUserProfile.networkId.pubKey.id,
-            receiverNetworkId = myUserProfile.networkId,
-            text = "This is a longer message to demonstrate how the chat message box handles multiple lines of text. It should wrap properly and maintain good readability with proper spacing and alignment.",
-            citation = null,
-            date = 1234567890000L,
-            mediator = null,
-            chatMessageType = ChatMessageTypeEnum.TEXT,
-            bisqEasyOffer = null,
-            chatMessageReactions = emptySet(),
-            citationAuthorUserProfile = null
-        )
+        val dto =
+            BisqEasyOpenTradeMessageDto(
+                tradeId = "trade123",
+                messageId = "msg789",
+                channelId = "channel123",
+                senderUserProfile = peerUserProfile,
+                receiverUserProfileId = myUserProfile.networkId.pubKey.id,
+                receiverNetworkId = myUserProfile.networkId,
+                text = "This is a longer message to demonstrate how the chat message box handles multiple lines of text. It should wrap properly and maintain good readability with proper spacing and alignment.",
+                citation = null,
+                date = 1234567890000L,
+                mediator = null,
+                chatMessageType = ChatMessageTypeEnum.TEXT,
+                bisqEasyOffer = null,
+                chatMessageReactions = emptySet(),
+                citationAuthorUserProfile = null,
+            )
 
-        val message = BisqEasyOpenTradeMessageModel(
-            dto,
-            myUserProfile,
-            emptyList(),
-        )
+        val message =
+            BisqEasyOpenTradeMessageModel(
+                dto,
+                myUserProfile,
+                emptyList(),
+            )
 
         ChatTextMessageBox(
             message = message,
@@ -282,7 +291,7 @@ private fun ChatTextMessageBoxPreview_LongMessage() {
             onRemoveReaction = {},
             isIgnored = false,
             onResendMessage = {},
-            userNameProvider = { it }
+            userNameProvider = { it },
         )
     }
 }

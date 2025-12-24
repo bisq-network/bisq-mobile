@@ -6,5 +6,5 @@ enum class ReactionEnum {
     HAPPY,
     LAUGH,
     HEART,
-    PARTY
+    PARTY,
 }

@@ -22,19 +22,18 @@ fun TrustedNodeAPIIncompatiblePopup(
     onFix: () -> Unit,
 ) {
     BisqDialog {
-
         Row(
             horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ExclamationRedIcon()
             BisqGap.HHalf()
-            BisqText.h4Regular("mobile.error.warning".i18n())
+            BisqText.H4Regular("mobile.error.warning".i18n())
         }
 
         BisqGap.V1()
 
-        BisqText.baseRegular(
+        BisqText.BaseRegular(
             text = errorMessage,
         )
 
@@ -45,36 +44,37 @@ fun TrustedNodeAPIIncompatiblePopup(
             onClick = onFix,
             type = BisqButtonType.Grey,
             fullWidth = true,
-            padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)
+            padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf),
         )
     }
 }
 
 @Preview
 @Composable
-private fun TrustedNodeAPIIncompatiblePopupPreview_Default() {
+private fun TrustedNodeAPIIncompatiblePopupPreview_DefaultPreview() {
     BisqTheme.Preview {
         TrustedNodeAPIIncompatiblePopup(
             errorMessage = "API version mismatch: Server is running v2.1.0 but client requires v2.0.0",
-            onFix = {}
+            onFix = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun TrustedNodeAPIIncompatiblePopupPreview_LongError() {
+private fun TrustedNodeAPIIncompatiblePopupPreview_LongErrorPreview() {
     BisqTheme.Preview {
         TrustedNodeAPIIncompatiblePopup(
-            errorMessage = """
+            errorMessage =
+                """
                 Trusted node API compatibility error:
-                
+
                 Expected API version: v2.0.0
                 Received API version: v2.1.0
-                
+
                 The trusted node you are connecting to is using an incompatible API version. Please update your trusted node configuration to use a compatible node.
-            """.trimIndent(),
-            onFix = {}
+                """.trimIndent(),
+            onFix = {},
         )
     }
 }

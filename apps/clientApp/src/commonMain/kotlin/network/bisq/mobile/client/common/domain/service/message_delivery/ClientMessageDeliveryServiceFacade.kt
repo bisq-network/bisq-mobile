@@ -4,9 +4,7 @@ import network.bisq.mobile.domain.data.replicated.network.confidential.ack.Messa
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 
 // TODO impl
-class ClientMessageDeliveryServiceFacade() :
-    MessageDeliveryServiceFacade() {
-
+class ClientMessageDeliveryServiceFacade : MessageDeliveryServiceFacade() {
     override suspend fun activate() {
         super.activate()
     }
@@ -19,7 +17,10 @@ class ClientMessageDeliveryServiceFacade() :
         // TODO impl
     }
 
-    override fun addMessageDeliveryStatusObserver(tradeMessageId: String, onNewStatus: (entry: Pair<String, MessageDeliveryInfoVO>) -> Unit) {
+    override fun addMessageDeliveryStatusObserver(
+        tradeMessageId: String,
+        onNewStatus: (entry: Pair<String, MessageDeliveryInfoVO>) -> Unit,
+    ) {
         // TODO impl
     }
 

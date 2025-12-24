@@ -17,7 +17,7 @@ object UserSerializer : OkioSerializer<User> {
         return try {
             dataStoreJson.decodeFromString(
                 User.serializer(),
-                source.readUtf8()
+                source.readUtf8(),
             )
         } catch (e: SerializationException) {
             throw CorruptionException("Cannot deserialize User", e)
@@ -26,7 +26,10 @@ object UserSerializer : OkioSerializer<User> {
         }
     }
 
-    override suspend fun writeTo(t: User, sink: BufferedSink) {
+    override suspend fun writeTo(
+        t: User,
+        sink: BufferedSink,
+    ) {
         val payload = dataStoreJson.encodeToString(User.serializer(), t)
         sink.writeUtf8(payload)
     }

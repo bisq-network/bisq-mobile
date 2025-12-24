@@ -9,8 +9,9 @@ import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnumExtensions.isSeller
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 
-
-class BisqEasyTradeModel(bisqEasyTradeDto: BisqEasyTradeDto) {
+class BisqEasyTradeModel(
+    bisqEasyTradeDto: BisqEasyTradeDto,
+) {
     // Delegates of bisqEasyTradeVO
     val taker = bisqEasyTradeDto.taker
     val maker = bisqEasyTradeDto.maker
@@ -34,20 +35,22 @@ class BisqEasyTradeModel(bisqEasyTradeDto: BisqEasyTradeDto) {
     val myself: BisqEasyTradePartyVO get() = if (tradeRole.isTaker) taker else maker
 
     val buyer: BisqEasyTradePartyVO
-        get() = when (tradeRole) {
-            TradeRoleEnum.BUYER_AS_TAKER -> taker
-            TradeRoleEnum.BUYER_AS_MAKER -> maker
-            TradeRoleEnum.SELLER_AS_TAKER -> maker
-            TradeRoleEnum.SELLER_AS_MAKER -> taker
-        }
+        get() =
+            when (tradeRole) {
+                TradeRoleEnum.BUYER_AS_TAKER -> taker
+                TradeRoleEnum.BUYER_AS_MAKER -> maker
+                TradeRoleEnum.SELLER_AS_TAKER -> maker
+                TradeRoleEnum.SELLER_AS_MAKER -> taker
+            }
 
     val seller: BisqEasyTradePartyVO
-        get() = when (tradeRole) {
-            TradeRoleEnum.BUYER_AS_TAKER -> maker
-            TradeRoleEnum.BUYER_AS_MAKER -> taker
-            TradeRoleEnum.SELLER_AS_TAKER -> taker
-            TradeRoleEnum.SELLER_AS_MAKER -> maker
-        }
+        get() =
+            when (tradeRole) {
+                TradeRoleEnum.BUYER_AS_TAKER -> maker
+                TradeRoleEnum.BUYER_AS_MAKER -> taker
+                TradeRoleEnum.SELLER_AS_TAKER -> taker
+                TradeRoleEnum.SELLER_AS_MAKER -> maker
+            }
 
     val shortId: String
         get() {

@@ -11,10 +11,12 @@ import org.koin.core.component.inject
  *
  * Provide useful coroutines methods
  */
-abstract class BaseService : KoinComponent, Logging {
+abstract class BaseService :
+    KoinComponent,
+    Logging {
     // we use KoinCompoent inject to avoid having to pass the manager as parameter on every single service
     protected val jobsManager: CoroutineJobsManager by inject()
-    
+
     // Provide access to the service scope from the jobsManager
     protected val serviceScope: CoroutineScope
         get() = jobsManager.getScope()

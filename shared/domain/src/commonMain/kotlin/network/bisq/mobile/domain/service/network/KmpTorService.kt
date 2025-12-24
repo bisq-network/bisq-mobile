@@ -36,7 +36,6 @@ import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
 
-
 /**
  * We use the external tor setup of Bisq Easy and use the kmp-tor runtime.
  * The task of that class is to start the kmp tor runtime and configure the data for the external tor setup.
@@ -51,11 +50,16 @@ import okio.SYSTEM
  *    The bisq 2 tor lib will detect the external tor and use that.
  *
  */
-class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
+class KmpTorService(
+    private val baseDir: Path,
+) : BaseService(),
+    Logging {
     sealed class TorState {
         protected abstract val i18nKey: String
 
-        data class Stopped(val error: Throwable? = null) : TorState() {
+        data class Stopped(
+            val error: Throwable? = null,
+        ) : TorState() {
             override val i18nKey = "mobile.kmpTorService.state.stopped"
         }
 
@@ -108,35 +112,39 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                         didAcquireStart = true
                         log.i("Starting kmp-tor")
                         _state.value = TorState.Starting
-                        val newStartDefer = serviceScope.async {
-                            val runtime = getTorRuntime()
-                            val startTime = Clock.System.now().toEpochMilliseconds()
-                            withTimeout(timeoutMs) {
-                                runtime.startDaemonAsync()
-                                configTor()
+                        val newStartDefer =
+                            serviceScope.async {
+                                val runtime = getTorRuntime()
+                                val startTime = Clock.System.now().toEpochMilliseconds()
+                                withTimeout(timeoutMs) {
+                                    runtime.startDaemonAsync()
+                                    configTor()
+                                }
+                                val durationMs = Clock.System.now().toEpochMilliseconds() - startTime
+                                remainingTime = (timeoutMs - durationMs).coerceAtLeast(0)
                             }
-                            val durationMs = Clock.System.now().toEpochMilliseconds() - startTime
-                            remainingTime = (timeoutMs - durationMs).coerceAtLeast(0)
-                        }
                         startDefer = newStartDefer
                         newStartDefer.await()
                     }
                     // If another coroutine changed state while we waited for the lock, defer to it
                     if (!didAcquireStart) {
-                        return _state.filter { it !is TorState.Starting }
+                        return _state
+                            .filter { it !is TorState.Starting }
                             .first() is TorState.Started
                     }
 
-                    val bootstrapped = withTimeout(remainingTime) {
-                        awaitBootstrapped()
-                    }
+                    val bootstrapped =
+                        withTimeout(remainingTime) {
+                            awaitBootstrapped()
+                        }
                     return bootstrapped
                 } catch (error: Throwable) {
                     stopTor(error)
-                    val errorMessage = listOfNotNull(
-                        error.message,
-                        error.cause?.message
-                    ).firstOrNull() ?: "Unknown Tor error"
+                    val errorMessage =
+                        listOfNotNull(
+                            error.message,
+                            error.cause?.message,
+                        ).firstOrNull() ?: "Unknown Tor error"
                     log.e(error) { "Starting kmp-tor daemon failed: $errorMessage" }
                     currentCoroutineContext().ensureActive()
                     return false
@@ -149,10 +157,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun awaitBootstrapped(): Boolean {
-        val result = awaitOrNull(
-            _bootstrapProgress.filter { it >= 100 }.map { true },
-            _state.filter { it is TorState.Stopped }
-        )
+        val result =
+            awaitOrNull(
+                _bootstrapProgress.filter { it >= 100 }.map { true },
+                _state.filter { it is TorState.Stopped },
+            )
         if (result == null) {
             log.i { "Tor bootstrap interrupted - service stopped" }
             return false
@@ -165,12 +174,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
      *
      * Will return early with null if state is already Stopped
      */
-    suspend fun awaitSocksPort(): Int? {
-        return awaitOrNull(
+    suspend fun awaitSocksPort(): Int? =
+        awaitOrNull(
             _socksPort.filterNotNull(),
-            _state.filter { it is TorState.Stopped }
+            _state.filter { it is TorState.Stopped },
         )
-    }
 
     suspend fun stopTor(reason: Throwable? = null) {
         startDefer?.cancel()
@@ -201,37 +209,39 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         val torDir = getTorDir()
         val cacheDirectory = getTorCacheDir()
         val controlPortFile = getControlPortFile()
-        val environment = TorRuntime.Environment.Builder(
-            workDirectory = File(torDir.toString()),
-            cacheDirectory = File(cacheDirectory.toString()),
-            loader = ::torResourceLoader,
-        )
+        val environment =
+            TorRuntime.Environment.Builder(
+                workDirectory = File(torDir.toString()),
+                cacheDirectory = File(cacheDirectory.toString()),
+                loader = ::torResourceLoader,
+            )
 
-        val runtime = TorRuntime.Builder(environment) {
-            required(TorEvent.ERR)
-            observerStatic(TorEvent.ERR, OnEvent.Executor.Immediate) { data ->
-                log.e("Tor error event: $data")
-            }
+        val runtime =
+            TorRuntime.Builder(environment) {
+                required(TorEvent.ERR)
+                observerStatic(TorEvent.ERR, OnEvent.Executor.Immediate) { data ->
+                    log.e("Tor error event: $data")
+                }
 
-            required(TorEvent.NOTICE)
-            observerStatic(TorEvent.NOTICE, OnEvent.Executor.Immediate) { data ->
-                tryParseSockPort(data)
-                tryParseBootstrapProgress(data)
-            }
+                required(TorEvent.NOTICE)
+                observerStatic(TorEvent.NOTICE, OnEvent.Executor.Immediate) { data ->
+                    tryParseSockPort(data)
+                    tryParseBootstrapProgress(data)
+                }
 
-            // See https://github.com/05nelsonm/kmp-tor-resource/blob/master/docs/tor-man.adoc#DataDirectory
-            config { _ ->
-                TorOption.SocksPort.configure { auto() }
-                TorOption.ControlPort.configure { auto() }
-                TorOption.ControlPortWriteToFile.configure(File(controlPortFile.toString()))
-                TorOption.CookieAuthentication.configure(true)
-                TorOption.DataDirectory.configure(File(torDir.toString()))
-                TorOption.CacheDirectory.configure(File(cacheDirectory.toString()))
-                TorOption.DisableNetwork.configure(true) // Bisq Easy tor lib managed the DisableNetwork state, initially it is disabled.
-                TorOption.NoExec.configure(true)
-                TorOption.TruncateLogFile.configure(true)
+                // See https://github.com/05nelsonm/kmp-tor-resource/blob/master/docs/tor-man.adoc#DataDirectory
+                config { _ ->
+                    TorOption.SocksPort.configure { auto() }
+                    TorOption.ControlPort.configure { auto() }
+                    TorOption.ControlPortWriteToFile.configure(File(controlPortFile.toString()))
+                    TorOption.CookieAuthentication.configure(true)
+                    TorOption.DataDirectory.configure(File(torDir.toString()))
+                    TorOption.CacheDirectory.configure(File(cacheDirectory.toString()))
+                    TorOption.DisableNetwork.configure(true) // Bisq Easy tor lib managed the DisableNetwork state, initially it is disabled.
+                    TorOption.NoExec.configure(true)
+                    TorOption.TruncateLogFile.configure(true)
+                }
             }
-        }
 
         torRuntime = runtime
         return runtime
@@ -241,9 +251,10 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         // Expected string: `Socks listener listening on port {port}.`
         if (data.startsWith("Socks listener listening on port ")) {
             log.i { "Tor Notice: $data" }
-            val portAsString = data
-                .removePrefix("Socks listener listening on port ")
-                .trimEnd('.')
+            val portAsString =
+                data
+                    .removePrefix("Socks listener listening on port ")
+                    .trimEnd('.')
             val parsedPort = portAsString.toIntOrNull()
             if (parsedPort == null) {
                 log.e { "Failed to parse socks port from: $data" }
@@ -278,8 +289,9 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     private suspend fun configTor() {
         try {
             // Note: protected by outer withTimeout in startTor()
-            val socksPort = awaitSocksPort()
-                ?: throw KmpTorException("Service stopped before SOCKS port available")
+            val socksPort =
+                awaitSocksPort()
+                    ?: throw KmpTorException("Service stopped before SOCKS port available")
             val controlPort = readControlPort()
 
             writeExternalTorConfig(socksPort, controlPort)
@@ -308,12 +320,14 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 if (Clock.System.now().toEpochMilliseconds() - startTime > timeoutMs) {
                     throw KmpTorException("Timed out waiting for control port file")
                 }
-                val currentMetadata = withContext(Dispatchers.IO) {
-                    FileSystem.SYSTEM.metadataOrNull(controlPortFile)
-                }
+                val currentMetadata =
+                    withContext(Dispatchers.IO) {
+                        FileSystem.SYSTEM.metadataOrNull(controlPortFile)
+                    }
                 if (currentMetadata != null) {
-                    val parsedPort = parsePortFromFile(controlPortFile)
-                        ?: throw IllegalStateException("Failed to read port from control port")
+                    val parsedPort =
+                        parsePortFromFile(controlPortFile)
+                            ?: throw IllegalStateException("Failed to read port from control port")
                     // Rename the file so the observer doesn't pick up an old file
                     moveControlPortFileToBackup()
                     return parsedPort
@@ -329,16 +343,23 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     private suspend fun parsePortFromFile(file: Path): Int? {
         try {
             // Expected string in file: `PORT=127.0.0.1:{port}`
-            val lines = withContext(Dispatchers.IO) {
-                FileSystem.SYSTEM.read(file) {
-                    readUtf8().lines()
+            val lines =
+                withContext(Dispatchers.IO) {
+                    FileSystem.SYSTEM.read(file) {
+                        readUtf8().lines()
+                    }
                 }
-            }
-            val line = lines.firstOrNull { it.contains("PORT=") }
-                ?: error("No PORT line found")
+            val line =
+                lines.firstOrNull { it.contains("PORT=") }
+                    ?: error("No PORT line found")
             val portRegex = Regex("""PORT=.*:(\d+)""")
-            val port = portRegex.find(line)?.groupValues?.get(1)?.toInt()
-                ?: error("Failed to parse port from line: $line")
+            val port =
+                portRegex
+                    .find(line)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toInt()
+                    ?: error("Failed to parse port from line: $line")
             log.i("Control port read from control.txt file: $port")
             return port
         } catch (error: Exception) {
@@ -356,17 +377,21 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         }
     }
 
-    private suspend fun writeExternalTorConfig(socksPort: Int, controlPort: Int) {
+    private suspend fun writeExternalTorConfig(
+        socksPort: Int,
+        controlPort: Int,
+    ) {
         try {
             val torDir = getTorDir()
             val cookieFile = torDir / "control_auth_cookie"
-            val configContent = buildString {
-                appendLine("UseExternalTor 1")
-                appendLine("CookieAuthentication 1")
-                appendLine("CookieAuthFile ${cookieFile.toString()}")
-                appendLine("SocksPort 127.0.0.1:$socksPort")
-                appendLine("ControlPort 127.0.0.1:$controlPort")
-            }
+            val configContent =
+                buildString {
+                    appendLine("UseExternalTor 1")
+                    appendLine("CookieAuthentication 1")
+                    appendLine("CookieAuthFile $cookieFile")
+                    appendLine("SocksPort 127.0.0.1:$socksPort")
+                    appendLine("ControlPort 127.0.0.1:$controlPort")
+                }
 
             val configFile = torDir / "external_tor.config"
             withContext(Dispatchers.IO) {
@@ -389,7 +414,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     private suspend fun validateExternalTorConfig(
         configFile: Path,
         expectedSocksPort: Int,
-        expectedControlPort: Int
+        expectedControlPort: Int,
     ) {
         try {
             withContext(Dispatchers.IO) {
@@ -453,7 +478,6 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
     private fun getControlPortBackupFile(): Path = getTorDir() / "control-port-backup.txt"
 
-
     /**
      * Deletes the Tor working directory (including cache) to allow a fresh start on next run.
      * Should be called only when Tor is fully stopped.
@@ -481,13 +505,14 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
      */
     private suspend fun deleteRecursively(path: Path) {
         // Try to list children; if fails, treat as file
-        val children = withContext(Dispatchers.IO) {
-            try {
-                FileSystem.SYSTEM.list(path)
-            } catch (e: Exception) {
-                null
+        val children =
+            withContext(Dispatchers.IO) {
+                try {
+                    FileSystem.SYSTEM.list(path)
+                } catch (e: Exception) {
+                    null
+                }
             }
-        }
         children?.forEach { child -> deleteRecursively(child) }
         withContext(Dispatchers.IO) {
             try {
@@ -509,11 +534,12 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             log.w(e) { "stopTorSync failed; will still wait for port to close and purge" }
         }
         // Try to read a last-known control port (backup first, then current)
-        val lastKnownPort = try {
-            readLastKnownControlPort()
-        } catch (_: Exception) {
-            null
-        }
+        val lastKnownPort =
+            try {
+                readLastKnownControlPort()
+            } catch (_: Exception) {
+                null
+            }
         if (lastKnownPort != null) {
             waitForControlPortClosed(lastKnownPort, timeoutMs)
         }
@@ -528,17 +554,22 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         return parsePortFromFile(backup) ?: parsePortFromFile(current)
     }
 
-    private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
+    private suspend fun waitForControlPortClosed(
+        port: Int,
+        timeoutMs: Long = 7_000,
+    ) {
         val selectorManager = SelectorManager(Dispatchers.IO)
         selectorManager.use {
             val start = Clock.System.now().toEpochMilliseconds()
             while (true) {
-                val stillOpen = try {
-                    val socket = aSocket(it).tcp().connect("127.0.0.1", port)
-                    socket.close(); true
-                } catch (_: Exception) {
-                    false
-                }
+                val stillOpen =
+                    try {
+                        val socket = aSocket(it).tcp().connect("127.0.0.1", port)
+                        socket.close()
+                        true
+                    } catch (_: Exception) {
+                        false
+                    }
                 if (!stillOpen) {
                     log.i { "Control port $port is closed" }
                     return

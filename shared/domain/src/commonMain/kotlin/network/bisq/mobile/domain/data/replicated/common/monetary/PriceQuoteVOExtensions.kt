@@ -18,7 +18,6 @@ package network.bisq.mobile.domain.data.replicated.common.monetary
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.fromFaceValue
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.decimalMode
 
@@ -26,16 +25,14 @@ object PriceQuoteVOExtensions {
     // val PriceQuoteVO.baseSideMonetary: MonetaryVO get() = CoinVOFactory.fromFaceValue(1.0, market.baseCurrencyCode)
     // val PriceQuoteVO.quoteSideMonetary: MonetaryVO get() = FiatVOFactory.from(value, market.quoteCurrencyCode)
 
-    fun PriceQuoteVO.toDouble(value: Long): Double {
-        return BigDecimal.fromLong(value)
+    fun PriceQuoteVO.toDouble(value: Long): Double =
+        BigDecimal
+            .fromLong(value)
             .moveDecimalPoint(-quoteSideMonetary.precision)
             .scale(quoteSideMonetary.precision.toLong())
             .doubleValue(false)
-    }
 
-    fun PriceQuoteVO.asDouble(): Double {
-        return toDouble(value)
-    }
+    fun PriceQuoteVO.asDouble(): Double = toDouble(value)
 
     fun PriceQuoteVO.toBaseSideMonetary(quoteSideMonetary: MonetaryVO): MonetaryVO {
         require(quoteSideMonetary::class == this.quoteSideMonetary::class) {
@@ -45,10 +42,12 @@ object PriceQuoteVOExtensions {
             "value must not be 0 as division by 0 is not allowed. PriceQuoteVO = $this"
         }
 
-        val newValue: Long = BigDecimal.fromLong(quoteSideMonetary.value)
-            .moveDecimalPoint(baseSideMonetary.precision)
-            .divide(BigDecimal.fromLong(value), baseSideMonetary.decimalMode)
-            .longValue(false)
+        val newValue: Long =
+            BigDecimal
+                .fromLong(quoteSideMonetary.value)
+                .moveDecimalPoint(baseSideMonetary.precision)
+                .divide(BigDecimal.fromLong(value), baseSideMonetary.decimalMode)
+                .longValue(false)
         return if (baseSideMonetary is FiatVO) {
             FiatVOFactory.from(newValue, baseSideMonetary.code, baseSideMonetary.precision)
         } else {
@@ -60,10 +59,12 @@ object PriceQuoteVOExtensions {
         require(baseSideMonetary::class == this.baseSideMonetary::class) {
             "baseSideMonetary must be the same type as the quote.baseSideMonetary"
         }
-        val value: Long = BigDecimal.fromLong(baseSideMonetary.value)
-            .multiply(BigDecimal.fromLong(value), baseSideMonetary.decimalMode)
-            .moveDecimalPoint(-baseSideMonetary.precision)
-            .longValue(false)
+        val value: Long =
+            BigDecimal
+                .fromLong(baseSideMonetary.value)
+                .multiply(BigDecimal.fromLong(value), baseSideMonetary.decimalMode)
+                .moveDecimalPoint(-baseSideMonetary.precision)
+                .longValue(false)
         // TODO: PriceQuoteVO doesn't have baseSideMonetary as in bisq2 code,
         // but it's hardcoded to be CoinVO always, in this Extension
         // @Henrik: Is this right?
@@ -80,4 +81,3 @@ object PriceQuoteVOExtensions {
         }
     }
 }
-

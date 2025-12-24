@@ -18,7 +18,8 @@ import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 class NodeNetworkServiceFacade(
     private val provider: AndroidApplicationService.Provider,
     kmpTorService: KmpTorService,
-) : NetworkServiceFacade(kmpTorService), Node.Listener {
+) : NetworkServiceFacade(kmpTorService),
+    Node.Listener {
     // While tor starts up we use -1 to flag as network not available yet
     private val _numConnections = MutableStateFlow(-1)
     override val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
@@ -44,19 +45,20 @@ class NodeNetworkServiceFacade(
             "Expected exactly one transport type on mobile, found ${serviceNodesByTransport.size}"
         }
         serviceNodesByTransport.values.forEach { serviceNode ->
-            serviceNodeStatePin = serviceNode.state.addObserver {
-                val node = serviceNode.defaultNode
-                if (node != null) {
-                    defaultNode = node
-                    defaultNode!!.addListener(this)
-                    updateNumConnections()
+            serviceNodeStatePin =
+                serviceNode.state.addObserver {
+                    val node = serviceNode.defaultNode
+                    if (node != null) {
+                        defaultNode = node
+                        defaultNode!!.addListener(this)
+                        updateNumConnections()
 
-                    observeInventoryData(serviceNode)
+                        observeInventoryData(serviceNode)
 
-                    serviceNodeStatePin?.unbind()
-                    serviceNodeStatePin = null
+                        serviceNodeStatePin?.unbind()
+                        serviceNodeStatePin = null
+                    }
                 }
-            }
         }
     }
 
@@ -71,15 +73,22 @@ class NodeNetworkServiceFacade(
         allDataReceivedPin = null
     }
 
-    /* Node.Listener implementation */
-    override fun onMessage(message: EnvelopePayloadMessage, connection: Connection, networkId: NetworkId) {
+    // Node.Listener implementation
+    override fun onMessage(
+        message: EnvelopePayloadMessage,
+        connection: Connection,
+        networkId: NetworkId,
+    ) {
     }
 
     override fun onConnection(connection: Connection) {
         updateNumConnections()
     }
 
-    override fun onDisconnect(connection: Connection, closeReason: CloseReason) {
+    override fun onDisconnect(
+        connection: Connection,
+        closeReason: CloseReason,
+    ) {
         updateNumConnections()
     }
 
@@ -95,8 +104,9 @@ class NodeNetworkServiceFacade(
         val inventoryService = serviceNode.inventoryService.get()
         val inventoryRequestService = inventoryService.inventoryRequestService
 
-        allDataReceivedPin = inventoryRequestService.allDataReceived.addObserver { allDataReceived ->
-            _allDataReceived.value = allDataReceived
-        }
+        allDataReceivedPin =
+            inventoryRequestService.allDataReceived.addObserver { allDataReceived ->
+                _allDataReceived.value = allDataReceived
+            }
     }
 }

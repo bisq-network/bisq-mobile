@@ -16,12 +16,13 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 // FinalTODO: Merge StaticScaffold and ScrollScaffold
 @Composable
 fun BisqStaticScaffold(
-    padding: PaddingValues = PaddingValues(
-        top = BisqUIConstants.ScreenPadding,
-        bottom = BisqUIConstants.ScreenPadding,
-        start = BisqUIConstants.ScreenPadding,
-        end = BisqUIConstants.ScreenPadding
-    ),
+    padding: PaddingValues =
+        PaddingValues(
+            top = BisqUIConstants.ScreenPadding,
+            bottom = BisqUIConstants.ScreenPadding,
+            start = BisqUIConstants.ScreenPadding,
+            end = BisqUIConstants.ScreenPadding,
+        ),
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState? = null,
@@ -30,7 +31,7 @@ fun BisqStaticScaffold(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     isInteractive: Boolean = true,
     shouldBlurBg: Boolean = false,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.blur(if (shouldBlurBg) BisqUIConstants.ScreenPaddingHalf else BisqUIConstants.Zero),
@@ -49,10 +50,10 @@ fun BisqStaticScaffold(
                 scaffoldPadding = scaffoldPadding,
                 horizontalAlignment = horizontalAlignment,
                 verticalArrangement = verticalArrangement,
-                isInteractive = isInteractive
+                isInteractive = isInteractive,
             ) {
                 content()
             }
-        }
+        },
     )
 }

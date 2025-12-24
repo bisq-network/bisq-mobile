@@ -4,11 +4,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 
 class ClientLanguageServiceFacade : LanguageServiceFacade() {
-
-    private val _defaultLanguage: MutableStateFlow<String> = MutableStateFlow("en")
+    private val defaultLanguage: MutableStateFlow<String> = MutableStateFlow("en")
 
     override fun setDefaultLanguage(languageCode: String) {
-        _defaultLanguage.value = languageCode
+        defaultLanguage.value = languageCode
     }
 
     override suspend fun sync() {

@@ -14,21 +14,23 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 fun OrderedList(
     number: String,
     text: String,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     includeBottomPadding: Boolean = true,
-    modifier: Modifier = Modifier.fillMaxWidth()
 ) {
-    val rowModifier = if (includeBottomPadding)
-        modifier.padding(bottom = BisqUIConstants.ScreenPadding2X)
-    else
-        modifier
+    val rowModifier =
+        if (includeBottomPadding) {
+            modifier.padding(bottom = BisqUIConstants.ScreenPadding2X)
+        } else {
+            modifier
+        }
     Row(modifier = rowModifier) {
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = number,
-            modifier = Modifier.width(20.dp)
+            modifier = Modifier.width(20.dp),
         )
-        BisqText.baseLight(
+        BisqText.BaseLight(
             text = text,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }

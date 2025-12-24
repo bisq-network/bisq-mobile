@@ -10,6 +10,8 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
 fun WarningConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
     headline: String = "popup.headline.warning".i18n(),
     message: String = "",
     confirmButtonText: String = "confirmation.ok".i18n(),
@@ -18,8 +20,6 @@ fun WarningConfirmationDialog(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
     dismissOnClickOutside: Boolean = true,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
 ) {
     ConfirmationDialog(
         headline = headline,

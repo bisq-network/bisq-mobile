@@ -2,7 +2,6 @@ package network.bisq.mobile.domain.utils
 
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
-
 import kotlin.math.roundToLong
 
 /**
@@ -20,7 +19,7 @@ object MonetarySlider {
         fraction: Float,
         minAmount: Long,
         maxAmount: Long,
-        step: Long = 10_000L
+        step: Long = 10_000L,
     ): Long {
         require(step > 0L) { "step must be > 0" }
         require(maxAmount >= minAmount) { "maxAmount must be >= minAmount" }
@@ -41,7 +40,7 @@ object MonetarySlider {
         faceValue: Double,
         minAmount: Long,
         maxAmount: Long,
-        precision: Int = 4
+        precision: Int = 4,
     ): Float {
         val minor = FiatVOFactory.faceValueToLong(faceValue, precision)
         return minorToFraction(minor, minAmount, maxAmount)
@@ -53,11 +52,10 @@ object MonetarySlider {
     fun minorToFraction(
         minorAmount: Long,
         minAmount: Long,
-        maxAmount: Long
+        maxAmount: Long,
     ): Float {
         val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
         val inFraction = (minorAmount - minAmount).toDouble() / range.toDouble()
         return inFraction.toFloat()
     }
 }
-

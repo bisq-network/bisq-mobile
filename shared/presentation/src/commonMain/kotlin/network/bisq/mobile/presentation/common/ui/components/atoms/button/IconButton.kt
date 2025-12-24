@@ -17,19 +17,22 @@ fun BisqIconButton(
     modifier: Modifier = Modifier,
     disabled: Boolean = false,
     size: Dp = BisqUIConstants.ScreenPadding2X,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     IconButton(
-        modifier = modifier.size(size)
-            .alpha(if (disabled) 0.5f else 1.0f),
+        modifier =
+            modifier
+                .size(size)
+                .alpha(if (disabled) 0.5f else 1.0f),
         onClick = onClick,
-        colors = IconButtonColors(
-            containerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            contentColor = BisqTheme.colors.white,
-            disabledContentColor = BisqTheme.colors.mid_grey20,
-        ),
-        enabled = !disabled
+        colors =
+            IconButtonColors(
+                containerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                contentColor = BisqTheme.colors.white,
+                disabledContentColor = BisqTheme.colors.mid_grey20,
+            ),
+        enabled = !disabled,
     ) {
         content()
     }
