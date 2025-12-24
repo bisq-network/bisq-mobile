@@ -10,6 +10,37 @@ on:
   workflow_dispatch:
 
 jobs:
+  # --- Ktlint Check (runs in parallel with build) ---
+  ktlint:
+    name: Ktlint Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Azul Zulu)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create fake local.properties
+        run: |
+          echo "KEYSTORE_PATH=/path/to/keystore" > local.properties
+          echo "KEYSTORE_PASSWORD=yourKeystorePassword" >> local.properties
+          echo "KEY_ALIAS=yourKeyAlias" >> local.properties
+          echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
+          echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
+          echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
+
+      - name: Run ktlint check
+        run: ./gradlew ktlintCheck --build-cache -Pkotlin.native.ignoreDisabledTargets=true
+
   # --- Common Build & Test (runs for all PRs, including forks) ---
   build:
     name: Build & Test (No Secrets)
@@ -62,10 +93,6 @@ jobs:
           echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
-
-      - name: Run ktlint check
-        if: startsWith(matrix.os, 'ubuntu')
-        run: ./gradlew ktlintCheck --build-cache -Pkotlin.native.ignoreDisabledTargets=true
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
