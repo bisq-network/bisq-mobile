@@ -2,76 +2,75 @@ package network.bisq.mobile.node.common.domain.service.accounts
 
 import bisq.account.AccountService
 import bisq.account.accounts.UserDefinedFiatAccount
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
-import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.mapping.UserDefinedFiatAccountMapping
+import kotlin.IllegalStateException
 
-class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), AccountsServiceFacade {
+class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Provider) :
+    AccountsServiceFacade() {
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
 
-    private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
-    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = _accounts.asStateFlow()
-
-    private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
-    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount.asStateFlow()
-
-    override suspend fun activate() {
-        super<ServiceFacade>.activate()
+    override suspend fun executeGetAccounts(): Result<List<UserDefinedFiatAccountVO>> {
+        return runCatching {
+            accountService
+                .accountByNameMap
+                .values
+                .filterIsInstance<UserDefinedFiatAccount>()
+                .map { UserDefinedFiatAccountMapping.fromBisq2Model(it) }
+        }
     }
 
-    override suspend fun deactivate() {
-        super<ServiceFacade>.deactivate()
-    }
-
-    override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
-        return accountService
-            .accountByNameMap
-            .values
-            .map { UserDefinedFiatAccountMapping.fromBisq2Model(it as UserDefinedFiatAccount) }
-            .sortedBy { it.accountName }
-            .also { _accounts.value = it }
-    }
-
-    override suspend fun addAccount(account: UserDefinedFiatAccountVO) {
-        val bisq2Account = UserDefinedFiatAccountMapping.toBisq2Model(account)
-        accountService.addPaymentAccount(bisq2Account)
-        getAccounts()
-        setSelectedAccount(account)
-    }
-
-    override suspend fun saveAccount(account: UserDefinedFiatAccountVO) {
-        removeAccount(selectedAccount.value!!, false)
-        accountService.addPaymentAccount(UserDefinedFiatAccountMapping.toBisq2Model(account))
-        getAccounts()
-        setSelectedAccount(account)
-    }
-
-    override suspend fun removeAccount(account: UserDefinedFiatAccountVO, updateSelectedAccount: Boolean) {
-        accountService.removePaymentAccount(UserDefinedFiatAccountMapping.toBisq2Model(account))
-        getAccounts()
-        if (updateSelectedAccount) {
-            val nextAccount = accounts.value.firstOrNull()
-            if (nextAccount != null) {
-                setSelectedAccount(nextAccount)
+    override suspend fun executeGetSelectedAccount(): Result<UserDefinedFiatAccountVO?> {
+        return runCatching {
+            if (accountService.selectedAccount.isPresent) {
+                val bisq2Account = accountService.selectedAccount.get()
+                if (bisq2Account !is UserDefinedFiatAccount) {
+                    throw IllegalStateException("Selected account is not a UserDefinedFiatAccount but ${bisq2Account::class.simpleName}")
+                }
+                UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
+            } else {
+                null
             }
         }
     }
 
-    override suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO) {
-        accountService.setSelectedAccount(UserDefinedFiatAccountMapping.toBisq2Model(account))
-       _selectedAccount.value = account
+    override suspend fun executeAddAccount(account: UserDefinedFiatAccountVO): Result<Unit> {
+        return runCatching {
+            val bisq2Account = UserDefinedFiatAccountMapping.toBisq2Model(account)
+            accountService.addPaymentAccount(bisq2Account)
+        }
     }
 
-    override suspend fun getSelectedAccount() {
-        if (accountService.selectedAccount.isPresent) {
-            val bisq2Account = accountService.selectedAccount.get() as UserDefinedFiatAccount
-            val account: UserDefinedFiatAccountVO  = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
-            _selectedAccount.value = account
+    override suspend fun executeSaveAccount(
+        accountName: String,
+        account: UserDefinedFiatAccountVO
+    ): Result<Unit> {
+        return runCatching {
+            accountService.updatePaymentAccount(
+                accountName, UserDefinedFiatAccountMapping.toBisq2Model(account)
+            )
+        }
+    }
+
+    override suspend fun executeDeleteAccount(accountName: String): Result<Unit> {
+        return runCatching {
+            val bisq2Account = currentState.accounts
+                .find { it.accountName == accountName }
+                ?.let { UserDefinedFiatAccountMapping.toBisq2Model(it) }
+            if (bisq2Account == null) {
+                throw IllegalStateException("Account not found: $accountName")
+            }
+            accountService.removePaymentAccount(bisq2Account)
+        }
+    }
+
+    override suspend fun executeSetSelectedAccount(account: UserDefinedFiatAccountVO): Result<Unit> {
+        return runCatching {
+            accountService.setSelectedAccount(
+                UserDefinedFiatAccountMapping.toBisq2Model(account)
+            )
         }
     }
 }
