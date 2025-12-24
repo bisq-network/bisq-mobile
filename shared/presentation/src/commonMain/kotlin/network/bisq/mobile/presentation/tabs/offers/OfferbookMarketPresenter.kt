@@ -135,8 +135,14 @@ class OfferbookMarketPresenter(
     }
 
     fun onSelectMarket(marketListItem: MarketListItem) {
-        offersServiceFacade.selectOfferbookMarket(marketListItem)
-        navigateTo(NavRoute.Offerbook)
+        offersServiceFacade
+            .selectOfferbookMarket(marketListItem)
+            .onSuccess {
+                navigateTo(NavRoute.Offerbook)
+            }.onFailure { e ->
+                log.e("Market selection failed", e)
+                showSnackbar("Failed to select market. Please try again.")
+            }
     }
 
     override fun onViewAttached() {

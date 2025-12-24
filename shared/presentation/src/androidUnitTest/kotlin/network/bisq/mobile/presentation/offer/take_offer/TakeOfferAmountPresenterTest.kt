@@ -121,7 +121,7 @@ class TakeOfferAmountPresenterTest {
 
         override fun refreshSelectedFormattedMarketPrice() {}
 
-        override fun selectMarket(marketListItem: MarketListItem) {}
+        override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
     }
 
     private class FakeTradesServiceFacade : TradesServiceFacade {

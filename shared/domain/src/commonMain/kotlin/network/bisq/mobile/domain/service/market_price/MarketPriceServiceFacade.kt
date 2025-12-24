@@ -33,7 +33,7 @@ abstract class MarketPriceServiceFacade(
 
     abstract fun refreshSelectedFormattedMarketPrice()
 
-    abstract fun selectMarket(marketListItem: MarketListItem)
+    abstract fun selectMarket(marketListItem: MarketListItem): Result<Unit>
 
     /**
      * Triggers a global price update notification

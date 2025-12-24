@@ -47,11 +47,14 @@ class NodeMarketPriceServiceFacade(
     }
 
     // API
-    override fun selectMarket(marketListItem: MarketListItem) {
-        val market = MarketMapping.toBisq2Model(marketListItem.market)
-        marketPriceService.setSelectedMarket(market)
-        persistSelectedMarketToSettings(marketListItem)
-    }
+    override fun selectMarket(marketListItem: MarketListItem): Result<Unit> =
+        runCatching {
+            val market = MarketMapping.toBisq2Model(marketListItem.market)
+            marketPriceService.setSelectedMarket(market)
+            persistSelectedMarketToSettings(marketListItem)
+        }.onFailure { e ->
+            log.e("Failed to select market: ${marketListItem.market}", e)
+        }
 
     override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
         val market = MarketMapping.toBisq2Model(marketVO)

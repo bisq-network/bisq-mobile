@@ -59,12 +59,14 @@ class ClientMarketPriceServiceFacade(
     }
 
     // API
-    override fun selectMarket(marketListItem: MarketListItem) {
-        selectedMarket = marketListItem.market
-        updateMarketPriceItem()
-
-        persistSelectedMarketToSettings(marketListItem)
-    }
+    override fun selectMarket(marketListItem: MarketListItem): Result<Unit> =
+        runCatching {
+            selectedMarket = marketListItem.market
+            updateMarketPriceItem()
+            persistSelectedMarketToSettings(marketListItem)
+        }.onFailure { e ->
+            log.e("Failed to select market: ${marketListItem.market}", e)
+        }
 
     override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
         val quoteCurrencyCode: String = marketVO.quoteCurrencyCode

@@ -131,19 +131,21 @@ class NodeOffersServiceFacade(
     }
 
     // API
-    override fun selectOfferbookMarket(marketListItem: MarketListItem) {
-        val market = Mappings.MarketMapping.toBisq2Model(marketListItem.market)
-        val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
+    override fun selectOfferbookMarket(marketListItem: MarketListItem): Result<Unit> =
+        runCatching {
+            val market = Mappings.MarketMapping.toBisq2Model(marketListItem.market)
+            val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
 
-        if (!channelOptional.isPresent) {
-            log.e { "No channel found for market ${market.marketCodes}" }
-            return
+            if (!channelOptional.isPresent) {
+                throw IllegalStateException("No channel found for market ${market.marketCodes}")
+            }
+
+            val channel = channelOptional.get()
+            bisqEasyOfferbookChannelSelectionService.selectChannel(channel)
+            marketPriceServiceFacade.selectMarket(marketListItem).getOrThrow()
+        }.onFailure { e ->
+            log.e("Failed to select offerbook market: ${marketListItem.market}", e)
         }
-
-        val channel = channelOptional.get()
-        bisqEasyOfferbookChannelSelectionService.selectChannel(channel)
-        marketPriceServiceFacade.selectMarket(marketListItem)
-    }
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {

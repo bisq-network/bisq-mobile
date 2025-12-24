@@ -211,7 +211,7 @@ class OfferbookPresenterFilterTest {
 
                 override fun refreshSelectedFormattedMarketPrice() {}
 
-                override fun selectMarket(marketListItem: MarketListItem) {}
+                override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
             }
         val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
         val takeOfferPresenter = mockk<TakeOfferPresenter>(relaxed = true)

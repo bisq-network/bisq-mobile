@@ -375,7 +375,7 @@ class CreateOfferAmountPresenterTest {
                     }
                     every { findUSDMarketPriceItem() } returns prices[marketUSD]
                     every { refreshSelectedFormattedMarketPrice() } returns Unit
-                    every { selectMarket(any()) } returns Unit
+                    every { selectMarket(any()) } returns Result.success(Unit)
                 }
 
             // Mock the Android top-level function accessed by MainPresenter
@@ -455,7 +455,7 @@ class CreateOfferAmountPresenterTest {
                     }
                     every { findUSDMarketPriceItem() } returns prices[marketUSD]
                     every { refreshSelectedFormattedMarketPrice() } returns Unit
-                    every { selectMarket(any()) } returns Unit
+                    every { selectMarket(any()) } returns Result.success(Unit)
                 }
 
             // Mock the Android top-level function accessed by MainPresenter

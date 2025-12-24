@@ -111,8 +111,9 @@ class MarketPriceServiceFacadeTest : KoinTest {
             }
         }
 
-        override fun selectMarket(marketListItem: MarketListItem) {
+        override fun selectMarket(marketListItem: MarketListItem): Result<Unit> {
             persistSelectedMarketToSettings(marketListItem)
+            return Result.success(Unit)
         }
 
         override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? = testMarketPriceItem.value

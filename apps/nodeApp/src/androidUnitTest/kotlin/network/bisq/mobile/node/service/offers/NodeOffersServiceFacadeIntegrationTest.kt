@@ -55,21 +55,6 @@ class NodeOffersServiceFacadeIntegrationTest {
         override suspend fun clear() {}
     }
 
-    // Minimal fake MarketPriceServiceFacade to drive selectedMarketPriceItem
-    private class FakeMarketPriceServiceFacade : MarketPriceServiceFacade(FakeSettingsRepo()) {
-        override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? = selectedMarketPriceItem.value
-
-        override fun findUSDMarketPriceItem(): MarketPriceItem? = selectedMarketPriceItem.value
-
-        override fun refreshSelectedFormattedMarketPrice() {}
-
-        override fun selectMarket(marketListItem: MarketListItem) {}
-
-        fun set(item: MarketPriceItem) {
-            _selectedMarketPriceItem.value = item
-        }
-    }
-
     private fun buildDto(
         id: String,
         market: MarketVO,

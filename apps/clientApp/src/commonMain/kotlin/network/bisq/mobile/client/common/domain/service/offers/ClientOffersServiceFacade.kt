@@ -63,36 +63,40 @@ class ClientOffersServiceFacade(
     }
 
     // API
-    override fun selectOfferbookMarket(marketListItem: MarketListItem) {
-        log.d { "Selecting offerbook market - Currency: ${marketListItem.market.quoteCurrencyCode}, Name: ${marketListItem.market.quoteCurrencyName}, NumOffers: ${marketListItem.numOffers}" }
+    override fun selectOfferbookMarket(marketListItem: MarketListItem): Result<Unit> =
+        runCatching<Unit> {
+            log.d { "Selecting offerbook market - Currency: ${marketListItem.market.quoteCurrencyCode}, Name: ${marketListItem.market.quoteCurrencyName}, NumOffers: ${marketListItem.numOffers}" }
 
-        marketPriceServiceFacade.selectMarket(marketListItem)
-        _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
+            marketPriceServiceFacade.selectMarket(marketListItem).getOrThrow()
+            _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
 
-        // If we don't have cached offers for the selected market yet, mark loading
-        val code = marketListItem.market.quoteCurrencyCode
-        val hasCache = offerbookListItemsByMarket[code]?.isNotEmpty() == true
-        if (!hasCache) {
-            _isOfferbookLoading.value = true
-            startLoadingTimeout()
-        }
+            // If we don't have cached offers for the selected market yet, mark loading
+            val code = marketListItem.market.quoteCurrencyCode
+            val hasCache = offerbookListItemsByMarket[code]?.isNotEmpty() == true
+            if (!hasCache) {
+                _isOfferbookLoading.value = true
+                startLoadingTimeout()
+            }
 
-        if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
-            log.d { "First time subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
-            subscribeOffers()
-        } else {
-            log.d { "Already subscribed to offers, applying filters for market ${marketListItem.market.quoteCurrencyCode}" }
-            serviceScope.launch {
-                try {
-                    applyOffersToSelectedMarket()
-                } catch (t: Throwable) {
-                    log.e(t) { "Error applying offers to selected market" }
-                    _isOfferbookLoading.value = false
-                    loadingTimeoutJob?.cancel()
+            if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
+                log.d { "First time subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
+                subscribeOffers()
+            } else {
+                log.d { "Already subscribed to offers, applying filters for market ${marketListItem.market.quoteCurrencyCode}" }
+                serviceScope.launch {
+                    try {
+                        applyOffersToSelectedMarket()
+                    } catch (t: Throwable) {
+                        log.e(t) { "Error applying offers to selected market" }
+                        _isOfferbookLoading.value = false
+                        loadingTimeoutJob?.cancel()
+                    }
                 }
             }
+            Unit
+        }.onFailure { e ->
+            log.e("Failed to select offerbook market: ${marketListItem.market}", e)
         }
-    }
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         val result: Result<Unit> = apiGateway.deleteOffer(offerId)

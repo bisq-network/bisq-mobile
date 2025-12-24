@@ -64,7 +64,7 @@ abstract class OffersServiceFacade :
         supportedLanguageCodes: Set<String>,
     ): Result<String>
 
-    abstract fun selectOfferbookMarket(marketListItem: MarketListItem)
+    abstract fun selectOfferbookMarket(marketListItem: MarketListItem): Result<Unit>
 
     // [1] thenBy doesn’t work as expected for boolean expressions because true and false are
     // sorted alphabetically (false before true), thus we use thenByDescending
