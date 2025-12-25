@@ -14,6 +14,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.i18n.i18n
 import org.koin.core.scope.Scope
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSApplicationSupportDirectory
@@ -45,17 +46,41 @@ import platform.Foundation.currentLocale
 import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.languageCode
 import platform.Foundation.localeWithLocaleIdentifier
+import platform.Foundation.setValue
 import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
+import platform.UIKit.UIAlertAction
+import platform.UIKit.UIAlertActionStyleDefault
+import platform.UIKit.UIAlertActionStyleDestructive
+import platform.UIKit.UIAlertController
+import platform.UIKit.UIAlertControllerStyleAlert
 import platform.UIKit.UIApplication
+import platform.UIKit.UIColor
 import platform.UIKit.UIDevice
+import platform.UIKit.UIFont
 import platform.UIKit.UIGraphicsBeginImageContextWithOptions
 import platform.UIKit.UIGraphicsEndImageContext
 import platform.UIKit.UIGraphicsGetImageFromCurrentImageContext
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
+import platform.UIKit.UIImageView
+import platform.UIKit.UILabel
+import platform.UIKit.UIPasteboard
+import platform.UIKit.UITextView
+import platform.UIKit.UIView
+import platform.UIKit.UIViewContentMode
+import platform.UIKit.UIViewController
+import platform.UIKit.labelColor
+import platform.UIKit.secondaryLabelColor
+import platform.UIKit.secondarySystemBackgroundColor
+import platform.UIKit.separatorColor
+import platform.UIKit.systemRedColor
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
+import platform.posix.SIGABRT
+import platform.posix.SIG_DFL
 import platform.posix.memcpy
+import platform.posix.raise
+import platform.posix.signal
 import kotlin.experimental.ExperimentalNativeApi
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
@@ -83,6 +108,142 @@ actual fun getDeviceLanguageCode(): String = NSLocale.currentLocale.languageCode
 
 private var globalOnCrash: ((Throwable) -> Unit)? = null
 
+@OptIn(ExperimentalForeignApi::class)
+fun exitApp() {
+    // Reset default handler just in case it was changed
+    // and then abort (the default behavior of uncought kotlin exception)
+    signal(SIGABRT, SIG_DFL)
+    raise(SIGABRT)
+}
+
+@OptIn(ExperimentalForeignApi::class)
+fun showCrashAlert(throwable: Throwable) {
+    // Best-effort: Show a native UI since compose won't be showing the generic error overlay on iOS
+    dispatch_async(dispatch_get_main_queue()) {
+        try {
+            val title = "mobile.genericError.headline".i18n()
+            val subtitle = "popup.reportError".i18n()
+            val errorLabel = "mobile.genericError.errorMessage".i18n()
+            val stackTrace = throwable.stackTraceToString()
+            val reportBugTitle = "support.reports.title".i18n()
+            val closeTitle = "action.close".i18n()
+
+            val alert =
+                UIAlertController.alertControllerWithTitle(
+                    title = title,
+                    message = null,
+                    preferredStyle = UIAlertControllerStyleAlert,
+                )
+
+            val container = UIView()
+
+            val iconView =
+                UIImageView().apply {
+                    translatesAutoresizingMaskIntoConstraints = false
+                    image = UIImage.systemImageNamed("exclamationmark.triangle.fill")
+                    tintColor = UIColor.systemRedColor
+                    contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
+                }
+
+            val subtitleLabel =
+                UILabel().apply {
+                    translatesAutoresizingMaskIntoConstraints = false
+                    text = subtitle
+                    font = UIFont.systemFontOfSize(13.0)
+                    textColor = UIColor.labelColor
+                    numberOfLines = 0
+                    lineBreakMode = platform.UIKit.NSLineBreakByWordWrapping
+                }
+            subtitleLabel.setContentCompressionResistancePriority(platform.UIKit.UILayoutPriorityRequired, platform.UIKit.UILayoutConstraintAxisVertical)
+
+            val errorLabelView =
+                UILabel().apply {
+                    translatesAutoresizingMaskIntoConstraints = false
+                    text = errorLabel
+                    font = UIFont.systemFontOfSize(13.0)
+                    textColor = UIColor.labelColor
+                    numberOfLines = 0
+                }
+            errorLabelView.setContentCompressionResistancePriority(platform.UIKit.UILayoutPriorityRequired, platform.UIKit.UILayoutConstraintAxisVertical)
+
+            val logTextView =
+                UITextView().apply {
+                    translatesAutoresizingMaskIntoConstraints = false
+                    text = stackTrace
+                    font = UIFont.monospacedSystemFontOfSize(10.0, weight = 0.0)
+                    textColor = UIColor.secondaryLabelColor
+                    textAlignment = platform.UIKit.NSTextAlignmentLeft
+                    backgroundColor = UIColor.secondarySystemBackgroundColor
+                    layer.cornerRadius = 6.0
+                    layer.borderWidth = 0.5
+                    layer.borderColor = UIColor.separatorColor.CGColor
+                    selectable = true
+                }
+            logTextView.setEditable(false)
+
+            container.addSubview(iconView)
+            container.addSubview(subtitleLabel)
+            container.addSubview(errorLabelView)
+            container.addSubview(logTextView)
+
+            iconView.topAnchor.constraintEqualToAnchor(container.topAnchor).apply { active = true }
+            iconView.centerXAnchor.constraintEqualToAnchor(container.centerXAnchor).apply { active = true }
+            iconView.widthAnchor.constraintEqualToConstant(32.0).apply { active = true }
+            iconView.heightAnchor.constraintEqualToConstant(32.0).apply { active = true }
+
+            subtitleLabel.topAnchor.constraintEqualToAnchor(iconView.bottomAnchor, constant = 12.0).apply { active = true }
+            subtitleLabel.leadingAnchor.constraintEqualToAnchor(container.leadingAnchor, constant = 16.0).apply { active = true }
+            subtitleLabel.trailingAnchor.constraintEqualToAnchor(container.trailingAnchor, constant = -16.0).apply { active = true }
+
+            errorLabelView.topAnchor.constraintEqualToAnchor(subtitleLabel.bottomAnchor, constant = 16.0).apply { active = true }
+            errorLabelView.leadingAnchor.constraintEqualToAnchor(container.leadingAnchor, constant = 16.0).apply { active = true }
+            errorLabelView.trailingAnchor.constraintEqualToAnchor(container.trailingAnchor, constant = -16.0).apply { active = true }
+
+            logTextView.topAnchor.constraintEqualToAnchor(errorLabelView.bottomAnchor, constant = 8.0).apply { active = true }
+            logTextView.leadingAnchor.constraintEqualToAnchor(container.leadingAnchor, constant = 16.0).apply { active = true }
+            logTextView.trailingAnchor.constraintEqualToAnchor(container.trailingAnchor, constant = -16.0).apply { active = true }
+            logTextView.bottomAnchor.constraintEqualToAnchor(container.bottomAnchor, constant = -8.0).apply { active = true }
+            logTextView.heightAnchor.constraintEqualToConstant(140.0).apply { active = true }
+
+            val contentVC = UIViewController()
+            contentVC.view = container
+            contentVC.setPreferredContentSize(CGSizeMake(270.0, 400.0))
+
+            alert.setValue(contentVC, forKey = "contentViewController")
+
+            val reportAction =
+                UIAlertAction.actionWithTitle(reportBugTitle, UIAlertActionStyleDefault) {
+                    UIPasteboard.generalPasteboard.string = stackTrace
+                    val url = NSURL.URLWithString("https://github.com/bisq-network/bisq-mobile/issues") // in domain we cant reference BisqLinks.BISQ_MOBILE_GH_ISSUES
+                    if (url != null) {
+                        UIApplication.sharedApplication.openURL(url, options = mapOf<Any?, Any>()) { _ ->
+                            exitApp()
+                        }
+                    } else {
+                        exitApp()
+                    }
+                }
+            alert.addAction(reportAction)
+
+            val closeAction =
+                UIAlertAction.actionWithTitle(closeTitle, UIAlertActionStyleDestructive) {
+                    exitApp()
+                }
+            alert.addAction(closeAction)
+
+            val rootVC =
+                UIApplication.sharedApplication.keyWindow?.rootViewController
+                    ?: UIApplication.sharedApplication.delegate
+                        ?.window
+                        ?.rootViewController
+            rootVC?.presentViewController(alert, true, null)
+        } catch (t: Throwable) {
+            println("Failed to present crash alert: ${t.message}")
+            exitApp()
+        }
+    }
+}
+
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 @Throws(Exception::class)
 actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
@@ -96,28 +257,33 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
 
                 // TODO report to some sort non-survaillant crashlytics?
 
-                // Let the UI react
                 val cause = Throwable(exception.reason)
                 val throwable = Throwable(message = exception.name, cause)
-                globalOnCrash?.invoke(throwable)
 
-                // needed on iOS
                 dispatch_async(dispatch_get_main_queue()) {
+                    try {
+                        globalOnCrash?.invoke(throwable)
+                    } catch (t: Throwable) {
+                        // Swallow any exceptions from handlers to avoid re-entrancy
+                        println("Error while invoking globalOnCrash: ${t.message}")
+                    }
                     println("Performing cleanup after uncaught exception")
                 }
+                showCrashAlert(throwable)
             }
-//        setUnhandledExceptionHook { throwable ->
-//            println("Uncaught Kotlin exception: ${throwable.message}")
-//            throwable.printStackTrace()
-//
-//            // Perform cleanup on the main thread
-//            dispatch_async(dispatch_get_main_queue()) {
-//                println("Performing cleanup after uncaught Kotlin exception")
-//                globalOnCrash?.invoke()
-//            }
-//        }
         },
     )
+
+    setUnhandledExceptionHook { throwable ->
+        dispatch_async(dispatch_get_main_queue()) {
+            try {
+                globalOnCrash?.invoke(throwable)
+            } catch (t: Throwable) {
+                println("Error while invoking globalOnCrash: ${t.message}")
+            }
+        }
+        showCrashAlert(throwable)
+    }
 }
 
 class IOSUrlLauncher : UrlLauncher {
