@@ -224,7 +224,7 @@ tasks.register<Exec>("ktlintFormatAndCheck") {
     description = "Formats code with ktlint and fails if any violations remain"
     group = "formatting"
 
-    commandLine("sh", "-c", "./gradlew ktlintFormat --rerun-tasks --continue && ./gradlew ktlintCheck")
+    commandLine("sh", "-c", "./gradlew ktlintFormat --continue && ./gradlew ktlintCheck")
     workingDir(rootProject.projectDir)
 }
 
