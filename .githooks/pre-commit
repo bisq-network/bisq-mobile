@@ -47,7 +47,7 @@ else
       git apply -R $diff
     fi
 
-    ktlint_output=$(./gradlew ktlintCheck --rerun-tasks -PinternalKtlintGitFilter="$CHANGED_FILES" 2>&1)
+    ktlint_output=$(./gradlew ktlintCheck -PinternalKtlintGitFilter="$CHANGED_FILES" 2>&1)
     gradle_command_exit_code=$?
 
     echo "✓ Completed ktlint run."
