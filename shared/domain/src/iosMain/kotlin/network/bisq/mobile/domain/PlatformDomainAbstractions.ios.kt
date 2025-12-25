@@ -69,6 +69,7 @@ import platform.UIKit.UITextView
 import platform.UIKit.UIView
 import platform.UIKit.UIViewContentMode
 import platform.UIKit.UIViewController
+import platform.UIKit.UIWindowScene
 import platform.UIKit.labelColor
 import platform.UIKit.secondaryLabelColor
 import platform.UIKit.secondarySystemBackgroundColor
@@ -111,7 +112,7 @@ private var globalOnCrash: ((Throwable) -> Unit)? = null
 @OptIn(ExperimentalForeignApi::class)
 fun exitApp() {
     // Reset default handler just in case it was changed
-    // and then abort (the default behavior of uncought kotlin exception)
+    // and then abort (the default behavior of uncaught kotlin exception)
     signal(SIGABRT, SIG_DFL)
     raise(SIGABRT)
 }
@@ -232,10 +233,28 @@ fun showCrashAlert(throwable: Throwable) {
             alert.addAction(closeAction)
 
             val rootVC =
-                UIApplication.sharedApplication.keyWindow?.rootViewController
-                    ?: UIApplication.sharedApplication.delegate
-                        ?.window
-                        ?.rootViewController
+                try {
+                    @Suppress("DEPRECATION")
+                    UIApplication.sharedApplication.keyWindow?.rootViewController
+                } catch (_: Exception) {
+                    try {
+                        UIApplication.sharedApplication.connectedScenes
+                            .toList()
+                            .filterIsInstance<UIWindowScene>()
+                            .firstNotNullOfOrNull { scene ->
+                                scene
+                                    .windows
+                                    .toList()
+                                    .filterIsInstance<platform.UIKit.UIWindow>()
+                                    .firstOrNull { it.keyWindow }
+                                    ?.rootViewController
+                            }
+                    } catch (_: Exception) {
+                        null
+                    }
+                } ?: UIApplication.sharedApplication.delegate
+                    ?.window
+                    ?.rootViewController
             rootVC?.presentViewController(alert, true, null)
         } catch (t: Throwable) {
             println("Failed to present crash alert: ${t.message}")
