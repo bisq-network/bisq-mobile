@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.common.domain.service
 
-import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
+import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
@@ -20,7 +20,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientApplicationLifecycleService(
     private val kmpTorService: KmpTorService,
-    private val accountsServiceFacade: AccountsServiceFacade,
+    private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
@@ -47,7 +47,7 @@ class ClientApplicationLifecycleService(
         tradeChatMessagesServiceFacade.activate()
         languageServiceFacade.activate()
 
-        accountsServiceFacade.activate()
+        fiatAccountsServiceFacade.activate()
         explorerServiceFacade.activate()
         mediationServiceFacade.activate()
         reputationServiceFacade.activate()
@@ -62,7 +62,7 @@ class ClientApplicationLifecycleService(
         reputationServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         explorerServiceFacade.deactivate()
-        accountsServiceFacade.deactivate()
+        fiatAccountsServiceFacade.deactivate()
 
         languageServiceFacade.deactivate()
         tradeChatMessagesServiceFacade.deactivate()

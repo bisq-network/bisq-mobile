@@ -41,6 +41,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 interface ITopBarPresenter : ViewPresenter {
@@ -55,9 +56,9 @@ interface ITopBarPresenter : ViewPresenter {
 }
 
 /**
+ * Stateful TopBar with dependencies - for production use
  * @param extraActions will be rendered before user avatar
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
     title: String = "",
@@ -71,32 +72,65 @@ fun TopBar(
     RememberPresenterLifecycle(presenter)
 
     val currentTabDestination by navigationManager.currentTab.collectAsState()
-
     val showAnimation by presenter.showAnimation.collectAsState()
     val userProfile by presenter.userProfile.collectAsState()
     val connectivityStatus by presenter.connectivityStatus.collectAsState()
 
-    val defaultBackButton: @Composable () -> Unit = {
-        IconButton(onClick = {
-            presenter.onMainBackNavigation()
-        }) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = BisqTheme.colors.mid_grey30,
-            )
-        }
-    }
+    TopBarContent(
+        title = title,
+        isHome = isHome,
+        showBackButton = navigationManager.showBackButton(),
+        onBackClick = { presenter.onMainBackNavigation() },
+        showUserAvatar = showUserAvatar,
+        userProfile = userProfile,
+        userProfileIconProvider = presenter.userProfileIconProvider,
+        connectivityStatus = connectivityStatus,
+        showAnimation = showAnimation,
+        avatarEnabled = presenter.avatarEnabled(currentTabDestination),
+        onAvatarClick = { presenter.navigateToUserProfile() },
+        extraActions = extraActions,
+    )
 
+    if (backBehavior != null) {
+        BackHandler(onBackPress = { backBehavior.invoke() })
+    }
+}
+
+/**
+ * Stateless TopBar content - for previews and testing
+ * @param extraActions will be rendered before user avatar
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopBarContent(
+    title: String = "",
+    isHome: Boolean = false,
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {},
+    showUserAvatar: Boolean = true,
+    userProfile: UserProfileVO? = null,
+    userProfileIconProvider: (suspend (UserProfileVO) -> PlatformImage)? = null,
+    connectivityStatus: ConnectivityService.ConnectivityStatus = ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
+    showAnimation: Boolean = false,
+    avatarEnabled: Boolean = true,
+    onAvatarClick: () -> Unit = {},
+    extraActions: @Composable (RowScope.() -> Unit)? = null,
+) {
     TopAppBar(
         navigationIcon = {
-            if (navigationManager.showBackButton()) {
-                defaultBackButton()
+            if (showBackButton) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = BisqTheme.colors.mid_grey30,
+                    )
+                }
             }
         },
         colors =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = BisqTheme.colors.backgroundColor, // Color.DarkGray,
+                containerColor = BisqTheme.colors.backgroundColor,
             ),
         title = {
             if (isHome) {
@@ -125,17 +159,15 @@ fun TopBar(
                     val userIconModifier =
                         Modifier
                             .size(BisqUIConstants.topBarAvatarSize)
-                            .clickable {
-                                if (presenter.avatarEnabled(currentTabDestination)) {
-                                    presenter.navigateToUserProfile()
-                                }
+                            .clickable(enabled = avatarEnabled) {
+                                onAvatarClick()
                             }.semantics { contentDescription = "top_bar_avatar" }
 
                     BisqGap.H1()
-                    if (userProfile != null) {
+                    if (userProfile != null && userProfileIconProvider != null) {
                         MyUserProfileIcon(
-                            userProfile!!,
-                            presenter.userProfileIconProvider,
+                            userProfile,
+                            userProfileIconProvider,
                             modifier = userIconModifier,
                             connectivityStatus = connectivityStatus,
                             showAnimations = showAnimation,
@@ -151,8 +183,69 @@ fun TopBar(
             }
         },
     )
+}
 
-    if (backBehavior != null) {
-        BackHandler(onBackPress = { backBehavior.invoke() })
+@Preview
+@Composable
+private fun TopBarContentPreview_HomePreview() {
+    BisqTheme.Preview {
+        TopBarContent(
+            title = "",
+            isHome = true,
+            showBackButton = false,
+            showUserAvatar = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TopBarContentPreview_WithTitlePreview() {
+    BisqTheme.Preview {
+        TopBarContent(
+            title = "Payment Accounts",
+            isHome = false,
+            showBackButton = true,
+            showUserAvatar = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TopBarContentPreview_WithBackButtonPreview() {
+    BisqTheme.Preview {
+        TopBarContent(
+            title = "Settings",
+            isHome = false,
+            showBackButton = true,
+            showUserAvatar = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TopBarContentPreview_LongTitlePreview() {
+    BisqTheme.Preview {
+        TopBarContent(
+            title = "This is a Very Long Title That Should Wrap to Multiple Lines",
+            isHome = false,
+            showBackButton = true,
+            showUserAvatar = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TopBarContentPreview_NoAvatarPreview() {
+    BisqTheme.Preview {
+        TopBarContent(
+            title = "Private Trades",
+            isHome = false,
+            showBackButton = true,
+            showUserAvatar = false,
+        )
     }
 }

@@ -28,7 +28,6 @@ import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewP
 import network.bisq.mobile.presentation.report_user.ReportUserPresenter
 import network.bisq.mobile.presentation.settings.ignored_users.IIgnoredUsersPresenter
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersPresenter
-import network.bisq.mobile.presentation.settings.payment_accounts.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsPresenter
 import network.bisq.mobile.presentation.settings.reputation.ReputationPresenter
 import network.bisq.mobile.presentation.settings.resources.ResourcesPresenter
@@ -75,7 +74,12 @@ val presentationModule =
 
         single<NetworkStatusBannerPresenter> { NetworkStatusBannerPresenter(get(), get()) }
 
-        factory<UserAgreementPresenter> { UserAgreementPresenter(get(), get()) } bind IAgreementPresenter::class
+        factory<UserAgreementPresenter> {
+            UserAgreementPresenter(
+                get(),
+                get(),
+            )
+        } bind IAgreementPresenter::class
 
         single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
@@ -119,7 +123,7 @@ val presentationModule =
 
         factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 
-        single { PaymentAccountsPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
+        factory { PaymentAccountsPresenter(get(), get()) }
 
         // Offerbook
         single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get()) }
