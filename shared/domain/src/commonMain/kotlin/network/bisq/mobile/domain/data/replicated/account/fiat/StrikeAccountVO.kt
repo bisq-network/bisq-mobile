@@ -1,6 +1,6 @@
 @file:Suppress("ktlint:standard:no-empty-file")
 
-package network.bisq.mobile.domain.data.replicated.account
+// package network.bisq.mobile.domain.data.replicated.account.fiat
 
 // Not used now
 // data class StrikeAccountVO(

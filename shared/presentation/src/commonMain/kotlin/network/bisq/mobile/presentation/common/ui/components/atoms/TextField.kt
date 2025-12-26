@@ -57,11 +57,30 @@ enum class BisqTextFieldType {
 }
 
 /**
+ * @deprecated This stateful version of BisqTextField is deprecated. Use BisqTextFieldV0 instead.
+ * BisqTextFieldV0 is a stateless component that provides better composability and testability.
+ *
+ * IMPORTANT: Migration to BisqTextFieldV0 requires manual code changes due to significant API differences:
+ * - onValueChange signature: ((String, Boolean) -> Unit)? vs (String) -> Unit (V0 no longer includes validation state)
+ * - Validation: Built-in validation callback vs declarative isError/bottomMessage parameters (move validation logic to presenter)
+ * - Prefix/suffix: String-based (@Composable - supported as composables)
+ * - Missing features in V0: copy/paste buttons, password field toggle, character counter, helperText,
+ *   isSearch/isTextArea modes, animations, onFocus callback
+ *
+ * Note: BisqTextFieldV0 has core features. Additional features will be added as needed.
+ * Validation logic should be handled in the presenter layer.
+ *
  * TODO:
  * 1. Should have a BisqNumberField with customizations like numberWithTwoDecimals
  * and whose value is Double and onValueChange emits Double
  * 2. Add onFocusOut event, to reset data incase of invalid inputs
  */
+@Deprecated(
+    message =
+        "Use BisqTextFieldV0 instead. Note: This is not a drop-in replacement - the APIs differ significantly. " +
+            "Manual migration is required. See KDoc for details.",
+    level = DeprecationLevel.WARNING,
+)
 @Composable
 fun BisqTextField(
     modifier: Modifier = Modifier,

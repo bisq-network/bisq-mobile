@@ -36,6 +36,8 @@ class WebSocketApiClient(
 
     suspend inline fun <reified T> get(path: String): Result<T> = request<T>("GET", path)
 
+    suspend inline fun <reified T> getNullable(path: String): Result<T?> = requestNullable<T>("GET", path)
+
     suspend inline fun <reified T> delete(path: String): Result<T> = request<T>("DELETE", path)
 
     suspend inline fun <reified T, reified R> delete(
@@ -52,8 +54,29 @@ class WebSocketApiClient(
         path: String,
         requestBody: R,
     ): Result<T> {
-        val bodyAsJson = json.encodeToString(requestBody)
-        return request<T>("PUT", path, bodyAsJson)
+        if (useHttpClient) {
+            log.d { "HTTP PUT to " + (apiPath + path) }
+            log.d { "Request body: $requestBody" }
+            try {
+                val response: HttpResponse =
+                    httpClientService.put {
+                        url {
+                            path(apiPath + path)
+                        }
+                        contentType(ContentType.Application.Json)
+                        accept(ContentType.Application.Json)
+                        setBody(requestBody)
+                    }
+                log.d { "HTTP PUT done status=${response.status}" }
+                return getResultFromHttpResponse<T>(response)
+            } catch (e: Exception) {
+                log.e(e) { "HTTP PUT failed for " + (apiPath + path) + ": ${e.message}" }
+                return Result.failure(e)
+            }
+        } else {
+            val bodyAsJson = json.encodeToString(requestBody)
+            return request<T>("PUT", path, bodyAsJson)
+        }
     }
 
     suspend inline fun <reified T> patch(path: String): Result<T> = request<T>("PATCH", path)
@@ -64,7 +87,12 @@ class WebSocketApiClient(
     ): Result<T> {
         if (useHttpClient) {
             log.d { "HTTP PATCH to ${apiPath + path}" }
+            log.d { "Request body: $requestBody" }
             try {
+                // Serialize to JSON to see what's actually being sent
+                val bodyAsJson = json.encodeToString(requestBody)
+                log.d { "Request body as JSON: $bodyAsJson" }
+
                 val response: HttpResponse =
                     httpClientService.patch {
                         url {
@@ -121,7 +149,31 @@ class WebSocketApiClient(
         method: String,
         path: String,
         bodyAsJson: String = "",
-    ): Result<T> {
+    ): Result<T> =
+        executeRequest<T, T>(method, path, bodyAsJson) {
+            check(T::class == Unit::class) { "If we get a HttpStatusCode.NoContent response we expect return type Unit" }
+            Result.success(Unit as T)
+        }
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend inline fun <reified T> requestNullable(
+        method: String,
+        path: String,
+        bodyAsJson: String = "",
+    ): Result<T?> =
+        executeRequest<T, T?>(method, path, bodyAsJson) {
+            // For nullable requests, 204 No Content means null result
+            Result.success(null)
+        }
+
+    @PublishedApi
+    @OptIn(ExperimentalUuidApi::class)
+    internal suspend inline fun <reified T, R> executeRequest(
+        method: String,
+        path: String,
+        bodyAsJson: String = "",
+        handleNoContent: () -> Result<R>,
+    ): Result<R> {
         val requestId = Uuid.random().toString()
         val fullPath = apiPath + path
         val webSocketRestApiRequest =
@@ -139,11 +191,11 @@ class WebSocketApiClient(
             val body = response.body
             if (response.isSuccess()) {
                 if (response.httpStatusCode == HttpStatusCode.NoContent) {
-                    check(T::class == Unit::class) { "If we get a HttpStatusCode.NoContent response we expect return type Unit" }
-                    return Result.success(Unit as T)
+                    return handleNoContent()
                 } else {
                     val decodeFromString = json.decodeFromString<T>(body)
-                    return Result.success(decodeFromString)
+                    @Suppress("UNCHECKED_CAST")
+                    return Result.success(decodeFromString as R)
                 }
             } else if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
                 return Result.failure(PasswordIncorrectOrMissingException())
@@ -174,7 +226,16 @@ class WebSocketApiClient(
 
     suspend inline fun <reified T> getResultFromHttpResponse(response: HttpResponse): Result<T> =
         if (response.status.isSuccess()) {
-            Result.success(response.body<T>())
+            if (response.status == HttpStatusCode.NoContent) {
+                try {
+                    check(T::class == Unit::class) { "If we get a HttpStatusCode.NoContent response we expect return type Unit" }
+                    Result.success(Unit as T)
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            } else {
+                Result.success(response.body<T>())
+            }
         } else {
             val errorText = response.bodyAsText()
             Result.failure(WebSocketRestApiException(response.status, errorText))

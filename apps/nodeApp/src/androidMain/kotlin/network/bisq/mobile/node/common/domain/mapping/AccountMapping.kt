@@ -3,8 +3,8 @@ package network.bisq.mobile.node.common.domain.mapping
 import bisq.account.accounts.fiat.UserDefinedFiatAccount
 import bisq.account.accounts.fiat.UserDefinedFiatAccountPayload
 import bisq.common.util.StringUtils
-import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
-import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
+import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountPayloadVO
+import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
 
 object UserDefinedFiatAccountMapping {
     fun toBisq2Model(value: UserDefinedFiatAccountVO): UserDefinedFiatAccount {
