@@ -2,238 +2,477 @@ package network.bisq.mobile.presentation.settings.payment_accounts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
+import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountPayloadVO
+import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
+import network.bisq.mobile.presentation.common.ui.components.ErrorState
+import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqEditableDropDown
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqDropdown
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet.BisqBottomSheet
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.components.organisms.settings.AppPaymentAccountCard
+import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbar
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
-
-interface IPaymentAccountSettingsPresenter : ViewPresenter {
-    val accounts: StateFlow<List<UserDefinedFiatAccountVO>>
-    val selectedAccount: StateFlow<UserDefinedFiatAccountVO?>
-
-    fun selectAccount(account: UserDefinedFiatAccountVO)
-
-    fun addAccount(
-        newName: String,
-        newDescription: String,
-    )
-
-    fun saveAccount(
-        newName: String,
-        newDescription: String,
-    )
-
-    fun deleteCurrentAccount()
-}
-
-private const val MAX_ACCOUNT_FIELD_LENGTH = 1024
 
 @Composable
 fun PaymentAccountsScreen() {
     val presenter: PaymentAccountsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val accounts by presenter.accounts.collectAsState()
-    val selectedAccount by presenter.selectedAccount.collectAsState()
-    val isLoadingAccounts by presenter.isLoadingAccounts.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
 
-    var accountName by remember { mutableStateOf(selectedAccount?.accountName ?: "") }
-    var accountNameValid by remember { mutableStateOf(true) }
-    var accountDescription by remember {
-        mutableStateOf(
-            selectedAccount?.accountPayload?.accountData ?: "",
-        )
-    }
-    var accountDescriptionValid by remember { mutableStateOf(true) }
-
-    var showConfirmationDialog by remember { mutableStateOf(false) }
-    var showBottomSheet by remember { mutableStateOf(false) }
-
-    LaunchedEffect(selectedAccount) {
-        accountName = selectedAccount?.accountName ?: ""
-        accountDescription = selectedAccount?.accountPayload?.accountData ?: ""
-        accountNameValid = true
-        accountDescriptionValid = true
-    }
-
-    BisqScrollScaffold(
-        topBar = { TopBar("paymentAccounts.headline".i18n()) },
-        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+    PaymentAccountsContent(
+        uiState = uiState,
+        onAction = presenter::onAction,
         snackbarHostState = presenter.getSnackState(),
-        shouldBlurBg = showConfirmationDialog,
-    ) {
-        if (showBottomSheet) {
-            BisqBottomSheet(
-                containerColor = BisqTheme.colors.dark_grey20,
-                onDismissRequest = { showBottomSheet = false },
-            ) {
-                AppPaymentAccountCard(
-                    onCancel = { showBottomSheet = false },
-                    onConfirm = { name, description ->
-                        presenter.addAccount(name, description)
-                        showBottomSheet = false
-                    },
-                )
-            }
-        }
+        topBar = { TopBar("paymentAccounts.headline".i18n()) },
+    )
+}
+
+@Composable
+fun PaymentAccountsContent(
+    uiState: PaymentAccountsUiState,
+    onAction: (PaymentAccountsUiAction) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    topBar: @Composable () -> Unit = {},
+) {
+    Scaffold(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .imePadding(),
+        topBar = topBar,
+        containerColor = BisqTheme.colors.backgroundColor,
+        snackbarHost = { BisqSnackbar(snackbarHostState = snackbarHostState) },
+    ) { paddingValues ->
 
         when {
-            isLoadingAccounts -> {
-                CircularProgressIndicator(
-                    color = BisqTheme.colors.primary,
-                    strokeWidth = 2.dp,
+            uiState.isLoadingAccounts -> {
+                LoadingState(paddingValues)
+            }
+
+            uiState.isLoadingAccountsError -> {
+                ErrorState(
+                    paddingValues = paddingValues,
+                    onRetry = { onAction(PaymentAccountsUiAction.OnRetryLoadAccountsClick) },
                 )
             }
 
-            accounts.isEmpty() -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Top,
-                ) {
-                    BisqText.BaseLightGrey("paymentAccounts.noAccounts.info".i18n())
-                    BisqGap.V2()
-                    BisqText.H2Light("paymentAccounts.noAccounts.whySetup".i18n())
-                    BisqGap.V1()
-                    BisqText.BaseLight("paymentAccounts.noAccounts.whySetup.info".i18n())
-                    BisqGap.V2()
-                    BisqText.BaseLightGrey("paymentAccounts.noAccounts.whySetup.note".i18n())
-
-                    BisqGap.V2()
-
-                    BisqButton(
-                        text = "paymentAccounts.createAccount".i18n(),
-                        onClick = { showBottomSheet = !showBottomSheet },
-                        modifier = Modifier.padding(all = 8.dp),
-                    )
-                }
+            uiState.showAddAccountState -> {
+                CreateAccountState(
+                    paddingValues = paddingValues,
+                    onAction = onAction,
+                    uiState = uiState,
+                )
             }
 
-            accounts.isNotEmpty() -> {
+            uiState.accounts.isEmpty() -> {
+                EmptyAccountsState(
+                    paddingValues = paddingValues,
+                    onAction = onAction,
+                )
+            }
+
+            uiState.accounts.isNotEmpty() -> {
+                AccountsListState(
+                    uiState = uiState,
+                    paddingValues = paddingValues,
+                    onAction = onAction,
+                )
+            }
+        }
+
+        if (uiState.showDeleteConfirmationDialog) {
+            ConfirmationDialog(
+                onConfirm = { onAction(PaymentAccountsUiAction.OnConfirmDeleteAccountClick) },
+                onDismiss = { onAction(PaymentAccountsUiAction.OnCancelDeleteAccountClick) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyAccountsState(
+    paddingValues: PaddingValues,
+    onAction: (PaymentAccountsUiAction) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+        ) {
+            BisqText.H4LightGrey("paymentAccounts.noAccounts.info".i18n())
+            BisqGap.V2()
+            BisqText.H2Light("paymentAccounts.noAccounts.whySetup".i18n())
+            BisqGap.V1()
+            BisqText.BaseLight("paymentAccounts.noAccounts.whySetup.info".i18n())
+            BisqGap.V2()
+            BisqText.BaseLightGrey("paymentAccounts.noAccounts.whySetup.note".i18n())
+        }
+
+        BisqButton(
+            text = "paymentAccounts.createAccount".i18n(),
+            onClick = { onAction(PaymentAccountsUiAction.OnAddAccountClick) },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+        )
+    }
+}
+
+@Composable
+private fun AccountsListState(
+    uiState: PaymentAccountsUiState,
+    paddingValues: PaddingValues,
+    onAction: (PaymentAccountsUiAction) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues)
+                .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column {
+            PaymentAccountForm(
+                uiState = uiState,
+                onAction = onAction,
+            )
+        }
+
+        if (!uiState.showEditAccountState) {
+            BisqButton(
+                text = "paymentAccounts.legacy.createAccount.headline".i18n(),
+                onClick = { onAction(PaymentAccountsUiAction.OnAddAccountClick) },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CreateAccountState(
+    uiState: PaymentAccountsUiState,
+    paddingValues: PaddingValues,
+    onAction: (PaymentAccountsUiAction) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues)
+                .padding(16.dp),
+    ) {
+        PaymentAccountForm(
+            uiState = uiState,
+            onAction = onAction,
+        )
+    }
+}
+
+@Composable
+@Suppress("UnusedReceiverParameter")
+private fun ColumnScope.PaymentAccountForm(
+    uiState: PaymentAccountsUiState,
+    onAction: (PaymentAccountsUiAction) -> Unit,
+) {
+    if (uiState.showEditAccountState || uiState.showAddAccountState) {
+        BisqTextFieldV0(
+            value = uiState.accountName,
+            onValueChange = { onAction(PaymentAccountsUiAction.OnAccountNameChange(it)) },
+            isError = uiState.accountNameInvalidMessage != null,
+            bottomMessage = uiState.accountNameInvalidMessage,
+            label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
+            placeholder = "paymentAccounts.legacy.createAccount.accountName.prompt".i18n(),
+        )
+    } else {
+        BisqDropdown(
+            options = uiState.accounts.map { it.accountName },
+            selectedIndex = uiState.selectedAccountIndex,
+            onOptionSelect = { onAction(PaymentAccountsUiAction.OnAccountSelect(it)) },
+            label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
+        )
+    }
+
+    BisqGap.V1()
+
+    BisqTextFieldV0(
+        value = uiState.accountDescription,
+        onValueChange = { onAction(PaymentAccountsUiAction.OnAccountDescriptionChange(it)) },
+        label = "paymentAccounts.legacy.accountData".i18n(),
+        enabled = uiState.showEditAccountState || uiState.showAddAccountState,
+        isError = uiState.accountDescriptionInvalidMessage != null,
+        bottomMessage = uiState.accountDescriptionInvalidMessage,
+        minLines = 4,
+        placeholder = "paymentAccounts.legacy.createAccount.accountData.prompt".i18n(),
+    )
+
+    BisqGap.V1()
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        when {
+            uiState.showEditAccountState -> {
                 BisqButton(
-                    text = "paymentAccounts.legacy.createAccount.headline".i18n(),
-                    onClick = { showBottomSheet = !showBottomSheet },
-                    padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                    text = "action.save".i18n(),
+                    onClick = { onAction(PaymentAccountsUiAction.OnSaveAccountClick) },
                 )
-
-                BisqGap.V1()
-
-                BisqEditableDropDown(
-                    value = accountName,
-                    items = accounts.map { it.accountName },
-                    // TODO use accounts key
-                    label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
-                    onValueChange = { name, isValid ->
-                        var account = accounts.firstOrNull { it.accountName == name }
-                        if (account == null) {
-                            account =
-                                accounts.firstOrNull { it.accountPayload.accountData == accountDescription }
-                        }
-                        if (account != null) {
-                            presenter.selectAccount(account)
-                        }
-                        accountName = name
-                        accountNameValid = isValid
-                    },
-                    validation = {
-                        if (it.length < 3) {
-                            return@BisqEditableDropDown "paymentAccounts.legacy.createAccount.paymentAccount.validations.minLength".i18n()
-                        }
-
-                        if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                            return@BisqEditableDropDown "paymentAccounts.legacy.createAccount.paymentAccount.validations.maxLength".i18n()
-                        }
-
-                        return@BisqEditableDropDown null
-                    },
+                BisqButton(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                    text = "paymentAccounts.deleteAccount".i18n(),
+                    type = BisqButtonType.Grey,
+                    onClick = { onAction(PaymentAccountsUiAction.OnDeleteAccountClick) },
                 )
-
-                BisqGap.V1()
-
-                BisqTextField(
-                    value = accountDescription,
-                    onValueChange = { value, isValid ->
-                        accountDescription = value
-                        accountDescriptionValid = isValid
-                    },
-                    label = "paymentAccounts.legacy.accountData".i18n(),
-                    isTextArea = true,
-                    minLines = 4,
-                    validation = {
-                        if (it.length < 3) {
-                            return@BisqTextField "paymentAccounts.legacy.accountData.paymentAccount.validations.minLength".i18n()
-                        }
-
-                        if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                            return@BisqTextField "paymentAccounts.legacy.accountData.paymentAccount.validations.maxLength".i18n()
-                        }
-
-                        return@BisqTextField null
-                    },
+                BisqButton(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                    text = "action.cancel".i18n(),
+                    type = BisqButtonType.Outline,
+                    onClick = { onAction(PaymentAccountsUiAction.OnCancelAddEditAccountClick) },
                 )
+            }
 
-                BisqGap.V1()
+            uiState.showAddAccountState -> {
+                BisqButton(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                    text = "paymentAccounts.createAccount".i18n(),
+                    onClick = { onAction(PaymentAccountsUiAction.OnConfirmAddAccountClick) },
+                )
+                BisqButton(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                    text = "action.cancel".i18n(),
+                    type = BisqButtonType.Outline,
+                    onClick = { onAction(PaymentAccountsUiAction.OnCancelAddEditAccountClick) },
+                )
+            }
 
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    BisqButton(
-                        text = "paymentAccounts.deleteAccount".i18n(),
-                        type = BisqButtonType.Grey,
-                        onClick = { showConfirmationDialog = true },
-                        disabled = selectedAccount == null,
-                    )
-                    BisqButton(
-                        text = "action.save".i18n(),
-                        onClick = {
-                            presenter.saveAccount(accountName, accountDescription)
-                        },
-                        disabled = !accountNameValid || !accountDescriptionValid,
-                    )
-                }
+            else -> {
+                BisqButton(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                    text = "action.edit".i18n(),
+                    onClick = { onAction(PaymentAccountsUiAction.OnEditAccountClick) },
+                )
             }
         }
     }
+}
 
-    if (showConfirmationDialog) {
-        ConfirmationDialog(
-            onConfirm = {
-                presenter.deleteCurrentAccount()
-                showConfirmationDialog = false
-            },
-            onDismiss = {
-                showConfirmationDialog = false
-            },
+@Composable
+private fun PreviewTopBar() {
+    TopBarContent(
+        title = "paymentAccounts.headline".i18n(),
+        showBackButton = true,
+        showUserAvatar = true,
+    )
+}
+
+@Composable
+private fun previewSnackbarHostState() = remember { SnackbarHostState() }
+
+private val previewOnAction: (PaymentAccountsUiAction) -> Unit = {}
+
+@Preview
+@Composable
+private fun PaymentAccountsScreenPreview_EmptyPreview() {
+    BisqTheme.Preview {
+        PaymentAccountsContent(
+            uiState = PaymentAccountsUiState(),
+            onAction = previewOnAction,
+            snackbarHostState = previewSnackbarHostState(),
+            topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PaymentAccountsScreenPreview_WithAccountsPreview() {
+    val sampleAccounts =
+        listOf(
+            UserDefinedFiatAccountVO(
+                accountName = "PayPal Account",
+                accountPayload =
+                    UserDefinedFiatAccountPayloadVO(
+                        accountData = "user@example.com",
+                    ),
+            ),
+            UserDefinedFiatAccountVO(
+                accountName = "Bank Transfer",
+                accountPayload =
+                    UserDefinedFiatAccountPayloadVO(
+                        accountData = "IBAN: DE89370400440532013000",
+                    ),
+            ),
+            UserDefinedFiatAccountVO(
+                accountName = "Revolut",
+                accountPayload =
+                    UserDefinedFiatAccountPayloadVO(
+                        accountData = "+1234567890",
+                    ),
+            ),
+        )
+
+    BisqTheme.Preview {
+        PaymentAccountsContent(
+            uiState =
+                PaymentAccountsUiState(
+                    accounts = sampleAccounts,
+                    selectedAccountIndex = 0,
+                    accountName = sampleAccounts[0].accountName,
+                    accountDescription = sampleAccounts[0].accountPayload.accountData,
+                ),
+            onAction = previewOnAction,
+            snackbarHostState = previewSnackbarHostState(),
+            topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PaymentAccountsScreenPreview_EditModePreview() {
+    val sampleAccounts =
+        listOf(
+            UserDefinedFiatAccountVO(
+                accountName = "PayPal Account",
+                accountPayload =
+                    UserDefinedFiatAccountPayloadVO(
+                        accountData = "user@example.com",
+                    ),
+            ),
+            UserDefinedFiatAccountVO(
+                accountName = "Bank Transfer",
+                accountPayload =
+                    UserDefinedFiatAccountPayloadVO(
+                        accountData = "IBAN: DE89370400440532013000",
+                    ),
+            ),
+            UserDefinedFiatAccountVO(
+                accountName = "Revolut",
+                accountPayload =
+                    UserDefinedFiatAccountPayloadVO(
+                        accountData = "+1234567890",
+                    ),
+            ),
+        )
+
+    BisqTheme.Preview {
+        PaymentAccountsContent(
+            uiState =
+                PaymentAccountsUiState(
+                    accounts = sampleAccounts,
+                    selectedAccountIndex = 1,
+                    accountName = sampleAccounts[1].accountName,
+                    accountDescription = sampleAccounts[1].accountPayload.accountData,
+                    showEditAccountState = true,
+                ),
+            onAction = previewOnAction,
+            snackbarHostState = previewSnackbarHostState(),
+            topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PaymentAccountsScreenPreview_LoadingPreview() {
+    BisqTheme.Preview {
+        PaymentAccountsContent(
+            uiState = PaymentAccountsUiState(isLoadingAccounts = true),
+            onAction = previewOnAction,
+            snackbarHostState = previewSnackbarHostState(),
+            topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PaymentAccountsScreenPreview_ErrorPreview() {
+    BisqTheme.Preview {
+        PaymentAccountsContent(
+            uiState = PaymentAccountsUiState(isLoadingAccountsError = true),
+            onAction = previewOnAction,
+            snackbarHostState = previewSnackbarHostState(),
+            topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PaymentAccountsScreenPreview_CreateModePreview() {
+    BisqTheme.Preview {
+        PaymentAccountsContent(
+            uiState =
+                PaymentAccountsUiState(
+                    showAddAccountState = true,
+                    accountName = EMPTY_STRING,
+                    accountDescription = EMPTY_STRING,
+                ),
+            onAction = previewOnAction,
+            snackbarHostState = previewSnackbarHostState(),
+            topBar = { PreviewTopBar() },
         )
     }
 }

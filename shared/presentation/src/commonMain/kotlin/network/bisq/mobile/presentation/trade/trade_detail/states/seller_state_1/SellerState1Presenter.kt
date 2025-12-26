@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
-import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
+import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
+import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -13,14 +13,15 @@ import network.bisq.mobile.presentation.main.MainPresenter
 class SellerState1Presenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val accountsServiceFacade: AccountsServiceFacade,
+    private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
 ) : BasePresenter(mainPresenter) {
-    val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = accountsServiceFacade.accounts
+    private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
+    val accounts = _accounts.asStateFlow()
 
-    private var _paymentAccountData = MutableStateFlow("")
+    private val _paymentAccountData = MutableStateFlow("")
     val paymentAccountData: StateFlow<String> get() = _paymentAccountData.asStateFlow()
 
-    private var _paymentAccountDataValid = MutableStateFlow(false)
+    private val _paymentAccountDataValid = MutableStateFlow(false)
     val paymentAccountDataValid: StateFlow<Boolean> get() = _paymentAccountDataValid.asStateFlow()
 
     private var _paymentAccountName = MutableStateFlow("")
@@ -30,12 +31,18 @@ class SellerState1Presenter(
         super.onViewAttached()
 
         presenterScope.launch {
-            val accounts = accountsServiceFacade.getAccounts()
-
-            if (accounts.isNotEmpty()) {
-                onPaymentDataInput(accounts[0].accountPayload.accountData, true)
-                _paymentAccountName.value = accounts[0].accountName
-            }
+            fiatAccountsServiceFacade
+                .getAccounts()
+                .onSuccess { accounts ->
+                    val userDefinedAccounts = accounts.filterIsInstance<UserDefinedFiatAccountVO>()
+                    _accounts.value = userDefinedAccounts
+                    userDefinedAccounts.firstOrNull()?.let { account ->
+                        onPaymentDataInput(account.accountPayload.accountData, true)
+                        _paymentAccountName.value = account.accountName
+                    }
+                }.onFailure { error ->
+                    log.e(error) { "Failed to load accounts" }
+                }
         }
     }
 

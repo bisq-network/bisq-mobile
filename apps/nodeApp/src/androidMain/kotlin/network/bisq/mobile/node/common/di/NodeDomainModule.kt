@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.ForegroundDetector
-import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
+import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
@@ -30,7 +30,7 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.node.BuildConfig
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.NodeApplicationLifecycleService
-import network.bisq.mobile.node.common.domain.service.accounts.NodeAccountsServiceFacade
+import network.bisq.mobile.node.common.domain.service.accounts.NodeFiatAccountsServiceFacade
 import network.bisq.mobile.node.common.domain.service.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import network.bisq.mobile.node.common.domain.service.chat.trade.NodeTradeChatMessagesServiceFacade
@@ -121,7 +121,7 @@ val androidNodeDomainModule =
 
         single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
 
-        single<AccountsServiceFacade> { NodeAccountsServiceFacade(get()) }
+        single<FiatAccountsServiceFacade> { NodeFiatAccountsServiceFacade(get()) }
 
         single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
 

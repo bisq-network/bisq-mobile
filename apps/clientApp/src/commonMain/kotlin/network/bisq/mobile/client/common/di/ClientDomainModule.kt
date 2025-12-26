@@ -11,8 +11,8 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryImpl
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
-import network.bisq.mobile.client.common.domain.service.accounts.AccountsApiGateway
-import network.bisq.mobile.client.common.domain.service.accounts.ClientAccountsServiceFacade
+import network.bisq.mobile.client.common.domain.service.accounts.ClientFiatAccountsServiceFacade
+import network.bisq.mobile.client.common.domain.service.accounts.FiatPaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
@@ -66,7 +66,7 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpe
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.getStorageDir
-import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
+import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -93,6 +93,7 @@ val clientDomainModule =
         val json =
             Json {
                 prettyPrint = true
+                encodeDefaults = true
                 serializersModule =
                     SerializersModule {
                         polymorphic(MonetaryVO::class) {
@@ -224,8 +225,8 @@ val clientDomainModule =
         single { SettingsApiGateway(get()) }
         single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
 
-        single { AccountsApiGateway(get()) }
-        single<AccountsServiceFacade> { ClientAccountsServiceFacade(get()) }
+        single { FiatPaymentAccountsApiGateway(get()) }
+        single<FiatAccountsServiceFacade> { ClientFiatAccountsServiceFacade(get()) }
 
         single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
 
