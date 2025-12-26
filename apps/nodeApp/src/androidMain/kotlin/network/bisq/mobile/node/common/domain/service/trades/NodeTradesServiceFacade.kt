@@ -1,6 +1,9 @@
 package network.bisq.mobile.node.common.domain.service.trades
 
+import bisq.account.payment_method.BitcoinPaymentMethodSpec
 import bisq.account.payment_method.BitcoinPaymentRail
+import bisq.account.payment_method.PaymentMethodSpecUtil
+import bisq.account.payment_method.fiat.FiatPaymentMethodSpec
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.ChatChannelDomain
 import bisq.chat.ChatChannelSelectionService
@@ -16,9 +19,6 @@ import bisq.common.observable.collection.CollectionObserver
 import bisq.contract.bisq_easy.BisqEasyContract
 import bisq.i18n.Res
 import bisq.offer.bisq_easy.BisqEasyOffer
-import bisq.offer.payment_method.BitcoinPaymentMethodSpec
-import bisq.offer.payment_method.FiatPaymentMethodSpec
-import bisq.offer.payment_method.PaymentMethodSpecUtil
 import bisq.support.mediation.MediationRequestService
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
@@ -182,8 +182,12 @@ class NodeTradesServiceFacade(
                         Mappings.BisqEasyOfferMapping.toBisq2Model(bisqEasyOffer),
                         Mappings.MonetaryMapping.toBisq2Model(takersBaseSideAmount),
                         Mappings.MonetaryMapping.toBisq2Model(takersQuoteSideAmount),
-                        BitcoinPaymentMethodSpec(PaymentMethodSpecUtil.getBitcoinPaymentMethod(bitcoinPaymentMethod)),
-                        FiatPaymentMethodSpec(PaymentMethodSpecUtil.getFiatPaymentMethod(fiatPaymentMethod)),
+                        BitcoinPaymentMethodSpec(
+                            PaymentMethodSpecUtil.getBitcoinPaymentMethod(bitcoinPaymentMethod),
+                        ),
+                        FiatPaymentMethodSpec(
+                            PaymentMethodSpecUtil.getFiatPaymentMethod(fiatPaymentMethod),
+                        ),
                         takeOfferStatus,
                         takeOfferErrorMessage,
                     )
@@ -397,7 +401,7 @@ class NodeTradesServiceFacade(
             val priceSpec = bisqEasyOffer.priceSpec
             val marketPrice: Long = marketPriceService.findMarketPrice(bisqEasyOffer.market).map { it.priceQuote.value }.orElse(0)
             val bisqEasyProtocol: BisqEasyProtocol =
-                bisqEasyTradeService.createBisqEasyProtocol(
+                bisqEasyTradeService.takerCreatesProtocol(
                     takerIdentity.identity,
                     bisqEasyOffer,
                     takersBaseSideAmount,
@@ -420,7 +424,7 @@ class NodeTradesServiceFacade(
                             Res.get(
                                 "bisqEasy.openTrades.failed.popup",
                                 message,
-                                bisqEasyTrade.errorStackTrace.take(500),
+                                bisqEasyTrade.errorStackTrace?.take(500),
                             )
                     }
                 }
@@ -431,7 +435,7 @@ class NodeTradesServiceFacade(
                             Res.get(
                                 "bisqEasy.openTrades.failedAtPeer.popup",
                                 peersErrorMessage,
-                                bisqEasyTrade.peersErrorStackTrace.take(500),
+                                bisqEasyTrade.peersErrorStackTrace?.take(500),
                             )
                     }
                 }

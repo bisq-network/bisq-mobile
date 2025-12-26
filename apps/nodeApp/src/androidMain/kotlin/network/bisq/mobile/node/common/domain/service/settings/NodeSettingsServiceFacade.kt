@@ -59,7 +59,7 @@ class NodeSettingsServiceFacade(
     override suspend fun setLanguageCode(value: String) {
         try {
             log.i { "Attempting to set language code to: $value" }
-            settingsService.setLanguageCode(value)
+            settingsService.setLanguageTag(value)
             val locale = languageToLocaleMap[value] ?: Locale("en", "US")
             LocaleRepository.setDefaultLocale(locale)
             _languageCode.value = value
@@ -75,7 +75,7 @@ class NodeSettingsServiceFacade(
     override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes.asStateFlow()
 
     override suspend fun setSupportedLanguageCodes(value: Set<String>) {
-        settingsService.supportedLanguageCodes.setAll(value)
+        settingsService.supportedLanguageTags.setAll(value)
     }
 
     private val _chatNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
@@ -141,7 +141,7 @@ class NodeSettingsServiceFacade(
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
-        settingsService.languageCode.addObserver { code ->
+        settingsService.languageTag.addObserver { code ->
             _languageCode.value = code
         }
         isTacAcceptedPin =

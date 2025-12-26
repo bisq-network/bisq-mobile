@@ -8,4 +8,5 @@ enum class ChatChannelDomainEnum {
     BISQ_EASY_OPEN_TRADES,
     DISCUSSION,
     SUPPORT,
+    MU_SIG_OPEN_TRADES,
 }

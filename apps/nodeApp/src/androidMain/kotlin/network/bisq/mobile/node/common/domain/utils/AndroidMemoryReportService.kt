@@ -2,6 +2,9 @@ package network.bisq.mobile.node.common.domain.utils
 
 import android.app.ActivityManager
 import android.os.Debug
+import bisq.common.observable.ReadOnlyObservable
+import bisq.common.observable.map.ObservableHashMap
+import bisq.common.observable.map.ReadOnlyObservableMap
 import bisq.common.platform.MemoryReportService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +16,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.utils.Logging
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 class AndroidMemoryReportService(
@@ -134,5 +138,21 @@ class AndroidMemoryReportService(
             activityManager.getMemoryInfo(deviceMemInfo)
             return bytesToMb(deviceMemInfo.totalMem)
         }
+    }
+
+    override fun getHistoricalNumThreadsByThreadName(): ReadOnlyObservableMap<String?, ObservableHashMap<Long?, AtomicInteger?>?>? {
+        // Thread-level statistics are currently not collected on Android.
+        // The nullable return type is used by callers to detect unsupported platforms.
+        return null
+    }
+
+    override fun getCurrentNumThreads(): ReadOnlyObservable<Int?>? {
+        // Not supported on Android; return null to indicate unavailability.
+        return null
+    }
+
+    override fun getPeakNumThreads(): ReadOnlyObservable<Int?>? {
+        // Not supported on Android; return null to indicate unavailability.
+        return null
     }
 }

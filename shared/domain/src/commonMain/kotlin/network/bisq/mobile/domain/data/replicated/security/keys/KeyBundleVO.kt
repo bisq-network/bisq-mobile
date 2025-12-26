@@ -7,4 +7,5 @@ data class KeyBundleVO(
     val keyId: String,
     val keyPair: KeyPairVO,
     val torKeyPair: TorKeyPairVO,
+    val i2pKeyPair: I2pKeyPairVO?,
 )

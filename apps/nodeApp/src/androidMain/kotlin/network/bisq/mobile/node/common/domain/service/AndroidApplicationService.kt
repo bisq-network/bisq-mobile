@@ -23,7 +23,9 @@ import bisq.application.ApplicationService
 import bisq.application.State
 import bisq.bisq_easy.BisqEasyService
 import bisq.bonded_roles.BondedRolesService
+import bisq.bonded_roles.bonded_role.AuthorizedBondedRolesService
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
+import bisq.burningman.BurningmanService
 import bisq.chat.ChatService
 import bisq.common.locale.LanguageRepository
 import bisq.common.observable.Observable
@@ -128,14 +130,14 @@ class AndroidApplicationService(
     val shutDownErrorMessage = Observable<String>()
     val startupErrorMessage = Observable<String>()
 
-    val androidCatHashService = AndroidNodeCatHashService(context, config.baseDir)
+    val androidCatHashService = AndroidNodeCatHashService(context, config.appDataDirPath)
 
     val securityService =
         SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")))
 
-    val networkServiceConfig =
+    val networkServiceConfig: NetworkServiceConfig? =
         NetworkServiceConfig.from(
-            config.baseDir,
+            config.appDataDirPath,
             getConfig("network"),
         )
 
@@ -148,19 +150,31 @@ class AndroidApplicationService(
             securityService.equihashProofOfWorkService,
             androidMemoryReportService,
         )
+
     val identityService =
         IdentityService(
             persistenceService,
             securityService.keyBundleService,
             networkService,
         )
+
+    private val bondedRolesConfig: BondedRolesService.Config =
+        BondedRolesService.Config.from(getConfig("bondedRoles"))
+
     val bondedRolesService =
         BondedRolesService(
-            BondedRolesService.Config.from(getConfig("bondedRoles")),
+            bondedRolesConfig,
             getPersistenceService(),
             networkService,
         )
+
+    val authorizedBondedRolesService =
+        AuthorizedBondedRolesService(
+            networkService,
+            bondedRolesConfig.isIgnoreSecurityManager,
+        )
     val accountService = AccountService(persistenceService)
+    val burningManService = BurningmanService(authorizedBondedRolesService)
     val offerService = OfferService(networkService, identityService, persistenceService)
     val contractService = ContractService(securityService)
     val userService =
@@ -204,8 +218,6 @@ class AndroidApplicationService(
 
         tradeService =
             TradeService(
-//            TODO: this is part of Bisq 2.1.8
-//            TradeService.Config.from(getConfig("trade")),
                 null,
                 networkService,
                 identityService,
@@ -217,6 +229,8 @@ class AndroidApplicationService(
                 bondedRolesService,
                 userService,
                 settingsService,
+                accountService,
+                burningManService,
             )
 
         bisqEasyService =

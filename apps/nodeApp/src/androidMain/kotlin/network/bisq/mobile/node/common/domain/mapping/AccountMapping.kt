@@ -1,16 +1,21 @@
 package network.bisq.mobile.node.common.domain.mapping
 
-import bisq.account.accounts.UserDefinedFiatAccount
-import bisq.account.accounts.UserDefinedFiatAccountPayload
+import bisq.account.accounts.fiat.UserDefinedFiatAccount
+import bisq.account.accounts.fiat.UserDefinedFiatAccountPayload
+import bisq.common.util.StringUtils
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 
 object UserDefinedFiatAccountMapping {
-    fun toBisq2Model(value: UserDefinedFiatAccountVO): UserDefinedFiatAccount =
-        UserDefinedFiatAccount(
+    fun toBisq2Model(value: UserDefinedFiatAccountVO): UserDefinedFiatAccount {
+        val payload = UserDefinedFiatAccountPayloadMapping.toBisq2Model(value.accountPayload)
+        return UserDefinedFiatAccount(
+            StringUtils.createUid(),
+            System.currentTimeMillis(),
             value.accountName,
-            value.accountPayload.accountData,
+            payload,
         )
+    }
 
     fun fromBisq2Model(value: UserDefinedFiatAccount): UserDefinedFiatAccountVO =
         UserDefinedFiatAccountVO(
@@ -22,8 +27,7 @@ object UserDefinedFiatAccountMapping {
 object UserDefinedFiatAccountPayloadMapping {
     fun toBisq2Model(value: UserDefinedFiatAccountPayloadVO): UserDefinedFiatAccountPayload =
         UserDefinedFiatAccountPayload(
-            "",
-            "",
+            StringUtils.createUid(),
             value.accountData,
         )
 

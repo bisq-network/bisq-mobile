@@ -63,6 +63,23 @@ class AndroidNodeCatHashService(
     }
 
     override fun writeRawImage(
+        platformImage: PlatformImage?,
+        path: Path?,
+    ) {
+        if (platformImage == null || path == null) {
+            return
+        }
+        writeRawImage(platformImage, path.toFile())
+    }
+
+    override fun readRawImage(path: Path?): PlatformImage? {
+        if (path == null) {
+            return null
+        }
+        return readRawImage(path.toFile())
+    }
+
+    private fun writeRawImage(
         image: PlatformImage,
         file: File,
     ) {
@@ -70,7 +87,7 @@ class AndroidNodeCatHashService(
         AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
     }
 
-    override fun readRawImage(file: File): PlatformImage? {
+    private fun readRawImage(file: File): PlatformImage? {
         val bitmap: Bitmap? = AndroidImageUtil.readByteArrayAsBitmap(file)
         return if (bitmap == null) null else PlatformImage(bitmap.asImageBitmap())
     }

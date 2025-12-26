@@ -1,10 +1,10 @@
 [versions]
 
 # -------------------- Project Specific --------------------
-bisq-core = "2.1.7"
-bisq-core-commit = "fa8eb0c092a1caf493692930d666882eb9c0679f"
+bisq-core = "2.1.8"
+bisq-core-commit = "d25503dc8581e92de3a8318c0650e0a9ef4b5fd9"
 # API version is usually same as bisq-core but for more control we keep it separated
-#bisq-api = "2.1.7"
+#bisq-api = "2.1.8"
 
 # -------------------- Kotlin & JetBrains --------------------
 kotlin = "2.2.10"
@@ -44,8 +44,8 @@ coil-compose = "3.3.0"
 # -------------------- Multiplatform Libraries --------------------
 bignum-lib = "0.3.10"
 # kmp-tor for embedded Tor support
-kmp-tor = "2.4.1"
-kmp-tor-resource = "408.17.0"
+kmp-tor = "2.5.0"
+kmp-tor-resource = "408.19.0"
 kermit = "2.0.8"
 
 # -------------------- Testing --------------------
@@ -184,6 +184,7 @@ bisq-core-offer = { module = "bisq:offer", version.ref = "bisq-core" }
 bisq-core-persistence = { module = "bisq:persistence", version.ref = "bisq-core" }
 bisq-core-presentation = { module = "bisq:presentation", version.ref = "bisq-core" }
 bisq-core-account = { module = "bisq:account", version.ref = "bisq-core" }
+bisq-core-burningman = { module = "bisq:burningman", version.ref = "bisq-core" }
 bisq-core-application = { module = "bisq:application", version.ref = "bisq-core" }
 bisq-core-bonded-roles = { module = "bisq:bonded-roles", version.ref = "bisq-core" }
 bisq-core-chat = { module = "bisq:chat", version.ref = "bisq-core" }

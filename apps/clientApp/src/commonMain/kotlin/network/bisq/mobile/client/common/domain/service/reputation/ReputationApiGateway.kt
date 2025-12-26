@@ -17,7 +17,7 @@ class ReputationApiGateway(
 
     suspend fun subscribeUserReputation(): WebSocketEventObserver {
         try {
-            return webSocketClientService.subscribe(Topic.USER_REPUTATION)
+            return webSocketClientService.subscribe(Topic.REPUTATION)
         } catch (e: Exception) {
             log.e(e) { "Failed to subscribe to reputation events: ${e.message}" }
             throw e

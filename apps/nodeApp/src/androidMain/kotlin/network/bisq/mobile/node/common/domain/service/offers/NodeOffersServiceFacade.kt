@@ -2,8 +2,8 @@ package network.bisq.mobile.node.common.domain.service.offers
 
 import bisq.account.payment_method.BitcoinPaymentMethod
 import bisq.account.payment_method.BitcoinPaymentMethodUtil
-import bisq.account.payment_method.FiatPaymentMethod
-import bisq.account.payment_method.FiatPaymentMethodUtil
+import bisq.account.payment_method.fiat.FiatPaymentMethod
+import bisq.account.payment_method.fiat.FiatPaymentMethodUtil
 import bisq.bisq_easy.BisqEasyServiceUtil
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.ChatMessageType
@@ -11,7 +11,7 @@ import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannelService
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookMessage
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookSelectionService
-import bisq.common.currency.Market
+import bisq.common.market.Market
 import bisq.common.observable.Pin
 import bisq.common.observable.collection.CollectionObserver
 import bisq.common.observable.collection.ObservableSet
@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -241,8 +242,7 @@ class NodeOffersServiceFacade(
                 fiatPaymentMethods,
                 userProfile.terms,
                 supportedLanguageCodes,
-//            TODO for Bisq v2.1.8
-//            BuildNodeConfig.TRADE_PROTOCOL_VERSION,
+                BuildNodeConfig.TRADE_PROTOCOL_VERSION,
             )
 
         val channel: BisqEasyOfferbookChannel =

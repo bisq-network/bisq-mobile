@@ -21,7 +21,7 @@ enum class Topic(
     OFFERS(typeOf<List<OfferItemPresentationDto>>()),
     TRADES(typeOf<List<TradeItemPresentationDto>>()),
     TRADE_PROPERTIES(typeOf<List<Map<String, TradePropertiesDto>>>()),
-    TRADE_CHATS(typeOf<List<BisqEasyOpenTradeMessageDto>>()),
+    TRADE_CHAT_MESSAGES(typeOf<List<BisqEasyOpenTradeMessageDto>>()),
     CHAT_REACTIONS(typeOf<List<BisqEasyOpenTradeMessageReactionVO>>()),
-    USER_REPUTATION(typeOf<Map<String, ReputationScoreVO>>()),
+    REPUTATION(typeOf<Map<String, ReputationScoreVO>>()),
 }
