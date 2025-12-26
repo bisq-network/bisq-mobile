@@ -37,7 +37,7 @@ class NodeMediationServiceFacade(
             if (optionalChannel.isPresent) {
                 val channel = optionalChannel.get()
                 val mediator = channel.mediator
-                if (mediator != null) {
+                if (mediator.isPresent) {
                     val encoded =
                         Res.encode(
                             "bisqEasy.mediation.requester.tradeLogMessage",
