@@ -39,7 +39,7 @@ jobs:
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
       - name: Run ktlint check
-        run: ./gradlew ktlintCheck --build-cache -Pkotlin.native.ignoreDisabledTargets=true
+        run: ./gradlew ktlintCheck -Pkotlin.native.ignoreDisabledTargets=true
 
   # --- Common Build & Test (runs for all PRs, including forks) ---
   build:

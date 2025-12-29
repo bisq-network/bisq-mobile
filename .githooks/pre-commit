@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Pre-commit hook for Bisq Mobile
-# Official ktlint check + custom TODO/FIXME check
+# Checks for TODO/FIXME comments (warning only)
+# Note: ktlint checks have been moved to pre-push hook
 
 echo "🔍 Running pre-commit checks..."
 echo ""
@@ -25,137 +26,7 @@ print_warning() {
 }
 
 # ============================================
-# 1. OFFICIAL KTLINT CHECK
-# ============================================
-echo "🎨 Running ktlint check..."
-
-######## KTLINT-GRADLE HOOK START ########
-set +e
-CHANGED_FILES="$(git --no-pager diff --name-status --no-color --cached | awk '$1 != "D" && $NF ~ /\.kts?$/ { print $NF }')"
-
-if [ -z "$CHANGED_FILES" ]; then
-    echo "No Kotlin staged files."
-else
-    echo "Running ktlint over these files:"
-    echo "$CHANGED_FILES"
-    echo ""
-    echo "⏳ Checking code style (this may take a moment)..."
-
-    diff=.git/unstaged-ktlint-git-hook.diff
-    git diff --binary --color=never > $diff
-    if [ -s $diff ]; then
-      git apply -R $diff
-    fi
-
-    ktlint_output=$(./gradlew ktlintCheck -PinternalKtlintGitFilter="$CHANGED_FILES" 2>&1)
-    gradle_command_exit_code=$?
-
-    echo "✓ Completed ktlint run."
-
-    if [ -s $diff ]; then
-      git apply --ignore-whitespace $diff
-    fi
-    rm $diff
-    unset diff
-
-    # Exit if ktlint check failed
-    if [ $gradle_command_exit_code -ne 0 ]; then
-        # Check if there are actual ktlint violations (not compilation errors)
-        violations=$(echo "$ktlint_output" | grep -E "\.kts?:[0-9]+:[0-9]+" | grep -v "file://" | grep -v "^[ew]:")
-
-        if [ -n "$violations" ]; then
-            # Actual ktlint violations found
-            echo ""
-            print_error "ktlint found violations!"
-            echo ""
-            echo "Violations found:"
-            echo "$violations" | head -20
-            echo ""
-            echo ""
-
-            # Offer auto-fix
-            printf "Attempt auto-fix? (y/n): "
-            exec < /dev/tty
-            read -r response
-            exec <&-
-
-            if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
-                echo ""
-                echo "🔧 Running ktlintFormat..."
-                ./gradlew --quiet ktlintFormat -PinternalKtlintGitFilter="$CHANGED_FILES"
-                format_exit_code=$?
-
-                if [ $format_exit_code -eq 0 ]; then
-                    echo ""
-                    print_success "Files formatted successfully!"
-                    echo ""
-                    echo "📋 Modified files:"
-                    echo "$CHANGED_FILES" | while read -r file; do
-                        echo "  • $file"
-                    done
-                    echo ""
-                    print_warning "TIP: Review changes with 'git diff' before staging"
-                    echo ""
-
-                    # Ask user if they want to stage and proceed
-                    printf "Stage these changes and proceed with commit? (y/n): "
-                    exec < /dev/tty
-                    read -r stage_response
-                    exec <&-
-
-                    if [ "$stage_response" = "y" ] || [ "$stage_response" = "Y" ]; then
-                        # Re-add the fixed files
-                        echo "$CHANGED_FILES" | while read -r file; do
-                            git add "$file"
-                        done
-                        echo ""
-                        print_success "Files staged and commit proceeding..."
-                        echo ""
-                    else
-                        echo ""
-                        print_warning "Commit aborted. Files are formatted but not staged."
-                        echo ""
-                        echo "Next steps:"
-                        echo "  1. Review changes: git diff"
-                        echo "  2. When ready:     git add <files> && git commit"
-                        echo ""
-                        exit 1
-                    fi
-                else
-                    echo ""
-                    print_error "Auto-fix failed. Please fix manually."
-                    echo ""
-                    exit $format_exit_code
-                fi
-            else
-                echo ""
-                echo "Fix manually with: ./gradlew ktlintFormat"
-                echo "Or commit anyway with: git commit --no-verify"
-                echo ""
-                exit $gradle_command_exit_code
-            fi
-        else
-            # No ktlint violations found, but task failed (likely compilation error)
-            echo ""
-            print_error "Build failed (not a ktlint issue)"
-            echo ""
-            echo "The ktlint check failed due to compilation errors or other build issues."
-            echo "Please fix the errors and try again."
-            echo ""
-            echo "To see full error output:"
-            echo "  ./gradlew ktlintCheck"
-            echo ""
-            exit $gradle_command_exit_code
-        fi
-    fi
-fi
-######## KTLINT-GRADLE HOOK END ########
-
-print_success "ktlint check passed!"
-echo ""
-
-# ============================================
-# 2. CHECK FOR TODO/FIXME (Warning only)
+# CHECK FOR TODO/FIXME (Warning only)
 # ============================================
 echo "📝 Checking for TODO/FIXME comments..."
 TODO_FOUND=false
@@ -189,7 +60,7 @@ fi
 
 # Success!
 echo "════════════════════════════════════════════"
-print_success "All pre-commit checks passed! ✨"
+print_success "Pre-commit checks complete! ✨"
 echo "════════════════════════════════════════════"
 echo ""
 

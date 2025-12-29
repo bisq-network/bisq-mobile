@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Pre-push hook for Bisq Mobile
-# Runs unit tests before allowing push
+# Runs ktlint check and unit tests before allowing push
 
 echo "🔍 Running pre-push checks..."
 echo ""
@@ -25,7 +25,187 @@ print_warning() {
 }
 
 # ============================================
-# 1. RUN UNIT TESTS
+# REUSABLE FUNCTIONS
+# ============================================
+
+# Handles ktlint check failures (both violations and build errors)
+# Parameters: $1 = exit code, $2 = ktlint output, $3 = files source type
+handle_ktlint_failure() {
+    local exit_code=$1
+    local ktlint_output="$2"
+    local files_source="$3"
+
+    if [ $exit_code -ne 0 ]; then
+        # Check if there are actual ktlint violations (not compilation errors)
+        violations=$(echo "$ktlint_output" | grep -E "\.kts?:[0-9]+:[0-9]+" | grep -v "file://" | grep -v "^[ew]:")
+
+        if [ -n "$violations" ]; then
+            # Actual ktlint violations found
+            echo ""
+            print_error "ktlint found violations!"
+            echo ""
+            echo "Violations found:"
+            echo "$violations" | head -20
+            echo ""
+            echo ""
+
+            # Offer auto-fix
+            printf "Attempt auto-fix? (y/n): "
+            exec < /dev/tty
+            read -r response
+            exec <&-
+
+            if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
+                echo ""
+                echo "🔧 Running ktlintFormat..."
+
+                # Execute format command based on source type and capture output
+                if [ "$files_source" = "changed_files" ]; then
+                    format_output=$(./gradlew --quiet ktlintFormat -PinternalKtlintGitFilter="$CHANGED_FILES" -Pkotlin.native.ignoreDisabledTargets=true 2>&1)
+                else
+                    format_output=$(./gradlew --quiet ktlintFormat -Pkotlin.native.ignoreDisabledTargets=true 2>&1)
+                fi
+                format_exit_code=$?
+
+                if [ $format_exit_code -eq 0 ]; then
+                    echo ""
+                    print_success "Files formatted successfully!"
+                    echo ""
+
+                    # Show which files were modified
+                    files_modified=$(git diff --name-only | grep "\.kts\?$")
+
+                    if [ -n "$files_modified" ]; then
+                        echo "📋 Modified files:"
+                        echo "$files_modified" | while read -r file; do
+                            echo "  • $file"
+                        done
+                        echo ""
+                    fi
+
+                    print_warning "Push aborted. Please review the changes, commit, and push again."
+                    echo ""
+                    echo "Next steps:"
+                    echo "  1. Review changes:  git diff"
+                    echo "  2. Stage files:     git add <files>"
+                    echo "  3. Commit:          git commit --amend --no-edit  (or create new commit)"
+                    echo "  4. Push again:      git push"
+                    echo ""
+                    exit 1
+                else
+                    echo ""
+                    print_error "Auto-fix failed. Some violations cannot be fixed automatically."
+                    echo ""
+
+                    # Try to extract report file path from output
+                    report_path=$(echo "$format_output" | grep -oE "/[^[:space:]]+\.txt" | head -1)
+
+                    if [ -n "$report_path" ]; then
+                        echo "See detailed violations report:"
+                        echo "  $report_path"
+                        echo ""
+                    fi
+
+                    echo "Please fix these violations manually and try again."
+                    echo ""
+                    exit $format_exit_code
+                fi
+            else
+                echo ""
+                print_error "Push aborted due to ktlint violations"
+                echo ""
+                echo "Next steps:"
+                echo "  # Fix all violations:"
+                echo "  ./gradlew ktlintFormat"
+                echo ""
+                echo "  # Or fix only files changed in your branch (replace <base-branch> with your actual base):"
+                echo "  ./gradlew ktlintFormat -PinternalKtlintGitFilter=\"\$(git diff --name-status <base-branch (e.g: upstream/main)>...HEAD | awk '\$1 != \"D\" && \$NF ~ /\\.kts?$/ { print \$NF }')\""
+                echo ""
+                echo "  # Then stage and commit (amend or new commit - your choice):"
+                echo "  git add <files>"
+                echo "  git commit"
+                echo ""
+                echo "Or push anyway with: git push --no-verify"
+                echo ""
+                exit $exit_code
+            fi
+        else
+            # No ktlint violations found, but task failed (likely compilation error)
+            echo ""
+            print_error "Build failed (not a ktlint issue)"
+            echo ""
+            echo "The ktlint check failed due to compilation errors or other build issues."
+            echo "Please fix the errors and try again."
+            echo ""
+            echo "To see full error output:"
+            echo "  ./gradlew ktlintCheck"
+            echo ""
+            exit $exit_code
+        fi
+    fi
+}
+
+# ============================================
+# 1. KTLINT CHECK (files changed in branch)
+# ============================================
+echo "🎨 Running ktlint check on branch changes..."
+
+# Detect base branch with fallbacks
+if git rev-parse --verify upstream/main >/dev/null 2>&1; then
+    BASE_BRANCH="upstream/main"
+else
+    echo ""
+    print_warning "No base branch found (tried upstream/main)"
+    print_warning "Running ktlint on entire project instead"
+    echo ""
+    BASE_BRANCH=""
+fi
+
+# Determine which files to check
+if [ -n "$BASE_BRANCH" ]; then
+    # Get Kotlin files changed in this branch (excluding deleted files)
+    CHANGED_FILES="$(git diff --name-status $BASE_BRANCH...HEAD | awk '$1 != "D" && $NF ~ /\.kts?$/ { print $NF }')"
+
+    if [ -z "$CHANGED_FILES" ]; then
+        echo "No Kotlin files changed in this branch."
+        echo ""
+    else
+        echo "Checking Kotlin files changed in this branch (compared to $BASE_BRANCH):"
+        echo "$CHANGED_FILES"
+        echo ""
+        echo "⏳ Running ktlint (this may take a moment)..."
+
+        ktlint_output=$(./gradlew ktlintCheck -PinternalKtlintGitFilter="$CHANGED_FILES" -Pkotlin.native.ignoreDisabledTargets=true 2>&1)
+        gradle_command_exit_code=$?
+
+        echo "✓ Completed ktlint run."
+
+        # Handle failures using shared function
+        handle_ktlint_failure $gradle_command_exit_code "$ktlint_output" "changed_files"
+
+        print_success "ktlint check passed!"
+        echo ""
+    fi
+else
+    # No base branch found - run ktlint on entire project
+    echo "Checking all Kotlin files in project..."
+    echo ""
+    echo "⏳ Running ktlint on entire project (this may take a while)..."
+
+    ktlint_output=$(./gradlew ktlintCheck -Pkotlin.native.ignoreDisabledTargets=true 2>&1)
+    gradle_command_exit_code=$?
+
+    echo "✓ Completed ktlint run."
+
+    # Handle failures using shared function
+    handle_ktlint_failure $gradle_command_exit_code "$ktlint_output" "all_files"
+
+    print_success "ktlint check passed!"
+    echo ""
+fi
+
+# ============================================
+# 2. RUN UNIT TESTS
 # ============================================
 echo "🧪 Running unit tests (androidUnitTest + commonTest)..."
 ./gradlew testDebugUnitTest -q
@@ -53,7 +233,7 @@ echo ""
 
 # Success!
 echo "════════════════════════════════════════════"
-print_success "All tests passed! 🚀"
+print_success "All pre-push checks passed! 🚀"
 echo "════════════════════════════════════════════"
 echo ""
 
