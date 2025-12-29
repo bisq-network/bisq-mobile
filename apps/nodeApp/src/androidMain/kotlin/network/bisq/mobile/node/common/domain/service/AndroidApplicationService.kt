@@ -218,7 +218,7 @@ class AndroidApplicationService(
 
         tradeService =
             TradeService(
-                null,
+                TradeService.Config.from(getConfig("trade")),
                 networkService,
                 identityService,
                 persistenceService,
