@@ -50,7 +50,7 @@ class NodeNetworkServiceFacade(
                     log.i { "ServiceNode state changed to: $state, defaultNode: ${serviceNode.defaultNode}" }
                     if (ServiceNode.State.INITIALIZING == state) {
                         defaultNode = serviceNode.defaultNode
-                        requireNotNull(defaultNode) { "defaultNode is not null when state is ServiceNode.State.INITIALIZING" }
+                        requireNotNull(defaultNode) { "defaultNode must not be null when state is ServiceNode.State.INITIALIZING" }
                         log.i { "Setting up Node.Listener for defaultNode: $defaultNode" }
                         defaultNode!!.addListener(this)
                         updateNumConnections()
