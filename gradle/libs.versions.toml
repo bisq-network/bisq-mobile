@@ -44,8 +44,11 @@ coil-compose = "3.3.0"
 # -------------------- Multiplatform Libraries --------------------
 bignum-lib = "0.3.10"
 # kmp-tor for embedded Tor support
-kmp-tor = "2.5.0"
-kmp-tor-resource = "408.19.0"
+kmp-tor = "2.4.1"
+kmp-tor-resource = "408.17.0"
+## we can't upgrade to 2.5.0 - it breaks iOS
+#kmp-tor = "2.5.0"
+#kmp-tor-resource = "408.19.0"
 kermit = "2.0.8"
 
 # -------------------- Testing --------------------
