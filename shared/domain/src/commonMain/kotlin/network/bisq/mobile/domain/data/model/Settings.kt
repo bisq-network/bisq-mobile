@@ -9,6 +9,7 @@ data class Settings(
     val selectedMarketCode: String = "BTC/USD",
     val notificationPermissionState: PermissionState = PermissionState.NOT_GRANTED,
     val batteryOptimizationState: BatteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+    val pushNotificationsEnabled: Boolean = false,
 )
 
 @Serializable
