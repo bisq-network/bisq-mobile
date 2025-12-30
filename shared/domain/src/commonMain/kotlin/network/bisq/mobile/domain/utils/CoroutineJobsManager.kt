@@ -71,25 +71,9 @@ class DefaultCoroutineJobsManager :
     override fun getScope(): CoroutineScope = scope
 
     override suspend fun dispose() {
-        if (isIOS) {
-            // On iOS, don't dispose scopes during shutdown to avoid crashes
-            // The system will clean up when the app terminates
-            return
-        }
-
-        // Android - normal disposal
-        disposeScopes()
-        recreateScopes()
-    }
-
-    private fun disposeScopes() {
         runCatching { scope.cancel() }.onFailure { throwable ->
             log.w(throwable) { "Failed to cancel scope: ${throwable.message}" }
         }
-    }
-
-    private fun recreateScopes() {
-        scope = createScope()
     }
 
     private fun createScope(): CoroutineScope {
