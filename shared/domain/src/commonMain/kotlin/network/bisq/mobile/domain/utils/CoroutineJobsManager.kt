@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
 import kotlin.coroutines.EmptyCoroutineContext
@@ -16,7 +17,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  */
 interface CoroutineJobsManager {
     /**
-     * Dispose all managed jobs.
+     * Dispose all managed jobs. CoroutineJobsManager becomes unusable after calling [dispose].
      */
     suspend fun dispose()
 
@@ -68,7 +69,10 @@ class DefaultCoroutineJobsManager :
         onCoroutineException = handler
     }
 
-    override fun getScope(): CoroutineScope = scope
+    override fun getScope(): CoroutineScope {
+        check(scope.isActive) { "Scope has been disposed and cannot be reused" }
+        return scope
+    }
 
     override suspend fun dispose() {
         runCatching { scope.cancel() }.onFailure { throwable ->
