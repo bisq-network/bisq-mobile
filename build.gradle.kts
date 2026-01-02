@@ -41,7 +41,14 @@ plugins {
     // For iOS device some setup is needed to incorporate the LibTor.framework
     // that is expected to be present at runtime.
     // See: https://github.com/05nelsonm/kmp-tor-resource/blob/master/library/resource-frameworks-gradle-plugin/README.md
-    alias(libs.plugins.kmp.tor.resource.frameworks).apply(false)
+    alias(libs.plugins.kmp.tor.resource.frameworks)
+}
+
+// Configure kmp-tor-resource-frameworks plugin for iOS
+// This generates LibTor.xcframework in build/kmp-tor-resource/
+// which must be manually added to the Xcode project
+kmpTorResourceFrameworks {
+    torGPL.set(true) // We use the -gpl variants
 }
 
 // Kover dependencies for aggregated coverage reports
