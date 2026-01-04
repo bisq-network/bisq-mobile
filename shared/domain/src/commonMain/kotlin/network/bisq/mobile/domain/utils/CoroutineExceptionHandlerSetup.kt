@@ -24,7 +24,7 @@ class CoroutineExceptionHandlerSetup {
      */
     fun setupExceptionHandler(jobsManager: CoroutineJobsManager) {
         exceptionHandler?.let { handler ->
-            jobsManager.setCoroutineExceptionHandler(handler)
+            jobsManager.coroutineExceptionHandler = handler
         }
     }
 }

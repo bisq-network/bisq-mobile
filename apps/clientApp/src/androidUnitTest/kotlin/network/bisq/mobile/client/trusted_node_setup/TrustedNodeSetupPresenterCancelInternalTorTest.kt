@@ -107,8 +107,6 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
                 override suspend fun dispose() {}
 
                 override fun getScope() = scope
-
-                override fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {}
             }
 
         startKoin {
