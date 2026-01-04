@@ -496,6 +496,7 @@ class OfferbookPresenterFilterTest {
 
     private class TestCoroutineJobsManager(
         private val dispatcher: CoroutineDispatcher,
+        override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null,
     ) : CoroutineJobsManager {
         private val scope = CoroutineScope(dispatcher + SupervisorJob())
         private val ioScope = CoroutineScope(dispatcher + SupervisorJob())
@@ -508,8 +509,6 @@ class OfferbookPresenterFilterTest {
         }
 
         override fun getScope(): CoroutineScope = scope
-
-        override fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {}
     }
 
     private class NoopNavigationManager : NavigationManager {

@@ -11,6 +11,8 @@ class LifecycleAwareComposeViewController: UIViewController {
         self.presenter = presenter
         self.notificationServiceWrapper = notificationServiceWrapper
         GenericErrorHandler.companion.doInit()
+        let exceptionHandler = get(CoroutineExceptionHandlerSetup.self)
+        GenericErrorHandler.companion.setupCoroutineExceptionHandler(handlerSetup: exceptionHandler)
 
         self.clientApplicationLifecycleService = get(ApplicationLifecycleService.self)
         self.clientApplicationLifecycleService.initialize()

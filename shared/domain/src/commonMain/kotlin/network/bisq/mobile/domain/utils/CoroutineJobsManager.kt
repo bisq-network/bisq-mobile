@@ -7,8 +7,7 @@ import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.getPlatformInfo
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
@@ -28,10 +27,8 @@ interface CoroutineJobsManager {
 
     /**
      * Set a custom coroutine exception handler.
-     * Note: On iOS, this method has no effect due to platform limitations.
-     * @param handler The exception handler callback
      */
-    fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit)
+    var coroutineExceptionHandler: ((Throwable) -> Unit)?
 }
 
 /**
@@ -40,44 +37,34 @@ interface CoroutineJobsManager {
 class DefaultCoroutineJobsManager :
     CoroutineJobsManager,
     Logging {
+    @Volatile
+    override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null
+
     private val exceptionHandler =
         CoroutineExceptionHandler { _, exception ->
             log.e(exception) { "Uncaught coroutine exception" }
-
             // Handle the exception gracefully
             try {
-                onCoroutineException?.invoke(exception)
+                coroutineExceptionHandler?.invoke(exception)
             } catch (e: Exception) {
                 log.e(e) { "Error in coroutine exception handler" }
             }
         }
 
-    // TODO we might need to make the whole manager platform-specific to cater for iOS properly
-    // Platform-aware scope creation
-    private val isIOS = getPlatformInfo().type == PlatformType.IOS
-
     private var scope: CoroutineScope = createScope()
 
-    // Callback for handling coroutine exceptions
-    private var onCoroutineException: ((Throwable) -> Unit)? = null
-
-    override fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {
-        if (isIOS) {
-            log.d { "iOS detected - coroutine exception handler not supported" }
-            return
-        }
-        onCoroutineException = handler
-    }
-
     override fun getScope(): CoroutineScope {
-        check(scope.isActive) { "Scope has been disposed and cannot be reused" }
+        check(scope.isActive) { "Scope has been disposed and cannot be reused until replaced" }
         return scope
     }
 
     override suspend fun dispose() {
+        // JobsManager is currently getting disposed on BasePresenter on unattach (screen's composable onDispose),
+        // Which is different from how viewModelScope supposed to work
         runCatching { scope.cancel() }.onFailure { throwable ->
             log.w(throwable) { "Failed to cancel scope: ${throwable.message}" }
         }
+        scope = createScope()
     }
 
     private fun createScope(): CoroutineScope {
@@ -100,11 +87,7 @@ class DefaultCoroutineJobsManager :
                 // In JVM Desktop environments where `Dispatchers.Main` might not exist (e.g., Swing):
                 EmptyCoroutineContext
             }
-        return if (isIOS) {
-            CoroutineScope(dispatcher + SupervisorJob())
-        } else {
-            CoroutineScope(dispatcher + SupervisorJob() + exceptionHandler)
-        }
+        return CoroutineScope(dispatcher + SupervisorJob() + exceptionHandler)
     }
 
     private fun createDispatcher(): MainCoroutineDispatcher =

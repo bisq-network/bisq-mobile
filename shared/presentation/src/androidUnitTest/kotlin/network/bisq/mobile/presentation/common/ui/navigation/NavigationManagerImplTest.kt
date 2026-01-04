@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -34,6 +33,7 @@ class NavigationManagerImplTest {
     // Minimal TestCoroutineJobsManager mirroring the pattern used in OfferbookPresenterFilterTest
     private class TestCoroutineJobsManager(
         private val dispatcher: CoroutineDispatcher,
+        override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null,
     ) : CoroutineJobsManager {
         private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
@@ -42,10 +42,5 @@ class NavigationManagerImplTest {
         }
 
         override fun getScope(): CoroutineScope = scope
-
-        override fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {
-            // No-op for tests; exceptions are surfaced by runTest
-            scope.launch { }
-        }
     }
 }

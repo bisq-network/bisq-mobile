@@ -6,7 +6,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -122,7 +121,7 @@ abstract class BasePresenter(
     protected val jobsManager: CoroutineJobsManager by inject()
 
     // For presenters we need a fresh ui scope each as otherwise navigation brings conflicts
-    protected val presenterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    protected val presenterScope get() = jobsManager.getScope()
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
