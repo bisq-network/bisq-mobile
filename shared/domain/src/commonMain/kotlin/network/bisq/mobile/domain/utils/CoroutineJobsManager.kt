@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -53,10 +52,7 @@ class DefaultCoroutineJobsManager :
 
     private var scope: CoroutineScope = createScope()
 
-    override fun getScope(): CoroutineScope {
-        check(scope.isActive) { "Scope has been disposed and cannot be reused until replaced" }
-        return scope
-    }
+    override fun getScope() = scope
 
     override suspend fun dispose() {
         // JobsManager is currently getting disposed on BasePresenter on unattach (screen's composable onDispose),
