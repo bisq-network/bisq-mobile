@@ -15,7 +15,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  */
 interface CoroutineJobsManager {
     /**
-     * Dispose all managed jobs. CoroutineJobsManager becomes unusable after calling [dispose].
+     * Dispose all managed jobs and recreate scope
      */
     suspend fun dispose()
 
