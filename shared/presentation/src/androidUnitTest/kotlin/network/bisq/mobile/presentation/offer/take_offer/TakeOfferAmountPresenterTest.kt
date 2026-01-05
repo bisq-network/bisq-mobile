@@ -51,6 +51,9 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
+import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
@@ -59,6 +62,9 @@ import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecyc
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -76,11 +82,24 @@ class TakeOfferAmountPresenterTest {
     @BeforeTest
     fun setUpMainDispatcher() {
         Dispatchers.setMain(testDispatcher)
+        startKoin {
+            modules(
+                module {
+                    single { CoroutineExceptionHandlerSetup() }
+                    factory<CoroutineJobsManager> {
+                        DefaultCoroutineJobsManager().apply {
+                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
+                        }
+                    }
+                },
+            )
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @AfterTest
     fun tearDownMainDispatcher() {
+        stopKoin()
         Dispatchers.resetMain()
     }
 

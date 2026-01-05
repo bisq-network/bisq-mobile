@@ -26,9 +26,15 @@ import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServic
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
+import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -46,10 +52,23 @@ class MainPresenterUnreadBadgeTest {
     @BeforeTest
     fun setUpMainDispatcher() {
         Dispatchers.setMain(testDispatcher)
+        startKoin {
+            modules(
+                module {
+                    single { CoroutineExceptionHandlerSetup() }
+                    factory<CoroutineJobsManager> {
+                        DefaultCoroutineJobsManager().apply {
+                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
+                        }
+                    }
+                },
+            )
+        }
     }
 
     @AfterTest
     fun tearDownMainDispatcher() {
+        stopKoin()
         Dispatchers.resetMain()
     }
 
