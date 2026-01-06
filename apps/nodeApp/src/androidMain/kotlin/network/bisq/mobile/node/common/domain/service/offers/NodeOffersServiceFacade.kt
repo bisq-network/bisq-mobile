@@ -57,6 +57,7 @@ class NodeOffersServiceFacade(
     private val applicationService: AndroidApplicationService.Provider,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val settingsRepository: network.bisq.mobile.domain.data.repository.SettingsRepository,
 ) : OffersServiceFacade() {
     // Dependencies
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
@@ -81,16 +82,54 @@ class NodeOffersServiceFacade(
     override suspend fun activate() {
         super.activate()
 
-        // We set channel to null to avoid that our _offerbookMarketItems gets filled initially
         // React to ignore/unignore to update both lists and counts immediately
         observeIgnoredProfiles()
 
-        // We only want to fill it when we select a market.
-        bisqEasyOfferbookChannelSelectionService.selectChannel(null)
+        // Restore the previously selected market from settings (if any) and select its channel
+        // This avoids loading ALL offers at startup (memory/CPU optimization)
+        // while still showing offers for the user's last selected market
+        restoreAndSelectChannel()
 
         observeSelectedChannel()
         observeMarketPrice()
         observeMarketListItems(_offerbookMarketItems)
+    }
+
+    private suspend fun restoreAndSelectChannel() {
+        try {
+            val settings = settingsRepository.fetch()
+            val marketCode = settings.selectedMarketCode
+            val parts = marketCode.split("/")
+
+            if (parts.size == 2) {
+                val baseCurrency = parts[0]
+                val quoteCurrency = parts[1]
+                val marketVO = MarketVO(baseCurrency, quoteCurrency)
+                val market = Mappings.MarketMapping.toBisq2Model(marketVO)
+                val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
+
+                if (channelOptional.isPresent) {
+                    log.d { "Restoring selected channel for market: ${market.marketCodes}" }
+                    bisqEasyOfferbookChannelSelectionService.selectChannel(channelOptional.get())
+                    return
+                } else {
+                    log.w { "Could not find channel for restored market: ${market.marketCodes}" }
+                }
+            }
+        } catch (e: Exception) {
+            log.w(e) { "Failed to restore selected market from settings" }
+        }
+
+        // If no market was restored (fresh install or error), select the default market (BTC/USD)
+        val defaultMarket = Market("BTC", "USD", "Bitcoin", "US Dollar")
+        val channelOptional = bisqEasyOfferbookChannelService.findChannel(defaultMarket)
+        if (channelOptional.isPresent) {
+            log.d { "No saved market found, selecting default market: ${defaultMarket.marketCodes}" }
+            bisqEasyOfferbookChannelSelectionService.selectChannel(channelOptional.get())
+        } else {
+            log.w { "Could not find default BTC/USD channel, setting channel to null" }
+            bisqEasyOfferbookChannelSelectionService.selectChannel(null)
+        }
     }
 
     private fun observeIgnoredProfiles() {
