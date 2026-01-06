@@ -1,8 +1,17 @@
 package network.bisq.mobile.presentation.settings.user_profile
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +35,7 @@ import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSelect
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
@@ -61,8 +71,27 @@ fun UserProfileScreen() {
         scrollState.animateScrollTo(0)
     }
 
+    val scrollThreshold = 150f
+    val transitionProgress = (scrollState.value / scrollThreshold).coerceIn(0f, 1f)
+    val animatedProgress by animateFloatAsState(
+        targetValue = transitionProgress,
+        animationSpec = tween(durationMillis = 200),
+        label = "profileTransition",
+    )
+
     BisqScrollScaffold(
-        topBar = { TopBar("user.userProfile".i18n(), showUserAvatar = false) },
+        topBar = {
+            Column {
+                TopBar("user.userProfile".i18n(), showUserAvatar = false)
+                uiState.selectedUserProfile?.let { profile ->
+                    AnimatedTopBarProfile(
+                        profile = profile,
+                        imageProvider = presenter::getUserProfileIcon,
+                        transitionProgress = animatedProgress,
+                    )
+                }
+            }
+        },
         horizontalAlignment = Alignment.Start,
         snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
@@ -70,10 +99,6 @@ fun UserProfileScreen() {
         scrollState = scrollState,
     ) {
         uiState.selectedUserProfile?.let { profile ->
-            UserProfileScreenHeader(profile, presenter::getUserProfileIcon)
-
-            BisqGap.V1()
-
             Row(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
@@ -224,19 +249,48 @@ fun UserProfileScreen() {
 }
 
 @Composable
-private fun UserProfileScreenHeader(
+private fun AnimatedTopBarProfile(
     profile: UserProfileVO,
     imageProvider: suspend (UserProfileVO) -> PlatformImage,
+    transitionProgress: Float,
 ) {
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center,
+    val iconSize by animateDpAsState(
+        targetValue = if (transitionProgress < 0.5f) 80.dp else 50.dp,
+        animationSpec = tween(durationMillis = 200),
+        label = "iconSize",
+    )
+
+    val showNickname = transitionProgress > 0.6f
+
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = BisqUIConstants.ScreenPadding,
+                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                ),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         UserProfileIcon(
             profile,
             imageProvider,
-            90.dp,
+            iconSize,
         )
+        AnimatedVisibility(
+            visible = showNickname,
+            enter = fadeIn(animationSpec = tween(200)) + expandHorizontally(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200)) + shrinkHorizontally(animationSpec = tween(200)),
+        ) {
+            Row {
+                BisqGap.H1()
+                BisqText.H3Regular(
+                    text = profile.nickName,
+                    color = BisqTheme.colors.light_grey10,
+                )
+            }
+        }
     }
 }
 
