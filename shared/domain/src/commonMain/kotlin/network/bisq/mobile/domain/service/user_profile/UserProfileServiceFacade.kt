@@ -130,12 +130,12 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>>
 
     /**
-     * Selects a user profile using it's ID
+     * Selects a user profile using its ID
      */
     suspend fun selectUserProfile(id: String): Result<UserProfileVO>
 
     /**
-     * Deletes a user profile using it's ID
+     * Deletes a user profile using its ID
      */
     suspend fun deleteUserProfile(id: String): Result<UserProfileVO>
 }
