@@ -185,8 +185,6 @@ class CreateOfferAmountPresenterTest {
 
         override suspend fun getUserIdentityIds(): List<String> = emptyList()
 
-        override suspend fun getSelectedUserProfile() = null
-
         override suspend fun findUserProfile(profileId: String) = null
 
         override suspend fun findUserProfiles(ids: List<String>) = emptyList<UserProfileVO>()

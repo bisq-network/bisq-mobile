@@ -195,7 +195,7 @@ class NodeUserProfileServiceFacade(
 
     override suspend fun getUserIdentityIds(): List<String> = userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
 
-    override suspend fun getSelectedUserProfile(): UserProfileVO? =
+    private fun getSelectedUserProfile(): UserProfileVO? =
         userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
             Mappings.UserProfileMapping.fromBisq2Model(it)
         }

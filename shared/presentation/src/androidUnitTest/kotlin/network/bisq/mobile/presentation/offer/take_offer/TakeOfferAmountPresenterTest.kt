@@ -254,8 +254,6 @@ class TakeOfferAmountPresenterTest {
 
         override suspend fun getUserIdentityIds(): List<String> = emptyList()
 
-        override suspend fun getSelectedUserProfile() = createMockUserProfile("me")
-
         override suspend fun findUserProfile(profileId: String) = createMockUserProfile(profileId)
 
         override suspend fun findUserProfiles(ids: List<String>) = ids.map { createMockUserProfile(it) }

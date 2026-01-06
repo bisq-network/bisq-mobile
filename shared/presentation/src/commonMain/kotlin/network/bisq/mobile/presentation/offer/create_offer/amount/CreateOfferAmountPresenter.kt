@@ -534,7 +534,7 @@ class CreateOfferAmountPresenter(
         val range = maxAmount - minAmount
         presenterScope.launch {
             val userProfile: UserProfileVO =
-                userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
+                userProfileServiceFacade.selectedUserProfile.value ?: return@launch
 
             val reputationScore: ReputationScoreVO =
                 reputationServiceFacade.getReputation(userProfile.id).getOrNull() ?: return@launch

@@ -82,11 +82,11 @@ class ClientUserProfileServiceFacade(
                         val selectedDeferred =
                             async {
                                 try {
-                                    getSelectedUserProfile()?.also { _selectedUserProfile.value = it }
+                                    apiGateway.getSelectedUserProfile().getOrThrow().also { _selectedUserProfile.value = it }
                                 } catch (e: CancellationException) {
                                     throw e
                                 } catch (e: Exception) {
-                                    log.d("Error getting user profile: ${e.message}")
+                                    log.d("Error getting user profile in UserProfileServiceFacade: ${e.message}")
                                 }
                             }
 
@@ -208,19 +208,6 @@ class ClientUserProfileServiceFacade(
         }
 
         return apiResult.getOrThrow()
-    }
-
-    override suspend fun getSelectedUserProfile(): UserProfileVO? {
-        try {
-            val apiResult = apiGateway.getSelectedUserProfile()
-            if (apiResult.isFailure) {
-                throw apiResult.exceptionOrNull()!!
-            }
-            return apiResult.getOrThrow()
-        } catch (e: Exception) {
-            log.e(e) { "Failed to get selected user profile from service facade" }
-            throw e
-        }
     }
 
     override suspend fun findUserProfile(profileId: String): UserProfileVO? {

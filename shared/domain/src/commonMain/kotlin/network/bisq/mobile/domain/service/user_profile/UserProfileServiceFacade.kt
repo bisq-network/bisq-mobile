@@ -62,11 +62,6 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun getUserIdentityIds(): List<String>
 
     /**
-     * @return UserProfile if existent, null otherwise
-     */
-    suspend fun getSelectedUserProfile(): UserProfileVO?
-
-    /**
      * @return the UserProfile for the given ID if it exists; null if not found.
      *         Implementations may perform network I/O and can throw on transport or persistence errors.
      */
