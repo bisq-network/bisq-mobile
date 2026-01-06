@@ -2,13 +2,19 @@ package network.bisq.mobile.client.common.domain.service.user_profile
 
 import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -48,6 +54,9 @@ class ClientUserProfileServiceFacade(
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
     // Properties
+    private val _userProfiles: MutableStateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
+    override val userProfiles = _userProfiles.asStateFlow()
+
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
 
@@ -67,31 +76,38 @@ class ClientUserProfileServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch {
-            webSocketClientService.connectionState.collect {
-                if (it is ConnectionState.Connected) {
-                    // Initialize selected user profile with proper error handling
-                    runCatching {
-                        getSelectedUserProfile()
-                    }.onSuccess { profile ->
-                        _selectedUserProfile.value = profile
-                    }.onFailure { e ->
-                        if (e is CancellationException) {
-                            throw e
-                        }
-                        // Expected at first run
-                        log.d("Error getting user profile: ${e.message}")
-                    }
+            webSocketClientService.connectionState.collectLatest { state ->
+                if (state is ConnectionState.Connected) {
+                    supervisorScope {
+                        val selectedDeferred =
+                            async {
+                                try {
+                                    getSelectedUserProfile()?.also { _selectedUserProfile.value = it }
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    log.d("Error getting user profile: ${e.message}")
+                                }
+                            }
 
-                    // Ensure ignored users cache is initialized before any hot-path calls
-                    try {
-                        getIgnoredUserProfileIds()
-                        log.d { "Ignored users cache initialized successfully" }
-                    } catch (e: Exception) {
-                        log.e(e) { "Failed to initialize ignored users cache during activation" }
-                        // Set empty cache to prevent repeated network calls
-                        ignoredUserIdsMutex.withLock {
-                            _ignoredProfileIds.value = emptySet()
-                        }
+                        val profilesDeferred = refreshUserProfiles()
+
+                        val ignoredDeferred =
+                            async {
+                                // Ensure ignored users cache is initialized before any hot-path calls
+                                try {
+                                    getIgnoredUserProfileIds()
+                                    log.d { "Ignored users cache initialized successfully" }
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    log.e(e) { "Failed to initialize ignored users cache during activation" }
+                                    // Set empty cache to prevent repeated network calls
+                                    ignoredUserIdsMutex.withLock { _ignoredProfileIds.value = emptySet() }
+                                }
+                            }
+
+                        awaitAll(selectedDeferred, profilesDeferred, ignoredDeferred)
                     }
                 }
             }
@@ -154,18 +170,19 @@ class ClientUserProfileServiceFacade(
         this.keyMaterialResponse = null
         log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfile.id}" }
 
+        _userProfiles.update { it + response.userProfile }
+        // just in case our addition was erroneous and if state changed server side
+        refreshUserProfiles()
         _selectedUserProfile.value = response.userProfile
     }
 
     override suspend fun updateAndPublishUserProfile(
+        profileId: String,
         statement: String?,
         terms: String?,
     ): Result<UserProfileVO> {
         try {
-            // trigger exception if no selected user profile
-            getSelectedUserProfile()
-
-            val apiResult = apiGateway.updateUserProfile(statement ?: "", terms ?: "")
+            val apiResult = apiGateway.updateUserProfile(profileId, statement ?: "", terms ?: "")
             if (apiResult.isFailure) {
                 throw apiResult.exceptionOrNull()!!
             }
@@ -191,11 +208,6 @@ class ClientUserProfileServiceFacade(
         }
 
         return apiResult.getOrThrow()
-    }
-
-    override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
-        val userProfile = getSelectedUserProfile()
-        return Triple(userProfile?.nickName, userProfile?.nym, userProfile?.id)
     }
 
     override suspend fun getSelectedUserProfile(): UserProfileVO? {
@@ -247,7 +259,9 @@ class ClientUserProfileServiceFacade(
                 val ts = Clock.System.now().toEpochMilliseconds()
                 clientCatHashService.getImage(userProfile, size.toInt()).also {
                     log.d {
-                        "Get userProfileIcon for ${userProfile.userName} took ${Clock.System.now().toEpochMilliseconds() - ts} ms. User profile ID=${userProfile.id}"
+                        "Get userProfileIcon for ${userProfile.userName} took ${
+                            Clock.System.now().toEpochMilliseconds() - ts
+                        } ms. User profile ID=${userProfile.id}"
                     }
                 }
             }
@@ -367,6 +381,25 @@ class ClientUserProfileServiceFacade(
         return apiGateway.reportUserProfile(accusedUserProfile.networkId.pubKey.id, trimmedMessage)
     }
 
+    override suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>> = apiGateway.getOwnedUserProfiles()
+
+    override suspend fun selectUserProfile(id: String): Result<UserProfileVO> =
+        apiGateway
+            .selectUserProfile(id)
+            .also { it.onSuccess { profile -> _selectedUserProfile.value = profile } }
+
+    override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> =
+        apiGateway
+            .deleteUserProfile(id)
+            .also { result ->
+                result.onSuccess { profile ->
+                    _userProfiles.update { list -> list.filterNot { it.id == id } }
+                    // trigger refresh just in case
+                    refreshUserProfiles()
+                    _selectedUserProfile.value = profile
+                }
+            }
+
     private fun observeNumUserProfiles() {
         serviceScope.launch {
             try {
@@ -376,7 +409,8 @@ class ClientUserProfileServiceFacade(
                         return@collect
                     }
 
-                    val webSocketEventPayload: WebSocketEventPayload<Int> = WebSocketEventPayload.from(json, webSocketEvent)
+                    val webSocketEventPayload: WebSocketEventPayload<Int> =
+                        WebSocketEventPayload.from(json, webSocketEvent)
                     _numUserProfiles.value = webSocketEventPayload.payload
                 }
             } catch (e: Exception) {
@@ -384,4 +418,16 @@ class ClientUserProfileServiceFacade(
             }
         }
     }
+
+    private fun refreshUserProfiles(): Deferred<Unit> =
+        serviceScope.async {
+            try {
+                getOwnedUserProfiles().onSuccess { _userProfiles.value = it }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Expected at first run
+                log.d("Error getting user profiles: ${e.message}")
+            }
+        }
 }

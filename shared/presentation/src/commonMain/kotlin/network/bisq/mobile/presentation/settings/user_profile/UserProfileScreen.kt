@@ -1,62 +1,51 @@
 package network.bisq.mobile.presentation.settings.user_profile
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.dummy_user_profile_icon
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSelect
 import network.bisq.mobile.presentation.common.ui.components.atoms.SettingsTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.AddIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
-import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface IUserProfilePresenter : ViewPresenter {
-    val reputation: StateFlow<String>
-    val lastUserActivity: StateFlow<String>
-    val profileAge: StateFlow<String>
-    val profileId: StateFlow<String>
-    val nickname: StateFlow<String>
-    val botId: StateFlow<String>
-    val statement: StateFlow<String>
-    val tradeTerms: StateFlow<String>
-    val selectedUserProfile: StateFlow<UserProfileVO?>
-    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
-    val showLoading: StateFlow<Boolean>
+    val uiState: StateFlow<UserProfileUiState>
 
-    fun onDelete()
+    fun onAction(action: UserProfileUiAction)
 
-    fun onSave()
-
-    fun updateTradeTerms(it: String)
-
-    fun updateStatement(it: String)
-
-    val showDeleteProfileConfirmation: StateFlow<Boolean>
-
-    fun setShowDeleteProfileConfirmation(value: Boolean)
+    suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage
 }
 
 @Composable
@@ -65,140 +54,224 @@ fun UserProfileScreen() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
-    val botId by presenter.botId.collectAsState()
-    val nickname by presenter.nickname.collectAsState()
-    val profileId by presenter.profileId.collectAsState()
-    val profileAge by presenter.profileAge.collectAsState()
-    val lastUserActivity by presenter.lastUserActivity.collectAsState()
-    val reputation by presenter.reputation.collectAsState()
-    val statement by presenter.statement.collectAsState()
-    val tradeTerms by presenter.tradeTerms.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
+    val scrollState = rememberScrollState()
 
-    val showLoading by presenter.showLoading.collectAsState()
-    val showDeleteConfirmation by presenter.showDeleteProfileConfirmation.collectAsState()
+    LaunchedEffect(uiState.selectedUserProfile?.id) {
+        scrollState.animateScrollTo(0)
+    }
 
     BisqScrollScaffold(
         topBar = { TopBar("user.userProfile".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
-        shouldBlurBg = showDeleteConfirmation,
+        shouldBlurBg = uiState.shouldBlurBg,
+        scrollState = scrollState,
     ) {
-        UserProfileScreenHeader(presenter)
+        uiState.selectedUserProfile?.let { profile ->
+            UserProfileScreenHeader(profile, presenter::getUserProfileIcon)
 
-        SettingsTextField(label = "mobile.settings.userProfile.labels.nickname".i18n(), value = nickname, editable = false)
+            BisqGap.V1()
 
-        BisqGap.V1()
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+            ) {
+                BisqSelect(
+                    label = "user.bondedRoles.userProfile.select".i18n(),
+                    options = uiState.userProfiles,
+                    optionKey = { it.id },
+                    optionLabel = { it.nickName },
+                    selectedKey = profile.id,
+                    searchable = true,
+                    onSelect = {
+                        presenter.onAction(UserProfileUiAction.OnUserProfileSelected(it))
+                    },
+                    disabled = !isInteractive || uiState.userProfiles.isEmpty(),
+                    modifier = Modifier.weight(1f),
+                )
 
-        // Bot ID with copy functionality
-        SettingsTextField(
-            label = "user.userProfile.nymId".i18n(),
-            value = botId,
-            editable = false,
-            trailingIcon = { CopyIconButton(value = botId) },
-        )
+                Box(Modifier.padding(bottom = 2.dp)) {
+                    // to align button with text field
+                    BisqIconButton(
+                        onClick = {
+                            presenter.onAction(UserProfileUiAction.OnCreateProfilePressed)
+                        },
+                        disabled = !isInteractive,
+                        modifier =
+                            Modifier
+                                .size(46.dp)
+                                .background(
+                                    BisqTheme.colors.primary,
+                                    RoundedCornerShape(BisqUIConstants.BorderRadius),
+                                ),
+                    ) {
+                        AddIcon()
+                    }
+                }
+            }
 
-        BisqGap.V1()
+            BisqGap.V1()
 
-        // Profile ID with copy functionality
-        SettingsTextField(
-            label = "user.userProfile.profileId".i18n(),
-            value = profileId,
-            editable = false,
-            trailingIcon = { CopyIconButton(value = profileId) },
-        )
+            SettingsTextField(
+                label = "mobile.settings.userProfile.labels.nickname".i18n(),
+                value = profile.nickName,
+                editable = false,
+            )
 
-        BisqGap.V1()
+            BisqGap.V1()
 
-        SettingsTextField(label = "user.profileCard.details.profileAge".i18n(), value = profileAge, editable = false)
+            // Bot ID with copy functionality
+            SettingsTextField(
+                label = "user.userProfile.nymId".i18n(),
+                value = profile.nym,
+                editable = false,
+                trailingIcon = { CopyIconButton(value = profile.nym) },
+            )
 
-        BisqGap.V1()
+            BisqGap.V1()
 
-        SettingsTextField(label = "user.userProfile.livenessState.description".i18n(), value = lastUserActivity, editable = false)
+            // Profile ID with copy functionality
+            SettingsTextField(
+                label = "user.userProfile.profileId".i18n(),
+                value = profile.id,
+                editable = false,
+                trailingIcon = { CopyIconButton(value = profile.id) },
+            )
 
-        BisqGap.V1()
+            BisqGap.V1()
 
-        // Reputation
-        SettingsTextField(label = "user.userProfile.reputation".i18n(), value = reputation, editable = false)
+            SettingsTextField(
+                label = "user.profileCard.details.profileAge".i18n(),
+                value = uiState.profileAge,
+                editable = false,
+            )
 
-        BisqGap.V1()
+            BisqGap.V1()
 
-        // Statement
-        SettingsTextField(
-            label = "user.userProfile.statement".i18n(),
-            value = statement,
-            isTextArea = true,
-            onValueChange = { newValue, isValid -> presenter.updateStatement(newValue) },
-        )
+            SettingsTextField(
+                label = "user.userProfile.livenessState.description".i18n(),
+                value = uiState.lastUserActivity,
+                editable = false,
+            )
 
-        BisqGap.V1()
+            BisqGap.V1()
 
-        // Trade Terms
-        SettingsTextField(
-            label = "user.userProfile.terms".i18n(),
-            value = tradeTerms,
-            isTextArea = true,
-            onValueChange = { newValue, isValid -> presenter.updateTradeTerms(newValue) },
-        )
-        BisqGap.V1()
-        UserProfileScreenFooter(presenter, showLoading)
+            // Reputation
+            SettingsTextField(
+                label = "user.userProfile.reputation".i18n(),
+                value = uiState.reputation,
+                editable = false,
+            )
+
+            BisqGap.V1()
+
+            // Statement
+            SettingsTextField(
+                label = "user.userProfile.statement".i18n(),
+                value = uiState.statementDraft,
+                isTextArea = true,
+                onValueChange = { newValue, isValid ->
+                    presenter.onAction(
+                        UserProfileUiAction.OnStatementChanged(
+                            newValue,
+                        ),
+                    )
+                },
+            )
+
+            BisqGap.V1()
+
+            // Trade Terms
+            SettingsTextField(
+                label = "user.userProfile.terms".i18n(),
+                value = uiState.termsDraft,
+                isTextArea = true,
+                onValueChange = { newValue, isValid ->
+                    presenter.onAction(
+                        UserProfileUiAction.OnTermsChanged(
+                            newValue,
+                        ),
+                    )
+                },
+            )
+            BisqGap.V1()
+            UserProfileScreenFooter(
+                onSavePress = { presenter.onAction(UserProfileUiAction.OnSavePressed(profile.id, uiState)) },
+                onDeletePress = { presenter.onAction(UserProfileUiAction.OnDeletePressed(profile)) },
+                isBusy = uiState.isBusy,
+            )
+        }
     }
 
-    if (showDeleteConfirmation) {
-        ConfirmationDialog(
-            headline = "mobile.settings.userProfile.deleteConfirmationDialog.headline".i18n(),
-            onConfirm = presenter::onDelete,
-            onDismiss = { presenter.setShowDeleteProfileConfirmation(false) },
+    uiState.showDeleteConfirmationForProfile?.let { profile ->
+        WarningConfirmationDialog(
+            message = "mobile.settings.userProfile.deleteConfirmationDialog.message".i18n(profile.nickName),
+            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteConfirmed(profile)) },
+            onDismiss = { presenter.onAction(UserProfileUiAction.OnDeleteConfirmationDismissed) },
+        )
+    }
+
+    if (uiState.showDeleteErrorDialog) {
+        WarningConfirmationDialog(
+            message = "user.userProfile.deleteProfile.cannotDelete".i18n(),
+            dismissButtonText = "",
+            onDismiss = { presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismissed) },
+            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismissed) },
         )
     }
 }
 
 @Composable
-private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
-    val selectedUserProfile by presenter.selectedUserProfile.collectAsState()
+private fun UserProfileScreenHeader(
+    profile: UserProfileVO,
+    imageProvider: suspend (UserProfileVO) -> PlatformImage,
+) {
     Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        val size = 120.dp
-        if (selectedUserProfile != null) {
-            UserProfileIcon(
-                selectedUserProfile!!,
-                presenter.userProfileIconProvider,
-                size,
-            )
-        } else {
-            // Icons are expected to be present, so this branch will never be reached
-            Image(
-                painterResource(Res.drawable.dummy_user_profile_icon),
-                "",
-                modifier = Modifier.size(size),
-            )
-        }
+        UserProfileIcon(
+            profile,
+            imageProvider,
+            90.dp,
+        )
     }
 }
 
 @Composable
 private fun UserProfileScreenFooter(
-    presenter: IUserProfilePresenter,
-    showLoading: Boolean,
+    onSavePress: () -> Unit,
+    onDeletePress: () -> Unit,
+    isBusy: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
     ) {
         BisqButton(
             text = "mobile.settings.userProfile.labels.save".i18n(),
-            onClick = presenter::onSave,
-            isLoading = showLoading,
+            onClick = onSavePress,
+            isLoading = isBusy,
             modifier = Modifier.weight(1.0F),
             padding =
                 PaddingValues(
                     horizontal = BisqUIConstants.ScreenPadding,
                     vertical = BisqUIConstants.ScreenPaddingHalf,
                 ),
+        )
+        BisqButton(
+            text = "mobile.action.delete".i18n(),
+            onClick = onDeletePress,
+            isLoading = isBusy,
+            modifier = Modifier.weight(1.0F),
+            padding =
+                PaddingValues(
+                    horizontal = BisqUIConstants.ScreenPadding,
+                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                ),
+            type = BisqButtonType.WarningOutline,
         )
     }
 }

@@ -33,15 +33,17 @@ class UserProfileApiGateway(
     }
 
     suspend fun updateUserProfile(
+        profileId: String,
         statement: String,
         terms: String,
     ): Result<CreateUserIdentityResponse> {
         val request =
-            UpdateUserIdentityRequest(
+            UpdateUserIdentityV2Request(
+                profileId = profileId,
                 terms = terms,
                 statement = statement,
             )
-        return webSocketApiClient.patch(basePath, request)
+        return webSocketApiClient.patch("$basePath/profile", request)
     }
 
     suspend fun getUserIdentityIds(): Result<List<String>> = webSocketApiClient.get("$basePath/ids")
@@ -72,4 +74,13 @@ class UserProfileApiGateway(
     }
 
     suspend fun triggerUserActivityDetection(): Result<Unit> = webSocketApiClient.post("$profileBasePath/activity", "")
+
+    suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>> = webSocketApiClient.get("$basePath/owned-profiles")
+
+    suspend fun selectUserProfile(id: String): Result<UserProfileVO> = webSocketApiClient.post("$basePath/select", SelectUserProfileRequest(id))
+
+    /**
+     * deletes user profile and returns currently selected user profile in it's place
+     */
+    suspend fun deleteUserProfile(id: String): Result<UserProfileVO> = webSocketApiClient.post("$basePath/delete", DeleteUserProfileRequest(id))
 }

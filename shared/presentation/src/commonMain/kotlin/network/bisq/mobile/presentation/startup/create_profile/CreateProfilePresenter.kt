@@ -26,6 +26,9 @@ class CreateProfilePresenter(
         const val IMAGE_SIZE_IN_PX = 300
     }
 
+    private val _isOnboarding = MutableStateFlow(true)
+    val isOnboarding = _isOnboarding.asStateFlow()
+
     // Properties
     private val _id = MutableStateFlow("")
     val id: StateFlow<String> get() = _id.asStateFlow()
@@ -83,6 +86,10 @@ class CreateProfilePresenter(
         // if this presenter gets to work, it means there is no profile saved
     }
 
+    fun setIsOnboarding(value: Boolean) {
+        _isOnboarding.value = value
+    }
+
     fun validateNickname(nickname: String): String? {
         val trimmed = nickname.trim()
         return when {
@@ -111,13 +118,18 @@ class CreateProfilePresenter(
                     log.i { "Show busy animation for createAndPublishInProgress" }
                     runCatching {
                         userProfileService.createAndPublishNewUserProfile(toSubmit)
-                        // Navigate to TabContainer and completely clear the back stack
-                        // This ensures the user can never navigate back to onboarding screens
-                        navigateTo(NavRoute.TabContainer) {
-                            it.popUpTo(NavRoute.Splash) { inclusive = true }
+                        if (isOnboarding.value) {
+                            // Navigate to TabContainer and completely clear the back stack
+                            // This ensures the user can never navigate back to onboarding screens
+                            navigateTo(NavRoute.TabContainer) {
+                                it.popUpTo(NavRoute.Splash) { inclusive = true }
+                            }
+                        } else {
+                            navigateBack()
                         }
 
                         log.i { "Hide busy animation for createAndPublishInProgress" }
+                        _nickName.value = ""
                         _createAndPublishInProgress.value = false
                         enableInteractive()
                     }.onFailure { e ->

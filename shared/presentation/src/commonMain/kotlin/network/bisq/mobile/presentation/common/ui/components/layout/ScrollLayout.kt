@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.components.layout
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,10 +37,10 @@ fun BisqScrollLayout(
     onModifier: ((Modifier) -> Modifier)? = null, // allows to customize modifier settings
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
+    scrollState: ScrollState = rememberScrollState(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
 
     val jumpToBottomVisible by remember {
         derivedStateOf {

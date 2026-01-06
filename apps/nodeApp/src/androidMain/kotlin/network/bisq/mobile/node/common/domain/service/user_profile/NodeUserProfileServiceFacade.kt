@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,6 +29,7 @@ import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import java.security.KeyPair
 import java.util.Random
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.max
 import kotlin.math.min
 
@@ -59,6 +61,9 @@ class NodeUserProfileServiceFacade(
     override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredProfileIds.asStateFlow()
 
     // Properties
+    private val _userProfiles: MutableStateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
+    override val userProfiles = _userProfiles.asStateFlow()
+
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
 
@@ -75,7 +80,12 @@ class NodeUserProfileServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch {
+            _userProfiles.value = getOwnedUserProfiles().getOrNull() ?: emptyList()
+        }
+        serviceScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
+        }
+        serviceScope.launch {
             getIgnoredUserProfileIds()
         }
 
@@ -144,19 +154,23 @@ class NodeUserProfileServiceFacade(
         keyPair = null
         proofOfWork = null
 
+        getOwnedUserProfiles().getOrNull()?.let { _userProfiles.value = it }
         _selectedUserProfile.value = getSelectedUserProfile()
     }
 
     override suspend fun updateAndPublishUserProfile(
+        profileId: String,
         statement: String?,
         terms: String?,
     ): Result<UserProfileVO> {
         try {
-            val selectedUserIdentity = userService.userIdentityService.selectedUserIdentity
+            val userIdentity =
+                userService.userIdentityService.findUserIdentity(profileId).getOrNull()
+                    ?: throw IllegalStateException("userIdentity with id `$profileId` not found")
             withContext(Dispatchers.IO) {
                 userService.userIdentityService
                     .editUserProfile(
-                        selectedUserIdentity,
+                        userIdentity,
                         terms ?: "",
                         statement ?: "",
                     ).await()
@@ -180,11 +194,6 @@ class NodeUserProfileServiceFacade(
     }
 
     override suspend fun getUserIdentityIds(): List<String> = userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
-
-    override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
-        val userProfile = getSelectedUserProfile()
-        return Triple(userProfile?.nickName, userProfile?.nym, userProfile?.id)
-    }
 
     override suspend fun getSelectedUserProfile(): UserProfileVO? =
         userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
@@ -311,4 +320,40 @@ class NodeUserProfileServiceFacade(
             Result.failure(e)
         }
     }
+
+    override suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>> =
+        Result.success(
+            userService.userIdentityService.userIdentities.map {
+                Mappings.UserProfileMapping.fromBisq2Model(
+                    it.userProfile,
+                )
+            },
+        )
+
+    override suspend fun selectUserProfile(id: String): Result<UserProfileVO> =
+        runCatching {
+            val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
+            if (identity != null) {
+                userService.userIdentityService.selectChatUserIdentity(identity)
+                val userProfile = getSelectedUserProfile()
+                _selectedUserProfile.value = userProfile
+                userProfile ?: throw IllegalStateException("expected selected user identity to have a profile, but did not")
+            } else {
+                throw IllegalArgumentException("profile id not found")
+            }
+        }
+
+    override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> =
+        runCatching {
+            val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
+            if (identity != null) {
+                userService.userIdentityService.deleteUserIdentity(identity).await()
+                _userProfiles.update { list -> list.filterNot { it.id == id } }
+                val userProfile = getSelectedUserProfile()
+                _selectedUserProfile.value = userProfile
+                userProfile ?: throw IllegalStateException("expected selected user identity to have a profile after delete, but did not")
+            } else {
+                throw IllegalArgumentException("profile id not found")
+            }
+        }
 }

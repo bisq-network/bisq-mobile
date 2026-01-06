@@ -1,16 +1,11 @@
 package network.bisq.mobile.presentation.settings.user_profile
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -21,7 +16,9 @@ import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.TimeUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute.CreateProfile
 import network.bisq.mobile.presentation.main.MainPresenter
+import kotlin.concurrent.Volatile
 
 class UserProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -39,172 +36,207 @@ class UserProfilePresenter(
         fun getLocalizedNA(): String = "data.na".i18n()
     }
 
-    override val selectedUserProfile: StateFlow<UserProfileVO?> get() = userProfileServiceFacade.selectedUserProfile
-    override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
-        get() = { userProfile ->
-            userProfileServiceFacade.getUserProfileIcon(userProfile, ICON_SIZE)
-        }
+    @Volatile
+    private var profileIdCollectJob: Job? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val reputation: StateFlow<String> =
-        selectedUserProfile
-            .distinctUntilChangedBy { it?.id }
-            .mapLatest {
-                it?.let { profile ->
-                    reputationServiceFacade
-                        .getReputation(profile.id)
-                        .getOrNull()
-                        ?.totalScore
-                        ?.toString()
-                }
-            }.catch { emit(null) }
-            .map { it ?: getLocalizedNA() }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                getLocalizedNA(),
-            )
+    @Volatile
+    private var profileCollectJob: Job? = null
 
-    override val lastUserActivity: StateFlow<String> =
-        TimeUtils
-            .tickerFlow(1_000L)
-            .onStart { emit(Unit) }
-            .map {
-                val ts: Long = userProfileServiceFacade.getUserPublishDate()
-                if (ts <= 0L) getLocalizedNA() else DateUtils.lastSeen(ts)
-            }.catch { emit(getLocalizedNA()) }
-            .stateIn(
-                scope = presenterScope,
-                started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
-                initialValue = getLocalizedNA(),
-            )
+    @Volatile
+    private var profilesCollectJob: Job? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val profileAge: StateFlow<String> =
-        selectedUserProfile
-            .distinctUntilChangedBy { it?.id }
-            .mapLatest {
-                it?.let { profile ->
-                    reputationServiceFacade
-                        .getProfileAge(profile.id)
-                        .getOrNull()
-                }
-            }.catch { emit(null) }
-            .map { age ->
-                if (age != null) {
-                    DateUtils.formatProfileAge(age)
-                } else {
-                    null
-                }
-            }.map { it ?: getLocalizedNA() }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                getLocalizedNA(),
-            )
+    @Volatile
+    private var tickerJob: Job? = null
 
-    override val profileId: StateFlow<String> =
-        selectedUserProfile
-            .map { it?.id ?: getLocalizedNA() }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                getLocalizedNA(),
-            )
-
-    override val nickname: StateFlow<String> =
-        selectedUserProfile
-            .map { it?.nickName ?: getLocalizedNA() }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                getLocalizedNA(),
-            )
-
-    override val botId: StateFlow<String> =
-        selectedUserProfile
-            .map { it?.nym ?: getLocalizedNA() }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                getLocalizedNA(),
-            )
-
-    private val _tradeTerms = MutableStateFlow("")
-    override val tradeTerms: StateFlow<String> get() = _tradeTerms.asStateFlow()
-    private val _statement = MutableStateFlow("")
-    override val statement: StateFlow<String> get() = _statement.asStateFlow()
-
-    private val _showLoading = MutableStateFlow(false)
-    override val showLoading: StateFlow<Boolean> get() = _showLoading.asStateFlow()
-
-    private val _showDeleteOfferConfirmation = MutableStateFlow(false)
-    override val showDeleteProfileConfirmation: StateFlow<Boolean> get() = _showDeleteOfferConfirmation.asStateFlow()
-
-    override fun setShowDeleteProfileConfirmation(value: Boolean) {
-        _showDeleteOfferConfirmation.value = value
-    }
+    private val _uiState = MutableStateFlow(UserProfileUiState())
+    override val uiState = _uiState.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
-        initEditableFields()
+        launchJobs()
     }
 
-    override fun onDelete() {
-        TODO("Not yet implemented")
+    override fun onViewUnattaching() {
+        super.onViewUnattaching()
+        cancelJobs()
     }
 
-    override fun onSave() {
-        disableInteractive()
-        setShowLoading(true)
-        presenterScope.launch {
-            try {
-                val na = getLocalizedNA()
-                val safeStatement = statement.value.takeUnless { it == na } ?: ""
-                val safeTerms = tradeTerms.value.takeUnless { it == na } ?: ""
-                val result =
-                    userProfileServiceFacade.updateAndPublishUserProfile(
-                        safeStatement,
-                        safeTerms,
-                    )
-                if (result.isSuccess) {
-                    showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
-                } else {
-                    showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), isError = true)
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage = userProfileServiceFacade.getUserProfileIcon(userProfile, ICON_SIZE)
+
+    override fun onAction(action: UserProfileUiAction) {
+        when (action) {
+            is UserProfileUiAction.OnStatementChanged -> {
+                _uiState.value.selectedUserProfile?.let { profile ->
+                    _uiState.update { current ->
+                        current.copy(
+                            statementDraft = action.value,
+                        )
+                    }
                 }
-            } catch (e: Exception) {
-                log.e(e) { "Failed to save user profile settings" }
-            } finally {
-                setShowLoading(false)
-                enableInteractive()
+            }
+
+            is UserProfileUiAction.OnTermsChanged -> {
+                _uiState.value.selectedUserProfile?.let { profile ->
+                    _uiState.update { current ->
+                        current.copy(
+                            termsDraft = action.value,
+                        )
+                    }
+                }
+            }
+
+            is UserProfileUiAction.OnSavePressed -> {
+                disableInteractive()
+                _uiState.update { it.copy(isBusy = true) }
+                presenterScope.launch {
+                    try {
+                        val na = getLocalizedNA()
+                        val safeStatement = action.uiState.statementDraft.takeUnless { it == na } ?: ""
+                        val safeTerms = action.uiState.termsDraft.takeUnless { it == na } ?: ""
+                        val result =
+                            userProfileServiceFacade.updateAndPublishUserProfile(
+                                action.profileId,
+                                safeStatement,
+                                safeTerms,
+                            )
+                        if (result.isSuccess) {
+                            showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
+                        } else {
+                            showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), isError = true)
+                        }
+                    } catch (e: Exception) {
+                        log.e(e) { "Failed to save user profile settings" }
+                    } finally {
+                        _uiState.update { it.copy(isBusy = false) }
+                        enableInteractive()
+                    }
+                }
+            }
+
+            is UserProfileUiAction.OnCreateProfilePressed -> {
+                navigateTo(CreateProfile(false))
+            }
+
+            is UserProfileUiAction.OnDeletePressed -> {
+                _uiState.update {
+                    it.copy(showDeleteConfirmationForProfile = action.profile)
+                }
+            }
+
+            is UserProfileUiAction.OnDeleteConfirmed -> {
+                disableInteractive()
+                _uiState.update { it.copy(isBusy = true, showDeleteConfirmationForProfile = null) }
+                presenterScope.launch {
+                    userProfileServiceFacade.deleteUserProfile(action.profile.id).onFailure { e ->
+                        log.e(e) { "Failed to delete user profile" }
+                        onAction(UserProfileUiAction.OnDeleteError)
+                    }
+                    _uiState.update { it.copy(isBusy = false) }
+                    enableInteractive()
+                }
+            }
+
+            is UserProfileUiAction.OnDeleteConfirmationDismissed -> {
+                _uiState.update {
+                    it.copy(showDeleteConfirmationForProfile = null)
+                }
+            }
+
+            is UserProfileUiAction.OnDeleteError -> {
+                _uiState.update { it.copy(showDeleteErrorDialog = true) }
+            }
+
+            is UserProfileUiAction.OnDeleteErrorDialogDismissed -> {
+                _uiState.update { it.copy(showDeleteErrorDialog = false) }
+            }
+
+            is UserProfileUiAction.OnUserProfileSelected -> {
+                disableInteractive()
+                _uiState.update { it.copy(isBusy = true) }
+                presenterScope.launch {
+                    try {
+                        userProfileServiceFacade.selectUserProfile(action.profile.id)
+                    } catch (e: Exception) {
+                        log.e(e) { "Failed to change user profile" }
+                    } finally {
+                        _uiState.update { it.copy(isBusy = false) }
+                        enableInteractive()
+                    }
+                }
             }
         }
     }
 
-    override fun updateTradeTerms(it: String) {
-        _tradeTerms.value = it
-    }
-
-    override fun updateStatement(it: String) {
-        _statement.value = it
-    }
-
-    private fun setShowLoading(show: Boolean = true) {
-        _showLoading.value = show
-    }
-
-    private fun initEditableFields() {
-        presenterScope.launch {
-            runCatching {
-                userProfileServiceFacade.getSelectedUserProfile()
-            }.onSuccess { profile ->
-                profile?.let {
-                    _statement.value = it.statement
-                    _tradeTerms.value = it.terms
+    private fun launchJobs() {
+        profileIdCollectJob?.cancel()
+        profileIdCollectJob =
+            presenterScope.launch {
+                userProfileServiceFacade.selectedUserProfile.distinctUntilChangedBy { it?.id }.collect { profile ->
+                    profile?.let { profile ->
+                        val profileAge =
+                            reputationServiceFacade
+                                .getProfileAge(profile.id)
+                                .getOrNull()
+                                ?.let { age -> DateUtils.formatProfileAge(age) } ?: getLocalizedNA()
+                        val reputation =
+                            reputationServiceFacade
+                                .getReputation(profile.id)
+                                .getOrNull()
+                                ?.totalScore
+                                ?.toString()
+                                ?: getLocalizedNA()
+                        _uiState.update { current ->
+                            current.copy(
+                                selectedUserProfile = profile,
+                                profileAge = profileAge,
+                                reputation = reputation,
+                                statementDraft = profile.statement,
+                                termsDraft = profile.terms,
+                                isBusy = false,
+                            )
+                        }
+                    }
                 }
-            }.onFailure { e ->
-                log.d("User profile not yet available: ${e.message}")
             }
-        }
+        profileCollectJob?.cancel()
+        profileCollectJob =
+            presenterScope.launch {
+                // this job's difference from previous one is that this one is
+                // to reflect the changes in other fields of userProfile
+                userProfileServiceFacade.selectedUserProfile.collect { profile ->
+                    _uiState.update {
+                        it.copy(selectedUserProfile = profile)
+                    }
+                }
+            }
+        tickerJob?.cancel()
+        tickerJob =
+            presenterScope.launch {
+                TimeUtils.tickerFlow(1_000L).onStart { emit(Unit) }.collect {
+                    _uiState.update {
+                        it.copy(
+                            lastUserActivity =
+                                it.selectedUserProfile?.publishDate?.let { ts -> DateUtils.lastSeen(ts) }
+                                    ?: getLocalizedNA(),
+                        )
+                    }
+                }
+            }
+        profilesCollectJob?.cancel()
+        profilesCollectJob =
+            presenterScope.launch {
+                userProfileServiceFacade.userProfiles.collect { profiles ->
+                    _uiState.update {
+                        it.copy(userProfiles = profiles)
+                    }
+                }
+            }
+    }
+
+    private fun cancelJobs() {
+        profileIdCollectJob?.cancel()
+        profileCollectJob?.cancel()
+        profilesCollectJob?.cancel()
+        tickerJob?.cancel()
     }
 }

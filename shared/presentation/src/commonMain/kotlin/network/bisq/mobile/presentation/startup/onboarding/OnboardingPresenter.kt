@@ -112,7 +112,7 @@ abstract class OnboardingPresenter(
     }
 
     protected fun navigateToCreateProfile() {
-        navigateTo(NavRoute.CreateProfile)
+        navigateTo(NavRoute.CreateProfile(true))
     }
 
     protected fun navigateToHome() {

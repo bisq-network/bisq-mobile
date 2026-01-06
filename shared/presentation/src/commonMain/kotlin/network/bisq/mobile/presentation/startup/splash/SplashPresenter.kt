@@ -107,7 +107,7 @@ abstract class SplashPresenter(
     }
 
     protected fun navigateToCreateProfile() {
-        navigateTo(NavRoute.CreateProfile) {
+        navigateTo(NavRoute.CreateProfile(true)) {
             it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }

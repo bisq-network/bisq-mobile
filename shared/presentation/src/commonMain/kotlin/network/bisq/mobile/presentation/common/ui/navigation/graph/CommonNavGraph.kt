@@ -58,7 +58,10 @@ fun NavGraphBuilder.addCommonAppRoutes() {
 
     addScreen<NavRoute.UserAgreement> { UserAgreementScreen() }
     addScreen<NavRoute.Onboarding> { OnboardingScreen() }
-    addScreen<NavRoute.CreateProfile> { CreateProfileScreen() }
+    addScreen<NavRoute.CreateProfile> { backStackEntry ->
+        val route: NavRoute.CreateProfile = backStackEntry.toRoute()
+        CreateProfileScreen(route.isOnboarding)
+    }
 
     addScreen<NavRoute.TabContainer>(
         deepLinks =

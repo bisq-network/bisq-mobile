@@ -617,6 +617,7 @@ class OfferbookPresenterFilterTest {
     }
 
     private class FakeUserProfileServiceFacade : UserProfileServiceFacade {
+        override val userProfiles: StateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
         override val selectedUserProfile: StateFlow<UserProfileVO?> = MutableStateFlow(null)
         override val ignoredProfileIds: StateFlow<Set<String>> = MutableStateFlow(emptySet())
         override val numUserProfiles: StateFlow<Int> = MutableStateFlow(1)
@@ -632,13 +633,12 @@ class OfferbookPresenterFilterTest {
         override suspend fun createAndPublishNewUserProfile(nickName: String) {}
 
         override suspend fun updateAndPublishUserProfile(
+            profileId: String,
             statement: String?,
             terms: String?,
         ) = Result.success(createMockUserProfile("me"))
 
         override suspend fun getUserIdentityIds(): List<String> = emptyList()
-
-        override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> = Triple(null, null, null)
 
         override suspend fun getSelectedUserProfile() = createMockUserProfile("me")
 
@@ -669,5 +669,11 @@ class OfferbookPresenterFilterTest {
             accusedUserProfile: UserProfileVO,
             message: String,
         ): Result<Unit> = Result.failure(Exception("unused in test"))
+
+        override suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>> = Result.failure(Exception("unused in test"))
+
+        override suspend fun selectUserProfile(id: String): Result<UserProfileVO> = Result.failure(Exception("unused in test"))
+
+        override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> = Result.failure(Exception("unused in test"))
     }
 }

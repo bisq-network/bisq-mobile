@@ -1,8 +1,10 @@
 package network.bisq.mobile.presentation.common.ui.components.layout
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -33,6 +35,7 @@ fun BisqScrollScaffold(
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
     shouldBlurBg: Boolean = false,
+    scrollState: ScrollState = rememberScrollState(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Scaffold(
@@ -62,6 +65,7 @@ fun BisqScrollScaffold(
                 isInteractive = isInteractive,
                 showJumpToBottom = showJumpToBottom,
                 horizontalAlignment = horizontalAlignment,
+                scrollState = scrollState,
             ) {
                 content()
             }

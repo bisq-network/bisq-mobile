@@ -22,7 +22,9 @@ interface NavRoute {
     data object Onboarding : NavRoute
 
     @Serializable
-    data object CreateProfile : NavRoute
+    data class CreateProfile(
+        val isOnboarding: Boolean = false,
+    ) : NavRoute
 
     @Serializable
     data object TabContainer : NavRoute, DeepLinkableRoute {

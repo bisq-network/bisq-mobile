@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -25,15 +26,20 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
-fun CreateProfileScreen() {
+fun CreateProfileScreen(isOnboarding: Boolean) {
     val presenter: CreateProfilePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
+
+    LaunchedEffect(presenter, isOnboarding) {
+        presenter.setIsOnboarding(isOnboarding)
+    }
 
     val generateKeyPairInProgress by presenter.generateKeyPairInProgress.collectAsState()
     val createAndPublishInProgress by presenter.createAndPublishInProgress.collectAsState()
@@ -43,9 +49,17 @@ fun CreateProfileScreen() {
     val nym by presenter.nym.collectAsState()
     val iconSize = 140.dp
 
-    BisqScrollScaffold {
-        BisqGap.V2()
-        BisqText.H1Light("onboarding.createProfile.headline".i18n())
+    BisqScrollScaffold(
+        topBar = {
+            if (!isOnboarding) {
+                TopBar("mobile.onboarding.createProfile".i18n(), showUserAvatar = false)
+            }
+        },
+    ) {
+        if (isOnboarding) {
+            BisqGap.V2()
+            BisqText.H1Light("onboarding.createProfile.headline".i18n())
+        }
         BisqGap.V2()
         BisqText.BaseLightGrey(
             text = "onboarding.createProfile.subTitle".i18n(),
@@ -114,12 +128,21 @@ fun CreateProfileScreen() {
             text = "onboarding.createProfile.regenerate".i18n(),
             type = BisqButtonType.Grey,
             disabled = generateKeyPairInProgress,
-            padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding5X, vertical = BisqUIConstants.ScreenPadding),
+            padding =
+                PaddingValues(
+                    horizontal = BisqUIConstants.ScreenPadding5X,
+                    vertical = BisqUIConstants.ScreenPadding,
+                ),
             onClick = { presenter.onGenerateKeyPair() },
         )
         BisqGap.V1()
         BisqButton(
-            text = "action.next".i18n(),
+            text =
+                if (isOnboarding) {
+                    "action.next".i18n()
+                } else {
+                    "mobile.onboarding.createProfile".i18n()
+                },
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
             disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || !nickNameValid,
             isLoading = createAndPublishInProgress,

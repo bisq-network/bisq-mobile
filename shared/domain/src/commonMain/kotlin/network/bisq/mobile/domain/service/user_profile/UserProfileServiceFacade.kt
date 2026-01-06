@@ -6,6 +6,7 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
+    val userProfiles: StateFlow<List<UserProfileVO>>
     val selectedUserProfile: StateFlow<UserProfileVO?>
     val ignoredProfileIds: StateFlow<Set<String>>
 
@@ -50,6 +51,7 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * and shared with the network.
      */
     suspend fun updateAndPublishUserProfile(
+        profileId: String,
         statement: String?,
         terms: String?,
     ): Result<UserProfileVO>
@@ -58,12 +60,6 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * Create UserProfileModels from the userIdentities.
      */
     suspend fun getUserIdentityIds(): List<String>
-
-    /**
-     * Applies the selected user identity to the user profile model
-     * @return Triple containing nickname, nym and id
-     */
-    suspend fun applySelectedUserProfile(): Triple<String?, String?, String?>
 
     /**
      * @return UserProfile if existent, null otherwise
@@ -132,4 +128,19 @@ interface UserProfileServiceFacade : LifeCycleAware {
         accusedUserProfile: UserProfileVO,
         message: String,
     ): Result<Unit>
+
+    /**
+     * Returns a list of our user profiles
+     */
+    suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>>
+
+    /**
+     * Selects a user profile using it's ID
+     */
+    suspend fun selectUserProfile(id: String): Result<UserProfileVO>
+
+    /**
+     * Deletes a user profile using it's ID
+     */
+    suspend fun deleteUserProfile(id: String): Result<UserProfileVO>
 }
