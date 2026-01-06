@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -19,7 +19,6 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import kotlin.concurrent.Volatile
 
 class CreateOfferDirectionPresenter(
     mainPresenter: MainPresenter,
@@ -72,7 +71,6 @@ class CreateOfferDirectionPresenter(
                 0L,
             )
 
-    @Volatile
     private var reputationCollectorJob: Job? = null
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
@@ -85,7 +83,7 @@ class CreateOfferDirectionPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         reputationCollectorJob?.cancel()
-        reputationCollectorJob = presenterScope.launch { reputationTotalScore.collect { } }
+        reputationCollectorJob = reputationTotalScore.launchIn(presenterScope)
     }
 
     override fun onViewUnattaching() {
