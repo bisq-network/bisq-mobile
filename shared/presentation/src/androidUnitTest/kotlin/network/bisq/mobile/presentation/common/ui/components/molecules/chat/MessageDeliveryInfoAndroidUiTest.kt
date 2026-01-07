@@ -48,7 +48,6 @@ class MessageDeliveryInfoAndroidUiTest {
 
     @Test
     fun messageDeliveryInfo_composes_with_non_empty_map_and_shows_text() {
-        I18nSupport.setLanguage("en")
         val info =
             MessageDeliveryInfoVO(
                 messageDeliveryStatus = MessageDeliveryStatusEnum.SENT,

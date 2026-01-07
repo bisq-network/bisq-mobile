@@ -8,23 +8,22 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
-import kotlin.test.BeforeTest
 
 @RunWith(AndroidJUnit4::class)
 class AndroidImageUtilTest {
     private lateinit var context: Context
 
-    @BeforeTest
+    @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
     }
 
     @Test
     fun `test getImageByPath valid path`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
         val assetPath = "bisq_logo.png"
         val bitmap = AndroidImageUtil.getImageByPath(context, AndroidImageUtil.PATH_TO_DRAWABLE, assetPath)
         assertNotNull("Image should be loaded", bitmap)
