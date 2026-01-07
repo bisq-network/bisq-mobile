@@ -42,6 +42,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -57,8 +58,12 @@ class NodeOffersServiceFacade(
     private val applicationService: AndroidApplicationService.Provider,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
-    private val settingsRepository: network.bisq.mobile.domain.data.repository.SettingsRepository,
+    private val settingsRepository: SettingsRepository,
 ) : OffersServiceFacade() {
+    companion object {
+        private val DEFAULT_MARKET = Market("BTC", "USD", "Bitcoin", "US Dollar")
+    }
+
     // Dependencies
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
@@ -96,35 +101,46 @@ class NodeOffersServiceFacade(
     }
 
     private suspend fun restoreAndSelectChannel() {
-        try {
+        var marketSelectionRestored = false
+        runCatching {
             val settings = settingsRepository.fetch()
             val marketCode = settings.selectedMarketCode
-            val parts = marketCode.split("/")
 
-            if (parts.size == 2) {
-                val baseCurrency = parts[0]
-                val quoteCurrency = parts[1]
-                val marketVO = MarketVO(baseCurrency, quoteCurrency)
-                val market = Mappings.MarketMapping.toBisq2Model(marketVO)
-                val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
+            if (marketCode.isNullOrEmpty()) {
+                log.d { "No selected market code to restore" }
+            } else {
+                val parts = marketCode.split("/")
 
-                if (channelOptional.isPresent) {
-                    log.d { "Restoring selected channel for market: ${market.marketCodes}" }
-                    bisqEasyOfferbookChannelSelectionService.selectChannel(channelOptional.get())
-                    return
-                } else {
-                    log.w { "Could not find channel for restored market: ${market.marketCodes}" }
+                if (parts.size == 2) {
+                    val baseCurrency = parts[0]
+                    val quoteCurrency = parts[1]
+                    val marketVO = MarketVO(baseCurrency, quoteCurrency)
+                    val market = Mappings.MarketMapping.toBisq2Model(marketVO)
+                    val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
+
+                    if (channelOptional.isPresent) {
+                        log.d { "Restoring selected channel for market: ${market.marketCodes}" }
+                        bisqEasyOfferbookChannelSelectionService.selectChannel(channelOptional.get())
+                        marketSelectionRestored = true
+                    } else {
+                        log.w { "Could not find channel for restored market: ${market.marketCodes}" }
+                    }
                 }
             }
-        } catch (e: Exception) {
+        }.onFailure { e ->
             log.w(e) { "Failed to restore selected market from settings" }
         }
 
-        // If no market was restored (fresh install or error), select the default market (BTC/USD)
-        val defaultMarket = Market("BTC", "USD", "Bitcoin", "US Dollar")
-        val channelOptional = bisqEasyOfferbookChannelService.findChannel(defaultMarket)
+        // (fresh install or error), select the default market (BTC/USD)
+        if (!marketSelectionRestored) {
+            restoreAndSelectDefaultChannel()
+        }
+    }
+
+    private fun restoreAndSelectDefaultChannel() {
+        val channelOptional = bisqEasyOfferbookChannelService.findChannel(DEFAULT_MARKET)
         if (channelOptional.isPresent) {
-            log.d { "No saved market found, selecting default market: ${defaultMarket.marketCodes}" }
+            log.d { "No saved market found, selecting default market: ${DEFAULT_MARKET.marketCodes}" }
             bisqEasyOfferbookChannelSelectionService.selectChannel(channelOptional.get())
         } else {
             log.w { "Could not find default BTC/USD channel, setting channel to null" }
