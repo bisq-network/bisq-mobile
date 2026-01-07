@@ -11,9 +11,7 @@ data class SettingsChangeRequest(
     val closeMyOfferWhenTaken: Boolean? = null,
     val languageCode: String? = null,
     val supportedLanguageCodes: Set<String>? = null,
-    val chatNotificationType: ChatChannelNotificationTypeEnum? = null,
     val maxTradePriceDeviation: Double? = null,
     val useAnimations: Boolean? = null,
-    val selectedMarket: MarketVO? = null,
     val numDaysAfterRedactingTradeData: Int? = null,
 )
