@@ -14,10 +14,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPre
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
-import network.bisq.mobile.presentation.settings.resources.ResourcesPresenter
 import network.bisq.mobile.presentation.settings.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
-import network.bisq.mobile.presentation.startup.onboarding.IOnboardingPresenter
+import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
@@ -29,13 +28,13 @@ val androidNodePresentationModule =
     module {
         factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-        factory<IOnboardingPresenter> {
+        factory {
             NodeOnboardingPresenter(
                 get(),
                 get(),
                 get(),
             )
-        } bind IOnboardingPresenter::class
+        } bind OnboardingPresenter::class
 
         single<OfferbookPresenter> {
             OfferbookPresenter(

@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,10 +27,10 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqDropdown
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbar
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
@@ -61,14 +59,9 @@ fun PaymentAccountsContent(
     snackbarHostState: SnackbarHostState,
     topBar: @Composable () -> Unit = {},
 ) {
-    Scaffold(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .imePadding(),
+    BisqScaffold(
         topBar = topBar,
-        containerColor = BisqTheme.colors.backgroundColor,
-        snackbarHost = { BisqSnackbar(snackbarHostState = snackbarHostState) },
+        snackbarHostState = snackbarHostState,
     ) { paddingValues ->
 
         when {

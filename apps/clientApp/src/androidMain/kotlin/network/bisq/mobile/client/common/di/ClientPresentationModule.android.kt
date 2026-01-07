@@ -16,7 +16,7 @@ import network.bisq.mobile.presentation.common.platform_settings.PlatformSetting
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.startup.onboarding.IOnboardingPresenter
+import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -30,13 +30,13 @@ val androidClientPresentationModule =
             AndroidClientCatHashService(context, filesDir)
         } bind ClientCatHashService::class
 
-        single<IOnboardingPresenter> {
+        factory {
             ClientOnboardingPresenter(
                 get(),
                 get(),
                 get(),
             )
-        }
+        } bind OnboardingPresenter::class
 
         single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
 

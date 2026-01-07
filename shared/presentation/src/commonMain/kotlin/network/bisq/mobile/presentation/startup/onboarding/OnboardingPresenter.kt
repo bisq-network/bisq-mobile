@@ -1,11 +1,13 @@
 package network.bisq.mobile.presentation.startup.onboarding
 
-import androidx.compose.foundation.pager.PagerState
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
 import bisqapps.shared.presentation.generated.resources.img_connect
 import bisqapps.shared.presentation.generated.resources.img_p2p_tor
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -19,8 +21,10 @@ abstract class OnboardingPresenter(
     mainPresenter: MainPresenter,
     private val settingsRepository: SettingsRepository,
     private val userProfileService: UserProfileServiceFacade,
-) : BasePresenter(mainPresenter),
-    IOnboardingPresenter {
+) : BasePresenter(mainPresenter) {
+    private val _uiState = MutableStateFlow(OnboardingUiState())
+    val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
+
     private val pages =
         listOf(
             PagerViewItem(
@@ -42,43 +46,67 @@ abstract class OnboardingPresenter(
             ),
         )
 
-    override var filteredPages: List<PagerViewItem> = listOf()
+    abstract val headline: String
+
+    protected abstract val indexesToShow: List<Int>
+
+    fun onAction(action: OnboardingUiAction) {
+        when (action) {
+            is OnboardingUiAction.OnPageChanged -> onPageChanged(action.page)
+            is OnboardingUiAction.OnNextButtonClick -> onNextButtonClick()
+        }
+    }
 
     override fun onViewAttached() {
         super.onViewAttached()
 
-        filteredPages =
+        val filteredPagesValue =
             pages.filterIndexed { index, _ ->
                 indexesToShow.contains(index)
             }
+
+        _uiState.update {
+            it.copy(
+                filteredPages = filteredPagesValue,
+                headline = headline,
+                nextButtonText = "action.next".i18n(),
+            )
+        }
     }
 
-    override fun onNextButtonClick(
-        coroutineScope: CoroutineScope,
-        pagerState: PagerState,
-    ) {
-        presenterScope.launch {
-            if (pagerState.currentPage == filteredPages.lastIndex) {
-                showLoading()
-                try {
-                    settingsRepository.setFirstLaunch(false)
-                    val hasProfile: Boolean = userProfileService.hasUserProfile()
-                    presenterScope.launch {
-                        if (!hasProfile) {
-                            navigateToCreateProfile()
-                        } else {
-                            navigateToHome()
-                        }
-                    }
-                } finally {
-                    hideLoading()
-                }
+    private fun onPageChanged(page: Int) {
+        val state = _uiState.value
+        val isLastPage = page == state.filteredPages.lastIndex
+        val buttonText =
+            if (isLastPage) {
+                "mobile.onboarding.createProfile".i18n()
             } else {
-                // Let the UI handle the animation in the composable
-                // This is safe because we're using the coroutineScope passed from the composable
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                "action.next".i18n()
+            }
+
+        _uiState.update {
+            it.copy(
+                currentPage = page,
+                nextButtonText = buttonText,
+            )
+        }
+    }
+
+    private fun onNextButtonClick() {
+        // Page navigation happens in the UI
+        // This method is called by the UI only on the final page to complete onboarding
+        presenterScope.launch {
+            showLoading()
+            try {
+                settingsRepository.setFirstLaunch(false)
+                val hasProfile: Boolean = userProfileService.hasUserProfile()
+                if (!hasProfile) {
+                    navigateToCreateProfile()
+                } else {
+                    navigateToHome()
                 }
+            } finally {
+                hideLoading()
             }
         }
     }

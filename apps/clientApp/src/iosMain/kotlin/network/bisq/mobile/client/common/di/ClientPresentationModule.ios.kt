@@ -8,7 +8,7 @@ import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.IosDeviceInfoProvider
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
-import network.bisq.mobile.presentation.startup.onboarding.IOnboardingPresenter
+import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -16,13 +16,13 @@ val iosClientPresentationModule =
     module {
         single { IosClientCatHashService(getStorageDir()) } bind ClientCatHashService::class
 
-        single<IOnboardingPresenter> {
+        factory {
             ClientOnboardingPresenter(
                 get(),
                 get(),
                 get(),
             )
-        } bind IOnboardingPresenter::class
+        } bind OnboardingPresenter::class
 
         single<DeviceInfoProvider> { IosDeviceInfoProvider() }
 
