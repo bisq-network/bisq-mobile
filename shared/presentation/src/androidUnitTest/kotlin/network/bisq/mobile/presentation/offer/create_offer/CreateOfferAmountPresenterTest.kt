@@ -331,6 +331,7 @@ class CreateOfferAmountPresenterTest {
         val notificationController = FakeNotificationController()
         val foregroundServiceController = FakeForegroundServiceController()
         val foregroundDetector = FakeForegroundDetector()
+        val testApplicationLifecycleService = TestApplicationLifecycleService()
         val openTradesNotificationService =
             OpenTradesNotificationService(
                 notificationController,
@@ -338,6 +339,7 @@ class CreateOfferAmountPresenterTest {
                 tradesServiceFacade,
                 userProfileServiceFacade,
                 foregroundDetector,
+                testApplicationLifecycleService.isInitializationComplete,
             )
         val settingsService = FakeSettingsServiceFacade()
         val tradeReadStateRepository = FakeTradeReadStateRepository()

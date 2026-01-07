@@ -24,14 +24,12 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.restartProcess
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
 import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
-import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import java.io.File
 
 /**
  * Node main presenter has a very different setup than the rest of the apps (bisq2 core dependencies)
  */
 class NodeApplicationLifecycleService(
-    private val openTradesNotificationService: OpenTradesNotificationService,
     private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
@@ -134,14 +132,6 @@ class NodeApplicationLifecycleService(
     }
 
     override suspend fun deactivateServiceFacades() {
-        // tear down notification service, since we may be terminating the app
-        // and cleaning it up later makes it unnecessarily complex
-        try {
-            openTradesNotificationService.stopNotificationService()
-        } catch (e: Exception) {
-            log.w(e) { "Error at openTradesNotificationService.stopNotificationService" }
-        }
-
         // deactivate in opposite direction of activation
         messageDeliveryServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()

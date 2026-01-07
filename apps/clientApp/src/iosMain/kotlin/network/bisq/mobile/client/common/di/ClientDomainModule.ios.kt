@@ -21,9 +21,6 @@ val iosClientDomainModule =
         single { AppForegroundController() } bind ForegroundDetector::class
         single { NotificationControllerImpl(get()) } bind NotificationController::class
         single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
-        single {
-            OpenTradesNotificationService(get(), get(), get(), get(), get())
-        }
 
         single<ApplicationLifecycleService> {
             ClientApplicationLifecycleService(
@@ -45,6 +42,19 @@ val iosClientDomainModule =
                 get(),
             )
         }
+
+        single {
+            val applicationLifecycleService: ApplicationLifecycleService = get()
+            OpenTradesNotificationService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                applicationLifecycleService.isInitializationComplete,
+            )
+        }
+
         single<UrlLauncher> { IOSUrlLauncher() }
         single<VersionProvider> { ClientVersionProvider() }
     }

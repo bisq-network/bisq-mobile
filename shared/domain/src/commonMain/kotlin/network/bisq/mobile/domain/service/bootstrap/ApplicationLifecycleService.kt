@@ -1,6 +1,9 @@
 package network.bisq.mobile.domain.service.bootstrap
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
@@ -14,6 +17,9 @@ abstract class ApplicationLifecycleService(
     private val kmpTorService: KmpTorService,
 ) : BaseService() {
     private val isTerminating = atomic<Boolean>(false)
+
+    private val _isInitializationComplete = MutableStateFlow(false)
+    val isInitializationComplete: StateFlow<Boolean> = _isInitializationComplete.asStateFlow()
 
     /**
      * Marks the app as terminating if not already started, returns true if this is the first call.
@@ -33,6 +39,8 @@ abstract class ApplicationLifecycleService(
         serviceScope.launch {
             try {
                 activateServiceFacades()
+                _isInitializationComplete.value = true
+                log.i { "Service facades activation completed" }
             } catch (e: Exception) {
                 onUnrecoverableError(e)
             }

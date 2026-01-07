@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.di
 import network.bisq.mobile.client.main.ClientMainActivity
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.ForegroundDetector
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceControllerImpl
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -23,6 +24,14 @@ val androidClientDomainModule =
         } bind NotificationController::class
         single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
         single {
-            OpenTradesNotificationService(get(), get(), get(), get(), get())
+            val applicationLifecycleService: ApplicationLifecycleService = get()
+            OpenTradesNotificationService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                applicationLifecycleService.isInitializationComplete,
+            )
         }
     }

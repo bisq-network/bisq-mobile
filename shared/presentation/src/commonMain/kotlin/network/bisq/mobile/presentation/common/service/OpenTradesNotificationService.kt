@@ -7,6 +7,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -44,6 +46,7 @@ class OpenTradesNotificationService(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val appForegroundController: ForegroundDetector,
+    private val isInitializationComplete: StateFlow<Boolean>,
 ) : Logging {
     private val observedTradeIds = mutableSetOf<String>()
 
@@ -73,16 +76,21 @@ class OpenTradesNotificationService(
         }
 
         lifecycleObserverJob =
-            appForegroundController.isForeground
-                .debounce(FOREGROUND_DEBOUNCE_MS)
-                .distinctUntilChanged()
-                .onEach { isForeground ->
+            combine(
+                appForegroundController.isForeground.debounce(FOREGROUND_DEBOUNCE_MS),
+                isInitializationComplete,
+            ) { isForeground, isInitComplete ->
+                Pair(isForeground, isInitComplete)
+            }.distinctUntilChanged()
+                .onEach { (isForeground, isInitComplete) ->
                     if (isForeground) {
                         log.d { "App entered foreground (debounced). Stopping service and observers." }
                         stopObserversAndService()
-                    } else {
-                        log.d { "App entered background (debounced). Starting service and observers." }
+                    } else if (isInitComplete) {
+                        log.d { "App entered background (debounced) and initialization complete. Starting service and observers." }
                         startServiceAndObservers()
+                    } else {
+                        log.d { "App entered background but initialization not complete. Skipping service start to avoid ForegroundServiceDidNotStartInTimeException." }
                     }
                 }.launchIn(scope)
     }

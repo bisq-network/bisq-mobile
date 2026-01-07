@@ -154,7 +154,6 @@ val androidNodeDomainModule =
                 get(),
                 get(),
                 get(),
-                get(),
             )
         } bind ApplicationLifecycleService::class
 
@@ -174,6 +173,14 @@ val androidNodeDomainModule =
         single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
 
         single {
-            OpenTradesNotificationService(get(), get(), get(), get(), get())
+            val applicationLifecycleService: ApplicationLifecycleService = get()
+            OpenTradesNotificationService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                applicationLifecycleService.isInitializationComplete,
+            )
         }
     }
