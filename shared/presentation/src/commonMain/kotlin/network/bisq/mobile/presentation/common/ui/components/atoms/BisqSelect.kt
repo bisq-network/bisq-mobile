@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +28,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -220,17 +223,18 @@ fun <T> BisqSelect(
                 .let { if (it.isNotEmpty()) it.values.first().second else "" }
         }
 
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
     val onTriggerClickState = rememberUpdatedState(onTriggerClick)
 
-    LaunchedEffect(isPressed) {
-        if (isPressed) {
-            val newExpand = onTriggerClickState.value() ?: true
-            expanded = newExpand
-        }
-    }
+    val focusManager = LocalFocusManager.current
+
+    val triggerModifier =
+        Modifier
+            .onFocusChanged { state ->
+                if (state.hasFocus) {
+                    val newExpand = onTriggerClickState.value() ?: true
+                    expanded = newExpand
+                }
+            }
 
     Column(modifier = modifier) {
         BisqTextFieldV0(
@@ -238,7 +242,7 @@ fun <T> BisqSelect(
             readOnly = true,
             value = selectedLabel,
             placeholder = placeholder,
-            interactionSource = interactionSource,
+            modifier = triggerModifier,
             bottomMessage =
                 if (!errorText.isNullOrBlank()) {
                     errorText
@@ -258,6 +262,7 @@ fun <T> BisqSelect(
     if (expanded) {
         BisqBottomSheet(
             onDismissRequest = {
+                focusManager.clearFocus()
                 expanded = false
                 searchText = ""
             },
