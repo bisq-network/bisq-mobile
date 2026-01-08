@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAc
 import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -21,7 +22,13 @@ open class PaymentAccountsPresenter(
     private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
-    private val _uiState = MutableStateFlow(PaymentAccountsUiState())
+    private val _uiState =
+        MutableStateFlow(
+            PaymentAccountsUiState(
+                accountNameEntry = DataEntry(validator = ::validateAccountNameField),
+                accountDescriptionEntry = DataEntry(validator = ::validateAccountDescriptionField),
+            ),
+        )
     val uiState: StateFlow<PaymentAccountsUiState> = _uiState.asStateFlow()
 
     override fun onViewAttached() {
@@ -105,12 +112,16 @@ open class PaymentAccountsPresenter(
                         selectedAccountIndex = state.selectedAccountIndex,
                         showEditAccountState = false,
                         showAddAccountState = false,
-                        accountName = selectedAccount?.accountName ?: EMPTY_STRING,
-                        accountDescription =
-                            selectedAccount?.accountPayload?.accountData
-                                ?: EMPTY_STRING,
-                        accountNameInvalidMessage = null,
-                        accountDescriptionInvalidMessage = null,
+                        accountNameEntry =
+                            it.accountNameEntry
+                                .updateValue(selectedAccount?.accountName ?: EMPTY_STRING)
+                                .clearError(),
+                        accountDescriptionEntry =
+                            it.accountDescriptionEntry
+                                .updateValue(
+                                    selectedAccount?.accountPayload?.accountData
+                                        ?: EMPTY_STRING,
+                                ).clearError(),
                     )
                 }
             }
@@ -118,29 +129,29 @@ open class PaymentAccountsPresenter(
     }
 
     private fun validateAccountFields(
-        name: String,
-        description: String,
         excludeAccountName: String? = null, // When editing, exclude the current account name from duplicate check
     ): Boolean {
+        val accountNameEntry = _uiState.value.accountNameEntry
+        val accountDescriptionEntry = _uiState.value.accountDescriptionEntry
         // Check for duplicate account name
         val isDuplicate =
             _uiState.value.accounts.any {
-                it.accountName == name && it.accountName != excludeAccountName
+                it.accountName == accountNameEntry.value && it.accountName != excludeAccountName
             }
         if (isDuplicate) {
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             return false
         }
 
-        // Validate fields
-        val accountNameInvalidMessage = validateAccountNameField(name)
-        val accountDescriptionInvalidMessage = validateAccountDescriptionField(description)
+        // Validate fields using DataEntry
+        val validatedNameEntry = accountNameEntry.validate()
+        val validatedDescriptionEntry = accountDescriptionEntry.validate()
 
-        if (accountDescriptionInvalidMessage != null || accountNameInvalidMessage != null) {
+        if (!validatedNameEntry.isValid || !validatedDescriptionEntry.isValid) {
             _uiState.update {
                 it.copy(
-                    accountNameInvalidMessage = accountNameInvalidMessage,
-                    accountDescriptionInvalidMessage = accountDescriptionInvalidMessage,
+                    accountNameEntry = validatedNameEntry,
+                    accountDescriptionEntry = validatedDescriptionEntry,
                 )
             }
             return false
@@ -162,10 +173,10 @@ open class PaymentAccountsPresenter(
         )
 
     private fun addAccount() {
-        val newName = _uiState.value.accountName
-        val newDescription = _uiState.value.accountDescription
+        val newName = _uiState.value.accountNameEntry.value
+        val newDescription = _uiState.value.accountDescriptionEntry.value
 
-        if (!validateAccountFields(newName, newDescription)) {
+        if (!validateAccountFields()) {
             return
         }
 
@@ -189,12 +200,12 @@ open class PaymentAccountsPresenter(
 
     private fun saveAccount() {
         val state = _uiState.value
-        val newName = state.accountName
-        val newDescription = state.accountDescription
+        val newName = state.accountNameEntry.value
+        val newDescription = state.accountDescriptionEntry.value
         val selectedAccount = state.accounts.getOrNull(state.selectedAccountIndex)
         if (selectedAccount == null) return
 
-        if (!validateAccountFields(newName, newDescription, selectedAccount.accountName)) {
+        if (!validateAccountFields(selectedAccount.accountName)) {
             return
         }
 
@@ -272,10 +283,9 @@ open class PaymentAccountsPresenter(
         _uiState.update {
             it.copy(
                 showAddAccountState = true,
-                accountNameInvalidMessage = null,
-                accountDescriptionInvalidMessage = null,
-                accountName = EMPTY_STRING,
-                accountDescription = EMPTY_STRING,
+                accountNameEntry = it.accountNameEntry.updateValue(EMPTY_STRING).clearError(),
+                accountDescriptionEntry =
+                    it.accountDescriptionEntry.updateValue(EMPTY_STRING).clearError(),
             )
         }
     }
@@ -302,14 +312,13 @@ open class PaymentAccountsPresenter(
     }
 
     private fun onAccountNameChange(name: String) {
-        _uiState.update { it.copy(accountName = name, accountNameInvalidMessage = null) }
+        _uiState.update { it.copy(accountNameEntry = it.accountNameEntry.updateValue(name)) }
     }
 
     private fun onAccountDescriptionChange(description: String) {
         _uiState.update {
             it.copy(
-                accountDescription = description,
-                accountDescriptionInvalidMessage = null,
+                accountDescriptionEntry = it.accountDescriptionEntry.updateValue(description),
             )
         }
     }
@@ -320,12 +329,16 @@ open class PaymentAccountsPresenter(
             it.copy(
                 showEditAccountState = false,
                 showAddAccountState = false,
-                accountNameInvalidMessage = null,
-                accountDescriptionInvalidMessage = null,
-                accountName = selectedAccount?.accountName ?: EMPTY_STRING,
-                accountDescription =
-                    selectedAccount?.accountPayload?.accountData
-                        ?: EMPTY_STRING,
+                accountNameEntry =
+                    it.accountNameEntry
+                        .updateValue(selectedAccount?.accountName ?: EMPTY_STRING)
+                        .clearError(),
+                accountDescriptionEntry =
+                    it.accountDescriptionEntry
+                        .updateValue(
+                            selectedAccount?.accountPayload?.accountData
+                                ?: EMPTY_STRING,
+                        ).clearError(),
             )
         }
     }

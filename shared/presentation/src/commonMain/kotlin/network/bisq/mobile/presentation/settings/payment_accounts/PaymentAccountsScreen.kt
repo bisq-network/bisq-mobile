@@ -32,7 +32,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
+import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -212,10 +212,10 @@ private fun ColumnScope.PaymentAccountForm(
 ) {
     if (uiState.showEditAccountState || uiState.showAddAccountState) {
         BisqTextFieldV0(
-            value = uiState.accountName,
+            value = uiState.accountNameEntry.value,
             onValueChange = { onAction(PaymentAccountsUiAction.OnAccountNameChange(it)) },
-            isError = uiState.accountNameInvalidMessage != null,
-            bottomMessage = uiState.accountNameInvalidMessage,
+            isError = uiState.accountNameEntry.errorMessage != null,
+            bottomMessage = uiState.accountNameEntry.errorMessage,
             label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
             placeholder = "paymentAccounts.legacy.createAccount.accountName.prompt".i18n(),
         )
@@ -231,12 +231,12 @@ private fun ColumnScope.PaymentAccountForm(
     BisqGap.V1()
 
     BisqTextFieldV0(
-        value = uiState.accountDescription,
+        value = uiState.accountDescriptionEntry.value,
         onValueChange = { onAction(PaymentAccountsUiAction.OnAccountDescriptionChange(it)) },
         label = "paymentAccounts.legacy.accountData".i18n(),
         enabled = uiState.showEditAccountState || uiState.showAddAccountState,
-        isError = uiState.accountDescriptionInvalidMessage != null,
-        bottomMessage = uiState.accountDescriptionInvalidMessage,
+        isError = uiState.accountDescriptionEntry.errorMessage != null,
+        bottomMessage = uiState.accountDescriptionEntry.errorMessage,
         minLines = 4,
         placeholder = "paymentAccounts.legacy.createAccount.accountData.prompt".i18n(),
     )
@@ -371,8 +371,11 @@ private fun PaymentAccountsScreenPreview_WithAccountsPreview() {
                 PaymentAccountsUiState(
                     accounts = sampleAccounts,
                     selectedAccountIndex = 0,
-                    accountName = sampleAccounts[0].accountName,
-                    accountDescription = sampleAccounts[0].accountPayload.accountData,
+                    accountNameEntry = DataEntry(value = sampleAccounts[0].accountName),
+                    accountDescriptionEntry =
+                        DataEntry(
+                            value = sampleAccounts[0].accountPayload.accountData,
+                        ),
                 ),
             onAction = previewOnAction,
             snackbarHostState = previewSnackbarHostState(),
@@ -415,8 +418,11 @@ private fun PaymentAccountsScreenPreview_EditModePreview() {
                 PaymentAccountsUiState(
                     accounts = sampleAccounts,
                     selectedAccountIndex = 1,
-                    accountName = sampleAccounts[1].accountName,
-                    accountDescription = sampleAccounts[1].accountPayload.accountData,
+                    accountNameEntry = DataEntry(value = sampleAccounts[1].accountName),
+                    accountDescriptionEntry =
+                        DataEntry(
+                            value = sampleAccounts[1].accountPayload.accountData,
+                        ),
                     showEditAccountState = true,
                 ),
             onAction = previewOnAction,
@@ -460,8 +466,6 @@ private fun PaymentAccountsScreenPreview_CreateModePreview() {
             uiState =
                 PaymentAccountsUiState(
                     showAddAccountState = true,
-                    accountName = EMPTY_STRING,
-                    accountDescription = EMPTY_STRING,
                 ),
             onAction = previewOnAction,
             snackbarHostState = previewSnackbarHostState(),
