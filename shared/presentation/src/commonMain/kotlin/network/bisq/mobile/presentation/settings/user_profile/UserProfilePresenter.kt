@@ -53,6 +53,7 @@ class UserProfilePresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        _uiState.update { it.copy(isLoadingData = true) }
         launchJobs()
     }
 
@@ -87,7 +88,7 @@ class UserProfilePresenter(
 
             is UserProfileUiAction.OnSavePressed -> {
                 disableInteractive()
-                _uiState.update { it.copy(isBusy = true) }
+                _uiState.update { it.copy(isBusyWithAction = true) }
                 presenterScope.launch {
                     try {
                         val na = getLocalizedNA()
@@ -107,7 +108,7 @@ class UserProfilePresenter(
                     } catch (e: Exception) {
                         log.e(e) { "Failed to save user profile settings" }
                     } finally {
-                        _uiState.update { it.copy(isBusy = false) }
+                        _uiState.update { it.copy(isBusyWithAction = false) }
                         enableInteractive()
                     }
                 }
@@ -125,7 +126,7 @@ class UserProfilePresenter(
 
             is UserProfileUiAction.OnDeleteConfirmed -> {
                 disableInteractive()
-                _uiState.update { it.copy(isBusy = true, showDeleteConfirmationForProfile = null) }
+                _uiState.update { it.copy(isBusyWithAction = true, showDeleteConfirmationForProfile = null) }
                 presenterScope.launch {
                     userProfileServiceFacade
                         .deleteUserProfile(action.profile.id)
@@ -135,7 +136,7 @@ class UserProfilePresenter(
                             log.e(e) { "Failed to delete user profile" }
                             onAction(UserProfileUiAction.OnDeleteError)
                         }
-                    _uiState.update { it.copy(isBusy = false) }
+                    _uiState.update { it.copy(isBusyWithAction = false) }
                     enableInteractive()
                 }
             }
@@ -156,18 +157,18 @@ class UserProfilePresenter(
 
             is UserProfileUiAction.OnUserProfileSelected -> {
                 disableInteractive()
-                _uiState.update { it.copy(isBusy = true) }
+                _uiState.update { it.copy(isBusyWithAction = true) }
                 presenterScope.launch {
                     userProfileServiceFacade
                         .selectUserProfile(action.profile.id)
                         .onSuccess {
                             showSnackbar("mobile.settings.userProfile.selectSuccess".i18n(), isError = false)
-                            _uiState.update { it.copy(isBusy = false) }
+                            _uiState.update { it.copy(isBusyWithAction = false) }
                             enableInteractive()
                         }.onFailure { e ->
                             log.e(e) { "Failed to change user profile" }
                             showSnackbar("mobile.settings.userProfile.selectFailure".i18n(), isError = true)
-                            _uiState.update { it.copy(isBusy = false) }
+                            _uiState.update { it.copy(isBusyWithAction = false) }
                             enableInteractive()
                         }
                 }
@@ -200,7 +201,7 @@ class UserProfilePresenter(
                                 reputation = reputation,
                                 statementDraft = profile.statement,
                                 termsDraft = profile.terms,
-                                isBusy = false,
+                                isLoadingData = false,
                             )
                         }
                     }
