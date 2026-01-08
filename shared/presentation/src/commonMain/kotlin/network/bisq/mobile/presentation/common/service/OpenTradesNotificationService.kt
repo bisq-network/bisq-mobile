@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.common.notification.NotificationIds
 import network.bisq.mobile.presentation.common.notification.model.NotificationPressAction
 import network.bisq.mobile.presentation.common.notification.model.android.AndroidNotificationCategory
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import kotlin.concurrent.Volatile
 
 /**
  * Service to manage notifications for open trades
@@ -60,6 +61,8 @@ class OpenTradesNotificationService(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var lifecycleObserverJob: Job? = null
+
+    @Volatile
     private var isServiceStarted = false
 
     companion object {
