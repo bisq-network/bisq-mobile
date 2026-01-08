@@ -43,6 +43,7 @@ val iosClientDomainModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         }
         single<UrlLauncher> { IOSUrlLauncher() }

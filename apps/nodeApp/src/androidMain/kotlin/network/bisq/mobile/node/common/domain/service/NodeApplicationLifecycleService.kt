@@ -105,6 +105,11 @@ class NodeApplicationLifecycleService(
     }
 
     override suspend fun activateServiceFacades() {
+        // Start foreground service FIRST, before any heavy work, to avoid
+        // ForegroundServiceDidNotStartInTimeException
+        log.i { "Starting foreground notification service" }
+        openTradesNotificationService.startService()
+
         androidMemoryReportService.initialize()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
         networkServiceFacade.activate()

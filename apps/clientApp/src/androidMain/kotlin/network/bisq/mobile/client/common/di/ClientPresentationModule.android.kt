@@ -60,6 +60,7 @@ val androidClientPresentationModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         }
 

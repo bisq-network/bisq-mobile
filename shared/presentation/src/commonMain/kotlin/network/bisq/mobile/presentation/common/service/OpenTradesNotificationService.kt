@@ -39,7 +39,7 @@ import kotlin.concurrent.Volatile
  * Will update the user on important trade progress and new trades
  * whilst the bisq notification service is running (e.g. background app)
  *
- * The foreground service is started on the first background event and kept running
+ * The foreground service is started immediately on app initialization (before heavy work)
  * to avoid Android's ForegroundServiceDidNotStartInTimeException. Observers are
  * registered/unregistered based on foreground/background state to manage resources.
  */
@@ -73,6 +73,20 @@ class OpenTradesNotificationService(
         setupLifecycleObserver()
     }
 
+    /**
+     * Starts the foreground service immediately. Should be called during app initialization
+     * before any heavy work to avoid ForegroundServiceDidNotStartInTimeException.
+     */
+    fun startService() {
+        if (!isServiceStarted) {
+            log.i { "Starting foreground service on app initialization" }
+            foregroundServiceController.startService()
+            isServiceStarted = true
+        } else {
+            log.d { "Foreground service already started" }
+        }
+    }
+
     @OptIn(FlowPreview::class)
     private fun setupLifecycleObserver() {
         if (lifecycleObserverJob?.isActive == true) {
@@ -89,8 +103,7 @@ class OpenTradesNotificationService(
                         log.d { "App entered foreground (debounced). Unregistering observers." }
                         unregisterObservers()
                     } else {
-                        log.d { "App entered background (debounced). Starting service and registering observers." }
-                        ensureServiceStarted()
+                        log.d { "App entered background (debounced). Registering observers." }
                         registerObservers()
                     }
                 }.launchIn(scope)
@@ -117,20 +130,6 @@ class OpenTradesNotificationService(
         scope.cancel()
 
         log.d { "OpenTradesNotificationService permanently stopped" }
-    }
-
-    /**
-     * Ensures the foreground service is started. This is called on the first background event
-     * and the service remains running to avoid ForegroundServiceDidNotStartInTimeException.
-     */
-    private fun ensureServiceStarted() {
-        if (!isServiceStarted) {
-            log.i { "Starting foreground service for the first time" }
-            foregroundServiceController.startService()
-            isServiceStarted = true
-        } else {
-            log.d { "Foreground service already running" }
-        }
     }
 
     /**
