@@ -62,7 +62,7 @@ fun ErrorState(
 
 @Preview
 @Composable
-private fun ErrorStatePreview_DefaultPreview() {
+private fun ErrorState_DefaultPreview() {
     BisqTheme.Preview {
         ErrorState(
             onRetry = {},
@@ -72,7 +72,7 @@ private fun ErrorStatePreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun ErrorStatePreview_NoRetryPreview() {
+private fun ErrorState_NoRetryPreview() {
     BisqTheme.Preview {
         ErrorState(
             message = "Failed to load payment accounts. Please check your connection.",

@@ -67,7 +67,7 @@ private fun TradeGuideOverviewContentPreview(
 
 @Preview
 @Composable
-private fun TradeGuideOverviewContentPreview_EnPreview() {
+private fun TradeGuideOverviewContent_EnPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             TradeGuideOverviewContentPreview()
@@ -77,4 +77,4 @@ private fun TradeGuideOverviewContentPreview_EnPreview() {
 
 @Preview
 @Composable
-private fun TradeGuideOverviewContentPreview_RuPreview() = TradeGuideOverviewContentPreview(language = "ru")
+private fun TradeGuideOverviewContent_RuPreview() = TradeGuideOverviewContentPreview(language = "ru")

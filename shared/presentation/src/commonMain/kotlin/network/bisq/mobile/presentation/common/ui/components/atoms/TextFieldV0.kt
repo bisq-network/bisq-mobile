@@ -205,7 +205,7 @@ fun BisqTextFieldV0(
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_DefaultPreview() {
+private fun BisqTextFieldV0_DefaultPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("Sample text") }
@@ -221,7 +221,7 @@ private fun BisqTextFieldV0Preview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_EmptyPreview() {
+private fun BisqTextFieldV0_EmptyPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("") }
@@ -238,7 +238,7 @@ private fun BisqTextFieldV0Preview_EmptyPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_ErrorPreview() {
+private fun BisqTextFieldV0_ErrorPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("Invalid input") }
@@ -255,7 +255,7 @@ private fun BisqTextFieldV0Preview_ErrorPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_DisabledPreview() {
+private fun BisqTextFieldV0_DisabledPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("Disabled field") }
@@ -272,7 +272,7 @@ private fun BisqTextFieldV0Preview_DisabledPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_NoLabelPreview() {
+private fun BisqTextFieldV0_NoLabelPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("Text without label") }
@@ -286,7 +286,7 @@ private fun BisqTextFieldV0Preview_NoLabelPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_MultiLinePreview() {
+private fun BisqTextFieldV0_MultiLinePreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember {
@@ -306,7 +306,7 @@ private fun BisqTextFieldV0Preview_MultiLinePreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_SingleLinePreview() {
+private fun BisqTextFieldV0_SingleLinePreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("Single line input") }
@@ -323,7 +323,7 @@ private fun BisqTextFieldV0Preview_SingleLinePreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_WithPlaceholderPreview() {
+private fun BisqTextFieldV0_WithPlaceholderPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("") }
@@ -340,7 +340,7 @@ private fun BisqTextFieldV0Preview_WithPlaceholderPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_LabelOnlyPreview() {
+private fun BisqTextFieldV0_LabelOnlyPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("Some text") }
@@ -355,7 +355,7 @@ private fun BisqTextFieldV0Preview_LabelOnlyPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_WithPrefixPreview() {
+private fun BisqTextFieldV0_WithPrefixPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("example.com") }
@@ -377,7 +377,7 @@ private fun BisqTextFieldV0Preview_WithPrefixPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_WithSuffixPreview() {
+private fun BisqTextFieldV0_WithSuffixPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("100") }
@@ -399,7 +399,7 @@ private fun BisqTextFieldV0Preview_WithSuffixPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_WithPrefixAndSuffixPreview() {
+private fun BisqTextFieldV0_WithPrefixAndSuffixPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("1,000") }
@@ -427,7 +427,7 @@ private fun BisqTextFieldV0Preview_WithPrefixAndSuffixPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_WithLeadingIconPreview() {
+private fun BisqTextFieldV0_WithLeadingIconPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("search query") }
@@ -446,7 +446,7 @@ private fun BisqTextFieldV0Preview_WithLeadingIconPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_WithTrailingIconPreview() {
+private fun BisqTextFieldV0_WithTrailingIconPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("Clear me") }
@@ -465,7 +465,7 @@ private fun BisqTextFieldV0Preview_WithTrailingIconPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldV0Preview_WithAllDecorationsPreview() {
+private fun BisqTextFieldV0_WithAllDecorationsPreview() {
     BisqTheme.Preview {
         Box(modifier = Modifier.padding(12.dp)) {
             var textState by remember { mutableStateOf("This is a very long text value that should test how the text field handles lengthy input content with all decorations enabled") }

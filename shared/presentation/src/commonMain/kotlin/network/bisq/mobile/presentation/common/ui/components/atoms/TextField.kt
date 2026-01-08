@@ -491,7 +491,7 @@ private fun CharacterCounter(
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_EmptyPreview() {
+private fun BisqTextField_EmptyPreview() {
     var text by remember { mutableStateOf("") }
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
@@ -507,7 +507,7 @@ private fun BisqTextFieldPreview_EmptyPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_SearchPreview() {
+private fun BisqTextField_SearchPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -522,7 +522,7 @@ private fun BisqTextFieldPreview_SearchPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_TextAreaPreview() {
+private fun BisqTextField_TextAreaPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -539,7 +539,7 @@ private fun BisqTextFieldPreview_TextAreaPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithValuePreview() {
+private fun BisqTextField_WithValuePreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -553,7 +553,7 @@ private fun BisqTextFieldPreview_WithValuePreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithHelperTextPreview() {
+private fun BisqTextField_WithHelperTextPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -568,7 +568,7 @@ private fun BisqTextFieldPreview_WithHelperTextPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithErrorPreview() {
+private fun BisqTextField_WithErrorPreview() {
     BisqTheme.Preview {
         // To preview the error state, we must simulate interaction.
         // The error text will not show in a static preview unless hasInteracted=true.
@@ -586,7 +586,7 @@ private fun BisqTextFieldPreview_WithErrorPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_DisabledPreview() {
+private fun BisqTextField_DisabledPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -601,7 +601,7 @@ private fun BisqTextFieldPreview_DisabledPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithSuffixesPreview() {
+private fun BisqTextField_WithSuffixesPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -627,7 +627,7 @@ private fun BisqTextFieldPreview_WithSuffixesPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_LabelWithSuffixPreview() {
+private fun BisqTextField_LabelWithSuffixPreview() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             BisqTextField(
@@ -642,7 +642,7 @@ private fun BisqTextFieldPreview_LabelWithSuffixPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithCharacterCounterPreview() {
+private fun BisqTextField_WithCharacterCounterPreview() {
     var text by remember { mutableStateOf("Hello World") }
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
@@ -661,7 +661,7 @@ private fun BisqTextFieldPreview_WithCharacterCounterPreview() {
 
 @Preview
 @Composable
-private fun BisqTextFieldPreview_WithCharacterCounterAndErrorPreview() {
+private fun BisqTextField_WithCharacterCounterAndErrorPreview() {
     var text by remember { mutableStateOf("Hello World") }
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {

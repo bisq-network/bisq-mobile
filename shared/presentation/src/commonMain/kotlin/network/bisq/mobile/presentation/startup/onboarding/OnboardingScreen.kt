@@ -109,7 +109,7 @@ private fun OnboardingContent(
 
 @Preview
 @Composable
-private fun OnboardingScreenPreview_FirstPagePreview() {
+private fun OnboardingScreen_FirstPagePreview() {
     BisqTheme.Preview {
         val coroutineScope = rememberCoroutineScope()
         val pagerState =
@@ -147,7 +147,7 @@ private fun OnboardingScreenPreview_FirstPagePreview() {
 
 @Preview
 @Composable
-private fun OnboardingScreenPreview_LastPagePreview() {
+private fun OnboardingScreen_LastPagePreview() {
     BisqTheme.Preview {
         val coroutineScope = rememberCoroutineScope()
         val pagerState =
@@ -185,7 +185,7 @@ private fun OnboardingScreenPreview_LastPagePreview() {
 
 @Preview
 @Composable
-private fun OnboardingScreenPreview_ThreePagesPreview() {
+private fun OnboardingScreen_ThreePagesPreview() {
     BisqTheme.Preview {
         val coroutineScope = rememberCoroutineScope()
         val pagerState =

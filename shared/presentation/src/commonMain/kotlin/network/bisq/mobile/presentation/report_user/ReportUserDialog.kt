@@ -131,7 +131,7 @@ private fun ReportUserDialogPreview() {
 
 @Composable
 @Preview
-private fun ReportUserDialogPreview_LoadingPreview() {
+private fun ReportUserDialog_LoadingPreview() {
     BisqTheme.Preview {
         ReportUserDialogContent(
             state =

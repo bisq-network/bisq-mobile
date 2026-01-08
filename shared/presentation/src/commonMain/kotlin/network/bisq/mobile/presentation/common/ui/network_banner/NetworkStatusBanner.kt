@@ -182,7 +182,7 @@ private fun NetworkStatusBannerContentPreview(
 
 @Preview
 @Composable
-private fun NetworkStatusBannerPreview_LoadingPreview() {
+private fun NetworkStatusBanner_LoadingPreview() {
     BisqTheme.Preview {
         NetworkStatusBannerContentPreview(
             allDataReceived = false,
@@ -193,7 +193,7 @@ private fun NetworkStatusBannerPreview_LoadingPreview() {
 
 @Preview
 @Composable
-private fun NetworkStatusBannerPreview_CompletedPreview() {
+private fun NetworkStatusBanner_CompletedPreview() {
     BisqTheme.Preview {
         NetworkStatusBannerContentPreview(
             allDataReceived = true,

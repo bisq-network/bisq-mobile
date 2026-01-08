@@ -63,7 +63,7 @@ private fun BisqGeneralErrorDialogPreview() {
 
 @Preview
 @Composable
-private fun BisqGeneralErrorDialogPreview_EmptyTitlePreview() {
+private fun BisqGeneralErrorDialog_EmptyTitlePreview() {
     BisqTheme.Preview {
         BisqGeneralErrorDialog(
             errorTitle = EMPTY_STRING,

@@ -86,7 +86,7 @@ fun UsernameMessageDeliveryAndDate(
 
 @Preview
 @Composable
-private fun UsernameMessageDeliveryAndDatePreview_MyMessagePreview() {
+private fun UsernameMessageDeliveryAndDate_MyMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob [Marvelously-Extraneous-Elephant-234345435]")
         val peerUserProfile =
@@ -128,7 +128,7 @@ private fun UsernameMessageDeliveryAndDatePreview_MyMessagePreview() {
 
 @Preview
 @Composable
-private fun UsernameMessageDeliveryAndDatePreview_PeerMessagePreview() {
+private fun UsernameMessageDeliveryAndDate_PeerMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob [Marvelously-Extraneous-Elephant-234345435]")
         val peerUserProfile =

@@ -125,7 +125,7 @@ fun ConfirmationDialog(
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_DefaultPreview() {
+private fun ConfirmationDialog_DefaultPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "Are you absolutely sure?",
@@ -140,7 +140,7 @@ private fun ConfirmationDialogPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_Default_single_buttonPreview() {
+private fun ConfirmationDialog_Default_single_buttonPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "Unrecoverable error",
@@ -156,7 +156,7 @@ private fun ConfirmationDialogPreview_Default_single_buttonPreview() {
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_WarningPreview() {
+private fun ConfirmationDialog_WarningPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "mobile.error.warning".i18n(),
@@ -173,7 +173,7 @@ private fun ConfirmationDialogPreview_WarningPreview() {
 
 @Preview
 @Composable
-private fun ConfirmationDialogPreview_VerticalButtonsPreview() {
+private fun ConfirmationDialog_VerticalButtonsPreview() {
     BisqTheme.Preview {
         ConfirmationDialog(
             headline = "Vertical Button Layout",

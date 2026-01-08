@@ -431,20 +431,20 @@ private fun DashboardContentPreview(
 
 @Preview
 @Composable
-private fun DashboardContentPreview_EnPreview() = DashboardContentPreview(tradeRulesConfirmed = true)
+private fun DashboardContent_EnPreview() = DashboardContentPreview(tradeRulesConfirmed = true)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_EnRulesNotConfirmedPreview() = DashboardContentPreview(tradeRulesConfirmed = false)
+private fun DashboardContent_EnRulesNotConfirmedPreview() = DashboardContentPreview(tradeRulesConfirmed = false)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_En_PermissionDialogPreview() = DashboardContentPreview(isPermissionRequestDialogVisible = true)
+private fun DashboardContent_En_PermissionDialogPreview() = DashboardContentPreview(isPermissionRequestDialogVisible = true)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_RuPreview() = DashboardContentPreview("ru", true)
+private fun DashboardContent_RuPreview() = DashboardContentPreview("ru", true)
 
 @Preview
 @Composable
-private fun DashboardContentPreview_RuRulesNotConfirmedPreview() = DashboardContentPreview("ru", false)
+private fun DashboardContent_RuRulesNotConfirmedPreview() = DashboardContentPreview("ru", false)
