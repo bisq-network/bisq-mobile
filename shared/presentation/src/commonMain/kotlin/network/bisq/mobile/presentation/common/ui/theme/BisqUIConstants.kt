@@ -27,4 +27,8 @@ object BisqUIConstants {
 
     val BorderRadius = 9.dp
     val BorderRadiusSmall = 7.dp
+
+    // User profile specific constants
+    val userProfileIconButtonSize = 46.dp
+    val userProfileIconButtonPadding = 2.dp
 }

@@ -117,7 +117,7 @@ fun UserProfileScreen() {
                     modifier = Modifier.weight(1f),
                 )
 
-                Box(Modifier.padding(bottom = 2.dp)) {
+                Box(Modifier.padding(bottom = BisqUIConstants.userProfileIconButtonPadding)) {
                     // to align button with text field
                     BisqIconButton(
                         onClick = {
@@ -126,7 +126,7 @@ fun UserProfileScreen() {
                         disabled = !isInteractive,
                         modifier =
                             Modifier
-                                .size(46.dp)
+                                .size(BisqUIConstants.userProfileIconButtonSize)
                                 .background(
                                     BisqTheme.colors.primary,
                                     RoundedCornerShape(BisqUIConstants.BorderRadius),
@@ -197,7 +197,7 @@ fun UserProfileScreen() {
                 label = "user.userProfile.statement".i18n(),
                 value = uiState.statementDraft,
                 isTextArea = true,
-                onValueChange = { newValue, isValid ->
+                onValueChange = { newValue, _ ->
                     presenter.onAction(
                         UserProfileUiAction.OnStatementChanged(
                             newValue,
@@ -213,7 +213,7 @@ fun UserProfileScreen() {
                 label = "user.userProfile.terms".i18n(),
                 value = uiState.termsDraft,
                 isTextArea = true,
-                onValueChange = { newValue, isValid ->
+                onValueChange = { newValue, _ ->
                     presenter.onAction(
                         UserProfileUiAction.OnTermsChanged(
                             newValue,

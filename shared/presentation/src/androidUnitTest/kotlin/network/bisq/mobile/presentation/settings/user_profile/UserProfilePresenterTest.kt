@@ -444,8 +444,8 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // Then
-            // Navigation is handled by BasePresenter, verify it was called
-            // (In real scenario, you'd verify the navigation manager was called)
+            // TODO: Add verification when test becomes runnable:
+            // verify { navManager.navigate(CreateProfile) }
         }
 
     // ========== Lifecycle Tests ==========

@@ -221,10 +221,10 @@ class MultiProfileIntegrationTest {
                     _userProfiles.value.firstOrNull()
                 } else {
                     _selectedUserProfile.value
-                }
+                } ?: _userProfiles.value.first()
 
             _selectedUserProfile.value = newSelected
-            return Result.success(newSelected!!)
+            return Result.success(newSelected)
         }
 
         override suspend fun updateAndPublishUserProfile(
