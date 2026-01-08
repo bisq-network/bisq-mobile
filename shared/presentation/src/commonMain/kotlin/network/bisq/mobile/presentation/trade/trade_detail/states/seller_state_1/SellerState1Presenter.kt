@@ -55,7 +55,7 @@ class SellerState1Presenter(
         value: String,
         isValid: Boolean,
     ) {
-        _paymentAccountData.value = value.trim()
+        _paymentAccountData.value = value
         _paymentAccountDataValid.value = isValid
     }
 
