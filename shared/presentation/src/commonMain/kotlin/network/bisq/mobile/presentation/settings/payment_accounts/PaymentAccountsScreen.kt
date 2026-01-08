@@ -326,7 +326,7 @@ private val previewOnAction: (PaymentAccountsUiAction) -> Unit = {}
 
 @Preview
 @Composable
-private fun PaymentAccountsScreenPreview_EmptyPreview() {
+private fun PaymentAccountsScreen_EmptyPreview() {
     BisqTheme.Preview {
         PaymentAccountsContent(
             uiState = PaymentAccountsUiState(),
@@ -339,7 +339,7 @@ private fun PaymentAccountsScreenPreview_EmptyPreview() {
 
 @Preview
 @Composable
-private fun PaymentAccountsScreenPreview_WithAccountsPreview() {
+private fun PaymentAccountsScreen_WithAccountsPreview() {
     val sampleAccounts =
         listOf(
             UserDefinedFiatAccountVO(
@@ -383,7 +383,7 @@ private fun PaymentAccountsScreenPreview_WithAccountsPreview() {
 
 @Preview
 @Composable
-private fun PaymentAccountsScreenPreview_EditModePreview() {
+private fun PaymentAccountsScreen_EditModePreview() {
     val sampleAccounts =
         listOf(
             UserDefinedFiatAccountVO(
@@ -428,7 +428,7 @@ private fun PaymentAccountsScreenPreview_EditModePreview() {
 
 @Preview
 @Composable
-private fun PaymentAccountsScreenPreview_LoadingPreview() {
+private fun PaymentAccountsScreen_LoadingPreview() {
     BisqTheme.Preview {
         PaymentAccountsContent(
             uiState = PaymentAccountsUiState(isLoadingAccounts = true),
@@ -441,7 +441,7 @@ private fun PaymentAccountsScreenPreview_LoadingPreview() {
 
 @Preview
 @Composable
-private fun PaymentAccountsScreenPreview_ErrorPreview() {
+private fun PaymentAccountsScreen_ErrorPreview() {
     BisqTheme.Preview {
         PaymentAccountsContent(
             uiState = PaymentAccountsUiState(isLoadingAccountsError = true),
@@ -454,7 +454,7 @@ private fun PaymentAccountsScreenPreview_ErrorPreview() {
 
 @Preview
 @Composable
-private fun PaymentAccountsScreenPreview_CreateModePreview() {
+private fun PaymentAccountsScreen_CreateModePreview() {
     BisqTheme.Preview {
         PaymentAccountsContent(
             uiState =

@@ -187,7 +187,7 @@ fun TopBarContent(
 
 @Preview
 @Composable
-private fun TopBarContentPreview_HomePreview() {
+private fun TopBarContent_HomePreview() {
     BisqTheme.Preview {
         TopBarContent(
             title = "",
@@ -200,7 +200,7 @@ private fun TopBarContentPreview_HomePreview() {
 
 @Preview
 @Composable
-private fun TopBarContentPreview_WithTitlePreview() {
+private fun TopBarContent_WithTitlePreview() {
     BisqTheme.Preview {
         TopBarContent(
             title = "Payment Accounts",
@@ -213,7 +213,7 @@ private fun TopBarContentPreview_WithTitlePreview() {
 
 @Preview
 @Composable
-private fun TopBarContentPreview_WithBackButtonPreview() {
+private fun TopBarContent_WithBackButtonPreview() {
     BisqTheme.Preview {
         TopBarContent(
             title = "Settings",
@@ -226,7 +226,7 @@ private fun TopBarContentPreview_WithBackButtonPreview() {
 
 @Preview
 @Composable
-private fun TopBarContentPreview_LongTitlePreview() {
+private fun TopBarContent_LongTitlePreview() {
     BisqTheme.Preview {
         TopBarContent(
             title = "This is a Very Long Title That Should Wrap to Multiple Lines",
@@ -239,7 +239,7 @@ private fun TopBarContentPreview_LongTitlePreview() {
 
 @Preview
 @Composable
-private fun TopBarContentPreview_NoAvatarPreview() {
+private fun TopBarContent_NoAvatarPreview() {
     BisqTheme.Preview {
         TopBarContent(
             title = "Private Trades",

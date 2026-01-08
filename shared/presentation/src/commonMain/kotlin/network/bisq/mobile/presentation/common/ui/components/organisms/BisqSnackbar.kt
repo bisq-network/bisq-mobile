@@ -80,7 +80,7 @@ private fun BisqSnackbarPreview() {
 
 @Preview
 @Composable
-private fun BisqSnackbarPreview_NoDismissActionPreview() {
+private fun BisqSnackbar_NoDismissActionPreview() {
     BisqTheme.Preview {
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -100,7 +100,7 @@ private fun BisqSnackbarPreview_NoDismissActionPreview() {
 
 @Preview
 @Composable
-private fun BisqSnackbarPreview_LongMessagePreview() {
+private fun BisqSnackbar_LongMessagePreview() {
     BisqTheme.Preview {
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -120,7 +120,7 @@ private fun BisqSnackbarPreview_LongMessagePreview() {
 
 @Preview
 @Composable
-private fun BisqSnackbarPreview_ErrorPreview() {
+private fun BisqSnackbar_ErrorPreview() {
     BisqTheme.Preview {
         val snackbarHostState = remember { SnackbarHostState() }
 

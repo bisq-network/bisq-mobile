@@ -166,7 +166,7 @@ fun ChatTextMessageBox(
 
 @Preview
 @Composable
-private fun ChatTextMessageBoxPreview_MyMessagePreview() {
+private fun ChatTextMessageBox_MyMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob")
         val peerUserProfile = createMockUserProfile("Alice")
@@ -210,7 +210,7 @@ private fun ChatTextMessageBoxPreview_MyMessagePreview() {
 
 @Preview
 @Composable
-private fun ChatTextMessageBoxPreview_PeerMessagePreview() {
+private fun ChatTextMessageBox_PeerMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob")
         val peerUserProfile = createMockUserProfile("Alice")
@@ -254,7 +254,7 @@ private fun ChatTextMessageBoxPreview_PeerMessagePreview() {
 
 @Preview
 @Composable
-private fun ChatTextMessageBoxPreview_LongMessagePreview() {
+private fun ChatTextMessageBox_LongMessagePreview() {
     BisqTheme.Preview {
         val myUserProfile = createMockUserProfile("Bob")
         val peerUserProfile = createMockUserProfile("Alice")

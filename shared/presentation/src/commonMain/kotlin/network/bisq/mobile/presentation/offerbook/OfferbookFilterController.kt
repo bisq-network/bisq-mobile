@@ -645,7 +645,7 @@ private fun mockState(
 
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_AllSelectedPreview() {
+private fun OfferbookFilterController_AllSelectedPreview() {
     val ui = mockState(allSelected = true)
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {
@@ -664,7 +664,7 @@ private fun Preview_OfferbookFilterController_AllSelectedPreview() {
 
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_PartialFiltersPreview() {
+private fun OfferbookFilterController_PartialFiltersPreview() {
     val ui = mockState(allSelected = false, partial = true)
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {
@@ -683,7 +683,7 @@ private fun Preview_OfferbookFilterController_PartialFiltersPreview() {
 
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_ManyPaymentsPreview() {
+private fun OfferbookFilterController_ManyPaymentsPreview() {
     val payments =
         listOf(
             "SEPA",
@@ -743,7 +743,7 @@ private fun Preview_OfferbookFilterController_ManyPaymentsPreview() {
 
 @Preview
 @Composable
-private fun Preview_OfferbookFilterController_ExpandedPreview() {
+private fun OfferbookFilterController_ExpandedPreview() {
     val ui = mockState(allSelected = false, partial = true)
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {

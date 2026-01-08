@@ -51,7 +51,7 @@ fun TrustedNodeAPIIncompatiblePopup(
 
 @Preview
 @Composable
-private fun TrustedNodeAPIIncompatiblePopupPreview_DefaultPreview() {
+private fun TrustedNodeAPIIncompatiblePopup_DefaultPreview() {
     BisqTheme.Preview {
         TrustedNodeAPIIncompatiblePopup(
             errorMessage = "API version mismatch: Server is running v2.1.0 but client requires v2.0.0",
@@ -62,7 +62,7 @@ private fun TrustedNodeAPIIncompatiblePopupPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun TrustedNodeAPIIncompatiblePopupPreview_LongErrorPreview() {
+private fun TrustedNodeAPIIncompatiblePopup_LongErrorPreview() {
     BisqTheme.Preview {
         TrustedNodeAPIIncompatiblePopup(
             errorMessage =

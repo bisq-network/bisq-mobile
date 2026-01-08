@@ -91,7 +91,7 @@ private fun TradeGuideSecurityContentPreview(
 
 @Preview
 @Composable
-private fun TradeGuideSecurityContentPreview_EnPreview() {
+private fun TradeGuideSecurityContent_EnPreview() {
     BisqTheme.Preview {
         PreviewEnvironment {
             TradeGuideSecurityContentPreview()
@@ -101,4 +101,4 @@ private fun TradeGuideSecurityContentPreview_EnPreview() {
 
 @Preview
 @Composable
-private fun TradeGuideSecurityContentPreview_RuPreview() = TradeGuideSecurityContentPreview(language = "ru")
+private fun TradeGuideSecurityContent_RuPreview() = TradeGuideSecurityContentPreview(language = "ru")

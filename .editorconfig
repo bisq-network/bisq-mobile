@@ -13,6 +13,8 @@ max_line_length = 120
 ktlint_standard_max-line-length = disabled
 # Allow underscores in package names (project convention)
 ktlint_standard_package-name = disabled
+# Explicitly enable the unused imports rule
+ktlint_standard_no-unused-imports = enabled
 # Already ktlint defaults, but kept for IDE consistency
 indent_size = 4
 indent_style = space

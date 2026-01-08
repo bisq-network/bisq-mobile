@@ -140,7 +140,7 @@ private fun ReportBugPanelContent(
 
 @Preview
 @Composable
-private fun ReportBugPanelPreview_DefaultPreview() {
+private fun ReportBugPanel_DefaultPreview() {
     BisqTheme.Preview {
         ReportBugPanelContent(
             errorMessage = "java.lang.NullPointerException: Attempt to invoke virtual method 'int java.lang.String.length()' on a null object reference\n\tat com.example.MyClass.doSomething(MyClass.java:42)\n\tat com.example.MainActivity.onCreate(MainActivity.java:18)",
@@ -155,7 +155,7 @@ private fun ReportBugPanelPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun ReportBugPanelPreview_UncaughtException_AndroidPreview() {
+private fun ReportBugPanel_UncaughtException_AndroidPreview() {
     BisqTheme.Preview {
         ReportBugPanelContent(
             errorMessage = "Fatal error: OutOfMemoryError\nUnable to allocate memory for critical system operation.",
@@ -170,7 +170,7 @@ private fun ReportBugPanelPreview_UncaughtException_AndroidPreview() {
 
 @Preview
 @Composable
-private fun ReportBugPanelPreview_UncaughtException_iOSPreview() {
+private fun ReportBugPanel_UncaughtException_iOSPreview() {
     BisqTheme.Preview {
         ReportBugPanelContent(
             errorMessage = "Fatal error: Thread 1: signal SIGABRT\nApplication terminated unexpectedly.",
@@ -185,7 +185,7 @@ private fun ReportBugPanelPreview_UncaughtException_iOSPreview() {
 
 @Preview
 @Composable
-private fun ReportBugPanelPreview_LongErrorPreview() {
+private fun ReportBugPanel_LongErrorPreview() {
     BisqTheme.Preview {
         ReportBugPanelContent(
             errorMessage =
