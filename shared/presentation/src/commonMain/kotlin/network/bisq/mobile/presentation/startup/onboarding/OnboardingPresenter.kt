@@ -67,6 +67,7 @@ abstract class OnboardingPresenter(
 
         _uiState.update {
             it.copy(
+                isLoading = false,
                 filteredPages = filteredPagesValue,
                 headline = headline,
                 nextButtonText = "action.next".i18n(),

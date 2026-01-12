@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.startup.onboarding
 import network.bisq.mobile.presentation.common.ui.components.organisms.pager_view.PagerViewItem
 
 data class OnboardingUiState(
+    val isLoading: Boolean = true,
     val filteredPages: List<PagerViewItem> = emptyList(),
     val headline: String = "",
     val currentPage: Int = 0,

@@ -25,6 +25,7 @@ import bisqapps.shared.presentation.generated.resources.img_p2p_tor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.BisqLogo
@@ -66,43 +67,47 @@ private fun OnboardingContent(
     coroutineScope: CoroutineScope,
 ) {
     BisqScaffold { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        if (uiState.isLoading) {
+            LoadingState(paddingValues)
+        } else {
             Column(
                 modifier =
                     Modifier
-                        .verticalScroll(rememberScrollState())
-                        .weight(1f),
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqLogo()
-                BisqGap.V3()
-                BisqText.H2Light(uiState.headline, textAlign = TextAlign.Center)
-                BisqGap.V2()
-                BisqPagerView(pagerState, uiState.filteredPages)
-            }
-            BisqButton(
-                text = uiState.nextButtonText,
-                onClick = {
-                    if (pagerState.currentPage == uiState.filteredPages.lastIndex) {
-                        onAction(OnboardingUiAction.OnNextButtonClick)
-                    } else {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                Column(
+                    modifier =
+                        Modifier
+                            .verticalScroll(rememberScrollState())
+                            .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    BisqLogo()
+                    BisqGap.V3()
+                    BisqText.H2Light(uiState.headline, textAlign = TextAlign.Center)
+                    BisqGap.V2()
+                    BisqPagerView(pagerState, uiState.filteredPages)
+                }
+                BisqButton(
+                    text = uiState.nextButtonText,
+                    onClick = {
+                        if (pagerState.currentPage == uiState.filteredPages.lastIndex) {
+                            onAction(OnboardingUiAction.OnNextButtonClick)
+                        } else {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
                         }
-                    }
-                },
-                modifier =
-                    Modifier
-                        .semantics { contentDescription = "onboarding_next_button" }
-                        .padding(top = 16.dp),
-            )
+                    },
+                    modifier =
+                        Modifier
+                            .semantics { contentDescription = "onboarding_next_button" }
+                            .padding(top = 16.dp),
+                )
+            }
         }
     }
 }
@@ -121,6 +126,7 @@ private fun OnboardingScreen_FirstPagePreview() {
         OnboardingContent(
             uiState =
                 OnboardingUiState(
+                    isLoading = false,
                     headline = "mobile.onboarding.fullMode.headline".i18n(),
                     currentPage = 0,
                     nextButtonText = "action.next".i18n(),
@@ -159,6 +165,7 @@ private fun OnboardingScreen_LastPagePreview() {
         OnboardingContent(
             uiState =
                 OnboardingUiState(
+                    isLoading = false,
                     headline = "mobile.onboarding.fullMode.headline".i18n(),
                     currentPage = 1,
                     nextButtonText = "mobile.onboarding.createProfile".i18n(),
@@ -197,6 +204,7 @@ private fun OnboardingScreen_ThreePagesPreview() {
         OnboardingContent(
             uiState =
                 OnboardingUiState(
+                    isLoading = false,
                     headline = "mobile.onboarding.fullMode.headline".i18n(),
                     currentPage = 0,
                     nextButtonText = "action.next".i18n(),
