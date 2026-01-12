@@ -6,6 +6,8 @@ import android.os.Process
 import bisq.common.facades.FacadeProvider
 import bisq.common.facades.android.AndroidGuavaFacade
 import bisq.common.facades.android.AndroidJdkFacade
+import bisq.common.file.FileMutatorUtils
+import bisq.common.file.FileReaderUtils
 import bisq.common.network.clear_net_address_types.AndroidEmulatorAddressTypeFacade
 import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import kotlinx.coroutines.Dispatchers
@@ -184,6 +186,8 @@ class NodeMainApplication : MainApplication() {
             } else {
                 LANAddressTypeFacade()
             }
+        FileMutatorUtils.setup(false, false)
+        FileReaderUtils.setup(false)
         FacadeProvider.setClearNetAddressTypeFacade(clearNetFacade)
         FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
         FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
