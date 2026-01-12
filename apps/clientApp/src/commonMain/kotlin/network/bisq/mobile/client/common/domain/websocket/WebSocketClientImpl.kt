@@ -256,6 +256,7 @@ class WebSocketClientImpl(
                     } else {
                         null
                     }
+
                 val authToken =
                     AuthUtils.generateAuthHash(
                         password,
@@ -265,11 +266,10 @@ class WebSocketClientImpl(
                         normalizedPath,
                         bodySha256Hex,
                     )
+
                 val replacementRequest =
                     webSocketRequest.copy(
-                        authToken = authToken,
-                        authTs = timestamp,
-                        authNonce = nonce,
+                        deviceId = "TODO",
                     )
                 return requestResponseHandler.request(replacementRequest)
             } else {
@@ -407,6 +407,7 @@ class WebSocketClientImpl(
                 "GET",
                 "/api/v1/settings/version",
                 "",
+                deviceId = "TODO"
             )
         val response = sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
