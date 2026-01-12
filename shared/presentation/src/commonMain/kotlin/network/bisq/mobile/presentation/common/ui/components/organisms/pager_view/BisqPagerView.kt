@@ -36,6 +36,8 @@ fun BisqPagerView(
     pagerState: PagerState,
     pageItems: List<PagerViewItem>,
 ) {
+    if (pageItems.isEmpty()) return
+
     CompositionLocalProvider(values = arrayOf()) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -50,7 +52,7 @@ fun BisqPagerView(
             ) { index ->
                 pageItems
                     .getOrNull(
-                        index % (pageItems.size),
+                        index % pageItems.size,
                     )?.let { item ->
                         PagerSingleItem(
                             image = item.image,
