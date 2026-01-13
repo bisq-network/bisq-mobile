@@ -42,6 +42,8 @@ class TrustedNodeSetupPresenterCancelTest {
     private lateinit var wsClientService: WebSocketClientService
     private lateinit var kmpTorService: KmpTorService
     private lateinit var appBootstrap: ApplicationBootstrapFacade
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var mainPresenter: MainPresenter
 

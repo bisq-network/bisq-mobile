@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -48,7 +49,7 @@ class NavigationManagerImpl(
      * @return true if navigation should proceed, false if it should be throttled
      */
     private fun shouldAllowNavigation(): Boolean {
-        val currentTime = System.currentTimeMillis()
+        val currentTime = Clock.System.now().toEpochMilliseconds()
         val timeSinceLastNav = currentTime - lastNavigationTime
         if (timeSinceLastNav < navigationThrottleMs) {
             log.d { "Navigation throttled: ${timeSinceLastNav}ms since last navigation (min: ${navigationThrottleMs}ms)" }

@@ -183,6 +183,8 @@ class NodeOffersServiceFacade(
         marketPriceUpdateJob = null
         ignoredIdsJob?.cancel()
         ignoredIdsJob = null
+        offerProcessingJob?.cancel()
+        offerProcessingJob = null
         numOffersObservers.forEach { it.dispose() }
         numOffersObservers.clear()
 
@@ -367,21 +369,22 @@ class NodeOffersServiceFacade(
                         // Process offers asynchronously to avoid blocking the main thread
                         // This prevents ANRs when selecting markets with many offers
                         // Using Default dispatcher for CPU-intensive work (formatting, reputation calculations)
-                        offerProcessingJob = serviceScope.launch(Dispatchers.Default) {
-                            val listItems: List<OfferItemPresentationModel> =
-                                values
-                                    .filter { it.hasBisqEasyOffer() }
-                                    .filter { isValidOfferbookMessage(it) }
-                                    .map { createOfferItemPresentationModel(it) }
+                        offerProcessingJob =
+                            serviceScope.launch(Dispatchers.Default) {
+                                val listItems: List<OfferItemPresentationModel> =
+                                    values
+                                        .filter { it.hasBisqEasyOffer() }
+                                        .filter { isValidOfferbookMessage(it) }
+                                        .map { createOfferItemPresentationModel(it) }
 
-                            // Update UI state on main thread
-                            withContext(Dispatchers.Main) {
-                                _offerbookListItems.update { current ->
-                                    (current + listItems).distinctBy { it.bisqEasyOffer.id }
+                                // Update UI state on main thread
+                                withContext(Dispatchers.Main) {
+                                    _offerbookListItems.update { current ->
+                                        (current + listItems).distinctBy { it.bisqEasyOffer.id }
+                                    }
+                                    _isOfferbookLoading.value = false
                                 }
-                                _isOfferbookLoading.value = false
                             }
-                        }
                     }
 
                     // Newly added messages
