@@ -13,12 +13,16 @@ class I18nSupport {
         var isReady: Boolean = false
             private set
 
+        var currentLanguage: String = "en"
+            private set
+
         fun initialize(languageCode: String = "en") {
             setLanguage(languageCode)
             isReady = true
         }
 
         fun setLanguage(languageCode: String = "en") {
+            currentLanguage = languageCode
             // bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }
             val bundleMapsByName: Map<String, Map<String, String>> =
                 when (languageCode) {

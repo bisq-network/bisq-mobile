@@ -60,11 +60,8 @@ class NodeSettingsServiceFacade(
         try {
             log.i { "Attempting to set language code to: $value" }
             settingsService.setLanguageTag(value)
-            val locale = languageToLocaleMap[value] ?: Locale("en", "US")
-            LocaleRepository.setDefaultLocale(locale)
-            _languageCode.value = value
+            updateLanguage(value)
             log.i { "Successfully set language code to: $value (via Bisq2 core)" }
-            I18nSupport.setLanguage(value)
         } catch (e: Exception) {
             log.e(e) { "Failed to set language code to: $value" }
             throw e
@@ -179,10 +176,20 @@ class NodeSettingsServiceFacade(
         super<ServiceFacade>.deactivate()
     }
 
+    private fun updateLanguage(code: String) {
+        if (I18nSupport.currentLanguage != code || _languageCode.value != code) {
+            val locale = languageToLocaleMap[code] ?: Locale("en", "US")
+            LocaleRepository.setDefaultLocale(locale)
+            I18nSupport.setLanguage(code)
+            _languageCode.value = code
+        }
+    }
+
     // API
     override suspend fun getSettings(): Result<SettingsVO> =
         try {
             val settings = Mappings.SettingsMapping.from(settingsService)
+            updateLanguage(settings.languageCode)
             Result.success(settings)
         } catch (e: Exception) {
             Result.failure(e)

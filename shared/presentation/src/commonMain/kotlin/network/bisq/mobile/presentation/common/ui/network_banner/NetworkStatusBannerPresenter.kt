@@ -2,7 +2,7 @@ package network.bisq.mobile.presentation.common.ui.network_banner
 
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -24,16 +24,15 @@ open class NetworkStatusBannerPresenter(
     val isMainContentVisible: StateFlow<Boolean> = mainPresenter.isMainContentVisible
 
     val inventoryRequestInfo: StateFlow<String> =
-        allDataReceived
-            .map { isComplete ->
-                if (isComplete) {
-                    "mobile.inventoryRequest.completed".i18n()
-                } else {
-                    "mobile.inventoryRequest.requesting".i18n()
-                }
-            }.stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                "data.na".i18n(),
-            )
+        combine(allDataReceived, mainPresenter.languageCode) { isComplete, _ ->
+            if (isComplete) {
+                "mobile.inventoryRequest.completed".i18n()
+            } else {
+                "mobile.inventoryRequest.requesting".i18n()
+            }
+        }.stateIn(
+            presenterScope,
+            SharingStarted.Lazily,
+            "data.na".i18n(),
+        )
 }

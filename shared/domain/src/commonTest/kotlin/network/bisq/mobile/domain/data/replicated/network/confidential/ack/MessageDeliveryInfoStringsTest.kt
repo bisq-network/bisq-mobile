@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 class MessageDeliveryInfoStringsTest {
     @Test
     fun test_i18n_delivery_state_key_resolves_successfully() {
-        I18nSupport.setLanguage("en")
+        I18nSupport.setLanguage()
         // Sanity check: ensure i18n is initialized and delivery-state key resolves to non-blank.
         val key = "chat.message.deliveryState.SENT"
         val value = key.i18n()
@@ -18,7 +18,7 @@ class MessageDeliveryInfoStringsTest {
 
     @Test
     fun tooltip_single_peer_uses_plain_delivery_state() {
-        I18nSupport.setLanguage("en")
+        I18nSupport.setLanguage()
         val info =
             MessageDeliveryInfoVO(
                 messageDeliveryStatus = MessageDeliveryStatusEnum.SENT,
@@ -39,7 +39,7 @@ class MessageDeliveryInfoStringsTest {
 
     @Test
     fun tooltip_multi_peer_includes_user_and_delivery_state() {
-        I18nSupport.setLanguage("en")
+        I18nSupport.setLanguage()
         val info =
             MessageDeliveryInfoVO(
                 messageDeliveryStatus = MessageDeliveryStatusEnum.SENT,

@@ -45,12 +45,11 @@ class ClientSettingsServiceFacade(
             log.i { "Client attempting to set language code to: $value" }
             val result = apiGateway.setLanguageCode(value)
             if (result.isSuccess) {
-                _languageCode.value = value
+                updateLanguage(value)
                 log.i { "Client successfully set language code to: $value (via API)" }
             } else {
                 log.e { "Client API call failed for language code: $value" }
             }
-            I18nSupport.setLanguage(value)
         } catch (e: Exception) {
             log.e(e) { "Client failed to set language code to: $value" }
             throw e
@@ -138,6 +137,13 @@ class ClientSettingsServiceFacade(
         super<ServiceFacade>.deactivate()
     }
 
+    private fun updateLanguage(code: String) {
+        if (I18nSupport.currentLanguage != code || _languageCode.value != code) {
+            I18nSupport.setLanguage(code)
+            _languageCode.value = code
+        }
+    }
+
     // API
     override suspend fun getSettings(): Result<SettingsVO> {
         val result = apiGateway.getSettings()
@@ -145,7 +151,7 @@ class ClientSettingsServiceFacade(
             result.getOrThrow().let { settings ->
                 _isTacAccepted.value = settings.isTacAccepted
                 _tradeRulesConfirmed.value = settings.tradeRulesConfirmed
-                _languageCode.value = settings.languageCode
+                updateLanguage(settings.languageCode)
                 _maxTradePriceDeviation.value = settings.maxTradePriceDeviation
                 _supportedLanguageCodes.value = settings.supportedLanguageCodes
                 _closeMyOfferWhenTaken.value = settings.closeMyOfferWhenTaken

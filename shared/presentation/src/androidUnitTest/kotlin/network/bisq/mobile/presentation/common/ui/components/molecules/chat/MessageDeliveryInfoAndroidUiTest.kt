@@ -27,7 +27,7 @@ class MessageDeliveryInfoAndroidUiTest {
 
     @Before
     fun setup() {
-        I18nSupport.setLanguage("en")
+        I18nSupport.setLanguage()
     }
 
     @Test
