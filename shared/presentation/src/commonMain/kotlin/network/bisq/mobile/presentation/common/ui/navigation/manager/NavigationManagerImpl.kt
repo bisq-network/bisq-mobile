@@ -26,6 +26,10 @@ class NavigationManagerImpl(
     val coroutineJobsManager: CoroutineJobsManager,
 ) : NavigationManager,
     Logging {
+    companion object {
+        const val NAVIGATE_THROTTLE_MS = 300L // Minimum time between navigation calls based on human eye reaction
+    }
+
     private var rootNavControllerFlow = MutableStateFlow<NavHostController?>(null)
     private var tabNavControllerFlow = MutableStateFlow<NavHostController?>(null)
 
@@ -38,7 +42,6 @@ class NavigationManagerImpl(
 
     // Track last navigation time to prevent rapid navigation calls that can cause ANRs
     private var lastNavigationTime = 0L
-    private val navigationThrottleMs = 300L // Minimum time between navigation calls
 
     // External scope, but we always dispatch to Main when touching NavController.
     private val scope get() = coroutineJobsManager.getScope()
@@ -51,8 +54,8 @@ class NavigationManagerImpl(
     private fun shouldAllowNavigation(): Boolean {
         val currentTime = Clock.System.now().toEpochMilliseconds()
         val timeSinceLastNav = currentTime - lastNavigationTime
-        if (timeSinceLastNav < navigationThrottleMs) {
-            log.d { "Navigation throttled: ${timeSinceLastNav}ms since last navigation (min: ${navigationThrottleMs}ms)" }
+        if (timeSinceLastNav < NAVIGATE_THROTTLE_MS) {
+            log.d { "Navigation throttled: ${timeSinceLastNav}ms since last navigation (min: ${NAVIGATE_THROTTLE_MS}ms)" }
             return false
         }
         lastNavigationTime = currentTime
@@ -150,10 +153,12 @@ class NavigationManagerImpl(
         onCompleted: (() -> Unit)?,
     ) {
         scope.launch {
+            var completedInvoked = false
             navMutex.withLock {
                 try {
                     if (!shouldAllowNavigation()) {
                         onCompleted?.invoke()
+                        completedInvoked = true
                         return@withLock
                     }
 
@@ -168,7 +173,9 @@ class NavigationManagerImpl(
                 } catch (t: Throwable) {
                     log.e(t) { "Failed to navigate to $destination (exception)" }
                 } finally {
-                    onCompleted?.invoke()
+                    if (!completedInvoked) {
+                        onCompleted?.invoke()
+                    }
                 }
             }
         }

@@ -27,6 +27,7 @@ import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -366,23 +367,34 @@ class NodeOffersServiceFacade(
                 object : CollectionObserver<BisqEasyOfferbookMessage> {
                     // We get all already existing offers applied at channel selection
                     override fun addAll(values: Collection<BisqEasyOfferbookMessage>) {
+                        val currentChannel = channel
                         // Process offers asynchronously to avoid blocking the main thread
                         // This prevents ANRs when selecting markets with many offers
                         // Using Default dispatcher for CPU-intensive work (formatting, reputation calculations)
                         offerProcessingJob =
                             serviceScope.launch(Dispatchers.Default) {
-                                val listItems: List<OfferItemPresentationModel> =
-                                    values
-                                        .filter { it.hasBisqEasyOffer() }
-                                        .filter { isValidOfferbookMessage(it) }
-                                        .map { createOfferItemPresentationModel(it) }
+                                try {
+                                    val listItems: List<OfferItemPresentationModel> =
+                                        values
+                                            .filter { it.hasBisqEasyOffer() }
+                                            .filter { isValidOfferbookMessage(it) }
+                                            .map { createOfferItemPresentationModel(it) }
 
-                                // Update UI state on main thread
-                                withContext(Dispatchers.Main) {
-                                    _offerbookListItems.update { current ->
-                                        (current + listItems).distinctBy { it.bisqEasyOffer.id }
+                                    // Update UI state on main thread
+                                    withContext(Dispatchers.Main) {
+                                        // Only update if we're still on the same channel
+                                        if (selectedChannel == currentChannel) {
+                                            _offerbookListItems.update { current ->
+                                                (current + listItems).distinctBy { it.bisqEasyOffer.id }
+                                            }
+                                        }
                                     }
-                                    _isOfferbookLoading.value = false
+                                } finally {
+                                    // Always reset loading state, even if job is cancelled
+                                    // NonCancellable ensures cleanup runs even during cancellation
+                                    withContext(NonCancellable + Dispatchers.Main) {
+                                        _isOfferbookLoading.value = false
+                                    }
                                 }
                             }
                     }
@@ -392,13 +404,17 @@ class NodeOffersServiceFacade(
                         if (!message.hasBisqEasyOffer() || !isValidOfferbookMessage(message)) {
                             return
                         }
+                        val currentChannel = channel
                         // Process single offer asynchronously to avoid blocking main thread
                         // Using Default dispatcher for CPU-intensive work (formatting, reputation calculations)
                         serviceScope.launch(Dispatchers.Default) {
                             val listItem = createOfferItemPresentationModel(message)
                             withContext(Dispatchers.Main) {
-                                _offerbookListItems.update { current ->
-                                    (current + listItem).distinctBy { it.bisqEasyOffer.id }
+                                // Only update if we're still on the same channel
+                                if (selectedChannel == currentChannel) {
+                                    _offerbookListItems.update { current ->
+                                        (current + listItem).distinctBy { it.bisqEasyOffer.id }
+                                    }
                                 }
                             }
                         }
