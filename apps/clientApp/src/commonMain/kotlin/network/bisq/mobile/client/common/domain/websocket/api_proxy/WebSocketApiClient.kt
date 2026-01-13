@@ -8,6 +8,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.headers
 import io.ktor.http.isSuccess
 import io.ktor.http.path
 import kotlinx.coroutines.CancellationException
@@ -15,13 +16,14 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.client.common.domain.utils.Headers
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.createUuid
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class WebSocketApiClient(
     val httpClientService: HttpClientService,
@@ -30,7 +32,7 @@ class WebSocketApiClient(
 ) : Logging {
     val apiPath = "/api/v1/"
 
-    // POST and PATCH request are not working yes on the backend.
+    // PUT, POST and PATCH request are not working yet on the backend.
     // So we use httpClient instead.
     val useHttpClient = true
 
@@ -57,14 +59,26 @@ class WebSocketApiClient(
         if (useHttpClient) {
             log.d { "HTTP PUT to " + (apiPath + path) }
             log.d { "Request body: $requestBody" }
+
+            // TODO
+            val sessionId = "sessionId TODO"
+            val nonce = "nonce TODO"
+            val timestamp = "timestamp TODO"
+            val signature = "signature TODO"
             try {
                 val response: HttpResponse =
                     httpClientService.put {
                         url {
                             path(apiPath + path)
                         }
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
+                        headers {
+                            append("Content-Type", "application/json")
+                            append("Accept", "application/json")
+                            append(Headers.SESSION_ID, sessionId)
+                            append(Headers.NONCE, nonce)
+                            append(Headers.TIMESTAMP, timestamp)
+                            append(Headers.SIGNATURE, signature)
+                        }
                         setBody(requestBody)
                     }
                 log.d { "HTTP PUT done status=${response.status}" }
@@ -88,11 +102,17 @@ class WebSocketApiClient(
         if (useHttpClient) {
             log.d { "HTTP PATCH to ${apiPath + path}" }
             log.d { "Request body: $requestBody" }
+
+            // TODO
+            val sessionId = "sessionId TODO"
+            val nonce = "nonce TODO"
+            val timestamp = "timestamp TODO"
+            val signature = "signature TODO"
+
             try {
                 // Serialize to JSON to see what's actually being sent
                 val bodyAsJson = json.encodeToString(requestBody)
                 log.d { "Request body as JSON: $bodyAsJson" }
-
                 val response: HttpResponse =
                     httpClientService.patch {
                         url {
@@ -100,6 +120,12 @@ class WebSocketApiClient(
                         }
                         contentType(ContentType.Application.Json)
                         accept(ContentType.Application.Json)
+                        headers {
+                            append(Headers.SESSION_ID, sessionId)
+                            append(Headers.NONCE, nonce)
+                            append(Headers.TIMESTAMP, timestamp)
+                            append(Headers.SIGNATURE, signature)
+                        }
                         setBody(requestBody)
                     }
                 log.d { "HTTP PATCH done status=${response.status}" }
@@ -122,6 +148,12 @@ class WebSocketApiClient(
         if (useHttpClient) {
             log.d { "HTTP POST to ${apiPath + path}" }
             log.d { "Request body: $requestBody" }
+
+            // TODO
+            val sessionId = "sessionId TODO"
+            val nonce = "nonce TODO"
+            val timestamp = "timestamp TODO"
+            val signature = "signature TODO"
             try {
                 val response: HttpResponse =
                     httpClientService.post {
@@ -130,6 +162,12 @@ class WebSocketApiClient(
                         }
                         contentType(ContentType.Application.Json)
                         accept(ContentType.Application.Json)
+                        headers {
+                            append(Headers.SESSION_ID, sessionId)
+                            append(Headers.NONCE, nonce)
+                            append(Headers.TIMESTAMP, timestamp)
+                            append(Headers.SIGNATURE, signature)
+                        }
                         setBody(requestBody)
                     }
                 log.d { "HTTP POST done status=${response.status}" }
@@ -174,15 +212,32 @@ class WebSocketApiClient(
         bodyAsJson: String = "",
         handleNoContent: () -> Result<R>,
     ): Result<R> {
-        val requestId = Uuid.random().toString()
         val fullPath = apiPath + path
+        val requestId = createUuid()
+
+        // TODO
+        val deviceId = "deviceId"
+        val sessionId = "sessionId TODO"
+        val nonce = "nonce TODO"
+        val timestamp = "timestamp TODO"
+        val signature = "signature TODO"
+
         val webSocketRestApiRequest =
             WebSocketRestApiRequest(
-                requestId,
-                method,
-                fullPath,
-                bodyAsJson,
-                "TODO"
+                requestId = requestId,
+                method = method,
+                path = fullPath,
+                body = bodyAsJson,
+                headers =
+                    mapOf(
+                        "Content-Type" to "application/json",
+                        "Accept" to "application/json",
+                        Headers.SESSION_ID to sessionId,
+                        Headers.NONCE to nonce,
+                        Headers.TIMESTAMP to timestamp,
+                        Headers.SIGNATURE to signature,
+                    ),
+                deviceId = deviceId,
             )
         try {
             val startTime = DateUtils.now()

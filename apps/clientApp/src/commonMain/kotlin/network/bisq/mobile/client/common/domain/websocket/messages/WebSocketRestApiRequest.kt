@@ -11,7 +11,7 @@ data class WebSocketRestApiRequest(
     val method: String,
     val path: String,
     val body: String,
-
+    val headers: Map<String, String>,
     // TODO
     // Device UUID is created and persisted at the client. It will be associated with a user defined device
     // name which will be sent to the server in the PairingRequestPayload.

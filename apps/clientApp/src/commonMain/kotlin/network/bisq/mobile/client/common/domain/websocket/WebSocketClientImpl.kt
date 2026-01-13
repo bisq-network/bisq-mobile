@@ -6,6 +6,7 @@ import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
+import io.ktor.http.headers
 import io.ktor.http.parseUrl
 import io.ktor.http.path
 import io.ktor.util.collections.ConcurrentMap
@@ -42,6 +43,7 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.AuthUtils
 import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.utils.Headers
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
@@ -113,6 +115,13 @@ class WebSocketClientImpl(
                 log.d { "WS connecting to $apiUrl ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val startTime = DateUtils.now()
+
+                // TODO
+                val sessionId = "sessionId TODO"
+                val nonce = "nonce TODO"
+                val timestamp = "timestamp TODO"
+                val signature = "signature TODO"
+
                 val newSession =
                     withTimeout(timeout) {
                         httpClient.webSocketSession {
@@ -123,6 +132,14 @@ class WebSocketClientImpl(
                                 host = apiUrl.host
                                 port = apiUrl.port
                                 path("/websocket")
+                            }
+                            headers {
+                                append("Content-Type", "application/json")
+                                append("Accept", "application/json")
+                                append(Headers.SESSION_ID, sessionId)
+                                append(Headers.NONCE, nonce)
+                                append(Headers.TIMESTAMP, timestamp)
+                                append(Headers.SIGNATURE, signature)
                             }
                         }
                     }
@@ -401,13 +418,30 @@ class WebSocketClientImpl(
 
     private suspend fun getApiVersion(): ApiVersionSettingsVO {
         val requestId = createUuid()
+        val deviceId = "deviceId"
+
+        // TODO
+        val sessionId = "sessionId TODO"
+        val nonce = "nonce TODO"
+        val timestamp = "timestamp TODO"
+        val signature = "signature TODO"
+
         val webSocketRestApiRequest =
             WebSocketRestApiRequest(
-                requestId,
-                "GET",
-                "/api/v1/settings/version",
-                "",
-                deviceId = "TODO"
+                requestId = requestId,
+                method = "GET",
+                path = "/api/v1/settings/version",
+                body = "",
+                headers =
+                    mapOf(
+                        "Content-Type" to "application/json",
+                        "Accept" to "application/json",
+                        Headers.SESSION_ID to sessionId,
+                        Headers.NONCE to nonce,
+                        Headers.TIMESTAMP to timestamp,
+                        Headers.SIGNATURE to signature,
+                    ),
+                deviceId = deviceId,
             )
         val response = sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
