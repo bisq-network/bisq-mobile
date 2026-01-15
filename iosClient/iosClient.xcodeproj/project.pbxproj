@@ -9,9 +9,10 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
-		0CCB445A3602D1F9E892AF01 /* Pods_Bisq_Connect.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88680611676508104049356D /* Pods_Bisq_Connect.framework */; };
 		2152FB042600AC8F00CF470E /* iosClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iosClient.swift */; };
+		4EE6883ABC18CB037E299404 /* Pods_Bisq_Connect.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 982F99A95AC1F861545BA80B /* Pods_Bisq_Connect.framework */; };
 		609CEB4AB21E643901D61667 /* KoinHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 609CE23ED65204A4441A4BA8 /* KoinHelper.swift */; };
+		64A9698AD2276A25567FCED0 /* Pods_Bisq_Connect_Debug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22691A9F2049D97E11433E1A /* Pods_Bisq_Connect_Debug.framework */; };
 		74831B6D2D5088E600B729F4 /* iosClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iosClient.swift */; };
 		74831B6E2D5088E600B729F4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		74831B6F2D5088E600B729F4 /* LifecycleAwareComposeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749C8F4D2CCB978300AE196D /* LifecycleAwareComposeViewController.swift */; };
@@ -21,7 +22,6 @@
 		749C8F4E2CCB978300AE196D /* LifecycleAwareComposeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749C8F4D2CCB978300AE196D /* LifecycleAwareComposeViewController.swift */; };
 		74D8991D2F07ADAC00A4DA07 /* LibTor.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 74D8991B2F07ADAC00A4DA07 /* LibTor.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
-		85DCB5FFCF73343AB36BB4D7 /* Pods_Bisq_Connect_Debug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9C6741480BD230ACE128F91 /* Pods_Bisq_Connect_Debug.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,24 +39,25 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		02DF01F74F28A075260747F9 /* Pods-Bisq Connect Debug.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect Debug.debug.xcconfig"; path = "Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug.debug.xcconfig"; sourceTree = "<group>"; };
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		0F78653760685B119D231839 /* Pods-Bisq Connect.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect.release.xcconfig"; path = "Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect.release.xcconfig"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iosClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosClient.swift; sourceTree = "<group>"; };
+		22691A9F2049D97E11433E1A /* Pods_Bisq_Connect_Debug.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Bisq_Connect_Debug.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		2E00410D41E08AB40B10659A /* Pods-Bisq Connect Debug.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect Debug.release.xcconfig"; path = "Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug.release.xcconfig"; sourceTree = "<group>"; };
+		598D967155ADCB12250F06F5 /* Pods-Bisq Connect.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect.release.xcconfig"; path = "Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect.release.xcconfig"; sourceTree = "<group>"; };
 		609CE23ED65204A4441A4BA8 /* KoinHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KoinHelper.swift; sourceTree = "<group>"; };
 		740A90492F0289CF007E5171 /* Bisq ConnectRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Bisq ConnectRelease.entitlements"; sourceTree = "<group>"; };
 		74831B7B2D5088E600B729F4 /* Bisq Connect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bisq Connect.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		749C8F4D2CCB978300AE196D /* LifecycleAwareComposeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleAwareComposeViewController.swift; sourceTree = "<group>"; };
+		74C4C6632F18B7C300C73EF2 /* Bisq ConnectDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Bisq ConnectDebug.entitlements"; sourceTree = "<group>"; };
 		74D8991B2F07ADAC00A4DA07 /* LibTor.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = LibTor.xcframework; path = "../build/kmp-tor-resource/LibTor.xcframework"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Bisq Connect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bisq Connect.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		7FE4D8D889D542E1F4A83F00 /* Pods-Bisq Connect Debug.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect Debug.debug.xcconfig"; path = "Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug.debug.xcconfig"; sourceTree = "<group>"; };
-		88680611676508104049356D /* Pods_Bisq_Connect.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Bisq_Connect.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		A01C97282DA8CBC28E37F1E9 /* Pods-Bisq Connect.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect.debug.xcconfig"; path = "Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect.debug.xcconfig"; sourceTree = "<group>"; };
+		78D9B1D932A4E05C135F6846 /* Pods-Bisq Connect.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect.debug.xcconfig"; path = "Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect.debug.xcconfig"; sourceTree = "<group>"; };
+		982F99A95AC1F861545BA80B /* Pods_Bisq_Connect.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Bisq_Connect.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		C9C6741480BD230ACE128F91 /* Pods_Bisq_Connect_Debug.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Bisq_Connect_Debug.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		D66D096E2845BDBE3D7F5F10 /* Pods-Bisq Connect Debug.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect Debug.release.xcconfig"; path = "Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -78,7 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0CCB445A3602D1F9E892AF01 /* Pods_Bisq_Connect.framework in Frameworks */,
+				4EE6883ABC18CB037E299404 /* Pods_Bisq_Connect.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,7 +87,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				85DCB5FFCF73343AB36BB4D7 /* Pods_Bisq_Connect_Debug.framework in Frameworks */,
+				64A9698AD2276A25567FCED0 /* Pods_Bisq_Connect_Debug.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,8 +106,8 @@
 			isa = PBXGroup;
 			children = (
 				74D8991B2F07ADAC00A4DA07 /* LibTor.xcframework */,
-				88680611676508104049356D /* Pods_Bisq_Connect.framework */,
-				C9C6741480BD230ACE128F91 /* Pods_Bisq_Connect_Debug.framework */,
+				982F99A95AC1F861545BA80B /* Pods_Bisq_Connect.framework */,
+				22691A9F2049D97E11433E1A /* Pods_Bisq_Connect_Debug.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -114,6 +115,7 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				74C4C6632F18B7C300C73EF2 /* Bisq ConnectDebug.entitlements */,
 				740A90492F0289CF007E5171 /* Bisq ConnectRelease.entitlements */,
 				AB1DB47929225F7C00F7AF9C /* Configuration */,
 				7555FF7D242A565900829871 /* iosClient */,
@@ -150,10 +152,10 @@
 		9A04D16CB0295F0B78A2DEC1 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				A01C97282DA8CBC28E37F1E9 /* Pods-Bisq Connect.debug.xcconfig */,
-				0F78653760685B119D231839 /* Pods-Bisq Connect.release.xcconfig */,
-				7FE4D8D889D542E1F4A83F00 /* Pods-Bisq Connect Debug.debug.xcconfig */,
-				D66D096E2845BDBE3D7F5F10 /* Pods-Bisq Connect Debug.release.xcconfig */,
+				78D9B1D932A4E05C135F6846 /* Pods-Bisq Connect.debug.xcconfig */,
+				598D967155ADCB12250F06F5 /* Pods-Bisq Connect.release.xcconfig */,
+				02DF01F74F28A075260747F9 /* Pods-Bisq Connect Debug.debug.xcconfig */,
+				2E00410D41E08AB40B10659A /* Pods-Bisq Connect Debug.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -173,14 +175,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 74831B782D5088E600B729F4 /* Build configuration list for PBXNativeTarget "Bisq Connect" */;
 			buildPhases = (
-				D48BB9D75821AB9001657843 /* [CP] Check Pods Manifest.lock */,
+				7E0600D4346D1F5AB09CDC05 /* [CP] Check Pods Manifest.lock */,
 				74831B6B2D5088E600B729F4 /* Compile Kotlin Framework */,
 				74831B6C2D5088E600B729F4 /* Sources */,
 				74D8991F2F07B00000A4DA07 /* Embed LibTor Framework */,
 				74831B712D5088E600B729F4 /* Frameworks */,
 				74831B732D5088E600B729F4 /* Resources */,
 				74D8991E2F07ADAC00A4DA07 /* Embed Frameworks */,
-				3413FA135E8327B7F75A6F85 /* [CP] Copy Pods Resources */,
+				C4AB344D127BD41A17CE7A9B /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -198,13 +200,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "Bisq Connect Debug" */;
 			buildPhases = (
-				1157F09E9DC9A21585A11AD3 /* [CP] Check Pods Manifest.lock */,
+				A8B04EBAB4E017795C240AA7 /* [CP] Check Pods Manifest.lock */,
 				F36B1CEB2AD83DDC00CB74D5 /* Compile Kotlin Framework */,
 				7555FF77242A565900829871 /* Sources */,
 				74D8991F2F07B00000A4DA07 /* Embed LibTor Framework */,
 				B92378962B6B1156000C7307 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
-				7A9AFC6C2A83835D65ABFD00 /* [CP] Copy Pods Resources */,
+				F50D8C54FC95E922F861F967 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -275,45 +277,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		1157F09E9DC9A21585A11AD3 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Bisq Connect Debug-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		3413FA135E8327B7F75A6F85 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		74831B6B2D5088E600B729F4 /* Compile Kotlin Framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -351,24 +314,7 @@
 			shellScript = "\"${PROJECT_DIR}/embed_libtor.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		7A9AFC6C2A83835D65ABFD00 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		D48BB9D75821AB9001657843 /* [CP] Check Pods Manifest.lock */ = {
+		7E0600D4346D1F5AB09CDC05 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -390,6 +336,45 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		A8B04EBAB4E017795C240AA7 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Bisq Connect Debug-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C4AB344D127BD41A17CE7A9B /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		F36B1CEB2AD83DDC00CB74D5 /* Compile Kotlin Framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -407,6 +392,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n";
+		};
+		F50D8C54FC95E922F861F967 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -438,13 +440,14 @@
 /* Begin XCBuildConfiguration section */
 		74831B792D5088E600B729F4 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A01C97282DA8CBC28E37F1E9 /* Pods-Bisq Connect.debug.xcconfig */;
+			baseConfigurationReference = 78D9B1D932A4E05C135F6846 /* Pods-Bisq Connect.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Bisq ConnectDebug.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosClient/Preview Content\"";
-				DEVELOPMENT_TEAM = UC4273Y485;
+				DEVELOPMENT_TEAM = YRAZCRBR9J;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -471,7 +474,7 @@
 		};
 		74831B7A2D5088E600B729F4 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0F78653760685B119D231839 /* Pods-Bisq Connect.release.xcconfig */;
+			baseConfigurationReference = 598D967155ADCB12250F06F5 /* Pods-Bisq Connect.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "Bisq ConnectRelease.entitlements";
@@ -629,12 +632,13 @@
 		};
 		7555FFA6242A565B00829871 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7FE4D8D889D542E1F4A83F00 /* Pods-Bisq Connect Debug.debug.xcconfig */;
+			baseConfigurationReference = 02DF01F74F28A075260747F9 /* Pods-Bisq Connect Debug.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosClient/Preview Content\"";
+				DEVELOPMENT_TEAM = UC4273Y485;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -661,7 +665,7 @@
 		};
 		7555FFA7242A565B00829871 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D66D096E2845BDBE3D7F5F10 /* Pods-Bisq Connect Debug.release.xcconfig */;
+			baseConfigurationReference = 2E00410D41E08AB40B10659A /* Pods-Bisq Connect Debug.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";

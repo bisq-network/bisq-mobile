@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import network.bisq.mobile.client.common.presentation.support.ClientSupportScreen
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
@@ -28,6 +29,10 @@ fun ClientRootNavGraph(
 }
 
 fun NavGraphBuilder.addClientAppRoutes() {
+    // Override Support screen with client-specific version
+    addScreen<NavRoute.Support> { ClientSupportScreen() }
+
+    // Client-specific screens
     addScreen<TrustedNodeSetupSettings> { TrustedNodeSetupScreen(isWorkflow = false) }
     addScreen<TrustedNodeSetup> { TrustedNodeSetupScreen() }
 }

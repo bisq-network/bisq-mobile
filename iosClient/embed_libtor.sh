@@ -15,21 +15,22 @@ fi
 
 echo "🔧 Embedding LibTor.framework..."
 
-# Source framework (extracted by Xcode from xcframework)
-# Try multiple possible locations where Xcode might extract the framework
-POSSIBLE_LOCATIONS=(
-    "${BUILD_DIR}/${CONFIGURATION}${EFFECTIVE_PLATFORM_NAME}/LibTor.framework"
-    "${PROJECT_DIR}/build/${CONFIGURATION}${EFFECTIVE_PLATFORM_NAME}/LibTor.framework"
-    "${SRCROOT}/build/${CONFIGURATION}${EFFECTIVE_PLATFORM_NAME}/LibTor.framework"
-)
+# Path to the xcframework
+XCFRAMEWORK_PATH="${PROJECT_DIR}/../build/kmp-tor-resource/LibTor.xcframework"
 
-SOURCE_FRAMEWORK=""
-for location in "${POSSIBLE_LOCATIONS[@]}"; do
-    if [ -d "$location" ]; then
-        SOURCE_FRAMEWORK="$location"
-        break
-    fi
-done
+# The xcframework contains ios/LibTor.framework (for device)
+FRAMEWORK_SLICE="${XCFRAMEWORK_PATH}/ios/LibTor.framework"
+
+# Check if the framework slice exists
+if [ ! -d "${FRAMEWORK_SLICE}" ]; then
+    echo "❌ ERROR: LibTor.framework not found at: ${FRAMEWORK_SLICE}"
+    echo "   Make sure kmp-tor resources are generated"
+    echo "   Run: ./gradlew :shared:domain:copyKmpTorXCFramework"
+    exit 1
+fi
+
+SOURCE_FRAMEWORK="${FRAMEWORK_SLICE}"
+echo "📍 Using framework from: ${SOURCE_FRAMEWORK}"
 
 # Destination (app bundle Frameworks folder)
 DEST_FRAMEWORKS="${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}"
