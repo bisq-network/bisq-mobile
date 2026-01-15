@@ -643,6 +643,7 @@
 			baseConfigurationReference = 02DF01F74F28A075260747F9 /* Pods-Bisq Connect Debug.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Bisq ConnectDebug.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosClient/Preview Content\"";
