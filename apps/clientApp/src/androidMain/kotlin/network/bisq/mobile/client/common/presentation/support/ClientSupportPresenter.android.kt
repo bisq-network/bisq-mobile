@@ -20,4 +20,3 @@ private object ClipboardHelper : KoinComponent {
         return context
     }
 }
-

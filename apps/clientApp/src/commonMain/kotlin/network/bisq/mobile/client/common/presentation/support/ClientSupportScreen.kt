@@ -121,79 +121,78 @@ fun ClientSupportScreen() {
         // TODO: Restore BuildConfig.IS_DEBUG check after testing is complete
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
 
-            BisqText.H3Light("Push Notifications (Debug)")
-            BisqGap.V2()
+        BisqText.H3Light("Push Notifications (Debug)")
+        BisqGap.V2()
 
-            BisqText.BaseLight(
-                text = "Debug feature to test APNs device token registration. Only works on real iOS devices.",
-                color = BisqTheme.colors.light_grey50,
+        BisqText.BaseLight(
+            text = "Debug feature to test APNs device token registration. Only works on real iOS devices.",
+            color = BisqTheme.colors.light_grey50,
+        )
+        BisqGap.V1()
+
+        // Registration status
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BisqText.BaseRegular("Status:")
+            BisqText.BaseRegular(
+                text = if (isDeviceRegistered) "✅ Registered" else "❌ Not Registered",
+                color = if (isDeviceRegistered) BisqTheme.colors.primary else BisqTheme.colors.danger,
             )
-            BisqGap.V1()
+        }
 
-            // Registration status
-            Row(
+        BisqGap.V1()
+
+        // Device token display
+        if (deviceToken != null) {
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
             ) {
-                BisqText.BaseRegular("Status:")
-                BisqText.BaseRegular(
-                    text = if (isDeviceRegistered) "✅ Registered" else "❌ Not Registered",
-                    color = if (isDeviceRegistered) BisqTheme.colors.primary else BisqTheme.colors.danger,
+                BisqText.BaseRegular("Device Token:")
+                BisqText.SmallLight(
+                    text = deviceToken ?: "",
+                    color = BisqTheme.colors.light_grey50,
                 )
             }
-
             BisqGap.V1()
+        }
 
-            // Device token display
+        // Action buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+        ) {
+            BisqButton(
+                text = if (tokenRequestInProgress) "Requesting..." else "Request Device Token",
+                onClick = { clientPresenter.onRequestDeviceToken() },
+                type = BisqButtonType.Outline,
+                disabled = tokenRequestInProgress,
+            )
+
             if (deviceToken != null) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-                ) {
-                    BisqText.BaseRegular("Device Token:")
-                    BisqText.SmallLight(
-                        text = deviceToken ?: "",
-                        color = BisqTheme.colors.light_grey50,
-                    )
-                }
-                BisqGap.V1()
-            }
-
-            // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-            ) {
                 BisqButton(
-                    text = if (tokenRequestInProgress) "Requesting..." else "Request Device Token",
-                    onClick = { clientPresenter.onRequestDeviceToken() },
+                    text = "Copy Token",
+                    onClick = { clientPresenter.onCopyToken(deviceToken!!) },
                     type = BisqButtonType.Outline,
-                    disabled = tokenRequestInProgress,
                 )
-
-                if (deviceToken != null) {
-                    BisqButton(
-                        text = "Copy Token",
-                        onClick = { clientPresenter.onCopyToken(deviceToken!!) },
-                        type = BisqButtonType.Outline,
-                    )
-                }
             }
+        }
 
-            if (tokenRequestInProgress) {
-                BisqGap.V1()
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp),
-                        color = BisqTheme.colors.primary,
-                        strokeWidth = 2.dp,
-                    )
-                }
+        if (tokenRequestInProgress) {
+            BisqGap.V1()
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(32.dp),
+                    color = BisqTheme.colors.primary,
+                    strokeWidth = 2.dp,
+                )
             }
+        }
     }
 }
-

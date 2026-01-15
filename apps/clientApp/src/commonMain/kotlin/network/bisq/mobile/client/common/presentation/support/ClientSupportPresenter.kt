@@ -15,33 +15,32 @@ class ClientSupportPresenter(
     mainPresenter: MainPresenter,
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
     private val _deviceToken = MutableStateFlow<String?>(null)
     val deviceToken: StateFlow<String?> = _deviceToken.asStateFlow()
-    
+
     private val _isDeviceRegistered = MutableStateFlow(false)
     val isDeviceRegistered: StateFlow<Boolean> = _isDeviceRegistered.asStateFlow()
-    
+
     private val _tokenRequestInProgress = MutableStateFlow(false)
     val tokenRequestInProgress: StateFlow<Boolean> = _tokenRequestInProgress.asStateFlow()
-    
+
     override fun onViewAttached() {
         super.onViewAttached()
-        
+
         // Observe push notification state
         presenterScope.launch {
             pushNotificationServiceFacade.deviceToken.collect { token ->
                 _deviceToken.value = token
             }
         }
-        
+
         presenterScope.launch {
             pushNotificationServiceFacade.isDeviceRegistered.collect { registered ->
                 _isDeviceRegistered.value = registered
             }
         }
     }
-    
+
     fun onRequestDeviceToken() {
         presenterScope.launch {
             _tokenRequestInProgress.value = true
@@ -59,7 +58,7 @@ class ClientSupportPresenter(
             }
         }
     }
-    
+
     fun onCopyToken(token: String) {
         copyToClipboard(token)
         showSnackbar("Token copied to clipboard", isError = false)
@@ -68,4 +67,3 @@ class ClientSupportPresenter(
 
 // Platform-specific clipboard function
 expect fun copyToClipboard(text: String)
-
