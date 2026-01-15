@@ -46,13 +46,12 @@ def convert_locale_format(locale: str) -> str:
     return locale.replace("_", "-")
 
 
-def generate_batches(batch_size: int, max_parallel: int, priority_based: bool = False, locales: Optional[List[str]] = None) -> List[Dict]:
+def generate_batches(batch_size: int, priority_based: bool = False, locales: Optional[List[str]] = None) -> List[Dict]:
     """
     Generate batch configuration for GitHub Actions matrix.
 
     Args:
         batch_size: Number of locales per batch
-        max_parallel: Maximum parallel batches to run
         priority_based: If True, group by priority tiers
         locales: Optional list of specific locales to batch. If None, uses ALL_LOCALES.
 
@@ -317,7 +316,7 @@ Examples:
             parser.error(f"Invalid JSON in --resources-json: {e}")
 
     # Generate batches
-    batches = generate_batches(args.batch_size, args.max_parallel, args.priority, target_locales)
+    batches = generate_batches(args.batch_size, args.priority, target_locales)
 
     # Determine total locales count for statistics
     total_locales = len(target_locales) if target_locales else len(ALL_LOCALES)
