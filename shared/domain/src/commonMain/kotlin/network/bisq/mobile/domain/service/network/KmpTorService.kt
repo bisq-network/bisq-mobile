@@ -56,7 +56,8 @@ class KmpTorService(
 ) : BaseService(),
     Logging {
     companion object {
-        private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 60_000L
+        private const val DEFAULT_DAEMON_START_TIMEOUT_MS = 60_000L
+        private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 120_000L // 2 minutes for bootstrap
     }
 
     sealed class TorState {
@@ -98,7 +99,10 @@ class KmpTorService(
 
     private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
 
-    suspend fun startTor(timeoutMs: Long = DEFAULT_BOOTSTRAP_TIMEOUT_MS): Boolean {
+    suspend fun startTor(
+        daemonStartTimeoutMs: Long = DEFAULT_DAEMON_START_TIMEOUT_MS,
+        bootstrapTimeoutMs: Long = DEFAULT_BOOTSTRAP_TIMEOUT_MS,
+    ): Boolean {
         when (_state.value) {
             is TorState.Started -> return true
             is TorState.Stopping -> return false
@@ -108,7 +112,6 @@ class KmpTorService(
 
             is TorState.Stopped -> {
                 try {
-                    var remainingTime = timeoutMs
                     var didAcquireStart = false
                     controlMutex.withLock {
                         if (_state.value !is TorState.Stopped) {
@@ -120,13 +123,10 @@ class KmpTorService(
                         val newStartDefer =
                             serviceScope.async {
                                 val runtime = getTorRuntime()
-                                val startTime = Clock.System.now().toEpochMilliseconds()
-                                withTimeout(timeoutMs) {
+                                withTimeout(daemonStartTimeoutMs) {
                                     runtime.startDaemonAsync()
                                     configTor()
                                 }
-                                val durationMs = Clock.System.now().toEpochMilliseconds() - startTime
-                                remainingTime = (timeoutMs - durationMs).coerceAtLeast(0)
                             }
                         startDefer = newStartDefer
                         newStartDefer.await()
@@ -138,8 +138,9 @@ class KmpTorService(
                             .first() is TorState.Started
                     }
 
+                    // Bootstrap gets its own separate timeout
                     val bootstrapped =
-                        withTimeout(remainingTime) {
+                        withTimeout(bootstrapTimeoutMs) {
                             awaitBootstrapped()
                         }
                     return bootstrapped
