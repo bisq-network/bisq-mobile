@@ -647,7 +647,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosClient/Preview Content\"";
-				DEVELOPMENT_TEAM = UC4273Y485;
+				DEVELOPMENT_TEAM = YRAZCRBR9J;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
