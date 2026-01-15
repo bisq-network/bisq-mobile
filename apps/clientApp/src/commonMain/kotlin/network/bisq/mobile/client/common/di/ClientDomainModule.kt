@@ -235,7 +235,11 @@ val clientDomainModule =
 
         single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
 
-        single<KmpTorService> { KmpTorService(getStorageDir().toPath(true)) }
+        single<KmpTorService> {
+            // ClientApp doesn't have Bisq2's Tor library to enable network via control port,
+            // so we start with network enabled (disableNetworkInitially = false)
+            KmpTorService(getStorageDir().toPath(true), disableNetworkInitially = false)
+        }
 
         single<SensitiveSettingsRepository> { SensitiveSettingsRepositoryImpl(get(named("SensitiveSettings"))) }
         single<DataStore<SensitiveSettings>>(named("SensitiveSettings")) {

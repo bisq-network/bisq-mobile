@@ -52,6 +52,7 @@ import okio.SYSTEM
  */
 class KmpTorService(
     private val baseDir: Path,
+    private val disableNetworkInitially: Boolean = true,
 ) : BaseService(),
     Logging {
     companion object {
@@ -241,7 +242,9 @@ class KmpTorService(
                     TorOption.CookieAuthentication.configure(true)
                     TorOption.DataDirectory.configure(File(torDir.toString()))
                     TorOption.CacheDirectory.configure(File(cacheDirectory.toString()))
-                    TorOption.DisableNetwork.configure(true) // Bisq Easy tor lib managed the DisableNetwork state, initially it is disabled.
+                    // For nodeApp: Bisq2's Tor library manages DisableNetwork via control port
+                    // For clientApp: Network should be enabled immediately for bootstrap to complete
+                    TorOption.DisableNetwork.configure(disableNetworkInitially)
                     TorOption.NoExec.configure(true)
                     TorOption.TruncateLogFile.configure(true)
                 }
