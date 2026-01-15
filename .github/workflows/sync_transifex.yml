@@ -19,7 +19,7 @@ jobs:
       COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ env.COMMIT_SHA }}
           fetch-depth: 0
@@ -76,7 +76,7 @@ jobs:
         id: check_commit
         run: |
           git fetch origin main
-          if git merge-base --is-ancestor ${{ env.COMMIT_SHA }} origin/main; then
+          if git merge-base --is-ancestor "$COMMIT_SHA" origin/main; then
             echo "commit_in_main=true" >> $GITHUB_OUTPUT
           else
             echo "commit_in_main=false" >> $GITHUB_OUTPUT
@@ -94,16 +94,17 @@ jobs:
 
   calculate_and_push_sources:
     name: Calculate pushes and push source files
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     needs: verify_config
     runs-on: ubuntu-latest
     outputs:
       t_matrix: ${{ steps.calculate-pushes.outputs.t_matrix || '{"include":[]}' }}
+      has_translation_changes: ${{ steps.calculate-pushes.outputs.has_translation_changes }}
     env:
-      COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ env.COMMIT_SHA }}
           fetch-depth: 0
@@ -112,58 +113,75 @@ jobs:
         id: check_commit
         run: |
           git fetch origin main
-          if git merge-base --is-ancestor ${{ env.COMMIT_SHA }} origin/main; then
+          if git merge-base --is-ancestor "$COMMIT_SHA" origin/main; then
             echo "commit_in_main=true" >> $GITHUB_OUTPUT
           else
             echo "commit_in_main=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Check if batch script is available
+        if: steps.check_commit.outputs.commit_in_main == 'true'
+        id: check_batch_script
+        run: |
+          if [ -f scripts/generate_transifex_batches.py ]; then
+            echo "batch_script_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Batch generation script found - will use dynamic batching"
+          else
+            echo "batch_script_available=false" >> $GITHUB_OUTPUT
+            echo "::warning::Batch generation script not found - using simple matrix"
+          fi
+
       - name: Calculate push commands
         id: calculate-pushes
         if: steps.check_commit.outputs.commit_in_main == 'true'
+        env:
+          BATCH_SCRIPT_AVAILABLE: ${{ steps.check_batch_script.outputs.batch_script_available }}
         run: |
           set -euo pipefail
 
           echo "Finding changed files..."
-          # We compare the merge commit with its first parent to get the list of files.
-          # Note: This is reliable for standard PR merges but may not handle octopus merges.
-          CHANGED_FILES=$(git diff --name-only ${{ env.COMMIT_SHA }}~1 ${{ env.COMMIT_SHA }})
+          CHANGED_FILES=$(git diff --name-only "${COMMIT_SHA}~1" "${COMMIT_SHA}")
           echo "Files changed in the merge:"
           echo "$CHANGED_FILES"
 
           # --- Handle SOURCE file pushes (-s) ---
           s_args=""
-          s_resources="" # This will be the comma-separated list
-          CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+\.properties$' | grep -v "_[a-z][a-z]\.properties$" | grep -v "_[a-z][a-z]_[A-Z][A-Z]\.properties$" | grep -v "_pcm\.properties$" || true)
-          if [ -n "$CHANGED_SOURCE_FILES" ]; then
-            for file in $CHANGED_SOURCE_FILES; do
-              resource_slug_line=$(awk -v file="$file" '
-                $0 ~ /^\[o:.*:p:.*:r:.*\]$/ {resource=$0}
-                $0 ~ ("source_file[[:space:]]*=[[:space:]]*" file "$") {print resource}
-              ' .tx/config)
-              if [[ -n "$resource_slug_line" ]] && [[ "$resource_slug_line" =~ ^\[o:.*:p:(.*):r:(.*)\]$ ]]; then
-                project_slug="${BASH_REMATCH[1]}"
-                resource_slug="${BASH_REMATCH[2]}"
-                full_resource_id="${project_slug}.${resource_slug}"
-                if [[ -z "$s_resources" ]]; then
-                    s_resources="$full_resource_id"
+          if echo "${CHANGED_FILES}" | grep -q -x ".tx/config"; then
+            echo "::notice:: .tx/config changed. Pushing all source files."
+            s_args="push -s"
+          else
+            s_resources=""
+            CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+\.properties$' | grep -v "_[a-z][a-z]\.properties$" | grep -v "_[a-z][a-z]_[A-Z][A-Z]\.properties$" | grep -v "_pcm\.properties$" || true)
+            if [ -n "$CHANGED_SOURCE_FILES" ]; then
+              for file in $CHANGED_SOURCE_FILES; do
+                resource_slug_line=$(awk -v file="$file" '
+                  $0 ~ /^\[o:.*:p:.*:r:.*\]$/ {resource=$0}
+                  $0 ~ ("source_file[[:space:]]*=[[:space:]]*" file "$") {print resource}
+                ' .tx/config)
+                if [[ -n "$resource_slug_line" ]] && [[ "$resource_slug_line" =~ ^\[o:.*:p:(.*):r:(.*)\]$ ]]; then
+                  project_slug="${BASH_REMATCH[1]}"
+                  resource_slug="${BASH_REMATCH[2]}"
+                  full_resource_id="${project_slug}.${resource_slug}"
+                  if [[ -z "$s_resources" ]]; then
+                      s_resources="$full_resource_id"
+                  else
+                      s_resources+=",$full_resource_id"
+                  fi
                 else
-                    s_resources+=",$full_resource_id"
+                  echo "::warning::Could not find resource slug for changed source file: $file"
                 fi
-              else
-                echo "::warning::Could not find resource slug for changed source file: $file"
-              fi
-            done
-          fi
-          # If we found any resources, construct the final args string
-          if [[ -n "$s_resources" ]]; then
-            s_args="push -s -r $s_resources"
+              done
+            fi
+            if [[ -n "$s_resources" ]]; then
+              s_args="push -s -r $s_resources"
+            fi
           fi
           echo "s_args=$s_args" >> $GITHUB_OUTPUT
 
-          # --- Handle TRANSLATION file pushes (-t) ---
+          # --- Handle TRANSLATION file pushes (-t) with BATCHING ---
           declare -A lang_resources
           CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$' -- || true)
+
           if [ -n "$CHANGED_TRANSLATION_FILES" ]; then
             for file in $CHANGED_TRANSLATION_FILES; do
               lang=$(echo "$file" | sed -E 's/.*_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$/\1/')
@@ -191,19 +209,65 @@ jobs:
                 fi
               fi
             done
-          fi
 
-          json_output='{"include":['
-          first_lang=true
-          for lang in "${!lang_resources[@]}"; do
-            if ! $first_lang; then
-              json_output+=','
+            # Build resources JSON for Python script
+            resources_json="{"
+            first_item=true
+            for locale in "${!lang_resources[@]}"; do
+              if ! $first_item; then
+                resources_json+=","
+              fi
+              resources="${lang_resources[$locale]}"
+              resources_json+="\"$locale\":\"$resources\""
+              first_item=false
+            done
+            resources_json+="}"
+
+            # Collect changed locales for batch generation
+            changed_locales_list=""
+            for locale in "${!lang_resources[@]}"; do
+              changed_locales_list="${changed_locales_list:+$changed_locales_list,}$locale"
+            done
+
+            # Generate batched matrix configuration if we have locales
+            if [ -n "$changed_locales_list" ]; then
+              echo "has_translation_changes=true" >> $GITHUB_OUTPUT
+              echo "::notice::Changed locales: $changed_locales_list"
+              echo "::notice::Resources mapping: $resources_json"
+
+              if [ "$BATCH_SCRIPT_AVAILABLE" == "true" ]; then
+                # Use Python script for optimal batch configuration
+                batch_matrix=$(python3 scripts/generate_transifex_batches.py \
+                  --locales "$changed_locales_list" \
+                  --batch-size 4 \
+                  --max-parallel 2 \
+                  --json \
+                  --resources-json "$resources_json")
+
+                echo "::notice::Generated batch configuration: $batch_matrix"
+                printf 't_matrix=%s\n' "$batch_matrix" >> "$GITHUB_OUTPUT"
+              else
+                # Fallback: simple matrix without batching
+                json_output='{"include":['
+                first_lang=true
+                for lang in "${!lang_resources[@]}"; do
+                  if ! $first_lang; then
+                    json_output+=','
+                  fi
+                  json_output+="{\"id\":1,\"locales\":\"$lang\",\"name\":\"$lang\",\"resources\":\"${lang_resources[$lang]}\"}"
+                  first_lang=false
+                done
+                json_output+=']}'
+                printf 't_matrix=%s\n' "$json_output" >> "$GITHUB_OUTPUT"
+              fi
+            else
+              echo "has_translation_changes=false" >> $GITHUB_OUTPUT
+              echo 't_matrix={"include":[]}' >> "$GITHUB_OUTPUT"
             fi
-            json_output+="{\"lang\":\"$lang\",\"resources\":\"${lang_resources[$lang]}\"}"
-            first_lang=false
-          done
-          json_output+=']}'
-          printf 't_matrix=%s\n' "$json_output" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_translation_changes=false" >> $GITHUB_OUTPUT
+            echo 't_matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Push source files to Transifex
         if: steps.calculate-pushes.outputs.s_args != ''
@@ -213,21 +277,152 @@ jobs:
           args: ${{ steps.calculate-pushes.outputs.s_args }}
 
   push_translations:
-    name: Push translation files to Transifex
+    name: Push translations (${{ matrix.name }})
     if: needs.calculate_and_push_sources.outputs.t_matrix != '{"include":[]}'
     needs: calculate_and_push_sources
     runs-on: ubuntu-latest
+    env:
+      COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+      BATCH_ID: ${{ matrix.id }}
+      BATCH_NAME: ${{ matrix.name }}
+      BATCH_LOCALES: ${{ matrix.locales }}
+      BATCH_RESOURCES: ${{ matrix.resources }}
     strategy:
       matrix: ${{ fromJson(needs.calculate_and_push_sources.outputs.t_matrix) }}
+      max-parallel: 2  # Controlled parallelism to avoid Transifex API rate limits
+      fail-fast: false  # Don't cancel all jobs if one fails
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
-          # Checkout the commit from the triggering event (pull_request or workflow_run)
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+          ref: ${{ env.COMMIT_SHA }}
 
-      - name: Push ${{ matrix.lang }} translations
-        uses: transifex/cli-action@v2
+      - name: Install Transifex CLI
+        run: |
+          curl -o- https://raw.githubusercontent.com/transifex/cli/master/install.sh | bash
+          echo "$PWD" >> $GITHUB_PATH
+          echo "::group::Transifex CLI Installation"
+          echo "Installed Transifex CLI version:"
+          ./tx --version
+          echo "::endgroup::"
+        env:
+          TX_TOKEN: ${{ secrets.TX_TOKEN }}
+
+      - name: Validate batch configuration
+        run: |
+          if [ -z "$BATCH_RESOURCES" ]; then
+            echo "::error::No resources specified for batch $BATCH_ID (locales: $BATCH_LOCALES)"
+            exit 1
+          fi
+          echo "::notice::Batch $BATCH_ID validated: $BATCH_LOCALES → $BATCH_RESOURCES"
+
+      - name: Stagger batch start
+        run: |
+          DELAY=$(((BATCH_ID - 1) * 10))
+          echo "::notice::Delaying batch $BATCH_ID by ${DELAY}s for rate limiting"
+          sleep $DELAY
+
+      - name: Push translations with retry
+        uses: nick-fields/retry@v3
+        id: push_with_retry
+        env:
+          TX_TOKEN: ${{ secrets.TX_TOKEN }}
         with:
-          token: ${{ secrets.TX_TOKEN }}
-          args: push -t -l ${{ matrix.lang }} -r ${{ matrix.resources }}
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_wait_seconds: 60
+          retry_on: error
+          command: |
+            set -euo pipefail
+
+            echo "::group::Uploading translations for batch: $BATCH_LOCALES"
+
+            IFS=',' read -ra LOCALES <<< "$BATCH_LOCALES"
+            UPLOADED_COUNT=0
+
+            for locale in "${LOCALES[@]}"; do
+              echo "::group::Uploading locale: $locale"
+              echo "Batch: $BATCH_NAME | Locale: $locale | Resource: $BATCH_RESOURCES"
+              echo "Start time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+
+              if [ $UPLOADED_COUNT -gt 0 ]; then
+                echo "Rate limiting: sleeping 5s between locales"
+                sleep 5
+              fi
+
+              START_TIME=$(date +%s)
+              EXIT_CODE=0
+              echo "Executing: tx push -t -l \"$locale\" -r \"$BATCH_RESOURCES\""
+
+              TX_LOG="/tmp/tx_${locale}_$$.log"
+              ./tx push -t -l "$locale" -r "$BATCH_RESOURCES" 2>&1 | tee "$TX_LOG"
+              EXIT_CODE=${PIPESTATUS[0]}
+              OUTPUT=$(cat "$TX_LOG" 2>/dev/null || echo "No output captured")
+              rm -f "$TX_LOG"
+
+              END_TIME=$(date +%s)
+              DURATION=$((END_TIME - START_TIME))
+
+              echo "End time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+              echo "Duration: ${DURATION}s"
+              echo "Exit code: $EXIT_CODE"
+
+              if [ ${EXIT_CODE:-0} -ne 0 ]; then
+                echo "::error::Upload failed for $locale after ${DURATION}s"
+                echo "Full output:"
+                echo "$OUTPUT"
+
+                if echo "$OUTPUT" | grep -qi "unauthorized\|forbidden\|not found\|invalid"; then
+                  echo "::error::Permanent error detected - no retry"
+                  echo "::endgroup::"
+                  exit 1
+                elif echo "$OUTPUT" | grep -qi "timeout\|rate limit\|too many requests\|connection\|network"; then
+                  echo "::warning::Transient error detected - will retry"
+                  echo "::endgroup::"
+                  exit 2
+                else
+                  echo "::warning::Unknown error type - will retry once"
+                  echo "::endgroup::"
+                  exit 2
+                fi
+              fi
+
+              echo "✅ Upload successful (${DURATION}s)"
+              echo "TX CLI output:"
+              echo "$OUTPUT" | tail -5
+              echo "::endgroup::"
+              UPLOADED_COUNT=$((UPLOADED_COUNT + 1))
+            done
+
+            echo "::endgroup::"
+            echo "::notice::Batch $BATCH_NAME complete: ${UPLOADED_COUNT} locales uploaded"
+
+      - name: Confirm upload succeeded
+        id: verify
+        if: steps.push_with_retry.outcome == 'success'
+        run: |
+          echo "✅ Upload confirmed successful for batch: $BATCH_LOCALES"
+          echo "::notice::Transifex accepted the translation files (tx push exit code 0)"
+
+      - name: Report upload metrics
+        if: always()
+        run: |
+          echo "## 🌍 Batch $BATCH_NAME Upload Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Batch ID**: $BATCH_ID" >> $GITHUB_STEP_SUMMARY
+          echo "- **Locales**: $BATCH_LOCALES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ steps.push_with_retry.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Verification**: ${{ steps.verify.outcome || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+
+  summary:
+    name: Upload Summary Report
+    needs: [calculate_and_push_sources, push_translations]
+    if: always() && needs.calculate_and_push_sources.outputs.has_translation_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# 🌍 Translation Upload Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Translation upload workflow completed." >> $GITHUB_STEP_SUMMARY
+          echo "Check individual batch job logs for detailed status." >> $GITHUB_STEP_SUMMARY

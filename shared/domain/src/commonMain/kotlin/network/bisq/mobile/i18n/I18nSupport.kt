@@ -31,10 +31,15 @@ class I18nSupport {
                     "cs" -> GeneratedResourceBundles_cs.bundles
                     "de" -> GeneratedResourceBundles_de.bundles
                     "es" -> GeneratedResourceBundles_es.bundles
+                    "fr" -> GeneratedResourceBundles_fr.bundles
+                    "hi" -> GeneratedResourceBundles_hi.bundles
+                    "id" -> GeneratedResourceBundles_id.bundles
                     "it" -> GeneratedResourceBundles_it.bundles
                     "pcm" -> GeneratedResourceBundles_pcm.bundles
                     "pt-BR" -> GeneratedResourceBundles_pt_BR.bundles
                     "ru" -> GeneratedResourceBundles_ru.bundles
+                    "tr" -> GeneratedResourceBundles_tr.bundles
+                    "vi" -> GeneratedResourceBundles_vi.bundles
                     else -> GeneratedResourceBundles_en.bundles
                 }
             bundles = bundleMapsByName.values.map { ResourceBundle(it) }

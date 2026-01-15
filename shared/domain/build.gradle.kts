@@ -276,7 +276,7 @@ abstract class GenerateResourceBundlesTask : DefaultTask() {
                 "mobile", // custom for mobile client
             )
 
-        val languageCodes = listOf("en", "af_ZA", "cs", "de", "es", "it", "pcm", "pt_BR", "ru")
+        val languageCodes = listOf("en", "af_ZA", "cs", "de", "es", "fr", "hi", "id", "it", "pcm", "pt_BR", "ru", "tr", "vi")
 
         val bundlesByCode: Map<String, List<ResourceBundle>> =
             languageCodes.associateWith { languageCode ->
