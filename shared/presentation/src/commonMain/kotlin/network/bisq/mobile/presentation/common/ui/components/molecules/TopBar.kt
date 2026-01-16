@@ -74,7 +74,6 @@ fun TopBar(
     val currentTabDestination by navigationManager.currentTab.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
     val userProfile by presenter.userProfile.collectAsState()
-    val connectivityStatus by presenter.connectivityStatus.collectAsState()
 
     TopBarContent(
         title = title,
@@ -84,7 +83,7 @@ fun TopBar(
         showUserAvatar = showUserAvatar,
         userProfile = userProfile,
         userProfileIconProvider = presenter.userProfileIconProvider,
-        connectivityStatus = connectivityStatus,
+        connectivityStatusFlow = presenter.connectivityStatus,
         showAnimation = showAnimation,
         avatarEnabled = presenter.avatarEnabled(currentTabDestination),
         onAvatarClick = { presenter.navigateToUserProfile() },
@@ -99,6 +98,8 @@ fun TopBar(
 /**
  * Stateless TopBar content - for previews and testing
  * @param extraActions will be rendered before user avatar
+ * @param connectivityStatusFlow StateFlow for connectivity status (for production use)
+ * @param connectivityStatus Static connectivity status (for previews only, ignored if connectivityStatusFlow is provided)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,12 +111,15 @@ fun TopBarContent(
     showUserAvatar: Boolean = true,
     userProfile: UserProfileVO? = null,
     userProfileIconProvider: (suspend (UserProfileVO) -> PlatformImage)? = null,
+    connectivityStatusFlow: StateFlow<ConnectivityService.ConnectivityStatus>? = null,
     connectivityStatus: ConnectivityService.ConnectivityStatus = ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
     showAnimation: Boolean = false,
     avatarEnabled: Boolean = true,
     onAvatarClick: () -> Unit = {},
     extraActions: @Composable (RowScope.() -> Unit)? = null,
 ) {
+    // Collect the flow if provided, otherwise use the static value (for previews)
+    val currentConnectivityStatus = connectivityStatusFlow?.collectAsState()?.value ?: connectivityStatus
     TopAppBar(
         navigationIcon = {
             if (showBackButton) {
@@ -169,7 +173,7 @@ fun TopBarContent(
                             userProfile,
                             userProfileIconProvider,
                             modifier = userIconModifier,
-                            connectivityStatus = connectivityStatus,
+                            connectivityStatus = currentConnectivityStatus,
                             showAnimations = showAnimation,
                         )
                     } else {
