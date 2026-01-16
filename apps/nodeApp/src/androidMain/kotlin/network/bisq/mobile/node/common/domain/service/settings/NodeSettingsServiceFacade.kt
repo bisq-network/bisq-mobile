@@ -23,12 +23,33 @@ class NodeSettingsServiceFacade(
     SettingsServiceFacade,
     Logging {
     companion object {
-        private fun languageCodeToLocale(languageCode: String): Locale {
-            require(I18nSupport.LANGUAGE_CODE_TO_BUNDLE_MAP.containsKey(languageCode)) {
-                "Language code '$languageCode' is not supported. Supported codes: ${I18nSupport.LANGUAGE_CODE_TO_BUNDLE_MAP.keys}"
+        private fun normalizeLanguageCode(languageCode: String): String {
+            if (languageCode.isBlank()) {
+                return "en"
             }
 
-            return when (languageCode) {
+            return when {
+                // Handle underscore variants (e.g., "pt_BR" -> "pt-BR", "af_ZA" -> "af-ZA")
+                languageCode.contains("_") -> languageCode.replace("_", "-")
+                // Handle legacy "pcm" -> "pcm-NG"
+                languageCode == "pcm" -> "pcm-NG"
+                // Handle legacy "en_US" or similar -> just "en"
+                languageCode.startsWith("en") && languageCode.length > 2 -> "en"
+                else -> languageCode
+            }.let { normalized ->
+                // Verify the normalized code is supported, otherwise fall back to "en"
+                if (I18nSupport.LANGUAGE_CODE_TO_BUNDLE_MAP.containsKey(normalized)) {
+                    normalized
+                } else {
+                    "en"
+                }
+            }
+        }
+
+        private fun languageCodeToLocale(languageCode: String): Locale {
+            val normalizedCode = normalizeLanguageCode(languageCode)
+
+            return when (normalizedCode) {
                 "af-ZA" -> Locale("af", "ZA")
                 "cs" -> Locale("cs", "CZ")
                 "de" -> Locale("de", "DE")
@@ -190,11 +211,14 @@ class NodeSettingsServiceFacade(
     }
 
     private fun updateLanguage(code: String) {
-        if (I18nSupport.currentLanguage != code || _languageCode.value != code) {
-            val locale = languageCodeToLocale(code)
+        // Normalize the language code to ensure consistency across all systems
+        val normalizedCode = Companion.normalizeLanguageCode(code)
+
+        if (I18nSupport.currentLanguage != normalizedCode || _languageCode.value != normalizedCode) {
+            val locale = languageCodeToLocale(normalizedCode)
             LocaleRepository.setDefaultLocale(locale)
-            I18nSupport.setLanguage(code)
-            _languageCode.value = code
+            I18nSupport.setLanguage(normalizedCode)
+            _languageCode.value = normalizedCode
         }
     }
 

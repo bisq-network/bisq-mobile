@@ -40,11 +40,11 @@ class I18nSupport {
         }
 
         fun setLanguage(languageCode: String = "en") {
-            currentLanguage = languageCode
-            val bundleMapsByName =
-                LANGUAGE_CODE_TO_BUNDLE_MAP[languageCode]
-                    ?: GeneratedResourceBundles_en.bundles
-            bundles = bundleMapsByName.values.map { ResourceBundle(it) }
+            val bundleMapsByName = LANGUAGE_CODE_TO_BUNDLE_MAP[languageCode]
+            val resolvedLanguageCode = if (bundleMapsByName == null) "en" else languageCode
+            currentLanguage = resolvedLanguageCode
+            val resolvedBundles = bundleMapsByName ?: GeneratedResourceBundles_en.bundles
+            bundles = resolvedBundles.values.map { ResourceBundle(it) }
         }
 
         fun has(key: String): Boolean = bundles.any { it.containsKey(key) }
