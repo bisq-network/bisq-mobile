@@ -34,4 +34,3 @@ credentials
 
 # i18n generated Resources
 **/i18n/GeneratedResourceBundles_*.kt
-/shared/domain/src/commonMain/resources/mobile/archive/
