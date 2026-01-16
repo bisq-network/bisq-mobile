@@ -13,10 +13,15 @@ abstract class LanguageServiceFacade : ServiceFacade() {
                 "de" to "German (Deutsch)",
                 "en" to "English",
                 "es" to "Spanish (Espa\u00f1ol)",
+                "fr" to "French (fran\u00e7ais)",
+                "hi" to "Hindi (\u0939\u093f\u0928\u094d\u0926\u0940)",
+                "id" to "Indonesian (Indonesia)",
                 "it" to "Italian (Italiano)",
-                "pcm" to "Pidgin (Naij\u00e1)",
+                "pcm-NG" to "Pidgin (Naij\u00e1)",
                 "pt-BR" to "Portuguese (Portugu\u00eas)",
                 "ru" to "Russian (\u0440\u0443\u0441\u0441\u043a\u0438\u0439)",
+                "tr" to "Turkish (T\u00fcrk\u00e7e)",
+                "vi" to "Vietnamese (Ti\u1ebfng Vi\u1ec7t)",
             )
 
         val DEFAULT_SUPPORTED_LANGUAGES =
