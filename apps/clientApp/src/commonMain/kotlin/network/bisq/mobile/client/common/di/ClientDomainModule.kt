@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import network.bisq.mobile.client.common.domain.access.identity.ClientService
+import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.api.ClientPairingApiGateway
 import network.bisq.mobile.client.common.domain.access.pairing.api.ClientPairingService
@@ -180,7 +180,7 @@ val clientDomainModule =
         single { ClientPairingApiGateway(get()) }
         single { ClientPairingService(get()) }
         single { PairingService(get()) }
-        single { ClientService(get(), get()) }
+        single { ApiAccessService(get(), get()) }
 
         // single { WebSocketHttpClient(get()) }
         single {

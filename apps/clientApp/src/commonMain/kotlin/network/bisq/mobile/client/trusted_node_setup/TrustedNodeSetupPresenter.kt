@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import network.bisq.mobile.client.common.domain.access.identity.ClientService
+import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
@@ -68,16 +68,16 @@ class TrustedNodeSetupPresenter(
     // See https://github.com/bisq-network/bisq-mobile/issues/684
     private val wsClientService: WebSocketClientService by inject()
 
-    private val clientService: ClientService by inject()
+    private val apiAccessService: ApiAccessService by inject()
 
     private val _wsClientConnectionState =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val wsClientConnectionState = _wsClientConnectionState.asStateFlow()
 
     val pairingQrCodeString: StateFlow<String> =
-        clientService.pairingQrCodeString
-    val deviceName: StateFlow<String> = clientService.deviceName
-    val webSocketUrl: StateFlow<String> = clientService.webSocketUrl
+        apiAccessService.pairingQrCodeString
+    val deviceName: StateFlow<String> = apiAccessService.deviceName
+    val webSocketUrl: StateFlow<String> = apiAccessService.webSocketUrl
 
     private val _apiUrl = MutableStateFlow("")
     val apiUrl: StateFlow<String> = _apiUrl.asStateFlow()
@@ -219,11 +219,11 @@ class TrustedNodeSetupPresenter(
     }
 
     fun onPairingCodeChanged(value: String) {
-        clientService.setPairingQrCodeString(value)
+        apiAccessService.setPairingQrCodeString(value)
     }
 
     fun onDeviceNameChanged(value: String) {
-        clientService.setDeviceName(value)
+        apiAccessService.setDeviceName(value)
     }
 
     fun onApiUrlChanged(apiUrl: String) {
@@ -641,7 +641,7 @@ class TrustedNodeSetupPresenter(
     }
 
     fun onQrCodeResult(value: String) {
-        clientService.setPairingQrCodeString(value)
+        apiAccessService.setPairingQrCodeString(value)
         _showQrCodeView.value = false
     }
 }

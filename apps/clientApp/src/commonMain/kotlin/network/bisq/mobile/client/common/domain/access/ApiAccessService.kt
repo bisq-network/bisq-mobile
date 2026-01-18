@@ -1,10 +1,11 @@
-package network.bisq.mobile.client.common.domain.access.identity
+package network.bisq.mobile.client.common.domain.access
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.common.domain.access.identity.ClientIdentity
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
@@ -17,7 +18,7 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
-class ClientService(
+class ApiAccessService(
     private val pairingService: PairingService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
 ) : ServiceFacade(),
