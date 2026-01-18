@@ -21,7 +21,7 @@ class ClientService(val pairingService: PairingService) : ServiceFacade(), Loggi
     protected var sessionToken: SessionToken? = null
     var grantedPermissions: Set<Permission> = emptySet()
 
-    private val _deviceName = MutableStateFlow("TODO")
+    private val _deviceName = MutableStateFlow("")
     val deviceName: StateFlow<String> = _deviceName.asStateFlow()
 
     private val _pairingQrCodeString = MutableStateFlow("")

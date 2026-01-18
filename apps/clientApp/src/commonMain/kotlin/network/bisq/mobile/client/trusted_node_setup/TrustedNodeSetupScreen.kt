@@ -81,6 +81,7 @@ fun TrustedNodeSetupScreen(
     val apiUrlPrompt by presenter.apiUrlPrompt.collectAsState()
     val pairingCode by presenter.pairingQrCodeString.collectAsState()
     val deviceName by presenter.deviceName.collectAsState()
+    val webSocketUrl by presenter.webSocketUrl.collectAsState()
     val status by presenter.status.collectAsState()
     val isApiUrlValid by presenter.isApiUrlValid.collectAsState()
     val isProxyUrlValid by presenter.isProxyUrlValid.collectAsState()
@@ -202,6 +203,16 @@ fun TrustedNodeSetupScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 BisqGap.V1()
+
+                BisqTextField(
+                    label = "mobile.trustedNodeSetup.deviceName".i18n(),
+                    placeholder = "mobile.trustedNodeSetup.deviceName.prompt".i18n(),
+                    onValueChange = { value, _ -> presenter.onDeviceNameChanged(value) },
+                    value = deviceName,
+                )
+
+                BisqGap.V2()
+
                 BisqButton(
                     text = "mobile.trustedNodeSetup.pairingCode.scan".i18n(),
                     backgroundColor = BisqTheme.colors.primaryDim,
@@ -222,13 +233,18 @@ fun TrustedNodeSetupScreen(
                     validation = validationError,
                 )
 
-                BisqTextField(
-                    label = "mobile.trustedNodeSetup.deviceName".i18n(),
-                    placeholder = "mobile.trustedNodeSetup.deviceName.prompt".i18n(),
-                    onValueChange = { value, _ -> presenter.onDeviceNameChanged(value) },
-                    value = deviceName,
-                )
+                if (!webSocketUrl.isEmpty()) {
+                    BisqGap.V1()
+                    BisqTextField(
+                        label = "mobile.trustedNodeSetup.webSocketUrl".i18n(),
+                        value = webSocketUrl,
+                        readOnly = true,
+                        showCopy = true,
+                    )
+                }
             }
+
+            BisqGap.V2()
 
             /*Row(
                 modifier = Modifier.fillMaxWidth(),
