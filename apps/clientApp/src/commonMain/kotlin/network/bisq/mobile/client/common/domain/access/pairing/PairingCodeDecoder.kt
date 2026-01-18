@@ -2,8 +2,11 @@ package network.bisq.mobile.client.common.domain.access.pairing
 
 import kotlinx.datetime.Instant
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
+import network.bisq.mobile.domain.utils.getLogger
 import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
+@OptIn(ExperimentalEncodingApi::class)
 object PairingCodeDecoder {
     fun decode(base64: String): PairingCode {
         val bytes =
@@ -32,7 +35,11 @@ object PairingCodeDecoder {
 
         val permissions = mutableSetOf<Permission>()
         repeat(numPermissions) {
-            permissions += Permission.Companion.fromId(reader.readInt())
+            try {
+                permissions += Permission.Companion.fromId(reader.readInt())
+            } catch (e: Exception) {
+                getLogger("").w { "Permission could not be resolved. {${e.message}}" }
+            }
         }
 
         return PairingCode(

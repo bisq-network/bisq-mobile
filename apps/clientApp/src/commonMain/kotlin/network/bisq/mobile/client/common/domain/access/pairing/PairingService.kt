@@ -23,6 +23,7 @@ class PairingService(
         val timestamp: Instant = Clock.System.now()
         val pairingRequestPayload =
             PairingRequestPayload(
+                PairingRequestPayload.VERSION,
                 pairingCodeId,
                 clientPublicKey,
                 clientIdentity.deviceName,

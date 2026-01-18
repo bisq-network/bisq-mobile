@@ -243,7 +243,6 @@ fun TrustedNodeSetupScreen(
                     value = pairingCode,
                     disabled = isPairingInProgress,
                     showPaste = true,
-                    validation = validationError,
                 )
 
                 if (!webSocketUrl.isEmpty()) {

@@ -11,7 +11,7 @@ expect object PairingCryptoUtils {
     fun sign(
         message: ByteArray,
         encodedPrivateKey: ByteArray,
-    ): ByteArray // 64 bytes
+    ): ByteArray
 
     fun verify(
         message: ByteArray,

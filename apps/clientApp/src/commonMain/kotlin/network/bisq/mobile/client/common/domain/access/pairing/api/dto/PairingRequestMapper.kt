@@ -7,6 +7,7 @@ import network.bisq.mobile.client.common.domain.access.security.PairingCryptoUti
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+@OptIn(ExperimentalEncodingApi::class)
 object PairingRequestMapper {
     fun toBisq2Model(dto: PairingRequestDto?): PairingRequest {
         require(dto != null) {
@@ -22,6 +23,7 @@ object PairingRequestMapper {
 
     private fun toBisq2Model(dto: PairingRequestPayloadDto): PairingRequestPayload =
         PairingRequestPayload(
+            version = dto.version,
             pairingCodeId = dto.pairingCodeId,
             clientPublicKey = decodePublicKey(dto.clientPublicKeyBase64),
             deviceName = dto.deviceName,
@@ -36,14 +38,13 @@ object PairingRequestMapper {
 
     private fun fromBisq2Model(model: PairingRequestPayload): PairingRequestPayloadDto =
         PairingRequestPayloadDto(
-            version = 1,
+            version = model.version,
             pairingCodeId = model.pairingCodeId,
             clientPublicKeyBase64 = Base64.Default.encode(model.clientPublicKey),
             deviceName = model.deviceName,
             timestampEpochMillis = model.timestamp.toEpochMilliseconds(),
         )
 
-    @OptIn(ExperimentalEncodingApi::class)
     private fun decodePublicKey(
         base64: String,
     ): ByteArray {

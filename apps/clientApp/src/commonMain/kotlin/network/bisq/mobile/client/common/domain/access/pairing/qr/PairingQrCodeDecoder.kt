@@ -3,7 +3,9 @@ package network.bisq.mobile.client.common.domain.access.pairing.qr
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCodeDecoder
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
 import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
+@OptIn(ExperimentalEncodingApi::class)
 object PairingQrCodeDecoder {
     fun decode(qrCodeAsBase64: String): PairingQrCode =
         decode(
