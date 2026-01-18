@@ -68,6 +68,12 @@ class TrustedNodeSetupPresenter(
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val wsClientConnectionState = _wsClientConnectionState.asStateFlow()
 
+    private val _pairingQrCodeString = MutableStateFlow("")
+    val pairingQrCodeString: StateFlow<String> = _pairingQrCodeString.asStateFlow()
+
+    private val _deviceName = MutableStateFlow("")
+    val deviceName: StateFlow<String> = _deviceName.asStateFlow()
+
     private val _apiUrl = MutableStateFlow("")
     val apiUrl: StateFlow<String> = _apiUrl.asStateFlow()
 
@@ -198,6 +204,14 @@ class TrustedNodeSetupPresenter(
                 _isPairingInProgress.value = false
             }
         }
+    }
+
+    fun onPairingCodeChanged(value: String) {
+        _pairingQrCodeString.value = value
+    }
+
+    fun onDeviceNameChanged(value: String) {
+        _deviceName.value = value
     }
 
     fun onApiUrlChanged(apiUrl: String) {
@@ -337,7 +351,7 @@ class TrustedNodeSetupPresenter(
                                     when (newProxyOption) {
                                         BisqProxyOption.EXTERNAL_TOR,
                                         BisqProxyOption.SOCKS_PROXY,
-                                        -> "$newProxyHost:$newProxyPort"
+                                            -> "$newProxyHost:$newProxyPort"
 
                                         else -> ""
                                     },
@@ -487,7 +501,7 @@ class TrustedNodeSetupPresenter(
         val needsDefaultPort =
             !hasExplicitPort && (
                 host == LOCALHOST || host.isValidIpv4() || host.endsWith(".onion", ignoreCase = true)
-            )
+                )
         val port = if (needsDefaultPort) 8090 else first.port
         // Normalize to protocol://host:port (drop any path/query as before)
         val normalized = "${first.protocol.name}://$host:$port"
@@ -593,8 +607,7 @@ class TrustedNodeSetupPresenter(
     }
 
     fun onQrCodeResult(value: String) {
-        onApiUrlChanged(value)
+        _pairingQrCodeString.value = value
         _showQrCodeView.value = false
-        _triggerApiUrlValidation.value++
     }
 }
