@@ -30,7 +30,7 @@ class WebSocketApiClient(
 ) : Logging {
     val apiPath = "/api/v1/"
 
-    // POST and PATCH request are not working yes on the backend.
+    // PUT, POST and PATCH request are not working yet on the backend.
     // So we use httpClient instead.
     val useHttpClient = true
 

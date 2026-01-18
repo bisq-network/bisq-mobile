@@ -6,6 +6,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
+import network.bisq.mobile.client.common.domain.access.identity.ClientService
+import network.bisq.mobile.client.common.domain.access.pairing.PairingService
+import network.bisq.mobile.client.common.domain.access.pairing.api.ClientPairingApiGateway
+import network.bisq.mobile.client.common.domain.access.pairing.api.ClientPairingService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
@@ -172,6 +176,11 @@ val clientDomainModule =
                 get(),
             )
         }
+
+        single { ClientPairingApiGateway(get()) }
+        single { ClientPairingService(get()) }
+        single { PairingService(get()) }
+        single { ClientService(get()) }
 
         // single { WebSocketHttpClient(get()) }
         single {
