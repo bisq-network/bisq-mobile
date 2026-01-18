@@ -575,24 +575,24 @@ class TrustedNodeSetupPresenter(
         return null
     }
 
-    fun onBarcodeClick() {
+    fun onShowQrCodeView() {
         _showQrCodeView.value = true
     }
 
-    fun onBarcodeFail() {
+    fun onQrCodeFailed() {
         _showQrCodeView.value = false
         _showQrCodeError.value = true
     }
 
-    fun onBarcodeErrorClose() {
+    fun onQrCodeErrorClosed() {
         _showQrCodeError.value = false
     }
 
-    fun onBarcodeViewDismiss() {
+    fun onQrCodeViewDismissed() {
         _showQrCodeView.value = false
     }
 
-    fun onBarcodeResult(value: String) {
+    fun onQrCodeResult(value: String) {
         onApiUrlChanged(value)
         _showQrCodeView.value = false
         _triggerApiUrlValidation.value++

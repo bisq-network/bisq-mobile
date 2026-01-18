@@ -231,7 +231,7 @@ fun TrustedNodeSetupScreen(
                         // end of the hack
                         BisqButton(
                             backgroundColor = BisqTheme.colors.secondary,
-                            onClick = presenter::onBarcodeClick,
+                            onClick = presenter::onShowQrCodeView,
                             modifier = Modifier.size(BisqUIConstants.ScreenPadding4X),
                             iconOnly = {
                                 ScanQrIcon()
@@ -383,10 +383,10 @@ fun TrustedNodeSetupScreen(
 
     if (showQrCodeView) {
         BarcodeScannerView(
-            onCancel = presenter::onBarcodeViewDismiss,
-            onFail = { presenter.onBarcodeFail() },
+            onCancel = presenter::onQrCodeViewDismissed,
+            onFail = { presenter.onQrCodeFailed() },
         ) {
-            presenter.onBarcodeResult(it.data)
+            presenter.onQrCodeResult(it.data)
         }
     }
 
@@ -394,7 +394,7 @@ fun TrustedNodeSetupScreen(
         BisqGeneralErrorDialog(
             errorTitle = "mobile.barcode.error.title".i18n(),
             errorMessage = "mobile.barcode.error.message".i18n(),
-            onClose = presenter::onBarcodeErrorClose,
+            onClose = presenter::onQrCodeErrorClosed,
         )
     }
 }
