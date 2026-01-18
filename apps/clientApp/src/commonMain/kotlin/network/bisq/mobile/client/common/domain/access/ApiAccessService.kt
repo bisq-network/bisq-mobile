@@ -79,14 +79,20 @@ class ApiAccessService(
             persistClientIdentity(clientIdentity)
 
             _webSocketUrl.value = pairingQrCode.webSocketUrl
-            applyWebSocketUrl(pairingQrCode.webSocketUrl)
-
             val pairingCode = pairingQrCode.pairingCode
-
             _grantedPermissions.value = pairingCode.grantedPermissions
+
 
             requestPairingJob?.cancel()
             requestPairingJob = serviceScope.launch {
+                // This applied the WS url to the HttpClientSettings and
+                // recreates a new HttpClient with the new URL
+                updateHttpClientSettings(pairingQrCode.webSocketUrl)
+
+                // Now we do a HTTP POST request for pairing.
+                // This request is unauthenticated and will return the data we
+                // need for establishing an authenticated and authorized
+                // websocket connection.
                 val result: Result<PairingResponse> =
                     pairingService.requestPairing(
                         pairingQrCode,
@@ -94,16 +100,21 @@ class ApiAccessService(
                     )
                 if (result.isSuccess) {
                     val pairingResponse = result.getOrThrow()
-                    // TODO
-                    pairingResponse.sessionId
+                    applyPairingResponse(pairingResponse)
                 } else {
                     log.w { "Pairing request failed." }
                 }
+
                 requestPairingJob = null
             }
         } catch (e: Exception) {
             log.e("PairingCode decoding failed", e)
         }
+    }
+
+    private fun applyPairingResponse(pairingResponse: PairingResponse) {
+        pairingResponse.sessionId
+        //todo
     }
 
     private fun createClientIdentity(deviceName: String): ClientIdentity {
@@ -115,26 +126,28 @@ class ApiAccessService(
         //TODO
     }
 
-    private fun applyWebSocketUrl(webSocketUrl: String) {
-        serviceScope.launch {
-            val currentSettings =
-                sensitiveSettingsRepository.fetch()
-            val updatedSettings =
-                currentSettings.copy(
-                    bisqApiUrl = webSocketUrl,
-                    externalProxyUrl = "",  //todo
-                    /* when (newProxyOption) {
-                         BisqProxyOption.EXTERNAL_TOR,
-                         BisqProxyOption.SOCKS_PROXY,
-                             -> "$newProxyHost:$newProxyPort"
+    private suspend fun updateHttpClientSettings(webSocketUrl: String) {
+        log.e { "updateHttpClientSettings $webSocketUrl" }
 
-                         else -> ""
-                     },*/
-                    selectedProxyOption = BisqProxyOption.NONE, //todo
-                    bisqApiPassword = "",  //todo
-                )
+        val currentSettings =
+            sensitiveSettingsRepository.fetch()
+        val updatedSettings =
+            currentSettings.copy(
+                bisqApiUrl = webSocketUrl
+                    .replace("ws", "http")
+                    .replace("wss", "https"), //todo
+                externalProxyUrl = "",  //todo
+                /* when (newProxyOption) {
+                     BisqProxyOption.EXTERNAL_TOR,
+                     BisqProxyOption.SOCKS_PROXY,
+                         -> "$newProxyHost:$newProxyPort"
 
-            sensitiveSettingsRepository.update { updatedSettings }
-        }
+                     else -> ""
+                 },*/
+                selectedProxyOption = BisqProxyOption.NONE, //todo
+                bisqApiPassword = "",  //todo
+            )
+
+        sensitiveSettingsRepository.update { updatedSettings }
     }
 }
