@@ -78,7 +78,7 @@ fun TrustedNodeSetupScreen(
     RememberPresenterLifecycle(presenter)
 
     val connectionState by presenter.wsClientConnectionState.collectAsState()
-    val isNodeSetupInProgress by presenter.isNodeSetupInProgress.collectAsState()
+    val isPairingInProgress by presenter.isPairingInProgress.collectAsState()
     val selectedProxyOption by presenter.selectedProxyOption.collectAsState()
     val apiUrl by presenter.apiUrl.collectAsState()
     val apiUrlPrompt by presenter.apiUrlPrompt.collectAsState()
@@ -92,8 +92,8 @@ fun TrustedNodeSetupScreen(
     val torState by presenter.torState.collectAsState()
     val torProgress by presenter.torProgress.collectAsState()
     val timeoutCounter by presenter.timeoutCounter.collectAsState()
-    val showBarcodeView by presenter.showBarcodeView.collectAsState()
-    val showBarcodeError by presenter.showBarcodeError.collectAsState()
+    val showQrCodeView by presenter.showQrCodeView.collectAsState()
+    val showQrCodeError by presenter.showQrCodeError.collectAsState()
     val triggerValidation by presenter.triggerApiUrlValidation.collectAsState()
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
@@ -143,7 +143,7 @@ fun TrustedNodeSetupScreen(
                     BisqText.LargeRegular(
                         status,
                         color =
-                            if (isNodeSetupInProgress) {
+                            if (isPairingInProgress) {
                                 BisqTheme.colors.warning
                             } else if (connectionState is ConnectionState.Connected) {
                                 BisqTheme.colors.primary
@@ -166,11 +166,11 @@ fun TrustedNodeSetupScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     BisqButton(
-                        text = if (isNodeSetupInProgress) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
-                        color = if (!isNodeSetupInProgress && (!isApiUrlValid || !isProxyUrlValid)) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                        disabled = if (isNodeSetupInProgress) false else (!isWorkflow || !isApiUrlValid || !isProxyUrlValid),
+                        text = if (isPairingInProgress) "mobile.trustedNodeSetup.cancel".i18n() else "mobile.trustedNodeSetup.testAndSave".i18n(),
+                        color = if (!isPairingInProgress && (!isApiUrlValid || !isProxyUrlValid)) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
+                        disabled = if (isPairingInProgress) false else (!isWorkflow || !isApiUrlValid || !isProxyUrlValid),
                         onClick = {
-                            if (isNodeSetupInProgress) {
+                            if (isPairingInProgress) {
                                 presenter.onCancelPressed()
                             } else if (isNewApiUrl) {
                                 showConfirmDialog = true
@@ -209,7 +209,7 @@ fun TrustedNodeSetupScreen(
                     onValueChange = { apiUrl, _ -> if (isWorkflow) presenter.onApiUrlChanged(apiUrl) },
                     value = apiUrl,
                     placeholder = apiUrlPrompt,
-                    disabled = isNodeSetupInProgress,
+                    disabled = isPairingInProgress,
                     showPaste = true,
                     validation = validationError,
                 )
@@ -256,7 +256,7 @@ fun TrustedNodeSetupScreen(
                             presenter.onProxyOptionChanged(it)
                             blurTriggerSetup.triggerBlur()
                         },
-                        disabled = isNodeSetupInProgress || !isWorkflow,
+                        disabled = isPairingInProgress || !isWorkflow,
                     )
 
                     BisqTextField(
@@ -265,7 +265,7 @@ fun TrustedNodeSetupScreen(
                         onValueChange = { value, _ -> presenter.onPasswordChanged(value) },
                         keyboardType = KeyboardType.Password,
                         isPasswordField = true,
-                        disabled = isNodeSetupInProgress || !isWorkflow,
+                        disabled = isPairingInProgress || !isWorkflow,
                     )
                 }
             }
@@ -295,7 +295,7 @@ fun TrustedNodeSetupScreen(
                         value = proxyHost,
                         placeholder = "127.0.0.1",
                         keyboardType = KeyboardType.Decimal,
-                        disabled = isNodeSetupInProgress || !isWorkflow,
+                        disabled = isPairingInProgress || !isWorkflow,
                         validation = presenter::validateProxyHost,
                     )
                     BisqTextField(
@@ -305,7 +305,7 @@ fun TrustedNodeSetupScreen(
                         value = proxyPort,
                         placeholder = "9050",
                         keyboardType = KeyboardType.Decimal,
-                        disabled = isNodeSetupInProgress || !isWorkflow,
+                        disabled = isPairingInProgress || !isWorkflow,
                         validation = presenter::validatePort,
                     )
                 }
@@ -381,7 +381,7 @@ fun TrustedNodeSetupScreen(
         }
     }
 
-    if (showBarcodeView) {
+    if (showQrCodeView) {
         BarcodeScannerView(
             onCancel = presenter::onBarcodeViewDismiss,
             onFail = { presenter.onBarcodeFail() },
@@ -390,7 +390,7 @@ fun TrustedNodeSetupScreen(
         }
     }
 
-    if (showBarcodeError) {
+    if (showQrCodeError) {
         BisqGeneralErrorDialog(
             errorTitle = "mobile.barcode.error.title".i18n(),
             errorMessage = "mobile.barcode.error.message".i18n(),

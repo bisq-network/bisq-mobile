@@ -88,8 +88,8 @@ class TrustedNodeSetupPresenter(
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> = _status.asStateFlow()
 
-    private val _isNodeSetupInProgress = MutableStateFlow(true)
-    val isNodeSetupInProgress: StateFlow<Boolean> = _isNodeSetupInProgress.asStateFlow()
+    private val _isPairingInProgress = MutableStateFlow(true)
+    val isPairingInProgress: StateFlow<Boolean> = _isPairingInProgress.asStateFlow()
 
     private val _selectedProxyOption = MutableStateFlow(BisqProxyOption.NONE)
     val selectedProxyOption = _selectedProxyOption.asStateFlow()
@@ -148,11 +148,11 @@ class TrustedNodeSetupPresenter(
     private val _timeoutCounter = MutableStateFlow(0L)
     val timeoutCounter = _timeoutCounter.asStateFlow()
 
-    private val _showBarcodeView = MutableStateFlow(false)
-    val showBarcodeView: StateFlow<Boolean> = _showBarcodeView.asStateFlow()
+    private val _showQrCodeView = MutableStateFlow(false)
+    val showQrCodeView: StateFlow<Boolean> = _showQrCodeView.asStateFlow()
 
-    private val _showBarcodeError = MutableStateFlow(false)
-    val showBarcodeError: StateFlow<Boolean> = _showBarcodeError.asStateFlow()
+    private val _showQrCodeError = MutableStateFlow(false)
+    val showQrCodeError: StateFlow<Boolean> = _showQrCodeError.asStateFlow()
 
     private val _triggerApiUrlValidation = MutableStateFlow(0)
     val triggerApiUrlValidation = _triggerApiUrlValidation.asStateFlow()
@@ -195,7 +195,7 @@ class TrustedNodeSetupPresenter(
             } catch (e: Exception) {
                 log.e("Failed to load from repository", e)
             } finally {
-                _isNodeSetupInProgress.value = false
+                _isPairingInProgress.value = false
             }
         }
     }
@@ -235,7 +235,7 @@ class TrustedNodeSetupPresenter(
 
         if (!isApiUrlValid.value || !isProxyUrlValid.value) return
 
-        _isNodeSetupInProgress.value = true
+        _isPairingInProgress.value = true
         _status.value = "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
 
         val newApiUrlString = apiUrl.value
@@ -249,7 +249,7 @@ class TrustedNodeSetupPresenter(
                         IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
                         newApiUrlString,
                     )
-                    _isNodeSetupInProgress.value = false
+                    _isPairingInProgress.value = false
                     connectJob = null
                     return@launch
                 }
@@ -393,7 +393,7 @@ class TrustedNodeSetupPresenter(
                 } finally {
                     countdownJob?.cancel()
                     countdownJob = null
-                    _isNodeSetupInProgress.value = false
+                    _isPairingInProgress.value = false
                     connectJob = null
                 }
             }
@@ -417,7 +417,7 @@ class TrustedNodeSetupPresenter(
 
         _wsClientConnectionState.value = ConnectionState.Disconnected()
         _status.value = ""
-        _isNodeSetupInProgress.value = false
+        _isPairingInProgress.value = false
         _timeoutCounter.value = 0
         connectJob = null
     }
@@ -576,25 +576,25 @@ class TrustedNodeSetupPresenter(
     }
 
     fun onBarcodeClick() {
-        _showBarcodeView.value = true
+        _showQrCodeView.value = true
     }
 
     fun onBarcodeFail() {
-        _showBarcodeView.value = false
-        _showBarcodeError.value = true
+        _showQrCodeView.value = false
+        _showQrCodeError.value = true
     }
 
     fun onBarcodeErrorClose() {
-        _showBarcodeError.value = false
+        _showQrCodeError.value = false
     }
 
     fun onBarcodeViewDismiss() {
-        _showBarcodeView.value = false
+        _showQrCodeView.value = false
     }
 
     fun onBarcodeResult(value: String) {
         onApiUrlChanged(value)
-        _showBarcodeView.value = false
+        _showQrCodeView.value = false
         _triggerApiUrlValidation.value++
     }
 }
