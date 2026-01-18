@@ -492,6 +492,129 @@ class OfferbookPresenterFilterTest {
             )
         }
 
+    @Test
+    fun test_cross_market_payment_filter_persistence() =
+        runTest(testDispatcher) {
+            // Scenario: User filters to only WISE and REVOLUT,
+            // then the available payment methods change (simulating market switch).
+            // Expected: Offers with WISE or REVOLUT should still be visible.
+            // Bug: All offers get filtered out because selected methods become empty
+            // when availability changes, but hasManualPaymentFilter stays true.
+
+            // Initial offers: WISE, REVOLUT, SEPA
+            val initialOffers =
+                listOf(
+                    makeOffer("a1", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN")),
+                    makeOffer("a2", isMy = false, quoteMethods = listOf("REVOLUT"), baseMethods = listOf("MAIN_CHAIN")),
+                    makeOffer("a3", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+                )
+
+            // Build presenter with mutable offers flow so we can simulate market changes
+            val tradesServiceFacade = mockk<TradesServiceFacade>()
+            every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
+            val userProfileServiceForMain = FakeUserProfileServiceFacade()
+            val openTradesNotificationService = mockk<OpenTradesNotificationService>(relaxed = true)
+            val settingsService = FakeSettingsServiceFacade()
+            val tradeReadStateRepository = FakeTradeReadStateRepository()
+            val urlLauncher = mockk<UrlLauncher>(relaxed = true)
+            val mainPresenter =
+                MainPresenter(
+                    tradesServiceFacade,
+                    userProfileServiceForMain,
+                    openTradesNotificationService,
+                    settingsService,
+                    tradeReadStateRepository,
+                    urlLauncher,
+                    TestApplicationLifecycleService(),
+                )
+
+            val offersFlow = MutableStateFlow<List<OfferItemPresentationModel>>(initialOffers)
+            val marketFlow =
+                MutableStateFlow(
+                    OfferbookMarket(
+                        MarketVO(
+                            baseCurrencyCode = "BTC",
+                            quoteCurrencyCode = "USD",
+                            baseCurrencyName = "Bitcoin",
+                            quoteCurrencyName = "US Dollar",
+                        ),
+                    ),
+                )
+            val offersService = mockk<OffersServiceFacade>()
+            every { offersService.offerbookListItems } returns offersFlow
+            every { offersService.selectedOfferbookMarket } returns marketFlow
+            coEvery { offersService.deleteOffer(any()) } returns Result.success(true)
+
+            val offerUserProfileService = mockk<UserProfileServiceFacade>(relaxed = true)
+            val me = createMockUserProfile("me")
+            every { offerUserProfileService.selectedUserProfile } returns MutableStateFlow(me)
+            coEvery { offerUserProfileService.isUserIgnored(any()) } returns false
+            coEvery { offerUserProfileService.getUserProfileIcon(any(), any()) } returns mockk(relaxed = true)
+            coEvery { offerUserProfileService.getUserProfileIcon(any()) } returns mockk(relaxed = true)
+
+            val marketPriceServiceFacade =
+                object : MarketPriceServiceFacade(mockk(relaxed = true)) {
+                    override fun findMarketPriceItem(marketVO: MarketVO) = null
+
+                    override fun findUSDMarketPriceItem() = null
+
+                    override fun refreshSelectedFormattedMarketPrice() {}
+
+                    override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
+                }
+            val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
+            val takeOfferPresenter = mockk<TakeOfferPresenter>(relaxed = true)
+            val createOfferPresenter = mockk<CreateOfferPresenter>(relaxed = true)
+
+            val presenter =
+                OfferbookPresenter(
+                    mainPresenter,
+                    offersService,
+                    takeOfferPresenter,
+                    createOfferPresenter,
+                    marketPriceServiceFacade,
+                    offerUserProfileService,
+                    reputationService,
+                )
+            presenter.onViewAttached()
+            runCurrent()
+
+            // Wait for baseline availability
+            val initialPayments = initialOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
+            val initialSettlements = initialOffers.flatMap { it.baseSidePaymentMethods }.toSet()
+            awaitBaseline(presenter, initialPayments, initialSettlements)
+
+            // User manually filters to only WISE and REVOLUT
+            presenter.setSelectedPaymentMethodIds(setOf("WISE", "REVOLUT"))
+            presenter.setSelectedSettlementMethodIds(initialSettlements)
+            awaitSortedCount(presenter, 2) // Should show 2 offers (WISE and REVOLUT)
+
+            // Now simulate market change: new offers with WISE, REVOLUT, and NATIONAL_BANK
+            val newOffers =
+                listOf(
+                    makeOffer("b1", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN")),
+                    makeOffer("b2", isMy = false, quoteMethods = listOf("REVOLUT"), baseMethods = listOf("LIGHTNING")),
+                    makeOffer("b3", isMy = false, quoteMethods = listOf("NATIONAL_BANK"), baseMethods = listOf("MAIN_CHAIN")),
+                )
+            offersFlow.value = newOffers
+            runCurrent()
+            advanceUntilIdle()
+
+            // BUG: At this point, the selected payment methods should still include WISE and REVOLUT
+            // and we should see 2 offers (b1 and b2), but due to the bug, all offers are filtered out
+            val visibleOffers = presenter.sortedFilteredOffers.value
+
+            // Expected: 2 offers (WISE and REVOLUT)
+            // Actual (with bug): 0 offers
+            assertEquals(2, visibleOffers.size, "Should show offers with WISE or REVOLUT payment methods")
+            assertTrue(
+                visibleOffers.all { offer ->
+                    offer.quoteSidePaymentMethods.any { it in setOf("WISE", "REVOLUT") }
+                },
+                "All visible offers should have WISE or REVOLUT as payment method",
+            )
+        }
+
     // --- Minimal helpers/types for tests ---
 
     private class TestCoroutineJobsManager(

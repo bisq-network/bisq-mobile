@@ -264,11 +264,15 @@ open class OfferbookPresenter(
             availablePaymentMethodIds.collectLatest { avail ->
                 val current = _selectedPaymentMethodIds.value
                 val newlyAdded = avail - prevAvailPayment
-                val newSelection = (current intersect avail) + (if (hasManualPaymentFilter) emptySet() else newlyAdded)
+                // If user has manually filtered, preserve their selection (even if not currently available)
+                // and only add newly available methods if they haven't filtered yet
+                val newSelection = if (hasManualPaymentFilter) {
+                    current // Keep user's manual selection intact
+                } else {
+                    current + newlyAdded // Auto-add newly available methods
+                }
                 // If the user has never customized this filter, default to selecting all
-                // available methods when we first obtain availability. Once a manual
-                // filter is applied (including clearing all methods), we keep the
-                // user's selection stable across availability changes.
+                // available methods when we first obtain availability.
                 val finalSelection = if (current.isEmpty() && !hasManualPaymentFilter) avail else newSelection
                 if (finalSelection != current) {
                     _selectedPaymentMethodIds.value = finalSelection
@@ -280,10 +284,13 @@ open class OfferbookPresenter(
             availableSettlementMethodIds.collectLatest { avail ->
                 val current = _selectedSettlementMethodIds.value
                 val newlyAdded = avail - prevAvailSettlement
-                val newSelection = (current intersect avail) + (if (hasManualSettlementFilter) emptySet() else newlyAdded)
-                // Mirror payment-method behavior: only auto-select all when there is
-                // no manual filter yet. Manual filters (including empty selection)
-                // should remain stable when availability changes.
+                // Mirror payment-method behavior: preserve manual selections across availability changes
+                val newSelection = if (hasManualSettlementFilter) {
+                    current // Keep user's manual selection intact
+                } else {
+                    current + newlyAdded // Auto-add newly available methods
+                }
+                // Only auto-select all when there is no manual filter yet.
                 val finalSelection = if (current.isEmpty() && !hasManualSettlementFilter) avail else newSelection
                 if (finalSelection != current) {
                     _selectedSettlementMethodIds.value = finalSelection
