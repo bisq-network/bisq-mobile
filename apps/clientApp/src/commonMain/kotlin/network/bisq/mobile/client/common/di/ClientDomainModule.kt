@@ -180,7 +180,7 @@ val clientDomainModule =
         single { ClientPairingApiGateway(get()) }
         single { ClientPairingService(get()) }
         single { PairingService(get()) }
-        single { ClientService(get()) }
+        single { ClientService(get(), get()) }
 
         // single { WebSocketHttpClient(get()) }
         single {

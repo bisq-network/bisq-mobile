@@ -11,16 +11,19 @@ import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.access.security.PairingCryptoUtils
 import network.bisq.mobile.client.common.domain.access.session.SessionToken
+import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.security.RawKeyPair
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
 class ClientService(
-    val pairingService: PairingService,
+    private val pairingService: PairingService,
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository,
 ) : ServiceFacade(),
     Logging {
 
-    private val _deviceName = MutableStateFlow("")
+    private val _deviceName = MutableStateFlow("Alice") //todo
     val deviceName: StateFlow<String> = _deviceName.asStateFlow()
 
     private val _pairingQrCodeString = MutableStateFlow("")
@@ -75,11 +78,13 @@ class ClientService(
             persistClientIdentity(clientIdentity)
 
             _webSocketUrl.value = pairingQrCode.webSocketUrl
+            applyWebSocketUrl(pairingQrCode.webSocketUrl)
 
             val pairingCode = pairingQrCode.pairingCode
 
             _grantedPermissions.value = pairingCode.grantedPermissions
 
+            requestPairingJob?.cancel()
             requestPairingJob = serviceScope.launch {
                 val result: Result<PairingResponse> =
                     pairingService.requestPairing(
@@ -107,5 +112,28 @@ class ClientService(
 
     private fun persistClientIdentity(value: ClientIdentity) {
         //TODO
+    }
+
+    private fun applyWebSocketUrl(webSocketUrl: String) {
+        serviceScope.launch {
+            val currentSettings =
+                sensitiveSettingsRepository.fetch()
+            val updatedSettings =
+                currentSettings.copy(
+                    bisqApiUrl = webSocketUrl,
+                    externalProxyUrl = "",  //todo
+                    /* when (newProxyOption) {
+                         BisqProxyOption.EXTERNAL_TOR,
+                         BisqProxyOption.SOCKS_PROXY,
+                             -> "$newProxyHost:$newProxyPort"
+
+                         else -> ""
+                     },*/
+                    selectedProxyOption = BisqProxyOption.NONE, //todo
+                    bisqApiPassword = "",  //todo
+                )
+
+            sensitiveSettingsRepository.update { updatedSettings }
+        }
     }
 }
