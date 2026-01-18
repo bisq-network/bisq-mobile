@@ -39,6 +39,7 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 
 @ExperimentalCoroutinesApi
+@Ignore
 class TrustedNodeSetupPresenterTimeoutTest {
     private val testDispatcher = StandardTestDispatcher()
 

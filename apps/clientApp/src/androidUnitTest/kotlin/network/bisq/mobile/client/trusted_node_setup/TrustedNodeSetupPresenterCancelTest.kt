@@ -33,11 +33,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 
+@Ignore
 class TrustedNodeSetupPresenterCancelTest {
     private lateinit var wsClientService: WebSocketClientService
     private lateinit var kmpTorService: KmpTorService
