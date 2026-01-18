@@ -266,11 +266,12 @@ open class OfferbookPresenter(
                 val newlyAdded = avail - prevAvailPayment
                 // If user has manually filtered, preserve their selection (even if not currently available)
                 // and only add newly available methods if they haven't filtered yet
-                val newSelection = if (hasManualPaymentFilter) {
-                    current // Keep user's manual selection intact
-                } else {
-                    current + newlyAdded // Auto-add newly available methods
-                }
+                val newSelection =
+                    if (hasManualPaymentFilter) {
+                        current // Keep user's manual selection intact
+                    } else {
+                        current + newlyAdded // Auto-add newly available methods
+                    }
                 // If the user has never customized this filter, default to selecting all
                 // available methods when we first obtain availability.
                 val finalSelection = if (current.isEmpty() && !hasManualPaymentFilter) avail else newSelection
@@ -285,11 +286,12 @@ open class OfferbookPresenter(
                 val current = _selectedSettlementMethodIds.value
                 val newlyAdded = avail - prevAvailSettlement
                 // Mirror payment-method behavior: preserve manual selections across availability changes
-                val newSelection = if (hasManualSettlementFilter) {
-                    current // Keep user's manual selection intact
-                } else {
-                    current + newlyAdded // Auto-add newly available methods
-                }
+                val newSelection =
+                    if (hasManualSettlementFilter) {
+                        current // Keep user's manual selection intact
+                    } else {
+                        current + newlyAdded // Auto-add newly available methods
+                    }
                 // Only auto-select all when there is no manual filter yet.
                 val finalSelection = if (current.isEmpty() && !hasManualSettlementFilter) avail else newSelection
                 if (finalSelection != current) {
