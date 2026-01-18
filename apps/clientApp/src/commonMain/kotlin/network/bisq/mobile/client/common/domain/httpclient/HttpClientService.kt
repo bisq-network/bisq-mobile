@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.utils.createHttpClient
 import network.bisq.mobile.crypto.getSha256
@@ -207,7 +207,7 @@ class HttpClientService(
             HttpResponseValidator {
                 validateResponse { response ->
                     if (response.status == HttpStatusCode.Unauthorized) {
-                        throw PasswordIncorrectOrMissingException()
+                        throw UnauthorizedApiAccessException()
                     }
                 }
             }
