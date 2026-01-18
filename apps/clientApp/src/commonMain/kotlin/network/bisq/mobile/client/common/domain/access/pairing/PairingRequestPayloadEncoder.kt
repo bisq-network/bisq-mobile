@@ -4,7 +4,6 @@ import network.bisq.mobile.client.common.domain.utils.BinaryEncodingUtils
 import network.bisq.mobile.client.common.domain.utils.BinaryWriter
 
 object PairingRequestPayloadEncoder {
-
     private const val MAX_PAIRING_CODE_ID_LENGTH = 36
     private const val MAX_PUBLIC_KEY_BYTES = 128
     private const val MAX_DEVICE_NAME_LENGTH = 128
@@ -23,10 +22,25 @@ object PairingRequestPayloadEncoder {
         val writer = BinaryWriter()
 
         BinaryEncodingUtils.writeByte(writer, PairingRequestPayload.VERSION)
-        BinaryEncodingUtils.writeString(writer, payload.pairingCodeId, MAX_PAIRING_CODE_ID_LENGTH)
-        BinaryEncodingUtils.writeBytes(writer, payload.clientPublicKey, MAX_PUBLIC_KEY_BYTES)
-        BinaryEncodingUtils.writeString(writer, payload.deviceName, MAX_DEVICE_NAME_LENGTH)
-        BinaryEncodingUtils.writeLong(writer, payload.timestamp.toEpochMilliseconds())
+        BinaryEncodingUtils.writeString(
+            writer,
+            payload.pairingCodeId,
+            MAX_PAIRING_CODE_ID_LENGTH,
+        )
+        BinaryEncodingUtils.writeBytes(
+            writer,
+            payload.clientPublicKey,
+            MAX_PUBLIC_KEY_BYTES,
+        )
+        BinaryEncodingUtils.writeString(
+            writer,
+            payload.deviceName,
+            MAX_DEVICE_NAME_LENGTH,
+        )
+        BinaryEncodingUtils.writeLong(
+            writer,
+            payload.timestamp.toEpochMilliseconds(),
+        )
 
         return writer.toByteArray()
     }

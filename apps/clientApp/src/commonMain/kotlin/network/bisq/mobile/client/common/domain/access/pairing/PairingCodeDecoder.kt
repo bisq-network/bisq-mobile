@@ -6,7 +6,10 @@ import kotlin.io.encoding.Base64
 
 object PairingCodeDecoder {
     fun decode(base64: String): PairingCode {
-        val bytes = Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).decode(base64)
+        val bytes =
+            Base64.UrlSafe
+                .withPadding(Base64.PaddingOption.ABSENT)
+                .decode(base64)
         return decode(bytes)
     }
 
@@ -19,7 +22,8 @@ object PairingCodeDecoder {
         }
 
         val id = reader.readString()
-        val expiresAt = Instant.Companion.fromEpochMilliseconds(reader.readLong())
+        val expiresAt =
+            Instant.Companion.fromEpochMilliseconds(reader.readLong())
 
         val numPermissions = reader.readInt()
         require(numPermissions in 0..Permission.entries.size) {
@@ -34,7 +38,7 @@ object PairingCodeDecoder {
         return PairingCode(
             id = id,
             expiresAt = expiresAt,
-            grantedPermissions = permissions
+            grantedPermissions = permissions,
         )
     }
 }

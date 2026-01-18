@@ -5,6 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PairingResponseDto(
     val sessionId: String,
-    val expiresAt: Long
+    val expiresAt: Long,
 )
-

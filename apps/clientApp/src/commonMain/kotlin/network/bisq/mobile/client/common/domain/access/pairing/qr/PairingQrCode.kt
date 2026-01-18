@@ -7,6 +7,5 @@ data class PairingQrCode(
     val pairingCode: PairingCode,
     val webSocketUrl: String,
     val tlsFingerprint: String?,
-    val torClientAuthSecret: String?
+    val torClientAuthSecret: String?,
 )
-

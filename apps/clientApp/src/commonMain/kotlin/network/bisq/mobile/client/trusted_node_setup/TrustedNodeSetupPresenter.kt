@@ -56,7 +56,10 @@ class TrustedNodeSetupPresenter(
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
 
-        val publicDomains = Regex("""^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$""", RegexOption.IGNORE_CASE)
+        val publicDomains = Regex(
+            """^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$""",
+            RegexOption.IGNORE_CASE,
+        )
         val commonLocalNetworkSuffixes = setOf(".local", ".lan", ".internal")
     }
 
@@ -71,7 +74,8 @@ class TrustedNodeSetupPresenter(
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val wsClientConnectionState = _wsClientConnectionState.asStateFlow()
 
-    val pairingQrCodeString: StateFlow<String> = clientService.pairingQrCodeString
+    val pairingQrCodeString: StateFlow<String> =
+        clientService.pairingQrCodeString
     val deviceName: StateFlow<String> = clientService.deviceName
     val webSocketUrl: StateFlow<String> = clientService.webSocketUrl
 
@@ -96,7 +100,8 @@ class TrustedNodeSetupPresenter(
     val status: StateFlow<String> = _status.asStateFlow()
 
     private val _isPairingInProgress = MutableStateFlow(true)
-    val isPairingInProgress: StateFlow<Boolean> = _isPairingInProgress.asStateFlow()
+    val isPairingInProgress: StateFlow<Boolean> =
+        _isPairingInProgress.asStateFlow()
 
     private val _selectedProxyOption = MutableStateFlow(BisqProxyOption.NONE)
     val selectedProxyOption = _selectedProxyOption.asStateFlow()
@@ -112,9 +117,11 @@ class TrustedNodeSetupPresenter(
             proxyPort,
             selectedProxyOption,
         ) { h, p, proxyOption ->
-            if (proxyOption == BisqProxyOption.EXTERNAL_TOR || proxyOption == BisqProxyOption.SOCKS_PROXY) {
+            if (proxyOption == BisqProxyOption.EXTERNAL_TOR ||
+                proxyOption == BisqProxyOption.SOCKS_PROXY
+            ) {
                 validateProxyHost(h) == null &&
-                    validatePort(p) == null
+                        validatePort(p) == null
             } else {
                 true
             }
@@ -191,7 +198,11 @@ class TrustedNodeSetupPresenter(
                     onApiUrlChanged(settings.bisqApiUrl)
                 }
                 if (settings.externalProxyUrl.isBlank()) {
-                    if (_proxyHost.value.isNotBlank()) onProxyHostChanged(_proxyHost.value)
+                    if (_proxyHost.value.isNotBlank()) {
+                        onProxyHostChanged(
+                            _proxyHost.value,
+                        )
+                    }
                 } else {
                     val parts = settings.externalProxyUrl.split(':', limit = 2)
                     val savedHost = parts.getOrNull(0)?.trim().orEmpty()
@@ -251,7 +262,8 @@ class TrustedNodeSetupPresenter(
         if (!isApiUrlValid.value || !isProxyUrlValid.value) return
 
         _isPairingInProgress.value = true
-        _status.value = "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
+        _status.value =
+            "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
 
         val newApiUrlString = apiUrl.value
         log.d { "Test: $newApiUrlString isWorkflow $isWorkflow" }
@@ -316,7 +328,8 @@ class TrustedNodeSetupPresenter(
                         if (isExternalProxy && newProxyPort == null) {
                             IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
                         } else {
-                            val timeoutSecs = WebSocketClient.determineTimeout(newApiUrl.host) / 1000
+                            val timeoutSecs =
+                                WebSocketClient.determineTimeout(newApiUrl.host) / 1000
                             countdownJob =
                                 presenterScope.launch {
                                     for (i in timeoutSecs downTo 0) {
@@ -324,8 +337,10 @@ class TrustedNodeSetupPresenter(
                                         delay(1000)
                                     }
                                 }
-                            _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
-                            _wsClientConnectionState.value = ConnectionState.Connecting
+                            _status.value =
+                                "mobile.trustedNodeSetup.status.connecting".i18n()
+                            _wsClientConnectionState.value =
+                                ConnectionState.Connecting
                             val result =
                                 wsClientService.testConnection(
                                     newApiUrl,
@@ -339,12 +354,14 @@ class TrustedNodeSetupPresenter(
                         }
 
                     if (error != null) {
-                        _wsClientConnectionState.value = ConnectionState.Disconnected(error)
+                        _wsClientConnectionState.value =
+                            ConnectionState.Disconnected(error)
                         throw error
                     } else {
                         // we only dispose client if we are sure new settings differ from the old one
                         // because it wont emit if they are the same, and new clients wont be instantiated
-                        val currentSettings = sensitiveSettingsRepository.fetch()
+                        val currentSettings =
+                            sensitiveSettingsRepository.fetch()
                         val updatedSettings =
                             currentSettings.copy(
                                 bisqApiUrl = newApiUrl.toString(),
@@ -364,9 +381,11 @@ class TrustedNodeSetupPresenter(
                             // we need to do it in 1 update to not trigger unnecessary flow emits
                             sensitiveSettingsRepository.update { updatedSettings }
                         }
-                        val error = wsClientService.connect() // waits till new clients are initialized
+                        val error =
+                            wsClientService.connect() // waits till new clients are initialized
                         if (error != null) {
-                            _wsClientConnectionState.value = ConnectionState.Disconnected(error)
+                            _wsClientConnectionState.value =
+                                ConnectionState.Disconnected(error)
                             throw error
                         }
                         // wait till connectionState is changed to a final state
@@ -375,7 +394,8 @@ class TrustedNodeSetupPresenter(
                             .first()
                         _wsClientConnectionState.value =
                             ConnectionState.Connected // successful test regardless of final state
-                        _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
+                        _status.value =
+                            "mobile.trustedNodeSetup.status.connected".i18n()
                         if (currentSettings.bisqApiUrl != updatedSettings.bisqApiUrl) {
                             log.d { "user setup a new trusted node $newApiUrl" }
                             userRepository.clear()
@@ -400,7 +420,8 @@ class TrustedNodeSetupPresenter(
                     currentCoroutineContext().ensureActive()
                 } catch (e: CancellationException) {
                     // user cancelled: do not show error, just reset state
-                    _wsClientConnectionState.value = ConnectionState.Disconnected()
+                    _wsClientConnectionState.value =
+                        ConnectionState.Disconnected()
                     _status.value = ""
                 } catch (e: Throwable) {
                     onConnectionError(e, newApiUrl.toNormalizedString())
@@ -437,7 +458,8 @@ class TrustedNodeSetupPresenter(
         connectJob = null
     }
 
-    private fun Url.toNormalizedString(): String = "${this.protocol.name}://${this.host}:${this.port}"
+    private fun Url.toNormalizedString(): String =
+        "${protocol.name}://$host:$port"
 
     private fun onConnectionError(
         error: Throwable,
@@ -453,11 +475,13 @@ class TrustedNodeSetupPresenter(
             is IncompatibleHttpApiVersionException -> {
                 log.d { "Invalid version cannot connect" }
                 showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
-                _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
+                _status.value =
+                    "mobile.trustedNodeSetup.status.invalidVersion".i18n()
             }
 
             is UnauthorizedApiAccessException -> {
-                _status.value = "mobile.trustedNodeSetup.status.passwordIncorrectOrMissing".i18n()
+                _status.value =
+                    "mobile.trustedNodeSetup.status.passwordIncorrectOrMissing".i18n()
             }
 
             else -> {
@@ -495,14 +519,22 @@ class TrustedNodeSetupPresenter(
     private fun parseAndNormalizeUrl(value: String): Url? {
         val raw = value.trim()
         val withScheme = if (raw.contains("://")) raw else "http://$raw"
-        val first = parseUrl(withScheme) ?: return null
+        val first =
+            parseUrl(withScheme)
+                ?: return null
         // Detect if user explicitly provided a port in input
-        val hasExplicitPort = Regex("^https?://[^/]+:\\d+").containsMatchIn(withScheme)
+        val hasExplicitPort =
+            Regex("^https?://[^/]+:\\d+").containsMatchIn(withScheme)
         val host = first.host
         val needsDefaultPort =
             !hasExplicitPort && (
-                host == LOCALHOST || host.isValidIpv4() || host.endsWith(".onion", ignoreCase = true)
-                )
+                    host == LOCALHOST ||
+                            host.isValidIpv4() ||
+                            host.endsWith(
+                                ".onion",
+                                ignoreCase = true,
+                            )
+                    )
         val port = if (needsDefaultPort) 8090 else first.port
         // Normalize to protocol://host:port (drop any path/query as before)
         val normalized = "${first.protocol.name}://$host:$port"
@@ -575,7 +607,8 @@ class TrustedNodeSetupPresenter(
         return null
     }
 
-    private fun localHost(): String = if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
+    private fun localHost(): String =
+        if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
 
     fun validateProxyHost(value: String): String? {
         if (value.isEmpty()) {

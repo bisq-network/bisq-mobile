@@ -6,7 +6,7 @@ data class PairingRequestPayload(
     val pairingCodeId: String,
     val clientPublicKey: ByteArray,
     val deviceName: String,
-    val timestamp: Instant
+    val timestamp: Instant,
 ) {
     companion object {
         const val VERSION: Byte = 1

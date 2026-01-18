@@ -2,9 +2,8 @@ package network.bisq.mobile.client.common.domain.access.pairing
 
 class PairingRequest(
     val payload: PairingRequestPayload,
-    signature: ByteArray
+    signature: ByteArray,
 ) {
-
     private val _signature: ByteArray = signature.copyOf()
 
     val signature: ByteArray
@@ -22,7 +21,7 @@ class PairingRequest(
 
     override fun hashCode(): Int {
         var result = payload.hashCode()
-        result = 31 * result + (_signature?.contentHashCode() ?: 0)
+        result = 31 * result + (_signature.contentHashCode())
         return result
     }
 
@@ -33,4 +32,3 @@ class PairingRequest(
             else -> this.contentEquals(other)
         }
 }
-

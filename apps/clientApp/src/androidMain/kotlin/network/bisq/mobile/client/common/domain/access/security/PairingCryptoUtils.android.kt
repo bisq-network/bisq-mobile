@@ -14,7 +14,7 @@ import java.security.spec.X509EncodedKeySpec
 actual object PairingCryptoUtils {
     init {
         Security.removeProvider("BC"); // remove Android's old one
-        Security.insertProviderAt(BouncyCastleProvider(), 1);
+        Security.insertProviderAt(BouncyCastleProvider(), 1)
     }
 
     const val CURVE = "secp256r1"
@@ -29,7 +29,7 @@ actual object PairingCryptoUtils {
 
             return RawKeyPair(
                 publicKey = keyPair.public.encoded,
-                privateKey = keyPair.private.encoded
+                privateKey = keyPair.private.encoded,
             )
         } catch (e: Exception) {
             throw IllegalStateException("Failed to generate EC key pair", e)
@@ -38,20 +38,22 @@ actual object PairingCryptoUtils {
 
     actual fun generatePublic(encodedPublicKey: ByteArray): ByteArray {
         val keyFactory = KeyFactory.getInstance(KEY_ALGORITHM)
-        val publicKey = keyFactory.generatePublic(
-            X509EncodedKeySpec(encodedPublicKey)
-        )
+        val publicKey =
+            keyFactory.generatePublic(
+                X509EncodedKeySpec(encodedPublicKey),
+            )
         return publicKey.encoded
     }
 
     actual fun sign(
         message: ByteArray,
-        encodedPrivateKey: ByteArray
+        encodedPrivateKey: ByteArray,
     ): ByteArray {
         val keyFactory = KeyFactory.getInstance(KEY_ALGORITHM)
-        val privateKey = keyFactory.generatePrivate(
-            PKCS8EncodedKeySpec(encodedPrivateKey)
-        )
+        val privateKey =
+            keyFactory.generatePrivate(
+                PKCS8EncodedKeySpec(encodedPrivateKey),
+            )
 
         val signature = Signature.getInstance(SIGNATURE_ALGORITHM)
         signature.initSign(privateKey)
@@ -62,12 +64,13 @@ actual object PairingCryptoUtils {
     actual fun verify(
         message: ByteArray,
         signature: ByteArray,
-        encodedPublicKey: ByteArray
+        encodedPublicKey: ByteArray,
     ): Boolean {
         val keyFactory = KeyFactory.getInstance(KEY_ALGORITHM)
-        val publicKey = keyFactory.generatePublic(
-            X509EncodedKeySpec(encodedPublicKey)
-        )
+        val publicKey =
+            keyFactory.generatePublic(
+                X509EncodedKeySpec(encodedPublicKey),
+            )
 
         val sig = Signature.getInstance(SIGNATURE_ALGORITHM)
         sig.initVerify(publicKey)

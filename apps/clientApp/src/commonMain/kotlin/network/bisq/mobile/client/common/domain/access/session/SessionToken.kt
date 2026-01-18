@@ -7,9 +7,8 @@ import network.bisq.mobile.domain.utils.createUuid
 import kotlin.time.Duration.Companion.minutes
 
 class SessionToken(
-    val deviceId: String
+    val deviceId: String,
 ) {
-
     companion object {
         const val TTL_MINUTES: Long = 15
     }
@@ -19,11 +18,7 @@ class SessionToken(
 
     private val hmacKey: ByteArray = ByteArrayUtils.randomBytes(32) // 256-bit
 
-    fun isExpired(): Boolean {
-        return Clock.System.now() > expiresAt
-    }
+    fun isExpired(): Boolean = Clock.System.now() > expiresAt
 
-    fun getHmacKey(): ByteArray {
-        return hmacKey.copyOf()
-    }
+    fun getHmacKey(): ByteArray = hmacKey.copyOf()
 }

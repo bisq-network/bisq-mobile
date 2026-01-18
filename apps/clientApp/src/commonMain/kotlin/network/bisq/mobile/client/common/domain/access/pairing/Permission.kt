@@ -1,6 +1,8 @@
 package network.bisq.mobile.client.common.domain.access.pairing
 
-enum class Permission(val id: Int) {
+enum class Permission(
+    val id: Int,
+) {
     TRADE_CHAT_CHANNELS(0),
     EXPLORER(1),
     MARKET_PRICE(2),
@@ -10,7 +12,8 @@ enum class Permission(val id: Int) {
     SETTINGS(6),
     TRADES(7),
     USER_IDENTITIES(8),
-    USER_PROFILES(9);
+    USER_PROFILES(9),
+    ;
 
     companion object {
         fun fromId(id: Int): Permission =
@@ -18,4 +21,3 @@ enum class Permission(val id: Int) {
                 ?: throw IllegalArgumentException("No permission found for id $id")
     }
 }
-

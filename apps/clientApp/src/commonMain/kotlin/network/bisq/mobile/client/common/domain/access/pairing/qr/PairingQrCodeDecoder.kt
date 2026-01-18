@@ -5,9 +5,12 @@ import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
 import kotlin.io.encoding.Base64
 
 object PairingQrCodeDecoder {
-
     fun decode(qrCodeAsBase64: String): PairingQrCode =
-        decode(Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).decode(qrCodeAsBase64))
+        decode(
+            Base64.UrlSafe
+                .withPadding(Base64.PaddingOption.ABSENT)
+                .decode(qrCodeAsBase64),
+        )
 
     fun decode(qrCodeBytes: ByteArray): PairingQrCode {
         val reader = BinaryDecodingUtils(qrCodeBytes)
@@ -19,11 +22,13 @@ object PairingQrCodeDecoder {
         }
 
         // ---- PairingCode ----
-        val pairingCodeBytes = reader.readBytes(PairingQrCodeFormat.MAX_PAIRING_CODE_BYTES)
+        val pairingCodeBytes =
+            reader.readBytes(PairingQrCodeFormat.MAX_PAIRING_CODE_BYTES)
         val pairingCode = PairingCodeDecoder.decode(pairingCodeBytes)
 
         // ---- Address ----
-        val webSocketUrl = reader.readString(PairingQrCodeFormat.MAX_WS_URL_BYTES)
+        val webSocketUrl =
+            reader.readString(PairingQrCodeFormat.MAX_WS_URL_BYTES)
 
         // ---- Flags ----
         val flags = reader.readByte()
@@ -47,7 +52,7 @@ object PairingQrCodeDecoder {
             pairingCode = pairingCode,
             webSocketUrl = webSocketUrl,
             tlsFingerprint = tlsFingerprint,
-            torClientAuthSecret = torClientAuthSecret
+            torClientAuthSecret = torClientAuthSecret,
         )
     }
 }

@@ -13,30 +13,33 @@ import network.bisq.mobile.domain.utils.Logging
 class PairingService(
     private val clientPairingService: ClientPairingService,
 ) : ServiceFacade(), Logging {
-
     suspend fun requestPairing(
         pairingQrCode: PairingQrCode,
         clientIdentity: ClientIdentity,
-    )
-        : Result<PairingResponse> {
+    ): Result<PairingResponse> {
         val keyPair: RawKeyPair = clientIdentity.rawKeyPair
         val clientPublicKey: ByteArray = keyPair.publicKey
         val pairingCodeId: String = pairingQrCode.pairingCode.id
         val timestamp: Instant = Clock.System.now()
-        val pairingRequestPayload = PairingRequestPayload(
-            pairingCodeId,
-            clientPublicKey,
-            clientIdentity.deviceName,
-            timestamp,
-        )
+        val pairingRequestPayload =
+            PairingRequestPayload(
+                pairingCodeId,
+                clientPublicKey,
+                clientIdentity.deviceName,
+                timestamp,
+            )
 
-        val signature: ByteArray = signPayload(pairingRequestPayload, keyPair.privateKey)
+        val signature: ByteArray =
+            signPayload(pairingRequestPayload, keyPair.privateKey)
         val pairingRequest = PairingRequest(pairingRequestPayload, signature)
 
         return clientPairingService.requestPairing(pairingRequest)
     }
 
-    private fun signPayload(pairingRequestPayload: PairingRequestPayload, privateKey: ByteArray): ByteArray {
+    private fun signPayload(
+        pairingRequestPayload: PairingRequestPayload,
+        privateKey: ByteArray,
+    ): ByteArray {
         val message = PairingRequestPayloadEncoder.encode(pairingRequestPayload)
         return PairingCryptoUtils.sign(message, privateKey)
     }

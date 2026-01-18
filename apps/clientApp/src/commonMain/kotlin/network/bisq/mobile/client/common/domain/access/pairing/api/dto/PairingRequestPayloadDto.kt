@@ -8,5 +8,5 @@ data class PairingRequestPayloadDto(
     val pairingCodeId: String,
     val clientPublicKeyBase64: String,
     val deviceName: String,
-    val timestampEpochMillis: Long
+    val timestampEpochMillis: Long,
 )
