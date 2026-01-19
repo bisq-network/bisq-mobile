@@ -12,7 +12,8 @@ import network.bisq.mobile.domain.utils.Logging
 
 class PairingService(
     private val clientPairingService: ClientPairingService,
-) : ServiceFacade(), Logging {
+) : ServiceFacade(),
+    Logging {
     suspend fun requestPairing(
         pairingQrCode: PairingQrCode,
         clientIdentity: ClientIdentity,

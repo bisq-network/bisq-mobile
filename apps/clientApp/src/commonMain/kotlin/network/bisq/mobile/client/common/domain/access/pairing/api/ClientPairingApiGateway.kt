@@ -59,8 +59,8 @@ class ClientPairingApiGateway(
             Result.failure(
                 WebSocketRestApiException(
                     response.status,
-                    errorText
-                )
+                    errorText,
+                ),
             )
         }
 }

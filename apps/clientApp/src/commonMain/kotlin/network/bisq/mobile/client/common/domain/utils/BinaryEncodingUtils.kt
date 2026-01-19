@@ -1,13 +1,12 @@
 package network.bisq.mobile.client.common.domain.utils
 
-
 object BinaryEncodingUtils {
     private const val MAX_USHORT = 0xFFFF
 
     fun writeString(
         writer: BinaryWriter,
         value: String,
-        maxByteLength: Int
+        maxByteLength: Int,
     ) {
         val bytes = value.encodeToByteArray()
         writeBytes(writer, bytes, maxByteLength)
@@ -15,7 +14,7 @@ object BinaryEncodingUtils {
 
     fun writeString(
         writer: BinaryWriter,
-        value: String
+        value: String,
     ) {
         val bytes = value.encodeToByteArray()
         writeBytes(writer, bytes)
@@ -23,21 +22,21 @@ object BinaryEncodingUtils {
 
     fun writeInt(
         writer: BinaryWriter,
-        value: Int
+        value: Int,
     ) {
         writer.writeInt(value)
     }
 
     fun writeLong(
         writer: BinaryWriter,
-        value: Long
+        value: Long,
     ) {
         writer.writeLong(value)
     }
 
     fun writeByte(
         writer: BinaryWriter,
-        value: Byte
+        value: Byte,
     ) {
         writer.writeByte(value)
     }
@@ -45,7 +44,7 @@ object BinaryEncodingUtils {
     fun writeBytes(
         writer: BinaryWriter,
         value: ByteArray,
-        maxLength: Int
+        maxLength: Int,
     ) {
         require(maxLength <= MAX_USHORT) {
             "Max length exceeds 65535."
@@ -58,7 +57,7 @@ object BinaryEncodingUtils {
 
     fun writeBytes(
         writer: BinaryWriter,
-        value: ByteArray
+        value: ByteArray,
     ) {
         require(value.size <= MAX_USHORT) {
             "Byte array too long for 16-bit length prefix."
@@ -67,4 +66,3 @@ object BinaryEncodingUtils {
         writer.writeBytes(value)
     }
 }
-

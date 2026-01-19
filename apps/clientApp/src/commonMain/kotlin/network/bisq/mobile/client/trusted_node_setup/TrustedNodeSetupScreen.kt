@@ -323,7 +323,7 @@ fun TrustedNodeSetupScreen(
                         value = password,
                         onValueChange = { value, _ ->
                             presenter.onPasswordChanged(
-                                value
+                                value,
                             )
                         },
                         keyboardType = KeyboardType.Password,
@@ -349,16 +349,17 @@ fun TrustedNodeSetupScreen(
             AnimatedVisibility(isExternalProxyOption) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spaceBetweenWithMin(
-                        BisqUIConstants.ScreenPadding
-                    ),
+                    horizontalArrangement =
+                        Arrangement.spaceBetweenWithMin(
+                            BisqUIConstants.ScreenPadding,
+                        ),
                 ) {
                     BisqTextField(
                         modifier = Modifier.weight(0.8f),
                         label = "mobile.trustedNodeSetup.proxyHost".i18n(),
                         onValueChange = { host, _ ->
                             presenter.onProxyHostChanged(
-                                host
+                                host,
                             )
                         },
                         value = proxyHost,
@@ -372,7 +373,7 @@ fun TrustedNodeSetupScreen(
                         label = "mobile.trustedNodeSetup.port".i18n(),
                         onValueChange = { port, _ ->
                             presenter.onProxyPortChanged(
-                                port
+                                port,
                             )
                         },
                         value = proxyPort,
@@ -390,8 +391,8 @@ fun TrustedNodeSetupScreen(
                 BisqGap.V3()
                 BisqText.BaseRegular(
                     "mobile.trustedNodeSetup.version.expectedAPI".i18n(
-                        BuildConfig.BISQ_API_VERSION
-                    )
+                        BuildConfig.BISQ_API_VERSION,
+                    ),
                 )
                 BisqText.BaseRegular(
                     "mobile.trustedNodeSetup.version.nodeAPI".i18n(
@@ -436,11 +437,14 @@ fun TrustedNodeSetupScreen(
                 BisqGap.V2()
 
                 Row(
-                    horizontalArrangement = Arrangement.spaceBetweenWithMin(
-                        BisqUIConstants.ScreenPadding
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                        .height(IntrinsicSize.Max),
+                    horizontalArrangement =
+                        Arrangement.spaceBetweenWithMin(
+                            BisqUIConstants.ScreenPadding,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
                 ) {
                     BisqButton(
                         modifier = Modifier.fillMaxHeight(),
@@ -506,8 +510,10 @@ fun AdvancedOptionsDrawer(
             BisqHDivider(modifier = Modifier.weight(1f))
             OutlinedIconButton(
                 onClick = onToggle,
-                modifier = Modifier.size(24.dp)
-                    .clearAndSetSemantics { hideFromAccessibility() },
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clearAndSetSemantics { hideFromAccessibility() },
                 border = BorderStroke(1.dp, BisqTheme.colors.mid_grey10),
             ) {
                 ArrowDownIcon(modifier = Modifier.size(12.dp).rotate(rotation))

@@ -18,10 +18,10 @@ data class PairingRequestPayload(
         if (other !is PairingRequestPayload) return false
 
         return version == other.version &&
-                pairingCodeId == other.pairingCodeId &&
-                clientPublicKey.contentEquals(other.clientPublicKey) &&
-                deviceName == other.deviceName &&
-                timestamp == other.timestamp
+            pairingCodeId == other.pairingCodeId &&
+            clientPublicKey.contentEquals(other.clientPublicKey) &&
+            deviceName == other.deviceName &&
+            timestamp == other.timestamp
     }
 
     override fun hashCode(): Int {

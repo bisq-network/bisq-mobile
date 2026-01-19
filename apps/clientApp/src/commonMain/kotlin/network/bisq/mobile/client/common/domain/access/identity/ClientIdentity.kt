@@ -9,4 +9,3 @@ class ClientIdentity(
     val publicKey: ByteArray
         get() = rawKeyPair.publicKey
 }
-

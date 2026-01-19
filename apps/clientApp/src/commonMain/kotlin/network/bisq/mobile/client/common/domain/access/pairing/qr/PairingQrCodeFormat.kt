@@ -1,12 +1,11 @@
 package network.bisq.mobile.client.common.domain.access.pairing.qr
 
 object PairingQrCodeFormat {
-
     // ---- Versioning ----
     const val VERSION: Byte = 1
 
     // ---- Flags ----
-    const val FLAG_TLS_FINGERPRINT: Int = 1        // 1 shl 0
+    const val FLAG_TLS_FINGERPRINT: Int = 1 // 1 shl 0
     const val FLAG_TOR_CLIENT_AUTH: Int = 1 shl 1
 
     // ---- Limits ----

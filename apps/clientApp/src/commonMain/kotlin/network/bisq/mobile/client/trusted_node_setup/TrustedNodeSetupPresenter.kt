@@ -56,10 +56,11 @@ class TrustedNodeSetupPresenter(
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
 
-        val publicDomains = Regex(
-            """^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$""",
-            RegexOption.IGNORE_CASE,
-        )
+        val publicDomains =
+            Regex(
+                """^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$""",
+                RegexOption.IGNORE_CASE,
+            )
         val commonLocalNetworkSuffixes = setOf(".local", ".lan", ".internal")
     }
 
@@ -121,7 +122,7 @@ class TrustedNodeSetupPresenter(
                 proxyOption == BisqProxyOption.SOCKS_PROXY
             ) {
                 validateProxyHost(h) == null &&
-                        validatePort(p) == null
+                    validatePort(p) == null
             } else {
                 true
             }
@@ -458,8 +459,7 @@ class TrustedNodeSetupPresenter(
         connectJob = null
     }
 
-    private fun Url.toNormalizedString(): String =
-        "${protocol.name}://$host:$port"
+    private fun Url.toNormalizedString(): String = "${protocol.name}://$host:$port"
 
     private fun onConnectionError(
         error: Throwable,
@@ -529,12 +529,12 @@ class TrustedNodeSetupPresenter(
         val needsDefaultPort =
             !hasExplicitPort && (
                     host == LOCALHOST ||
-                            host.isValidIpv4() ||
-                            host.endsWith(
-                                ".onion",
-                                ignoreCase = true,
-                            )
+                    host.isValidIpv4() ||
+                    host.endsWith(
+                        ".onion",
+                        ignoreCase = true,
                     )
+            )
         val port = if (needsDefaultPort) 8090 else first.port
         // Normalize to protocol://host:port (drop any path/query as before)
         val normalized = "${first.protocol.name}://$host:$port"

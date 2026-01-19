@@ -87,8 +87,10 @@ class ClientUserProfileServiceFacade(
                         val selectedDeferred =
                             async {
                                 try {
-                                    apiGateway.getSelectedUserProfile()
-                                        .getOrThrow().also {
+                                    apiGateway
+                                        .getSelectedUserProfile()
+                                        .getOrThrow()
+                                        .also {
                                             _selectedUserProfile.value =
                                                 it
                                         }
@@ -122,7 +124,7 @@ class ClientUserProfileServiceFacade(
                         awaitAll(
                             selectedDeferred,
                             profilesDeferred,
-                            ignoredDeferred
+                            ignoredDeferred,
                         )
                     }
                 }
@@ -144,8 +146,7 @@ class ClientUserProfileServiceFacade(
     }
 
     // API
-    override suspend fun hasUserProfile(): Boolean =
-        getUserIdentityIds().isNotEmpty()
+    override suspend fun hasUserProfile(): Boolean = getUserIdentityIds().isNotEmpty()
 
     @OptIn(ExperimentalEncodingApi::class)
     override suspend fun generateKeyPair(
@@ -181,7 +182,7 @@ class ClientUserProfileServiceFacade(
         val apiResult =
             apiGateway.createAndPublishNewUserProfile(
                 nickName,
-                keyMaterialResponse!!
+                keyMaterialResponse!!,
             )
         if (apiResult.isFailure) {
             throw apiResult.exceptionOrNull()!!
@@ -209,7 +210,7 @@ class ClientUserProfileServiceFacade(
                     statement
                         ?: "",
                     terms
-                        ?: ""
+                        ?: "",
                 )
             if (apiResult.isFailure) {
                 throw apiResult.exceptionOrNull()!!
@@ -260,13 +261,12 @@ class ClientUserProfileServiceFacade(
         val delayDuration =
             min(
                 1000.0,
-                max(200.0, (200 + random - requestDuration).toDouble())
+                max(200.0, (200 + random - requestDuration).toDouble()),
             ).toLong()
         delay(delayDuration)
     }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage =
-        getUserProfileIcon(userProfile, ClientCatHashService.DEFAULT_SIZE)
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage = getUserProfileIcon(userProfile, ClientCatHashService.DEFAULT_SIZE)
 
     override suspend fun getUserProfileIcon(
         userProfile: UserProfileVO,
@@ -404,7 +404,7 @@ class ClientUserProfileServiceFacade(
         }
         return apiGateway.reportUserProfile(
             accusedUserProfile.networkId.pubKey.id,
-            trimmedMessage
+            trimmedMessage,
         )
     }
 

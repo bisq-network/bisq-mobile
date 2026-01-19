@@ -1,13 +1,11 @@
 package network.bisq.mobile.client.common.domain.utils
 
-
 class BinaryWriter(
-    initialCapacity: Int = 256
+    initialCapacity: Int = 256,
 ) {
     private val buffer = ArrayList<Byte>(initialCapacity)
 
-    fun toByteArray(): ByteArray =
-        buffer.toByteArray()
+    fun toByteArray(): ByteArray = buffer.toByteArray()
 
     fun writeByte(value: Byte) {
         buffer.add(value)
@@ -35,4 +33,3 @@ class BinaryWriter(
         buffer.addAll(bytes.toList())
     }
 }
-

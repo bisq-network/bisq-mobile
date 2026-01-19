@@ -1,6 +1,8 @@
 package network.bisq.mobile.client.common.domain.utils
 
-class BinaryDecodingUtils(private val data: ByteArray) {
+class BinaryDecodingUtils(
+    private val data: ByteArray,
+) {
     private var offset: Int = 0
 
     private fun requireAvailable(bytes: Int) {
@@ -43,8 +45,7 @@ class BinaryDecodingUtils(private val data: ByteArray) {
         return result
     }
 
-    fun readBytes(): ByteArray =
-        readBytes(Int.MAX_VALUE)
+    fun readBytes(): ByteArray = readBytes(Int.MAX_VALUE)
 
     fun readBytes(maxLength: Int): ByteArray {
         val length = readUnsignedShort()
@@ -58,8 +59,7 @@ class BinaryDecodingUtils(private val data: ByteArray) {
         return result
     }
 
-    fun readString(): String =
-        readString(Int.MAX_VALUE)
+    fun readString(): String = readString(Int.MAX_VALUE)
 
     fun readString(maxLength: Int): String {
         val bytes = readBytes(maxLength)
