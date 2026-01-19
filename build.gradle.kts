@@ -86,6 +86,8 @@ subprojects {
                         annotatedBy("androidx.compose.ui.tooling.preview.Preview")
                         annotatedBy("org.jetbrains.compose.ui.tooling.preview.Preview")
                         annotatedBy("network.bisq.mobile.presentation.common.ui.utils.PreviewHelper")
+                        // Exclude custom coverage exclusion annotation
+                        annotatedBy("network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage")
                         classes("*ComposableSingletons*")
                     }
                 }
@@ -274,8 +276,12 @@ kover {
                     annotatedBy("androidx.compose.ui.tooling.preview.Preview")
                     annotatedBy("org.jetbrains.compose.ui.tooling.preview.Preview")
                     annotatedBy("network.bisq.mobile.presentation.common.ui.utils.PreviewHelper")
+                    // Exclude custom coverage exclusion annotation
+                    annotatedBy("network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage")
                     // Exclude generated Compose code
                     classes("*ComposableSingletons*")
+                    // Exclude auto-generated Compose Multiplatform resources
+                    classes("bisqapps.*.generated.resources.*")
                 }
             }
 
