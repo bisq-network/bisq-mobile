@@ -33,6 +33,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarCon
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -310,6 +311,7 @@ private fun ColumnScope.PaymentAccountForm(
     }
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun PreviewTopBar() {
     TopBarContent(
@@ -319,6 +321,7 @@ private fun PreviewTopBar() {
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun previewSnackbarHostState() = remember { SnackbarHostState() }
 
@@ -340,32 +343,32 @@ private fun PaymentAccountsScreen_EmptyPreview() {
 @Preview
 @Composable
 private fun PaymentAccountsScreen_WithAccountsPreview() {
-    val sampleAccounts =
-        listOf(
-            UserDefinedFiatAccountVO(
-                accountName = "PayPal Account",
-                accountPayload =
-                    UserDefinedFiatAccountPayloadVO(
-                        accountData = "user@example.com",
-                    ),
-            ),
-            UserDefinedFiatAccountVO(
-                accountName = "Bank Transfer",
-                accountPayload =
-                    UserDefinedFiatAccountPayloadVO(
-                        accountData = "IBAN: DE89370400440532013000",
-                    ),
-            ),
-            UserDefinedFiatAccountVO(
-                accountName = "Revolut",
-                accountPayload =
-                    UserDefinedFiatAccountPayloadVO(
-                        accountData = "+1234567890",
-                    ),
-            ),
-        )
-
     BisqTheme.Preview {
+        val sampleAccounts =
+            listOf(
+                UserDefinedFiatAccountVO(
+                    accountName = "PayPal Account",
+                    accountPayload =
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = "user@example.com",
+                        ),
+                ),
+                UserDefinedFiatAccountVO(
+                    accountName = "Bank Transfer",
+                    accountPayload =
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = "IBAN: DE89370400440532013000",
+                        ),
+                ),
+                UserDefinedFiatAccountVO(
+                    accountName = "Revolut",
+                    accountPayload =
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = "+1234567890",
+                        ),
+                ),
+            )
+
         PaymentAccountsContent(
             uiState =
                 PaymentAccountsUiState(
@@ -387,32 +390,32 @@ private fun PaymentAccountsScreen_WithAccountsPreview() {
 @Preview
 @Composable
 private fun PaymentAccountsScreen_EditModePreview() {
-    val sampleAccounts =
-        listOf(
-            UserDefinedFiatAccountVO(
-                accountName = "PayPal Account",
-                accountPayload =
-                    UserDefinedFiatAccountPayloadVO(
-                        accountData = "user@example.com",
-                    ),
-            ),
-            UserDefinedFiatAccountVO(
-                accountName = "Bank Transfer",
-                accountPayload =
-                    UserDefinedFiatAccountPayloadVO(
-                        accountData = "IBAN: DE89370400440532013000",
-                    ),
-            ),
-            UserDefinedFiatAccountVO(
-                accountName = "Revolut",
-                accountPayload =
-                    UserDefinedFiatAccountPayloadVO(
-                        accountData = "+1234567890",
-                    ),
-            ),
-        )
-
     BisqTheme.Preview {
+        val sampleAccounts =
+            listOf(
+                UserDefinedFiatAccountVO(
+                    accountName = "PayPal Account",
+                    accountPayload =
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = "user@example.com",
+                        ),
+                ),
+                UserDefinedFiatAccountVO(
+                    accountName = "Bank Transfer",
+                    accountPayload =
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = "IBAN: DE89370400440532013000",
+                        ),
+                ),
+                UserDefinedFiatAccountVO(
+                    accountName = "Revolut",
+                    accountPayload =
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = "+1234567890",
+                        ),
+                ),
+            )
+
         PaymentAccountsContent(
             uiState =
                 PaymentAccountsUiState(

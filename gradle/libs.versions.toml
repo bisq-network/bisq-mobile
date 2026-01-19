@@ -14,6 +14,7 @@ kotlinx-serialization = "1.9.0"
 atomicfu = "0.29.0"
 compose-plugin = "1.8.2"
 ksp = "2.2.10-2.0.2"
+kover = "0.9.4"
 
 # -------------------- Android --------------------
 #noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
@@ -264,3 +265,4 @@ atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
 kmp-tor-resource-filterjar = { id = "io.matthewnelson.kmp.tor.resource-filterjar", version.ref = "kmp-tor-resource" }
 kmp-tor-resource-frameworks = { id = "io.matthewnelson.kmp.tor.resource-frameworks", version.ref = "kmp-tor-resource" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

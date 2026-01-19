@@ -8,6 +8,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
@@ -17,7 +18,8 @@ fun LoadingState(paddingValues: PaddingValues = PaddingValues(0.dp)) {
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .testTag("loading_indicator"),
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator(

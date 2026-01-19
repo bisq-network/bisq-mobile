@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.atomicfu)
+    alias(libs.plugins.kover)
 }
 
 version = project.findProperty("shared.version") as String

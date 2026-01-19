@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.buildconfig).apply(false)
     alias(libs.plugins.protobuf).apply(false)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.kover).apply(false)
 
     // For Java & KotlinMultiplatform/Jvm this is for stripping out unused compilations
     // of tor to reduce application binary size by keeping only the host/architecture
@@ -59,6 +60,27 @@ subprojects {
         // Add Compose Rules as a custom ktlint ruleset
         dependencies {
             add("ktlintRuleset", rootProject.libs.compose.rules.ktlint)
+        }
+    }
+
+    // Apply kover configuration to all subprojects with the kover plugin
+    plugins.withId(
+        rootProject.libs.plugins.kover
+            .get()
+            .pluginId,
+    ) {
+        configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
+            reports {
+                filters {
+                    excludes {
+                        // Exclude Preview annotations from coverage reports
+                        annotatedBy("androidx.compose.ui.tooling.preview.Preview")
+                        annotatedBy("org.jetbrains.compose.ui.tooling.preview.Preview")
+                        annotatedBy("network.bisq.mobile.presentation.common.ui.utils.PreviewHelper")
+                        classes("*ComposableSingletons*")
+                    }
+                }
+            }
         }
     }
 

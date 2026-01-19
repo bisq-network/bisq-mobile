@@ -3,13 +3,16 @@ package network.bisq.mobile.presentation.common.ui.components.atoms.icons
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.add_custom_green
@@ -65,9 +68,32 @@ import bisqapps.shared.presentation.generated.resources.leave_chat_green
 import bisqapps.shared.presentation.generated.resources.remove_offer
 import bisqapps.shared.presentation.generated.resources.up_arrow
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
 expect fun getPlatformImagePainter(platformImage: PlatformImage): Painter
+
+/**
+ * Helper function to render icons that use Compose Multiplatform Resources.
+ *
+ * In test environments (when LocalIsTest is true), renders a fallback Material icon
+ * instead of loading the resource, avoiding Robolectric resource loading issues.
+ */
+@Composable
+private fun BisqResourceIcon(
+    resource: DrawableResource,
+    fallbackIcon: ImageVector,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+) {
+    val isTest = LocalIsTest.current
+    if (isTest) {
+        Icon(fallbackIcon, contentDescription, modifier)
+    } else {
+        Image(painterResource(resource), contentDescription, modifier)
+    }
+}
 
 @Composable
 fun CloseIcon(
@@ -119,7 +145,7 @@ fun AddCircleIcon(modifier: Modifier = Modifier.size(16.dp)) {
 
 @Composable
 fun ArrowDownIcon(modifier: Modifier = Modifier.size(12.dp)) {
-    Image(painterResource(Res.drawable.icon_arrow_down), "Down arrow icon", modifier = modifier)
+    BisqResourceIcon(Res.drawable.icon_arrow_down, Icons.Default.ArrowDropDown, "Down arrow icon", modifier)
 }
 
 @Composable
@@ -280,7 +306,7 @@ fun UpIcon(modifier: Modifier = Modifier.size(30.dp)) {
 
 @Composable
 fun WarningIcon(modifier: Modifier = Modifier.size(24.dp)) {
-    Image(painterResource(Res.drawable.icon_warning), "Warning icon", modifier = modifier)
+    BisqResourceIcon(Res.drawable.icon_warning, Icons.Default.Warning, "Warning icon", modifier)
 }
 
 @Composable

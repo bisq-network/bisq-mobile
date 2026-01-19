@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.atomicfu)
+    alias(libs.plugins.kover)
 }
 
 dependencies {
