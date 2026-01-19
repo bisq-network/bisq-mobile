@@ -13,7 +13,7 @@ import io.ktor.http.path
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
-import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
@@ -30,7 +30,7 @@ class WebSocketApiClient(
 ) : Logging {
     val apiPath = "/api/v1/"
 
-    // POST and PATCH request are not working yes on the backend.
+    // PUT, POST and PATCH request are not working yet on the backend.
     // So we use httpClient instead.
     val useHttpClient = true
 
@@ -198,7 +198,7 @@ class WebSocketApiClient(
                     return Result.success(decodeFromString as R)
                 }
             } else if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
-                return Result.failure(PasswordIncorrectOrMissingException())
+                return Result.failure(UnauthorizedApiAccessException())
             } else {
                 val trimmed = body.trimStart()
                 if (trimmed.startsWith("{") || trimmed.startsWith("[")) {

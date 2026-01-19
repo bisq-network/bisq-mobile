@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.httpclient.exception
 
-data class PasswordIncorrectOrMissingException(
+data class UnauthorizedApiAccessException(
     override val cause: Throwable? = null,
-) : RuntimeException("Password incorrect or missing", cause) {
+) : RuntimeException("Api access was not authorized", cause) {
     override val message: String
         get() = super.message!!
 }

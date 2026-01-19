@@ -129,6 +129,9 @@ kotlin {
 
             // Ktor
             implementation(libs.ktor.client.okhttp)
+
+            // bouncycastle
+            implementation(libs.bouncycastle)
         }
 
         androidUnitTest.dependencies {

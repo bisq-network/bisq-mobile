@@ -41,7 +41,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.AuthUtils
-import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
@@ -411,7 +411,7 @@ class WebSocketClientImpl(
         val response = sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
         if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
-            throw PasswordIncorrectOrMissingException()
+            throw UnauthorizedApiAccessException()
         }
         val body = response.body
         val decodeFromString = json.decodeFromString<ApiVersionSettingsVO>(body)
