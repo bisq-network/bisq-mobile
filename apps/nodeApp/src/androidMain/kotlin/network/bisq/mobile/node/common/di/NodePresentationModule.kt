@@ -91,6 +91,7 @@ val androidNodePresentationModule =
                 get(),
                 get(),
                 get(),
+                get(), // pushNotificationServiceFacade
             )
         }
 

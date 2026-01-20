@@ -8,8 +8,19 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class DeviceRegistrationRequest(
+    val userProfileId: String,
     val deviceToken: String,
+    val publicKey: String,
     val platform: Platform,
+)
+
+/**
+ * Request to unregister a device from push notifications.
+ */
+@Serializable
+data class UnregisterDeviceRequest(
+    val userProfileId: String,
+    val deviceToken: String,
 )
 
 @Serializable

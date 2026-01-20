@@ -42,6 +42,7 @@ import network.bisq.mobile.node.common.domain.service.message_delivery.NodeMessa
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
 import network.bisq.mobile.node.common.domain.service.network.NodeNetworkServiceFacade
 import network.bisq.mobile.node.common.domain.service.offers.NodeOffersServiceFacade
+import network.bisq.mobile.node.common.domain.service.push_notification.NoOpPushNotificationServiceFacade
 import network.bisq.mobile.node.common.domain.service.reputation.NodeReputationServiceFacade
 import network.bisq.mobile.node.common.domain.service.settings.NodeSettingsServiceFacade
 import network.bisq.mobile.node.common.domain.service.trades.NodeTradesServiceFacade
@@ -175,5 +176,10 @@ val androidNodeDomainModule =
 
         single {
             OpenTradesNotificationService(get(), get(), get(), get(), get())
+        }
+
+        // Push notification service - no-op for node app
+        single<network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade> {
+            NoOpPushNotificationServiceFacade()
         }
     }

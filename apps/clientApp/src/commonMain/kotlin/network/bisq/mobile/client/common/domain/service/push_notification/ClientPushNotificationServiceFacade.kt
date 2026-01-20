@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.getPlatformInfo
@@ -19,7 +20,9 @@ import network.bisq.mobile.domain.utils.Logging
 class ClientPushNotificationServiceFacade(
     private val apiGateway: PushNotificationApiGateway,
     private val settingsRepository: SettingsRepository,
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val pushNotificationTokenProvider: PushNotificationTokenProvider,
+    private val userProfileServiceFacade: network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade,
 ) : ServiceFacade(),
     PushNotificationServiceFacade,
     Logging {
@@ -34,11 +37,46 @@ class ClientPushNotificationServiceFacade(
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
+
         // Load saved push notification preference
         serviceScope.launch {
             settingsRepository.data.collect { settings ->
+                val wasEnabled = _isPushNotificationsEnabled.value
                 _isPushNotificationsEnabled.value = settings.pushNotificationsEnabled
+
+                // Only auto-register if:
+                // 1. Push notifications are enabled in settings
+                // 2. Device is not already registered
+                // 3. User has completed onboarding (has a trusted node configured)
+                if (settings.pushNotificationsEnabled && !_isDeviceRegistered.value && !wasEnabled) {
+                    tryAutoRegisterIfOnboarded()
+                }
             }
+        }
+    }
+
+    /**
+     * Attempts to auto-register only if the user has completed onboarding.
+     * This prevents prompting for notifications during the initial setup flow.
+     */
+    private suspend fun tryAutoRegisterIfOnboarded() {
+        try {
+            // Check if user has completed onboarding by checking if they have a trusted node configured
+            val sensitiveSettings = sensitiveSettingsRepository.fetch()
+            if (sensitiveSettings.bisqApiUrl.isBlank()) {
+                log.d { "Skipping auto-registration - user has not completed onboarding yet" }
+                return
+            }
+
+            log.i { "Push notifications enabled and onboarding complete - auto-registering device" }
+            val result = registerForPushNotifications()
+            if (result.isSuccess) {
+                log.i { "Auto-registration successful" }
+            } else {
+                log.w { "Auto-registration failed: ${result.exceptionOrNull()?.message}" }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Error during auto-registration" }
         }
     }
 
@@ -75,6 +113,18 @@ class ClientPushNotificationServiceFacade(
     }
 
     private suspend fun registerTokenWithTrustedNode(token: String): Result<Unit> {
+        // Get the current user profile
+        val userProfile = userProfileServiceFacade.selectedUserProfile.value
+        if (userProfile == null) {
+            log.e { "Cannot register device: no user profile selected" }
+            return Result.failure(PushNotificationException("No user profile selected"))
+        }
+
+        val userProfileId = userProfile.networkId.pubKey.id
+        val publicKeyEncoded = userProfile.networkId.pubKey.publicKey.encoded
+
+        log.i { "Registering device for user profile: $userProfileId" }
+
         val platform =
             if (getPlatformInfo().type == network.bisq.mobile.domain.PlatformType.IOS) {
                 Platform.IOS
@@ -82,7 +132,7 @@ class ClientPushNotificationServiceFacade(
                 Platform.ANDROID
             }
 
-        val result = apiGateway.registerDevice(token, platform)
+        val result = apiGateway.registerDevice(userProfileId, token, publicKeyEncoded, platform)
         if (result.isSuccess) {
             log.i { "Device registered successfully with trusted node" }
             _isDeviceRegistered.value = true
@@ -104,7 +154,16 @@ class ClientPushNotificationServiceFacade(
             return Result.success(Unit)
         }
 
-        val result = apiGateway.unregisterDevice(token)
+        // Get the current user profile
+        val userProfile = userProfileServiceFacade.selectedUserProfile.value
+        if (userProfile == null) {
+            log.e { "Cannot unregister device: no user profile selected" }
+            return Result.failure(PushNotificationException("No user profile selected"))
+        }
+
+        val userProfileId = userProfile.networkId.pubKey.id
+
+        val result = apiGateway.unregisterDevice(userProfileId, token)
         if (result.isSuccess) {
             log.i { "Device unregistered successfully" }
             _isDeviceRegistered.value = false

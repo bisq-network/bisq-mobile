@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -39,6 +40,7 @@ class ClientApplicationLifecycleService(
     private val networkServiceFacade: NetworkServiceFacade,
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val connectivityService: ConnectivityService,
+    private val pushNotificationServiceFacade: PushNotificationServiceFacade,
 ) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
     override suspend fun activateServiceFacades() {
         // Start foreground service FIRST on Android, before any heavy work, to avoid
@@ -64,6 +66,9 @@ class ClientApplicationLifecycleService(
         reputationServiceFacade.activate()
         userProfileServiceFacade.activate()
         messageDeliveryServiceFacade.activate()
+
+        // Activate push notification service - will auto-register if user has granted permission
+        pushNotificationServiceFacade.activate()
     }
 
     override suspend fun deactivateServiceFacades() {
@@ -77,6 +82,7 @@ class ClientApplicationLifecycleService(
         }
 
         // deactivation should happen in the opposite direction of activation
+        pushNotificationServiceFacade.deactivate()
         messageDeliveryServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()
         reputationServiceFacade.deactivate()

@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -117,81 +118,82 @@ fun ClientSupportScreen() {
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )
 
-        // TEMPORARY: Push Notifications Debug Section (enabled in all builds for testing)
-        // TODO: Restore BuildConfig.IS_DEBUG check after testing is complete
-        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
+        // Push Notifications Debug Section (only in debug builds)
+        if (BuildConfig.IS_DEBUG) {
+            BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
 
-        BisqText.H3Light("Push Notifications (Debug)")
-        BisqGap.V2()
+            BisqText.H3Light("Push Notifications (Debug)")
+            BisqGap.V2()
 
-        BisqText.BaseLight(
-            text = "Debug feature to test APNs device token registration. Only works on real iOS devices.",
-            color = BisqTheme.colors.light_grey50,
-        )
-        BisqGap.V1()
-
-        // Registration status
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BisqText.BaseRegular("Status:")
-            BisqText.BaseRegular(
-                text = if (isDeviceRegistered) "✅ Registered" else "❌ Not Registered",
-                color = if (isDeviceRegistered) BisqTheme.colors.primary else BisqTheme.colors.danger,
+            BisqText.BaseLight(
+                text = "Debug feature to test APNs device token registration. Only works on real iOS devices.",
+                color = BisqTheme.colors.light_grey50,
             )
-        }
+            BisqGap.V1()
 
-        BisqGap.V1()
-
-        // Device token display
-        if (deviceToken != null) {
-            Column(
+            // Registration status
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                BisqText.BaseRegular("Device Token:")
-                BisqText.SmallLight(
-                    text = deviceToken ?: "",
-                    color = BisqTheme.colors.light_grey50,
+                BisqText.BaseRegular("Status:")
+                BisqText.BaseRegular(
+                    text = if (isDeviceRegistered) "✅ Registered" else "❌ Not Registered",
+                    color = if (isDeviceRegistered) BisqTheme.colors.primary else BisqTheme.colors.danger,
                 )
             }
+
             BisqGap.V1()
-        }
 
-        // Action buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-        ) {
-            BisqButton(
-                text = if (tokenRequestInProgress) "Requesting..." else "Request Device Token",
-                onClick = { clientPresenter.onRequestDeviceToken() },
-                type = BisqButtonType.Outline,
-                disabled = tokenRequestInProgress,
-            )
-
+            // Device token display
             if (deviceToken != null) {
-                BisqButton(
-                    text = "Copy Token",
-                    onClick = { clientPresenter.onCopyToken(deviceToken!!) },
-                    type = BisqButtonType.Outline,
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                ) {
+                    BisqText.BaseRegular("Device Token:")
+                    BisqText.SmallLight(
+                        text = deviceToken ?: "",
+                        color = BisqTheme.colors.light_grey50,
+                    )
+                }
+                BisqGap.V1()
             }
-        }
 
-        if (tokenRequestInProgress) {
-            BisqGap.V1()
-            Box(
+            // Action buttons
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(32.dp),
-                    color = BisqTheme.colors.primary,
-                    strokeWidth = 2.dp,
+                BisqButton(
+                    text = if (tokenRequestInProgress) "Requesting..." else "Request Device Token",
+                    onClick = { clientPresenter.onRequestDeviceToken() },
+                    type = BisqButtonType.Outline,
+                    disabled = tokenRequestInProgress,
                 )
+
+                if (deviceToken != null) {
+                    BisqButton(
+                        text = "Copy Token",
+                        onClick = { clientPresenter.onCopyToken(deviceToken!!) },
+                        type = BisqButtonType.Outline,
+                    )
+                }
+            }
+
+            if (tokenRequestInProgress) {
+                BisqGap.V1()
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp),
+                        color = BisqTheme.colors.primary,
+                        strokeWidth = 2.dp,
+                    )
+                }
             }
         }
     }
