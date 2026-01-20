@@ -11,28 +11,39 @@ import network.bisq.mobile.domain.utils.Logging
 class PushNotificationApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
 ) : Logging {
-    private val basePath = "push-notifications"
+    private val basePath = "devices"
 
     /**
      * Register a device for push notifications.
+     * @param userProfileId The user's profile ID
      * @param deviceToken The APNs/FCM device token
+     * @param publicKey The public key for encrypting notifications (base64 encoded)
      * @param platform The platform (iOS or Android)
      * @return Result indicating success or failure
      */
     suspend fun registerDevice(
+        userProfileId: String,
         deviceToken: String,
+        publicKey: String,
         platform: Platform,
     ): Result<Unit> {
-        val request = DeviceRegistrationRequest(deviceToken, platform)
+        val request = DeviceRegistrationRequest(userProfileId, deviceToken, publicKey, platform)
         return webSocketApiClient.post("$basePath/register", request)
     }
 
     /**
      * Unregister a device from push notifications.
+     * @param userProfileId The user's profile ID
      * @param deviceToken The APNs/FCM device token to unregister
      * @return Result indicating success or failure
      */
-    suspend fun unregisterDevice(deviceToken: String): Result<Unit> = webSocketApiClient.delete("$basePath/unregister/$deviceToken")
+    suspend fun unregisterDevice(
+        userProfileId: String,
+        deviceToken: String,
+    ): Result<Unit> {
+        val request = UnregisterDeviceRequest(userProfileId, deviceToken)
+        return webSocketApiClient.post("$basePath/unregister", request)
+    }
 
     /**
      * Check if the current device is registered for push notifications.

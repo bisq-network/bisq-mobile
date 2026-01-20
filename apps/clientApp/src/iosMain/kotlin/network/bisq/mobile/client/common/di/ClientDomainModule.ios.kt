@@ -34,7 +34,7 @@ val iosClientDomainModule =
         single<PushNotificationTokenProvider> { IosPushNotificationTokenProvider() }
         single { PushNotificationApiGateway(get()) }
         single<PushNotificationServiceFacade> {
-            ClientPushNotificationServiceFacade(get(), get(), get())
+            ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())
         }
 
         single<ApplicationLifecycleService> {
@@ -57,6 +57,7 @@ val iosClientDomainModule =
                 get(), // messageDeliveryServiceFacade
                 get(), // connectivityService
                 get(), // apiAccessService
+                get(), // pushNotificationServiceFacade
             )
         }
         single<UrlLauncher> { IOSUrlLauncher() }

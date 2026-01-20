@@ -35,6 +35,6 @@ val androidClientDomainModule =
         single<PushNotificationTokenProvider> { AndroidPushNotificationTokenProvider() }
         single { PushNotificationApiGateway(get()) }
         single<PushNotificationServiceFacade> {
-            ClientPushNotificationServiceFacade(get(), get(), get())
+            ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())
         }
     }

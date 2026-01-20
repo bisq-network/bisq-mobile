@@ -109,6 +109,7 @@ val presentationModule =
                 get(),
                 get(),
                 get(),
+                get(), // pushNotificationServiceFacade
             )
         }
 
