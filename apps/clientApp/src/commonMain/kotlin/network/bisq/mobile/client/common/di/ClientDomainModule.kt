@@ -101,18 +101,42 @@ val clientDomainModule =
                             subclass(FiatVO::class, FiatVO.serializer())
                         }
                         polymorphic(PriceSpecVO::class) {
-                            subclass(FixPriceSpecVO::class, FixPriceSpecVO.serializer())
-                            subclass(FloatPriceSpecVO::class, FloatPriceSpecVO.serializer())
-                            subclass(MarketPriceSpecVO::class, MarketPriceSpecVO.serializer())
+                            subclass(
+                                FixPriceSpecVO::class,
+                                FixPriceSpecVO.serializer(),
+                            )
+                            subclass(
+                                FloatPriceSpecVO::class,
+                                FloatPriceSpecVO.serializer(),
+                            )
+                            subclass(
+                                MarketPriceSpecVO::class,
+                                MarketPriceSpecVO.serializer(),
+                            )
                         }
                         polymorphic(AmountSpecVO::class) {
-                            subclass(QuoteSideFixedAmountSpecVO::class, QuoteSideFixedAmountSpecVO.serializer())
-                            subclass(QuoteSideRangeAmountSpecVO::class, QuoteSideRangeAmountSpecVO.serializer())
-                            subclass(BaseSideFixedAmountSpecVO::class, BaseSideFixedAmountSpecVO.serializer())
-                            subclass(BaseSideRangeAmountSpecVO::class, BaseSideRangeAmountSpecVO.serializer())
+                            subclass(
+                                QuoteSideFixedAmountSpecVO::class,
+                                QuoteSideFixedAmountSpecVO.serializer(),
+                            )
+                            subclass(
+                                QuoteSideRangeAmountSpecVO::class,
+                                QuoteSideRangeAmountSpecVO.serializer(),
+                            )
+                            subclass(
+                                BaseSideFixedAmountSpecVO::class,
+                                BaseSideFixedAmountSpecVO.serializer(),
+                            )
+                            subclass(
+                                BaseSideRangeAmountSpecVO::class,
+                                BaseSideRangeAmountSpecVO.serializer(),
+                            )
                         }
                         polymorphic(OfferOptionVO::class) {
-                            subclass(ReputationOptionVO::class, ReputationOptionVO.serializer())
+                            subclass(
+                                ReputationOptionVO::class,
+                                ReputationOptionVO.serializer(),
+                            )
                             subclass(
                                 TradeTermsOptionVO::class,
                                 TradeTermsOptionVO.serializer(),
@@ -143,7 +167,13 @@ val clientDomainModule =
 
         single { json }
 
-        single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
+        single<ApplicationBootstrapFacade> {
+            ClientApplicationBootstrapFacade(
+                get(),
+                get(),
+                get(),
+            )
+        }
 
         single { EnvironmentController() }
         single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
@@ -185,10 +215,23 @@ val clientDomainModule =
 
         single { ClientConnectivityService(get()) } bind ConnectivityService::class
 
-        single<NetworkServiceFacade> { ClientNetworkServiceFacade(get(), get(), get(), get()) }
+        single<NetworkServiceFacade> {
+            ClientNetworkServiceFacade(
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
 
         single { MarketPriceApiGateway(get(), get()) }
-        single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get(), get()) }
+        single<MarketPriceServiceFacade> {
+            ClientMarketPriceServiceFacade(
+                get(),
+                get(),
+                get(),
+            )
+        }
 
         single { UserProfileApiGateway(get(), get()) }
         single {
@@ -201,10 +244,23 @@ val clientDomainModule =
         } bind UserProfileServiceFacade::class
 
         single { OfferbookApiGateway(get(), get()) }
-        single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get(), get()) }
+        single<OffersServiceFacade> {
+            ClientOffersServiceFacade(
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
 
         single { TradesApiGateway(get(), get()) }
-        single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
+        single<TradesServiceFacade> {
+            ClientTradesServiceFacade(
+                get(),
+                get(),
+                get(),
+            )
+        }
 
         single { TradeChatMessagesApiGateway(get(), get()) }
         single<TradeChatMessagesServiceFacade> {
@@ -231,13 +287,22 @@ val clientDomainModule =
         single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
 
         single { ReputationApiGateway(get(), get()) }
-        single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
+        single<ReputationServiceFacade> {
+            ClientReputationServiceFacade(
+                get(),
+                get(),
+            )
+        }
 
         single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
 
         single<KmpTorService> { KmpTorService(getStorageDir().toPath(true)) }
 
-        single<SensitiveSettingsRepository> { SensitiveSettingsRepositoryImpl(get(named("SensitiveSettings"))) }
+        single<SensitiveSettingsRepository> {
+            SensitiveSettingsRepositoryImpl(
+                get(named("SensitiveSettings")),
+            )
+        }
         single<DataStore<SensitiveSettings>>(named("SensitiveSettings")) {
             createDataStore(
                 "SensitiveSettings",
