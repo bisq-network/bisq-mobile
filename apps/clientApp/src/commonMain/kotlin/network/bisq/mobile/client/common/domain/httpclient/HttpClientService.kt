@@ -60,14 +60,17 @@ class HttpClientService(
     private val defaultPort: Int,
 ) : ServiceFacade() {
     companion object {
-        private const val MAX_BODY_SIZE_BYTES: Long = 5 * 1024 * 1024 // 5 MB limit
+        private const val MAX_BODY_SIZE_BYTES: Long =
+            5 * 1024 * 1024 // 5 MB limit
     }
 
     @Volatile
     private var lastConfig: HttpClientSettings? = null
 
-    private var _httpClient: MutableStateFlow<HttpClient?> = MutableStateFlow(null)
-    private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
+    private var _httpClient: MutableStateFlow<HttpClient?> =
+        MutableStateFlow(null)
+    private val _httpClientChangedFlow =
+        MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
     private val stopFlow =
         MutableSharedFlow<Unit>(
@@ -197,8 +200,10 @@ class HttpClientService(
                 // when trying connection in services
                 install(HttpTimeout) {
                     requestTimeoutMillis = 180_000
-                    connectTimeoutMillis = 120_000 // not supported by Darwin engine
-                    socketTimeoutMillis = 120_000 // not supported by Curl engine
+                    connectTimeoutMillis =
+                        120_000 // not supported by Darwin engine
+                    socketTimeoutMillis =
+                        120_000 // not supported by Curl engine
                 }
             }
             defaultRequest {
@@ -239,29 +244,41 @@ class HttpClientService(
                                         val bytes =
                                             content
                                                 .readFrom()
-                                                .readRemaining(MAX_BODY_SIZE_BYTES + 1) // + 1 to detect if max size has reached
+                                                .readRemaining(
+                                                    MAX_BODY_SIZE_BYTES + 1,
+                                                ) // + 1 to detect if max size has reached
                                                 .readByteArray()
                                         if (bytes.size > MAX_BODY_SIZE_BYTES) {
                                             throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
                                         }
                                         reconstructedBody =
-                                            ByteArrayContent(bytes, content.contentType, content.status)
+                                            ByteArrayContent(
+                                                bytes,
+                                                content.contentType,
+                                                content.status,
+                                            )
                                         getSha256(bytes).toHexString()
                                     }
 
                                     is OutgoingContent.WriteChannelContent -> {
-                                        val channel = ByteChannel(autoFlush = true)
+                                        val channel =
+                                            ByteChannel(autoFlush = true)
                                         try {
                                             content.writeTo(channel)
                                             val bytes =
                                                 channel
-                                                    .readRemaining(MAX_BODY_SIZE_BYTES + 1)
-                                                    .readByteArray()
+                                                    .readRemaining(
+                                                        MAX_BODY_SIZE_BYTES + 1,
+                                                    ).readByteArray()
                                             if (bytes.size > MAX_BODY_SIZE_BYTES) {
                                                 throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
                                             }
                                             reconstructedBody =
-                                                ByteArrayContent(bytes, content.contentType, content.status)
+                                                ByteArrayContent(
+                                                    bytes,
+                                                    content.contentType,
+                                                    content.status,
+                                                )
                                             getSha256(bytes).toHexString()
                                         } finally {
                                             channel.close()
@@ -272,7 +289,8 @@ class HttpClientService(
                                         if (content.isEmpty()) {
                                             null
                                         } else {
-                                            val bytes = content.encodeToByteArray()
+                                            val bytes =
+                                                content.encodeToByteArray()
                                             if (bytes.size > MAX_BODY_SIZE_BYTES) {
                                                 throw IllegalArgumentException(
                                                     "Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes",
@@ -299,10 +317,11 @@ class HttpClientService(
                             request.headers.append("AUTH-TS", timestamp)
                             request.headers.append("AUTH-NONCE", nonce)
                         }
-                        reconstructedBody ?: when (content) {
-                            is OutgoingContent -> content
-                            else -> null // transformation not applicable
-                        }
+                        reconstructedBody
+                            ?: when (content) {
+                                is OutgoingContent -> content
+                                else -> null // transformation not applicable
+                            }
                     }
                 },
             )
