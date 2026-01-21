@@ -19,5 +19,7 @@ actual fun createHttpClient(
         }
         engine {
             proxy = proxyConfig?.config
+
+            // TODO add TLS support
         }
     }
