@@ -185,7 +185,10 @@ class WebSocketApiClient(
             )
         try {
             val startTime = DateUtils.now()
-            val response = webSocketClientService.sendRequestAndAwaitResponse(webSocketRestApiRequest)
+            val response =
+                webSocketClientService.sendRequestAndAwaitResponse(
+                    webSocketRestApiRequest,
+                )
             ClientConnectivityService.newRequestRoundTripTime(DateUtils.now() - startTime)
             require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
             val body = response.body
@@ -204,15 +207,33 @@ class WebSocketApiClient(
                 if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
                     // TODO Not sure if we expect any json error messages.
                     return try {
-                        val asMap = json.decodeFromString<Map<String, String>>(trimmed)
-                        val errorMessage = asMap["error"] ?: body
-                        Result.failure(WebSocketRestApiException(response.httpStatusCode, errorMessage))
+                        val asMap =
+                            json.decodeFromString<Map<String, String>>(trimmed)
+                        val errorMessage =
+                            asMap["error"]
+                                ?: body
+                        Result.failure(
+                            WebSocketRestApiException(
+                                response.httpStatusCode,
+                                errorMessage,
+                            ),
+                        )
                     } catch (e: Exception) {
                         log.e(e) { "Failed to decode error message as json. body=$body" }
-                        Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
+                        Result.failure(
+                            WebSocketRestApiException(
+                                response.httpStatusCode,
+                                body,
+                            ),
+                        )
                     }
                 } else {
-                    return Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
+                    return Result.failure(
+                        WebSocketRestApiException(
+                            response.httpStatusCode,
+                            body,
+                        ),
+                    )
                 }
             }
         } catch (e: CancellationException) {
@@ -238,6 +259,11 @@ class WebSocketApiClient(
             }
         } else {
             val errorText = response.bodyAsText()
-            Result.failure(WebSocketRestApiException(response.status, errorText))
+            Result.failure(
+                WebSocketRestApiException(
+                    response.status,
+                    errorText,
+                ),
+            )
         }
 }
