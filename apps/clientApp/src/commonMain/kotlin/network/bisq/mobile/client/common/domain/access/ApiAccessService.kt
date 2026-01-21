@@ -123,9 +123,6 @@ class ApiAccessService(
                 }
             }
         }
-
-        // todo
-        setDeviceName("Alice")
     }
 
     fun setDeviceName(value: String) {
