@@ -270,6 +270,7 @@ class WebSocketClientService(
      */
     suspend fun testConnection(
         apiUrl: Url,
+        tlsFingerprint: String? = null,
         proxyHost: String? = null,
         proxyPort: Int? = null,
         isTorProxy: Boolean = true,
@@ -280,6 +281,7 @@ class WebSocketClientService(
             httpClientService.createNewInstance(
                 HttpClientSettings(
                     apiUrl = apiUrl.toString(),
+                    tlsFingerprint = tlsFingerprint,
                     proxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
                     isTorProxy = isTorProxy,
                     password = password,

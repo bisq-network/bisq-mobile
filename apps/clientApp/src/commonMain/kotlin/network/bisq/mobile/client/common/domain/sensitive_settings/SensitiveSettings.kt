@@ -6,6 +6,7 @@ import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 @Serializable
 data class SensitiveSettings(
     val bisqApiUrl: String = "",
+    val tlsFingerprint: String? = null,
     val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
     val externalProxyUrl: String = "",
     val bisqApiPassword: String = "",

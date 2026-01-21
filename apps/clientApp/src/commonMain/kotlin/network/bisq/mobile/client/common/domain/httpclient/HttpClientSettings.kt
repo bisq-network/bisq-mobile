@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.getPlatformInfo
 
 data class HttpClientSettings(
     val apiUrl: String?,
+    val tlsFingerprint: String? = null,
     val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
     val proxyUrl: String? = null,
     val isTorProxy: Boolean = false,
@@ -44,11 +45,12 @@ data class HttpClientSettings(
                 }
             }
             return HttpClientSettings(
-                settings.bisqApiUrl,
-                selectedProxyOption,
-                proxyUrl,
-                isTorProxy,
-                settings.bisqApiPassword,
+                apiUrl = settings.bisqApiUrl,
+                tlsFingerprint = settings.tlsFingerprint,
+                selectedProxyOption = selectedProxyOption,
+                proxyUrl = proxyUrl,
+                isTorProxy = isTorProxy,
+                password = settings.bisqApiPassword,
             )
         }
     }
