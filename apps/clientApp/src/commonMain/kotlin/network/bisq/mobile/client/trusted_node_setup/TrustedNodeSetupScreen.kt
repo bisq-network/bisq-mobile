@@ -76,7 +76,7 @@ fun TrustedNodeSetupScreen(
     val connectionState by presenter.wsClientConnectionState.collectAsState()
     val isPairingInProgress by presenter.isPairingInProgress.collectAsState()
     val selectedProxyOption by presenter.selectedProxyOption.collectAsState()
-    val apiUrl by presenter.apiUrl.collectAsState()
+    val apiUrl by presenter.restApiUrl.collectAsState()
     val pairingCode by presenter.pairingQrCodeString.collectAsState()
     val clientName by presenter.clientName.collectAsState()
     val status by presenter.status.collectAsState()
@@ -87,7 +87,7 @@ fun TrustedNodeSetupScreen(
     val timeoutCounter by presenter.timeoutCounter.collectAsState()
     val showQrCodeView by presenter.showQrCodeView.collectAsState()
     val showQrCodeError by presenter.showQrCodeError.collectAsState()
-    val triggerValidation by presenter.triggerApiUrlValidation.collectAsState()
+    val pairingCompleted by presenter.pairingCompleted.collectAsState()
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
 
@@ -157,6 +157,8 @@ fun TrustedNodeSetupScreen(
             BisqText.LargeRegular(text = "mobile.trustedNodeSetup.info".i18n())
             BisqGap.V2()
 
+            // TODO add mobile.trustedNodeSetup.info.detail as overlay
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -177,7 +179,12 @@ fun TrustedNodeSetupScreen(
 
                 BisqButton(
                     text = "mobile.trustedNodeSetup.pairingCode.scan".i18n(),
-                    backgroundColor = BisqTheme.colors.primaryDim,
+                    type =
+                        if (pairingCompleted) {
+                            BisqButtonType.Grey
+                        } else {
+                            BisqButtonType.Default
+                        },
                     onClick = presenter::onShowQrCodeView,
                     // modifier = Modifier.size(BisqUIConstants.ScreenPadding4X),
                     leftIcon = { ScanQrIcon() },
@@ -208,6 +215,16 @@ fun TrustedNodeSetupScreen(
                         readOnly = true,
                         showCopy = true,
                     )
+                }
+
+                if (pairingCompleted) {
+                    BisqGap.V2()
+                    BisqButton(
+                        text = "mobile.trustedNodeSetup.testConnection".i18n(),
+                        backgroundColor = BisqTheme.colors.primaryDim,
+                        onClick = { presenter.onTestAndSavePressed(true) },
+                    )
+                    BisqGap.V2()
                 }
             }
 

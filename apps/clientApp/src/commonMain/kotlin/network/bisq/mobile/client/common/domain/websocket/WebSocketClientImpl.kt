@@ -116,15 +116,18 @@ class WebSocketClientImpl(
                 log.d { "WS connecting to $apiUrl ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val startTime = DateUtils.now()
+                val wsProtocol =
+                    if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
+                val wsHost = apiUrl.host
+                val wsPort = apiUrl.port
                 val newSession =
                     withTimeout(timeout) {
                         httpClient.webSocketSession {
                             url {
                                 // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
-                                protocol =
-                                    if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
-                                host = apiUrl.host
-                                port = apiUrl.port
+                                protocol = wsProtocol
+                                host = wsHost
+                                port = wsPort
                                 path("/websocket")
                             }
                         }

@@ -64,11 +64,6 @@ class HttpClientService(
     private val defaultHost: String,
     private val defaultPort: Int,
 ) : ServiceFacade() {
-    companion object {
-        private const val MAX_BODY_SIZE_BYTES: Long =
-            5 * 1024 * 1024 // 5 MB limit
-    }
-
     val apiPath = "/api/v1/"
 
     @Volatile

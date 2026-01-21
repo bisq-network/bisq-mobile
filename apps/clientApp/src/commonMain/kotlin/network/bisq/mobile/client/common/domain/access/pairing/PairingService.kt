@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.common.domain.access.pairing
 
 import network.bisq.mobile.client.common.domain.access.pairing.dto.PairingRequestDto
-import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
@@ -14,10 +13,9 @@ class PairingService(
     }
 
     suspend fun requestPairing(
-        pairingQrCode: PairingQrCode,
+        pairingCodeId: String,
         clientName: String,
     ): Result<PairingResponse> {
-        val pairingCodeId: String = pairingQrCode.pairingCode.id
         val pairingRequestDto =
             PairingRequestDto(
                 version = VERSION,

@@ -74,26 +74,20 @@ class TrustedNodeSetupPresenter(
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val wsClientConnectionState = _wsClientConnectionState.asStateFlow()
 
+    val clientName: StateFlow<String> = apiAccessService.clientName
     val pairingQrCodeString: StateFlow<String> =
         apiAccessService.pairingQrCodeString
-    val clientName: StateFlow<String> = apiAccessService.clientName
-    val apiUrl: StateFlow<String> = apiAccessService.webSocketUrl
+    val restApiUrl: StateFlow<String> = apiAccessService.restApiUrl
     val pairingResult: StateFlow<Result<PairingResponse>?> =
         apiAccessService.pairingResult
+    val pairingResultPersisted: StateFlow<Boolean> =
+        apiAccessService.pairingResultStored
 
     private val _proxyHost = MutableStateFlow("127.0.0.1")
     val proxyHost: StateFlow<String> = _proxyHost.asStateFlow()
 
     private val _proxyPort = MutableStateFlow("9050")
     val proxyPort: StateFlow<String> = _proxyPort.asStateFlow()
-
-    val isNewApiUrl: StateFlow<Boolean> =
-        combine(
-            sensitiveSettingsRepository.data,
-            apiUrl,
-        ) { settings, newUrl ->
-            settings.bisqApiUrl.isNotBlank() && settings.bisqApiUrl != newUrl
-        }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> = _status.asStateFlow()
@@ -104,11 +98,6 @@ class TrustedNodeSetupPresenter(
 
     private val _selectedProxyOption = MutableStateFlow(BisqProxyOption.NONE)
     val selectedProxyOption = _selectedProxyOption.asStateFlow()
-
-    val isApiUrlValid: StateFlow<Boolean> =
-        combine(apiUrl, selectedProxyOption) { apiUrl, proxyOption ->
-            validateApiUrl(apiUrl, proxyOption) == null
-        }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
     val isProxyUrlValid: StateFlow<Boolean> =
         combine(
@@ -124,7 +113,7 @@ class TrustedNodeSetupPresenter(
             } else {
                 true
             }
-        }.stateIn(presenterScope, SharingStarted.Lazily, false)
+        }.stateIn(presenterScope, SharingStarted.Lazily, true)
 
     val torState: StateFlow<KmpTorService.TorState> =
         kmpTorService.state.stateIn(
@@ -158,6 +147,18 @@ class TrustedNodeSetupPresenter(
     private var connectJob: Job? = null
     private var countdownJob: Job? = null
 
+    val pairingCompleted: StateFlow<Boolean> =
+        pairingResultPersisted
+            .combine(pairingResult) { pairingResultPersisted, pairingResult ->
+                val result =
+                    pairingResultPersisted && pairingResult != null && pairingResult.isSuccess
+                result
+            }.stateIn(
+                scope = presenterScope,
+                started = SharingStarted.Lazily,
+                initialValue = false,
+            )
+
     override fun onViewAttached() {
         super.onViewAttached()
         initialize()
@@ -169,19 +170,6 @@ class TrustedNodeSetupPresenter(
         /*if (BuildConfig.IS_DEBUG) {
             _apiUrl.value = "http://" + localHost() + ":8090"
         }*/
-        presenterScope.launch {
-            pairingResult.collect {
-                if (it == null) {
-                    return@collect
-                }
-                if (it.isSuccess) {
-                    // TODO start connection
-                } else {
-                    log.w { "Pairing failed ${it.exceptionOrNull()}" }
-                    // TODO show error message
-                }
-            }
-        }
 
         presenterScope.launch {
             try {
@@ -246,13 +234,13 @@ class TrustedNodeSetupPresenter(
             return
         }
 
-        if (!isApiUrlValid.value || !isProxyUrlValid.value) return
+        if (!isProxyUrlValid.value) return
 
         _isPairingInProgress.value = true
         _status.value =
             "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
 
-        val newApiUrlString = apiUrl.value
+        val newApiUrlString = restApiUrl.value
         log.d { "Test: $newApiUrlString isWorkflow $isWorkflow" }
         val newApiUrl = parseAndNormalizeUrl(newApiUrlString)
 
@@ -267,7 +255,10 @@ class TrustedNodeSetupPresenter(
                     connectJob = null
                     return@launch
                 }
-                val tlsFingerprint = null // todo
+                val tlsFingerprint = apiAccessService.tlsFingerprint.value
+                val clientId = apiAccessService.clientId.value
+                val sessionId = apiAccessService.sessionId.value
+
                 try {
                     val newProxyHost: String?
                     val newProxyPort: Int?
@@ -332,6 +323,8 @@ class TrustedNodeSetupPresenter(
                                 wsClientService.testConnection(
                                     apiUrl = newApiUrl,
                                     tlsFingerprint = tlsFingerprint,
+                                    clientId = clientId,
+                                    sessionId = sessionId,
                                     proxyHost = newProxyHost,
                                     proxyPort = newProxyPort,
                                     isTorProxy = newProxyIsTor,
@@ -353,6 +346,8 @@ class TrustedNodeSetupPresenter(
                             currentSettings.copy(
                                 bisqApiUrl = newApiUrl.toString(),
                                 tlsFingerprint = tlsFingerprint,
+                                clientId = clientId,
+                                sessionId = sessionId,
                                 externalProxyUrl =
                                     when (newProxyOption) {
                                         BisqProxyOption.EXTERNAL_TOR,
@@ -399,6 +394,7 @@ class TrustedNodeSetupPresenter(
                         // change the states before going back
                         applicationBootstrapFacade.setState("mobile.bootstrap.connectedToTrustedNode".i18n())
                         applicationBootstrapFacade.setProgress(1.0f)
+
                         navigateToSplashScreen() // to trigger navigateToNextScreen again
                     }
                 } catch (e: TimeoutCancellationException) {

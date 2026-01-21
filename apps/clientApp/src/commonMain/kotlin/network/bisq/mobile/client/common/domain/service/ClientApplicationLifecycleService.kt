@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service
 
+import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
@@ -39,6 +40,7 @@ class ClientApplicationLifecycleService(
     private val networkServiceFacade: NetworkServiceFacade,
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val connectivityService: ConnectivityService,
+    private val apiAccessService: ApiAccessService,
 ) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
     override suspend fun activateServiceFacades() {
         // Start foreground service FIRST on Android, before any heavy work, to avoid
@@ -48,6 +50,7 @@ class ClientApplicationLifecycleService(
             openTradesNotificationService.startService()
         }
 
+        apiAccessService.activate()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
         networkServiceFacade.activate()
         settingsServiceFacade.activate()
@@ -94,5 +97,6 @@ class ClientApplicationLifecycleService(
 
         networkServiceFacade.deactivate()
         applicationBootstrapFacade.deactivate()
+        apiAccessService.deactivate()
     }
 }
