@@ -1,7 +1,12 @@
 package network.bisq.mobile.client.common.domain.service.bootstrap
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.common.domain.access.session.SessionResponse
+import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -12,6 +17,7 @@ class ClientApplicationBootstrapFacade(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val webSocketClientService: WebSocketClientService,
     kmpTorService: KmpTorService,
+    private val sessionService: SessionService,
 ) : ApplicationBootstrapFacade(kmpTorService) {
     override suspend fun activate() {
         super.activate()
@@ -29,27 +35,74 @@ class ClientApplicationBootstrapFacade(
 
     fun onTorStartedOrSkipped() {
         onInitialized()
-        serviceScope.launch {
-            val url = sensitiveSettingsRepository.fetch().bisqApiUrl
+        serviceScope.launch(Dispatchers.Default) {
+            val currentSettings = sensitiveSettingsRepository.fetch()
+
+            val clientAuthState: ClientAuthState =
+                resolveClientAuthState(currentSettings)
+
+            val url = currentSettings.bisqApiUrl
             log.d { "Settings url $url" }
 
-            if (url.isBlank()) {
-                // fresh install scenario, let it proceed to onboarding
-                setState("mobile.bootstrap.preparingInitialSetup".i18n())
-                setProgress(1.0f)
-            } else {
-                setProgress(0.5f)
-                setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
-
-                val error = webSocketClientService.connect()
-                if (error == null) {
-                    setState("mobile.bootstrap.connectedToTrustedNode".i18n())
-                    setProgress(1.0f)
-                } else {
-                    log.e(error) { "Failed to connect to trusted node: ${error.message}" }
-                    setState("mobile.bootstrap.noConnectivity".i18n())
+            when (clientAuthState) {
+                ClientAuthState.REQUIRE_PAIRING -> {
+                    // fresh install scenario, let it proceed to onboarding
+                    setState("mobile.bootstrap.preparingInitialSetup".i18n())
                     setProgress(1.0f)
                 }
+
+                ClientAuthState.RENEW_SESSION -> {
+                    require(currentSettings.clientId != null)
+                    require(currentSettings.clientSecret != null)
+
+                    setProgress(0.5f)
+                    setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
+
+                    val result =
+                        sessionService.requestSession(
+                            currentSettings.clientId,
+                            currentSettings.clientSecret,
+                        )
+
+                    if (result.isSuccess) {
+                        log.i { "Requesting sessionId was successful" }
+                        val response: SessionResponse = result.getOrThrow()
+                        val updatedSettings =
+                            currentSettings.copy(
+                                sessionId = response.sessionId,
+                            )
+
+                        sensitiveSettingsRepository.update { updatedSettings }
+
+                        serviceScope.launch {
+                            // Without delay its not working
+                            delay(100)
+                            connect()
+                        }
+                    } else {
+                        log.i { "Requesting sessionId failed" }
+                        // Either trusted node is offline or pairing data are
+                        // not valid anymore (node has another LAN address or
+                        // pairing ID is expired)
+                        // TODO show info in pairing screen to redo pairing
+                        setState("mobile.bootstrap.preparingInitialSetup".i18n())
+                        setProgress(1.0f)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun connect() {
+        serviceScope.launch {
+            val error = webSocketClientService.connect()
+            if (error == null) {
+                setState("mobile.bootstrap.connectedToTrustedNode".i18n())
+                setProgress(1.0f)
+            } else {
+                log.e(error) { "Failed to connect to trusted node: ${error.message}" }
+                setState("mobile.bootstrap.noConnectivity".i18n())
+                setProgress(1.0f)
             }
         }
     }
@@ -61,4 +114,15 @@ class ClientApplicationBootstrapFacade(
     override suspend fun deactivate() {
         super.deactivate()
     }
+
+    private fun resolveClientAuthState(settings: SensitiveSettings): ClientAuthState =
+        if (settings.bisqApiUrl.isEmpty() ||
+            settings.clientName == null ||
+            settings.clientId == null ||
+            settings.clientSecret == null
+        ) {
+            ClientAuthState.REQUIRE_PAIRING
+        } else {
+            ClientAuthState.RENEW_SESSION
+        }
 }
