@@ -140,7 +140,7 @@ class TrustedNodeSetupPresenterTimeoutTest {
                 )
 
             // Set valid inputs
-            presenter.onApiUrlChanged("http://127.0.0.1:8090")
+            // presenter.onApiUrlChanged("http://127.0.0.1:8090")
             presenter.onProxyOptionChanged(BisqProxyOption.NONE)
 
             // Start validators (lazy flows)

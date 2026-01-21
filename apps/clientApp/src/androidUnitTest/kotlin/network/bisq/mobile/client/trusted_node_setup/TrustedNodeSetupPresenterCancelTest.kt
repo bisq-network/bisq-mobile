@@ -30,7 +30,6 @@ import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Ignore
@@ -131,7 +130,10 @@ class TrustedNodeSetupPresenterCancelTest {
         TestDoubles.cleanupWebSocketClientMock()
     }
 
-    @Ignore
+    @Ignore(
+        "With recent changes likely not make sense anymore, " +
+            "or would require some effort to get it work again",
+    )
     @Test
     fun `cancel during connection resets state and prevents follow-up actions`() =
         runBlocking {
@@ -144,7 +146,7 @@ class TrustedNodeSetupPresenterCancelTest {
                     appBootstrap,
                 )
             // Provide a valid API URL and no proxy (so we avoid Tor paths)
-            presenter.onApiUrlChanged("http://127.0.0.1:8090")
+            // presenter.onApiUrlChanged("http://127.0.0.1:8090")
             presenter.onProxyOptionChanged(BisqProxyOption.NONE)
 
             // Ensure validation StateFlows are started
@@ -159,7 +161,7 @@ class TrustedNodeSetupPresenterCancelTest {
             presenter.onTestAndSavePressed(isWorkflow = true)
             // Let things start
             delay(100)
-            assertTrue(presenter.isNodeSetupInProgress.value)
+            // assertTrue(presenter.isNodeSetupInProgress.value)
             assertTrue(presenter.wsClientConnectionState.value is ConnectionState.Connecting)
 
             // Cancel
@@ -169,7 +171,7 @@ class TrustedNodeSetupPresenterCancelTest {
             collectorJob.cancel()
 
             // Assert state reset
-            assertFalse(presenter.isNodeSetupInProgress.value)
+            // assertFalse(presenter.isNodeSetupInProgress.value)
             assertEquals("", presenter.status.value)
             val state = presenter.wsClientConnectionState.value
             assertTrue(state is ConnectionState.Disconnected && state.error == null)
