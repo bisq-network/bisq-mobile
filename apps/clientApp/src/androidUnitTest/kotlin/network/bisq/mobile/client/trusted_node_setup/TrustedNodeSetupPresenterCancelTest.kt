@@ -94,9 +94,20 @@ class TrustedNodeSetupPresenterCancelTest {
         // Mock timeout and connection: delay long so we can cancel
         // IMPORTANT: mock object before stubbing to avoid global leakage across tests
         mockkObject(WebSocketClient)
-        every { wsClientService.connectionState } returns MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+        every { wsClientService.connectionState } returns
+            MutableStateFlow<ConnectionState>(
+                ConnectionState.Disconnected(),
+            )
         every { WebSocketClient.determineTimeout(any()) } returns 60_000L
-        coEvery { wsClientService.testConnection(any(), any(), any(), any(), any()) } coAnswers {
+        coEvery {
+            wsClientService.testConnection(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } coAnswers {
             delay(10_000)
             null
         }
@@ -152,7 +163,7 @@ class TrustedNodeSetupPresenterCancelTest {
             // Ensure validation StateFlows are started
             val collectorJob =
                 CoroutineScope(testDispatcher).launch {
-                    launch { presenter.isApiUrlValid.collect { /* no-op */ } }
+                    // launch { presenter.isApiUrlValid.collect { /* no-op */ } }
                     launch { presenter.isProxyUrlValid.collect { /* no-op */ } }
                 }
             // Allow validation flows to propagate

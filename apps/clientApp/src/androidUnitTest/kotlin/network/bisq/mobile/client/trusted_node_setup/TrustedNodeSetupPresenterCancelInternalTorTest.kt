@@ -167,7 +167,7 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
             // Start validators (lazy flows) so onTestAndSavePressed will proceed
             val validators =
                 CoroutineScope(testDispatcher).launch {
-                    launch { presenter.isApiUrlValid.collect { } }
+                    // launch { presenter.isApiUrlValid.collect { } }
                     launch { presenter.isProxyUrlValid.collect { } }
                 }
             delay(20)
@@ -223,7 +223,7 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
 
             val validators =
                 CoroutineScope(testDispatcher).launch {
-                    launch { presenter.isApiUrlValid.collect { } }
+                    // launch { presenter.isApiUrlValid.collect { } }
                     launch { presenter.isProxyUrlValid.collect { } }
                 }
             delay(20)
