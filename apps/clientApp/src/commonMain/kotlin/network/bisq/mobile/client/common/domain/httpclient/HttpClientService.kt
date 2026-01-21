@@ -1,19 +1,29 @@
 package network.bisq.mobile.client.common.domain.httpclient
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.accept
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.headers
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,9 +37,11 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.access.utils.Headers
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.utils.createHttpClient
+import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -46,7 +58,7 @@ import kotlin.concurrent.Volatile
 class HttpClientService(
     private val kmpTorService: KmpTorService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
-    private val jsonConfig: Json,
+    val json: Json,
     private val versionProvider: VersionProvider,
     private val defaultHost: String,
     private val defaultPort: Int,
@@ -55,6 +67,8 @@ class HttpClientService(
         private const val MAX_BODY_SIZE_BYTES: Long =
             5 * 1024 * 1024 // 5 MB limit
     }
+
+    val apiPath = "/api/v1/"
 
     @Volatile
     private var lastConfig: HttpClientSettings? = null
@@ -139,15 +153,102 @@ class HttpClientService(
             block(this)
         }
 
+    suspend inline fun <reified T, reified R> post(
+        path: String,
+        requestBody: R? = null,
+        headers: Map<String, String> = emptyMap(),
+    ): Result<T> {
+        log.d { "HTTP POST to ${apiPath + path}" }
+        log.d { "Request body: $requestBody" }
+        try {
+            val response: HttpResponse =
+                post {
+                    url {
+                        path(apiPath + path)
+                    }
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    if (requestBody != null) {
+                        setBody(requestBody)
+                    }
+
+                    if (headers.isNotEmpty()) {
+                        headers {
+                            headers.forEach { (key, value) ->
+                                append(key, value)
+                            }
+                        }
+                    }
+                }
+            log.d { "HTTP POST done status=${response.status}" }
+            return getResultFromHttpResponse<T>(response)
+        } catch (e: Exception) {
+            log.e(e) { "HTTP POST failed for ${apiPath + path}: ${e.message}" }
+            return Result.failure(e)
+        }
+    }
+
     suspend fun post(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().post {
             block(this)
         }
 
+    suspend inline fun <reified T, reified R> patch(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
+        log.d { "HTTP PATCH to ${apiPath + path}" }
+        log.d { "Request body: $requestBody" }
+        try {
+            // Serialize to JSON to see what's actually being sent
+            val bodyAsJson = json.encodeToString(requestBody)
+            log.d { "Request body as JSON: $bodyAsJson" }
+
+            val response: HttpResponse =
+                patch {
+                    url {
+                        path(apiPath + path)
+                    }
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    setBody(requestBody)
+                }
+            log.d { "HTTP PATCH done status=${response.status}" }
+            return getResultFromHttpResponse<T>(response)
+        } catch (e: Exception) {
+            log.e(e) { "HTTP PATCH failed for ${apiPath + path}: ${e.message}" }
+            return Result.failure(e)
+        }
+    }
+
     suspend fun patch(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().patch {
             block(this)
         }
+
+    suspend inline fun <reified T, reified R> put(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
+        log.d { "HTTP PUT to " + (apiPath + path) }
+        log.d { "Request body: $requestBody" }
+        try {
+            val response: HttpResponse =
+                put {
+                    url {
+                        path(apiPath + path)
+                    }
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    setBody(requestBody)
+                }
+            log.d { "HTTP PUT done status=${response.status}" }
+            return getResultFromHttpResponse<T>(response)
+        } catch (e: Exception) {
+            log.e(e) { "HTTP PUT failed for " + (apiPath + path) + ": ${e.message}" }
+            return Result.failure(e)
+        }
+    }
 
     suspend fun put(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().put {
@@ -159,26 +260,30 @@ class HttpClientService(
             block(this)
         }
 
-    fun createNewInstance(clientSettings: HttpClientSettings): HttpClient {
-        val proxy = clientSettings.bisqProxyConfig()
+    fun createNewInstance(httpClientSettings: HttpClientSettings): HttpClient {
+        val proxy = httpClientSettings.bisqProxyConfig()
         if (proxy != null) {
             log.d { "Using proxy from settings: $proxy" }
         }
         val rawBase =
-            if (!clientSettings.bisqApiUrl.isNullOrBlank()) {
-                clientSettings.bisqApiUrl
+            if (!httpClientSettings.bisqApiUrl.isNullOrBlank()) {
+                httpClientSettings.bisqApiUrl
             } else {
                 "http://$defaultHost:$defaultPort"
             }
-
-        val host = rawBase
-        val tlsFingerprint = clientSettings.tlsFingerprint
 
         val baseUrl = sanitizeBaseUrl(rawBase, defaultPort)
         if (baseUrl != rawBase) {
             log.w { "Sanitized baseUrl from '$rawBase' to '$baseUrl'" }
         }
         log.d { "HttpClient baseUrl set to $baseUrl" }
+
+        val host =
+            httpClientSettings.bisqApiUrl
+                ?: defaultHost
+        val tlsFingerprint = httpClientSettings.tlsFingerprint
+        val sessionId = httpClientSettings.sessionId
+        val clientId = httpClientSettings.clientId
         return createHttpClient(
             host = host,
             tlsFingerprint = tlsFingerprint,
@@ -192,7 +297,7 @@ class HttpClientService(
                     )
             }
             install(ContentNegotiation) {
-                json(jsonConfig)
+                json(json)
             }
             if (proxy?.isTorProxy == true) {
                 // we set these to very high values here but we use more limited timeouts
@@ -207,6 +312,17 @@ class HttpClientService(
             }
             defaultRequest {
                 url(baseUrl)
+
+                // ---------------------------
+                // Session / client headers
+                // ---------------------------
+
+                sessionId?.let {
+                    header(Headers.SESSION_ID, it)
+                }
+                clientId?.let {
+                    header(Headers.CLIENT_ID, it)
+                }
             }
             HttpResponseValidator {
                 validateResponse { response ->
@@ -217,4 +333,26 @@ class HttpClientService(
             }
         }
     }
+
+    suspend inline fun <reified T> getResultFromHttpResponse(response: HttpResponse): Result<T> =
+        if (response.status.isSuccess()) {
+            if (response.status == HttpStatusCode.NoContent) {
+                try {
+                    check(T::class == Unit::class) { "If we get a HttpStatusCode.NoContent response we expect return type Unit" }
+                    Result.success(Unit as T)
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            } else {
+                Result.success(response.body<T>())
+            }
+        } else {
+            val errorText = response.bodyAsText()
+            Result.failure(
+                WebSocketRestApiException(
+                    response.status,
+                    errorText,
+                ),
+            )
+        }
 }

@@ -1,15 +1,6 @@
 package network.bisq.mobile.client.common.domain.websocket.api_proxy
 
-import io.ktor.client.call.body
-import io.ktor.client.request.accept
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.http.path
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
@@ -30,7 +21,7 @@ class WebSocketApiClient(
 ) : Logging {
     val apiPath = "/api/v1/"
 
-    // POST and PATCH request are not working yes on the backend.
+    // PUT, POST and PATCH request are not working yet on the backend.
     // So we use httpClient instead.
     val useHttpClient = true
 
@@ -55,24 +46,7 @@ class WebSocketApiClient(
         requestBody: R,
     ): Result<T> {
         if (useHttpClient) {
-            log.d { "HTTP PUT to " + (apiPath + path) }
-            log.d { "Request body: $requestBody" }
-            try {
-                val response: HttpResponse =
-                    httpClientService.put {
-                        url {
-                            path(apiPath + path)
-                        }
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        setBody(requestBody)
-                    }
-                log.d { "HTTP PUT done status=${response.status}" }
-                return getResultFromHttpResponse<T>(response)
-            } catch (e: Exception) {
-                log.e(e) { "HTTP PUT failed for " + (apiPath + path) + ": ${e.message}" }
-                return Result.failure(e)
-            }
+            return httpClientService.put<T, R>(path, requestBody)
         } else {
             val bodyAsJson = json.encodeToString(requestBody)
             return request<T>("PUT", path, bodyAsJson)
@@ -86,28 +60,7 @@ class WebSocketApiClient(
         requestBody: R,
     ): Result<T> {
         if (useHttpClient) {
-            log.d { "HTTP PATCH to ${apiPath + path}" }
-            log.d { "Request body: $requestBody" }
-            try {
-                // Serialize to JSON to see what's actually being sent
-                val bodyAsJson = json.encodeToString(requestBody)
-                log.d { "Request body as JSON: $bodyAsJson" }
-
-                val response: HttpResponse =
-                    httpClientService.patch {
-                        url {
-                            path(apiPath + path)
-                        }
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        setBody(requestBody)
-                    }
-                log.d { "HTTP PATCH done status=${response.status}" }
-                return getResultFromHttpResponse<T>(response)
-            } catch (e: Exception) {
-                log.e(e) { "HTTP PATCH failed for ${apiPath + path}: ${e.message}" }
-                return Result.failure(e)
-            }
+            return httpClientService.patch<T, R>(path, requestBody)
         } else {
             val bodyAsJson = json.encodeToString(requestBody)
             log.d { "WS PATCH to ${apiPath + path}" }
@@ -120,24 +73,7 @@ class WebSocketApiClient(
         requestBody: R,
     ): Result<T> {
         if (useHttpClient) {
-            log.d { "HTTP POST to ${apiPath + path}" }
-            log.d { "Request body: $requestBody" }
-            try {
-                val response: HttpResponse =
-                    httpClientService.post {
-                        url {
-                            path(apiPath + path)
-                        }
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        setBody(requestBody)
-                    }
-                log.d { "HTTP POST done status=${response.status}" }
-                return getResultFromHttpResponse<T>(response)
-            } catch (e: Exception) {
-                log.e(e) { "HTTP POST failed for ${apiPath + path}: ${e.message}" }
-                return Result.failure(e)
-            }
+            return httpClientService.post<T, R>(path, requestBody)
         } else {
             val bodyAsJson = json.encodeToString(requestBody)
             return request<T>("POST", path, bodyAsJson)
@@ -244,26 +180,4 @@ class WebSocketApiClient(
             return Result.failure(e)
         }
     }
-
-    suspend inline fun <reified T> getResultFromHttpResponse(response: HttpResponse): Result<T> =
-        if (response.status.isSuccess()) {
-            if (response.status == HttpStatusCode.NoContent) {
-                try {
-                    check(T::class == Unit::class) { "If we get a HttpStatusCode.NoContent response we expect return type Unit" }
-                    Result.success(Unit as T)
-                } catch (e: Exception) {
-                    Result.failure(e)
-                }
-            } else {
-                Result.success(response.body<T>())
-            }
-        } else {
-            val errorText = response.bodyAsText()
-            Result.failure(
-                WebSocketRestApiException(
-                    response.status,
-                    errorText,
-                ),
-            )
-        }
 }
