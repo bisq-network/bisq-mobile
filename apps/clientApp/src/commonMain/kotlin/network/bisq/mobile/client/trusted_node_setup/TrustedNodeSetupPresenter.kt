@@ -75,6 +75,9 @@ class TrustedNodeSetupPresenter(
     private val _apiUrl = MutableStateFlow("")
     val apiUrl: StateFlow<String> = _apiUrl.asStateFlow()
 
+    private val _tlsFingerprint = MutableStateFlow(null)
+    val tlsFingerprint: StateFlow<String?> = _tlsFingerprint.asStateFlow()
+
     private val _proxyHost = MutableStateFlow("127.0.0.1")
     val proxyHost: StateFlow<String> = _proxyHost.asStateFlow()
 
@@ -326,11 +329,12 @@ class TrustedNodeSetupPresenter(
                                 ConnectionState.Connecting
                             val result =
                                 wsClientService.testConnection(
-                                    newApiUrl,
-                                    newProxyHost,
-                                    newProxyPort,
-                                    newProxyIsTor,
-                                    password,
+                                    apiUrl = newApiUrl,
+                                    tlsFingerprint = _tlsFingerprint.value,
+                                    proxyHost = newProxyHost,
+                                    proxyPort = newProxyPort,
+                                    isTorProxy = newProxyIsTor,
+                                    password = password,
                                 )
                             countdownJob?.cancel()
                             result
@@ -348,6 +352,7 @@ class TrustedNodeSetupPresenter(
                         val updatedSettings =
                             currentSettings.copy(
                                 bisqApiUrl = newApiUrl.toString(),
+                                tlsFingerprint = _tlsFingerprint.value,
                                 externalProxyUrl =
                                     when (newProxyOption) {
                                         BisqProxyOption.EXTERNAL_TOR,
