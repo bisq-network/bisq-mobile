@@ -6,10 +6,8 @@ import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
-import io.ktor.http.parseUrl
 import io.ktor.http.path
 import io.ktor.util.collections.ConcurrentMap
-import io.ktor.utils.io.core.toByteArray
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
@@ -38,9 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.httpclient.AuthUtils
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
@@ -59,7 +55,6 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.crypto.getSha256
 import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
@@ -71,7 +66,6 @@ class WebSocketClientImpl(
     private val httpClient: HttpClient,
     private val json: Json,
     override val apiUrl: Url,
-    private val password: String? = null,
     private val clientScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : WebSocketClient,
     Logging {
@@ -85,13 +79,19 @@ class WebSocketClientImpl(
     private var isReconnecting = atomic(false)
     private var reconnectJob: Job? = null
     private var session: DefaultClientWebSocketSession? = null
-    private val webSocketEventObservers = ConcurrentMap<String, WebSocketEventObserver>()
-    private val requestResponseHandlers = mutableMapOf<String, RequestResponseHandler>()
+    private val webSocketEventObservers =
+        ConcurrentMap<String, WebSocketEventObserver>()
+    private val requestResponseHandlers =
+        mutableMapOf<String, RequestResponseHandler>()
     private val connectionMutex = Mutex()
     private val requestResponseHandlersMutex = Mutex()
 
     // signal to cancel waiters
-    private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val stopFlow =
+        MutableSharedFlow<Unit>(
+            replay = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
 
     private val _webSocketClientStatus =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
@@ -131,14 +131,17 @@ class WebSocketClientImpl(
                 session = newSession
                 if (newSession.isActive) {
                     log.d { "WS connected successfully" }
-                    listenerJob = clientScope.launch { startListening(newSession) }
+                    listenerJob =
+                        clientScope.launch { startListening(newSession) }
 
                     withTimeout(remainingTime) {
                         val nodeApiVersion = getApiVersion()
                         if (!isApiCompatible(nodeApiVersion)) {
                             doDisconnect()
                             awaitDisconnection() // so that we update the disconnect reason correctly
-                            throw IncompatibleHttpApiVersionException(nodeApiVersion.version)
+                            throw IncompatibleHttpApiVersionException(
+                                nodeApiVersion.version,
+                            )
                         }
                     }
 
@@ -195,7 +198,8 @@ class WebSocketClientImpl(
                 if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
                     val e = MaximumRetryReachedException(MAX_RECONNECT_ATTEMPTS)
                     log.w { e.message }
-                    _webSocketClientStatus.value = ConnectionState.Disconnected(e)
+                    _webSocketClientStatus.value =
+                        ConnectionState.Disconnected(e)
                     // Reset counter for future reconnects
                     reconnectAttempts = 0
                     return@async null
@@ -204,7 +208,13 @@ class WebSocketClientImpl(
                 // Implement exponential backoff
                 val delayMillis =
                     minOf(
-                        DELAY_TO_RECONNECT * (1 shl minOf(reconnectAttempts, 4)), // Exponential backoff
+                        DELAY_TO_RECONNECT * (
+                            1 shl
+                                minOf(
+                                    reconnectAttempts,
+                                    4,
+                                )
+                        ), // Exponential backoff
                         MAX_RECONNECT_DELAY,
                     )
                 log.d { "Waiting ${delayMillis}ms before reconnect attempt" }
@@ -239,42 +249,7 @@ class WebSocketClientImpl(
         }
 
         try {
-            if (webSocketRequest is WebSocketRestApiRequest && !password.isNullOrBlank()) {
-                val nonce = AuthUtils.generateNonce()
-                val timestamp =
-                    Clock.System
-                        .now()
-                        .toEpochMilliseconds()
-                        .toString()
-                val parsedPath =
-                    parseUrl("http://dummy${webSocketRequest.path}")
-                        ?: throw IllegalArgumentException("Invalid path provided: $webSocketRequest.path")
-                val normalizedPath = AuthUtils.getNormalizedPathAndQuery(parsedPath)
-                val bodySha256Hex =
-                    if (webSocketRequest.body.isNotBlank()) {
-                        getSha256(webSocketRequest.body.toByteArray()).toHexString()
-                    } else {
-                        null
-                    }
-                val authToken =
-                    AuthUtils.generateAuthHash(
-                        password,
-                        nonce,
-                        timestamp,
-                        webSocketRequest.method.uppercase(),
-                        normalizedPath,
-                        bodySha256Hex,
-                    )
-                val replacementRequest =
-                    webSocketRequest.copy(
-                        authToken = authToken,
-                        authTs = timestamp,
-                        authNonce = nonce,
-                    )
-                return requestResponseHandler.request(replacementRequest)
-            } else {
-                return requestResponseHandler.request(webSocketRequest)
-            }
+            return requestResponseHandler.request(webSocketRequest)
         } finally {
             requestResponseHandlersMutex.withLock {
                 requestResponseHandlers.remove(requestId)
@@ -305,7 +280,13 @@ class WebSocketClientImpl(
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
 
         val response: WebSocketResponse? =
-            sendRequestAndAwaitResponse(SubscriptionRequest(topic, parameter, subscriberId))
+            sendRequestAndAwaitResponse(
+                SubscriptionRequest(
+                    topic,
+                    parameter,
+                    subscriberId,
+                ),
+            )
         require(response is SubscriptionResponse)
         log.i {
             "Received SubscriptionResponse for topic $topic and subscriberId $subscriberId."
@@ -348,7 +329,10 @@ class WebSocketClientImpl(
                     // todo add input validation
                     log.d { "Received raw text $message" }
                     val webSocketMessage: WebSocketMessage =
-                        json.decodeFromString(WebSocketMessage.serializer(), message)
+                        json.decodeFromString(
+                            WebSocketMessage.serializer(),
+                            message,
+                        )
                     log.i { "Received webSocketMessage $webSocketMessage" }
                     if (webSocketMessage is WebSocketResponse) {
                         onWebSocketResponse(webSocketMessage)
@@ -378,14 +362,17 @@ class WebSocketClientImpl(
                 _webSocketClientStatus.value =
                     ConnectionState.Disconnected(WebSocketIsReconnecting())
             } else {
-                _webSocketClientStatus.value = ConnectionState.Disconnected(error)
+                _webSocketClientStatus.value =
+                    ConnectionState.Disconnected(error)
             }
         }
         currentCoroutineContext().ensureActive()
     }
 
     private suspend fun onWebSocketResponse(response: WebSocketResponse) {
-        requestResponseHandlers[response.requestId]?.onWebSocketResponse(response)
+        requestResponseHandlers[response.requestId]?.onWebSocketResponse(
+            response,
+        )
     }
 
     private suspend fun onWebSocketEvent(event: WebSocketEvent) {
@@ -408,7 +395,8 @@ class WebSocketClientImpl(
                 "/api/v1/settings/version",
                 "",
             )
-        val response = sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
+        val response =
+            sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
         if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
             throw UnauthorizedApiAccessException()
@@ -423,7 +411,10 @@ class WebSocketClientImpl(
         val nodeApiVersion = apiVersion.version
         log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
         return try {
-            SemanticVersion.from(nodeApiVersion) >= SemanticVersion.from(requiredVersion)
+            SemanticVersion.from(nodeApiVersion) >=
+                    SemanticVersion.from(
+                        requiredVersion,
+                    )
         } catch (e: Throwable) {
             log.e(e) { "Failed to parse nodeApiVersion or requiredVersion into a sematic version for comparison" }
             false
