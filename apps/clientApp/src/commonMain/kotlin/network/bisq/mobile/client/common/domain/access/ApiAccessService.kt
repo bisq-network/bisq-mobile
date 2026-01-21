@@ -1,29 +1,35 @@
 package network.bisq.mobile.client.common.domain.access
 
 import androidx.annotation.CallSuper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+
+const val LOCALHOST = "localhost"
+const val LOOPBACK = "127.0.0.1"
+const val ANDROID_LOCALHOST = "10.0.2.2"
 
 class ApiAccessService(
     private val pairingService: PairingService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
-    private val webSocketClientService: WebSocketClientService,
 ) : ServiceFacade(),
     Logging {
-    private val _clientName = MutableStateFlow("Alice") // todo
+    private val _clientName = MutableStateFlow("")
     val clientName: StateFlow<String> = _clientName.asStateFlow()
 
+    // Provided by qr code
     private val _pairingQrCodeString = MutableStateFlow("")
     val pairingQrCodeString: StateFlow<String> =
         _pairingQrCodeString.asStateFlow()
@@ -31,19 +37,50 @@ class ApiAccessService(
     private val _webSocketUrl = MutableStateFlow("")
     val webSocketUrl: StateFlow<String> = _webSocketUrl.asStateFlow()
 
+    private val _restApiUrl = MutableStateFlow("")
+    val restApiUrl: StateFlow<String> = _restApiUrl.asStateFlow()
+
+    private val _tlsFingerprint: MutableStateFlow<String?> =
+        MutableStateFlow(null)
+    val tlsFingerprint: StateFlow<String?> = _tlsFingerprint.asStateFlow()
+
+    private val _pairingCodeId: MutableStateFlow<String?> =
+        MutableStateFlow(null)
+    val pairingCodeId: StateFlow<String?> = _pairingCodeId.asStateFlow()
+
     private val _grantedPermissions: MutableStateFlow<Set<Permission>> =
         MutableStateFlow(emptySet())
     val grantedPermissions: StateFlow<Set<Permission>> =
         _grantedPermissions.asStateFlow()
+
+    // Provided by pairing response
+    private val _clientId: MutableStateFlow<String?> =
+        MutableStateFlow(null)
+    val clientId: StateFlow<String?> = _clientId.asStateFlow()
+
+    private val _clientSecret: MutableStateFlow<String?> =
+        MutableStateFlow(null)
+    val clientSecret: StateFlow<String?> = _clientSecret.asStateFlow()
+
+    private val _sessionId: MutableStateFlow<String?> =
+        MutableStateFlow(null)
+    val sessionId: StateFlow<String?> = _sessionId.asStateFlow()
 
     private val _pairingResult: MutableStateFlow<Result<PairingResponse>?> =
         MutableStateFlow(null)
     val pairingResult: StateFlow<Result<PairingResponse>?> =
         _pairingResult.asStateFlow()
 
+    // private var pairingCode: PairingCode? = null
     private var requestPairingJob: Job? = null
 
-    private var pairingDataStored: Boolean = false
+    private val pairingQrCodeDataStored: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+
+    private val _pairingResultStored: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val pairingResultStored: StateFlow<Boolean> =
+        _pairingResultStored.asStateFlow()
 
     @CallSuper
     override suspend fun activate() {
@@ -51,68 +88,99 @@ class ApiAccessService(
         serviceScope.launch {
             try {
                 val settings = sensitiveSettingsRepository.fetch()
-                if (_webSocketUrl.value.isBlank() && settings.bisqApiUrl.isNotBlank()) {
-                    _webSocketUrl.value = settings.bisqApiUrl
+                val bisqApiUrl = adaptLoopbackForAndroid(settings.bisqApiUrl)
+                if (_webSocketUrl.value.isBlank() && bisqApiUrl.isNotBlank()) {
+                    _webSocketUrl.value =
+                        restApiUrlToWebSocketUrl(bisqApiUrl)
                 }
+                if (_restApiUrl.value.isBlank() && bisqApiUrl.isNotBlank()) {
+                    _restApiUrl.value = bisqApiUrl
+                }
+                if (_tlsFingerprint.value == null) {
+                    _tlsFingerprint.value = settings.tlsFingerprint
+                }
+                if (_clientId.value == null) {
+                    _clientId.value = settings.clientId
+                }
+                if (_clientSecret.value == null) {
+                    _clientSecret.value = settings.clientSecret
+                }
+                if (_sessionId.value == null) {
+                    _sessionId.value = settings.sessionId
+                }
+
+                // todo apply other fields as well
             } catch (e: Exception) {
                 log.e("Failed to load from repository", e)
             }
         }
-    }
-
-    fun setPairingQrCodeString(value: String) {
-        if (value.isNotBlank()) {
-            applyPairingQrCode(value)
+        serviceScope.launch {
+            combine(pairingQrCodeDataStored, clientName) { a, b ->
+                a to b
+            }.collect { (pairingDataStored, clientName) ->
+                if (pairingDataStored && clientName.length >= 4) {
+                    requestPairing()
+                }
+            }
         }
+
+        // todo
+        setDeviceName("Alice")
     }
 
     fun setDeviceName(value: String) {
         if (value.length >= 4) {
             _clientName.value = value
-
-            if (pairingDataStored) {
-                requestPairing()
-            }
         }
     }
 
-    fun applyPairingQrCode(value: String) {
-        _pairingQrCodeString.value = value
+    fun setPairingQrCodeString(value: String) {
+        if (value.isBlank()) {
+            return
+        }
         try {
+            _pairingQrCodeString.value = value
+            pairingQrCodeDataStored.value = false
             val pairingQrCode =
-                PairingQrCodeDecoder.decode(_pairingQrCodeString.value)
-
-            _webSocketUrl.value = pairingQrCode.webSocketUrl
+                PairingQrCodeDecoder.decode(value)
+            val wsUrl = adaptLoopbackForAndroid(pairingQrCode.webSocketUrl)
+            _webSocketUrl.value = wsUrl
+            _restApiUrl.value =
+                webSocketUrlToRestApiUrl(wsUrl)
+            _tlsFingerprint.value = pairingQrCode.tlsFingerprint
             val pairingCode = pairingQrCode.pairingCode
+            _pairingCodeId.value = pairingCode.id
             _grantedPermissions.value = pairingCode.grantedPermissions
 
+            log.i {
+                "update SensitiveSettings: webSocketUrl=$wsUrl " +
+                    "tlsFingerprint=${pairingQrCode.tlsFingerprint}" +
+                    "clientName=${_clientName.value}"
+            }
+
+            updatedSettings(_restApiUrl.value, pairingQrCode.tlsFingerprint)
+        } catch (ignore: Exception) {
+        }
+    }
+
+    fun updatedSettings(
+        restApiUrl: String,
+        tlsFingerprint: String?,
+    ) {
+        try {
             serviceScope.launch {
-                log.i {
-                    "update SensitiveSettings: webSocketUrl=$webSocketUrl " +
-                        "tlsFingerprint=${pairingQrCode.tlsFingerprint}" +
-                        "clientName=${_clientName.value}" +
-                        "clientKeyPair (not logged)"
-                }
                 val currentSettings = sensitiveSettingsRepository.fetch()
-                val bisqApiUrl =
-                    pairingQrCode.webSocketUrl
-                        .replaceFirst("wss", "https")
-                        .replaceFirst("ws", "http")
                 val updatedSettings =
                     currentSettings.copy(
-                        bisqApiUrl = bisqApiUrl,
-                        tlsFingerprint = pairingQrCode.tlsFingerprint,
+                        bisqApiUrl = restApiUrl,
+                        tlsFingerprint = tlsFingerprint,
                         clientName = _clientName.value,
                     )
                 sensitiveSettingsRepository.update { updatedSettings }
-
-                pairingDataStored = true
-                if (_clientName.value.length >= 4) {
-                    requestPairing()
-                }
+                pairingQrCodeDataStored.value = true
             }
         } catch (e: Exception) {
-            log.e("PairingCode decoding failed", e)
+            log.e { "updatedSettings failed" }
         }
     }
 
@@ -121,61 +189,80 @@ class ApiAccessService(
             log.w { "Pairing request in process" }
             return
         }
-
-        try {
-            val pairingQrCode =
-                PairingQrCodeDecoder.decode(_pairingQrCodeString.value)
-
-            _webSocketUrl.value = pairingQrCode.webSocketUrl
-            val pairingCode = pairingQrCode.pairingCode
-            _grantedPermissions.value = pairingCode.grantedPermissions
-
-            requestPairingJob?.cancel()
-            requestPairingJob =
-                serviceScope.launch {
-                    // Now we do a HTTP POST request for pairing.
-                    // This request is unauthenticated and will return the data we
-                    // need for establishing an authenticated and authorized
-                    // websocket connection.
-                    val result: Result<PairingResponse> =
-                        pairingService.requestPairing(
-                            pairingQrCode,
-                            _clientName.value,
-                        )
-                    _pairingResult.value = result
-                    if (result.isSuccess) {
-                        log.i { "Pairing request was successful." }
-                        val pairingResponse = result.getOrThrow()
-                        applyPairingResponse(pairingResponse)
-                    } else {
-                        log.w { "Pairing request failed." }
-                    }
-
-                    requestPairingJob = null
-                }
-        } catch (e: Exception) {
-            log.e("PairingCode decoding failed", e)
+        if (_pairingCodeId.value == null) {
+            log.w { "Pairing code must not be null" }
+            return
         }
+
+        _pairingResultStored.value = false
+
+        requestPairingJob?.cancel()
+        requestPairingJob =
+            serviceScope.launch(Dispatchers.Default) {
+                // Now we do a HTTP POST request for pairing.
+                // This request is unauthenticated and will return the data we
+                // need for establishing an authenticated and authorized
+                // websocket connection.
+                val result: Result<PairingResponse> =
+                    pairingService.requestPairing(
+                        _pairingCodeId.value!!,
+                        _clientName.value,
+                    )
+                _pairingResult.value = result
+                if (result.isSuccess) {
+                    log.i { "Pairing request was successful." }
+                    val pairingResponse = result.getOrThrow()
+                    _clientId.value = pairingResponse.clientId
+                    _clientSecret.value = pairingResponse.clientSecret
+                    _sessionId.value = pairingResponse.sessionId
+                    // _pairingCodeExpiresAt.value = pairingResponse.expiresAt
+                    updatedSettings(pairingResponse)
+                } else {
+                    log.w { "Pairing request failed." }
+                }
+
+                requestPairingJob = null
+            }
     }
 
-    private fun applyPairingResponse(pairingResponse: PairingResponse) {
+    private fun updatedSettings(pairingResponse: PairingResponse) {
         serviceScope.launch {
             val currentSettings =
                 sensitiveSettingsRepository.fetch()
             val updatedSettings =
                 currentSettings.copy(
-                    sessionId = pairingResponse.sessionId,
                     clientId = pairingResponse.clientId,
+                    sessionId = pairingResponse.sessionId,
                     clientSecret = pairingResponse.clientSecret,
                 )
 
             sensitiveSettingsRepository.update { updatedSettings }
-
-            serviceScope.launch {
-                log.e { "webSocketClientService.connect" }
-                val result = webSocketClientService.connect()
-                log.e { "webSocketClientService.connect $result" }
-            }
+            _pairingResultStored.value = true
         }
+    }
+
+    private fun webSocketUrlToRestApiUrl(webSocketUrl: String): String =
+        webSocketUrl
+            .replaceFirst("wss", "https")
+            .replaceFirst("ws", "http")
+
+    private fun restApiUrlToWebSocketUrl(restApiUrl: String): String =
+        restApiUrl
+            .replaceFirst("https", "wss")
+            .replaceFirst("http", "ws")
+
+    private fun adaptLoopbackForAndroid(url: String): String {
+        if (isIOS()) return url
+
+        return url
+            .replace(LOOPBACK, ANDROID_LOCALHOST)
+            .replace(LOCALHOST, ANDROID_LOCALHOST)
+    }
+
+    fun isIOS(): Boolean {
+        val platformInfo = getPlatformInfo()
+        val isIOS = platformInfo.name.lowercase().contains("ios")
+        log.d { "isIOS = $isIOS" }
+        return isIOS
     }
 }

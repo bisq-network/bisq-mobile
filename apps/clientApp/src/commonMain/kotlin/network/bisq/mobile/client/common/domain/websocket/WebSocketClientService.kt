@@ -280,11 +280,11 @@ class WebSocketClientService(
     suspend fun testConnection(
         apiUrl: Url,
         tlsFingerprint: String? = null,
+        clientId: String? = null,
+        sessionId: String? = null,
         proxyHost: String? = null,
         proxyPort: Int? = null,
         isTorProxy: Boolean = true,
-        sessionId: String? = null,
-        clientId: String? = null,
     ): Throwable? {
         val hasProxy = proxyHost != null && proxyPort != null
         val httpClient =
@@ -292,6 +292,8 @@ class WebSocketClientService(
                 HttpClientSettings(
                     bisqApiUrl = apiUrl.toString(),
                     tlsFingerprint = tlsFingerprint,
+                    clientId = clientId,
+                    sessionId = sessionId,
                     externalProxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
                     isTorProxy = isTorProxy,
                 ),
@@ -300,8 +302,8 @@ class WebSocketClientService(
             webSocketClientFactory.createNewClient(
                 httpClient = httpClient,
                 apiUrl = apiUrl,
-                sessionId = sessionId,
                 clientId = clientId,
+                sessionId = sessionId,
             )
         try {
             val timeout = WebSocketClient.determineTimeout(apiUrl.host)

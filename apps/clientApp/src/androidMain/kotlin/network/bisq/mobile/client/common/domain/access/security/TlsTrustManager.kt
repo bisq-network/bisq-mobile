@@ -6,6 +6,10 @@ import java.security.MessageDigest
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
+const val LOOPBACK = "127.0.0.1"
+const val LOCALHOST = "localhost"
+const val ANDROID_LOCALHOST = "10.0.2.2"
+
 @SuppressLint("CustomX509TrustManager")
 class TlsTrustManager(
     val expectedHost: String,
@@ -23,10 +27,27 @@ class TlsTrustManager(
         try {
             val cert = chain[0] // leaf cert
 
-            if (!SanVerifier.matchesHost(cert, expectedHost)) {
-                throw SecurityException(
-                    "Certificate SAN does not match host: " + expectedHost,
-                )
+            // If host is ANDROID_LOCALHOST we use the LOOPBACK host as that was
+            // used for SAN setup at server
+            val hostToTest =
+                if (expectedHost == ANDROID_LOCALHOST) {
+                    LOOPBACK
+                } else {
+                    expectedHost
+                }
+            if (!SanVerifier.matchesHost(cert, hostToTest)) {
+                // In case we had tested with "127.0.0.1" and it failed we will
+                // test again with "localhost".
+                if (hostToTest != LOOPBACK ||
+                    !SanVerifier.matchesHost(
+                        cert,
+                        LOCALHOST,
+                    )
+                ) {
+                    throw SecurityException(
+                        "Certificate SAN does not match host: $hostToTest",
+                    )
+                }
             }
 
             val hash = MessageDigest.getInstance("SHA-256").digest(cert.encoded)
