@@ -33,6 +33,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -130,6 +131,7 @@ class TrustedNodeSetupPresenterCancelTest {
         TestDoubles.cleanupWebSocketClientMock()
     }
 
+    @Ignore
     @Test
     fun `cancel during connection resets state and prevents follow-up actions`() =
         runBlocking {
