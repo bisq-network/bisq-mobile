@@ -34,7 +34,6 @@ object TestDoubles {
                 proxyHost = any(),
                 proxyPort = any(),
                 isTorProxy = any(),
-                password = any(),
             )
         } coAnswers {
             if (testConnectionDelayMs > 0) delay(testConnectionDelayMs)

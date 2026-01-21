@@ -84,9 +84,6 @@ class TrustedNodeSetupPresenter(
     private val _proxyPort = MutableStateFlow("9050")
     val proxyPort: StateFlow<String> = _proxyPort.asStateFlow()
 
-    private val _password = MutableStateFlow("")
-    val password: StateFlow<String> = _password.asStateFlow()
-
     val isNewApiUrl: StateFlow<Boolean> =
         combine(sensitiveSettingsRepository.data, apiUrl) { settings, newUrl ->
             settings.bisqApiUrl.isNotBlank() && settings.bisqApiUrl != newUrl
@@ -184,7 +181,6 @@ class TrustedNodeSetupPresenter(
         presenterScope.launch {
             try {
                 val settings = sensitiveSettingsRepository.fetch()
-                _password.value = settings.bisqApiPassword
                 _selectedProxyOption.value = settings.selectedProxyOption
                 if (settings.bisqApiUrl.isBlank()) {
                     if (apiUrl.value.isNotBlank()) onApiUrlChanged(apiUrl.value)
@@ -222,10 +218,6 @@ class TrustedNodeSetupPresenter(
 
     fun onProxyPortChanged(port: String) {
         _proxyPort.value = port
-    }
-
-    fun onPasswordChanged(value: String) {
-        _password.value = value
     }
 
     fun onProxyOptionChanged(value: BisqProxyOption) {
@@ -271,7 +263,6 @@ class TrustedNodeSetupPresenter(
                     val newProxyPort: Int?
                     val newProxyIsTor: Boolean
                     val newProxyOption = selectedProxyOption.value
-                    val password = _password.value
                     when (newProxyOption) {
                         BisqProxyOption.INTERNAL_TOR -> {
                             if (kmpTorService.state.value !is KmpTorService.TorState.Started) {
@@ -334,7 +325,6 @@ class TrustedNodeSetupPresenter(
                                     proxyHost = newProxyHost,
                                     proxyPort = newProxyPort,
                                     isTorProxy = newProxyIsTor,
-                                    password = password,
                                 )
                             countdownJob?.cancel()
                             result
@@ -362,7 +352,6 @@ class TrustedNodeSetupPresenter(
                                         else -> ""
                                     },
                                 selectedProxyOption = newProxyOption,
-                                bisqApiPassword = password,
                             )
                         if (currentSettings != updatedSettings) {
                             wsClientService.disposeClient()

@@ -13,7 +13,6 @@ class WebSocketClientFactory(
     fun createNewClient(
         httpClient: HttpClient,
         apiUrl: Url,
-        password: String? = null,
     ): WebSocketClient =
         if (apiUrl.host == "demo.bisq" && apiUrl.port == 21) {
             WebSocketClientDemo(jsonConfig)
@@ -22,7 +21,6 @@ class WebSocketClientFactory(
                 httpClient,
                 jsonConfig,
                 apiUrl,
-                password,
             )
         }
 }
