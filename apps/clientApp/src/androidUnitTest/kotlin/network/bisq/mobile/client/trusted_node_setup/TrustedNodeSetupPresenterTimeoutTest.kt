@@ -98,11 +98,23 @@ class TrustedNodeSetupPresenterTimeoutTest {
         mockkObject(WebSocketClient)
 
         // Mock timeout behavior
-        every { wsClientService.connectionState } returns MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+        every { wsClientService.connectionState } returns
+            MutableStateFlow<ConnectionState>(
+                ConnectionState.Disconnected(),
+            )
         every { WebSocketClient.determineTimeout(any()) } returns 3_000L
-        coEvery { wsClientService.testConnection(any(), any(), any(), any(), any()) } coAnswers {
+        coEvery {
+            wsClientService.testConnection(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } coAnswers {
             // Simulate a timeout that returns the TimeoutCancellationException as a result
-            val e = runCatching { withTimeout(1) { delay(50) } }.exceptionOrNull()
+            val e =
+                runCatching { withTimeout(1) { delay(50) } }.exceptionOrNull()
             e
         }
 
@@ -146,7 +158,7 @@ class TrustedNodeSetupPresenterTimeoutTest {
             // Start validators (lazy flows)
             val validators =
                 backgroundScope.launch {
-                    launch { presenter.isApiUrlValid.collect { } }
+                    // launch { presenter.isApiUrlValid.collect { } }
                     launch { presenter.isProxyUrlValid.collect { } }
                 }
 
