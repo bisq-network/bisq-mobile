@@ -21,7 +21,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
-import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
@@ -132,13 +132,13 @@ class WebSocketClientService(
     private suspend fun updateWebSocketClient(httpClientSettings: HttpClientSettings) {
         clientUpdateMutex.withLock {
             val newApiUrl: Url =
-                httpClientSettings.apiUrl?.takeIf { it.isNotBlank() }?.let {
+                httpClientSettings.bisqApiUrl?.takeIf { it.isNotBlank() }?.let {
                     parseUrl(it)
                 } ?: parseUrl("http://$defaultHost:$defaultPort")!!
 
             currentClient.value =
                 currentClient.value?.let {
-                    log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.proxyUrl}" }
+                    log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.externalProxyUrl}" }
                     it.dispose()
                     null
                 }
@@ -180,7 +180,7 @@ class WebSocketClientService(
 
     private fun shouldAttemptReconnect(error: Throwable): Boolean {
         return when (error) {
-            is PasswordIncorrectOrMissingException,
+            is UnauthorizedApiAccessException,
             is MaximumRetryReachedException,
             is WebSocketIsReconnecting,
             -> false
@@ -280,9 +280,9 @@ class WebSocketClientService(
         val httpClient =
             httpClientService.createNewInstance(
                 HttpClientSettings(
-                    apiUrl = apiUrl.toString(),
+                    bisqApiUrl = apiUrl.toString(),
                     tlsFingerprint = tlsFingerprint,
-                    proxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
+                    externalProxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
                     isTorProxy = isTorProxy,
                     password = password,
                 ),

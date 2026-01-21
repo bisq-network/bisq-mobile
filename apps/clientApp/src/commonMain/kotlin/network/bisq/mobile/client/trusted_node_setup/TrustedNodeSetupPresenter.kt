@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
-import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
@@ -466,7 +466,7 @@ class TrustedNodeSetupPresenter(
                     "mobile.trustedNodeSetup.status.invalidVersion".i18n()
             }
 
-            is PasswordIncorrectOrMissingException -> {
+            is UnauthorizedApiAccessException -> {
                 _status.value =
                     "mobile.trustedNodeSetup.status.passwordIncorrectOrMissing".i18n()
             }
