@@ -63,7 +63,8 @@ class WebSocketClientService(
     }
 
     private val clientUpdateMutex = Mutex()
-    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+    private val _connectionState =
+        MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val connectionState = _connectionState.asStateFlow()
 
     private var stateCollectionJob: Job? = null
@@ -76,17 +77,23 @@ class WebSocketClientService(
         )
     private var subscriptionsAreApplied = false
 
-    private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
+    private val stopFlow =
+        MutableSharedFlow<Unit>(
+            replay = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        ) // signal to cancel waiters
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val initialSubscriptionsReceivedData: Flow<Boolean> =
         requestedSubscriptions.flatMapLatest { subsMap ->
             // Only the first seven subscriptions contribute to the initial data banner
-            val trackedObservers = initialSubscriptionTypes.mapNotNull { subsMap[it] }
+            val trackedObservers =
+                initialSubscriptionTypes.mapNotNull { subsMap[it] }
             if (trackedObservers.size < initialSubscriptionTypes.size) {
                 flowOf(false)
             } else {
-                val hasReceivedDataFlows = trackedObservers.map { it.hasReceivedData }
+                val hasReceivedDataFlows =
+                    trackedObservers.map { it.hasReceivedData }
                 combine(hasReceivedDataFlows) { hasReceivedDataArray ->
                     hasReceivedDataArray.all { hasReceivedData -> hasReceivedData }
                 }
@@ -134,7 +141,8 @@ class WebSocketClientService(
             val newApiUrl: Url =
                 httpClientSettings.bisqApiUrl?.takeIf { it.isNotBlank() }?.let {
                     parseUrl(it)
-                } ?: parseUrl("http://$defaultHost:$defaultPort")!!
+                }
+                    ?: parseUrl("http://$defaultHost:$defaultPort")!!
 
             currentClient.value =
                 currentClient.value?.let {
