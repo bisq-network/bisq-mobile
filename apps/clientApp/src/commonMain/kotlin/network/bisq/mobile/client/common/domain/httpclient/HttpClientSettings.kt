@@ -66,7 +66,10 @@ data class HttpClientSettings(
             val address = AddressVO.from(proxyUrl)
             if (address != null) {
                 return BisqProxyConfig(
-                    ProxyBuilder.socks(normalizeProxyHost(address.host), address.port),
+                    ProxyBuilder.socks(
+                        normalizeProxyHost(address.host),
+                        address.port,
+                    ),
                     isTorProxy,
                 )
             }
