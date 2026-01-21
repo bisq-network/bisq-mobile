@@ -21,6 +21,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
@@ -279,8 +280,11 @@ class HttpClientService(
         log.d { "HttpClient baseUrl set to $baseUrl" }
 
         val host =
-            httpClientSettings.bisqApiUrl
-                ?: defaultHost
+            if (httpClientSettings.bisqApiUrl == null) {
+                defaultHost
+            } else {
+                Url(httpClientSettings.bisqApiUrl).host
+            }
         val tlsFingerprint = httpClientSettings.tlsFingerprint
         val sessionId = httpClientSettings.sessionId
         val clientId = httpClientSettings.clientId
