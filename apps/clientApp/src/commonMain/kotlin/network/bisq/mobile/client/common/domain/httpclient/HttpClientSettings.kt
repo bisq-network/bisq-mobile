@@ -8,11 +8,12 @@ import network.bisq.mobile.domain.getPlatformInfo
 
 data class HttpClientSettings(
     val bisqApiUrl: String?,
-    val tlsFingerprint: String? = null,
+    val tlsFingerprint: String?,
+    val clientId: String? = null,
+    val sessionId: String? = null,
     val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
     val externalProxyUrl: String? = null,
     val isTorProxy: Boolean = false,
-    val password: String? = null,
 ) {
     companion object {
         fun from(
@@ -50,7 +51,6 @@ data class HttpClientSettings(
                 selectedProxyOption = selectedProxyOption,
                 externalProxyUrl = proxyUrl,
                 isTorProxy = isTorProxy,
-                password = settings.bisqApiPassword,
             )
         }
     }

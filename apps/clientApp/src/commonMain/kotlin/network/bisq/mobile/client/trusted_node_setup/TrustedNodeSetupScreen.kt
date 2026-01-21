@@ -87,7 +87,6 @@ fun TrustedNodeSetupScreen(
     val isProxyUrlValid by presenter.isProxyUrlValid.collectAsState()
     val proxyHost by presenter.proxyHost.collectAsState()
     val proxyPort by presenter.proxyPort.collectAsState()
-    val password by presenter.password.collectAsState()
     val isNewApiUrl by presenter.isNewApiUrl.collectAsState()
     val torState by presenter.torState.collectAsState()
     val torProgress by presenter.torProgress.collectAsState()
@@ -256,15 +255,6 @@ fun TrustedNodeSetupScreen(
                             presenter.onProxyOptionChanged(it)
                             blurTriggerSetup.triggerBlur()
                         },
-                        disabled = isNodeSetupInProgress || !isWorkflow,
-                    )
-
-                    BisqTextField(
-                        label = "mobile.trustedNodeSetup.password".i18n(),
-                        value = password,
-                        onValueChange = { value, _ -> presenter.onPasswordChanged(value) },
-                        keyboardType = KeyboardType.Password,
-                        isPasswordField = true,
                         disabled = isNodeSetupInProgress || !isWorkflow,
                     )
                 }
