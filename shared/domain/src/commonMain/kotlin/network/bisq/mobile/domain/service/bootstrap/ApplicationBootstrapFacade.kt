@@ -18,7 +18,8 @@ abstract class ApplicationBootstrapFacade(
 ) : ServiceFacade() {
     companion object {
         var isDemo = false
-        private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 90_000L // 90 seconds per stage
+        private const val BOOTSTRAP_STAGE_TIMEOUT_MS =
+            90_000L // 90 seconds per stage
     }
 
     private var currentTimeoutJob: Job? = null
@@ -54,7 +55,8 @@ abstract class ApplicationBootstrapFacade(
     }
 
     private val _torBootstrapFailed = MutableStateFlow(false)
-    val torBootstrapFailed: StateFlow<Boolean> = _torBootstrapFailed.asStateFlow()
+    val torBootstrapFailed: StateFlow<Boolean> =
+        _torBootstrapFailed.asStateFlow()
 
     fun setTorBootstrapFailed(failed: Boolean) {
         _torBootstrapFailed.value = failed
@@ -105,13 +107,15 @@ abstract class ApplicationBootstrapFacade(
                     }
 
                     is TorState.Stopping -> {}
+
                     is TorState.Stopped -> {
                         if (newState.error != null) {
                             val errorMessage =
                                 listOfNotNull(
                                     newState.error.message,
                                     newState.error.cause?.message,
-                                ).firstOrNull() ?: "Unknown Tor error"
+                                ).firstOrNull()
+                                    ?: "Unknown Tor error"
                             setState("mobile.bootstrap.tor.failed".i18n() + ": $errorMessage")
                             cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
                             setTorBootstrapFailed(true)

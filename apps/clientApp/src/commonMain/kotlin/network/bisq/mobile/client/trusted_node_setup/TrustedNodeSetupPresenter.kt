@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
@@ -28,7 +27,6 @@ import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
@@ -127,22 +125,6 @@ class TrustedNodeSetupPresenter(
                 true
             }
         }.stateIn(presenterScope, SharingStarted.Lazily, false)
-
-    val apiUrlPrompt: StateFlow<String> =
-        selectedProxyOption
-            .map {
-                when (it) {
-                    BisqProxyOption.INTERNAL_TOR, BisqProxyOption.EXTERNAL_TOR ->
-                        "mobile.trustedNodeSetup.host.prompt".i18n()
-
-                    else ->
-                        if (BuildConfig.IS_DEBUG) {
-                            "http://${localHost()}:8090"
-                        } else {
-                            "http://$IPV4_EXAMPLE:8090"
-                        }
-                }
-            }.stateIn(presenterScope, SharingStarted.Lazily, "")
 
     val torState: StateFlow<KmpTorService.TorState> =
         kmpTorService.state.stateIn(

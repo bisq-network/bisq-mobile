@@ -37,6 +37,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
+@OptIn(ExperimentalEncodingApi::class)
 class ClientUserProfileServiceFacade(
     private val apiGateway: UserProfileApiGateway,
     private val clientCatHashService: ClientCatHashService<PlatformImage>,
@@ -45,7 +46,8 @@ class ClientUserProfileServiceFacade(
 ) : ServiceFacade(),
     UserProfileServiceFacade {
     companion object {
-        private const val MIN_PAUSE_TO_NEXT_REPUBLISH = 5 * 60 * 1000L // 5 minutes in milliseconds
+        private const val MIN_PAUSE_TO_NEXT_REPUBLISH =
+            5 * 60 * 1000L // 5 minutes in milliseconds
     }
 
     private var lastPublished: Long = 0L
@@ -54,16 +56,19 @@ class ClientUserProfileServiceFacade(
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
     // Properties
-    private val _userProfiles: MutableStateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
+    private val _userProfiles: MutableStateFlow<List<UserProfileVO>> =
+        MutableStateFlow(emptyList())
     override val userProfiles = _userProfiles.asStateFlow()
 
-    private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
+    private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> =
+        MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
 
     private val _numUserProfiles = MutableStateFlow(0)
     override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
 
-    private val _ignoredProfileIds: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+    private val _ignoredProfileIds: MutableStateFlow<Set<String>> =
+        MutableStateFlow(emptySet())
     override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredProfileIds.asStateFlow()
     private val ignoredUserIdsMutex = Mutex()
 
@@ -82,7 +87,13 @@ class ClientUserProfileServiceFacade(
                         val selectedDeferred =
                             async {
                                 try {
-                                    apiGateway.getSelectedUserProfile().getOrThrow().also { _selectedUserProfile.value = it }
+                                    apiGateway
+                                        .getSelectedUserProfile()
+                                        .getOrThrow()
+                                        .also {
+                                            _selectedUserProfile.value =
+                                                it
+                                        }
                                 } catch (e: CancellationException) {
                                     throw e
                                 } catch (e: Exception) {
@@ -103,11 +114,18 @@ class ClientUserProfileServiceFacade(
                                 } catch (e: Exception) {
                                     log.e(e) { "Failed to initialize ignored users cache during activation" }
                                     // Set empty cache to prevent repeated network calls
-                                    ignoredUserIdsMutex.withLock { _ignoredProfileIds.value = emptySet() }
+                                    ignoredUserIdsMutex.withLock {
+                                        _ignoredProfileIds.value =
+                                            emptySet()
+                                    }
                                 }
                             }
 
-                        awaitAll(selectedDeferred, profilesDeferred, ignoredDeferred)
+                        awaitAll(
+                            selectedDeferred,
+                            profilesDeferred,
+                            ignoredDeferred,
+                        )
                     }
                 }
             }
@@ -161,7 +179,11 @@ class ClientUserProfileServiceFacade(
         if (keyMaterialResponse == null) {
             return
         }
-        val apiResult = apiGateway.createAndPublishNewUserProfile(nickName, keyMaterialResponse!!)
+        val apiResult =
+            apiGateway.createAndPublishNewUserProfile(
+                nickName,
+                keyMaterialResponse!!,
+            )
         if (apiResult.isFailure) {
             throw apiResult.exceptionOrNull()!!
         }
@@ -182,7 +204,14 @@ class ClientUserProfileServiceFacade(
         terms: String?,
     ): Result<UserProfileVO> {
         try {
-            val apiResult = apiGateway.updateUserProfile(profileId, statement ?: "", terms ?: "")
+            val apiResult =
+                apiGateway.updateUserProfile(
+                    profileId,
+                    statement
+                        ?: "",
+                    terms
+                        ?: "",
+                )
             if (apiResult.isFailure) {
                 throw apiResult.exceptionOrNull()!!
             }
@@ -229,7 +258,11 @@ class ClientUserProfileServiceFacade(
         // The delay should avoid a too fast flicker-effect in the UI when recreating the nym,
         // and should make the usage of the proof of work more visible.
         val random: Int = Random.nextInt(800)
-        val delayDuration = min(1000.0, max(200.0, (200 + random - requestDuration).toDouble())).toLong()
+        val delayDuration =
+            min(
+                1000.0,
+                max(200.0, (200 + random - requestDuration).toDouble()),
+            ).toLong()
         delay(delayDuration)
     }
 
@@ -261,7 +294,8 @@ class ClientUserProfileServiceFacade(
     private fun fallbackProfileImage(): PlatformImage =
         try {
             // Try to decode a 1x1 transparent PNG
-            val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
+            val base64 =
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
             val bytes = Base64.decode(base64)
             PlatformImage.deserialize(bytes)
         } catch (e: Exception) {
@@ -271,7 +305,9 @@ class ClientUserProfileServiceFacade(
             createEmptyImage()
         }
 
-    override suspend fun getUserPublishDate(): Long = selectedUserProfile.value?.publishDate ?: 0L
+    override suspend fun getUserPublishDate(): Long =
+        selectedUserProfile.value?.publishDate
+            ?: 0L
 
     override suspend fun userActivityDetected() {
         lastPublishedMutex.withLock {
@@ -365,7 +401,10 @@ class ClientUserProfileServiceFacade(
         if (trimmedMessage.isBlank()) {
             return Result.failure(IllegalArgumentException("Report message cannot be blank"))
         }
-        return apiGateway.reportUserProfile(accusedUserProfile.networkId.pubKey.id, trimmedMessage)
+        return apiGateway.reportUserProfile(
+            accusedUserProfile.networkId.pubKey.id,
+            trimmedMessage,
+        )
     }
 
     override suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>> = apiGateway.getOwnedUserProfiles()
@@ -373,7 +412,12 @@ class ClientUserProfileServiceFacade(
     override suspend fun selectUserProfile(id: String): Result<UserProfileVO> =
         apiGateway
             .selectUserProfile(id)
-            .also { it.onSuccess { profile -> _selectedUserProfile.value = profile } }
+            .also {
+                it.onSuccess { profile ->
+                    _selectedUserProfile.value =
+                        profile
+                }
+            }
 
     override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> =
         apiGateway
