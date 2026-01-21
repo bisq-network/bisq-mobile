@@ -48,6 +48,8 @@ data class HttpClientSettings(
             return HttpClientSettings(
                 bisqApiUrl = settings.bisqApiUrl,
                 tlsFingerprint = settings.tlsFingerprint,
+                sessionId = settings.sessionId,
+                clientId = settings.clientId,
                 selectedProxyOption = selectedProxyOption,
                 externalProxyUrl = proxyUrl,
                 isTorProxy = isTorProxy,

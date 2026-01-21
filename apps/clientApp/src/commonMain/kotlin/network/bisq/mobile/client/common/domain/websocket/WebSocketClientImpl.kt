@@ -37,6 +37,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.access.utils.Headers
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
@@ -66,6 +67,8 @@ class WebSocketClientImpl(
     private val httpClient: HttpClient,
     private val json: Json,
     override val apiUrl: Url,
+    val sessionId: String?,
+    val clientId: String?,
     private val clientScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : WebSocketClient,
     Logging {
@@ -249,7 +252,19 @@ class WebSocketClientImpl(
         }
 
         try {
-            return requestResponseHandler.request(webSocketRequest)
+            if (webSocketRequest is WebSocketRestApiRequest) {
+                val headers = mutableMapOf<String, String>()
+                sessionId?.let { headers[Headers.SESSION_ID] = it }
+                clientId?.let { headers[Headers.CLIENT_ID] = it }
+
+                val replacementRequest =
+                    webSocketRequest.copy(
+                        headers = headers,
+                    )
+                return requestResponseHandler.request(replacementRequest)
+            } else {
+                return requestResponseHandler.request(webSocketRequest)
+            }
         } finally {
             requestResponseHandlersMutex.withLock {
                 requestResponseHandlers.remove(requestId)
@@ -412,9 +427,9 @@ class WebSocketClientImpl(
         log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
         return try {
             SemanticVersion.from(nodeApiVersion) >=
-                    SemanticVersion.from(
-                        requiredVersion,
-                    )
+                SemanticVersion.from(
+                    requiredVersion,
+                )
         } catch (e: Throwable) {
             log.e(e) { "Failed to parse nodeApiVersion or requiredVersion into a sematic version for comparison" }
             false
