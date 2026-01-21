@@ -9,6 +9,8 @@ import network.bisq.mobile.client.httpclient.NoDns
 import java.util.concurrent.TimeUnit
 
 actual fun createHttpClient(
+    host: String,
+    tlsFingerprint: String?,
     proxyConfig: BisqProxyConfig?,
     config: HttpClientConfig<*>.() -> Unit,
 ) = HttpClient(OkHttp) {

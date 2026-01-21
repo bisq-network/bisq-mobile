@@ -178,13 +178,21 @@ class HttpClientService(
             } else {
                 "http://$defaultHost:$defaultPort"
             }
+
+        val host = rawBase
+        val tlsFingerprint = clientSettings.tlsFingerprint
+
         val baseUrl = sanitizeBaseUrl(rawBase, defaultPort)
         if (baseUrl != rawBase) {
             log.w { "Sanitized baseUrl from '$rawBase' to '$baseUrl'" }
         }
         log.d { "HttpClient baseUrl set to $baseUrl" }
         val password = clientSettings.password
-        return createHttpClient(proxy) {
+        return createHttpClient(
+            host = host,
+            tlsFingerprint = tlsFingerprint,
+            proxyConfig = proxy,
+        ) {
             install(UserAgent) {
                 agent =
                     versionProvider.getAppNameAndVersion(

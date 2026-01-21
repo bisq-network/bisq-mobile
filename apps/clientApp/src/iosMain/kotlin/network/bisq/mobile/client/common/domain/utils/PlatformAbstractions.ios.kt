@@ -7,6 +7,8 @@ import io.ktor.client.plugins.websocket.WebSockets
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyConfig
 
 actual fun createHttpClient(
+    host: String,
+    tlsFingerprint: String?,
     proxyConfig: BisqProxyConfig?,
     config: HttpClientConfig<*>.() -> Unit,
 ): HttpClient =
