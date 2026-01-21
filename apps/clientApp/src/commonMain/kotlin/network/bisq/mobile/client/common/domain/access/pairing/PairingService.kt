@@ -33,7 +33,7 @@ class PairingService(
                     dto.clientId,
                     dto.clientSecret,
                     dto.sessionId,
-                    dto.expiresAt,
+                    dto.sessionExpiryDate,
                 ),
             )
         } else {

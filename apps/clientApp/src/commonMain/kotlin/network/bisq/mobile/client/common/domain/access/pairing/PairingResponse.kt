@@ -5,5 +5,5 @@ data class PairingResponse(
     val clientId: String,
     val clientSecret: String,
     val sessionId: String,
-    val expiresAt: Long,
+    val sessionExpiryDate: Long,
 )
