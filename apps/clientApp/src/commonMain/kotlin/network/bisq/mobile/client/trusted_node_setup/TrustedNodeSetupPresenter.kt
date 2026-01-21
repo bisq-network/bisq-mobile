@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.common.domain.access.ApiAccessService
+import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
@@ -68,15 +70,18 @@ class TrustedNodeSetupPresenter(
     // See https://github.com/bisq-network/bisq-mobile/issues/684
     private val wsClientService: WebSocketClientService by inject()
 
+    private val apiAccessService: ApiAccessService by inject()
+
     private val _wsClientConnectionState =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val wsClientConnectionState = _wsClientConnectionState.asStateFlow()
 
-    private val _apiUrl = MutableStateFlow("")
-    val apiUrl: StateFlow<String> = _apiUrl.asStateFlow()
-
-    private val _tlsFingerprint = MutableStateFlow(null)
-    val tlsFingerprint: StateFlow<String?> = _tlsFingerprint.asStateFlow()
+    val pairingQrCodeString: StateFlow<String> =
+        apiAccessService.pairingQrCodeString
+    val clientName: StateFlow<String> = apiAccessService.clientName
+    val apiUrl: StateFlow<String> = apiAccessService.webSocketUrl
+    val pairingResult: StateFlow<Result<PairingResponse>?> =
+        apiAccessService.pairingResult
 
     private val _proxyHost = MutableStateFlow("127.0.0.1")
     val proxyHost: StateFlow<String> = _proxyHost.asStateFlow()
@@ -85,16 +90,19 @@ class TrustedNodeSetupPresenter(
     val proxyPort: StateFlow<String> = _proxyPort.asStateFlow()
 
     val isNewApiUrl: StateFlow<Boolean> =
-        combine(sensitiveSettingsRepository.data, apiUrl) { settings, newUrl ->
+        combine(
+            sensitiveSettingsRepository.data,
+            apiUrl,
+        ) { settings, newUrl ->
             settings.bisqApiUrl.isNotBlank() && settings.bisqApiUrl != newUrl
         }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> = _status.asStateFlow()
 
-    private val _isNodeSetupInProgress = MutableStateFlow(true)
-    val isNodeSetupInProgress: StateFlow<Boolean> =
-        _isNodeSetupInProgress.asStateFlow()
+    private val _isPairingInProgress = MutableStateFlow(true)
+    val isPairingInProgress: StateFlow<Boolean> =
+        _isPairingInProgress.asStateFlow()
 
     private val _selectedProxyOption = MutableStateFlow(BisqProxyOption.NONE)
     val selectedProxyOption = _selectedProxyOption.asStateFlow()
@@ -110,7 +118,9 @@ class TrustedNodeSetupPresenter(
             proxyPort,
             selectedProxyOption,
         ) { h, p, proxyOption ->
-            if (proxyOption == BisqProxyOption.EXTERNAL_TOR || proxyOption == BisqProxyOption.SOCKS_PROXY) {
+            if (proxyOption == BisqProxyOption.EXTERNAL_TOR ||
+                proxyOption == BisqProxyOption.SOCKS_PROXY
+            ) {
                 validateProxyHost(h) == null &&
                     validatePort(p) == null
             } else {
@@ -153,11 +163,11 @@ class TrustedNodeSetupPresenter(
     private val _timeoutCounter = MutableStateFlow(0L)
     val timeoutCounter = _timeoutCounter.asStateFlow()
 
-    private val _showBarcodeView = MutableStateFlow(false)
-    val showBarcodeView: StateFlow<Boolean> = _showBarcodeView.asStateFlow()
+    private val _showQrCodeView = MutableStateFlow(false)
+    val showQrCodeView: StateFlow<Boolean> = _showQrCodeView.asStateFlow()
 
-    private val _showBarcodeError = MutableStateFlow(false)
-    val showBarcodeError: StateFlow<Boolean> = _showBarcodeError.asStateFlow()
+    private val _showQrCodeError = MutableStateFlow(false)
+    val showQrCodeError: StateFlow<Boolean> = _showQrCodeError.asStateFlow()
 
     private val _triggerApiUrlValidation = MutableStateFlow(0)
     val triggerApiUrlValidation = _triggerApiUrlValidation.asStateFlow()
@@ -174,19 +184,32 @@ class TrustedNodeSetupPresenter(
     private fun initialize() {
         log.i { "View attached to Trusted node presenter" }
 
-        if (BuildConfig.IS_DEBUG) {
+        /*if (BuildConfig.IS_DEBUG) {
             _apiUrl.value = "http://" + localHost() + ":8090"
+        }*/
+        presenterScope.launch {
+            pairingResult.collect {
+                if (it == null) {
+                    return@collect
+                }
+                if (it.isSuccess) {
+                    // TODO start connection
+                } else {
+                    log.w { "Pairing failed ${it.exceptionOrNull()}" }
+                    // TODO show error message
+                }
+            }
         }
 
         presenterScope.launch {
             try {
                 val settings = sensitiveSettingsRepository.fetch()
                 _selectedProxyOption.value = settings.selectedProxyOption
-                if (settings.bisqApiUrl.isBlank()) {
-                    if (apiUrl.value.isNotBlank()) onApiUrlChanged(apiUrl.value)
-                } else {
-                    onApiUrlChanged(settings.bisqApiUrl)
-                }
+                /* if (settings.bisqApiUrl.isBlank()) {
+                     if (apiUrl.value.isNotBlank()) onApiUrlChanged(apiUrl.value)
+                 } else {
+                     onApiUrlChanged(settings.bisqApiUrl)
+                 }*/
                 if (settings.externalProxyUrl.isBlank()) {
                     if (_proxyHost.value.isNotBlank()) {
                         onProxyHostChanged(
@@ -203,13 +226,17 @@ class TrustedNodeSetupPresenter(
             } catch (e: Exception) {
                 log.e("Failed to load from repository", e)
             } finally {
-                _isNodeSetupInProgress.value = false
+                _isPairingInProgress.value = false
             }
         }
     }
 
-    fun onApiUrlChanged(apiUrl: String) {
-        _apiUrl.value = apiUrl
+    fun onPairingCodeChanged(value: String) {
+        apiAccessService.setPairingQrCodeString(value)
+    }
+
+    fun onDeviceNameChanged(value: String) {
+        apiAccessService.setDeviceName(value)
     }
 
     fun onProxyHostChanged(host: String) {
@@ -239,7 +266,7 @@ class TrustedNodeSetupPresenter(
 
         if (!isApiUrlValid.value || !isProxyUrlValid.value) return
 
-        _isNodeSetupInProgress.value = true
+        _isPairingInProgress.value = true
         _status.value =
             "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
 
@@ -254,10 +281,11 @@ class TrustedNodeSetupPresenter(
                         IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
                         newApiUrlString,
                     )
-                    _isNodeSetupInProgress.value = false
+                    _isPairingInProgress.value = false
                     connectJob = null
                     return@launch
                 }
+                val tlsFingerprint = null // todo
                 try {
                     val newProxyHost: String?
                     val newProxyPort: Int?
@@ -321,7 +349,7 @@ class TrustedNodeSetupPresenter(
                             val result =
                                 wsClientService.testConnection(
                                     apiUrl = newApiUrl,
-                                    tlsFingerprint = _tlsFingerprint.value,
+                                    tlsFingerprint = tlsFingerprint,
                                     proxyHost = newProxyHost,
                                     proxyPort = newProxyPort,
                                     isTorProxy = newProxyIsTor,
@@ -342,7 +370,7 @@ class TrustedNodeSetupPresenter(
                         val updatedSettings =
                             currentSettings.copy(
                                 bisqApiUrl = newApiUrl.toString(),
-                                tlsFingerprint = _tlsFingerprint.value,
+                                tlsFingerprint = tlsFingerprint,
                                 externalProxyUrl =
                                     when (newProxyOption) {
                                         BisqProxyOption.EXTERNAL_TOR,
@@ -406,7 +434,7 @@ class TrustedNodeSetupPresenter(
                 } finally {
                     countdownJob?.cancel()
                     countdownJob = null
-                    _isNodeSetupInProgress.value = false
+                    _isPairingInProgress.value = false
                     connectJob = null
                 }
             }
@@ -430,12 +458,12 @@ class TrustedNodeSetupPresenter(
 
         _wsClientConnectionState.value = ConnectionState.Disconnected()
         _status.value = ""
-        _isNodeSetupInProgress.value = false
+        _isPairingInProgress.value = false
         _timeoutCounter.value = 0
         connectJob = null
     }
 
-    private fun Url.toNormalizedString(): String = "${this.protocol.name}://${this.host}:${this.port}"
+    private fun Url.toNormalizedString(): String = "${protocol.name}://$host:$port"
 
     private fun onConnectionError(
         error: Throwable,
@@ -597,26 +625,25 @@ class TrustedNodeSetupPresenter(
         return null
     }
 
-    fun onBarcodeClick() {
-        _showBarcodeView.value = true
+    fun onShowQrCodeView() {
+        _showQrCodeView.value = true
     }
 
-    fun onBarcodeFail() {
-        _showBarcodeView.value = false
-        _showBarcodeError.value = true
+    fun onQrCodeFailed() {
+        _showQrCodeView.value = false
+        _showQrCodeError.value = true
     }
 
-    fun onBarcodeErrorClose() {
-        _showBarcodeError.value = false
+    fun onQrCodeErrorClosed() {
+        _showQrCodeError.value = false
     }
 
-    fun onBarcodeViewDismiss() {
-        _showBarcodeView.value = false
+    fun onQrCodeViewDismissed() {
+        _showQrCodeView.value = false
     }
 
-    fun onBarcodeResult(value: String) {
-        onApiUrlChanged(value)
-        _showBarcodeView.value = false
-        _triggerApiUrlValidation.value++
+    fun onQrCodeResult(value: String) {
+        apiAccessService.setPairingQrCodeString(value)
+        _showQrCodeView.value = false
     }
 }
