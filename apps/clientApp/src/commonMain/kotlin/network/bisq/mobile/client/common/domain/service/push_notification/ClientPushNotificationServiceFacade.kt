@@ -6,9 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -37,6 +35,8 @@ class ClientPushNotificationServiceFacade(
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
+
+        log.i { "Activating native push notification service" }
 
         // Load saved push notification preference
         serviceScope.launch {
@@ -125,14 +125,7 @@ class ClientPushNotificationServiceFacade(
 
         log.i { "Registering device for user profile: $userProfileId" }
 
-        val platform =
-            if (getPlatformInfo().type == network.bisq.mobile.domain.PlatformType.IOS) {
-                Platform.IOS
-            } else {
-                Platform.ANDROID
-            }
-
-        val result = apiGateway.registerDevice(userProfileId, token, publicKeyEncoded, platform)
+        val result = apiGateway.registerDevice(userProfileId, token, publicKeyEncoded, Platform.IOS)
         if (result.isSuccess) {
             log.i { "Device registered successfully with trusted node" }
             _isDeviceRegistered.value = true
