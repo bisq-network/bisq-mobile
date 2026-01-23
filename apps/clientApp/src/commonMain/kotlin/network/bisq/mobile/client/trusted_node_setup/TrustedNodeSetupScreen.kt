@@ -168,7 +168,7 @@ fun TrustedNodeSetupScreen(
                     label = "mobile.trustedNodeSetup.deviceName".i18n(),
                     placeholder = "mobile.trustedNodeSetup.deviceName.prompt".i18n(),
                     onValueChange = { value, _ ->
-                        presenter.onDeviceNameChanged(
+                        presenter.onClientNameChanged(
                             value,
                         )
                     },
