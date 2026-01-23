@@ -125,10 +125,8 @@ class ApiAccessService(
         }
     }
 
-    fun setDeviceName(value: String) {
-        if (value.length >= 4) {
-            _clientName.value = value
-        }
+    fun setClientName(value: String) {
+        _clientName.value = value
     }
 
     fun setPairingQrCodeString(value: String) {

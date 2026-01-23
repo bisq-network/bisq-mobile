@@ -205,8 +205,8 @@ class TrustedNodeSetupPresenter(
         apiAccessService.setPairingQrCodeString(value)
     }
 
-    fun onDeviceNameChanged(value: String) {
-        apiAccessService.setDeviceName(value)
+    fun onClientNameChanged(value: String) {
+        apiAccessService.setClientName(value)
     }
 
     fun onProxyHostChanged(host: String) {
