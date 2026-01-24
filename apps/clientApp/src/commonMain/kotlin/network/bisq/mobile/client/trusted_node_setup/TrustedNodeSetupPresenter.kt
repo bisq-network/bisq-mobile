@@ -152,7 +152,12 @@ class TrustedNodeSetupPresenter(
             .combine(pairingResult) { pairingResultPersisted, pairingResult ->
                 val result =
                     pairingResultPersisted && pairingResult != null && pairingResult.isSuccess
-                result
+
+                if (!pairingCompleted.value) {
+                    result
+                } else {
+                    true
+                }
             }.stateIn(
                 scope = presenterScope,
                 started = SharingStarted.Lazily,
