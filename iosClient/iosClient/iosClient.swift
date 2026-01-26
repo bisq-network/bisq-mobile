@@ -24,6 +24,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         registrationCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             if IosPushNotificationTokenProvider.Companion.shared.shouldTriggerRegistration() {
                 print("Triggering remote notification registration from Kotlin request...")
+
+                // Stop timer immediately after triggering registration
+                self?.registrationCheckTimer?.invalidate()
+                self?.registrationCheckTimer = nil
+
                 DispatchQueue.main.async {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
@@ -38,12 +43,20 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         print("APNs device token received: \(tokenString.prefix(20))...")
 
+        // Ensure timer is cleaned up on successful registration
+        registrationCheckTimer?.invalidate()
+        registrationCheckTimer = nil
+
         // Forward to Kotlin code
         IosPushNotificationTokenProvider.Companion.shared.onTokenReceived(token: tokenString)
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("Failed to register for remote notifications: \(error.localizedDescription)")
+
+        // Ensure timer is cleaned up on registration failure
+        registrationCheckTimer?.invalidate()
+        registrationCheckTimer = nil
 
         // Forward error to Kotlin code
         let nsError = error as NSError

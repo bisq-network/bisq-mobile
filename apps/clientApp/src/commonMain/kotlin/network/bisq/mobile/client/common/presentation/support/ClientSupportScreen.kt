@@ -176,7 +176,11 @@ fun ClientSupportScreen() {
                 if (deviceToken != null) {
                     BisqButton(
                         text = "Copy Token",
-                        onClick = { clientPresenter.onCopyToken(deviceToken!!) },
+                        onClick = {
+                            deviceToken?.let { token ->
+                                clientPresenter.onCopyToken(token)
+                            }
+                        },
                         type = BisqButtonType.Outline,
                     )
                 }

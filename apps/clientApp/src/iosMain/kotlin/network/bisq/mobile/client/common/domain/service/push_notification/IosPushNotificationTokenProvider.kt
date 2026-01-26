@@ -1,9 +1,12 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.domain.utils.Logging
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
@@ -31,6 +34,9 @@ class IosPushNotificationTokenProvider :
 
         // Flag to signal that registration should be triggered
         private var shouldRegister = false
+
+        // Mutex for thread-safe access to pendingTokenRequest
+        private val mutex = Mutex()
 
         /**
          * Called from AppDelegate when a device token is received.
@@ -84,26 +90,29 @@ class IosPushNotificationTokenProvider :
             return Result.failure(PushNotificationException("Notification permission not granted"))
         }
 
-        // Create a deferred to wait for the token
-        val deferred = CompletableDeferred<String>()
-        pendingTokenRequest = deferred
-
-        // Signal that registration should be triggered
-        // The Swift code will poll this and call registerForRemoteNotifications
-        log.i { "Requesting device token registration..." }
-        shouldRegister = true
+        // Reuse existing pending request if present and not completed
+        val deferred =
+            mutex.withLock {
+                pendingTokenRequest?.takeIf { !it.isCompleted } ?: CompletableDeferred<String>().also {
+                    pendingTokenRequest = it
+                    shouldRegister = true // Only trigger registration for new requests
+                    log.i { "Requesting device token registration..." }
+                }
+            }
 
         // Wait for the token with a timeout (will be delivered via AppDelegate)
         return try {
-            val token = withTimeoutOrNull(30_000L) { deferred.await() }
-            if (token != null) {
-                log.i { "Received device token: ${token.take(10)}..." }
-                Result.success(token)
-            } else {
-                log.e { "Timeout waiting for device token" }
-                Result.failure(PushNotificationException("Timeout waiting for device token"))
-            }
+            val token = withTimeout(30_000L) { deferred.await() }
+            log.i { "Received device token: ${token.take(10)}..." }
+            Result.success(token)
+        } catch (e: CancellationException) {
+            // Preserve structured concurrency - rethrow cancellation
+            throw e
         } catch (e: Exception) {
+            // Clear pending request on error
+            mutex.withLock {
+                pendingTokenRequest = null
+            }
             log.e(e) { "Failed to get device token" }
             Result.failure(e)
         }

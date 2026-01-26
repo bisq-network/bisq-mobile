@@ -14,8 +14,8 @@ class AndroidPushNotificationTokenProvider :
     Logging {
     override suspend fun requestPermission(): Boolean {
         // Android 13+ requires POST_NOTIFICATIONS permission
-        // For now, return true as we'll handle this when FCM is integrated
-        log.w { "Android push notification permission check not yet implemented" }
+        // For now, return false as FCM integration and permission handling are not implemented yet
+        log.w { "Android push notification permission check not implemented - FCM integration required" }
         return false
     }
 
