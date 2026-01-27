@@ -4,6 +4,22 @@ val ktlintVersion = "1.7.1"
 // Convert ktlint version to IDE plugin format (e.g., "1.7.1" -> "V1_7_1")
 fun String.toKtlintIdeVersion(): String = "V${this.replace(".", "_")}"
 
+// Common Kover exclusion patterns
+object KoverExclusions {
+    val annotations =
+        listOf(
+            "androidx.compose.ui.tooling.preview.Preview",
+            "org.jetbrains.compose.ui.tooling.preview.Preview",
+            "network.bisq.mobile.presentation.common.ui.utils.PreviewHelper",
+            "network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage",
+        )
+    val classes =
+        listOf(
+            "*ComposableSingletons*",
+            "bisqapps.*.generated.resources.*",
+        )
+}
+
 plugins {
     // trick: for the same plugin versions in all sub-modules
     alias(libs.plugins.android.application).apply(false)
@@ -32,9 +48,9 @@ plugins {
 dependencies {
     kover(project(":shared:domain"))
     kover(project(":shared:presentation"))
-    kover(project(":apps:nodeApp"))
     kover(project(":apps:clientApp"))
     // Note: shared:kscan is excluded as it's a third-party library wrapper with no tests
+    // Note: apps:nodeApp is excluded as it requires Maven secrets not available in fork PRs
 }
 
 // Configure all subprojects to run generateResourceBundles before compilation
@@ -82,13 +98,8 @@ subprojects {
             reports {
                 filters {
                     excludes {
-                        // Exclude Preview annotations from coverage reports
-                        annotatedBy("androidx.compose.ui.tooling.preview.Preview")
-                        annotatedBy("org.jetbrains.compose.ui.tooling.preview.Preview")
-                        annotatedBy("network.bisq.mobile.presentation.common.ui.utils.PreviewHelper")
-                        // Exclude custom coverage exclusion annotation
-                        annotatedBy("network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage")
-                        classes("*ComposableSingletons*")
+                        KoverExclusions.annotations.forEach { annotatedBy(it) }
+                        KoverExclusions.classes.forEach { classes(it) }
                     }
                 }
             }
@@ -272,16 +283,8 @@ kover {
         total {
             filters {
                 excludes {
-                    // Exclude Compose Preview functions from coverage
-                    annotatedBy("androidx.compose.ui.tooling.preview.Preview")
-                    annotatedBy("org.jetbrains.compose.ui.tooling.preview.Preview")
-                    annotatedBy("network.bisq.mobile.presentation.common.ui.utils.PreviewHelper")
-                    // Exclude custom coverage exclusion annotation
-                    annotatedBy("network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage")
-                    // Exclude generated Compose code
-                    classes("*ComposableSingletons*")
-                    // Exclude auto-generated Compose Multiplatform resources
-                    classes("bisqapps.*.generated.resources.*")
+                    KoverExclusions.annotations.forEach { annotatedBy(it) }
+                    KoverExclusions.classes.forEach { classes(it) }
                 }
             }
 
@@ -293,6 +296,21 @@ kover {
             xml {
                 title = "Bisq Mobile - Code Coverage Report"
                 onCheck = false
+            }
+
+            verify {
+                rule("Check Coverage") {
+                    bound {
+                        // Read minimum coverage from gradle.properties
+                        // This ensures coverage doesn't decrease over time
+                        minValue = (project.findProperty("kover.coverage.minimum") as? String)?.let { value ->
+                            value.toIntOrNull()
+                                ?: throw GradleException(
+                                    "kover.coverage.minimum in gradle.properties must be an integer (found: '$value')",
+                                )
+                        } ?: throw GradleException("kover.coverage.minimum property not found in gradle.properties")
+                    }
+                }
             }
         }
     }

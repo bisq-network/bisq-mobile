@@ -61,6 +61,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21 (Azul Zulu)
         uses: actions/setup-java@v4
@@ -119,7 +121,50 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CI: true
-        run: ./gradlew clean test -x :apps:nodeApp:testDebugUnitTest -x :apps:nodeApp:testReleaseUnitTest -x :apps:nodeApp:test --info
+        run: ./gradlew clean test --no-configuration-cache -x :apps:nodeApp:test --info
+
+      - name: Run Kover Verification (Ubuntu only, excluding nodeApp)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: ./gradlew koverVerify koverXmlReport --no-configuration-cache -x :apps:nodeApp:koverVerify -x :apps:nodeApp:koverXmlReport -x :apps:nodeApp:koverGenerateArtifact --info
+
+      - name: Check diff coverage on PRs (Ubuntu only, excluding nodeApp)
+        if: startsWith(matrix.os, 'ubuntu') && github.event_name == 'pull_request'
+        run: |
+          pip install diff-cover==10.2.0
+
+          # Read diff coverage threshold from gradle.properties
+          DIFF_COVERAGE_THRESHOLD=$(grep "kover.diff.coverage.minimum" gradle.properties | cut -d'=' -f2)
+          if [ -z "$DIFF_COVERAGE_THRESHOLD" ]; then
+            echo "Error: kover.diff.coverage.minimum not found in gradle.properties"
+            exit 1
+          fi
+
+          # Ensure compare branch exists for diff-cover
+          git fetch origin main
+
+          # Dynamically find all Kotlin source folders (exclude build directories)
+          SRC_ROOTS=()
+          while IFS= read -r dir; do
+            SRC_ROOTS+=("$dir")
+          done < <(find . -type d -path "*/src/*/kotlin" -not -path "*/build/*" | sed 's|^\./||')
+
+          echo "Found source roots: ${#SRC_ROOTS[@]} directories"
+
+          mkdir -p build/reports/diff-cover
+
+          diff-cover build/reports/kover/report.xml \
+            --compare-branch=origin/main \
+            --fail-under=${DIFF_COVERAGE_THRESHOLD} \
+            --html-report build/reports/diff-cover/diff-cover.html \
+            --src-roots "${SRC_ROOTS[@]}"
+
+      - name: Upload diff coverage report (Ubuntu only)
+        if: always() && startsWith(matrix.os, 'ubuntu') && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: diff-coverage-report-no-secrets
+          retention-days: 30
+          path: build/reports/diff-cover/diff-cover.html
 
       - name: Generate dummy framework for CocoaPods (Mac only)
         if: startsWith(matrix.os, 'macos')
@@ -202,9 +247,9 @@ jobs:
         run: |
           ./gradlew :shared:domain:iosSimulatorArm64Test --info
 
-  # --- Node-specific Maven build (needs secrets) ---
+  # --- Node app tests (needs secrets for Maven dependencies) ---
   node-maven:
-    name: Node Build (Needs Secrets)
+    name: Node App Tests (Needs Secrets)
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository # skip only fork PRs
@@ -255,7 +300,5 @@ jobs:
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
-      - name: Build Node Project with Maven Secrets
-        run: |
-          ./gradlew apps:nodeApp:clean apps:nodeApp:bundleDebug --refresh-dependencies --info
-          ./gradlew apps:nodeApp:test
+      - name: Run Node App Tests
+        run: ./gradlew :apps:nodeApp:testDebugUnitTest :apps:nodeApp:testReleaseUnitTest --info

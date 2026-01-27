@@ -24,6 +24,22 @@ print_warning() {
     echo -e "${YELLOW}⚠️  $1${NC}"
 }
 
+# Find repository root to handle pushes from subdirectories
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Read coverage thresholds from gradle.properties
+COVERAGE_THRESHOLD=$(grep "kover.coverage.minimum" "$REPO_ROOT/gradle.properties" | cut -d'=' -f2)
+if [ -z "$COVERAGE_THRESHOLD" ]; then
+    echo "Error: kover.coverage.minimum property not found in gradle.properties"
+    exit 1
+fi
+
+DIFF_COVERAGE_THRESHOLD=$(grep "kover.diff.coverage.minimum" "$REPO_ROOT/gradle.properties" | cut -d'=' -f2)
+if [ -z "$DIFF_COVERAGE_THRESHOLD" ]; then
+    echo "Error: kover.diff.coverage.minimum property not found in gradle.properties"
+    exit 1
+fi
+
 # ============================================
 # REUSABLE FUNCTIONS
 # ============================================
@@ -205,22 +221,26 @@ else
 fi
 
 # ============================================
-# 2. RUN UNIT TESTS
+# 2. RUN UNIT TESTS & CODE COVERAGE
 # ============================================
-echo "🧪 Running unit tests (androidUnitTest + commonTest)..."
-./gradlew testDebugUnitTest -q
+echo "🧪 Running unit tests with coverage verification..."
+./gradlew testDebugUnitTest koverVerify -q
 
 if [ $? -ne 0 ]; then
     echo ""
-    print_error "Unit tests failed!"
+    print_error "Tests failed or coverage is below the required threshold!"
     echo ""
-    echo "Some tests are failing. Please fix them before pushing."
-    echo ""
-    echo "To see details, run:"
+    echo "To see test details, run:"
     echo "  ./gradlew testDebugUnitTest"
     echo ""
     echo "To view HTML test reports:"
     echo "  open */build/reports/tests/testDebugUnitTest/index.html"
+    echo ""
+    echo "To see detailed coverage report:"
+    echo "  ./gradlew koverHtmlReport"
+    echo "  open build/reports/kover/html/index.html"
+    echo ""
+    echo "Note: The project requires a minimum of ${COVERAGE_THRESHOLD}% overall coverage."
     echo ""
     echo "To skip this check (not recommended):"
     echo "  git push --no-verify"
@@ -228,7 +248,20 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-print_success "All unit tests passed!"
+print_success "All unit tests passed and coverage meets baseline (≥${COVERAGE_THRESHOLD}%)!"
+echo ""
+echo "ℹ️  Note: PRs must also meet ${DIFF_COVERAGE_THRESHOLD}% diff coverage (checked in CI)"
+echo "   To check diff coverage locally before pushing:"
+echo "   pip3 install diff-cover==10.2.0  # or: python3 -m pip install diff-cover==10.2.0"
+echo "   ./gradlew koverXmlReport"
+echo "   bash << 'COVERAGE_EOF'"
+echo "     SRC_ROOTS=()"
+echo "     while IFS= read -r dir; do SRC_ROOTS+=(\"\$dir\"); done < <(find . -type d -path \"*/src/*/kotlin\" -not -path \"*/build/*\" | sed 's|^\\./||')"
+echo "     mkdir -p build/reports/diff-cover"
+echo "     diff-cover build/reports/kover/report.xml --compare-branch=upstream/main --fail-under=${DIFF_COVERAGE_THRESHOLD} \\"
+echo "       --html-report build/reports/diff-cover/diff-coverage.html --src-roots \"\${SRC_ROOTS[@]}\""
+echo "   COVERAGE_EOF"
+echo "   open build/reports/diff-cover/diff-coverage.html  # Opens the visual HTML report"
 echo ""
 
 # Success!
