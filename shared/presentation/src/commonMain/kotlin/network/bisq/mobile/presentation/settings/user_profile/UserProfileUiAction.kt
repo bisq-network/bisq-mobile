@@ -3,36 +3,36 @@ package network.bisq.mobile.presentation.settings.user_profile
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 sealed interface UserProfileUiAction {
-    data class OnStatementChanged(
+    data class OnStatementChange(
         val value: String,
     ) : UserProfileUiAction
 
-    data class OnTermsChanged(
+    data class OnTermsChange(
         val value: String,
     ) : UserProfileUiAction
 
-    data class OnSavePressed(
+    data class OnSavePress(
         val profileId: String,
         val uiState: UserProfileUiState,
     ) : UserProfileUiAction
 
-    object OnCreateProfilePressed : UserProfileUiAction
+    object OnCreateProfilePress : UserProfileUiAction
 
-    data class OnDeletePressed(
+    data class OnDeletePress(
         val profile: UserProfileVO,
     ) : UserProfileUiAction
 
-    data class OnDeleteConfirmed(
+    data class OnDeleteConfirm(
         val profile: UserProfileVO,
     ) : UserProfileUiAction
 
-    object OnDeleteConfirmationDismissed : UserProfileUiAction
+    object OnDeleteConfirmationDismiss : UserProfileUiAction
 
     object OnDeleteError : UserProfileUiAction
 
-    object OnDeleteErrorDialogDismissed : UserProfileUiAction
+    object OnDeleteErrorDialogDismiss : UserProfileUiAction
 
-    data class OnUserProfileSelected(
+    data class OnUserProfileSelect(
         val profile: UserProfileVO,
     ) : UserProfileUiAction
 }

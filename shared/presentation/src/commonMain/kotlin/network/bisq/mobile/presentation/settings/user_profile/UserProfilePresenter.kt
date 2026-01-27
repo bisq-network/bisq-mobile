@@ -66,7 +66,7 @@ class UserProfilePresenter(
 
     override fun onAction(action: UserProfileUiAction) {
         when (action) {
-            is UserProfileUiAction.OnStatementChanged -> {
+            is UserProfileUiAction.OnStatementChange -> {
                 _uiState.value.selectedUserProfile?.let {
                     _uiState.update { current ->
                         current.copy(
@@ -76,7 +76,7 @@ class UserProfilePresenter(
                 }
             }
 
-            is UserProfileUiAction.OnTermsChanged -> {
+            is UserProfileUiAction.OnTermsChange -> {
                 _uiState.value.selectedUserProfile?.let {
                     _uiState.update { current ->
                         current.copy(
@@ -86,7 +86,7 @@ class UserProfilePresenter(
                 }
             }
 
-            is UserProfileUiAction.OnSavePressed -> {
+            is UserProfileUiAction.OnSavePress -> {
                 disableInteractive()
                 _uiState.update { it.copy(isBusyWithAction = true) }
                 presenterScope.launch {
@@ -114,17 +114,17 @@ class UserProfilePresenter(
                 }
             }
 
-            is UserProfileUiAction.OnCreateProfilePressed -> {
+            is UserProfileUiAction.OnCreateProfilePress -> {
                 navigateTo(CreateProfile(false))
             }
 
-            is UserProfileUiAction.OnDeletePressed -> {
+            is UserProfileUiAction.OnDeletePress -> {
                 _uiState.update {
                     it.copy(showDeleteConfirmationForProfile = action.profile)
                 }
             }
 
-            is UserProfileUiAction.OnDeleteConfirmed -> {
+            is UserProfileUiAction.OnDeleteConfirm -> {
                 disableInteractive()
                 _uiState.update { it.copy(isBusyWithAction = true, showDeleteConfirmationForProfile = null) }
                 presenterScope.launch {
@@ -141,7 +141,7 @@ class UserProfilePresenter(
                 }
             }
 
-            is UserProfileUiAction.OnDeleteConfirmationDismissed -> {
+            is UserProfileUiAction.OnDeleteConfirmationDismiss -> {
                 _uiState.update {
                     it.copy(showDeleteConfirmationForProfile = null)
                 }
@@ -151,11 +151,11 @@ class UserProfilePresenter(
                 _uiState.update { it.copy(showDeleteErrorDialog = true) }
             }
 
-            is UserProfileUiAction.OnDeleteErrorDialogDismissed -> {
+            is UserProfileUiAction.OnDeleteErrorDialogDismiss -> {
                 _uiState.update { it.copy(showDeleteErrorDialog = false) }
             }
 
-            is UserProfileUiAction.OnUserProfileSelected -> {
+            is UserProfileUiAction.OnUserProfileSelect -> {
                 disableInteractive()
                 _uiState.update { it.copy(isBusyWithAction = true) }
                 presenterScope.launch {
