@@ -161,15 +161,12 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
                     appBootstrap,
                 )
 
-            presenter.onProxyOptionChanged(BisqProxyOption.INTERNAL_TOR)
-            // presenter.onApiUrlChanged("http://127.0.0.1:8090")
+            // Note: Proxy option is now automatically detected based on URL
+            // Simulate a .onion URL to trigger INTERNAL_TOR automatically
+            // The pairing code would set this via ApiAccessService.setPairingQrCodeString
+            // For this test, we'll use the fact that validateApiUrl sets INTERNAL_TOR for .onion URLs
+            presenter.validateApiUrl("http://test123456789012345678901234567890123456.onion:8090", BisqProxyOption.NONE)
 
-            // Start validators (lazy flows) so onTestAndSavePressed will proceed
-            val validators =
-                CoroutineScope(testDispatcher).launch {
-                    // launch { presenter.isApiUrlValid.collect { } }
-                    launch { presenter.isProxyUrlValid.collect { } }
-                }
             delay(20)
             presenter.onTestAndSavePressed(isWorkflow = true)
             // Wait until mocked startTor flips the state to Starting
@@ -218,20 +215,15 @@ class TrustedNodeSetupPresenterCancelInternalTorTest {
                     appBootstrap,
                 )
 
-            presenter.onProxyOptionChanged(BisqProxyOption.INTERNAL_TOR)
-            // presenter.onApiUrlChanged("http://127.0.0.1:8090")
+            // Note: Proxy option is now automatically detected based on URL
+            // Simulate a .onion URL to trigger INTERNAL_TOR automatically
+            presenter.validateApiUrl("http://test123456789012345678901234567890123456.onion:8090", BisqProxyOption.NONE)
 
-            val validators =
-                CoroutineScope(testDispatcher).launch {
-                    // launch { presenter.isApiUrlValid.collect { } }
-                    launch { presenter.isProxyUrlValid.collect { } }
-                }
             delay(20)
             presenter.onTestAndSavePressed(isWorkflow = true)
             delay(100)
             presenter.onCancelPressed()
             delay(50)
-            validators.cancel()
 
             // Presenter state reset
             // assertFalse(presenter.isNodeSetupInProgress.value)

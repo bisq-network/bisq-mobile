@@ -1,66 +1,57 @@
 package network.bisq.mobile.client.trusted_node_setup
 
-import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.di.clientTestModule
+import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.client.common.domain.websocket.ConnectionState
-import network.bisq.mobile.client.common.domain.websocket.WebSocketClient
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.test_utils.TestDoubles
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.After
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 
-@ExperimentalCoroutinesApi
-class TrustedNodeSetupPresenterTimeoutTest {
+/**
+ * Tests for automatic proxy detection based on URL patterns.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class TrustedNodeSetupPresenterProxyDetectionTest {
     private val testDispatcher = StandardTestDispatcher()
-
     private lateinit var wsClientService: WebSocketClientService
+    private lateinit var apiAccessService: ApiAccessService
     private lateinit var kmpTorService: KmpTorService
     private lateinit var appBootstrap: ApplicationBootstrapFacade
     private lateinit var mainPresenter: MainPresenter
-
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
     private lateinit var userRepository: UserRepository
+    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        // Mocks / fakes
+        // Mocks
         wsClientService = mockk(relaxed = true)
+        apiAccessService = mockk(relaxed = true)
         kmpTorService = mockk(relaxed = true)
         appBootstrap = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
 
-        // Minimal repositories
         sensitiveSettingsRepository =
             object : SensitiveSettingsRepository {
                 private val _data = MutableStateFlow(SensitiveSettings())
@@ -76,6 +67,7 @@ class TrustedNodeSetupPresenterTimeoutTest {
                     _data.value = SensitiveSettings()
                 }
             }
+
         userRepository =
             object : UserRepository {
                 private val _data = MutableStateFlow(User())
@@ -94,35 +86,12 @@ class TrustedNodeSetupPresenterTimeoutTest {
                 }
             }
 
-        // IMPORTANT: mock object before stubbing to avoid global leakage across tests
-        mockkObject(WebSocketClient)
-
-        // Mock timeout behavior
-        every { wsClientService.connectionState } returns
-            MutableStateFlow<ConnectionState>(
-                ConnectionState.Disconnected(),
-            )
-        every { WebSocketClient.determineTimeout(any()) } returns 3_000L
-        coEvery {
-            wsClientService.testConnection(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } coAnswers {
-            // Simulate a timeout that returns the TimeoutCancellationException as a result
-            val e =
-                runCatching { withTimeout(1) { delay(50) } }.exceptionOrNull()
-            e
-        }
-
         startKoin {
             modules(
                 clientTestModule,
                 module {
                     single<WebSocketClientService> { wsClientService }
+                    single<ApiAccessService> { apiAccessService }
                     single<KmpTorService> { kmpTorService }
                     single<ApplicationBootstrapFacade> { appBootstrap }
                 },
@@ -134,13 +103,10 @@ class TrustedNodeSetupPresenterTimeoutTest {
     fun tearDown() {
         Dispatchers.resetMain()
         stopKoin()
-        // Cleanup global mock to avoid leakage across tests
-        TestDoubles.cleanupWebSocketClientMock()
     }
 
-    @Ignore("Flaky under current test jobs manager; will enable after injecting test jobs manager here")
     @Test
-    fun `timeout during connection is routed to error handler (not silent cancel)`() =
+    fun `onion URL automatically enables INTERNAL_TOR`() =
         runTest {
             val presenter =
                 TrustedNodeSetupPresenter(
@@ -151,19 +117,60 @@ class TrustedNodeSetupPresenterTimeoutTest {
                     appBootstrap,
                 )
 
-            // Set valid inputs
-            // Note: Proxy option is now automatically detected based on URL
-            // No need to manually set proxy option or validate proxy URL
+            // Initially NONE
+            assertEquals(BisqProxyOption.NONE, presenter.selectedProxyOption.value)
 
-            // Act
-            presenter.onTestAndSavePressed(isWorkflow = true)
+            // Validate a .onion URL
+            val onionUrl = "http://test1234567890123456789012345678901234567890123456.onion:8090"
+            presenter.validateApiUrl(onionUrl, presenter.selectedProxyOption.value)
 
-            // Run all scheduled tasks/timeouts
-            advanceUntilIdle()
+            // Should automatically switch to INTERNAL_TOR
+            assertEquals(BisqProxyOption.INTERNAL_TOR, presenter.selectedProxyOption.value)
+        }
 
-            // Assert: we reached Disconnected(error=TimeoutCancellationException)
-            val state = presenter.wsClientConnectionState.value
-            println("STATE=" + state)
-            assertTrue(state is ConnectionState.Disconnected && state.error is TimeoutCancellationException)
+    @Test
+    fun `clearnet URL uses NONE proxy option`() =
+        runTest {
+            val presenter =
+                TrustedNodeSetupPresenter(
+                    mainPresenter,
+                    userRepository,
+                    sensitiveSettingsRepository,
+                    kmpTorService,
+                    appBootstrap,
+                )
+
+            // Initially NONE
+            assertEquals(BisqProxyOption.NONE, presenter.selectedProxyOption.value)
+
+            // Validate a clearnet URL
+            val clearnetUrl = "https://example.com:8090"
+            presenter.validateApiUrl(clearnetUrl, presenter.selectedProxyOption.value)
+
+            // Should remain NONE
+            assertEquals(BisqProxyOption.NONE, presenter.selectedProxyOption.value)
+        }
+
+    @Test
+    fun `localhost URL uses NONE proxy option`() =
+        runTest {
+            val presenter =
+                TrustedNodeSetupPresenter(
+                    mainPresenter,
+                    userRepository,
+                    sensitiveSettingsRepository,
+                    kmpTorService,
+                    appBootstrap,
+                )
+
+            // Initially NONE
+            assertEquals(BisqProxyOption.NONE, presenter.selectedProxyOption.value)
+
+            // Validate localhost URL
+            val localhostUrl = "http://localhost:8090"
+            presenter.validateApiUrl(localhostUrl, presenter.selectedProxyOption.value)
+
+            // Should remain NONE
+            assertEquals(BisqProxyOption.NONE, presenter.selectedProxyOption.value)
         }
 }

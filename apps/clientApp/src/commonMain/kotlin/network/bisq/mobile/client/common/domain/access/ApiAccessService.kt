@@ -135,6 +135,8 @@ class ApiAccessService(
                 PairingQrCodeDecoder.decode(value)
             val wsUrl = adaptLoopbackForAndroid(pairingQrCode.webSocketUrl)
             _webSocketUrl.value = wsUrl
+            // Convert WebSocket URL to REST API URL, preserving the port
+            // webSocketUrlToRestApiUrl just replaces ws:// with http://, keeping the port intact
             _restApiUrl.value =
                 webSocketUrlToRestApiUrl(wsUrl)
             _tlsFingerprint.value = pairingQrCode.tlsFingerprint
@@ -144,7 +146,8 @@ class ApiAccessService(
 
             log.i {
                 "update SensitiveSettings: webSocketUrl=$wsUrl " +
-                    "tlsFingerprint=${pairingQrCode.tlsFingerprint}" +
+                    "restApiUrl=${_restApiUrl.value} " +
+                    "tlsFingerprint=${pairingQrCode.tlsFingerprint} " +
                     "clientName=${_clientName.value}"
             }
 

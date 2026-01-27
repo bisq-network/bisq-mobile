@@ -40,4 +40,18 @@ class UrlUtilsTest {
         val expected = "http://localhost:8081/api/v1"
         assertEquals(expected, sanitizeBaseUrl(input, defaultPort))
     }
+
+    @Test
+    fun `preserves explicit port for onion URLs with http scheme`() {
+        val input = "http://uhw224s7asl3m43p7kzdk2yoflweswq54zmnzvnsnrxucnlamdltx6id.onion:80"
+        val expected = "http://uhw224s7asl3m43p7kzdk2yoflweswq54zmnzvnsnrxucnlamdltx6id.onion:80"
+        assertEquals(expected, sanitizeBaseUrl(input, defaultPort))
+    }
+
+    @Test
+    fun `preserves explicit non-default port for http URLs`() {
+        val input = "http://example.com:8080"
+        val expected = "http://example.com:8080"
+        assertEquals(expected, sanitizeBaseUrl(input, defaultPort))
+    }
 }

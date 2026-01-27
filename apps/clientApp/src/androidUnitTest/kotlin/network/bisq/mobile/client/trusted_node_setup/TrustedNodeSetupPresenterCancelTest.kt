@@ -156,17 +156,10 @@ class TrustedNodeSetupPresenterCancelTest {
                     kmpTorService,
                     appBootstrap,
                 )
-            // Provide a valid API URL and no proxy (so we avoid Tor paths)
-            // presenter.onApiUrlChanged("http://127.0.0.1:8090")
-            presenter.onProxyOptionChanged(BisqProxyOption.NONE)
+            // Note: Proxy option is now automatically detected based on URL
+            // No need to manually set proxy option or validate proxy URL
 
-            // Ensure validation StateFlows are started
-            val collectorJob =
-                CoroutineScope(testDispatcher).launch {
-                    // launch { presenter.isApiUrlValid.collect { /* no-op */ } }
-                    launch { presenter.isProxyUrlValid.collect { /* no-op */ } }
-                }
-            // Allow validation flows to propagate
+            // Allow any initialization to complete
             delay(50)
             // Start connection
             presenter.onTestAndSavePressed(isWorkflow = true)
@@ -179,7 +172,6 @@ class TrustedNodeSetupPresenterCancelTest {
             presenter.onCancelPressed()
             // Give coroutine a beat to process cancellation
             delay(50)
-            collectorJob.cancel()
 
             // Assert state reset
             // assertFalse(presenter.isNodeSetupInProgress.value)

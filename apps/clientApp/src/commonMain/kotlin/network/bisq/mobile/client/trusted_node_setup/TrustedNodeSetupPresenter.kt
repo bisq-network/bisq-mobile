@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -83,12 +84,6 @@ class TrustedNodeSetupPresenter(
     val pairingResultPersisted: StateFlow<Boolean> =
         apiAccessService.pairingResultStored
 
-    private val _proxyHost = MutableStateFlow("127.0.0.1")
-    val proxyHost: StateFlow<String> = _proxyHost.asStateFlow()
-
-    private val _proxyPort = MutableStateFlow("9050")
-    val proxyPort: StateFlow<String> = _proxyPort.asStateFlow()
-
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> = _status.asStateFlow()
 
@@ -98,22 +93,6 @@ class TrustedNodeSetupPresenter(
 
     private val _selectedProxyOption = MutableStateFlow(BisqProxyOption.NONE)
     val selectedProxyOption = _selectedProxyOption.asStateFlow()
-
-    val isProxyUrlValid: StateFlow<Boolean> =
-        combine(
-            proxyHost,
-            proxyPort,
-            selectedProxyOption,
-        ) { h, p, proxyOption ->
-            if (proxyOption == BisqProxyOption.EXTERNAL_TOR ||
-                proxyOption == BisqProxyOption.SOCKS_PROXY
-            ) {
-                validateProxyHost(h) == null &&
-                    validatePort(p) == null
-            } else {
-                true
-            }
-        }.stateIn(presenterScope, SharingStarted.Lazily, true)
 
     val torState: StateFlow<KmpTorService.TorState> =
         kmpTorService.state.stateIn(
@@ -180,24 +159,6 @@ class TrustedNodeSetupPresenter(
             try {
                 val settings = sensitiveSettingsRepository.fetch()
                 _selectedProxyOption.value = settings.selectedProxyOption
-                /* if (settings.bisqApiUrl.isBlank()) {
-                     if (apiUrl.value.isNotBlank()) onApiUrlChanged(apiUrl.value)
-                 } else {
-                     onApiUrlChanged(settings.bisqApiUrl)
-                 }*/
-                if (settings.externalProxyUrl.isBlank()) {
-                    if (_proxyHost.value.isNotBlank()) {
-                        onProxyHostChanged(
-                            _proxyHost.value,
-                        )
-                    }
-                } else {
-                    val parts = settings.externalProxyUrl.split(':', limit = 2)
-                    val savedHost = parts.getOrNull(0)?.trim().orEmpty()
-                    val savedPort = parts.getOrNull(1)?.trim().orEmpty()
-                    onProxyHostChanged(savedHost)
-                    if (savedPort.isNotBlank()) onProxyPortChanged(savedPort)
-                }
             } catch (e: Exception) {
                 log.e("Failed to load from repository", e)
             } finally {
@@ -208,19 +169,8 @@ class TrustedNodeSetupPresenter(
 
     fun onPairingCodeChanged(value: String) {
         apiAccessService.setPairingQrCodeString(value)
-    }
-
-    fun onProxyHostChanged(host: String) {
-        _proxyHost.value = host
-    }
-
-    fun onProxyPortChanged(port: String) {
-        _proxyPort.value = port
-    }
-
-    fun onProxyOptionChanged(value: BisqProxyOption) {
-        _selectedProxyOption.value = value
-        userExplicitlyChangedProxy.value = true
+        // Trigger automatic proxy detection for pasted pairing code
+        detectAndSetProxyOption()
     }
 
     fun onTestAndSavePressed(isWorkflow: Boolean) {
@@ -234,8 +184,6 @@ class TrustedNodeSetupPresenter(
             showSnackbar("mobile.trustedNodeSetup.testConnection.message".i18n())
             return
         }
-
-        if (!isProxyUrlValid.value) return
 
         _isPairingInProgress.value = true
         _status.value =
@@ -257,82 +205,108 @@ class TrustedNodeSetupPresenter(
                     return@launch
                 }
                 val tlsFingerprint = apiAccessService.tlsFingerprint.value
-                val clientId = apiAccessService.clientId.value
-                val sessionId = apiAccessService.sessionId.value
+                var clientId = apiAccessService.clientId.value
+                var sessionId = apiAccessService.sessionId.value
 
                 try {
+                    // If clientId or sessionId is null, we need to request pairing first
+                    if (clientId == null || sessionId == null) {
+                        _status.value = "mobile.trustedNodeSetup.status.requestingPairing".i18n()
+                        log.d { "ClientId or SessionId is null, requesting pairing..." }
+
+                        // Trigger pairing request
+                        apiAccessService.requestPairing()
+
+                        // Wait for pairing result
+                        val pairingResult =
+                            apiAccessService.pairingResult
+                                .filterNotNull()
+                                .first()
+
+                        if (pairingResult.isFailure) {
+                            val pairingError = pairingResult.exceptionOrNull()
+                            log.e(pairingError) { "Pairing request failed" }
+                            throw pairingError ?: IllegalStateException("Pairing request failed")
+                        }
+
+                        log.d { "Pairing request successful" }
+                        // Update clientId and sessionId from pairing response
+                        clientId = apiAccessService.clientId.value
+                        sessionId = apiAccessService.sessionId.value
+                    }
+
                     val newProxyHost: String?
                     val newProxyPort: Int?
                     val newProxyIsTor: Boolean
                     val newProxyOption = selectedProxyOption.value
+                    log.d { "Proxy option: $newProxyOption for URL: ${newApiUrl.host}" }
                     when (newProxyOption) {
                         BisqProxyOption.INTERNAL_TOR -> {
+                            log.d { "Using INTERNAL_TOR proxy, checking Tor state: ${kmpTorService.state.value}" }
+                            // Start Tor if not already started and wait for it to be fully bootstrapped
                             if (kmpTorService.state.value !is KmpTorService.TorState.Started) {
+                                _status.value = "mobile.trustedNodeSetup.status.startingTor".i18n()
+                                log.d { "Tor not started, attempting to start..." }
                                 val started = kmpTorService.startTor()
                                 if (!started) {
                                     val startError =
                                         (kmpTorService.state.value as? KmpTorService.TorState.Stopped)?.error
                                             ?: IllegalStateException("Failed to start Tor")
+                                    log.e(startError) { "Failed to start Tor" }
                                     throw startError
                                 }
+                                log.d { "Tor started, waiting for bootstrap to complete..." }
+                                // Wait for Tor to be fully bootstrapped (100%)
+                                _status.value = "mobile.trustedNodeSetup.status.bootstrappingTor".i18n()
+                                kmpTorService.bootstrapProgress.filter { it >= 100 }.first()
+                                log.d { "Tor bootstrap complete (100%)" }
                             }
                             newProxyHost = "127.0.0.1"
                             newProxyPort = kmpTorService.awaitSocksPort()
                             newProxyIsTor = true
+                            log.d { "Using Tor proxy at $newProxyHost:$newProxyPort" }
                         }
 
-                        BisqProxyOption.EXTERNAL_TOR -> {
-                            newProxyHost = proxyHost.value
-                            newProxyPort = proxyPort.value.toIntOrNull()
-                            newProxyIsTor = true
-                        }
-
-                        BisqProxyOption.SOCKS_PROXY -> {
-                            newProxyHost = proxyHost.value
-                            newProxyPort = proxyPort.value.toIntOrNull()
-                            newProxyIsTor = false
+                        BisqProxyOption.EXTERNAL_TOR,
+                        BisqProxyOption.SOCKS_PROXY,
+                        -> {
+                            // External proxy options are not supported in pairing flow
+                            // They can only be configured via automatic detection
+                            throw IllegalStateException("External proxy options not supported in pairing flow")
                         }
 
                         BisqProxyOption.NONE -> {
                             newProxyHost = null
                             newProxyPort = null
                             newProxyIsTor = false
+                            log.d { "No proxy configured" }
                         }
                     }
 
-                    val isExternalProxy =
-                        newProxyOption == BisqProxyOption.EXTERNAL_TOR || newProxyOption == BisqProxyOption.SOCKS_PROXY
-
-                    val error =
-                        if (isExternalProxy && newProxyPort == null) {
-                            IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
-                        } else {
-                            val timeoutSecs =
-                                WebSocketClient.determineTimeout(newApiUrl.host) / 1000
-                            countdownJob =
-                                presenterScope.launch {
-                                    for (i in timeoutSecs downTo 0) {
-                                        _timeoutCounter.value = i
-                                        delay(1000)
-                                    }
-                                }
-                            _status.value =
-                                "mobile.trustedNodeSetup.status.connecting".i18n()
-                            _wsClientConnectionState.value =
-                                ConnectionState.Connecting
-                            val result =
-                                wsClientService.testConnection(
-                                    apiUrl = newApiUrl,
-                                    tlsFingerprint = tlsFingerprint,
-                                    clientId = clientId,
-                                    sessionId = sessionId,
-                                    proxyHost = newProxyHost,
-                                    proxyPort = newProxyPort,
-                                    isTorProxy = newProxyIsTor,
-                                )
-                            countdownJob?.cancel()
-                            result
+                    val timeoutSecs =
+                        WebSocketClient.determineTimeout(newApiUrl.host) / 1000
+                    countdownJob =
+                        presenterScope.launch {
+                            for (i in timeoutSecs downTo 0) {
+                                _timeoutCounter.value = i
+                                delay(1000)
+                            }
                         }
+                    _status.value =
+                        "mobile.trustedNodeSetup.status.connecting".i18n()
+                    _wsClientConnectionState.value =
+                        ConnectionState.Connecting
+                    val error =
+                        wsClientService.testConnection(
+                            apiUrl = newApiUrl,
+                            tlsFingerprint = tlsFingerprint,
+                            clientId = clientId,
+                            sessionId = sessionId,
+                            proxyHost = newProxyHost,
+                            proxyPort = newProxyPort,
+                            isTorProxy = newProxyIsTor,
+                        )
+                    countdownJob?.cancel()
 
                     if (error != null) {
                         _wsClientConnectionState.value =
@@ -343,9 +317,12 @@ class TrustedNodeSetupPresenter(
                         // because it wont emit if they are the same, and new clients wont be instantiated
                         val currentSettings =
                             sensitiveSettingsRepository.fetch()
+                        // Explicitly include port in URL to preserve non-default ports (e.g., :80 for HTTP)
+                        // Ktor's Url.toString() drops default ports, which breaks QR code URLs with explicit ports
+                        val apiUrlWithPort = "${newApiUrl.protocol.name}://${newApiUrl.host}:${newApiUrl.port}"
                         val updatedSettings =
                             currentSettings.copy(
-                                bisqApiUrl = newApiUrl.toString(),
+                                bisqApiUrl = apiUrlWithPort,
                                 tlsFingerprint = tlsFingerprint,
                                 clientId = clientId,
                                 sessionId = sessionId,
@@ -579,30 +556,7 @@ class TrustedNodeSetupPresenter(
         return null
     }
 
-    fun validatePort(value: String): String? {
-        if (value.isEmpty()) {
-            return "mobile.trustedNodeSetup.port.invalid.empty".i18n()
-        }
-        if (!value.isValidPort()) {
-            return "mobile.trustedNodeSetup.port.invalid".i18n()
-        }
-        return null
-    }
-
     private fun localHost(): String = if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
-
-    fun validateProxyHost(value: String): String? {
-        if (value.isEmpty()) {
-            return "mobile.trustedNodeSetup.proxyHost.invalid.empty".i18n()
-        }
-        if (value == "localhost") {
-            return null
-        }
-        if (!value.isValidIpv4()) {
-            return "mobile.trustedNodeSetup.host.ip.invalid".i18n()
-        }
-        return null
-    }
 
     fun onShowQrCodeView() {
         _showQrCodeView.value = true
@@ -624,5 +578,24 @@ class TrustedNodeSetupPresenter(
     fun onQrCodeResult(value: String) {
         apiAccessService.setPairingQrCodeString(value)
         _showQrCodeView.value = false
+        // Trigger automatic proxy detection for QR code
+        detectAndSetProxyOption()
+    }
+
+    /**
+     * Detects if the current API URL requires Tor proxy and sets the proxy option accordingly.
+     * This is called after scanning a QR code or pasting a pairing code.
+     */
+    private fun detectAndSetProxyOption() {
+        val url = apiAccessService.restApiUrl.value
+        if (url.isNotBlank()) {
+            val parsedUrl = parseAndNormalizeUrl(url)
+            if (parsedUrl != null && parsedUrl.host.endsWith(".onion")) {
+                if (selectedProxyOption.value != BisqProxyOption.INTERNAL_TOR) {
+                    log.d { "Pairing code contains .onion URL, setting proxy to INTERNAL_TOR" }
+                    _selectedProxyOption.value = BisqProxyOption.INTERNAL_TOR
+                }
+            }
+        }
     }
 }
