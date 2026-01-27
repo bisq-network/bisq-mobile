@@ -79,8 +79,6 @@ fun TrustedNodeSetupScreen(
     val pairingCode by presenter.pairingQrCodeString.collectAsState()
     val clientName by presenter.clientName.collectAsState()
     val status by presenter.status.collectAsState()
-    val proxyHost by presenter.proxyHost.collectAsState()
-    val proxyPort by presenter.proxyPort.collectAsState()
     val torState by presenter.torState.collectAsState()
     val torProgress by presenter.torProgress.collectAsState()
     val timeoutCounter by presenter.timeoutCounter.collectAsState()
@@ -89,7 +87,6 @@ fun TrustedNodeSetupScreen(
     val pairingCompleted by presenter.pairingCompleted.collectAsState()
 
     var showConfirmDialog by remember { mutableStateOf(false) }
-    var showAdvancedOptions by remember { mutableStateOf(false) }
 
     BisqScrollScaffold(
         modifier = modifier,
@@ -148,7 +145,7 @@ fun TrustedNodeSetupScreen(
                     "mobile.trustedNodeSetup.title".i18n(),
                     textAlign = TextAlign.Center,
                 )
-                BisqGap.V2()
+                BisqGap.V3()
             }
 
             BisqText.LargeRegular(text = "mobile.trustedNodeSetup.info".i18n())
@@ -159,7 +156,7 @@ fun TrustedNodeSetupScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqGap.V1()
+                BisqGap.V2()
 
                 BisqButton(
                     text = "mobile.trustedNodeSetup.pairingCode.scan".i18n(),
@@ -201,7 +198,7 @@ fun TrustedNodeSetupScreen(
                     )
                 }
 
-                BisqGap.V2()
+                BisqGap.V4()
                 BisqButton(
                     text = "mobile.trustedNodeSetup.testAndSave".i18n(),
                     backgroundColor = BisqTheme.colors.primaryDim,
@@ -211,28 +208,9 @@ fun TrustedNodeSetupScreen(
                 BisqGap.V2()
             }
 
-            BisqGap.V2()
+            BisqGap.V4()
 
-            AdvancedOptionsDrawer(
-                onToggle = { showAdvancedOptions = !showAdvancedOptions },
-                expanded = showAdvancedOptions,
-            ) {
-                Column {
-                    BisqSelect(
-                        label = "mobile.trustedNodeSetup.proxy".i18n(),
-                        options = BisqProxyOption.entries,
-                        selectedKey = selectedProxyOption.name,
-                        optionLabel = { it.displayString },
-                        optionKey = { it.name },
-                        onSelect = {
-                            presenter.onProxyOptionChanged(it)
-                        },
-                        disabled = isPairingInProgress || !isWorkflow || pairingCode.isNotEmpty(),
-                    )
-                }
-            }
-            BisqGap.V1()
-
+            // Show Tor state when Tor is active
             if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState !is KmpTorService.TorState.Stopped) {
                 Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
                     BisqText.BaseRegular("mobile.trustedNodeSetup.torState".i18n())
@@ -240,47 +218,6 @@ fun TrustedNodeSetupScreen(
                     if (torState is KmpTorService.TorState.Starting) {
                         BisqText.BaseRegular(" $torProgress%")
                     }
-                }
-            }
-
-            val isExternalProxyOption =
-                selectedProxyOption == BisqProxyOption.EXTERNAL_TOR || selectedProxyOption == BisqProxyOption.SOCKS_PROXY
-            AnimatedVisibility(isExternalProxyOption) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                        Arrangement.spaceBetweenWithMin(
-                            BisqUIConstants.ScreenPadding,
-                        ),
-                ) {
-                    BisqTextField(
-                        modifier = Modifier.weight(0.8f),
-                        label = "mobile.trustedNodeSetup.proxyHost".i18n(),
-                        onValueChange = { host, _ ->
-                            presenter.onProxyHostChanged(
-                                host,
-                            )
-                        },
-                        value = proxyHost,
-                        placeholder = "127.0.0.1",
-                        keyboardType = KeyboardType.Decimal,
-                        disabled = isPairingInProgress || !isWorkflow,
-                        validation = presenter::validateProxyHost,
-                    )
-                    BisqTextField(
-                        modifier = Modifier.weight(0.2f),
-                        label = "mobile.trustedNodeSetup.port".i18n(),
-                        onValueChange = { port, _ ->
-                            presenter.onProxyPortChanged(
-                                port,
-                            )
-                        },
-                        value = proxyPort,
-                        placeholder = "9050",
-                        keyboardType = KeyboardType.Decimal,
-                        disabled = isPairingInProgress || !isWorkflow,
-                        validation = presenter::validatePort,
-                    )
                 }
             }
 

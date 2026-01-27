@@ -287,10 +287,13 @@ class WebSocketClientService(
         isTorProxy: Boolean = true,
     ): Throwable? {
         val hasProxy = proxyHost != null && proxyPort != null
+        // Explicitly include port in URL to preserve non-default ports (e.g., :80 for HTTP)
+        // Ktor's Url.toString() drops default ports, which breaks QR code URLs with explicit ports
+        val apiUrlWithPort = "${apiUrl.protocol.name}://${apiUrl.host}:${apiUrl.port}"
         val httpClient =
             httpClientService.createNewInstance(
                 HttpClientSettings(
-                    bisqApiUrl = apiUrl.toString(),
+                    bisqApiUrl = apiUrlWithPort,
                     tlsFingerprint = tlsFingerprint,
                     clientId = clientId,
                     sessionId = sessionId,
