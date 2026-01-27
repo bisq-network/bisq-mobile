@@ -2,33 +2,33 @@ package network.bisq.mobile.node.settings.backup.presentation
 
 import android.net.Uri
 
-sealed interface BackupUiActions {
-    data object ShowBackupDialog : BackupUiActions
+sealed interface BackupUiAction {
+    data object ShowBackupDialog : BackupUiAction
 
-    data object DismissBackupDialog : BackupUiActions
+    data object DismissBackupDialog : BackupUiAction
 
     data class ShowError(
         val message: String,
-    ) : BackupUiActions
+    ) : BackupUiAction
 
-    data object ClearError : BackupUiActions
+    data object ClearError : BackupUiAction
 
     data class OnBackupToFile(
         val password: String?,
-    ) : BackupUiActions
+    ) : BackupUiAction
 
     data class OnRestoreFromFileActivityResult(
         val uri: Uri?,
-    ) : BackupUiActions
+    ) : BackupUiAction
 
     data class ShowRestorePasswordDialog(
         val uri: Uri,
-    ) : BackupUiActions
+    ) : BackupUiAction
 
-    data object DismissRestorePasswordDialog : BackupUiActions
+    data object DismissRestorePasswordDialog : BackupUiAction
 
     data class OnStartRestore(
         val uri: Uri,
         val password: String?,
-    ) : BackupUiActions
+    ) : BackupUiAction
 }
