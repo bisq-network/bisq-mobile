@@ -65,7 +65,7 @@ fun BackupScreen() {
         )
         BisqButton(
             text = "mobile.resources.backup.button".i18n(),
-            onClick = { presenter.onAction(BackupUiActions.ShowBackupDialog) },
+            onClick = { presenter.onAction(BackupUiAction.ShowBackupDialog) },
             type = BisqButtonType.Outline,
             modifier =
                 Modifier
@@ -93,12 +93,12 @@ fun BackupScreen() {
 
         if (uiState.showBackupDialog) {
             BackupPasswordDialog(
-                onBackupDataDir = { password -> presenter.onAction(BackupUiActions.OnBackupToFile(password)) },
-                onDismissBackupOverlay = { presenter.onAction(BackupUiActions.DismissBackupDialog) },
+                onBackupDataDir = { password -> presenter.onAction(BackupUiAction.OnBackupToFile(password)) },
+                onDismissBackupOverlay = { presenter.onAction(BackupUiAction.DismissBackupDialog) },
             )
         }
 
-        uiState.errorMessage?.let { ErrorDialog(it) { presenter.onAction(BackupUiActions.ClearError) } }
+        uiState.errorMessage?.let { ErrorDialog(it) { presenter.onAction(BackupUiAction.ClearError) } }
 
         if (uiState.showWorkingDialog) {
             WorkingDialog()
@@ -107,10 +107,10 @@ fun BackupScreen() {
         uiState.showRestorePasswordDialogForUri?.let { uri ->
             RestorePasswordDialog(
                 onPassword = { password ->
-                    presenter.onAction(BackupUiActions.OnStartRestore(uri, password))
+                    presenter.onAction(BackupUiAction.OnStartRestore(uri, password))
                 },
                 onDismissOverlay = {
-                    presenter.onAction(BackupUiActions.DismissRestorePasswordDialog)
+                    presenter.onAction(BackupUiAction.DismissRestorePasswordDialog)
                 },
             )
         }
@@ -298,11 +298,11 @@ private class OpenDocumentWithPersist : ActivityResultContract<Array<String>, Ur
 }
 
 @Composable
-private fun RestoreBackupButton(onAction: (BackupUiActions) -> Unit) {
+private fun RestoreBackupButton(onAction: (BackupUiAction) -> Unit) {
     val launcher =
         rememberLauncherForActivityResult(
             contract = OpenDocumentWithPersist(),
-            onResult = { onAction(BackupUiActions.OnRestoreFromFileActivityResult(it)) },
+            onResult = { onAction(BackupUiAction.OnRestoreFromFileActivityResult(it)) },
         )
 
     BisqButton(

@@ -25,21 +25,21 @@ class BackupPresenter(
 
     val uiState = _uiState.asStateFlow()
 
-    fun onAction(action: BackupUiActions) {
+    fun onAction(action: BackupUiAction) {
         when (action) {
-            is BackupUiActions.ShowBackupDialog -> {
+            is BackupUiAction.ShowBackupDialog -> {
                 _uiState.update {
                     it.copy(showBackupDialog = true)
                 }
             }
 
-            is BackupUiActions.DismissBackupDialog -> {
+            is BackupUiAction.DismissBackupDialog -> {
                 _uiState.update {
                     it.copy(showBackupDialog = false)
                 }
             }
 
-            is BackupUiActions.OnBackupToFile -> {
+            is BackupUiAction.OnBackupToFile -> {
                 presenterScope.launch {
                     _uiState.update {
                         it.copy(
@@ -70,17 +70,17 @@ class BackupPresenter(
                 }
             }
 
-            is BackupUiActions.OnRestoreFromFileActivityResult -> {
+            is BackupUiAction.OnRestoreFromFileActivityResult -> {
                 action.uri?.let { selectedUri ->
                     presenterScope.launch {
                         val result = nodeBackupServiceFacade.restorePrefightCheck(selectedUri)
                         if (result.errorMessage != null) {
-                            onAction(BackupUiActions.ShowError(result.errorMessage))
+                            onAction(BackupUiAction.ShowError(result.errorMessage))
                         } else if (result.passwordRequired) {
-                            onAction(BackupUiActions.ShowRestorePasswordDialog(selectedUri))
+                            onAction(BackupUiAction.ShowRestorePasswordDialog(selectedUri))
                         } else {
                             onAction(
-                                BackupUiActions.OnStartRestore(
+                                BackupUiAction.OnStartRestore(
                                     selectedUri,
                                     null,
                                 ),
@@ -90,31 +90,31 @@ class BackupPresenter(
                 }
             }
 
-            is BackupUiActions.ShowError -> {
+            is BackupUiAction.ShowError -> {
                 _uiState.update {
                     it.copy(errorMessage = action.message)
                 }
             }
 
-            is BackupUiActions.ClearError -> {
+            is BackupUiAction.ClearError -> {
                 _uiState.update {
                     it.copy(errorMessage = null)
                 }
             }
 
-            is BackupUiActions.ShowRestorePasswordDialog -> {
+            is BackupUiAction.ShowRestorePasswordDialog -> {
                 _uiState.update {
                     it.copy(showRestorePasswordDialogForUri = action.uri)
                 }
             }
 
-            is BackupUiActions.DismissRestorePasswordDialog -> {
+            is BackupUiAction.DismissRestorePasswordDialog -> {
                 _uiState.update {
                     it.copy(showRestorePasswordDialogForUri = null)
                 }
             }
 
-            is BackupUiActions.OnStartRestore -> {
+            is BackupUiAction.OnStartRestore -> {
                 _uiState.update {
                     it.copy(
                         showRestorePasswordDialogForUri = null,
