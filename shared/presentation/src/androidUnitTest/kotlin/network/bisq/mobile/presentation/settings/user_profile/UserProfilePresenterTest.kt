@@ -305,8 +305,11 @@ class UserProfilePresenterTest {
             presenter.onAction(UserProfileUiAction.OnDeletePress)
             advanceUntilIdle()
 
+            presenter.onAction(UserProfileUiAction.OnUserProfileSelect(profile2))
+            advanceUntilIdle()
+
             // Then
-            assertEquals(profile2, presenter.uiState.value.showDeleteConfirmationForProfile)
+            assertEquals(profile1, presenter.uiState.value.showDeleteConfirmationForProfile)
         }
 
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
