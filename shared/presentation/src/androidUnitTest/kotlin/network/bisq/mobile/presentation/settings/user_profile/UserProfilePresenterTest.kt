@@ -371,12 +371,15 @@ class UserProfilePresenterTest {
         runTest(testDispatcher) {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
-            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
+            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile2)
             coEvery { userProfileServiceFacade.deleteUserProfile(profile2.networkId.pubKey.id) } returns
                 Result.failure(Exception("Cannot delete last profile"))
 
             presenter = createPresenter()
             presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
             advanceUntilIdle()
 
             // When
