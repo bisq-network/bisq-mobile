@@ -243,10 +243,7 @@ class UserProfilePresenterTest {
 
             // When - save
             presenter.onAction(
-                UserProfileUiAction.OnSavePress(
-                    profileId = profile1.networkId.pubKey.id,
-                    uiState = presenter.uiState.value,
-                ),
+                UserProfileUiAction.OnSavePress,
             )
             advanceUntilIdle()
 
@@ -278,10 +275,7 @@ class UserProfilePresenterTest {
 
             // When
             presenter.onAction(
-                UserProfileUiAction.OnSavePress(
-                    profileId = profile1.networkId.pubKey.id,
-                    uiState = presenter.uiState.value.copy(statementDraft = "test"),
-                ),
+                UserProfileUiAction.OnSavePress,
             )
 
             // Then - should be busy immediately
@@ -308,7 +302,7 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnDeletePress(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
             advanceUntilIdle()
 
             // Then
@@ -327,7 +321,7 @@ class UserProfilePresenterTest {
             presenter.onViewAttached()
             advanceUntilIdle()
 
-            presenter.onAction(UserProfileUiAction.OnDeletePress(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
             advanceUntilIdle()
 
             // When
@@ -356,7 +350,7 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnDeleteConfirm(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeleteConfirm)
             advanceUntilIdle()
 
             // Then
@@ -380,7 +374,7 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnDeleteConfirm(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeleteConfirm)
             advanceUntilIdle()
 
             // Then
