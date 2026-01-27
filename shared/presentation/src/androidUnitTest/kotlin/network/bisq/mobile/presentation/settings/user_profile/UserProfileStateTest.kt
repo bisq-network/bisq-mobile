@@ -142,28 +142,6 @@ class UserProfileStateTest {
     }
 
     @Test
-    fun `OnSavePress action holds profileId and state`() {
-        // Given
-        val state = UserProfileUiState(statementDraft = "test", termsDraft = "terms")
-
-        // When
-        val action = UserProfileUiAction.OnSavePress(profileId = "profile123", uiState = state)
-
-        // Then
-        assertEquals("profile123", action.profileId)
-        assertEquals(state, action.uiState)
-    }
-
-    @Test
-    fun `OnDeletePress action holds correct profile`() {
-        // When
-        val action = UserProfileUiAction.OnDeletePress(profile1)
-
-        // Then
-        assertEquals(profile1, action.profile)
-    }
-
-    @Test
     fun `OnUserProfileSelect action holds correct profile`() {
         // When
         val action = UserProfileUiAction.OnUserProfileSelect(profile1)
@@ -190,10 +168,10 @@ class UserProfileStateTest {
             listOf(
                 UserProfileUiAction.OnStatementChange("test"),
                 UserProfileUiAction.OnTermsChange("test"),
-                UserProfileUiAction.OnSavePress("id", UserProfileUiState()),
+                UserProfileUiAction.OnSavePress,
                 UserProfileUiAction.OnCreateProfilePress,
-                UserProfileUiAction.OnDeletePress(profile1),
-                UserProfileUiAction.OnDeleteConfirm(profile1),
+                UserProfileUiAction.OnDeletePress,
+                UserProfileUiAction.OnDeleteConfirm,
                 UserProfileUiAction.OnDeleteConfirmationDismiss,
                 UserProfileUiAction.OnDeleteError,
                 UserProfileUiAction.OnDeleteErrorDialogDismiss,

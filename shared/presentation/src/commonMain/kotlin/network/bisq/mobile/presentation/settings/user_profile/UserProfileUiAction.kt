@@ -11,20 +11,13 @@ sealed interface UserProfileUiAction {
         val value: String,
     ) : UserProfileUiAction
 
-    data class OnSavePress(
-        val profileId: String,
-        val uiState: UserProfileUiState,
-    ) : UserProfileUiAction
+    object OnSavePress : UserProfileUiAction
 
     object OnCreateProfilePress : UserProfileUiAction
 
-    data class OnDeletePress(
-        val profile: UserProfileVO,
-    ) : UserProfileUiAction
+    object OnDeletePress : UserProfileUiAction
 
-    data class OnDeleteConfirm(
-        val profile: UserProfileVO,
-    ) : UserProfileUiAction
+    object OnDeleteConfirm : UserProfileUiAction
 
     object OnDeleteConfirmationDismiss : UserProfileUiAction
 

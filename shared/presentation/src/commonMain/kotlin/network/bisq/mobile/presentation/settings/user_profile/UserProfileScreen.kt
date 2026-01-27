@@ -223,8 +223,8 @@ fun UserProfileScreen() {
             )
             BisqGap.V1()
             UserProfileScreenFooter(
-                onSavePress = { presenter.onAction(UserProfileUiAction.OnSavePress(profile.id, uiState)) },
-                onDeletePress = { presenter.onAction(UserProfileUiAction.OnDeletePress(profile)) },
+                onSavePress = { presenter.onAction(UserProfileUiAction.OnSavePress) },
+                onDeletePress = { presenter.onAction(UserProfileUiAction.OnDeletePress) },
                 isBusy = uiState.isBusy,
             )
         }
@@ -233,7 +233,7 @@ fun UserProfileScreen() {
     uiState.showDeleteConfirmationForProfile?.let { profile ->
         WarningConfirmationDialog(
             message = "mobile.settings.userProfile.deleteConfirmationDialog.message".i18n(profile.nickName),
-            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteConfirm(profile)) },
+            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteConfirm) },
             onDismiss = { presenter.onAction(UserProfileUiAction.OnDeleteConfirmationDismiss) },
         )
     }
