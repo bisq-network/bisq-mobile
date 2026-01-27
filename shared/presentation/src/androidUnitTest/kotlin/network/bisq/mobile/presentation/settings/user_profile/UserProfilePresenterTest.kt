@@ -342,7 +342,7 @@ class UserProfilePresenterTest {
             // Given
             val profilesFlow = MutableStateFlow(listOf(profile1, profile2, profile3))
             every { userProfileServiceFacade.userProfiles } returns profilesFlow
-            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
+            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile2)
             coEvery { userProfileServiceFacade.deleteUserProfile(profile2.networkId.pubKey.id) } coAnswers {
                 profilesFlow.value = listOf(profile1, profile3) // Simulate removal
                 Result.success(profile1) // Returns newly selected profile
@@ -350,6 +350,9 @@ class UserProfilePresenterTest {
 
             presenter = createPresenter()
             presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
             advanceUntilIdle()
 
             // When
