@@ -59,7 +59,6 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.B
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.common.ui.utils.rememberBlurTriggerSetup
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -88,8 +87,6 @@ fun TrustedNodeSetupScreen(
     val showQrCodeView by presenter.showQrCodeView.collectAsState()
     val showQrCodeError by presenter.showQrCodeError.collectAsState()
     val pairingCompleted by presenter.pairingCompleted.collectAsState()
-
-    val blurTriggerSetup = rememberBlurTriggerSetup()
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showAdvancedOptions by remember { mutableStateOf(false) }
@@ -164,19 +161,6 @@ fun TrustedNodeSetupScreen(
             ) {
                 BisqGap.V1()
 
-                BisqTextField(
-                    label = "mobile.trustedNodeSetup.deviceName".i18n(),
-                    placeholder = "mobile.trustedNodeSetup.deviceName.prompt".i18n(),
-                    onValueChange = { value, _ ->
-                        presenter.onClientNameChanged(
-                            value,
-                        )
-                    },
-                    value = clientName,
-                )
-
-                BisqGap.V2()
-
                 BisqButton(
                     text = "mobile.trustedNodeSetup.pairingCode.scan".i18n(),
                     type =
@@ -217,15 +201,14 @@ fun TrustedNodeSetupScreen(
                     )
                 }
 
-                if (pairingCompleted) {
-                    BisqGap.V2()
-                    BisqButton(
-                        text = "mobile.trustedNodeSetup.testConnection".i18n(),
-                        backgroundColor = BisqTheme.colors.primaryDim,
-                        onClick = { presenter.onTestAndSavePressed(true) },
-                    )
-                    BisqGap.V2()
-                }
+                BisqGap.V2()
+                BisqButton(
+                    text = "mobile.trustedNodeSetup.testAndSave".i18n(),
+                    backgroundColor = BisqTheme.colors.primaryDim,
+                    onClick = { presenter.onTestAndSavePressed(true) },
+                    disabled = pairingCode.isEmpty() || isPairingInProgress,
+                )
+                BisqGap.V2()
             }
 
             BisqGap.V2()
@@ -243,9 +226,8 @@ fun TrustedNodeSetupScreen(
                         optionKey = { it.name },
                         onSelect = {
                             presenter.onProxyOptionChanged(it)
-                            blurTriggerSetup.triggerBlur()
                         },
-                        disabled = isPairingInProgress || !isWorkflow,
+                        disabled = isPairingInProgress || !isWorkflow || pairingCode.isNotEmpty(),
                     )
                 }
             }

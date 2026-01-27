@@ -210,10 +210,6 @@ class TrustedNodeSetupPresenter(
         apiAccessService.setPairingQrCodeString(value)
     }
 
-    fun onClientNameChanged(value: String) {
-        apiAccessService.setClientName(value)
-    }
-
     fun onProxyHostChanged(host: String) {
         _proxyHost.value = host
     }
