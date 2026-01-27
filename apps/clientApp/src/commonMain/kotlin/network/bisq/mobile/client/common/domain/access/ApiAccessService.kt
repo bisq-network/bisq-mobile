@@ -26,7 +26,8 @@ class ApiAccessService(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
 ) : ServiceFacade(),
     Logging {
-    private val _clientName = MutableStateFlow("")
+    // Auto-generate client name from platform info
+    private val _clientName = MutableStateFlow(generateClientName())
     val clientName: StateFlow<String> = _clientName.asStateFlow()
 
     // Provided by qr code
@@ -115,18 +116,12 @@ class ApiAccessService(
             }
         }
         serviceScope.launch {
-            combine(pairingQrCodeDataStored, clientName) { a, b ->
-                a to b
-            }.collect { (pairingDataStored, clientName) ->
-                if (pairingDataStored && clientName.length >= 4) {
+            pairingQrCodeDataStored.collect { pairingDataStored ->
+                if (pairingDataStored) {
                     requestPairing()
                 }
             }
         }
-    }
-
-    fun setClientName(value: String) {
-        _clientName.value = value
     }
 
     fun setPairingQrCodeString(value: String) {
@@ -259,5 +254,10 @@ class ApiAccessService(
         val isIOS = platformInfo.name.lowercase().contains("ios")
         log.d { "isIOS = $isIOS" }
         return isIOS
+    }
+
+    private fun generateClientName(): String {
+        val platformInfo = getPlatformInfo()
+        return "Bisq Connect ${platformInfo.name}"
     }
 }
