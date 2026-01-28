@@ -126,17 +126,21 @@ class TrustedNodeSetupPresenter(
     private var connectJob: Job? = null
     private var countdownJob: Job? = null
 
+    // Backing flow to track sticky pairing completion state (once true, stays true)
+    private val _pairingCompletedSticky = MutableStateFlow(false)
+
     val pairingCompleted: StateFlow<Boolean> =
         pairingResultPersisted
             .combine(pairingResult) { pairingResultPersisted, pairingResult ->
-                val result =
+                val currentSuccess =
                     pairingResultPersisted && pairingResult != null && pairingResult.isSuccess
 
-                if (!pairingCompleted.value) {
-                    result
-                } else {
-                    true
+                // Make it sticky: once true, stays true
+                if (currentSuccess) {
+                    _pairingCompletedSticky.value = true
                 }
+
+                _pairingCompletedSticky.value
             }.stateIn(
                 scope = presenterScope,
                 started = SharingStarted.Lazily,
@@ -272,7 +276,12 @@ class TrustedNodeSetupPresenter(
                         -> {
                             // External proxy options are not supported in pairing flow
                             // They can only be configured via automatic detection
-                            throw IllegalStateException("External proxy options not supported in pairing flow")
+                            log.w { "External proxy options not supported in pairing flow: $newProxyOption" }
+                            showSnackbar("mobile.trustedNodeSetup.error.externalProxyNotSupported".i18n())
+                            _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+                            _isPairingInProgress.value = false
+                            connectJob = null
+                            return@launch
                         }
 
                         BisqProxyOption.NONE -> {
@@ -590,10 +599,19 @@ class TrustedNodeSetupPresenter(
         val url = apiAccessService.restApiUrl.value
         if (url.isNotBlank()) {
             val parsedUrl = parseAndNormalizeUrl(url)
-            if (parsedUrl != null && parsedUrl.host.endsWith(".onion")) {
-                if (selectedProxyOption.value != BisqProxyOption.INTERNAL_TOR) {
-                    log.d { "Pairing code contains .onion URL, setting proxy to INTERNAL_TOR" }
-                    _selectedProxyOption.value = BisqProxyOption.INTERNAL_TOR
+            if (parsedUrl != null) {
+                if (parsedUrl.host.endsWith(".onion")) {
+                    // .onion URL requires Tor
+                    if (selectedProxyOption.value != BisqProxyOption.INTERNAL_TOR) {
+                        log.d { "Pairing code contains .onion URL, setting proxy to INTERNAL_TOR" }
+                        _selectedProxyOption.value = BisqProxyOption.INTERNAL_TOR
+                    }
+                } else {
+                    // Clearnet URL (including localhost/10.0.2.2) should use no proxy
+                    if (selectedProxyOption.value != BisqProxyOption.NONE) {
+                        log.d { "Pairing code contains clearnet URL, setting proxy to NONE" }
+                        _selectedProxyOption.value = BisqProxyOption.NONE
+                    }
                 }
             }
         }
