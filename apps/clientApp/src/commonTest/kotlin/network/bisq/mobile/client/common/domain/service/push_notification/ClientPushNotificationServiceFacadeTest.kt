@@ -26,15 +26,17 @@ class ClientPushNotificationServiceFacadeTest {
     fun `DeviceRegistrationRequest contains correct data`() {
         val request =
             DeviceRegistrationRequest(
-                userProfileId = "user-profile-123",
+                deviceId = "device-id-123",
                 deviceToken = "test-token-12345",
-                publicKey = "base64-encoded-public-key",
+                publicKeyBase64 = "base64-encoded-public-key",
+                deviceDescriptor = "iPhone 15 Pro, iOS 17.2",
                 platform = Platform.IOS,
             )
 
-        assertEquals("user-profile-123", request.userProfileId)
+        assertEquals("device-id-123", request.deviceId)
         assertEquals("test-token-12345", request.deviceToken)
-        assertEquals("base64-encoded-public-key", request.publicKey)
+        assertEquals("base64-encoded-public-key", request.publicKeyBase64)
+        assertEquals("iPhone 15 Pro, iOS 17.2", request.deviceDescriptor)
         assertEquals(Platform.IOS, request.platform)
     }
 
@@ -42,15 +44,17 @@ class ClientPushNotificationServiceFacadeTest {
     fun `DeviceRegistrationRequest for Android platform`() {
         val request =
             DeviceRegistrationRequest(
-                userProfileId = "user-profile-456",
+                deviceId = "device-id-456",
                 deviceToken = "android-fcm-token",
-                publicKey = "base64-encoded-public-key-android",
+                publicKeyBase64 = "base64-encoded-public-key-android",
+                deviceDescriptor = "Pixel 8 Pro, Android 14",
                 platform = Platform.ANDROID,
             )
 
-        assertEquals("user-profile-456", request.userProfileId)
+        assertEquals("device-id-456", request.deviceId)
         assertEquals("android-fcm-token", request.deviceToken)
-        assertEquals("base64-encoded-public-key-android", request.publicKey)
+        assertEquals("base64-encoded-public-key-android", request.publicKeyBase64)
+        assertEquals("Pixel 8 Pro, Android 14", request.deviceDescriptor)
         assertEquals(Platform.ANDROID, request.platform)
     }
 
@@ -77,9 +81,10 @@ class ClientPushNotificationServiceFacadeTest {
         val testPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE" // Valid Base64
         val request =
             DeviceRegistrationRequest(
-                userProfileId = "user-123",
+                deviceId = "device-123",
                 deviceToken = "device-token-456",
-                publicKey = testPublicKey,
+                publicKeyBase64 = testPublicKey,
+                deviceDescriptor = "iPhone 15 Pro, iOS 17.2",
                 platform = Platform.IOS,
             )
 
@@ -101,41 +106,31 @@ class ClientPushNotificationServiceFacadeTest {
     }
 
     @Test
-    fun `DeviceRegistrationRequest with empty userProfileId`() {
+    fun `DeviceRegistrationRequest with empty deviceId`() {
         val request =
             DeviceRegistrationRequest(
-                userProfileId = "",
+                deviceId = "",
                 deviceToken = "token",
-                publicKey = "key",
+                publicKeyBase64 = "key",
+                deviceDescriptor = "iPhone",
                 platform = Platform.IOS,
             )
 
-        assertEquals("", request.userProfileId)
+        assertEquals("", request.deviceId)
     }
 
     @Test
     fun `DeviceRegistrationRequest with empty deviceToken`() {
         val request =
             DeviceRegistrationRequest(
-                userProfileId = "user",
+                deviceId = "device-id",
                 deviceToken = "",
-                publicKey = "key",
+                publicKeyBase64 = "key",
+                deviceDescriptor = "iPhone",
                 platform = Platform.IOS,
             )
 
         assertEquals("", request.deviceToken)
-    }
-
-    @Test
-    fun `UnregisterDeviceRequest has correct fields`() {
-        val request =
-            UnregisterDeviceRequest(
-                userProfileId = "user-789",
-                deviceToken = "token-012",
-            )
-
-        assertEquals("user-789", request.userProfileId)
-        assertEquals("token-012", request.deviceToken)
     }
 
     // Platform Detection Tests

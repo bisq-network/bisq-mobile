@@ -7,47 +7,39 @@ import network.bisq.mobile.domain.utils.Logging
  * API Gateway for push notification device registration with the trusted node.
  * The trusted node stores the device token mapping and uses it to send notifications
  * through the relay server when trade events occur.
+ *
+ * - POST /mobile-devices/registrations - Register device
+ * - DELETE /mobile-devices/registrations/{deviceId} - Unregister device
  */
 class PushNotificationApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
 ) : Logging {
-    private val basePath = "devices"
+    private val basePath = "mobile-devices/registrations"
 
     /**
      * Register a device for push notifications.
-     * @param userProfileId The user's profile ID
+     * @param deviceId Unique device identifier (hash of publicKeyBase64 or persisted UUID)
      * @param deviceToken The APNs/FCM device token
-     * @param publicKey The public key for encrypting notifications (base64 encoded)
+     * @param publicKeyBase64 The public key for encrypting notifications (base64 encoded)
+     * @param deviceDescriptor Device information (e.g., "iPhone 15 Pro, iOS 17.2")
      * @param platform The platform (iOS or Android)
      * @return Result indicating success or failure
      */
     suspend fun registerDevice(
-        userProfileId: String,
+        deviceId: String,
         deviceToken: String,
-        publicKey: String,
+        publicKeyBase64: String,
+        deviceDescriptor: String,
         platform: Platform,
     ): Result<Unit> {
-        val request = DeviceRegistrationRequest(userProfileId, deviceToken, publicKey, platform)
-        return webSocketApiClient.post("$basePath/register", request)
+        val request = DeviceRegistrationRequest(deviceId, deviceToken, publicKeyBase64, deviceDescriptor, platform)
+        return webSocketApiClient.post(basePath, request)
     }
 
     /**
      * Unregister a device from push notifications.
-     * @param userProfileId The user's profile ID
-     * @param deviceToken The APNs/FCM device token to unregister
+     * @param deviceId The device ID to unregister
      * @return Result indicating success or failure
      */
-    suspend fun unregisterDevice(
-        userProfileId: String,
-        deviceToken: String,
-    ): Result<Unit> {
-        val request = UnregisterDeviceRequest(userProfileId, deviceToken)
-        return webSocketApiClient.post("$basePath/unregister", request)
-    }
-
-    /**
-     * Check if the current device is registered for push notifications.
-     * @return Result containing registration status
-     */
-    suspend fun isDeviceRegistered(): Result<Boolean> = webSocketApiClient.get("$basePath/status")
+    suspend fun unregisterDevice(deviceId: String): Result<Unit> = webSocketApiClient.delete("$basePath/$deviceId")
 }

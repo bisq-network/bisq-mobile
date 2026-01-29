@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -14,6 +15,10 @@ import network.bisq.mobile.domain.utils.Logging
 /**
  * Client implementation of PushNotificationServiceFacade.
  * Manages device token registration with the trusted node.
+ *
+ * - Uses deviceId (hash of publicKeyBase64)
+ * - Includes deviceDescriptor for device information
+ * - Multi-profile safe (no profile coupling)
  */
 class ClientPushNotificationServiceFacade(
     private val apiGateway: PushNotificationApiGateway,
@@ -32,6 +37,9 @@ class ClientPushNotificationServiceFacade(
 
     private val _deviceToken = MutableStateFlow<String?>(null)
     override val deviceToken: StateFlow<String?> = _deviceToken.asStateFlow()
+
+    private val _deviceId = MutableStateFlow<String?>(null)
+    private val deviceId: StateFlow<String?> = _deviceId.asStateFlow()
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
@@ -120,12 +128,27 @@ class ClientPushNotificationServiceFacade(
             return Result.failure(PushNotificationException("No user profile selected"))
         }
 
-        val userProfileId = userProfile.networkId.pubKey.id
-        val publicKeyEncoded = userProfile.networkId.pubKey.publicKey.encoded
+        // publicKey.encoded is already a base64-encoded String from Bisq2
+        val publicKeyBase64 = userProfile.networkId.pubKey.publicKey.encoded
 
-        log.i { "Registering device for user profile: $userProfileId" }
+        // Generate deviceId as hash of publicKeyBase64 (as per PR #4304)
+        val deviceId = publicKeyBase64.hashCode().toString()
+        _deviceId.value = deviceId
 
-        val result = apiGateway.registerDevice(userProfileId, token, publicKeyEncoded, Platform.IOS)
+        // Get device descriptor (e.g., "iPhone 15 Pro, iOS 17.2")
+        val platformInfo = getPlatformInfo()
+        val deviceDescriptor = platformInfo.name
+
+        log.i { "Registering device with deviceId: $deviceId, descriptor: $deviceDescriptor" }
+
+        val result =
+            apiGateway.registerDevice(
+                deviceId = deviceId,
+                deviceToken = token,
+                publicKeyBase64 = publicKeyBase64,
+                deviceDescriptor = deviceDescriptor,
+                platform = Platform.IOS,
+            )
         if (result.isSuccess) {
             log.i { "Device registered successfully with trusted node" }
             _isDeviceRegistered.value = true
@@ -139,27 +162,19 @@ class ClientPushNotificationServiceFacade(
     override suspend fun unregisterFromPushNotifications(): Result<Unit> {
         log.i { "Unregistering from push notifications..." }
 
-        val token = _deviceToken.value
-        if (token.isNullOrBlank()) {
-            log.w { "No device token to unregister" }
+        val currentDeviceId = _deviceId.value
+        if (currentDeviceId.isNullOrBlank()) {
+            log.w { "No device ID to unregister" }
             _isDeviceRegistered.value = false
             settingsRepository.update { it.copy(pushNotificationsEnabled = false) }
             return Result.success(Unit)
         }
 
-        // Get the current user profile
-        val userProfile = userProfileServiceFacade.selectedUserProfile.value
-        if (userProfile == null) {
-            log.e { "Cannot unregister device: no user profile selected" }
-            return Result.failure(PushNotificationException("No user profile selected"))
-        }
-
-        val userProfileId = userProfile.networkId.pubKey.id
-
-        val result = apiGateway.unregisterDevice(userProfileId, token)
+        val result = apiGateway.unregisterDevice(currentDeviceId)
         if (result.isSuccess) {
             log.i { "Device unregistered successfully" }
             _isDeviceRegistered.value = false
+            _deviceId.value = null
             settingsRepository.update { it.copy(pushNotificationsEnabled = false) }
         } else {
             log.e { "Failed to unregister device: ${result.exceptionOrNull()?.message}" }
