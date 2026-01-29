@@ -49,6 +49,39 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = clientFrameworkBaseName
             configureSharedExports()
+
+            // Link Swift bridge object files (only from domain module to avoid duplicates)
+            val swiftBridgeModules = listOf("LocalEncryptionBridge")
+            val domainSwiftBridgeDir =
+                project(":shared:domain")
+                    .layout.buildDirectory
+                    .dir("swift-bridge")
+                    .get()
+                    .asFile
+
+            val objectFiles =
+                swiftBridgeModules.map { moduleName ->
+                    File(domainSwiftBridgeDir, "$moduleName.o").absolutePath
+                }
+
+            val isMac = System.getProperty("os.name").lowercase().contains("mac")
+            if (isMac) {
+                try {
+                    val swiftLibPath = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator"
+                    linkerOpts(
+                        *objectFiles.toTypedArray(),
+                        "-L$swiftLibPath",
+                        "-lswiftCore",
+                        "-lswiftFoundation",
+                        "-lswiftDispatch",
+                        "-lswiftObjectiveC",
+                        "-lswiftDarwin",
+                        "-lswiftCoreFoundation",
+                    )
+                } catch (e: Exception) {
+                    project.logger.warn("Could not configure Swift library path: ${e.message}")
+                }
+            }
         }
     }
 
@@ -295,6 +328,18 @@ afterEvaluate {
 
 // -------------------- Helper Functions --------------------
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
+
+// -------------------- Swift Bridge Configuration --------------------
+// Ensure Swift bridge objects are built before linking iOS frameworks
+tasks
+    .matching {
+        it.name.startsWith("link") &&
+            (it.name.contains("IosSimulatorArm64") || it.name.contains("IosArm64")) &&
+            !it.name.contains("Test")
+    }.configureEach {
+        dependsOn(":shared:domain:compileSwiftBridge")
+        dependsOn(":shared:presentation:compileSwiftBridge")
+    }
 
 // -------------------- ProGuard Mapping Configuration --------------------
 extra["moduleName"] = clientAppModuleName

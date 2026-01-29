@@ -7,11 +7,13 @@ import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.getPlatformInfo
 
 data class HttpClientSettings(
-    val apiUrl: String?,
+    val bisqApiUrl: String?,
+    val tlsFingerprint: String?,
+    val clientId: String? = null,
+    val sessionId: String? = null,
     val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
-    val proxyUrl: String? = null,
+    val externalProxyUrl: String? = null,
     val isTorProxy: Boolean = false,
-    val password: String? = null,
 ) {
     companion object {
         fun from(
@@ -44,11 +46,13 @@ data class HttpClientSettings(
                 }
             }
             return HttpClientSettings(
-                settings.bisqApiUrl,
-                selectedProxyOption,
-                proxyUrl,
-                isTorProxy,
-                settings.bisqApiPassword,
+                bisqApiUrl = settings.bisqApiUrl,
+                tlsFingerprint = settings.tlsFingerprint,
+                sessionId = settings.sessionId,
+                clientId = settings.clientId,
+                selectedProxyOption = selectedProxyOption,
+                externalProxyUrl = proxyUrl,
+                isTorProxy = isTorProxy,
             )
         }
     }
@@ -62,11 +66,14 @@ data class HttpClientSettings(
         }
 
     fun bisqProxyConfig(): BisqProxyConfig? {
-        if (!proxyUrl.isNullOrBlank()) {
-            val address = AddressVO.from(proxyUrl)
+        if (!externalProxyUrl.isNullOrBlank()) {
+            val address = AddressVO.from(externalProxyUrl)
             if (address != null) {
                 return BisqProxyConfig(
-                    ProxyBuilder.socks(normalizeProxyHost(address.host), address.port),
+                    ProxyBuilder.socks(
+                        normalizeProxyHost(address.host),
+                        address.port,
+                    ),
                     isTorProxy,
                 )
             }

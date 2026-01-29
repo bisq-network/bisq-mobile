@@ -21,7 +21,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
-import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
@@ -63,7 +63,8 @@ class WebSocketClientService(
     }
 
     private val clientUpdateMutex = Mutex()
-    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+    private val _connectionState =
+        MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val connectionState = _connectionState.asStateFlow()
 
     private var stateCollectionJob: Job? = null
@@ -76,17 +77,23 @@ class WebSocketClientService(
         )
     private var subscriptionsAreApplied = false
 
-    private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
+    private val stopFlow =
+        MutableSharedFlow<Unit>(
+            replay = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        ) // signal to cancel waiters
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val initialSubscriptionsReceivedData: Flow<Boolean> =
         requestedSubscriptions.flatMapLatest { subsMap ->
             // Only the first seven subscriptions contribute to the initial data banner
-            val trackedObservers = initialSubscriptionTypes.mapNotNull { subsMap[it] }
+            val trackedObservers =
+                initialSubscriptionTypes.mapNotNull { subsMap[it] }
             if (trackedObservers.size < initialSubscriptionTypes.size) {
                 flowOf(false)
             } else {
-                val hasReceivedDataFlows = trackedObservers.map { it.hasReceivedData }
+                val hasReceivedDataFlows =
+                    trackedObservers.map { it.hasReceivedData }
                 combine(hasReceivedDataFlows) { hasReceivedDataArray ->
                     hasReceivedDataArray.all { hasReceivedData -> hasReceivedData }
                 }
@@ -132,21 +139,23 @@ class WebSocketClientService(
     private suspend fun updateWebSocketClient(httpClientSettings: HttpClientSettings) {
         clientUpdateMutex.withLock {
             val newApiUrl: Url =
-                httpClientSettings.apiUrl?.takeIf { it.isNotBlank() }?.let {
+                httpClientSettings.bisqApiUrl?.takeIf { it.isNotBlank() }?.let {
                     parseUrl(it)
-                } ?: parseUrl("http://$defaultHost:$defaultPort")!!
+                }
+                    ?: parseUrl("http://$defaultHost:$defaultPort")!!
 
             currentClient.value =
                 currentClient.value?.let {
-                    log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.proxyUrl}" }
+                    log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.externalProxyUrl}" }
                     it.dispose()
                     null
                 }
             val newClient =
                 webSocketClientFactory.createNewClient(
-                    httpClientService.getClient(),
-                    newApiUrl,
-                    httpClientSettings.password,
+                    httpClient = httpClientService.getClient(),
+                    apiUrl = newApiUrl,
+                    sessionId = httpClientSettings.sessionId,
+                    clientId = httpClientSettings.clientId,
                 )
             currentClient.value = newClient
             ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
@@ -180,7 +189,7 @@ class WebSocketClientService(
 
     private fun shouldAttemptReconnect(error: Throwable): Boolean {
         return when (error) {
-            is PasswordIncorrectOrMissingException,
+            is UnauthorizedApiAccessException,
             is MaximumRetryReachedException,
             is WebSocketIsReconnecting,
             -> false
@@ -270,26 +279,34 @@ class WebSocketClientService(
      */
     suspend fun testConnection(
         apiUrl: Url,
+        tlsFingerprint: String? = null,
+        clientId: String? = null,
+        sessionId: String? = null,
         proxyHost: String? = null,
         proxyPort: Int? = null,
         isTorProxy: Boolean = true,
-        password: String? = null,
     ): Throwable? {
         val hasProxy = proxyHost != null && proxyPort != null
+        // Explicitly include port in URL to preserve non-default ports (e.g., :80 for HTTP)
+        // Ktor's Url.toString() drops default ports, which breaks QR code URLs with explicit ports
+        val apiUrlWithPort = "${apiUrl.protocol.name}://${apiUrl.host}:${apiUrl.port}"
         val httpClient =
             httpClientService.createNewInstance(
                 HttpClientSettings(
-                    apiUrl = apiUrl.toString(),
-                    proxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
+                    bisqApiUrl = apiUrlWithPort,
+                    tlsFingerprint = tlsFingerprint,
+                    clientId = clientId,
+                    sessionId = sessionId,
+                    externalProxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
                     isTorProxy = isTorProxy,
-                    password = password,
                 ),
             )
         val wsClient =
             webSocketClientFactory.createNewClient(
-                httpClient,
-                apiUrl,
-                password,
+                httpClient = httpClient,
+                apiUrl = apiUrl,
+                clientId = clientId,
+                sessionId = sessionId,
             )
         try {
             val timeout = WebSocketClient.determineTimeout(apiUrl.host)

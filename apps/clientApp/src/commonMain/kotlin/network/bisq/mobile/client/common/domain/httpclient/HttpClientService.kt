@@ -1,25 +1,31 @@
 package network.bisq.mobile.client.common.domain.httpclient
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
-import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.accept
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.headers
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.ByteArrayContent
-import io.ktor.http.content.OutgoingContent
+import io.ktor.http.Url
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.utils.io.ByteChannel
-import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -31,13 +37,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.httpclient.exception.PasswordIncorrectOrMissingException
+import network.bisq.mobile.client.common.domain.access.utils.Headers
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.utils.createHttpClient
-import network.bisq.mobile.crypto.getSha256
+import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -54,20 +59,20 @@ import kotlin.concurrent.Volatile
 class HttpClientService(
     private val kmpTorService: KmpTorService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
-    private val jsonConfig: Json,
+    val json: Json,
     private val versionProvider: VersionProvider,
     private val defaultHost: String,
     private val defaultPort: Int,
 ) : ServiceFacade() {
-    companion object {
-        private const val MAX_BODY_SIZE_BYTES: Long = 5 * 1024 * 1024 // 5 MB limit
-    }
+    val apiPath = "/api/v1/"
 
     @Volatile
     private var lastConfig: HttpClientSettings? = null
 
-    private var _httpClient: MutableStateFlow<HttpClient?> = MutableStateFlow(null)
-    private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
+    private var _httpClient: MutableStateFlow<HttpClient?> =
+        MutableStateFlow(null)
+    private val _httpClientChangedFlow =
+        MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
     private val stopFlow =
         MutableSharedFlow<Unit>(
@@ -139,49 +144,167 @@ class HttpClientService(
         lastConfig = null
     }
 
+    /**
+     * Add authentication headers to the request if available
+     */
+    private fun HttpRequestBuilder.addAuthHeaders() {
+        lastConfig?.sessionId?.let {
+            header(Headers.SESSION_ID, it)
+        }
+        lastConfig?.clientId?.let {
+            header(Headers.CLIENT_ID, it)
+        }
+    }
+
     suspend fun get(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().get {
+            addAuthHeaders()
             block(this)
         }
+
+    suspend inline fun <reified T, reified R> post(
+        path: String,
+        requestBody: R? = null,
+        headers: Map<String, String> = emptyMap(),
+    ): Result<T> {
+        log.d { "HTTP POST to ${apiPath + path}" }
+        log.d { "Request body: $requestBody" }
+        try {
+            val response: HttpResponse =
+                post {
+                    url {
+                        path(apiPath + path)
+                    }
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    if (requestBody != null) {
+                        setBody(requestBody)
+                    }
+
+                    if (headers.isNotEmpty()) {
+                        headers {
+                            headers.forEach { (key, value) ->
+                                append(key, value)
+                            }
+                        }
+                    }
+                }
+            log.d { "HTTP POST done status=${response.status}" }
+            return getResultFromHttpResponse<T>(response)
+        } catch (e: Exception) {
+            log.e(e) { "HTTP POST failed for ${apiPath + path}: ${e.message}" }
+            return Result.failure(e)
+        }
+    }
 
     suspend fun post(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().post {
+            addAuthHeaders()
             block(this)
         }
+
+    suspend inline fun <reified T, reified R> patch(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
+        log.d { "HTTP PATCH to ${apiPath + path}" }
+        log.d { "Request body: $requestBody" }
+        try {
+            // Serialize to JSON to see what's actually being sent
+            val bodyAsJson = json.encodeToString(requestBody)
+            log.d { "Request body as JSON: $bodyAsJson" }
+
+            val response: HttpResponse =
+                patch {
+                    url {
+                        path(apiPath + path)
+                    }
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    setBody(requestBody)
+                }
+            log.d { "HTTP PATCH done status=${response.status}" }
+            return getResultFromHttpResponse<T>(response)
+        } catch (e: Exception) {
+            log.e(e) { "HTTP PATCH failed for ${apiPath + path}: ${e.message}" }
+            return Result.failure(e)
+        }
+    }
 
     suspend fun patch(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().patch {
+            addAuthHeaders()
             block(this)
         }
 
+    suspend inline fun <reified T, reified R> put(
+        path: String,
+        requestBody: R,
+    ): Result<T> {
+        log.d { "HTTP PUT to " + (apiPath + path) }
+        log.d { "Request body: $requestBody" }
+        try {
+            val response: HttpResponse =
+                put {
+                    url {
+                        path(apiPath + path)
+                    }
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    setBody(requestBody)
+                }
+            log.d { "HTTP PUT done status=${response.status}" }
+            return getResultFromHttpResponse<T>(response)
+        } catch (e: Exception) {
+            log.e(e) { "HTTP PUT failed for " + (apiPath + path) + ": ${e.message}" }
+            return Result.failure(e)
+        }
+    }
+
     suspend fun put(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().put {
+            addAuthHeaders()
             block(this)
         }
 
     suspend fun delete(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().delete {
+            addAuthHeaders()
             block(this)
         }
 
-    fun createNewInstance(clientSettings: HttpClientSettings): HttpClient {
-        val proxy = clientSettings.bisqProxyConfig()
+    fun createNewInstance(httpClientSettings: HttpClientSettings): HttpClient {
+        val proxy = httpClientSettings.bisqProxyConfig()
         if (proxy != null) {
             log.d { "Using proxy from settings: $proxy" }
         }
         val rawBase =
-            if (!clientSettings.apiUrl.isNullOrBlank()) {
-                clientSettings.apiUrl
+            if (!httpClientSettings.bisqApiUrl.isNullOrBlank()) {
+                httpClientSettings.bisqApiUrl
             } else {
                 "http://$defaultHost:$defaultPort"
             }
+
         val baseUrl = sanitizeBaseUrl(rawBase, defaultPort)
         if (baseUrl != rawBase) {
             log.w { "Sanitized baseUrl from '$rawBase' to '$baseUrl'" }
         }
         log.d { "HttpClient baseUrl set to $baseUrl" }
-        val password = clientSettings.password
-        return createHttpClient(proxy) {
+
+        val host =
+            if (httpClientSettings.bisqApiUrl == null) {
+                defaultHost
+            } else {
+                Url(httpClientSettings.bisqApiUrl).host
+            }
+        val tlsFingerprint = httpClientSettings.tlsFingerprint
+        val sessionId = httpClientSettings.sessionId
+        val clientId = httpClientSettings.clientId
+        return createHttpClient(
+            host = host,
+            tlsFingerprint = tlsFingerprint,
+            proxyConfig = proxy,
+        ) {
             install(UserAgent) {
                 agent =
                     versionProvider.getAppNameAndVersion(
@@ -190,15 +313,17 @@ class HttpClientService(
                     )
             }
             install(ContentNegotiation) {
-                json(jsonConfig)
+                json(json)
             }
             if (proxy?.isTorProxy == true) {
                 // we set these to very high values here but we use more limited timeouts
                 // when trying connection in services
                 install(HttpTimeout) {
                     requestTimeoutMillis = 180_000
-                    connectTimeoutMillis = 120_000 // not supported by Darwin engine
-                    socketTimeoutMillis = 120_000 // not supported by Curl engine
+                    connectTimeoutMillis =
+                        120_000 // not supported by Darwin engine
+                    socketTimeoutMillis =
+                        120_000 // not supported by Curl engine
                 }
             }
             defaultRequest {
@@ -207,105 +332,32 @@ class HttpClientService(
             HttpResponseValidator {
                 validateResponse { response ->
                     if (response.status == HttpStatusCode.Unauthorized) {
-                        throw PasswordIncorrectOrMissingException()
+                        throw UnauthorizedApiAccessException()
                     }
                 }
             }
-            install(
-                createClientPlugin("HttpApiAuthPlugin") {
-                    transformRequestBody { request, content, bodyType ->
-                        var reconstructedBody: ByteArrayContent? = null
-                        if (!password.isNullOrBlank()) {
-                            val method = request.method.value
-                            val timestamp =
-                                Clock.System
-                                    .now()
-                                    .toEpochMilliseconds()
-                                    .toString()
-                            val nonce = AuthUtils.generateNonce()
-                            val normalizedPathAndQuery =
-                                AuthUtils.getNormalizedPathAndQuery(request.url.build())
-                            val bodySha256Hex =
-                                when (content) {
-                                    is OutgoingContent.ByteArrayContent -> {
-                                        val bytes = content.bytes()
-                                        if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                            throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
-                                        }
-                                        getSha256(bytes).toHexString()
-                                    }
-
-                                    is OutgoingContent.ReadChannelContent -> {
-                                        val bytes =
-                                            content
-                                                .readFrom()
-                                                .readRemaining(MAX_BODY_SIZE_BYTES + 1) // + 1 to detect if max size has reached
-                                                .readByteArray()
-                                        if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                            throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
-                                        }
-                                        reconstructedBody =
-                                            ByteArrayContent(bytes, content.contentType, content.status)
-                                        getSha256(bytes).toHexString()
-                                    }
-
-                                    is OutgoingContent.WriteChannelContent -> {
-                                        val channel = ByteChannel(autoFlush = true)
-                                        try {
-                                            content.writeTo(channel)
-                                            val bytes =
-                                                channel
-                                                    .readRemaining(MAX_BODY_SIZE_BYTES + 1)
-                                                    .readByteArray()
-                                            if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                                throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
-                                            }
-                                            reconstructedBody =
-                                                ByteArrayContent(bytes, content.contentType, content.status)
-                                            getSha256(bytes).toHexString()
-                                        } finally {
-                                            channel.close()
-                                        }
-                                    }
-
-                                    is String -> {
-                                        if (content.isEmpty()) {
-                                            null
-                                        } else {
-                                            val bytes = content.encodeToByteArray()
-                                            if (bytes.size > MAX_BODY_SIZE_BYTES) {
-                                                throw IllegalArgumentException(
-                                                    "Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes",
-                                                )
-                                            }
-                                            getSha256(bytes).toHexString()
-                                        }
-                                    }
-
-                                    else -> null
-                                }
-
-                            val hash =
-                                AuthUtils.generateAuthHash(
-                                    password,
-                                    nonce,
-                                    timestamp,
-                                    method,
-                                    normalizedPathAndQuery,
-                                    bodySha256Hex,
-                                )
-
-                            request.headers.append("AUTH-TOKEN", hash)
-                            request.headers.append("AUTH-TS", timestamp)
-                            request.headers.append("AUTH-NONCE", nonce)
-                        }
-                        reconstructedBody ?: when (content) {
-                            is OutgoingContent -> content
-                            else -> null // transformation not applicable
-                        }
-                    }
-                },
-            )
         }
     }
+
+    suspend inline fun <reified T> getResultFromHttpResponse(response: HttpResponse): Result<T> =
+        if (response.status.isSuccess()) {
+            if (response.status == HttpStatusCode.NoContent) {
+                try {
+                    check(T::class == Unit::class) { "If we get a HttpStatusCode.NoContent response we expect return type Unit" }
+                    Result.success(Unit as T)
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            } else {
+                Result.success(response.body<T>())
+            }
+        } else {
+            val errorText = response.bodyAsText()
+            Result.failure(
+                WebSocketRestApiException(
+                    response.status,
+                    errorText,
+                ),
+            )
+        }
 }
