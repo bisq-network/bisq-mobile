@@ -25,6 +25,10 @@ abstract class ApplicationBootstrapFacade(
 
     @Volatile
     private var bootstrapSuccessful = false
+
+    @Volatile
+    private var torProgressCollectJob: Job? = null
+
     private val _state = MutableStateFlow("")
     val state: StateFlow<String> get() = _state.asStateFlow()
 
@@ -93,12 +97,20 @@ abstract class ApplicationBootstrapFacade(
             kmpTorService.state.collect { newState ->
                 when (newState) {
                     is TorState.Starting -> {
-                        setState("mobile.bootstrap.tor.starting".i18n())
+                        setState("mobile.bootstrap.tor.starting".i18n(0))
                         setProgress(0.1f)
                         startTimeoutForStage()
+                        torProgressCollectJob?.cancel()
+                        torProgressCollectJob =
+                            serviceScope.launch {
+                                kmpTorService.bootstrapProgress.collect {
+                                    setState("mobile.bootstrap.tor.starting".i18n(it))
+                                }
+                            }
                     }
 
                     is TorState.Started -> {
+                        torProgressCollectJob?.cancel()
                         setState("mobile.bootstrap.tor.started".i18n())
                         setProgress(0.25f)
                         onTorStarted()
@@ -106,6 +118,7 @@ abstract class ApplicationBootstrapFacade(
 
                     is TorState.Stopping -> {}
                     is TorState.Stopped -> {
+                        torProgressCollectJob?.cancel()
                         if (newState.error != null) {
                             val errorMessage =
                                 listOfNotNull(
