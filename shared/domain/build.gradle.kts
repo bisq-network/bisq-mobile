@@ -563,6 +563,13 @@ class SwiftBridgeConfiguration {
         tasks.matching { it.name.startsWith("link") && it.name.contains("TestIosSimulatorArm64") }.configureEach {
             dependsOn(compileSwiftBridge)
         }
+        // Also ensure Swift bridge objects are built before linking iOS main binaries (for frameworks)
+        tasks.matching { it.name.startsWith("link") && it.name.contains("IosSimulatorArm64") && !it.name.contains("Test") }.configureEach {
+            dependsOn(compileSwiftBridge)
+        }
+        tasks.matching { it.name.startsWith("link") && it.name.contains("IosArm64") && !it.name.contains("Test") }.configureEach {
+            dependsOn(compileSwiftBridge)
+        }
         // Also tie to test Kotlin compilation as a safety net (ensures object files exist by link time)
         tasks.matching { it.name == "compileTestKotlinIosSimulatorArm64" }.configureEach {
             dependsOn(compileSwiftBridge)
@@ -576,7 +583,7 @@ class SwiftBridgeConfiguration {
             )
 
             configureSwiftBridgeLinking(
-                listOf(iosSimulatorArm64()),
+                listOf(iosX64(), iosArm64(), iosSimulatorArm64()),
                 bridgeModules,
             )
         }
