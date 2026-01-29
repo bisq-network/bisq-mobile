@@ -4,12 +4,10 @@ import ClientApp
 
 class LifecycleAwareComposeViewController: UIViewController {
     private let presenter: MainPresenter
-    private let notificationServiceWrapper: NotificationServiceWrapper
     private let clientApplicationLifecycleService: ApplicationLifecycleService
 
-    init(presenter: MainPresenter, notificationServiceWrapper: NotificationServiceWrapper) {
+    init(presenter: MainPresenter) {
         self.presenter = presenter
-        self.notificationServiceWrapper = notificationServiceWrapper
         GenericErrorHandler.companion.doInit()
         let exceptionHandler = get(CoroutineExceptionHandlerSetup.self)
         GenericErrorHandler.companion.setupCoroutineExceptionHandler(handlerSetup: exceptionHandler)
@@ -33,13 +31,10 @@ class LifecycleAwareComposeViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         presenter.onResume()
-        notificationServiceWrapper.foregroundServiceController.stopService()
         NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [self] _ in
-            notificationServiceWrapper.foregroundServiceController.startService()
             presenter.onPause()
         }
         NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [self] _ in
-            notificationServiceWrapper.foregroundServiceController.stopService()
             presenter.onResume()
         }
     }

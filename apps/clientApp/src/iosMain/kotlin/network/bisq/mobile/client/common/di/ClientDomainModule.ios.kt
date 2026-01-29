@@ -27,23 +27,24 @@ val iosClientDomainModule =
 
         single<ApplicationLifecycleService> {
             ClientApplicationLifecycleService(
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
+                get(), // openTradesNotificationService
+                get(), // kmpTorService
+                get(), // fiatAccountsServiceFacade
+                get(), // applicationBootstrapFacade
+                get(), // tradeChatMessagesServiceFacade
+                get(), // languageServiceFacade
+                get(), // explorerServiceFacade
+                get(), // marketPriceServiceFacade
+                get(), // mediationServiceFacade
+                get(), // offersServiceFacade
+                get(), // reputationServiceFacade
+                get(), // settingsServiceFacade
+                get(), // tradesServiceFacade
+                get(), // userProfileServiceFacade
+                get(), // networkServiceFacade
+                get(), // messageDeliveryServiceFacade
+                get(), // connectivityService
+                get(), // apiAccessService
             )
         }
         single<UrlLauncher> { IOSUrlLauncher() }
