@@ -77,6 +77,7 @@ fun TrustedNodeSetupScreen(
     val selectedProxyOption by presenter.selectedProxyOption.collectAsState()
     val apiUrl by presenter.restApiUrl.collectAsState()
     val pairingCode by presenter.pairingQrCodeString.collectAsState()
+    val pairingCodeError by presenter.pairingCodeError.collectAsState()
     val clientName by presenter.clientName.collectAsState()
     val status by presenter.status.collectAsState()
     val torState by presenter.torState.collectAsState()
@@ -177,15 +178,13 @@ fun TrustedNodeSetupScreen(
                     label = "mobile.trustedNodeSetup.pairingCode.textField".i18n(),
                     placeholder = "mobile.trustedNodeSetup.pairingCode.textField.prompt".i18n(),
                     onValueChange = { value, _ ->
-                        if (isWorkflow) {
-                            presenter.onPairingCodeChanged(
-                                value,
-                            )
-                        }
+                        presenter.onPairingCodeChanged(value)
                     },
                     value = pairingCode,
                     disabled = isPairingInProgress,
                     showPaste = true,
+                    helperText = pairingCodeError ?: "",
+                    indicatorColor = if (pairingCodeError != null) BisqTheme.colors.danger else BisqTheme.colors.primary,
                 )
 
                 if (!apiUrl.isEmpty()) {
@@ -203,7 +202,7 @@ fun TrustedNodeSetupScreen(
                     text = "mobile.trustedNodeSetup.testAndSave".i18n(),
                     backgroundColor = BisqTheme.colors.primaryDim,
                     onClick = { presenter.onTestAndSavePressed(true) },
-                    disabled = pairingCode.isEmpty() || isPairingInProgress,
+                    disabled = pairingCode.isEmpty() || isPairingInProgress || pairingCodeError != null,
                 )
                 BisqGap.V2()
             }

@@ -83,6 +83,8 @@ class TrustedNodeSetupPresenter(
         apiAccessService.pairingResult
     val pairingResultPersisted: StateFlow<Boolean> =
         apiAccessService.pairingResultStored
+    val pairingCodeError: StateFlow<String?> =
+        apiAccessService.pairingCodeError
 
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> = _status.asStateFlow()
