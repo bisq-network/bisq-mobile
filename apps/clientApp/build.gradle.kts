@@ -52,11 +52,17 @@ kotlin {
 
             // Link Swift bridge object files (only from domain module to avoid duplicates)
             val swiftBridgeModules = listOf("LocalEncryptionBridge")
-            val domainSwiftBridgeDir = project(":shared:domain").layout.buildDirectory.dir("swift-bridge").get().asFile
+            val domainSwiftBridgeDir =
+                project(":shared:domain")
+                    .layout.buildDirectory
+                    .dir("swift-bridge")
+                    .get()
+                    .asFile
 
-            val objectFiles = swiftBridgeModules.map { moduleName ->
-                File(domainSwiftBridgeDir, "$moduleName.o").absolutePath
-            }
+            val objectFiles =
+                swiftBridgeModules.map { moduleName ->
+                    File(domainSwiftBridgeDir, "$moduleName.o").absolutePath
+                }
 
             val isMac = System.getProperty("os.name").lowercase().contains("mac")
             if (isMac) {
@@ -325,14 +331,15 @@ fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.Default
 
 // -------------------- Swift Bridge Configuration --------------------
 // Ensure Swift bridge objects are built before linking iOS frameworks
-tasks.matching {
-    it.name.startsWith("link") &&
-    (it.name.contains("IosSimulatorArm64") || it.name.contains("IosArm64")) &&
-    !it.name.contains("Test")
-}.configureEach {
-    dependsOn(":shared:domain:compileSwiftBridge")
-    dependsOn(":shared:presentation:compileSwiftBridge")
-}
+tasks
+    .matching {
+        it.name.startsWith("link") &&
+            (it.name.contains("IosSimulatorArm64") || it.name.contains("IosArm64")) &&
+            !it.name.contains("Test")
+    }.configureEach {
+        dependsOn(":shared:domain:compileSwiftBridge")
+        dependsOn(":shared:presentation:compileSwiftBridge")
+    }
 
 // -------------------- ProGuard Mapping Configuration --------------------
 extra["moduleName"] = clientAppModuleName

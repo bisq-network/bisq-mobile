@@ -12,10 +12,12 @@ import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
+import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 
 const val LOCALHOST = "localhost"
 const val LOOPBACK = "127.0.0.1"
@@ -75,6 +77,10 @@ class ApiAccessService(
     // private var pairingCode: PairingCode? = null
     private var requestPairingJob: Job? = null
 
+    private val _pairingCodeError: MutableStateFlow<String?> =
+        MutableStateFlow(null)
+    val pairingCodeError: StateFlow<String?> = _pairingCodeError.asStateFlow()
+
     private val pairingQrCodeDataStored: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
 
@@ -118,6 +124,8 @@ class ApiAccessService(
         serviceScope.launch {
             pairingQrCodeDataStored.collect { pairingDataStored ->
                 if (pairingDataStored) {
+                    // Give HttpClientService time to react to settings change and create new client
+                    kotlinx.coroutines.delay(200)
                     requestPairing()
                 }
             }
@@ -126,13 +134,16 @@ class ApiAccessService(
 
     fun setPairingQrCodeString(value: String) {
         if (value.isBlank()) {
+            log.w { "setPairingQrCodeString called with blank value" }
             return
         }
+        // Clear any previous error
+        _pairingCodeError.value = null
         try {
-            _pairingQrCodeString.value = value
+            _pairingQrCodeString.value = value.trim()
             pairingQrCodeDataStored.value = false
             val pairingQrCode =
-                PairingQrCodeDecoder.decode(value)
+                PairingQrCodeDecoder.decode(value.trim())
             val wsUrl = adaptLoopbackForAndroid(pairingQrCode.webSocketUrl)
             _webSocketUrl.value = wsUrl
             // Convert WebSocket URL to REST API URL, preserving the port
@@ -144,21 +155,35 @@ class ApiAccessService(
             _pairingCodeId.value = pairingCode.id
             _grantedPermissions.value = pairingCode.grantedPermissions
 
+            // Detect if we need Tor proxy based on URL
+            val proxyOption =
+                if (_restApiUrl.value.contains(".onion")) {
+                    BisqProxyOption.INTERNAL_TOR
+                } else {
+                    BisqProxyOption.NONE
+                }
+
             log.i {
                 "update SensitiveSettings: webSocketUrl=$wsUrl " +
                     "restApiUrl=${_restApiUrl.value} " +
                     "tlsFingerprint=${pairingQrCode.tlsFingerprint} " +
-                    "clientName=${_clientName.value}"
+                    "clientName=${_clientName.value} " +
+                    "proxyOption=$proxyOption"
             }
 
-            updatedSettings(_restApiUrl.value, pairingQrCode.tlsFingerprint)
-        } catch (ignore: Exception) {
+            updatedSettings(_restApiUrl.value, pairingQrCode.tlsFingerprint, proxyOption)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to decode pairing QR code: ${e.message}" }
+            _pairingCodeError.value = "mobile.trustedNodeSetup.pairingCode.invalid".i18n()
+            // Reset pairing code ID to prevent pairing attempt with invalid data
+            _pairingCodeId.value = null
         }
     }
 
     fun updatedSettings(
         restApiUrl: String,
         tlsFingerprint: String?,
+        proxyOption: BisqProxyOption? = null,
     ) {
         try {
             serviceScope.launch {
@@ -168,11 +193,18 @@ class ApiAccessService(
                         bisqApiUrl = restApiUrl,
                         tlsFingerprint = tlsFingerprint,
                         clientName = _clientName.value,
+                        // Clear old credentials when setting a new config
+                        // The pairing request must be unauthenticated
+                        clientId = null,
+                        sessionId = null,
+                        clientSecret = null,
+                        // Update proxy option if provided
+                        selectedProxyOption = proxyOption ?: currentSettings.selectedProxyOption,
                     )
                 sensitiveSettingsRepository.update { updatedSettings }
                 pairingQrCodeDataStored.value = true
             }
-        } catch (e: Exception) {
+        } catch (ignore: Exception) {
             log.e { "updatedSettings failed" }
         }
     }

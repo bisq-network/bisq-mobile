@@ -144,8 +144,21 @@ class HttpClientService(
         lastConfig = null
     }
 
+    /**
+     * Add authentication headers to the request if available
+     */
+    private fun HttpRequestBuilder.addAuthHeaders() {
+        lastConfig?.sessionId?.let {
+            header(Headers.SESSION_ID, it)
+        }
+        lastConfig?.clientId?.let {
+            header(Headers.CLIENT_ID, it)
+        }
+    }
+
     suspend fun get(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().get {
+            addAuthHeaders()
             block(this)
         }
 
@@ -186,6 +199,7 @@ class HttpClientService(
 
     suspend fun post(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().post {
+            addAuthHeaders()
             block(this)
         }
 
@@ -219,6 +233,7 @@ class HttpClientService(
 
     suspend fun patch(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().patch {
+            addAuthHeaders()
             block(this)
         }
 
@@ -248,11 +263,13 @@ class HttpClientService(
 
     suspend fun put(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().put {
+            addAuthHeaders()
             block(this)
         }
 
     suspend fun delete(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().delete {
+            addAuthHeaders()
             block(this)
         }
 
@@ -311,17 +328,6 @@ class HttpClientService(
             }
             defaultRequest {
                 url(baseUrl)
-
-                // ---------------------------
-                // Session / client headers
-                // ---------------------------
-
-                sessionId?.let {
-                    header(Headers.SESSION_ID, it)
-                }
-                clientId?.let {
-                    header(Headers.CLIENT_ID, it)
-                }
             }
             HttpResponseValidator {
                 validateResponse { response ->
