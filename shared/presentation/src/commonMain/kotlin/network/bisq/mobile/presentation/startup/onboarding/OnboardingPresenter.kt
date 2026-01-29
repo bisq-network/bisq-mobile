@@ -19,8 +19,8 @@ import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class OnboardingPresenter(
     mainPresenter: MainPresenter,
-    private val settingsRepository: SettingsRepository,
-    private val userProfileService: UserProfileServiceFacade,
+    protected val settingsRepository: SettingsRepository,
+    protected val userProfileService: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(OnboardingUiState())
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()

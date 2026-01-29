@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.service.ForegroundDetector
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -35,6 +36,7 @@ open class DashboardPresenter(
     private val notificationController: NotificationController,
     private val foregroundDetector: ForegroundDetector,
     val platformSettingsManager: PlatformSettingsManager,
+    private val pushNotificationServiceFacade: PushNotificationServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private val _offersOnline = MutableStateFlow(0)
     val offersOnline: StateFlow<Int> get() = _offersOnline.asStateFlow()
@@ -120,7 +122,14 @@ open class DashboardPresenter(
     }
 
     fun saveNotificationPermissionState(state: PermissionState) {
-        presenterScope.launch { settingsRepository.setNotificationPermissionState(state) }
+        presenterScope.launch {
+            settingsRepository.setNotificationPermissionState(state)
+
+            // If permission was granted, register for push notifications
+            if (state == PermissionState.GRANTED) {
+                registerForPushNotifications()
+            }
+        }
     }
 
     fun saveBatteryOptimizationState(state: BatteryOptimizationState) {
@@ -128,4 +137,15 @@ open class DashboardPresenter(
     }
 
     suspend fun hasNotificationPermission(): Boolean = notificationController.hasPermission()
+
+    private suspend fun registerForPushNotifications() {
+        log.i { "User granted notification permission - registering for push notifications" }
+        val result = pushNotificationServiceFacade.registerForPushNotifications()
+        if (result.isSuccess) {
+            log.i { "Successfully registered for push notifications" }
+        } else {
+            log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.message}" }
+            showSnackbar("Failed to register for push notifications", isError = true)
+        }
+    }
 }

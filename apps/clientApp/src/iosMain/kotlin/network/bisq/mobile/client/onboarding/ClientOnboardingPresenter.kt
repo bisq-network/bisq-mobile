@@ -6,7 +6,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 
-// TODO: remove (unused/duplicate)
 class ClientOnboardingPresenter(
     mainPresenter: MainPresenter,
     settingsRepository: SettingsRepository,
