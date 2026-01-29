@@ -124,58 +124,27 @@ class UserProfileStateTest {
     // ========== UserProfileUiAction Tests ==========
 
     @Test
-    fun `OnStatementChanged action holds correct value`() {
+    fun `OnStatementChange action holds correct value`() {
         // When
-        val action = UserProfileUiAction.OnStatementChanged("New statement")
+        val action = UserProfileUiAction.OnStatementChange("New statement")
 
         // Then
         assertEquals("New statement", action.value)
     }
 
     @Test
-    fun `OnTermsChanged action holds correct value`() {
+    fun `OnTermsChange action holds correct value`() {
         // When
-        val action = UserProfileUiAction.OnTermsChanged("New terms")
+        val action = UserProfileUiAction.OnTermsChange("New terms")
 
         // Then
         assertEquals("New terms", action.value)
     }
 
     @Test
-    fun `OnSavePressed action holds profileId and state`() {
-        // Given
-        val state = UserProfileUiState(statementDraft = "test", termsDraft = "terms")
-
+    fun `OnUserProfileSelect action holds correct profile`() {
         // When
-        val action = UserProfileUiAction.OnSavePressed(profileId = "profile123", uiState = state)
-
-        // Then
-        assertEquals("profile123", action.profileId)
-        assertEquals(state, action.uiState)
-    }
-
-    @Test
-    fun `OnDeletePressed action holds correct profile`() {
-        // When
-        val action = UserProfileUiAction.OnDeletePressed(profile1)
-
-        // Then
-        assertEquals(profile1, action.profile)
-    }
-
-    @Test
-    fun `OnDeleteConfirmed action holds correct profile`() {
-        // When
-        val action = UserProfileUiAction.OnDeleteConfirmed(profile2)
-
-        // Then
-        assertEquals(profile2, action.profile)
-    }
-
-    @Test
-    fun `OnUserProfileSelected action holds correct profile`() {
-        // When
-        val action = UserProfileUiAction.OnUserProfileSelected(profile1)
+        val action = UserProfileUiAction.OnUserProfileSelect(profile1)
 
         // Then
         assertEquals(profile1, action.profile)
@@ -184,10 +153,10 @@ class UserProfileStateTest {
     @Test
     fun `singleton actions are correctly instantiated`() {
         // When/Then - verify singleton actions can be referenced
-        assertNotNull(UserProfileUiAction.OnCreateProfilePressed)
-        assertNotNull(UserProfileUiAction.OnDeleteConfirmationDismissed)
+        assertNotNull(UserProfileUiAction.OnCreateProfilePress)
+        assertNotNull(UserProfileUiAction.OnDeleteConfirmationDismiss)
         assertNotNull(UserProfileUiAction.OnDeleteError)
-        assertNotNull(UserProfileUiAction.OnDeleteErrorDialogDismissed)
+        assertNotNull(UserProfileUiAction.OnDeleteErrorDialogDismiss)
     }
 
     @Test
@@ -197,16 +166,16 @@ class UserProfileStateTest {
 
         val actions: List<UserProfileUiAction> =
             listOf(
-                UserProfileUiAction.OnStatementChanged("test"),
-                UserProfileUiAction.OnTermsChanged("test"),
-                UserProfileUiAction.OnSavePressed("id", UserProfileUiState()),
-                UserProfileUiAction.OnCreateProfilePressed,
-                UserProfileUiAction.OnDeletePressed(profile1),
-                UserProfileUiAction.OnDeleteConfirmed(profile1),
-                UserProfileUiAction.OnDeleteConfirmationDismissed,
+                UserProfileUiAction.OnStatementChange("test"),
+                UserProfileUiAction.OnTermsChange("test"),
+                UserProfileUiAction.OnSavePress,
+                UserProfileUiAction.OnCreateProfilePress,
+                UserProfileUiAction.OnDeletePress,
+                UserProfileUiAction.OnDeleteConfirm,
+                UserProfileUiAction.OnDeleteConfirmationDismiss,
                 UserProfileUiAction.OnDeleteError,
-                UserProfileUiAction.OnDeleteErrorDialogDismissed,
-                UserProfileUiAction.OnUserProfileSelected(profile1),
+                UserProfileUiAction.OnDeleteErrorDialogDismiss,
+                UserProfileUiAction.OnUserProfileSelect(profile1),
             )
 
         // Then - verify all 10 action types were created successfully

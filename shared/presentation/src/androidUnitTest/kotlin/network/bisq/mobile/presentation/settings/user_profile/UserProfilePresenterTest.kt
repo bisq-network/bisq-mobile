@@ -7,7 +7,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -21,7 +20,6 @@ import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
@@ -33,7 +31,6 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -183,7 +180,7 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnUserProfileSelected(profile2))
+            presenter.onAction(UserProfileUiAction.OnUserProfileSelect(profile2))
             advanceUntilIdle()
 
             // Then
@@ -207,7 +204,7 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnUserProfileSelected(profile2))
+            presenter.onAction(UserProfileUiAction.OnUserProfileSelect(profile2))
             advanceUntilIdle()
 
             // Then - should still have profile1 selected
@@ -236,8 +233,8 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When - update drafts
-            presenter.onAction(UserProfileUiAction.OnStatementChanged("New statement"))
-            presenter.onAction(UserProfileUiAction.OnTermsChanged("New terms"))
+            presenter.onAction(UserProfileUiAction.OnStatementChange("New statement"))
+            presenter.onAction(UserProfileUiAction.OnTermsChange("New terms"))
             advanceUntilIdle()
 
             // Then - verify drafts updated
@@ -246,10 +243,7 @@ class UserProfilePresenterTest {
 
             // When - save
             presenter.onAction(
-                UserProfileUiAction.OnSavePressed(
-                    profileId = profile1.networkId.pubKey.id,
-                    uiState = presenter.uiState.value,
-                ),
+                UserProfileUiAction.OnSavePress,
             )
             advanceUntilIdle()
 
@@ -281,10 +275,7 @@ class UserProfilePresenterTest {
 
             // When
             presenter.onAction(
-                UserProfileUiAction.OnSavePressed(
-                    profileId = profile1.networkId.pubKey.id,
-                    uiState = presenter.uiState.value.copy(statementDraft = "test"),
-                ),
+                UserProfileUiAction.OnSavePress,
             )
 
             // Then - should be busy immediately
@@ -311,11 +302,14 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnDeletePressed(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
+            advanceUntilIdle()
+
+            presenter.onAction(UserProfileUiAction.OnUserProfileSelect(profile2))
             advanceUntilIdle()
 
             // Then
-            assertEquals(profile2, presenter.uiState.value.showDeleteConfirmationForProfile)
+            assertEquals(profile1, presenter.uiState.value.showDeleteConfirmationForProfile)
         }
 
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
@@ -330,11 +324,11 @@ class UserProfilePresenterTest {
             presenter.onViewAttached()
             advanceUntilIdle()
 
-            presenter.onAction(UserProfileUiAction.OnDeletePressed(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnDeleteConfirmationDismissed)
+            presenter.onAction(UserProfileUiAction.OnDeleteConfirmationDismiss)
             advanceUntilIdle()
 
             // Then
@@ -348,7 +342,7 @@ class UserProfilePresenterTest {
             // Given
             val profilesFlow = MutableStateFlow(listOf(profile1, profile2, profile3))
             every { userProfileServiceFacade.userProfiles } returns profilesFlow
-            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
+            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile2)
             coEvery { userProfileServiceFacade.deleteUserProfile(profile2.networkId.pubKey.id) } coAnswers {
                 profilesFlow.value = listOf(profile1, profile3) // Simulate removal
                 Result.success(profile1) // Returns newly selected profile
@@ -358,8 +352,11 @@ class UserProfilePresenterTest {
             presenter.onViewAttached()
             advanceUntilIdle()
 
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
+            advanceUntilIdle()
+
             // When
-            presenter.onAction(UserProfileUiAction.OnDeleteConfirmed(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeleteConfirm)
             advanceUntilIdle()
 
             // Then
@@ -374,7 +371,7 @@ class UserProfilePresenterTest {
         runTest(testDispatcher) {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
-            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
+            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile2)
             coEvery { userProfileServiceFacade.deleteUserProfile(profile2.networkId.pubKey.id) } returns
                 Result.failure(Exception("Cannot delete last profile"))
 
@@ -382,8 +379,11 @@ class UserProfilePresenterTest {
             presenter.onViewAttached()
             advanceUntilIdle()
 
+            presenter.onAction(UserProfileUiAction.OnDeletePress)
+            advanceUntilIdle()
+
             // When
-            presenter.onAction(UserProfileUiAction.OnDeleteConfirmed(profile2))
+            presenter.onAction(UserProfileUiAction.OnDeleteConfirm)
             advanceUntilIdle()
 
             // Then
@@ -407,7 +407,7 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismissed)
+            presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismiss)
             advanceUntilIdle()
 
             // Then
@@ -440,7 +440,7 @@ class UserProfilePresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(UserProfileUiAction.OnCreateProfilePressed)
+            presenter.onAction(UserProfileUiAction.OnCreateProfilePress)
             advanceUntilIdle()
 
             // Then

@@ -111,7 +111,7 @@ fun UserProfileScreen() {
                     selectedKey = profile.id,
                     searchable = true,
                     onSelect = {
-                        presenter.onAction(UserProfileUiAction.OnUserProfileSelected(it))
+                        presenter.onAction(UserProfileUiAction.OnUserProfileSelect(it))
                     },
                     disabled = !isInteractive || uiState.userProfiles.isEmpty(),
                     modifier = Modifier.weight(1f),
@@ -121,7 +121,7 @@ fun UserProfileScreen() {
                     // to align button with text field
                     BisqIconButton(
                         onClick = {
-                            presenter.onAction(UserProfileUiAction.OnCreateProfilePressed)
+                            presenter.onAction(UserProfileUiAction.OnCreateProfilePress)
                         },
                         disabled = !isInteractive,
                         modifier =
@@ -199,7 +199,7 @@ fun UserProfileScreen() {
                 isTextArea = true,
                 onValueChange = { newValue, _ ->
                     presenter.onAction(
-                        UserProfileUiAction.OnStatementChanged(
+                        UserProfileUiAction.OnStatementChange(
                             newValue,
                         ),
                     )
@@ -215,7 +215,7 @@ fun UserProfileScreen() {
                 isTextArea = true,
                 onValueChange = { newValue, _ ->
                     presenter.onAction(
-                        UserProfileUiAction.OnTermsChanged(
+                        UserProfileUiAction.OnTermsChange(
                             newValue,
                         ),
                     )
@@ -223,8 +223,8 @@ fun UserProfileScreen() {
             )
             BisqGap.V1()
             UserProfileScreenFooter(
-                onSavePress = { presenter.onAction(UserProfileUiAction.OnSavePressed(profile.id, uiState)) },
-                onDeletePress = { presenter.onAction(UserProfileUiAction.OnDeletePressed(profile)) },
+                onSavePress = { presenter.onAction(UserProfileUiAction.OnSavePress) },
+                onDeletePress = { presenter.onAction(UserProfileUiAction.OnDeletePress) },
                 isBusy = uiState.isBusy,
             )
         }
@@ -233,8 +233,8 @@ fun UserProfileScreen() {
     uiState.showDeleteConfirmationForProfile?.let { profile ->
         WarningConfirmationDialog(
             message = "mobile.settings.userProfile.deleteConfirmationDialog.message".i18n(profile.nickName),
-            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteConfirmed(profile)) },
-            onDismiss = { presenter.onAction(UserProfileUiAction.OnDeleteConfirmationDismissed) },
+            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteConfirm) },
+            onDismiss = { presenter.onAction(UserProfileUiAction.OnDeleteConfirmationDismiss) },
         )
     }
 
@@ -242,8 +242,8 @@ fun UserProfileScreen() {
         WarningConfirmationDialog(
             message = "user.userProfile.deleteProfile.cannotDelete".i18n(),
             dismissButtonText = "",
-            onDismiss = { presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismissed) },
-            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismissed) },
+            onDismiss = { presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismiss) },
+            onConfirm = { presenter.onAction(UserProfileUiAction.OnDeleteErrorDialogDismiss) },
         )
     }
 }
