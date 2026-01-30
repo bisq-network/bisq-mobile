@@ -156,6 +156,18 @@ class HttpClientService(
         }
     }
 
+    /**
+     * Redact sensitive fields from request body for logging.
+     * Returns a summary with type name and field count, without exposing actual values.
+     * Note: Must be internal (not private) to be accessible from inline functions.
+     */
+    @PublishedApi
+    internal fun redactForLogging(body: Any?): String {
+        if (body == null) return "null"
+        val className = body::class.simpleName ?: "Unknown"
+        return "[$className object]"
+    }
+
     suspend fun get(block: HttpRequestBuilder.() -> Unit): HttpResponse =
         getClient().get {
             addAuthHeaders()
@@ -167,8 +179,7 @@ class HttpClientService(
         requestBody: R? = null,
         headers: Map<String, String> = emptyMap(),
     ): Result<T> {
-        log.d { "HTTP POST to ${apiPath + path}" }
-        log.d { "Request body: $requestBody" }
+        log.d { "HTTP POST to ${apiPath + path} with body: ${redactForLogging(requestBody)}" }
         try {
             val response: HttpResponse =
                 post {
@@ -207,13 +218,8 @@ class HttpClientService(
         path: String,
         requestBody: R,
     ): Result<T> {
-        log.d { "HTTP PATCH to ${apiPath + path}" }
-        log.d { "Request body: $requestBody" }
+        log.d { "HTTP PATCH to ${apiPath + path} with body: ${redactForLogging(requestBody)}" }
         try {
-            // Serialize to JSON to see what's actually being sent
-            val bodyAsJson = json.encodeToString(requestBody)
-            log.d { "Request body as JSON: $bodyAsJson" }
-
             val response: HttpResponse =
                 patch {
                     url {
@@ -241,8 +247,7 @@ class HttpClientService(
         path: String,
         requestBody: R,
     ): Result<T> {
-        log.d { "HTTP PUT to " + (apiPath + path) }
-        log.d { "Request body: $requestBody" }
+        log.d { "HTTP PUT to ${apiPath + path} with body: ${redactForLogging(requestBody)}" }
         try {
             val response: HttpResponse =
                 put {

@@ -125,7 +125,8 @@ fun TrustedNodeSetupScreen(
                                 BisqTheme.colors.danger
                             },
                     )
-                    if (connectionState is ConnectionState.Connecting) {
+                    // Show countdown during pairing or connecting phases
+                    if ((isPairingInProgress || connectionState is ConnectionState.Connecting) && timeoutCounter > 0) {
                         BisqText.LargeRegular(
                             timeoutCounter.toString(),
                             color = BisqTheme.colors.warning,
@@ -198,12 +199,25 @@ fun TrustedNodeSetupScreen(
                 }
 
                 BisqGap.V4()
-                BisqButton(
-                    text = "mobile.trustedNodeSetup.testAndSave".i18n(),
-                    backgroundColor = BisqTheme.colors.primaryDim,
-                    onClick = { presenter.onTestAndSavePressed(true) },
-                    disabled = pairingCode.isEmpty() || isPairingInProgress || pairingCodeError != null,
-                )
+                if (isPairingInProgress) {
+                    BisqButton(
+                        text =
+                            if (timeoutCounter > 0) {
+                                "mobile.trustedNodeSetup.cancelWithTimeout".i18n(timeoutCounter.toString())
+                            } else {
+                                "mobile.trustedNodeSetup.cancel".i18n()
+                            },
+                        type = BisqButtonType.Grey,
+                        onClick = presenter::onCancelPressed,
+                    )
+                } else {
+                    BisqButton(
+                        text = "mobile.trustedNodeSetup.testAndSave".i18n(),
+                        backgroundColor = BisqTheme.colors.primaryDim,
+                        onClick = { presenter.onTestAndSavePressed(true) },
+                        disabled = pairingCode.isEmpty() || pairingCodeError != null,
+                    )
+                }
                 BisqGap.V2()
             }
 

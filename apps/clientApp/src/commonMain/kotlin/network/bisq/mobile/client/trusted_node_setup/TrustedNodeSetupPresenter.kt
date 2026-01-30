@@ -19,9 +19,12 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
@@ -70,6 +73,8 @@ class TrustedNodeSetupPresenter(
     private val wsClientService: WebSocketClientService by inject()
 
     private val apiAccessService: ApiAccessService by inject()
+
+    private val httpClientService: HttpClientService by inject()
 
     private val _wsClientConnectionState =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
@@ -195,6 +200,18 @@ class TrustedNodeSetupPresenter(
         _status.value =
             "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
 
+        // Start a general countdown for the entire operation (Tor + pairing + connection)
+        // This provides visual feedback and enables the Cancel button
+        val totalTimeoutSecs = 120L // 2 minutes for the entire operation
+        countdownJob?.cancel()
+        countdownJob =
+            presenterScope.launch {
+                for (i in totalTimeoutSecs downTo 0) {
+                    _timeoutCounter.value = i
+                    delay(1000)
+                }
+            }
+
         val newApiUrlString = restApiUrl.value
         log.d { "Test: $newApiUrlString isWorkflow $isWorkflow" }
         val newApiUrl = parseAndNormalizeUrl(newApiUrlString)
@@ -215,32 +232,8 @@ class TrustedNodeSetupPresenter(
                 var sessionId = apiAccessService.sessionId.value
 
                 try {
-                    // If clientId or sessionId is null, we need to request pairing first
-                    if (clientId == null || sessionId == null) {
-                        _status.value = "mobile.trustedNodeSetup.status.requestingPairing".i18n()
-                        log.d { "ClientId or SessionId is null, requesting pairing..." }
-
-                        // Trigger pairing request
-                        apiAccessService.requestPairing()
-
-                        // Wait for pairing result
-                        val pairingResult =
-                            apiAccessService.pairingResult
-                                .filterNotNull()
-                                .first()
-
-                        if (pairingResult.isFailure) {
-                            val pairingError = pairingResult.exceptionOrNull()
-                            log.e(pairingError) { "Pairing request failed" }
-                            throw pairingError ?: IllegalStateException("Pairing request failed")
-                        }
-
-                        log.d { "Pairing request successful" }
-                        // Update clientId and sessionId from pairing response
-                        clientId = apiAccessService.clientId.value
-                        sessionId = apiAccessService.sessionId.value
-                    }
-
+                    // Setup proxy FIRST before any network requests
+                    // This ensures the HTTP client is configured correctly for onion URLs
                     val newProxyHost: String?
                     val newProxyPort: Int?
                     val newProxyIsTor: Boolean
@@ -271,6 +264,19 @@ class TrustedNodeSetupPresenter(
                             newProxyPort = kmpTorService.awaitSocksPort()
                             newProxyIsTor = true
                             log.d { "Using Tor proxy at $newProxyHost:$newProxyPort" }
+
+                            // Wait for HTTP client to be updated with Tor proxy settings
+                            // Use timeout to avoid hanging forever if the flow doesn't emit
+                            log.d { "Waiting for HTTP client to update with Tor proxy settings..." }
+                            val httpClientUpdated =
+                                withTimeoutOrNull(5000) {
+                                    httpClientService.httpClientChangedFlow.first()
+                                }
+                            if (httpClientUpdated != null) {
+                                log.d { "HTTP client updated with Tor proxy settings: $httpClientUpdated" }
+                            } else {
+                                log.w { "Timeout waiting for HTTP client update, proceeding anyway" }
+                            }
                         }
 
                         BisqProxyOption.EXTERNAL_TOR,
@@ -294,15 +300,36 @@ class TrustedNodeSetupPresenter(
                         }
                     }
 
-                    val timeoutSecs =
-                        WebSocketClient.determineTimeout(newApiUrl.host) / 1000
-                    countdownJob =
-                        presenterScope.launch {
-                            for (i in timeoutSecs downTo 0) {
-                                _timeoutCounter.value = i
-                                delay(1000)
+                    // If clientId or sessionId is null, we need to request pairing first
+                    // This must happen AFTER Tor is started so the HTTP client uses the correct proxy
+                    if (clientId == null || sessionId == null) {
+                        _status.value = "mobile.trustedNodeSetup.status.requestingPairing".i18n()
+                        log.d { "ClientId or SessionId is null, requesting pairing..." }
+
+                        val pairingTimeoutSecs = 60L
+                        withTimeout(pairingTimeoutSecs * 1000) {
+                            // Trigger pairing request
+                            apiAccessService.requestPairing()
+
+                            // Wait for pairing result
+                            val pairingResult =
+                                apiAccessService.pairingResult
+                                    .filterNotNull()
+                                    .first()
+
+                            if (pairingResult.isFailure) {
+                                val pairingError = pairingResult.exceptionOrNull()
+                                log.e(pairingError) { "Pairing request failed" }
+                                throw pairingError ?: IllegalStateException("Pairing request failed")
                             }
+
+                            log.d { "Pairing request successful" }
+                            // Update clientId and sessionId from pairing response
+                            clientId = apiAccessService.clientId.value
+                            sessionId = apiAccessService.sessionId.value
                         }
+                    }
+
                     _status.value =
                         "mobile.trustedNodeSetup.status.connecting".i18n()
                     _wsClientConnectionState.value =
@@ -317,7 +344,6 @@ class TrustedNodeSetupPresenter(
                             proxyPort = newProxyPort,
                             isTorProxy = newProxyIsTor,
                         )
-                    countdownJob?.cancel()
 
                     if (error != null) {
                         _wsClientConnectionState.value =
