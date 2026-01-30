@@ -52,16 +52,23 @@ class ClientApplicationBootstrapFacade(
                 }
 
                 ClientAuthState.RENEW_SESSION -> {
-                    require(currentSettings.clientId != null)
-                    require(currentSettings.clientSecret != null)
+                    // Defensive check: if clientId or clientSecret is null, fall back to pairing flow
+                    val clientId = currentSettings.clientId
+                    val clientSecret = currentSettings.clientSecret
+                    if (clientId == null || clientSecret == null) {
+                        log.w { "RENEW_SESSION state but clientId or clientSecret is null, falling back to pairing flow" }
+                        setState("mobile.bootstrap.preparingInitialSetup".i18n())
+                        setProgress(1.0f)
+                        return@launch
+                    }
 
                     setProgress(0.5f)
                     setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
 
                     val result =
                         sessionService.requestSession(
-                            currentSettings.clientId,
-                            currentSettings.clientSecret,
+                            clientId,
+                            clientSecret,
                         )
 
                     if (result.isSuccess) {

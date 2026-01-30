@@ -213,7 +213,7 @@ val clientDomainModule =
         single { PairingService(get()) }
         single { SessionApiGateway(get()) }
         single { SessionService(get()) }
-        single { ApiAccessService(get(), get()) }
+        single { ApiAccessService(get(), get(), get()) }
 
         // single { WebSocketHttpClient(get()) }
         single {

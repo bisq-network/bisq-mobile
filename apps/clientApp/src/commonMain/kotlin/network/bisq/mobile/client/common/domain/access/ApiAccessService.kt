@@ -13,6 +13,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -26,6 +27,7 @@ const val ANDROID_LOCALHOST = "10.0.2.2"
 class ApiAccessService(
     private val pairingService: PairingService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
+    private val httpClientService: HttpClientService,
 ) : ServiceFacade(),
     Logging {
     // Auto-generate client name from platform info
@@ -124,9 +126,15 @@ class ApiAccessService(
         serviceScope.launch {
             pairingQrCodeDataStored.collect { pairingDataStored ->
                 if (pairingDataStored) {
-                    // Give HttpClientService time to react to settings change and create new client
-                    kotlinx.coroutines.delay(200)
-                    requestPairing()
+                    // Wait for HttpClientService to apply settings and create new client
+                    val clientReady = httpClientService.awaitClientReady()
+                    if (clientReady) {
+                        log.d { "HTTP client ready, proceeding with pairing request" }
+                        requestPairing()
+                    } else {
+                        log.w { "Timeout waiting for HTTP client, proceeding with pairing request anyway" }
+                        requestPairing()
+                    }
                 }
             }
         }

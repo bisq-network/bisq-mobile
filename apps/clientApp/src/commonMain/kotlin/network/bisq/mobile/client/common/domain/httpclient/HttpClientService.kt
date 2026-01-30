@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -143,6 +144,18 @@ class HttpClientService(
         _httpClient.value = null
         lastConfig = null
     }
+
+    /**
+     * Suspends until the HTTP client has been created/updated and is ready for use.
+     * This should be called before making requests that depend on updated settings.
+     * @param timeoutMs Maximum time to wait for the client to be ready (default 5000ms)
+     * @return true if client is ready, false if timeout occurred
+     */
+    suspend fun awaitClientReady(timeoutMs: Long = 5000): Boolean =
+        kotlinx.coroutines.withTimeoutOrNull(timeoutMs) {
+            httpClientChangedFlow.first()
+            true
+        } ?: false
 
     /**
      * Add authentication headers to the request if available
