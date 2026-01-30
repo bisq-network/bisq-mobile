@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.service.accounts.AccountsState
 import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -439,6 +440,11 @@ class PaymentAccountsPresenterTest {
             // Validation failed - service should not be called
             val state = presenter.uiState.value
             assertTrue(state.showAddAccountState) // Still in add mode
+
+            // Verify duplicate name snackbar was shown
+            val snackbarData = presenter.getSnackState().currentSnackbarData
+            assertNotNull(snackbarData)
+            assertEquals("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n(), snackbarData.visuals.message)
         }
 
     // ========== Add Account Tests ==========
@@ -480,6 +486,11 @@ class PaymentAccountsPresenterTest {
             val payload = accountState.accounts[0].accountPayload as UserDefinedFiatAccountPayloadVO
             assertEquals("account@example.com", payload.accountData)
             assertFalse(presenter.uiState.value.showAddAccountState) // Dialog should be closed
+
+            // Verify success snackbar was shown
+            val snackbarData = presenter.getSnackState().currentSnackbarData
+            assertNotNull(snackbarData)
+            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(), snackbarData.visuals.message)
         }
 
     @Test
@@ -507,6 +518,11 @@ class PaymentAccountsPresenterTest {
             coVerify(atLeast = 1) { fiatAccountsServiceFacade.addAccount(any()) }
             // Should still be in add mode since it failed
             assertTrue(presenter.uiState.value.showAddAccountState)
+
+            // Verify error snackbar was shown
+            val snackbarData = presenter.getSnackState().currentSnackbarData
+            assertNotNull(snackbarData)
+            assertEquals("mobile.error.generic".i18n(), snackbarData.visuals.message)
         }
 
     // ========== Save Account Tests ==========
@@ -543,6 +559,11 @@ class PaymentAccountsPresenterTest {
             // Then
             // Verify the mock was called and state can be checked
             coVerify(atLeast = 1) { fiatAccountsServiceFacade.saveAccount(any()) }
+
+            // Verify success snackbar was shown
+            val snackbarData = presenter.getSnackState().currentSnackbarData
+            assertNotNull(snackbarData)
+            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(), snackbarData.visuals.message)
         }
 
     @Test
@@ -678,6 +699,11 @@ class PaymentAccountsPresenterTest {
             // Then
             // Verify save was called but failed
             coVerify(atLeast = 1) { fiatAccountsServiceFacade.saveAccount(any()) }
+
+            // Verify error snackbar was shown
+            val snackbarData = presenter.getSnackState().currentSnackbarData
+            assertNotNull(snackbarData)
+            assertEquals("mobile.error.generic".i18n(), snackbarData.visuals.message)
         }
 
     // ========== Delete Account Tests ==========
@@ -711,6 +737,11 @@ class PaymentAccountsPresenterTest {
             // Then
             val state = presenter.uiState.value
             assertFalse(state.showDeleteConfirmationDialog)
+
+            // Verify success snackbar was shown
+            val snackbarData = presenter.getSnackState().currentSnackbarData
+            assertNotNull(snackbarData)
+            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(), snackbarData.visuals.message)
         }
 
     @Test
@@ -745,6 +776,11 @@ class PaymentAccountsPresenterTest {
             // Verify the dialog remains open (presenter doesn't close it on failure)
             val state = presenter.uiState.value
             assertTrue(state.showDeleteConfirmationDialog)
+
+            // Verify error snackbar was shown
+            val snackbarData = presenter.getSnackState().currentSnackbarData
+            assertNotNull(snackbarData)
+            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(sampleAccount1.accountName), snackbarData.visuals.message)
         }
 
     // ========== UI Action Tests ==========
