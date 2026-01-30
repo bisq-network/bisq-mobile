@@ -22,6 +22,7 @@ abstract class ApplicationBootstrapFacade(
             90_000L // 90 seconds per stage
     }
 
+    @Volatile
     private var currentTimeoutJob: Job? = null
 
     @Volatile
