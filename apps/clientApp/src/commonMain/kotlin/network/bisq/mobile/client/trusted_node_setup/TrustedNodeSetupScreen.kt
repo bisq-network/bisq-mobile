@@ -48,6 +48,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonTyp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSelect
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.CloseIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ScanQrIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -182,8 +183,15 @@ fun TrustedNodeSetupScreen(
                         presenter.onPairingCodeChanged(value)
                     },
                     value = pairingCode,
+                    readOnly = true, // Only allow input via QR scan or paste
                     disabled = isPairingInProgress,
                     showPaste = true,
+                    rightSuffix =
+                        if (pairingCode.isNotEmpty() && !isPairingInProgress) {
+                            { CloseIconButton(onClick = { presenter.onPairingCodeChanged("") }) }
+                        } else {
+                            null
+                        },
                     helperText = pairingCodeError ?: "",
                     indicatorColor = if (pairingCodeError != null) BisqTheme.colors.danger else BisqTheme.colors.primary,
                 )
