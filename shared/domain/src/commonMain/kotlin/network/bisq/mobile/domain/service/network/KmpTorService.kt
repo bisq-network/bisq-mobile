@@ -52,10 +52,12 @@ import okio.SYSTEM
  */
 class KmpTorService(
     private val baseDir: Path,
+    private val disableNetworkInitially: Boolean = true,
 ) : BaseService(),
     Logging {
     companion object {
-        private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 60_000L
+        private const val DEFAULT_DAEMON_START_TIMEOUT_MS = 60_000L
+        private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 120_000L // 2 minutes for bootstrap
     }
 
     sealed class TorState {
@@ -97,7 +99,10 @@ class KmpTorService(
 
     private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
 
-    suspend fun startTor(timeoutMs: Long = DEFAULT_BOOTSTRAP_TIMEOUT_MS): Boolean {
+    suspend fun startTor(
+        daemonStartTimeoutMs: Long = DEFAULT_DAEMON_START_TIMEOUT_MS,
+        bootstrapTimeoutMs: Long = DEFAULT_BOOTSTRAP_TIMEOUT_MS,
+    ): Boolean {
         when (_state.value) {
             is TorState.Started -> return true
             is TorState.Stopping -> return false
@@ -107,7 +112,6 @@ class KmpTorService(
 
             is TorState.Stopped -> {
                 try {
-                    var remainingTime = timeoutMs
                     var didAcquireStart = false
                     controlMutex.withLock {
                         if (_state.value !is TorState.Stopped) {
@@ -119,13 +123,10 @@ class KmpTorService(
                         val newStartDefer =
                             serviceScope.async {
                                 val runtime = getTorRuntime()
-                                val startTime = Clock.System.now().toEpochMilliseconds()
-                                withTimeout(timeoutMs) {
+                                withTimeout(daemonStartTimeoutMs) {
                                     runtime.startDaemonAsync()
                                     configTor()
                                 }
-                                val durationMs = Clock.System.now().toEpochMilliseconds() - startTime
-                                remainingTime = (timeoutMs - durationMs).coerceAtLeast(0)
                             }
                         startDefer = newStartDefer
                         newStartDefer.await()
@@ -137,8 +138,9 @@ class KmpTorService(
                             .first() is TorState.Started
                     }
 
+                    // Bootstrap gets its own separate timeout
                     val bootstrapped =
-                        withTimeout(remainingTime) {
+                        withTimeout(bootstrapTimeoutMs) {
                             awaitBootstrapped()
                         }
                     return bootstrapped
@@ -241,7 +243,9 @@ class KmpTorService(
                     TorOption.CookieAuthentication.configure(true)
                     TorOption.DataDirectory.configure(File(torDir.toString()))
                     TorOption.CacheDirectory.configure(File(cacheDirectory.toString()))
-                    TorOption.DisableNetwork.configure(true) // Bisq Easy tor lib managed the DisableNetwork state, initially it is disabled.
+                    // For nodeApp: Bisq2's Tor library manages DisableNetwork via control port
+                    // For clientApp: Network should be enabled immediately for bootstrap to complete
+                    TorOption.DisableNetwork.configure(disableNetworkInitially)
                     TorOption.NoExec.configure(true)
                     TorOption.TruncateLogFile.configure(true)
                 }
