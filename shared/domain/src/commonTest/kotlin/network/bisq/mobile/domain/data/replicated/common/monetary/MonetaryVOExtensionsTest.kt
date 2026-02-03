@@ -90,4 +90,31 @@ class MonetaryVOExtensionsTest {
         val fiat = createFiat(12345L, "USD", 4) // 1.2345 USD
         assertEquals(1.2345, fiat.toDouble(12345L), tolerance)
     }
+
+    @Test
+    fun `toDouble handles large values`() {
+        val coin = createCoin(2100000000000000L) // 21 million BTC
+        assertEquals(21000000.0, coin.asDouble(), tolerance)
+    }
+
+    @Test
+    fun `toDouble handles negative values`() {
+        val coin = createCoin(-100000000L) // -1 BTC
+        assertEquals(-1.0, coin.asDouble(), tolerance)
+    }
+
+    @Test
+    fun `asDouble handles different fiat currencies`() {
+        val eur = createFiat(50000L, "EUR", 4) // 5.0000 EUR
+        assertEquals(5.0, eur.asDouble(), tolerance)
+    }
+
+    @Test
+    fun `decimalMode uses ROUND_HALF_AWAY_FROM_ZERO`() {
+        val coin = createCoin(100000000L)
+        assertEquals(
+            com.ionspin.kotlin.bignum.decimal.RoundingMode.ROUND_HALF_AWAY_FROM_ZERO,
+            coin.decimalMode.roundingMode,
+        )
+    }
 }

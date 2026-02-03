@@ -185,4 +185,23 @@ class DateUtilsTest {
         val result = DateUtils.lastSeen(oneMinuteAgo)
         assertEquals("1 min ago", result)
     }
+
+    @Test
+    fun `now should return current time in milliseconds`() {
+        val result = DateUtils.now()
+        assertEquals(fixedInstant.toEpochMilliseconds(), result)
+    }
+
+    @Test
+    fun `toDateTime should format timestamp correctly`() {
+        val result = DateUtils.toDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC)
+        assertTrue(result.contains("2024"))
+        assertTrue(result.contains("15"))
+    }
+
+    @Test
+    fun `toDateTime should handle epoch zero`() {
+        val result = DateUtils.toDateTime(0L, TimeZone.UTC)
+        assertTrue(result.contains("1970"))
+    }
 }

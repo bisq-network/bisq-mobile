@@ -234,4 +234,40 @@ class PriceUtilTest {
         // Expect raw ratio (no auto-correction across markets): ~100.1499%
         assertEquals(100.1499, result, 0.01)
     }
+
+    @Test
+    fun `fromMarketPriceMarkup should return same price for zero percentage`() {
+        val marketPrice = createTestPriceQuote(50000)
+        val result = PriceUtil.fromMarketPriceMarkup(marketPrice, 0.0)
+        assertEquals(50000, result.value)
+    }
+
+    @Test
+    fun `fromMarketPriceMarkup should increase price for positive percentage`() {
+        val marketPrice = createTestPriceQuote(50000)
+        val result = PriceUtil.fromMarketPriceMarkup(marketPrice, 0.1) // 10% markup
+        assertTrue(result.value > 50000)
+    }
+
+    @Test
+    fun `fromMarketPriceMarkup should decrease price for negative percentage`() {
+        val marketPrice = createTestPriceQuote(50000)
+        val result = PriceUtil.fromMarketPriceMarkup(marketPrice, -0.1) // 10% discount
+        assertTrue(result.value < 50000)
+    }
+
+    @Test
+    fun `fromMarketPriceMarkup should throw for percentage below minus 100`() {
+        val marketPrice = createTestPriceQuote(50000)
+        assertFailsWith<IllegalArgumentException> {
+            PriceUtil.fromMarketPriceMarkup(marketPrice, -1.1) // -110%
+        }
+    }
+
+    @Test
+    fun `fromMarketPriceMarkup should handle 100 percent markup`() {
+        val marketPrice = createTestPriceQuote(50000)
+        val result = PriceUtil.fromMarketPriceMarkup(marketPrice, 1.0) // 100% markup
+        assertTrue(result.value > 90000) // Should be close to double
+    }
 }

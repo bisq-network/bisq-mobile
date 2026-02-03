@@ -76,4 +76,71 @@ class SemanticVersionTest {
         val version = SemanticVersion.parse("1.0.0+001")
         assertEquals(listOf("001"), version.build)
     }
+
+    @Test
+    fun toStringFormatsCorrectly() {
+        val version = SemanticVersion(1, 2, 3)
+        assertEquals("1.2.3", version.toString())
+    }
+
+    @Test
+    fun toStringWithPreRelease() {
+        val version = SemanticVersion(1, 2, 3, listOf("alpha", "1"))
+        assertEquals("1.2.3-alpha.1", version.toString())
+    }
+
+    @Test
+    fun toStringWithBuildMetadata() {
+        val version = SemanticVersion(1, 2, 3, build = listOf("build", "123"))
+        assertEquals("1.2.3+build.123", version.toString())
+    }
+
+    @Test
+    fun toStringWithPreReleaseAndBuild() {
+        val version = SemanticVersion(1, 2, 3, listOf("beta"), listOf("456"))
+        assertEquals("1.2.3-beta+456", version.toString())
+    }
+
+    @Test
+    fun fromParsesSimpleVersion() {
+        val version = SemanticVersion.from("1.2.3")
+        assertEquals(1, version.major)
+        assertEquals(2, version.minor)
+        assertEquals(3, version.patch)
+    }
+
+    @Test
+    fun fromThrowsForInvalidFormat() {
+        assertFailsWith<IllegalArgumentException> { SemanticVersion.from("1.2") }
+        assertFailsWith<IllegalArgumentException> { SemanticVersion.from("1.2.3.4") }
+        assertFailsWith<IllegalArgumentException> { SemanticVersion.from("a.b.c") }
+    }
+
+    @Test
+    fun compareToReturnsZeroForEqual() {
+        val v1 = SemanticVersion(1, 2, 3)
+        val v2 = SemanticVersion(1, 2, 3)
+        assertEquals(0, v1.compareTo(v2))
+    }
+
+    @Test
+    fun compareToHandlesMajorDifference() {
+        val v1 = SemanticVersion(1, 0, 0)
+        val v2 = SemanticVersion(2, 0, 0)
+        assertTrue(v1 < v2)
+    }
+
+    @Test
+    fun compareToHandlesMinorDifference() {
+        val v1 = SemanticVersion(1, 1, 0)
+        val v2 = SemanticVersion(1, 2, 0)
+        assertTrue(v1 < v2)
+    }
+
+    @Test
+    fun compareToHandlesPatchDifference() {
+        val v1 = SemanticVersion(1, 0, 1)
+        val v2 = SemanticVersion(1, 0, 2)
+        assertTrue(v1 < v2)
+    }
 }

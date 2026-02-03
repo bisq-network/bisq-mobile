@@ -151,4 +151,28 @@ class AddressVOTest {
         val result = AddressVO.from("ws://websocket.example.com:8080")
         assertEquals(AddressVO("websocket.example.com", 8080), result)
     }
+
+    @Test
+    fun `toString formats correctly`() {
+        val address = AddressVO("example.com", 8080)
+        assertEquals("example.com:8080", address.toString())
+    }
+
+    @Test
+    fun `toString formats localhost correctly`() {
+        val address = AddressVO("localhost", 3000)
+        assertEquals("localhost:3000", address.toString())
+    }
+
+    @Test
+    fun `toString formats IP address correctly`() {
+        val address = AddressVO("192.168.1.1", 443)
+        assertEquals("192.168.1.1:443", address.toString())
+    }
+
+    @Test
+    fun `toString formats onion address correctly`() {
+        val address = AddressVO("test.onion", 9050)
+        assertEquals("test.onion:9050", address.toString())
+    }
 }
