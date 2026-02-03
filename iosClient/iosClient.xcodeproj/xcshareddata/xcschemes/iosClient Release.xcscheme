@@ -15,9 +15,9 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7555FF7A242A565900829871"
+               BlueprintIdentifier = "74831B692D5088E600B729F4"
                BuildableName = "Bisq Connect.app"
-               BlueprintName = "Bisq Connect Debug"
+               BlueprintName = "Bisq Connect"
                ReferencedContainer = "container:iosClient.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -67,12 +67,16 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7555FF7A242A565900829871"
+            BlueprintIdentifier = "74831B692D5088E600B729F4"
             BuildableName = "Bisq Connect.app"
-            BlueprintName = "Bisq Connect Debug"
+            BlueprintName = "Bisq Connect"
             ReferencedContainer = "container:iosClient.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <LocationScenarioReference
+         identifier = "com.apple.dt.IDEFoundation.CurrentLocationScenarioIdentifier"
+         referenceType = "1">
+      </LocationScenarioReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
