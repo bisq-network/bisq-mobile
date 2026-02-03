@@ -221,7 +221,6 @@ val clientDomainModule =
             WebSocketApiClient(
                 get(),
                 get(),
-                get(),
             )
         }
 

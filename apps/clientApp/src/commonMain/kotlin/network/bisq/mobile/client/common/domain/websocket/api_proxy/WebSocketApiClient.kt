@@ -3,7 +3,6 @@ package network.bisq.mobile.client.common.domain.websocket.api_proxy
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -15,15 +14,10 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class WebSocketApiClient(
-    val httpClientService: HttpClientService,
     val webSocketClientService: WebSocketClientService,
     val json: Json,
 ) : Logging {
     val apiPath = "/api/v1/"
-
-    // PUT, POST and PATCH request are not working yet on the backend.
-    // So we use httpClient instead.
-    val useHttpClient = true
 
     suspend inline fun <reified T> get(path: String): Result<T> = request<T>("GET", path)
 
@@ -45,12 +39,8 @@ class WebSocketApiClient(
         path: String,
         requestBody: R,
     ): Result<T> {
-        if (useHttpClient) {
-            return httpClientService.put<T, R>(path, requestBody)
-        } else {
-            val bodyAsJson = json.encodeToString(requestBody)
-            return request<T>("PUT", path, bodyAsJson)
-        }
+        val bodyAsJson = json.encodeToString(requestBody)
+        return request<T>("PUT", path, bodyAsJson)
     }
 
     suspend inline fun <reified T> patch(path: String): Result<T> = request<T>("PATCH", path)
@@ -59,25 +49,17 @@ class WebSocketApiClient(
         path: String,
         requestBody: R,
     ): Result<T> {
-        if (useHttpClient) {
-            return httpClientService.patch<T, R>(path, requestBody)
-        } else {
-            val bodyAsJson = json.encodeToString(requestBody)
-            log.d { "WS PATCH to ${apiPath + path}" }
-            return request<T>("PATCH", path, bodyAsJson)
-        }
+        val bodyAsJson = json.encodeToString(requestBody)
+        log.d { "WS PATCH to ${apiPath + path}" }
+        return request<T>("PATCH", path, bodyAsJson)
     }
 
     suspend inline fun <reified T, reified R> post(
         path: String,
         requestBody: R,
     ): Result<T> {
-        if (useHttpClient) {
-            return httpClientService.post<T, R>(path, requestBody)
-        } else {
-            val bodyAsJson = json.encodeToString(requestBody)
-            return request<T>("POST", path, bodyAsJson)
-        }
+        val bodyAsJson = json.encodeToString(requestBody)
+        return request<T>("POST", path, bodyAsJson)
     }
 
     @OptIn(ExperimentalUuidApi::class)
