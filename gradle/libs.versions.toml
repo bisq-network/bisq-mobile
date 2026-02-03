@@ -2,7 +2,8 @@
 
 # -------------------- Project Specific --------------------
 bisq-core = "2.1.8"
-bisq-core-commit = "2428db01510b3fa6f5290a6cd3b805d91580e0ec"
+# Update this commit hash when bisq2 JARs are regenerated (even with same version) to bust CI cache
+bisq-core-commit = "96a07890a2c65c5e98f9525ad92282bc4fac04ad"
 # API version is usually same as bisq-core but for more control we keep it separated
 #bisq-api = "2.1.8"
 
