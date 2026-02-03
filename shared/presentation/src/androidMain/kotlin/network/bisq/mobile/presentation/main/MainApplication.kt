@@ -34,6 +34,9 @@ abstract class MainApplication :
     override fun onCreate() {
         super.onCreate()
 
+        // Initialize ApplicationContextProvider for code that needs context without Koin
+        ApplicationContextProvider.initialize(this)
+
         setupI18n()
         setupSystemOutFiltering()
         setupKoinDI(this)

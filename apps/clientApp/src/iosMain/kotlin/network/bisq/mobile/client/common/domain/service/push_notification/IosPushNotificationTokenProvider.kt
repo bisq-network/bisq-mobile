@@ -63,6 +63,27 @@ class IosPushNotificationTokenProvider :
             shouldRegister = false
             return result
         }
+
+        // Flag to signal that the polling timer should be restarted
+        private var shouldRestartPolling = false
+
+        /**
+         * Check if the polling timer should be restarted.
+         * Called from Swift to determine if startRegistrationCheckTimer should be called again.
+         */
+        fun shouldRestartRegistrationPolling(): Boolean {
+            val result = shouldRestartPolling
+            shouldRestartPolling = false
+            return result
+        }
+
+        /**
+         * Request that the Swift polling timer be restarted.
+         * This is needed when re-registration is required after the initial timer was invalidated.
+         */
+        fun requestPollingRestart() {
+            shouldRestartPolling = true
+        }
     }
 
     @OptIn(ExperimentalForeignApi::class)
@@ -95,7 +116,9 @@ class IosPushNotificationTokenProvider :
             mutex.withLock {
                 pendingTokenRequest?.takeIf { !it.isCompleted } ?: CompletableDeferred<String>().also {
                     pendingTokenRequest = it
-                    shouldRegister = true // Only trigger registration for new requests
+                    shouldRegister = true // Signal that registration should be triggered
+                    // Request polling restart in case the timer was previously invalidated
+                    requestPollingRestart()
                     log.i { "Requesting device token registration..." }
                 }
             }

@@ -16,9 +16,10 @@ import network.bisq.mobile.domain.utils.Logging
  * Client implementation of PushNotificationServiceFacade.
  * Manages device token registration with the trusted node.
  *
- * - Uses deviceId (hash of publicKeyBase64)
+ * - Uses a deterministic device-specific deviceId based on hardware identifiers
+ *   (Android: ANDROID_ID, iOS: identifierForVendor)
  * - Includes deviceDescriptor for device information
- * - Multi-profile safe (no profile coupling)
+ * - Multi-profile safe: deviceId is per-device, not per-profile
  */
 class ClientPushNotificationServiceFacade(
     private val apiGateway: PushNotificationApiGateway,
@@ -121,7 +122,7 @@ class ClientPushNotificationServiceFacade(
     }
 
     private suspend fun registerTokenWithTrustedNode(token: String): Result<Unit> {
-        // Get the current user profile
+        // Get the current user profile (needed for publicKeyBase64)
         val userProfile = userProfileServiceFacade.selectedUserProfile.value
         if (userProfile == null) {
             log.e { "Cannot register device: no user profile selected" }
@@ -131,15 +132,16 @@ class ClientPushNotificationServiceFacade(
         // publicKey.encoded is already a base64-encoded String from Bisq2
         val publicKeyBase64 = userProfile.networkId.pubKey.publicKey.encoded
 
-        // Generate deviceId as hash of publicKeyBase64 (as per PR #4304)
-        val deviceId = publicKeyBase64.hashCode().toString()
+        // Get deterministic device-specific deviceId (based on hardware identifiers)
+        val deviceId = getDeviceId()
         _deviceId.value = deviceId
 
-        // Get device descriptor (e.g., "iPhone 15 Pro, iOS 17.2")
+        // Get device descriptor and platform dynamically
         val platformInfo = getPlatformInfo()
         val deviceDescriptor = platformInfo.name
+        val platform = PlatformMapper.fromPlatformType(platformInfo.type)
 
-        log.i { "Registering device with deviceId: $deviceId, descriptor: $deviceDescriptor" }
+        log.i { "Registering device with deviceId: $deviceId, descriptor: $deviceDescriptor, platform: $platform" }
 
         val result =
             apiGateway.registerDevice(
@@ -147,7 +149,7 @@ class ClientPushNotificationServiceFacade(
                 deviceToken = token,
                 publicKeyBase64 = publicKeyBase64,
                 deviceDescriptor = deviceDescriptor,
-                platform = Platform.IOS,
+                platform = platform,
             )
         if (result.isSuccess) {
             log.i { "Device registered successfully with trusted node" }
@@ -162,22 +164,19 @@ class ClientPushNotificationServiceFacade(
     override suspend fun unregisterFromPushNotifications(): Result<Unit> {
         log.i { "Unregistering from push notifications..." }
 
-        val currentDeviceId = _deviceId.value
-        if (currentDeviceId.isNullOrBlank()) {
-            log.w { "No device ID to unregister" }
-            _isDeviceRegistered.value = false
-            settingsRepository.update { it.copy(pushNotificationsEnabled = false) }
-            return Result.success(Unit)
-        }
+        // Get deterministic device-specific deviceId (always available from hardware)
+        val deviceIdToUnregister = getDeviceId()
 
-        val result = apiGateway.unregisterDevice(currentDeviceId)
+        val result = apiGateway.unregisterDevice(deviceIdToUnregister)
+        // Always update local state regardless of API result
+        _isDeviceRegistered.value = false
+        _deviceId.value = null
+        settingsRepository.update { it.copy(pushNotificationsEnabled = false) }
+
         if (result.isSuccess) {
             log.i { "Device unregistered successfully" }
-            _isDeviceRegistered.value = false
-            _deviceId.value = null
-            settingsRepository.update { it.copy(pushNotificationsEnabled = false) }
         } else {
-            log.e { "Failed to unregister device: ${result.exceptionOrNull()?.message}" }
+            log.e { "Failed to unregister device from server: ${result.exceptionOrNull()?.message}" }
         }
         return result
     }
@@ -188,7 +187,13 @@ class ClientPushNotificationServiceFacade(
 
         // If push notifications are enabled, re-register with new token
         if (_isPushNotificationsEnabled.value) {
-            registerTokenWithTrustedNode(token)
+            val result = registerTokenWithTrustedNode(token)
+            if (result.isFailure) {
+                val error = result.exceptionOrNull()
+                log.e(error) { "Failed to re-register device with new token" }
+                // Update registration state to reflect failure
+                _isDeviceRegistered.value = false
+            }
         }
     }
 

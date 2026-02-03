@@ -7,6 +7,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class MonetaryVOExtensionsTest {
+    // Tolerance for floating-point comparisons
+    private val tolerance = 1e-9
+
     // Helper to create a CoinVO for testing
     private fun createCoin(
         value: Long,
@@ -37,37 +40,37 @@ class MonetaryVOExtensionsTest {
     @Test
     fun `toDouble converts satoshis to BTC correctly`() {
         val coin = createCoin(100000000L) // 1 BTC in satoshis
-        assertEquals(1.0, coin.toDouble(100000000L))
+        assertEquals(1.0, coin.toDouble(100000000L), tolerance)
     }
 
     @Test
     fun `toDouble converts partial BTC correctly`() {
         val coin = createCoin(50000000L) // 0.5 BTC
-        assertEquals(0.5, coin.toDouble(50000000L))
+        assertEquals(0.5, coin.toDouble(50000000L), tolerance)
     }
 
     @Test
     fun `toDouble converts small amounts correctly`() {
         val coin = createCoin(1L) // 1 satoshi
-        assertEquals(0.00000001, coin.toDouble(1L))
+        assertEquals(0.00000001, coin.toDouble(1L), tolerance)
     }
 
     @Test
     fun `asDouble returns correct value for coin`() {
         val coin = createCoin(100000000L) // 1 BTC
-        assertEquals(1.0, coin.asDouble())
+        assertEquals(1.0, coin.asDouble(), tolerance)
     }
 
     @Test
     fun `asDouble returns correct value for fiat`() {
         val fiat = createFiat(10000L) // 1.0000 USD
-        assertEquals(1.0, fiat.asDouble())
+        assertEquals(1.0, fiat.asDouble(), tolerance)
     }
 
     @Test
     fun `asDouble handles zero value`() {
         val coin = createCoin(0L)
-        assertEquals(0.0, coin.asDouble())
+        assertEquals(0.0, coin.asDouble(), tolerance)
     }
 
     @Test
@@ -85,6 +88,6 @@ class MonetaryVOExtensionsTest {
     @Test
     fun `toDouble works with different precision values`() {
         val fiat = createFiat(12345L, "USD", 4) // 1.2345 USD
-        assertEquals(1.2345, fiat.toDouble(12345L))
+        assertEquals(1.2345, fiat.toDouble(12345L), tolerance)
     }
 }

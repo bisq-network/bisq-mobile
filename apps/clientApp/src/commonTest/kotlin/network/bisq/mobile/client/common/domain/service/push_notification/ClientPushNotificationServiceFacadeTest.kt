@@ -151,4 +151,18 @@ class ClientPushNotificationServiceFacadeTest {
         assertTrue(Platform.IOS == Platform.IOS)
         assertTrue(Platform.ANDROID == Platform.ANDROID)
     }
+
+    // PlatformMapper Tests
+
+    @Test
+    fun `PlatformMapper maps IOS PlatformType to IOS Platform`() {
+        val platform = PlatformMapper.fromPlatformType(network.bisq.mobile.domain.PlatformType.IOS)
+        assertEquals(Platform.IOS, platform)
+    }
+
+    @Test
+    fun `PlatformMapper maps ANDROID PlatformType to ANDROID Platform`() {
+        val platform = PlatformMapper.fromPlatformType(network.bisq.mobile.domain.PlatformType.ANDROID)
+        assertEquals(Platform.ANDROID, platform)
+    }
 }
