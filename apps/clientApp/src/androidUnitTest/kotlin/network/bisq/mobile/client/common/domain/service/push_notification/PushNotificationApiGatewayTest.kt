@@ -16,42 +16,61 @@ class PushNotificationApiGatewayTest {
 
     @Test
     fun `DeviceRegistrationRequest is correctly constructed for Android`() {
+        // Given
+        val deviceId = "test-device-id"
+        val deviceToken = "test-token"
+        val publicKeyBase64 = "test-public-key"
+        val deviceDescriptor = "Test Device"
+        val platform = Platform.ANDROID
+
+        // When
         val request =
             DeviceRegistrationRequest(
-                deviceId = "test-device-id",
-                deviceToken = "test-token",
-                publicKeyBase64 = "test-public-key",
-                deviceDescriptor = "Test Device",
-                platform = Platform.ANDROID,
+                deviceId = deviceId,
+                deviceToken = deviceToken,
+                publicKeyBase64 = publicKeyBase64,
+                deviceDescriptor = deviceDescriptor,
+                platform = platform,
             )
 
-        assertEquals("test-device-id", request.deviceId)
-        assertEquals("test-token", request.deviceToken)
-        assertEquals("test-public-key", request.publicKeyBase64)
-        assertEquals("Test Device", request.deviceDescriptor)
-        assertEquals(Platform.ANDROID, request.platform)
+        // Then
+        assertEquals(deviceId, request.deviceId)
+        assertEquals(deviceToken, request.deviceToken)
+        assertEquals(publicKeyBase64, request.publicKeyBase64)
+        assertEquals(deviceDescriptor, request.deviceDescriptor)
+        assertEquals(platform, request.platform)
     }
 
     @Test
     fun `DeviceRegistrationRequest is correctly constructed for iOS`() {
+        // Given
+        val deviceId = "ios-device"
+        val deviceToken = "apns-token"
+        val publicKeyBase64 = "ios-key"
+        val deviceDescriptor = "iPhone 15 Pro"
+        val platform = Platform.IOS
+
+        // When
         val request =
             DeviceRegistrationRequest(
-                deviceId = "ios-device",
-                deviceToken = "apns-token",
-                publicKeyBase64 = "ios-key",
-                deviceDescriptor = "iPhone 15 Pro",
-                platform = Platform.IOS,
+                deviceId = deviceId,
+                deviceToken = deviceToken,
+                publicKeyBase64 = publicKeyBase64,
+                deviceDescriptor = deviceDescriptor,
+                platform = platform,
             )
 
-        assertEquals("ios-device", request.deviceId)
-        assertEquals("apns-token", request.deviceToken)
-        assertEquals("ios-key", request.publicKeyBase64)
-        assertEquals("iPhone 15 Pro", request.deviceDescriptor)
-        assertEquals(Platform.IOS, request.platform)
+        // Then
+        assertEquals(deviceId, request.deviceId)
+        assertEquals(deviceToken, request.deviceToken)
+        assertEquals(publicKeyBase64, request.publicKeyBase64)
+        assertEquals(deviceDescriptor, request.deviceDescriptor)
+        assertEquals(platform, request.platform)
     }
 
     @Test
     fun `DeviceRegistrationRequest serializes to valid JSON`() {
+        // Given
         val request =
             DeviceRegistrationRequest(
                 deviceId = "device-123",
@@ -61,8 +80,10 @@ class PushNotificationApiGatewayTest {
                 platform = Platform.ANDROID,
             )
 
+        // When
         val serialized = json.encodeToString(request)
 
+        // Then
         assertTrue(serialized.contains("\"deviceId\":\"device-123\""))
         assertTrue(serialized.contains("\"deviceToken\":\"token-456\""))
         assertTrue(serialized.contains("\"publicKeyBase64\":\"key-789\""))
@@ -72,11 +93,14 @@ class PushNotificationApiGatewayTest {
 
     @Test
     fun `basePath is correctly formatted for registrations endpoint`() {
-        // The gateway uses "mobile-devices/registrations" as the base path
+        // Given
         val basePath = "mobile-devices/registrations"
         val deviceId = "device-123"
+
+        // When
         val unregisterPath = "$basePath/$deviceId"
 
+        // Then
         assertEquals("mobile-devices/registrations/device-123", unregisterPath)
     }
 }

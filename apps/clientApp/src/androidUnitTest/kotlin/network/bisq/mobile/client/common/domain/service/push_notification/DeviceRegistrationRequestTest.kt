@@ -11,6 +11,7 @@ class DeviceRegistrationRequestTest {
 
     @Test
     fun `DeviceRegistrationRequest serializes correctly`() {
+        // Given
         val request =
             DeviceRegistrationRequest(
                 deviceId = "test-device-id",
@@ -20,8 +21,10 @@ class DeviceRegistrationRequestTest {
                 platform = Platform.ANDROID,
             )
 
+        // When
         val serialized = json.encodeToString(request)
 
+        // Then
         assertTrue(serialized.contains("test-device-id"))
         assertTrue(serialized.contains("test-token-abc123"))
         assertTrue(serialized.contains("dGVzdC1wdWJsaWMta2V5"))
@@ -31,6 +34,7 @@ class DeviceRegistrationRequestTest {
 
     @Test
     fun `DeviceRegistrationRequest deserializes correctly`() {
+        // Given
         val jsonString =
             """
             {
@@ -42,8 +46,10 @@ class DeviceRegistrationRequestTest {
             }
             """.trimIndent()
 
+        // When
         val request = json.decodeFromString<DeviceRegistrationRequest>(jsonString)
 
+        // Then
         assertEquals("device-123", request.deviceId)
         assertEquals("token-456", request.deviceToken)
         assertEquals("cHVibGljS2V5", request.publicKeyBase64)
@@ -53,6 +59,7 @@ class DeviceRegistrationRequestTest {
 
     @Test
     fun `DeviceRegistrationRequest round-trip serialization`() {
+        // Given
         val original =
             DeviceRegistrationRequest(
                 deviceId = "round-trip-id",
@@ -62,26 +69,39 @@ class DeviceRegistrationRequestTest {
                 platform = Platform.IOS,
             )
 
+        // When
         val serialized = json.encodeToString(original)
         val deserialized = json.decodeFromString<DeviceRegistrationRequest>(serialized)
 
+        // Then
         assertEquals(original, deserialized)
     }
 
     @Test
     fun `Platform enum serializes correctly`() {
-        assertEquals("\"IOS\"", json.encodeToString(Platform.IOS))
-        assertEquals("\"ANDROID\"", json.encodeToString(Platform.ANDROID))
+        // Given
+        val iosPlatform = Platform.IOS
+        val androidPlatform = Platform.ANDROID
+
+        // When / Then
+        assertEquals("\"IOS\"", json.encodeToString(iosPlatform))
+        assertEquals("\"ANDROID\"", json.encodeToString(androidPlatform))
     }
 
     @Test
     fun `Platform enum deserializes correctly`() {
-        assertEquals(Platform.IOS, json.decodeFromString("\"IOS\""))
-        assertEquals(Platform.ANDROID, json.decodeFromString("\"ANDROID\""))
+        // Given
+        val iosJson = "\"IOS\""
+        val androidJson = "\"ANDROID\""
+
+        // When / Then
+        assertEquals(Platform.IOS, json.decodeFromString(iosJson))
+        assertEquals(Platform.ANDROID, json.decodeFromString(androidJson))
     }
 
     @Test
     fun `DeviceRegistrationRequest data class equality`() {
+        // Given
         val request1 =
             DeviceRegistrationRequest(
                 deviceId = "id",
@@ -99,6 +119,7 @@ class DeviceRegistrationRequestTest {
                 platform = Platform.ANDROID,
             )
 
+        // When / Then
         assertEquals(request1, request2)
         assertEquals(request1.hashCode(), request2.hashCode())
     }

@@ -18,58 +18,106 @@ class NoOpClientPushNotificationServiceFacadeTest {
 
     @Test
     fun `isPushNotificationsEnabled is initially false`() {
-        assertFalse(facade.isPushNotificationsEnabled.value)
+        // Given
+        // NoOp facade is initialized
+
+        // When
+        val result = facade.isPushNotificationsEnabled.value
+
+        // Then
+        assertFalse(result)
     }
 
     @Test
     fun `isDeviceRegistered is initially false`() {
-        assertFalse(facade.isDeviceRegistered.value)
+        // Given
+        // NoOp facade is initialized
+
+        // When
+        val result = facade.isDeviceRegistered.value
+
+        // Then
+        assertFalse(result)
     }
 
     @Test
     fun `deviceToken is initially null`() {
-        assertNull(facade.deviceToken.value)
+        // Given
+        // NoOp facade is initialized
+
+        // When
+        val result = facade.deviceToken.value
+
+        // Then
+        assertNull(result)
     }
 
     @Test
     fun `requestPermission returns false`() =
         runTest {
+            // Given
+            // NoOp facade is initialized
+
+            // When
             val result = facade.requestPermission()
+
+            // Then
             assertFalse(result)
         }
 
     @Test
     fun `registerForPushNotifications returns success`() =
         runTest {
+            // Given
+            // NoOp facade is initialized
+
+            // When
             val result = facade.registerForPushNotifications()
+
+            // Then
             assertTrue(result.isSuccess)
         }
 
     @Test
     fun `unregisterFromPushNotifications returns success`() =
         runTest {
+            // Given
+            // NoOp facade is initialized
+
+            // When
             val result = facade.unregisterFromPushNotifications()
+
+            // Then
             assertTrue(result.isSuccess)
         }
 
     @Test
     fun `onDeviceTokenReceived does not crash`() =
         runTest {
-            // Should not throw
-            facade.onDeviceTokenReceived("test-token")
+            // Given
+            val token = "test-token"
+
+            // When / Then - should not throw
+            facade.onDeviceTokenReceived(token)
         }
 
     @Test
     fun `onDeviceTokenRegistrationFailed does not crash`() =
         runTest {
-            // Should not throw
-            facade.onDeviceTokenRegistrationFailed(RuntimeException("Test error"))
+            // Given
+            val error = RuntimeException("Test error")
+
+            // When / Then - should not throw
+            facade.onDeviceTokenRegistrationFailed(error)
         }
 
     @Test
     fun `activate does not crash`() =
         runTest {
-            // Should not throw
+            // Given
+            // NoOp facade is initialized
+
+            // When / Then - should not throw
             facade.activate()
         }
 }

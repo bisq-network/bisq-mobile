@@ -195,13 +195,16 @@ class DateUtilsTest {
     @Test
     fun `toDateTime should format timestamp correctly`() {
         val result = DateUtils.toDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC)
-        assertTrue(result.contains("2024"))
-        assertTrue(result.contains("15"))
+        // The format is locale-dependent (e.g., "Jan 15, 2024" or "15/01/2024")
+        assertTrue(result.isNotEmpty(), "toDateTime should return a non-empty string")
+        assertTrue(result.contains("2024"), "Result '$result' should contain year 2024")
+        assertTrue(result.contains("15"), "Result '$result' should contain day 15")
     }
 
     @Test
     fun `toDateTime should handle epoch zero`() {
         val result = DateUtils.toDateTime(0L, TimeZone.UTC)
-        assertTrue(result.contains("1970"))
+        assertTrue(result.isNotEmpty(), "toDateTime should return a non-empty string for epoch zero")
+        assertTrue(result.contains("1970"), "Result '$result' should contain year 1970")
     }
 }

@@ -104,6 +104,10 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `initial state has push notifications disabled`() =
         runTest {
+            // Given
+            // Facade is initialized with default state
+
+            // When / Then
             assertFalse(facade.isPushNotificationsEnabled.value)
             assertFalse(facade.isDeviceRegistered.value)
             assertEquals(null, facade.deviceToken.value)
@@ -112,8 +116,13 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `requestPermission delegates to token provider`() =
         runTest {
+            // Given
             coEvery { tokenProvider.requestPermission() } returns true
+
+            // When
             val result = facade.requestPermission()
+
+            // Then
             assertTrue(result)
             coVerify { tokenProvider.requestPermission() }
         }
@@ -121,10 +130,13 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `registerForPushNotifications fails when permission denied`() =
         runTest {
+            // Given
             coEvery { tokenProvider.requestPermission() } returns false
 
+            // When
             val result = facade.registerForPushNotifications()
 
+            // Then
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull()?.message?.contains("Permission denied") == true)
         }
@@ -132,25 +144,31 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `registerForPushNotifications fails when token request fails`() =
         runTest {
+            // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns
                 Result.failure(
                     PushNotificationException("Token request failed"),
                 )
 
+            // When
             val result = facade.registerForPushNotifications()
 
+            // Then
             assertTrue(result.isFailure)
         }
 
     @Test
     fun `registerForPushNotifications fails when token is blank`() =
         runTest {
+            // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("")
 
+            // When
             val result = facade.registerForPushNotifications()
 
+            // Then
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull()?.message?.contains("null or blank") == true)
         }
@@ -158,12 +176,15 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `registerForPushNotifications fails when no user profile selected`() =
         runTest {
+            // Given
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-token")
 
+            // When
             val result = facade.registerForPushNotifications()
 
+            // Then
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull()?.message?.contains("No user profile") == true)
         }
@@ -171,19 +192,28 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `onDeviceTokenRegistrationFailed clears device token`() =
         runTest {
-            facade.onDeviceTokenRegistrationFailed(RuntimeException("Test error"))
+            // Given
+            val error = RuntimeException("Test error")
+
+            // When
+            facade.onDeviceTokenRegistrationFailed(error)
+
+            // Then
             assertEquals(null, facade.deviceToken.value)
         }
 
     @Test
     fun `registerForPushNotifications succeeds with valid token and profile`() =
         runTest {
+            // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("valid-device-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
+            // When
             val result = facade.registerForPushNotifications()
 
+            // Then
             assertTrue(result.isSuccess)
             assertTrue(facade.isDeviceRegistered.value)
             assertEquals("valid-device-token", facade.deviceToken.value)
@@ -193,22 +223,28 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `registerForPushNotifications updates settings on success`() =
         runTest {
+            // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("valid-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
+            // When
             facade.registerForPushNotifications()
 
+            // Then
             assertTrue(settingsRepository.fetch().pushNotificationsEnabled)
         }
 
     @Test
     fun `unregisterFromPushNotifications clears registration state`() =
         runTest {
+            // Given
             coEvery { apiGateway.unregisterDevice(any()) } returns Result.success(Unit)
 
+            // When
             val result = facade.unregisterFromPushNotifications()
 
+            // Then
             assertTrue(result.isSuccess)
             assertFalse(facade.isDeviceRegistered.value)
             assertFalse(settingsRepository.fetch().pushNotificationsEnabled)
@@ -217,10 +253,13 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `unregisterFromPushNotifications clears state even on API failure`() =
         runTest {
+            // Given
             coEvery { apiGateway.unregisterDevice(any()) } returns Result.failure(RuntimeException("API error"))
 
+            // When
             val result = facade.unregisterFromPushNotifications()
 
+            // Then
             assertTrue(result.isFailure)
             assertFalse(facade.isDeviceRegistered.value)
             assertFalse(settingsRepository.fetch().pushNotificationsEnabled)
@@ -229,32 +268,45 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `onDeviceTokenReceived updates token`() =
         runTest {
+            // Given
+            val newToken = "new-token"
             // Push notifications disabled by default, so no re-registration
-            facade.onDeviceTokenReceived("new-token")
 
-            assertEquals("new-token", facade.deviceToken.value)
+            // When
+            facade.onDeviceTokenReceived(newToken)
+
+            // Then
+            assertEquals(newToken, facade.deviceToken.value)
         }
 
     @Test
     fun `onDeviceTokenReceived does not re-register when disabled`() =
         runTest {
+            // Given
+            val newToken = "new-token"
             // Push notifications disabled by default
-            facade.onDeviceTokenReceived("new-token")
 
-            assertEquals("new-token", facade.deviceToken.value)
+            // When
+            facade.onDeviceTokenReceived(newToken)
+
+            // Then
+            assertEquals(newToken, facade.deviceToken.value)
             coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any()) }
         }
 
     @Test
     fun `registerForPushNotifications fails when API returns error`() =
         runTest {
+            // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("valid-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns
                 Result.failure(RuntimeException("Server error"))
 
+            // When
             val result = facade.registerForPushNotifications()
 
+            // Then
             assertTrue(result.isFailure)
             assertFalse(facade.isDeviceRegistered.value)
         }

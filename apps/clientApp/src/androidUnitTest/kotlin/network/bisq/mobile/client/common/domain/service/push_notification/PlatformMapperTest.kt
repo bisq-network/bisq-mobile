@@ -7,13 +7,25 @@ import kotlin.test.assertEquals
 class PlatformMapperTest {
     @Test
     fun `fromPlatformType maps IOS correctly`() {
-        val result = PlatformMapper.fromPlatformType(PlatformType.IOS)
+        // Given
+        val platformType = PlatformType.IOS
+
+        // When
+        val result = PlatformMapper.fromPlatformType(platformType)
+
+        // Then
         assertEquals(Platform.IOS, result)
     }
 
     @Test
     fun `fromPlatformType maps ANDROID correctly`() {
-        val result = PlatformMapper.fromPlatformType(PlatformType.ANDROID)
+        // Given
+        val platformType = PlatformType.ANDROID
+
+        // When
+        val result = PlatformMapper.fromPlatformType(platformType)
+
+        // Then
         assertEquals(Platform.ANDROID, result)
     }
 }

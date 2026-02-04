@@ -93,7 +93,11 @@ actual fun formatDateTime(dateTime: LocalDateTime): String {
         }
 
     val instant = dateTime.toInstant(TimeZone.currentSystemDefault())
-    val nsDate = NSDate(instant.toEpochMilliseconds() / 1000.0)
+    // NSDate() constructor expects seconds since Jan 1, 2001 (Apple reference date)
+    // Unix epoch is Jan 1, 1970, so we need to subtract the difference (978307200 seconds)
+    val unixEpochSeconds = instant.toEpochMilliseconds() / 1000.0
+    val appleReferenceOffset = 978307200.0 // Seconds between 1970-01-01 and 2001-01-01
+    val nsDate = NSDate(timeIntervalSinceReferenceDate = unixEpochSeconds - appleReferenceOffset)
 
     return formatter.stringFromDate(nsDate)
 }
