@@ -2,6 +2,7 @@ package network.bisq.mobile.client.common.domain.service.push_notification
 
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 /**
  * API Gateway for push notification device registration with the trusted node.
@@ -10,7 +11,12 @@ import network.bisq.mobile.domain.utils.Logging
  *
  * - POST /mobile-devices/registrations - Register device
  * - DELETE /mobile-devices/registrations/{deviceId} - Unregister device
+ *
+ * TODO: Coverage exclusion rationale - WebSocketApiClient uses inline reified functions
+ * (post<T, R>, delete<T>) which cannot be mocked in unit tests. Integration tests with
+ * a real or fake HTTP server would be needed for proper coverage.
  */
+@ExcludeFromCoverage
 class PushNotificationApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
 ) : Logging {

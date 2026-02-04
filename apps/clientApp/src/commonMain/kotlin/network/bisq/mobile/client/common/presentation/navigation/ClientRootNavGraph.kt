@@ -12,7 +12,11 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
+// TODO: Coverage exclusion rationale - Compose UI navigation code cannot be unit tested.
+// Requires Compose UI testing framework for proper coverage.
+@ExcludeFromCoverage
 @Composable
 fun ClientRootNavGraph(
     rootNavController: NavHostController,
@@ -28,6 +32,8 @@ fun ClientRootNavGraph(
     }
 }
 
+// TODO: Coverage exclusion rationale - NavGraphBuilder extension for Compose navigation.
+@ExcludeFromCoverage
 fun NavGraphBuilder.addClientAppRoutes() {
     // Override Support screen with client-specific version
     addScreen<NavRoute.Support> { ClientSupportScreen() }

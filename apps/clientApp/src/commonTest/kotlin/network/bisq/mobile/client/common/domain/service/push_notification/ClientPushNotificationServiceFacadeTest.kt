@@ -16,69 +16,102 @@ import kotlin.test.assertTrue
  */
 class ClientPushNotificationServiceFacadeTest {
     @Test
-    fun `Platform enum has correct values`() {
+    fun `when accessing Platform enum then has correct values`() {
+        // Given - Platform enum
+
+        // When/Then
         assertEquals("IOS", Platform.IOS.name)
         assertEquals("ANDROID", Platform.ANDROID.name)
         assertEquals(2, Platform.entries.size)
     }
 
     @Test
-    fun `DeviceRegistrationRequest contains correct data`() {
+    fun `when creating DeviceRegistrationRequest for iOS then contains correct data`() {
+        // Given
+        val deviceId = "device-id-123"
+        val deviceToken = "test-token-12345"
+        val publicKeyBase64 = "base64-encoded-public-key"
+        val deviceDescriptor = "iPhone 15 Pro, iOS 17.2"
+
+        // When
         val request =
             DeviceRegistrationRequest(
-                deviceId = "device-id-123",
-                deviceToken = "test-token-12345",
-                publicKeyBase64 = "base64-encoded-public-key",
-                deviceDescriptor = "iPhone 15 Pro, iOS 17.2",
+                deviceId = deviceId,
+                deviceToken = deviceToken,
+                publicKeyBase64 = publicKeyBase64,
+                deviceDescriptor = deviceDescriptor,
                 platform = Platform.IOS,
             )
 
-        assertEquals("device-id-123", request.deviceId)
-        assertEquals("test-token-12345", request.deviceToken)
-        assertEquals("base64-encoded-public-key", request.publicKeyBase64)
-        assertEquals("iPhone 15 Pro, iOS 17.2", request.deviceDescriptor)
+        // Then
+        assertEquals(deviceId, request.deviceId)
+        assertEquals(deviceToken, request.deviceToken)
+        assertEquals(publicKeyBase64, request.publicKeyBase64)
+        assertEquals(deviceDescriptor, request.deviceDescriptor)
         assertEquals(Platform.IOS, request.platform)
     }
 
     @Test
-    fun `DeviceRegistrationRequest for Android platform`() {
+    fun `when creating DeviceRegistrationRequest for Android then contains correct data`() {
+        // Given
+        val deviceId = "device-id-456"
+        val deviceToken = "android-fcm-token"
+        val publicKeyBase64 = "base64-encoded-public-key-android"
+        val deviceDescriptor = "Pixel 8 Pro, Android 14"
+
+        // When
         val request =
             DeviceRegistrationRequest(
-                deviceId = "device-id-456",
-                deviceToken = "android-fcm-token",
-                publicKeyBase64 = "base64-encoded-public-key-android",
-                deviceDescriptor = "Pixel 8 Pro, Android 14",
+                deviceId = deviceId,
+                deviceToken = deviceToken,
+                publicKeyBase64 = publicKeyBase64,
+                deviceDescriptor = deviceDescriptor,
                 platform = Platform.ANDROID,
             )
 
-        assertEquals("device-id-456", request.deviceId)
-        assertEquals("android-fcm-token", request.deviceToken)
-        assertEquals("base64-encoded-public-key-android", request.publicKeyBase64)
-        assertEquals("Pixel 8 Pro, Android 14", request.deviceDescriptor)
+        // Then
+        assertEquals(deviceId, request.deviceId)
+        assertEquals(deviceToken, request.deviceToken)
+        assertEquals(publicKeyBase64, request.publicKeyBase64)
+        assertEquals(deviceDescriptor, request.deviceDescriptor)
         assertEquals(Platform.ANDROID, request.platform)
     }
 
     @Test
-    fun `PushNotificationException contains message`() {
-        val exception = PushNotificationException("Test error message")
-        assertEquals("Test error message", exception.message)
+    fun `when creating PushNotificationException with message then contains message`() {
+        // Given
+        val errorMessage = "Test error message"
+
+        // When
+        val exception = PushNotificationException(errorMessage)
+
+        // Then
+        assertEquals(errorMessage, exception.message)
     }
 
     @Test
-    fun `PushNotificationException contains cause`() {
+    fun `when creating PushNotificationException with cause then contains cause`() {
+        // Given
         val cause = RuntimeException("Root cause")
-        val exception = PushNotificationException("Test error", cause)
+        val errorMessage = "Test error"
 
-        assertEquals("Test error", exception.message)
+        // When
+        val exception = PushNotificationException(errorMessage, cause)
+
+        // Then
+        assertEquals(errorMessage, exception.message)
         assertEquals(cause, exception.cause)
     }
 
-    // Device Registration Validation Tests
+    // ========== Device Registration Validation Tests ==========
 
     @OptIn(ExperimentalEncodingApi::class)
     @Test
-    fun `DeviceRegistrationRequest with valid Base64 public key`() {
+    fun `when DeviceRegistrationRequest has valid Base64 public key then decodes successfully`() {
+        // Given
         val testPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE" // Valid Base64
+
+        // When
         val request =
             DeviceRegistrationRequest(
                 deviceId = "device-123",
@@ -87,82 +120,120 @@ class ClientPushNotificationServiceFacadeTest {
                 deviceDescriptor = "iPhone 15 Pro, iOS 17.2",
                 platform = Platform.IOS,
             )
+        val decoded = Base64.decode(request.publicKeyBase64)
 
-        // Should be able to decode without throwing
-        val decoded = Base64.decode(testPublicKey)
+        // Then
         assertNotNull(decoded)
         assertTrue(decoded.isNotEmpty())
     }
 
     @OptIn(ExperimentalEncodingApi::class)
     @Test
-    fun `DeviceRegistrationRequest with invalid Base64 public key throws exception`() {
+    fun `when decoding invalid Base64 public key then throws exception`() {
+        // Given
         val invalidPublicKey = "not-valid-base64!!!"
 
-        // Should throw when trying to decode
+        // When/Then
         assertFailsWith<IllegalArgumentException> {
             Base64.decode(invalidPublicKey)
         }
     }
 
     @Test
-    fun `DeviceRegistrationRequest with empty deviceId`() {
+    fun `when DeviceRegistrationRequest has empty deviceId then allows creation`() {
+        // Given
+        val emptyDeviceId = ""
+
+        // When
         val request =
             DeviceRegistrationRequest(
-                deviceId = "",
+                deviceId = emptyDeviceId,
                 deviceToken = "token",
                 publicKeyBase64 = "key",
                 deviceDescriptor = "iPhone",
                 platform = Platform.IOS,
             )
 
-        assertEquals("", request.deviceId)
+        // Then
+        assertEquals(emptyDeviceId, request.deviceId)
     }
 
     @Test
-    fun `DeviceRegistrationRequest with empty deviceToken`() {
+    fun `when DeviceRegistrationRequest has empty deviceToken then allows creation`() {
+        // Given
+        val emptyDeviceToken = ""
+
+        // When
         val request =
             DeviceRegistrationRequest(
                 deviceId = "device-id",
-                deviceToken = "",
+                deviceToken = emptyDeviceToken,
                 publicKeyBase64 = "key",
                 deviceDescriptor = "iPhone",
                 platform = Platform.IOS,
             )
 
-        assertEquals("", request.deviceToken)
+        // Then
+        assertEquals(emptyDeviceToken, request.deviceToken)
     }
 
-    // Platform Detection Tests
+    // ========== Platform Detection Tests ==========
 
     @Test
-    fun `Platform IOS has correct string representation`() {
-        assertEquals("IOS", Platform.IOS.toString())
+    fun `when accessing Platform IOS then has correct string representation`() {
+        // Given - Platform.IOS
+
+        // When
+        val result = Platform.IOS.toString()
+
+        // Then
+        assertEquals("IOS", result)
     }
 
     @Test
-    fun `Platform ANDROID has correct string representation`() {
-        assertEquals("ANDROID", Platform.ANDROID.toString())
+    fun `when accessing Platform ANDROID then has correct string representation`() {
+        // Given - Platform.ANDROID
+
+        // When
+        val result = Platform.ANDROID.toString()
+
+        // Then
+        assertEquals("ANDROID", result)
     }
 
     @Test
-    fun `Platform enum can be compared`() {
+    fun `when comparing Platform enum values then correctly distinguishes them`() {
+        // Given - Platform enum values
+
+        // When/Then
         assertTrue(Platform.IOS != Platform.ANDROID)
         assertTrue(Platform.IOS == Platform.IOS)
         assertTrue(Platform.ANDROID == Platform.ANDROID)
     }
 
-    // PlatformMapper Tests
+    // ========== PlatformMapper Tests ==========
 
     @Test
-    fun `PlatformMapper maps IOS PlatformType to IOS Platform`() {
-        val platform = PlatformMapper.fromPlatformType(network.bisq.mobile.domain.PlatformType.IOS)
+    fun `when mapping IOS PlatformType then returns IOS Platform`() {
+        // Given
+        val platformType = network.bisq.mobile.domain.PlatformType.IOS
+
+        // When
+        val platform = PlatformMapper.fromPlatformType(platformType)
+
+        // Then
         assertEquals(Platform.IOS, platform)
     }
 
     @Test
-    fun `PlatformMapper maps ANDROID PlatformType to ANDROID Platform`() {
-        val platform = PlatformMapper.fromPlatformType(network.bisq.mobile.domain.PlatformType.ANDROID)
+    fun `when mapping ANDROID PlatformType then returns ANDROID Platform`() {
+        // Given
+        val platformType = network.bisq.mobile.domain.PlatformType.ANDROID
+
+        // When
+        val platform = PlatformMapper.fromPlatformType(platformType)
+
+        // Then
         assertEquals(Platform.ANDROID, platform)
     }
 }

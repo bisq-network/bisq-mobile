@@ -39,34 +39,51 @@ class DeviceIdGeneratorTest {
     @After
     fun tearDown() {
         unmockkStatic(Settings.Secure::class)
+        ApplicationContextProvider.reset()
     }
 
     @Test
-    fun `getDeviceId produces deterministic result for same device`() {
+    fun `when getDeviceId called multiple times then returns same value`() {
+        // Given - device context already set up in @Before
+
+        // When
         val deviceId1 = getDeviceId()
         val deviceId2 = getDeviceId()
 
+        // Then
         assertEquals(deviceId1, deviceId2, "Same device should always produce same deviceId")
     }
 
     @Test
-    fun `getDeviceId produces non-empty string`() {
+    fun `when getDeviceId called then returns non-empty string`() {
+        // Given - device context already set up in @Before
+
+        // When
         val deviceId = getDeviceId()
 
+        // Then
         assertTrue(deviceId.isNotBlank(), "DeviceId should not be blank")
     }
 
     @Test
-    fun `getDeviceId returns the Android ID`() {
+    fun `when getDeviceId called then returns the Android ID`() {
+        // Given - device context already set up in @Before
+
+        // When
         val deviceId = getDeviceId()
 
+        // Then
         assertEquals(testAndroidId, deviceId, "DeviceId should be the Android ID")
     }
 
     @Test
-    fun `getDeviceId produces reasonable length string`() {
+    fun `when getDeviceId called then returns reasonable length string`() {
+        // Given - device context already set up in @Before
+
+        // When
         val deviceId = getDeviceId()
 
+        // Then
         // Android ID is typically 16 hex characters (64 bits)
         assertTrue(deviceId.length >= 8, "DeviceId should be at least 8 characters")
     }

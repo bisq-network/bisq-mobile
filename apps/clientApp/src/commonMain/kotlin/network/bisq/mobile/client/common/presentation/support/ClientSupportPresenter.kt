@@ -6,11 +6,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.main.MainPresenter
 
 /**
  * Client-specific Support presenter with push notification debugging features.
+ *
+ * TODO: Coverage exclusion rationale - This presenter extends BasePresenter which requires
+ * Koin DI and MainPresenter initialization. Unit testing would require complex mocking of
+ * the entire presenter hierarchy. Consider integration tests with Koin if coverage is needed.
  */
+@ExcludeFromCoverage
 class ClientSupportPresenter(
     mainPresenter: MainPresenter,
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
@@ -49,10 +55,12 @@ class ClientSupportPresenter(
                 if (result.isSuccess) {
                     showSnackbar("Device token retrieved successfully", isError = false)
                 } else {
-                    showSnackbar("Failed to get device token: ${result.exceptionOrNull()?.message}", isError = true)
+                    val errorMessage = result.exceptionOrNull()?.message ?: "Unknown error"
+                    showSnackbar("Failed to get device token: $errorMessage", isError = true)
                 }
             } catch (e: Exception) {
-                showSnackbar("Error: ${e.message}", isError = true)
+                val errorMessage = e.message ?: "Unknown error"
+                showSnackbar("Error: $errorMessage", isError = true)
             } finally {
                 _tokenRequestInProgress.value = false
             }

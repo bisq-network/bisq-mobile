@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -28,30 +29,31 @@ class IosPushNotificationTokenProvider :
     PushNotificationTokenProvider,
     Logging {
     companion object {
-        // Singleton to hold the pending token request
+        // Atomic reference to hold the pending token request
         // This is needed because the token is delivered asynchronously via AppDelegate
-        private var pendingTokenRequest: CompletableDeferred<String>? = null
+        // Using atomic to ensure thread-safe access from both coroutines and Swift callbacks
+        private val pendingTokenRequestRef = atomic<CompletableDeferred<String>?>(null)
 
         // Flag to signal that registration should be triggered
         private var shouldRegister = false
 
-        // Mutex for thread-safe access to pendingTokenRequest
+        // Mutex for thread-safe access when creating new deferred
         private val mutex = Mutex()
 
         /**
          * Called from AppDelegate when a device token is received.
+         * Thread-safe: uses atomic getAndSet to avoid race conditions.
          */
         fun onTokenReceived(token: String) {
-            pendingTokenRequest?.complete(token)
-            pendingTokenRequest = null
+            pendingTokenRequestRef.getAndSet(null)?.complete(token)
         }
 
         /**
          * Called from AppDelegate when token registration fails.
+         * Thread-safe: uses atomic getAndSet to avoid race conditions.
          */
         fun onTokenRegistrationFailed(error: Throwable) {
-            pendingTokenRequest?.completeExceptionally(error)
-            pendingTokenRequest = null
+            pendingTokenRequestRef.getAndSet(null)?.completeExceptionally(error)
         }
 
         /**
@@ -114,8 +116,8 @@ class IosPushNotificationTokenProvider :
         // Reuse existing pending request if present and not completed
         val deferred =
             mutex.withLock {
-                pendingTokenRequest?.takeIf { !it.isCompleted } ?: CompletableDeferred<String>().also {
-                    pendingTokenRequest = it
+                pendingTokenRequestRef.value?.takeIf { !it.isCompleted } ?: CompletableDeferred<String>().also {
+                    pendingTokenRequestRef.value = it
                     shouldRegister = true // Signal that registration should be triggered
                     // Request polling restart in case the timer was previously invalidated
                     requestPollingRestart()
@@ -133,9 +135,7 @@ class IosPushNotificationTokenProvider :
             throw e
         } catch (e: Exception) {
             // Clear pending request on error
-            mutex.withLock {
-                pendingTokenRequest = null
-            }
+            pendingTokenRequestRef.value = null
             log.e(e) { "Failed to get device token" }
             Result.failure(e)
         }

@@ -21,4 +21,12 @@ object ApplicationContextProvider {
     fun initialize(context: Context) {
         _context = context.applicationContext
     }
+
+    /**
+     * Resets the context to null. Only for use in tests to avoid test pollution.
+     */
+    @androidx.annotation.VisibleForTesting
+    fun reset() {
+        _context = null
+    }
 }

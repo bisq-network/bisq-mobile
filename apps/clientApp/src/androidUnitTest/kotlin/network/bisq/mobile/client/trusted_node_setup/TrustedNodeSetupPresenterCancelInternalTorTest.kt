@@ -5,132 +5,73 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
+import network.bisq.mobile.client.common.test_utils.UserRepositoryMock
 import network.bisq.mobile.client.test_utils.TestDoubles
-import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.main.MainPresenter
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
 @ExperimentalCoroutinesApi
-class TrustedNodeSetupPresenterCancelInternalTorTest {
-    private val testDispatcher = UnconfinedTestDispatcher()
-
+class TrustedNodeSetupPresenterCancelInternalTorTest : KoinIntegrationTestBase() {
     private lateinit var wsClientService: WebSocketClientService
-    private lateinit var kmpTorService: KmpTorService
-    private lateinit var appBootstrap: ApplicationBootstrapFacade
-    private lateinit var mainPresenter: MainPresenter
-
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var userRepository: UserRepository
-
     private lateinit var wsCleanup: () -> Unit
+    private val kmpTorService: KmpTorService = mockk(relaxed = true)
+    private val appBootstrap: ApplicationBootstrapFacade = mockk(relaxed = true)
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository = SensitiveSettingsRepositoryMock()
+    private val userRepository: UserRepository = UserRepositoryMock()
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-
-        // Mocks / fakes
-        val (service, cleanup) = TestDoubles.wsService(testConnectionDelayMs = 10_000)
-        wsClientService = service
-        wsCleanup = cleanup
-        kmpTorService = mockk(relaxed = true)
-        appBootstrap = mockk(relaxed = true)
-
-        every { kmpTorService.state } returns
-            MutableStateFlow<KmpTorService.TorState>(
-                KmpTorService.TorState.Stopped(),
-            )
-        every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
-
-        // Minimal repositories
-        sensitiveSettingsRepository =
-            object : SensitiveSettingsRepository {
-                private val _data = MutableStateFlow(SensitiveSettings())
-                override val data = _data
-
-                override suspend fun fetch() = _data.value
-
-                override suspend fun update(transform: suspend (t: SensitiveSettings) -> SensitiveSettings) {
-                    _data.value = transform(_data.value)
-                }
-
-                override suspend fun clear() {
-                    _data.value = SensitiveSettings()
-                }
-            }
-        userRepository =
-            object : UserRepository {
-                private val _data = MutableStateFlow(User())
-                override val data = _data
-
-                override suspend fun updateTerms(value: String) {}
-
-                override suspend fun updateStatement(value: String) {}
-
-                override suspend fun update(value: User) {
-                    _data.value = value
-                }
-
-                override suspend fun clear() {
-                    _data.value = User()
-                }
-            }
-
+    override fun additionalModules(): List<Module> {
         // Test jobs manager that runs UI/IO on the same test dispatcher
         val testJobsManager =
             object : CoroutineJobsManager {
                 private val scope = CoroutineScope(testDispatcher)
-
-                override var coroutineExceptionHandler: ((Throwable) -> Unit)? =
-                    null
+                override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null
 
                 override suspend fun dispose() {}
 
                 override fun getScope() = scope
             }
 
-        startKoin {
-            modules(
-                clientTestModule,
-                module {
-                    single<WebSocketClientService> { wsClientService }
-                    single<KmpTorService> { kmpTorService }
-                    single<CoroutineJobsManager> { testJobsManager }
-                },
-            )
-        }
+        return listOf(
+            module {
+                single<WebSocketClientService> { wsClientService }
+                single<KmpTorService> { kmpTorService }
+                single<CoroutineJobsManager> { testJobsManager }
+            },
+        )
     }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-        stopKoin()
+    override fun onSetup() {
+        // Mocks / fakes
+        val (service, cleanup) = TestDoubles.wsService(testConnectionDelayMs = 10_000)
+        wsClientService = service
+        wsCleanup = cleanup
+
+        every { kmpTorService.state } returns
+            MutableStateFlow<KmpTorService.TorState>(
+                KmpTorService.TorState.Stopped(),
+            )
+        every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
+    }
+
+    override fun onTearDown() {
         // Ensure MockK global object mock is cleaned up to avoid leakage across tests
         wsCleanup()
     }

@@ -28,11 +28,15 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.settings.support.SupportPresenter
 import network.bisq.mobile.presentation.settings.support.SupportWeblink
 import org.koin.compose.koinInject
 
+// TODO: Coverage exclusion rationale - Compose UI screen cannot be unit tested.
+// Requires Compose UI testing framework for proper coverage.
+@ExcludeFromCoverage
 @Composable
 fun ClientSupportScreen() {
     // Use the standard SupportPresenter for base functionality
