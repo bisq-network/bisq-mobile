@@ -6,6 +6,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -41,10 +43,13 @@ class TrustedNodeSetupPresenterCancelInternalTorTest : KoinIntegrationTestBase()
         // Test jobs manager that runs UI/IO on the same test dispatcher
         val testJobsManager =
             object : CoroutineJobsManager {
-                private val scope = CoroutineScope(testDispatcher)
+                private var scope = CoroutineScope(SupervisorJob() + testDispatcher)
                 override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null
 
-                override suspend fun dispose() {}
+                override suspend fun dispose() {
+                    scope.cancel()
+                    scope = CoroutineScope(SupervisorJob() + testDispatcher)
+                }
 
                 override fun getScope() = scope
             }

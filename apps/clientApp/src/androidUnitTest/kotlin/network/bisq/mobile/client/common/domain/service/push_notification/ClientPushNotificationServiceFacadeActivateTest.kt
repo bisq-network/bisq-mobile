@@ -201,17 +201,40 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
         }
 
     @Test
-    fun `auto-registration failure is handled gracefully`() =
+    fun `when auto-registration returns failure then handles gracefully`() =
         runTest {
+            // Given
             sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns
                 Result.failure(Exception("API error"))
+
+            // When
             facade.activate()
             advanceUntilIdle()
             settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
             advanceUntilIdle()
+
+            // Then
+            assertTrue(facade.isPushNotificationsEnabled.value)
+            assertFalse(facade.isDeviceRegistered.value)
+        }
+
+    @Test
+    fun `when auto-registration throws exception then catches and logs error`() =
+        runTest {
+            // Given
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            coEvery { tokenProvider.requestPermission() } throws RuntimeException("Unexpected error during permission request")
+
+            // When
+            facade.activate()
+            advanceUntilIdle()
+            settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
+            advanceUntilIdle()
+
+            // Then - should not crash, exception is caught and logged
             assertTrue(facade.isPushNotificationsEnabled.value)
             assertFalse(facade.isDeviceRegistered.value)
         }

@@ -4,6 +4,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -130,8 +131,13 @@ class IosPushNotificationTokenProvider :
             val token = withTimeout(30_000L) { deferred.await() }
             log.i { "Received device token: ${token.take(10)}..." }
             Result.success(token)
+        } catch (e: TimeoutCancellationException) {
+            // Timeout is a specific case - clear pending request and return failure
+            pendingTokenRequestRef.value = null
+            log.e(e) { "Timeout waiting for device token" }
+            Result.failure(e)
         } catch (e: CancellationException) {
-            // Preserve structured concurrency - rethrow cancellation
+            // Preserve structured concurrency - rethrow non-timeout cancellation
             throw e
         } catch (e: Exception) {
             // Clear pending request on error
