@@ -59,17 +59,38 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
-# Ensure base branch exists
+# Ensure base branch exists and resolve the reference
+BASE_REF="$BASE_BRANCH"
 if ! git rev-parse --verify "$BASE_BRANCH" > /dev/null 2>&1; then
-    echo -e "${YELLOW}Warning: Base branch $BASE_BRANCH not found, fetching...${NC}"
-    git fetch origin main
+    echo -e "${YELLOW}Warning: Base branch $BASE_BRANCH not found locally, fetching...${NC}"
+
+    # Extract branch name from origin/branch format if present
+    BRANCH_NAME="${BASE_BRANCH#origin/}"
+
+    # Fetch the specific branch (or all if that fails)
+    if ! git fetch origin "$BRANCH_NAME" 2>/dev/null; then
+        echo -e "${YELLOW}Fetching all branches...${NC}"
+        git fetch --all
+    fi
+
+    # Re-check if BASE_BRANCH is now resolved
+    if ! git rev-parse --verify "$BASE_BRANCH" > /dev/null 2>&1; then
+        # Try with origin/ prefix
+        if git rev-parse --verify "origin/$BRANCH_NAME" > /dev/null 2>&1; then
+            BASE_REF="origin/$BRANCH_NAME"
+            echo -e "${GREEN}Using $BASE_REF as base reference${NC}"
+        else
+            echo -e "${RED}Error: Cannot resolve base branch $BASE_BRANCH${NC}"
+            exit 1
+        fi
+    fi
 fi
 
 # Analyze the diff for code movement
 echo -e "${BLUE}Analyzing code changes...${NC}"
 
 # Get total lines changed (additions + deletions)
-TOTAL_STATS=$(git diff --numstat "$BASE_BRANCH"...HEAD -- '*.kt' | awk '{add+=$1; del+=$2} END {print add, del}')
+TOTAL_STATS=$(git diff --numstat "$BASE_REF"...HEAD -- '*.kt' | awk '{add+=$1; del+=$2} END {print add, del}')
 TOTAL_ADDED=$(echo "$TOTAL_STATS" | awk '{print $1}')
 TOTAL_DELETED=$(echo "$TOTAL_STATS" | awk '{print $2}')
 TOTAL_CHANGED=$((TOTAL_ADDED + TOTAL_DELETED))
@@ -82,7 +103,7 @@ echo ""
 # Detect moved/copied code with 80% similarity threshold
 # -M80% detects renames/moves within files
 # -C80% detects copies across files
-MOVE_STATS=$(git diff -M80% -C80% --numstat "$BASE_BRANCH"...HEAD -- '*.kt' | awk '{add+=$1; del+=$2} END {print add, del}')
+MOVE_STATS=$(git diff -M80% -C80% --numstat "$BASE_REF"...HEAD -- '*.kt' | awk '{add+=$1; del+=$2} END {print add, del}')
 MOVE_ADDED=$(echo "$MOVE_STATS" | awk '{print $1}')
 MOVE_DELETED=$(echo "$MOVE_STATS" | awk '{print $2}')
 
@@ -164,7 +185,7 @@ mkdir -p build/reports/diff-cover
 # Run diff-cover with the determined threshold
 if [ -f "$COVERAGE_XML" ]; then
     if diff-cover "$COVERAGE_XML" \
-        --compare-branch="$BASE_BRANCH" \
+        --compare-branch="$BASE_REF" \
         --fail-under="${COVERAGE_THRESHOLD}" \
         --html-report build/reports/diff-cover/diff-cover.html \
         --src-roots "${SRC_ROOTS[@]}"; then
