@@ -132,31 +132,12 @@ jobs:
         run: |
           pip install diff-cover==10.2.0
 
-          # Read diff coverage threshold from gradle.properties
-          DIFF_COVERAGE_THRESHOLD=$(grep "kover.diff.coverage.minimum" gradle.properties | cut -d'=' -f2)
-          if [ -z "$DIFF_COVERAGE_THRESHOLD" ]; then
-            echo "Error: kover.diff.coverage.minimum not found in gradle.properties"
-            exit 1
-          fi
-
           # Ensure compare branch exists for diff-cover
           git fetch origin main
 
-          # Dynamically find all Kotlin source folders (exclude build directories)
-          SRC_ROOTS=()
-          while IFS= read -r dir; do
-            SRC_ROOTS+=("$dir")
-          done < <(find . -type d -path "*/src/*/kotlin" -not -path "*/build/*" | sed 's|^\./||')
-
-          echo "Found source roots: ${#SRC_ROOTS[@]} directories"
-
-          mkdir -p build/reports/diff-cover
-
-          diff-cover build/reports/kover/report.xml \
-            --compare-branch=origin/main \
-            --fail-under=${DIFF_COVERAGE_THRESHOLD} \
-            --html-report build/reports/diff-cover/diff-cover.html \
-            --src-roots "${SRC_ROOTS[@]}"
+          # Use smart diff coverage analyzer
+          chmod +x scripts/analyze-diff-coverage.sh
+          ./scripts/analyze-diff-coverage.sh origin/main build/reports/kover/report.xml
 
       - name: Upload diff coverage report (Ubuntu only)
         if: always() && startsWith(matrix.os, 'ubuntu') && github.event_name == 'pull_request'
