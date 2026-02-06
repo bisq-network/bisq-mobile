@@ -31,7 +31,8 @@ class ClientSplashPresenter(
     override val state: StateFlow<String> get() = applicationBootstrapFacade.state
 
     override suspend fun navigateToNextScreen() {
-        if (!webSocketClientService.isConnected()) {
+        // In demo mode, always proceed (demo WebSocket is always "connected")
+        if (!ApplicationBootstrapFacade.isDemo && !webSocketClientService.isConnected()) {
             log.d { "No connectivity detected, navigating to trusted node setup" }
             navigateToTrustedNodeSetup()
             return

@@ -216,7 +216,7 @@ val clientDomainModule =
         single { PairingQrCodeDecoder(get()) }
         single { SessionApiGateway(get()) }
         single { SessionService(get()) }
-        single { ApiAccessService(get(), get(), get()) }
+        single { ApiAccessService(get(), get(), get(), get()) }
 
         // single { WebSocketHttpClient(get()) }
         single {
