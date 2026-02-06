@@ -1,4 +1,5 @@
 {
+  "_TODO": "UPDATE AFTER DISTRIBUTION METHODS ARE CONFIRMED - See https://github.com/bisq-network/bisq-mobile/issues/936#issuecomment-3858661062 - This manifest is for AltStore PAL (EU) which requires Apple notarization. Update downloadURL, version, size, and dates once distribution method is confirmed.",
   "name": "Bisq Mobile",
   "identifier": "network.bisq.mobile",
   "subtitle": "Decentralized Bitcoin Exchange",

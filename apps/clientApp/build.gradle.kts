@@ -357,7 +357,10 @@ tasks.register("syncIosVersion") {
     description = "Syncs iOS version from gradle.properties to Config.xcconfig"
 
     // Capture values at configuration time for configuration cache compatibility
-    val xcConfigPath = layout.projectDirectory.file("../../iosClient/Configuration/Config.xcconfig").asFile.absolutePath
+    val xcConfigPath =
+        layout.projectDirectory
+            .file("../../iosClient/Configuration/Config.xcconfig")
+            .asFile.absolutePath
     val versionToSync = iosVersion
     val versionCodeToSync = iosVersionCode
 
@@ -367,16 +370,18 @@ tasks.register("syncIosVersion") {
             var content = xcConfigFile.readText()
 
             // Update APP_VERSION
-            content = content.replace(
-                Regex("APP_VERSION=.*"),
-                "APP_VERSION=$versionToSync"
-            )
+            content =
+                content.replace(
+                    Regex("APP_VERSION=.*"),
+                    "APP_VERSION=$versionToSync",
+                )
 
             // Update APP_VERSION_CODE
-            content = content.replace(
-                Regex("APP_VERSION_CODE=.*"),
-                "APP_VERSION_CODE=$versionCodeToSync"
-            )
+            content =
+                content.replace(
+                    Regex("APP_VERSION_CODE=.*"),
+                    "APP_VERSION_CODE=$versionCodeToSync",
+                )
 
             xcConfigFile.writeText(content)
             logger.lifecycle("Updated iOS version to $versionToSync ($versionCodeToSync) in Config.xcconfig")

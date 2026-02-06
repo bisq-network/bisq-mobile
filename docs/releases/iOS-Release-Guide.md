@@ -1,22 +1,89 @@
-# iOS EU Release Guide
+# iOS Release Guide
 
-This guide documents the manual release process for Bisq Connect iOS for the EU market via AltStore PAL.
+<!--
+================================================================================
+TODO: UPDATE AFTER DISTRIBUTION METHODS ARE CONFIRMED
+================================================================================
+This guide documents distribution methods that are PENDING confirmation. See:
+https://github.com/bisq-network/bisq-mobile/issues/936#issuecomment-3858661062
 
-## Overview
+Current status (as of Feb 2026):
+- TestFlight: Pending Apple review (may or may not pass external testing)
+- EU AltStore PAL: Requires notarization via App Store Connect (untested)
+- Non-EU Sideloading: Available but limited (100 devices, 7-day refresh)
 
-Since iOS 17.4, Apple allows alternative app distribution in the EU under the Digital Markets Act (DMA). This requires:
-1. Building with an Apple Distribution certificate
-2. Submitting the IPA for Apple Notarization
-3. Hosting the notarized IPA and AltStore manifest
+Once we confirm which distribution methods work, update this guide accordingly.
+================================================================================
+-->
+
+This guide documents the manual release process for Bisq Connect iOS.
+
+## Distribution Methods
+
+### EU Market (AltStore PAL) - PENDING
+
+Since iOS 17.4, Apple allows alternative app distribution in the EU under the Digital Markets Act (DMA).
+
+**Requirements:**
+1. App must be **notarized by Apple** via App Store Connect
+2. Must agree to **Alternative Terms Addendum for Apps in the EU**
+3. Notarized IPA hosted on GitHub, referenced in `apps.json`
 
 **Key Benefits:**
 - No 7-day expiration (unlike ad-hoc sideloading)
 - No device UUID registration required
-- Automated security review (not content review)
+- Notarization review is less strict than App Store review (security-focused, not content-focused)
 
 **Limitations:**
 - EU-only (device region must be set to EU country)
 - Requires iOS 17.4+ for installation via AltStore PAL
+- Must go through App Store Connect (no command-line notarization for iOS)
+
+### Non-EU Market (Sideloading)
+
+For users outside the EU, we provide Ad-Hoc signed IPAs.
+
+**Requirements:**
+- Device UUIDs must be registered in Apple Developer Portal
+- Users install via AltStore (free version) or similar tools
+
+**Limitations:**
+- 100 device limit per year
+- Apps require weekly refresh (7-day certificate)
+
+---
+
+## ⚠️ Important: iOS Notarization Reality
+
+**iOS notarization is completely different from macOS notarization!**
+
+| Platform | Notarization Method |
+|----------|---------------------|
+| **macOS** | `xcrun notarytool` command line ✅ |
+| **iOS** | App Store Connect web interface only ❌ no CLI |
+
+The `xcrun notarytool` command does **NOT** work for iOS IPAs. All iOS apps for EU alternative distribution must be uploaded to App Store Connect.
+
+### Notarization vs App Store Review
+
+| Aspect | App Store Review | Notarization Only |
+|--------|------------------|-------------------|
+| Content policies | ✅ Enforced | ❌ Not checked |
+| Business model | ✅ Reviewed | ❌ Not checked |
+| Malware/security | ✅ Checked | ✅ Checked |
+| Privacy basics | ✅ Checked | ✅ Checked |
+| Fraud prevention | ✅ Checked | ✅ Checked |
+
+**If your app was rejected from the App Store for content/policy reasons, it may still pass notarization.**
+
+### Web Distribution Eligibility (Direct from Website)
+
+To distribute directly from your own website (not via AltStore PAL), Apple requires:
+- ❌ **Organization account** (Individual accounts don't qualify)
+- ✅ **2+ years continuous membership**
+- ❌ **1M+ first annual installs in EU** in prior calendar year
+
+Most small developers won't qualify for Web Distribution. The alternative is to distribute via a marketplace like AltStore PAL.
 
 ---
 

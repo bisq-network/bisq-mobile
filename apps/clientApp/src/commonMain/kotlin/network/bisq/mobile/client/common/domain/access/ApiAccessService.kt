@@ -28,6 +28,7 @@ const val ANDROID_LOCALHOST = "10.0.2.2"
 
 // Demo mode pairing code - when entered, triggers demo mode with fake data
 const val DEMO_PAIRING_CODE = "BISQ_DEMO_PAIRING_CODE"
+
 // Demo mode URL that triggers WebSocketClientDemo
 const val DEMO_API_URL = "http://demo.bisq:21"
 
@@ -243,15 +244,16 @@ class ApiAccessService(
                 )
             sensitiveSettingsRepository.update { updatedSettings }
             // Mark pairing as complete for demo mode
-            _pairingResult.value = Result.success(
-                PairingResponse(
-                    version = 1,
-                    clientId = "demo-client-id",
-                    clientSecret = "demo-client-secret",
-                    sessionId = "demo-session-id",
-                    sessionExpiryDate = Long.MAX_VALUE,
-                ),
-            )
+            _pairingResult.value =
+                Result.success(
+                    PairingResponse(
+                        version = 1,
+                        clientId = "demo-client-id",
+                        clientSecret = "demo-client-secret",
+                        sessionId = "demo-session-id",
+                        sessionExpiryDate = Long.MAX_VALUE,
+                    ),
+                )
             _pairingResultStored.value = true
         }
     }

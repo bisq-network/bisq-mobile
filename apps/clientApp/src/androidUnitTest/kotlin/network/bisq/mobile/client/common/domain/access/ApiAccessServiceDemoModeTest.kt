@@ -45,11 +45,14 @@ class ApiAccessServiceDemoModeTest {
     private lateinit var apiAccessService: ApiAccessService
 
     // Test implementation of CoroutineJobsManager
-    private val testJobsManager = object : CoroutineJobsManager {
-        override suspend fun dispose() {}
-        override fun getScope(): CoroutineScope = testScope
-        override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null
-    }
+    private val testJobsManager =
+        object : CoroutineJobsManager {
+            override suspend fun dispose() {}
+
+            override fun getScope(): CoroutineScope = testScope
+
+            override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null
+        }
 
     @Before
     fun setup() {
@@ -60,7 +63,7 @@ class ApiAccessServiceDemoModeTest {
             modules(
                 module {
                     single<CoroutineJobsManager> { testJobsManager }
-                }
+                },
             )
         }
 
@@ -72,13 +75,13 @@ class ApiAccessServiceDemoModeTest {
         every { sensitiveSettingsRepository.data } returns flowOf(SensitiveSettings())
         coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
 
-        apiAccessService = ApiAccessService(
-            pairingService,
-            sensitiveSettingsRepository,
-            httpClientService,
-            pairingQrCodeDecoder,
-        )
-
+        apiAccessService =
+            ApiAccessService(
+                pairingService,
+                sensitiveSettingsRepository,
+                httpClientService,
+                pairingQrCodeDecoder,
+            )
         // Reset demo mode before each test
         ApplicationBootstrapFacade.isDemo = false
     }
@@ -101,96 +104,104 @@ class ApiAccessServiceDemoModeTest {
     }
 
     @Test
-    fun `setPairingQrCodeString with demo code sets demo mode`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
+    fun `setPairingQrCodeString with demo code sets demo mode`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
 
-        assertTrue(ApplicationBootstrapFacade.isDemo)
-    }
-
-    @Test
-    fun `setPairingQrCodeString with demo code sets correct API URL`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
-
-        assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
-        assertEquals("ws://demo.bisq:21", apiAccessService.webSocketUrl.value)
-    }
+            assertTrue(ApplicationBootstrapFacade.isDemo)
+        }
 
     @Test
-    fun `setPairingQrCodeString with demo code sets fake credentials`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
+    fun `setPairingQrCodeString with demo code sets correct API URL`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
 
-        assertEquals("demo-client-id", apiAccessService.clientId.value)
-        assertEquals("demo-client-secret", apiAccessService.clientSecret.value)
-        assertEquals("demo-session-id", apiAccessService.sessionId.value)
-        assertEquals("demo-pairing-id", apiAccessService.pairingCodeId.value)
-    }
-
-    @Test
-    fun `setPairingQrCodeString with demo code grants all permissions`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
-
-        assertEquals(Permission.entries.toSet(), apiAccessService.grantedPermissions.value)
-    }
+            assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
+            assertEquals("ws://demo.bisq:21", apiAccessService.webSocketUrl.value)
+        }
 
     @Test
-    fun `setPairingQrCodeString with demo code clears TLS fingerprint`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
+    fun `setPairingQrCodeString with demo code sets fake credentials`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
 
-        assertNull(apiAccessService.tlsFingerprint.value)
-    }
-
-    @Test
-    fun `setPairingQrCodeString with demo code clears pairing error`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
-
-        assertNull(apiAccessService.pairingCodeError.value)
-    }
+            assertEquals("demo-client-id", apiAccessService.clientId.value)
+            assertEquals("demo-client-secret", apiAccessService.clientSecret.value)
+            assertEquals("demo-session-id", apiAccessService.sessionId.value)
+            assertEquals("demo-pairing-id", apiAccessService.pairingCodeId.value)
+        }
 
     @Test
-    fun `setPairingQrCodeString with demo code updates sensitive settings`() = runTest {
-        val settingsSlot = slot<suspend (SensitiveSettings) -> SensitiveSettings>()
-        coEvery { sensitiveSettingsRepository.update(capture(settingsSlot)) } returns Unit
+    fun `setPairingQrCodeString with demo code grants all permissions`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
 
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
-
-        coVerify { sensitiveSettingsRepository.update(any()) }
-
-        // Verify the transform produces correct settings
-        val transformedSettings = settingsSlot.captured.invoke(SensitiveSettings())
-        assertEquals(DEMO_API_URL, transformedSettings.bisqApiUrl)
-        assertEquals("demo-client-id", transformedSettings.clientId)
-        assertEquals("demo-session-id", transformedSettings.sessionId)
-        assertEquals("demo-client-secret", transformedSettings.clientSecret)
-        assertEquals(BisqProxyOption.NONE, transformedSettings.selectedProxyOption)
-        assertNull(transformedSettings.tlsFingerprint)
-    }
+            assertEquals(Permission.entries.toSet(), apiAccessService.grantedPermissions.value)
+        }
 
     @Test
-    fun `setPairingQrCodeString with demo code sets pairing result stored`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
+    fun `setPairingQrCodeString with demo code clears TLS fingerprint`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
 
-        assertTrue(apiAccessService.pairingResultStored.value)
-    }
+            assertNull(apiAccessService.tlsFingerprint.value)
+        }
 
     @Test
-    fun `setPairingQrCodeString with demo code sets successful pairing result`() = runTest {
-        apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-        advanceUntilIdle()
+    fun `setPairingQrCodeString with demo code clears pairing error`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
 
-        val result = apiAccessService.pairingResult.value
-        assertTrue(result != null && result.isSuccess)
-        val response = result.getOrThrow()
-        assertEquals("demo-client-id", response.clientId)
-        assertEquals("demo-session-id", response.sessionId)
-        assertEquals("demo-client-secret", response.clientSecret)
-    }
+            assertNull(apiAccessService.pairingCodeError.value)
+        }
+
+    @Test
+    fun `setPairingQrCodeString with demo code updates sensitive settings`() =
+        runTest {
+            val settingsSlot = slot<suspend (SensitiveSettings) -> SensitiveSettings>()
+            coEvery { sensitiveSettingsRepository.update(capture(settingsSlot)) } returns Unit
+
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
+
+            coVerify { sensitiveSettingsRepository.update(any()) }
+
+            // Verify the transform produces correct settings
+            val transformedSettings = settingsSlot.captured.invoke(SensitiveSettings())
+            assertEquals(DEMO_API_URL, transformedSettings.bisqApiUrl)
+            assertEquals("demo-client-id", transformedSettings.clientId)
+            assertEquals("demo-session-id", transformedSettings.sessionId)
+            assertEquals("demo-client-secret", transformedSettings.clientSecret)
+            assertEquals(BisqProxyOption.NONE, transformedSettings.selectedProxyOption)
+            assertNull(transformedSettings.tlsFingerprint)
+        }
+
+    @Test
+    fun `setPairingQrCodeString with demo code sets pairing result stored`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
+
+            assertTrue(apiAccessService.pairingResultStored.value)
+        }
+
+    @Test
+    fun `setPairingQrCodeString with demo code sets successful pairing result`() =
+        runTest {
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
+
+            val result = apiAccessService.pairingResult.value
+            assertTrue(result != null && result.isSuccess)
+            val response = result.getOrThrow()
+            assertEquals("demo-client-id", response.clientId)
+            assertEquals("demo-session-id", response.sessionId)
+            assertEquals("demo-client-secret", response.clientSecret)
+        }
 }
-
