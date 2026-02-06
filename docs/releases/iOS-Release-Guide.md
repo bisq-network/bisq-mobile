@@ -51,17 +51,34 @@ cd iosClient && pod install && cd ..
 4. Product → Archive
 5. Wait for archive to complete
 
-### Step 4: Export for Distribution
+> **Note:** You only need to archive once. From the same archive, you'll export twice (EU and Non-EU).
 
-1. In Xcode Organizer (Window → Organizer), select the new archive
+### Step 4a: Export for EU (Notarization)
+
+1. In Xcode Organizer (Window → Organizer), select the archive
 2. Click **Distribute App**
 3. Select **Custom**
-4. Select **App Store Connect** (this enables notarization)
+4. Select **App Store Connect** ← This enables notarization
 5. Select **Export** (not Upload)
 6. Choose **Automatically manage signing**
-7. Export to a folder (e.g., `~/Desktop/BisqConnect-Release/`)
+7. Export to a folder (e.g., `~/Desktop/BisqConnect-EU/`)
 
-This creates `Bisq Connect.ipa`.
+This creates the EU IPA: `Bisq Connect.ipa` → rename to `BisqConnect-0.2.0.ipa`
+
+### Step 4b: Export for Non-EU (Sideloading)
+
+1. In Xcode Organizer, select the **same archive**
+2. Click **Distribute App**
+3. Select **Custom**
+4. Select **Ad Hoc** ← For sideloading
+5. Choose **Automatically manage signing** (or select your Ad-Hoc profile manually)
+6. Export to a different folder (e.g., `~/Desktop/BisqConnect-Sideload/`)
+
+This creates the sideload IPA: `Bisq Connect.ipa` → rename to `BisqConnect-0.2.0-sideload.ipa`
+
+> **Key Difference:**
+> - **App Store Connect** = Uses Distribution cert, can be notarized, works with AltStore PAL (EU)
+> - **Ad Hoc** = Uses Distribution cert + Ad-Hoc profile, requires registered device UUIDs, works with AltStore free (worldwide)
 
 ### Step 5: Notarize the IPA
 
