@@ -40,7 +40,9 @@ set -e
 BASE_BRANCH="${1:-origin/main}"
 COVERAGE_XML="${2:-build/reports/kover/report.xml}"
 DEFAULT_THRESHOLD=80
-REFACTORING_THRESHOLD=0
+## NOTE: Team decided to remove smart checks and leave only 80% for all letting the maintainer to
+## decide ACK/nACK on a per-case basis
+REFACTORING_THRESHOLD=80
 MOVEMENT_RATIO_THRESHOLD=0.5
 
 # Colors for output
