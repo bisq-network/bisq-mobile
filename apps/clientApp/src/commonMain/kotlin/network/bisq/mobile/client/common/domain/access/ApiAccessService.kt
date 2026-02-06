@@ -17,12 +17,18 @@ import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 
 const val LOCALHOST = "localhost"
 const val LOOPBACK = "127.0.0.1"
 const val ANDROID_LOCALHOST = "10.0.2.2"
+
+// Demo mode pairing code - when entered, triggers demo mode with fake data
+const val DEMO_PAIRING_CODE = "BISQ_DEMO_PAIRING_CODE"
+// Demo mode URL that triggers WebSocketClientDemo
+const val DEMO_API_URL = "http://demo.bisq:21"
 
 class ApiAccessService(
     private val pairingService: PairingService,
@@ -147,11 +153,21 @@ class ApiAccessService(
         }
         // Clear any previous error
         _pairingCodeError.value = null
+
+        val trimmedValue = value.trim()
+
+        // Check for demo pairing code
+        if (trimmedValue == DEMO_PAIRING_CODE) {
+            log.i { "Demo pairing code detected - activating demo mode" }
+            setupDemoMode()
+            return
+        }
+
         try {
-            _pairingQrCodeString.value = value.trim()
+            _pairingQrCodeString.value = trimmedValue
             pairingQrCodeDataStored.value = false
             val pairingQrCode =
-                PairingQrCodeDecoder.decode(value.trim())
+                PairingQrCodeDecoder.decode(trimmedValue)
             val wsUrl = adaptLoopbackForAndroid(pairingQrCode.webSocketUrl)
             _webSocketUrl.value = wsUrl
             // Convert WebSocket URL to REST API URL, preserving the port
@@ -185,6 +201,57 @@ class ApiAccessService(
             _pairingCodeError.value = "mobile.trustedNodeSetup.pairingCode.invalid".i18n()
             // Reset pairing code ID to prevent pairing attempt with invalid data
             _pairingCodeId.value = null
+        }
+    }
+
+    /**
+     * Sets up demo mode with fake credentials.
+     * This bypasses the normal pairing flow and uses WebSocketClientDemo.
+     */
+    private fun setupDemoMode() {
+        _pairingQrCodeString.value = DEMO_PAIRING_CODE
+        _webSocketUrl.value = "ws://demo.bisq:21"
+        _restApiUrl.value = DEMO_API_URL
+        _tlsFingerprint.value = null
+        // Use a fake pairing code ID for demo mode
+        _pairingCodeId.value = "demo-pairing-id"
+        // Grant all permissions in demo mode
+        _grantedPermissions.value = Permission.entries.toSet()
+        // Set fake credentials for demo mode
+        _clientId.value = "demo-client-id"
+        _clientSecret.value = "demo-client-secret"
+        _sessionId.value = "demo-session-id"
+
+        // Mark demo mode globally
+        ApplicationBootstrapFacade.isDemo = true
+
+        log.i { "Demo mode setup complete - using $DEMO_API_URL" }
+
+        // Update settings with demo values
+        serviceScope.launch {
+            val currentSettings = sensitiveSettingsRepository.fetch()
+            val updatedSettings =
+                currentSettings.copy(
+                    bisqApiUrl = DEMO_API_URL,
+                    tlsFingerprint = null,
+                    clientName = _clientName.value,
+                    clientId = "demo-client-id",
+                    sessionId = "demo-session-id",
+                    clientSecret = "demo-client-secret",
+                    selectedProxyOption = BisqProxyOption.NONE,
+                )
+            sensitiveSettingsRepository.update { updatedSettings }
+            // Mark pairing as complete for demo mode
+            _pairingResult.value = Result.success(
+                PairingResponse(
+                    version = 1,
+                    clientId = "demo-client-id",
+                    clientSecret = "demo-client-secret",
+                    sessionId = "demo-session-id",
+                    sessionExpiryDate = Long.MAX_VALUE,
+                ),
+            )
+            _pairingResultStored.value = true
         }
     }
 
