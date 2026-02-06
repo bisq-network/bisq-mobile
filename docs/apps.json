@@ -1,0 +1,61 @@
+{
+  "name": "Bisq Mobile",
+  "identifier": "network.bisq.mobile",
+  "subtitle": "Decentralized Bitcoin Exchange",
+  "description": "Official Bisq mobile applications for iOS. Connect to your trusted Bisq node securely.",
+  "iconURL": "https://bisq-network.github.io/bisq-mobile/assets/icon-512.png",
+  "headerURL": "https://bisq-network.github.io/bisq-mobile/assets/header.png",
+  "website": "https://bisq.network",
+  "tintColor": "#25B135",
+  "featuredApps": [
+    "bisq.mobile.client.BisqConnect"
+  ],
+  "apps": [
+    {
+      "name": "Bisq Connect",
+      "bundleIdentifier": "bisq.mobile.client.BisqConnect",
+      "developerName": "Bisq Network",
+      "subtitle": "Connect to your trusted Bisq node",
+      "localizedDescription": "Bisq Connect is a utility app designed to help users establish a secure connection to a trusted Bisq Node via WebSocket.\n\nKey Features:\n\n• Secure Node Access – Connect to a self-hosted Bisq Node over WebSocket for remote interaction.\n• Server-Controlled Configuration – Just enter the pairing code from your trusted node admin (or scan QR).\n• Privacy-First Design – No data tracking, storage, or third-party interference—your connection stays private.\n• Optimized for iOS – Lightweight and efficient, built for smooth performance on iPhone.\n• Tor Support – Built-in Tor integration for enhanced privacy.\n\nBisq Connect empowers users with a simple and private way to access their trusted Bisq Node remotely.",
+      "iconURL": "https://bisq-network.github.io/bisq-mobile/assets/icon-512.png",
+      "tintColor": "#25B135",
+      "category": "utilities",
+      "screenshots": [],
+      "versions": [
+        {
+          "version": "0.2.0",
+          "date": "2026-02-28T00:00:00Z",
+          "localizedDescription": "# Bisq Connect v0.2.0\n\n## What's New\n\n• First EU release via alternative distribution\n• Built-in Tor support for enhanced privacy\n• Improved connection stability\n• Enhanced UI/UX\n\n## Requirements\n\n• iOS 16.0 or later\n• A running Bisq node to connect to",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/iconnect_0.2.0/BisqConnect-0.2.0.ipa",
+          "size": 50000000,
+          "minOSVersion": "16.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [
+          {
+            "name": "aps-environment"
+          }
+        ],
+        "privacy": [
+          {
+            "name": "LocalNetwork",
+            "usageDescription": "Bisq Connect needs local network access to connect to your Bisq node."
+          }
+        ]
+      }
+    }
+  ],
+  "news": [
+    {
+      "title": "Bisq Connect Now Available for EU!",
+      "identifier": "bisq-connect-eu-launch",
+      "caption": "Install Bisq Connect on your iPhone via AltStore PAL",
+      "date": "2026-02-28T00:00:00Z",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    }
+  ]
+}
+
