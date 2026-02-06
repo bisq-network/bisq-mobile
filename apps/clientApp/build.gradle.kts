@@ -349,6 +349,48 @@ afterEvaluate {
     }
 }
 
+// -------------------- iOS Version Sync Task --------------------
+val iosVersionCode = project.findProperty("client.ios.version.code") as String
+
+tasks.register("syncIosVersion") {
+    group = "ios"
+    description = "Syncs iOS version from gradle.properties to Config.xcconfig"
+
+    // Capture values at configuration time for configuration cache compatibility
+    val xcConfigPath = layout.projectDirectory.file("../../iosClient/Configuration/Config.xcconfig").asFile.absolutePath
+    val versionToSync = iosVersion
+    val versionCodeToSync = iosVersionCode
+
+    doLast {
+        val xcConfigFile = File(xcConfigPath)
+        if (xcConfigFile.exists()) {
+            var content = xcConfigFile.readText()
+
+            // Update APP_VERSION
+            content = content.replace(
+                Regex("APP_VERSION=.*"),
+                "APP_VERSION=$versionToSync"
+            )
+
+            // Update APP_VERSION_CODE
+            content = content.replace(
+                Regex("APP_VERSION_CODE=.*"),
+                "APP_VERSION_CODE=$versionCodeToSync"
+            )
+
+            xcConfigFile.writeText(content)
+            logger.lifecycle("Updated iOS version to $versionToSync ($versionCodeToSync) in Config.xcconfig")
+        } else {
+            logger.warn("Config.xcconfig not found at $xcConfigPath")
+        }
+    }
+}
+
+// Make podInstall depend on syncIosVersion to ensure version is synced before building
+tasks.matching { it.name == "podInstall" }.configureEach {
+    dependsOn("syncIosVersion")
+}
+
 // -------------------- Helper Functions --------------------
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 
