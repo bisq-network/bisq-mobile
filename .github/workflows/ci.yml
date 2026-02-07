@@ -140,6 +140,7 @@ jobs:
           ./scripts/analyze-diff-coverage.sh origin/main build/reports/kover/report.xml
 
       - name: Upload diff coverage report (Ubuntu only)
+        id: coverage_check
         if: always() && startsWith(matrix.os, 'ubuntu') && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
@@ -154,57 +155,6 @@ jobs:
       - name: Android compile-only (Mac only)
         if: startsWith(matrix.os, 'macos')
         run: ./gradlew :apps:clientApp:assembleDebug -x test -x lint
-
-#      TODO seems GH default ci doesn't have support for this
-#      - name: Headless Android emulator and run instrumentation tests
-#        env:
-#          CI: true
-#        uses: reactivecircus/android-emulator-runner@v2
-#        with:
-#          api-level: 33
-#          target: default
-#          arch: x86_64
-#          profile: pixel_5
-#          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect
-#          disable-animations: true
-#          script: ./gradlew clientApp:testDebugUnitTest clientApp:connectedDebugAndroidTest
-
-
-#      If we figure out how to fix the Build iOS client task re-enable this
-#      - name: Install CocoaPods dependencies (Mac only)
-#        if: startsWith(matrix.os, 'macos')
-#        working-directory: iosClient
-#        run: pod install
-
-#     Not needed anymore since we are not using xcodebuild
-#      - name: Warm KMP compile outputs (Apple Silicon)
-#        if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
-#        run: |
-#          ./gradlew :shared:domain:compileKotlinIosSimulatorArm64 :shared:presentation:compileKotlinIosSimulatorArm64 --no-daemon
-#
-#      - name: Warm KMP compile outputs (Intel)
-#        if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
-#        run: |
-#          ./gradlew :shared:domain:compileKotlinIosX64 :shared:presentation:compileKotlinIosX64 --no-daemon
-
-#     Takes way too much time in GH CI Actions
-#      - name: Build iOS Client (Mac only)
-#        if: startsWith(matrix.os, 'macos')
-#        env:
-#          GRADLE_OPTS: "-Dorg.gradle.configuration-cache=false -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
-#        run: |
-#          xcodebuild -workspace iosClient/iosClient.xcworkspace \
-#            -scheme "iosClient Release" \
-#            -configuration Release \
-#            -sdk iphonesimulator \
-#            -destination 'generic/platform=iOS Simulator' \
-#            -parallelizeTargets NO \
-#            -jobs 1 \
-#            clean build \
-#            CODE_SIGN_IDENTITY="" \
-#            CODE_SIGNING_REQUIRED=NO \
-#            CODE_SIGNING_ALLOWED=NO
-
 
       - name: Run iOS Tests (Intel runner)
         if: startsWith(runner.os, 'macOS') && runner.arch == 'X64'

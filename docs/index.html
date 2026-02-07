@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bisq Connect for iOS</title>
+    <style>
+        :root {
+            --bisq-green: #25B135;
+            --bisq-dark: #1a1a1a;
+            --bisq-light: #f5f5f5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bisq-dark);
+            color: var(--bisq-light);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 { color: var(--bisq-green); margin-bottom: 1rem; }
+        h1 { font-size: 2.5rem; text-align: center; margin-bottom: 2rem; }
+        .logo { text-align: center; margin-bottom: 2rem; }
+        .logo img { width: 120px; height: 120px; border-radius: 24px; }
+        .section { background: #2a2a2a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-right: 0.5rem; }
+        .badge-eu { background: #0052B4; color: white; }
+        .badge-advanced { background: #666; color: white; }
+        ol, ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        code { background: #333; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.9rem; word-break: break-all; }
+        a { color: var(--bisq-green); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .btn { display: inline-block; background: var(--bisq-green); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; margin-top: 1rem; }
+        .btn:hover { background: #1e9a2c; text-decoration: none; }
+        .warning { background: #4a3000; border-left: 4px solid #ffa500; padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        .info { background: #003366; border-left: 4px solid #0088ff; padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        footer { text-align: center; margin-top: 3rem; color: #888; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <img src="assets/icon-512.png" alt="Bisq Connect">
+    </div>
+    <h1>Bisq Connect for iOS</h1>
+
+    <!--
+    ============================================================================
+    TODO: UPDATE AFTER DISTRIBUTION METHODS ARE CONFIRMED
+    ============================================================================
+    The distribution methods below are PENDING confirmation. See:
+    https://github.com/bisq-network/bisq-mobile/issues/936#issuecomment-3858661062
+
+    Current status:
+    - TestFlight: Pending Apple review (may or may not pass external testing)
+    - EU AltStore PAL: Requires notarization via App Store Connect (untested)
+    - Non-EU Sideloading: Available but limited (100 devices, 7-day refresh)
+
+    Once we confirm which distribution methods work, update this page accordingly.
+    ============================================================================
+    -->
+
+    <div class="section">
+        <h2><span class="badge badge-eu">EU</span> Install via AltStore PAL</h2>
+        <p><strong>⚠️ Coming Soon:</strong> This distribution method is pending Apple notarization approval.</p>
+        <p>For users in the European Union, Bisq Connect will be available through AltStore PAL using Apple's alternative distribution.</p>
+
+        <h3>Prerequisites</h3>
+        <ul>
+            <li>iPhone with iOS 17.4 or later</li>
+            <li>Device region set to an EU country</li>
+            <li><a href="https://altstore.io/" target="_blank">AltStore PAL</a> installed (€1.50/year)</li>
+        </ul>
+
+        <h3>Installation Steps</h3>
+        <ol>
+            <li>Open <strong>AltStore PAL</strong> on your iPhone</li>
+            <li>Go to the <strong>Browse</strong> tab</li>
+            <li>Tap <strong>Sources</strong> in the top-left</li>
+            <li>Tap the <strong>+</strong> button and enter this URL:</li>
+        </ol>
+        <p><code>https://bisq-network.github.io/bisq-mobile/apps.json</code></p>
+        <ol start="5">
+            <li>Find "Bisq Mobile" in your sources</li>
+            <li>Tap <strong>Get</strong> next to Bisq Connect</li>
+        </ol>
+
+        <div class="info">
+            <strong>✓ No expiration!</strong> Apps installed via AltStore PAL don't require weekly re-signing.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2><span class="badge badge-advanced">Advanced</span> Non-EU Sideloading</h2>
+        <p>For users outside the EU, you can sideload the app using the free version of AltStore. This requires a computer and weekly re-signing.</p>
+
+        <div class="warning">
+            <strong>⚠️ Limitations:</strong> Apps expire after 7 days and must be refreshed via AltStore connected to your computer.
+        </div>
+
+        <h3>Steps</h3>
+        <ol>
+            <li>Install <a href="https://altstore.io/" target="_blank">AltStore</a> (free) and AltServer on your computer</li>
+            <li>Download the IPA file from <a href="https://github.com/bisq-network/bisq-mobile/releases" target="_blank">GitHub Releases</a></li>
+            <li>Open the IPA file with AltStore to sign and install</li>
+            <li>Refresh the app every 7 days via AltStore</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Requirements</h2>
+        <ul>
+            <li><strong>iOS Version:</strong> 16.0 or later</li>
+            <li><strong>Bisq Node:</strong> A running Bisq 2 node (headless or Bisq2 Desktop) to connect to</li>
+            <li><strong>Network:</strong> Local network or Tor access to your node (for more information visit <a href="https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect">Bisq Connect Wiki Tutorial</a>)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Resources</h2>
+        <ul>
+            <li><a href="https://github.com/bisq-network/bisq-mobile" target="_blank">GitHub Repository</a></li>
+            <li><a href="https://bisq.network" target="_blank">Bisq Network</a></li>
+            <li><a href="https://github.com/bisq-network/bisq-mobile/releases" target="_blank">All Releases</a></li>
+        </ul>
+    </div>
+
+    <footer>
+        <p>Bisq Connect is open-source software. <a href="https://github.com/bisq-network/bisq-mobile/blob/main/LICENSE">View License</a></p>
+        <p>© 2026 Bisq Network</p>
+    </footer>
+</body>
+</html>
+

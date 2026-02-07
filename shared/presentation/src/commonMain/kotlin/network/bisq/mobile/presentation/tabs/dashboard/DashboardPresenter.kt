@@ -12,12 +12,14 @@ import network.bisq.mobile.domain.data.model.BatteryOptimizationState
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.ForegroundDetector
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -139,13 +141,19 @@ open class DashboardPresenter(
     suspend fun hasNotificationPermission(): Boolean = notificationController.hasPermission()
 
     private suspend fun registerForPushNotifications() {
+        if (ApplicationBootstrapFacade.isDemo) {
+            log.i { "Demo mode - push notifications not available" }
+            showSnackbar("mobile.pushNotifications.notAvailableInDemoMode".i18n(), isError = false)
+            return
+        }
+
         log.i { "User granted notification permission - registering for push notifications" }
         val result = pushNotificationServiceFacade.registerForPushNotifications()
         if (result.isSuccess) {
             log.i { "Successfully registered for push notifications" }
         } else {
             log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.message}" }
-            showSnackbar("Failed to register for push notifications", isError = true)
+            showSnackbar("mobile.pushNotifications.registrationFailed".i18n(), isError = true)
         }
     }
 }

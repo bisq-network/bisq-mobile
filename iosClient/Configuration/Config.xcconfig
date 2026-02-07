@@ -1,3 +1,7 @@
 TEAM_ID=UC4273Y485
 BUNDLE_ID=network.bisq.mobile.ios
 APP_NAME=Bisq Connect
+
+// Version - synced from gradle.properties by Gradle task :apps:clientApp:syncIosVersion
+APP_VERSION=0.0.60
+APP_VERSION_CODE=8

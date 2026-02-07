@@ -7,24 +7,12 @@
 # then applies appropriate coverage thresholds:
 #
 # THRESHOLDS:
-#   - New code/features: 80% coverage required
-#   - Refactoring/simplification: 0% PR coverage required (still general project coverage will apply)
+#   - All changes: 80% coverage required (maintainer decides ACK/nACK per case)
 #
-# DETECTION LOGIC (checked in priority order):
-#   1. Movement ratio >= 50%
-#      → 0% threshold (code was moved/copied across files)
-#      Uses: git diff -M80% -C80% to detect moves with 80% similarity
-#
-#   2. Deletion ratio >= 2.5
-#      → 0% threshold (deleted >= 2.5x what was added = simplification)
-#      Example: PR #1131 deleted 26 lines, added 7 (ratio 3.71)
-#
-#   3. Added <= 10 lines AND deleted > 0
-#      → 0% threshold (minimal refactoring with cleanup)
-#      Example: Small refactor with 8 added, 5 deleted
-#
-#   4. Otherwise
-#      → 80% threshold (new code, features, bug fixes)
+# DETECTION LOGIC (informational only - all paths use 80% threshold):
+#   The script detects movement, deletion, and minimal changes for logging purposes,
+#   but applies the same 80% threshold regardless. This allows maintainers to see
+#   the nature of changes while making case-by-case decisions on coverage requirements.
 #
 # USAGE:
 #   ./scripts/analyze-diff-coverage.sh [base-branch] [coverage-xml-path]
@@ -40,7 +28,9 @@ set -e
 BASE_BRANCH="${1:-origin/main}"
 COVERAGE_XML="${2:-build/reports/kover/report.xml}"
 DEFAULT_THRESHOLD=80
-REFACTORING_THRESHOLD=0
+## NOTE: Team decided to remove smart checks and leave only 80% for all letting the maintainer to
+## decide ACK/nACK on a per-case basis
+REFACTORING_THRESHOLD=80
 MOVEMENT_RATIO_THRESHOLD=0.5
 
 # Colors for output
@@ -142,25 +132,26 @@ fi
 echo -e "${BLUE}Refactoring indicators:${NC}"
 echo -e "  Deletion ratio: ${YELLOW}${DELETION_RATIO}${NC} (deleted/added)"
 
-# Check if this is primarily code movement/refactoring
+# Check if this is primarily code movement/refactoring (informational only)
 # Priority order: movement > net deletion > minimal changes
+# Note: All paths use the same 80% threshold; detection is for logging purposes
 if (( $(echo "$MOVEMENT_RATIO >= $MOVEMENT_RATIO_THRESHOLD" | bc -l) )); then
     COVERAGE_THRESHOLD=$REFACTORING_THRESHOLD
     THRESHOLD_REASON="refactoring detected (${MOVEMENT_RATIO} movement ratio)"
-    echo -e "${GREEN}✓ Significant code movement detected!${NC}"
-    echo -e "  Applying reduced coverage threshold: ${GREEN}${COVERAGE_THRESHOLD}%${NC}"
+    echo -e "${GREEN}✓ Significant code movement detected${NC}"
+    echo -e "  Applying coverage threshold: ${GREEN}${COVERAGE_THRESHOLD}%${NC}"
 elif (( $(echo "$DELETION_RATIO >= 2.5" | bc -l) )); then
     # If deleted >= 2.5x added, it's likely simplification/cleanup
     COVERAGE_THRESHOLD=$REFACTORING_THRESHOLD
     THRESHOLD_REASON="code simplification (deleted ${TOTAL_DELETED} lines, added ${TOTAL_ADDED})"
-    echo -e "${GREEN}✓ Code simplification detected!${NC}"
-    echo -e "  Applying reduced coverage threshold: ${GREEN}${COVERAGE_THRESHOLD}%${NC}"
+    echo -e "${GREEN}✓ Code simplification detected${NC}"
+    echo -e "  Applying coverage threshold: ${GREEN}${COVERAGE_THRESHOLD}%${NC}"
 elif [ "$TOTAL_ADDED" -le 10 ] && [ "$TOTAL_DELETED" -gt 0 ]; then
     # Minimal changes with some deletion (likely refactoring, not new feature)
     COVERAGE_THRESHOLD=$REFACTORING_THRESHOLD
     THRESHOLD_REASON="minimal changes with deletion (<=10 lines added, ${TOTAL_DELETED} deleted)"
-    echo -e "${GREEN}✓ Minimal refactoring detected!${NC}"
-    echo -e "  Applying reduced coverage threshold: ${GREEN}${COVERAGE_THRESHOLD}%${NC}"
+    echo -e "${GREEN}✓ Minimal refactoring detected${NC}"
+    echo -e "  Applying coverage threshold: ${GREEN}${COVERAGE_THRESHOLD}%${NC}"
 else
     echo -e "${BLUE}ℹ Standard coverage threshold applies: ${COVERAGE_THRESHOLD}%${NC}"
 fi
