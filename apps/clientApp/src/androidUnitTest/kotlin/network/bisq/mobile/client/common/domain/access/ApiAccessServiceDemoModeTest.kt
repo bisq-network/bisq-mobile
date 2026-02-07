@@ -110,13 +110,24 @@ class ApiAccessServiceDemoModeTest {
         }
 
     @Test
+    fun `setPairingQrCodeString with whitespace-padded demo code sets demo mode`() =
+        runTest {
+            // Input is trimmed before comparison, so whitespace should be handled
+            apiAccessService.setPairingQrCodeString("  $DEMO_PAIRING_CODE  ")
+            advanceUntilIdle()
+
+            assertTrue(ApplicationBootstrapFacade.isDemo)
+            assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
+        }
+
+    @Test
     fun `setPairingQrCodeString with demo code sets correct API URL`() =
         runTest {
             apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
             advanceUntilIdle()
 
             assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
-            assertEquals("ws://demo.bisq:21", apiAccessService.webSocketUrl.value)
+            assertEquals(DEMO_WS_URL, apiAccessService.webSocketUrl.value)
         }
 
     @Test

@@ -54,7 +54,7 @@
       "caption": "Install Bisq Connect on your iPhone via AltStore PAL",
       "date": "2026-02-28T00:00:00Z",
       "tintColor": "#25B135",
-      "notify": true,
+      "notify": false,
       "appID": "bisq.mobile.client.BisqConnect"
     }
   ]

@@ -143,7 +143,7 @@ open class DashboardPresenter(
     private suspend fun registerForPushNotifications() {
         if (ApplicationBootstrapFacade.isDemo) {
             log.i { "Demo mode - push notifications not available" }
-            showSnackbar("mobile.pushNotifications.notAvailableInDemoMode".i18n(), isError = true)
+            showSnackbar("mobile.pushNotifications.notAvailableInDemoMode".i18n(), isError = false)
             return
         }
 
