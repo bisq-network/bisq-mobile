@@ -29,8 +29,15 @@ const val ANDROID_LOCALHOST = "10.0.2.2"
 // Demo mode pairing code - when entered, triggers demo mode with fake data
 const val DEMO_PAIRING_CODE = "BISQ_DEMO_PAIRING_CODE"
 
-// Demo mode URL that triggers WebSocketClientDemo
+// Demo mode URLs that trigger WebSocketClientDemo
 const val DEMO_API_URL = "http://demo.bisq:21"
+const val DEMO_WS_URL = "ws://demo.bisq:21"
+
+// Demo mode credentials - used for both in-memory state and persisted settings
+private const val DEMO_CLIENT_ID = "demo-client-id"
+private const val DEMO_CLIENT_SECRET = "demo-client-secret"
+private const val DEMO_SESSION_ID = "demo-session-id"
+private const val DEMO_PAIRING_ID = "demo-pairing-id"
 
 class ApiAccessService(
     private val pairingService: PairingService,
@@ -165,6 +172,12 @@ class ApiAccessService(
             return
         }
 
+        // Clear demo mode when a real pairing code is entered
+        if (ApplicationBootstrapFacade.isDemo) {
+            log.i { "Real pairing code entered - exiting demo mode" }
+            ApplicationBootstrapFacade.isDemo = false
+        }
+
         try {
             _pairingQrCodeString.value = trimmedValue
             pairingQrCodeDataStored.value = false
@@ -212,17 +225,16 @@ class ApiAccessService(
      */
     private fun setupDemoMode() {
         _pairingQrCodeString.value = DEMO_PAIRING_CODE
-        _webSocketUrl.value = "ws://demo.bisq:21"
+        _webSocketUrl.value = DEMO_WS_URL
         _restApiUrl.value = DEMO_API_URL
         _tlsFingerprint.value = null
-        // Use a fake pairing code ID for demo mode
-        _pairingCodeId.value = "demo-pairing-id"
+        _pairingCodeId.value = DEMO_PAIRING_ID
         // Grant all permissions in demo mode
         _grantedPermissions.value = Permission.entries.toSet()
         // Set fake credentials for demo mode
-        _clientId.value = "demo-client-id"
-        _clientSecret.value = "demo-client-secret"
-        _sessionId.value = "demo-session-id"
+        _clientId.value = DEMO_CLIENT_ID
+        _clientSecret.value = DEMO_CLIENT_SECRET
+        _sessionId.value = DEMO_SESSION_ID
 
         // Mark demo mode globally
         ApplicationBootstrapFacade.isDemo = true
@@ -230,27 +242,27 @@ class ApiAccessService(
         log.i { "Demo mode setup complete - using $DEMO_API_URL" }
 
         // Update settings with demo values
+        val clientName = _clientName.value
         serviceScope.launch {
-            val currentSettings = sensitiveSettingsRepository.fetch()
-            val updatedSettings =
+            sensitiveSettingsRepository.update { currentSettings ->
                 currentSettings.copy(
                     bisqApiUrl = DEMO_API_URL,
                     tlsFingerprint = null,
-                    clientName = _clientName.value,
-                    clientId = "demo-client-id",
-                    sessionId = "demo-session-id",
-                    clientSecret = "demo-client-secret",
+                    clientName = clientName,
+                    clientId = DEMO_CLIENT_ID,
+                    sessionId = DEMO_SESSION_ID,
+                    clientSecret = DEMO_CLIENT_SECRET,
                     selectedProxyOption = BisqProxyOption.NONE,
                 )
-            sensitiveSettingsRepository.update { updatedSettings }
+            }
             // Mark pairing as complete for demo mode
             _pairingResult.value =
                 Result.success(
                     PairingResponse(
                         version = 1,
-                        clientId = "demo-client-id",
-                        clientSecret = "demo-client-secret",
-                        sessionId = "demo-session-id",
+                        clientId = DEMO_CLIENT_ID,
+                        clientSecret = DEMO_CLIENT_SECRET,
+                        sessionId = DEMO_SESSION_ID,
                         sessionExpiryDate = Long.MAX_VALUE,
                     ),
                 )
@@ -263,14 +275,14 @@ class ApiAccessService(
         tlsFingerprint: String?,
         proxyOption: BisqProxyOption? = null,
     ) {
+        val clientName = _clientName.value
         try {
             serviceScope.launch {
-                val currentSettings = sensitiveSettingsRepository.fetch()
-                val updatedSettings =
+                sensitiveSettingsRepository.update { currentSettings ->
                     currentSettings.copy(
                         bisqApiUrl = restApiUrl,
                         tlsFingerprint = tlsFingerprint,
-                        clientName = _clientName.value,
+                        clientName = clientName,
                         // Clear old credentials when setting a new config
                         // The pairing request must be unauthenticated
                         clientId = null,
@@ -279,7 +291,7 @@ class ApiAccessService(
                         // Update proxy option if provided
                         selectedProxyOption = proxyOption ?: currentSettings.selectedProxyOption,
                     )
-                sensitiveSettingsRepository.update { updatedSettings }
+                }
                 pairingQrCodeDataStored.value = true
             }
         } catch (ignore: Exception) {
@@ -329,16 +341,13 @@ class ApiAccessService(
 
     private fun updatedSettings(pairingResponse: PairingResponse) {
         serviceScope.launch {
-            val currentSettings =
-                sensitiveSettingsRepository.fetch()
-            val updatedSettings =
+            sensitiveSettingsRepository.update { currentSettings ->
                 currentSettings.copy(
                     clientId = pairingResponse.clientId,
                     sessionId = pairingResponse.sessionId,
                     clientSecret = pairingResponse.clientSecret,
                 )
-
-            sensitiveSettingsRepository.update { updatedSettings }
+            }
             _pairingResultStored.value = true
         }
     }

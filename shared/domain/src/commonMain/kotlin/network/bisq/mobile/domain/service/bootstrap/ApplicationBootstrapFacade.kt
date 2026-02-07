@@ -17,6 +17,7 @@ abstract class ApplicationBootstrapFacade(
     private val kmpTorService: KmpTorService,
 ) : ServiceFacade() {
     companion object {
+        @Volatile
         var isDemo = false
         private const val BOOTSTRAP_STAGE_TIMEOUT_MS =
             90_000L // 90 seconds per stage

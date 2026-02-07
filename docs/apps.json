@@ -5,7 +5,6 @@
   "subtitle": "Decentralized Bitcoin Exchange",
   "description": "Official Bisq mobile applications for iOS. Connect to your trusted Bisq node securely.",
   "iconURL": "https://bisq-network.github.io/bisq-mobile/assets/icon-512.png",
-  "headerURL": "https://bisq-network.github.io/bisq-mobile/assets/header.png",
   "website": "https://bisq.network",
   "tintColor": "#25B135",
   "featuredApps": [
@@ -54,7 +53,7 @@
       "caption": "Install Bisq Connect on your iPhone via AltStore PAL",
       "date": "2026-02-28T00:00:00Z",
       "tintColor": "#25B135",
-      "notify": true,
+      "notify": false,
       "appID": "bisq.mobile.client.BisqConnect"
     }
   ]

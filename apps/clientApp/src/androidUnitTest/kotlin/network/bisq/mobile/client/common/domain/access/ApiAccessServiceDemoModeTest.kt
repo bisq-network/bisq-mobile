@@ -31,6 +31,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -113,13 +114,24 @@ class ApiAccessServiceDemoModeTest {
         }
 
     @Test
+    fun `setPairingQrCodeString with whitespace-padded demo code sets demo mode`() =
+        runTest {
+            // Input is trimmed before comparison, so whitespace should be handled
+            apiAccessService.setPairingQrCodeString("  $DEMO_PAIRING_CODE  ")
+            advanceUntilIdle()
+
+            assertTrue(ApplicationBootstrapFacade.isDemo)
+            assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
+        }
+
+    @Test
     fun `setPairingQrCodeString with demo code sets correct API URL`() =
         runTest {
             apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
             advanceUntilIdle()
 
             assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
-            assertEquals("ws://demo.bisq:21", apiAccessService.webSocketUrl.value)
+            assertEquals(DEMO_WS_URL, apiAccessService.webSocketUrl.value)
         }
 
     @Test
@@ -203,5 +215,22 @@ class ApiAccessServiceDemoModeTest {
             assertEquals("demo-client-id", response.clientId)
             assertEquals("demo-session-id", response.sessionId)
             assertEquals("demo-client-secret", response.clientSecret)
+        }
+
+    @Test
+    fun `setPairingQrCodeString with real code clears demo mode when previously in demo`() =
+        runTest {
+            // First, enter demo mode
+            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
+            advanceUntilIdle()
+            assertTrue(ApplicationBootstrapFacade.isDemo)
+
+            // Now enter an invalid (but non-demo) pairing code - this should clear demo mode
+            // even though the code itself will fail to parse
+            apiAccessService.setPairingQrCodeString("some-invalid-real-code")
+            advanceUntilIdle()
+
+            // Demo mode should be cleared before attempting to parse
+            assertFalse(ApplicationBootstrapFacade.isDemo)
         }
 }

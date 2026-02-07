@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ExportOptions for EU Distribution via App Store Connect (Notarization Only)
+
+  Note on uploadSymbols=false:
+  dSYM files won't be uploaded to App Store Connect during export. This means:
+  - Crashes in Xcode Organizer / App Store Connect will appear unsymbolicated
+  - If using third-party crash reporters (e.g., Sentry), upload dSYMs separately
+  - For local debugging, dSYMs are still generated in the archive
+-->
 <plist version="1.0">
 <dict>
 	<key>destination</key>

@@ -367,21 +367,24 @@ tasks.register("syncIosVersion") {
     doLast {
         val xcConfigFile = File(xcConfigPath)
         if (xcConfigFile.exists()) {
-            var content = xcConfigFile.readText()
+            val originalContent = xcConfigFile.readText()
+            var content = originalContent
 
             // Update APP_VERSION
-            content =
-                content.replace(
-                    Regex("APP_VERSION=.*"),
-                    "APP_VERSION=$versionToSync",
-                )
+            val versionRegex = Regex("APP_VERSION=.*")
+            if (versionRegex.containsMatchIn(content)) {
+                content = content.replace(versionRegex, "APP_VERSION=$versionToSync")
+            } else {
+                logger.warn("APP_VERSION key not found in Config.xcconfig — version not synced")
+            }
 
             // Update APP_VERSION_CODE
-            content =
-                content.replace(
-                    Regex("APP_VERSION_CODE=.*"),
-                    "APP_VERSION_CODE=$versionCodeToSync",
-                )
+            val versionCodeRegex = Regex("APP_VERSION_CODE=.*")
+            if (versionCodeRegex.containsMatchIn(content)) {
+                content = content.replace(versionCodeRegex, "APP_VERSION_CODE=$versionCodeToSync")
+            } else {
+                logger.warn("APP_VERSION_CODE key not found in Config.xcconfig — version code not synced")
+            }
 
             xcConfigFile.writeText(content)
             logger.lifecycle("Updated iOS version to $versionToSync ($versionCodeToSync) in Config.xcconfig")

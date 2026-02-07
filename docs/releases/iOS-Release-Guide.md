@@ -147,55 +147,44 @@ This creates the sideload IPA: `Bisq Connect.ipa` → rename to `BisqConnect-0.2
 > - **App Store Connect** = Uses Distribution cert, can be notarized, works with AltStore PAL (EU)
 > - **Ad Hoc** = Uses Distribution cert + Ad-Hoc profile, requires registered device UUIDs, works with AltStore free (worldwide)
 
-### Step 5: Notarize the IPA
+### Step 5: Notarize the IPA via App Store Connect
 
-```bash
-# Navigate to export folder
-cd ~/Desktop/BisqConnect-Release/
+> ⚠️ **Important:** iOS notarization must be done through App Store Connect, NOT via `xcrun notarytool`.
+> The `xcrun notarytool` command only works for macOS apps.
 
-# Submit for notarization
-xcrun notarytool submit "Bisq Connect.ipa" \
-  --apple-id "your-apple-id@email.com" \
-  --team-id "YRAZCRBR9J" \
-  --password "your-app-specific-password-setup-in-apple-console" \
-  --wait
+**Option A: Using Transporter App (Recommended)**
 
-# Check status (if needed)
-xcrun notarytool history \
-  --apple-id "your-apple-id@email.com" \
-  --team-id "YRAZCRBR9J" \
-  --password "your-app-specific-password-setup-in-apple-console"
-```
+1. Download [Transporter](https://apps.apple.com/app/transporter/id1450874784) from the Mac App Store
+2. Sign in with your Apple Developer account
+3. Drag and drop the IPA file into Transporter
+4. Click "Deliver" to upload to App Store Connect
+5. Wait for processing (usually 5-15 minutes)
 
-**Expected output:**
-```
-Conducting pre-submission checks for Bisq Connect.ipa...
-Submitting Bisq Connect.ipa...
-Submission ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-Successfully uploaded file.
-Waiting for processing to complete...
-Processing complete.
-  Status: Accepted
-```
+**Option B: Using App Store Connect Web Interface**
 
-### Step 6: Staple the Notarization (Optional for IPA)
+1. Go to [App Store Connect](https://appstoreconnect.apple.com)
+2. Navigate to your app → "TestFlight" or "Distribution" section
+3. Upload the IPA using the web interface
+4. Wait for processing
 
-Note: Stapling is primarily for macOS apps. For iOS IPAs distributed via web, the notarization ticket is checked online.
+**After Upload:**
 
-```bash
-xcrun stapler staple "Bisq Connect.ipa"
-```
+1. Go to App Store Connect → Your App → "Distribution" tab
+2. Select "Notarization Only" (not App Store submission)
+3. Wait for notarization to complete (usually 5-30 minutes)
+4. Download the notarized IPA from App Store Connect
 
-If it fails with "not supported", that's okay - proceed without stapling.
+> **Note:** The exact UI flow may vary. Apple's documentation for EU alternative distribution
+> is at: https://developer.apple.com/help/app-store-connect/distribute-in-the-european-union/
 
-### Step 7: Rename and Prepare IPA
+### Step 6: Rename and Prepare IPA
 
 ```bash
 # Rename with version
 mv "Bisq Connect.ipa" "BisqConnect-0.2.0.ipa"
 ```
 
-### Step 8: Create GitHub Release
+### Step 7: Create GitHub Release
 
 1. Go to [GitHub Releases](https://github.com/bisq-network/bisq-mobile/releases)
 2. Click **Draft a new release**
@@ -205,7 +194,7 @@ mv "Bisq Connect.ipa" "BisqConnect-0.2.0.ipa"
 6. Add release notes
 7. Publish sideloading release
 
-### Step 9: Update apps.json
+### Step 8: Update apps.json
 
 Edit `docs/apps.json`:
 
@@ -220,7 +209,7 @@ Edit `docs/apps.json`:
 ls -l BisqConnect-0.2.0.ipa | awk '{print $5}'
 ```
 
-### Step 10: Deploy to GitHub Pages
+### Step 9: Deploy to GitHub Pages
 
 ```bash
 git add docs/apps.json docs/index.html docs/assets/
@@ -230,7 +219,7 @@ git push origin main
 
 GitHub Pages will automatically update (may take a few minutes).
 
-### Step 11: Verify Installation
+### Step 10: Verify Installation
 
 1. On an EU-region iPhone with **AltStore PAL** installed
 2. Go to Sources → Add Source
@@ -244,18 +233,15 @@ GitHub Pages will automatically update (may take a few minutes).
 
 ### Notarization Rejected
 
-Check the rejection reason:
-```bash
-xcrun notarytool log <submission-id> \
-  --apple-id "your-apple-id@email.com" \
-  --team-id "YRAZCRBR9J" \
-  --password "your-app-specific-password"
-```
+Check the rejection reason in App Store Connect:
+1. Go to App Store Connect → Your App → Activity
+2. Find the failed build and click "View Details"
+3. Review the notarization issues listed
 
 Common issues:
 - **Invalid signature**: Ensure you're using Apple Distribution certificate
 - **Missing entitlements**: Check entitlements file
-- **Hardened runtime**: Usually not required for iOS
+- **Bundle ID mismatch**: Ensure bundle ID matches your App Store Connect app
 
 ### AltStore Can't Find Source
 
