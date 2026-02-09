@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.domain.access.pairing.qr
 import network.bisq.mobile.client.common.domain.access.LOCALHOST
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCodeDecoder
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
+import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.domain.utils.isIOS
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -11,7 +12,9 @@ const val LOOPBACK = "127.0.0.1"
 const val ANDROID_LOCALHOST = "10.0.2.2"
 
 @OptIn(ExperimentalEncodingApi::class)
-object PairingQrCodeDecoder {
+class PairingQrCodeDecoder(
+    private val environmentController: EnvironmentController,
+) {
     fun decode(qrCodeAsBase64: String): PairingQrCode =
         decode(
             Base64.UrlSafe
@@ -68,13 +71,16 @@ object PairingQrCodeDecoder {
 
     private fun adjustWebSocketUrlForDevice(url: String): String {
         if (isIOS()) return url
+        val localhost = androidLocalhost()
         return url
-            .replace(LOOPBACK, ANDROID_LOCALHOST)
-            .replace(LOCALHOST, ANDROID_LOCALHOST)
+            .replace(LOOPBACK, localhost)
+            .replace(LOCALHOST, localhost)
     }
 
     private fun webSocketUrlToRestApiUrl(webSocketUrl: String): String =
         webSocketUrl
             .replaceFirst("wss://", "https://")
             .replaceFirst("ws://", "http://")
+
+    private fun androidLocalhost(): String = if (environmentController.isSimulator()) ANDROID_LOCALHOST else LOOPBACK
 }

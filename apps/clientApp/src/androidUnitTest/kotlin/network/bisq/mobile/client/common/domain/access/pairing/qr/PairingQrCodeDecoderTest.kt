@@ -1,9 +1,12 @@
 package network.bisq.mobile.client.common.domain.access.pairing.qr
 
+import io.mockk.every
+import io.mockk.mockk
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.utils.BinaryEncodingUtils
 import network.bisq.mobile.client.common.domain.utils.BinaryWriter
+import network.bisq.mobile.domain.data.EnvironmentController
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
@@ -14,6 +17,12 @@ import kotlin.test.assertNull
 
 @OptIn(ExperimentalEncodingApi::class)
 class PairingQrCodeDecoderTest {
+    private val environmentController =
+        mockk<EnvironmentController> {
+            every { isSimulator() } returns true
+        }
+    private val decoder = PairingQrCodeDecoder(environmentController)
+
     private fun encodePairingCodeBytes(
         version: Byte = PairingCode.VERSION,
         id: String = "test-id",
@@ -62,7 +71,7 @@ class PairingQrCodeDecoderTest {
                 webSocketUrl = "wss://test.example.com:8090",
             )
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals(PairingQrCodeFormat.VERSION, result.version)
         assertEquals("wss://test.example.com:8090", result.webSocketUrl)
@@ -76,7 +85,7 @@ class PairingQrCodeDecoderTest {
         val bytes = encodeQrCode(webSocketUrl = "wss://base64.test:8090")
         val base64 = Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(bytes)
 
-        val result = PairingQrCodeDecoder.decode(base64)
+        val result = decoder.decode(base64)
 
         assertEquals("wss://base64.test:8090", result.webSocketUrl)
     }
@@ -89,7 +98,7 @@ class PairingQrCodeDecoderTest {
                 tlsFingerprint = "abc123fingerprint",
             )
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals("abc123fingerprint", result.tlsFingerprint)
         assertNull(result.torClientAuthSecret)
@@ -103,7 +112,7 @@ class PairingQrCodeDecoderTest {
                 torClientAuthSecret = "tor-secret-key",
             )
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertNull(result.tlsFingerprint)
         assertEquals("tor-secret-key", result.torClientAuthSecret)
@@ -119,7 +128,7 @@ class PairingQrCodeDecoderTest {
                 torClientAuthSecret = "tor-secret",
             )
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals("fingerprint", result.tlsFingerprint)
         assertEquals("tor-secret", result.torClientAuthSecret)
@@ -130,7 +139,7 @@ class PairingQrCodeDecoderTest {
         val bytes = encodeQrCode(version = 99)
 
         assertFailsWith<IllegalArgumentException> {
-            PairingQrCodeDecoder.decode(bytes)
+            decoder.decode(bytes)
         }
     }
 
@@ -139,7 +148,7 @@ class PairingQrCodeDecoderTest {
         val onionUrl = "wss://abcdefghijklmnopqrstuvwxyz234567.onion:8090"
         val bytes = encodeQrCode(webSocketUrl = onionUrl)
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals(onionUrl, result.webSocketUrl)
     }
@@ -152,7 +161,7 @@ class PairingQrCodeDecoderTest {
             )
         val bytes = encodeQrCode(pairingCodeBytes = pairingCodeBytes)
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals(3, result.pairingCode.grantedPermissions.size)
     }
@@ -161,7 +170,7 @@ class PairingQrCodeDecoderTest {
     fun `decode with localhost URL works`() {
         val bytes = encodeQrCode(webSocketUrl = "ws://localhost:8090")
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals("ws://$ANDROID_LOCALHOST:8090", result.webSocketUrl)
     }
@@ -170,7 +179,7 @@ class PairingQrCodeDecoderTest {
     fun `decode with IP address URL works`() {
         val bytes = encodeQrCode(webSocketUrl = "wss://192.168.1.100:8090")
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals("wss://192.168.1.100:8090", result.webSocketUrl)
     }
@@ -180,7 +189,7 @@ class PairingQrCodeDecoderTest {
         val pairingCodeBytes = encodePairingCodeBytes(id = "unique-pairing-id-123")
         val bytes = encodeQrCode(pairingCodeBytes = pairingCodeBytes)
 
-        val result = PairingQrCodeDecoder.decode(bytes)
+        val result = decoder.decode(bytes)
 
         assertEquals("unique-pairing-id-123", result.pairingCode.id)
     }

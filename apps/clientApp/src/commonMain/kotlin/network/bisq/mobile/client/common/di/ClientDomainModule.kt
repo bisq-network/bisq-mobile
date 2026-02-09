@@ -9,6 +9,7 @@ import kotlinx.serialization.modules.subclass
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.pairing.PairingApiGateway
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
+import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.access.session.SessionApiGateway
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
@@ -212,9 +213,10 @@ val clientDomainModule =
 
         single { PairingApiGateway(get()) }
         single { PairingService(get()) }
+        single { PairingQrCodeDecoder(get()) }
         single { SessionApiGateway(get()) }
         single { SessionService(get()) }
-        single { ApiAccessService(get(), get()) }
+        single { ApiAccessService(get(), get(), get()) }
 
         // single { WebSocketHttpClient(get()) }
         single {

@@ -16,11 +16,12 @@ const val LOCALHOST = "localhost"
 class ApiAccessService(
     private val pairingService: PairingService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
+    private val pairingQrCodeDecoder: PairingQrCodeDecoder,
 ) : ServiceFacade(),
     Logging {
     fun getPairingCodeQr(value: String): Result<PairingQrCode> =
         try {
-            val code = PairingQrCodeDecoder.decode(value.trim())
+            val code = pairingQrCodeDecoder.decode(value.trim())
             Result.success(code)
         } catch (e: Exception) {
             log.e(e) { "Decoding pairing code failed." }

@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.di
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.domain.data.datastore.createDataStore
 import network.bisq.mobile.domain.data.datastore.serializer.SettingsSerializer
 import network.bisq.mobile.domain.data.datastore.serializer.TradeReadStateMapSerializer
@@ -24,6 +25,8 @@ import org.koin.dsl.module
 
 val domainModule =
     module {
+        // Environment controller - singleton for environment configuration
+        single { EnvironmentController() }
 
         single<DataStore<Settings>>(named("Settings")) {
             createDataStore(

@@ -1,7 +1,6 @@
 package network.bisq.mobile.node.main
 
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Process
 import bisq.common.facades.FacadeProvider
 import bisq.common.facades.android.AndroidGuavaFacade
@@ -13,6 +12,7 @@ import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.BuildNodeConfig
+import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.node.common.di.androidNodeDomainModule
@@ -179,7 +179,8 @@ class NodeMainApplication : MainApplication() {
     override fun isDebug(): Boolean = BuildNodeConfig.IS_DEBUG
 
     private fun setupBisqCoreStatics() {
-        val isEmulator = isEmulator()
+        val environmentController: EnvironmentController = get()
+        val isEmulator = environmentController.isSimulator()
         val clearNetFacade =
             if (isEmulator) {
                 AndroidEmulatorAddressTypeFacade()
@@ -198,14 +199,4 @@ class NodeMainApplication : MainApplication() {
         Security.addProvider(BouncyCastleProvider())
         log.d { "Configured bisq2 for Android${if (isEmulator) " emulator" else ""}" }
     }
-
-    private fun isEmulator(): Boolean =
-        Build.FINGERPRINT.startsWith("generic") ||
-            Build.FINGERPRINT.startsWith("unknown") ||
-            Build.MODEL.contains("google_sdk") ||
-            Build.MODEL.contains("Emulator") ||
-            Build.MODEL.contains("Android SDK built for x86") ||
-            Build.MANUFACTURER.contains("Genymotion") ||
-            (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
-            "google_sdk".equals(Build.PRODUCT)
 }
