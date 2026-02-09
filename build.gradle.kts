@@ -102,6 +102,12 @@ subprojects {
             .pluginId,
     ) {
         configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
+            currentProject {
+                instrumentation {
+                    disabledForTestTasks.add("testReleaseUnitTest")
+                }
+            }
+
             reports {
                 filters {
                     excludes {

@@ -89,6 +89,19 @@ data class DataEntry(
     fun withError(error: String?): DataEntry = copy(errorMessage = error)
 
     /**
+     * Updates both the value and error message atomically.
+     * Useful for synchronous validation during input where both need to change together.
+     *
+     * @param newValue The new value for the field
+     * @param error The error message to set (null if no error)
+     * @return A new DataEntry with both the updated value and error message
+     */
+    fun updateValueWithError(
+        newValue: String,
+        error: String?,
+    ): DataEntry = copy(value = newValue, errorMessage = error)
+
+    /**
      * Clears the error message without changing the value.
      *
      * @return A new DataEntry with no error message

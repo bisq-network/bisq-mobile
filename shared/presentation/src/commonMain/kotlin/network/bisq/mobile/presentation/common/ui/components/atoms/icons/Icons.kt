@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.common.ui.components.atoms.icons
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
@@ -12,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.add_custom_green
@@ -83,13 +81,12 @@ expect fun getPlatformImagePainter(platformImage: PlatformImage): Painter
 @Composable
 private fun BisqResourceIcon(
     resource: DrawableResource,
-    fallbackIcon: ImageVector,
     contentDescription: String,
     modifier: Modifier = Modifier,
 ) {
     val isTest = LocalIsTest.current
     if (isTest) {
-        Icon(fallbackIcon, contentDescription, modifier)
+        Icon(Icons.Default.Warning, contentDescription, modifier)
     } else {
         Image(painterResource(resource), contentDescription, modifier)
     }
@@ -145,7 +142,7 @@ fun AddCircleIcon(modifier: Modifier = Modifier.size(16.dp)) {
 
 @Composable
 fun ArrowDownIcon(modifier: Modifier = Modifier.size(12.dp)) {
-    BisqResourceIcon(Res.drawable.icon_arrow_down, Icons.Default.ArrowDropDown, "Down arrow icon", modifier)
+    BisqResourceIcon(Res.drawable.icon_arrow_down, "Down arrow icon", modifier)
 }
 
 @Composable
@@ -190,7 +187,11 @@ fun RemoveOfferIcon(modifier: Modifier = Modifier.size(20.dp)) {
 
 @Composable
 fun CopyIcon(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.icon_copy), "Copy icon", modifier = modifier)
+    BisqResourceIcon(
+        resource = Res.drawable.icon_copy,
+        contentDescription = "Copy icon",
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -230,7 +231,11 @@ fun GalleryIcon(modifier: Modifier = Modifier.size(24.dp)) {
 
 @Composable
 fun PasteIcon(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.icon_paste), "Paste icon", modifier = modifier)
+    BisqResourceIcon(
+        resource = Res.drawable.icon_paste,
+        contentDescription = "Paste icon",
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -260,7 +265,11 @@ fun ScanIcon(modifier: Modifier = Modifier) {
 
 @Composable
 fun ScanQrIcon(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.icon_scan_qr), "Scan icon", modifier = modifier)
+    BisqResourceIcon(
+        resource = Res.drawable.icon_scan_qr,
+        contentDescription = "Scan icon",
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -306,7 +315,7 @@ fun UpIcon(modifier: Modifier = Modifier.size(30.dp)) {
 
 @Composable
 fun WarningIcon(modifier: Modifier = Modifier.size(24.dp)) {
-    BisqResourceIcon(Res.drawable.icon_warning, Icons.Default.Warning, "Warning icon", modifier)
+    BisqResourceIcon(Res.drawable.icon_warning, "Warning icon", modifier)
 }
 
 @Composable

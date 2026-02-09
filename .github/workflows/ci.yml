@@ -121,7 +121,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CI: true
-        run: ./gradlew clean test --no-configuration-cache -x :apps:nodeApp:test --info
+        run: ./gradlew clean testDebugUnitTest --no-configuration-cache -x :apps:nodeApp:testDebugUnitTest --info
 
       - name: Run Kover Verification (Ubuntu only, excluding nodeApp)
         if: startsWith(matrix.os, 'ubuntu')

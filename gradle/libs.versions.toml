@@ -5,6 +5,7 @@ bisq-core = "2.1.8"
 # Update this commit hash when bisq2 JARs are regenerated (even with same version) to bust CI cache
 bisq-core-commit = "96a07890a2c65c5e98f9525ad92282bc4fac04ad"
 # API version is usually same as bisq-core but for more control we keep it separated
+# Retrieved in shared/domain/build.gradle.kts: val bisqApiVersion by extra { findTomlVersion("bisq-api") }
 #bisq-api = "2.1.8"
 
 # -------------------- Kotlin & JetBrains --------------------

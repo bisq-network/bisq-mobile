@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.utils
 
+import network.bisq.mobile.domain.getPlatformInfo
 import okio.ByteString.Companion.encodeUtf8
 import kotlin.math.abs
 

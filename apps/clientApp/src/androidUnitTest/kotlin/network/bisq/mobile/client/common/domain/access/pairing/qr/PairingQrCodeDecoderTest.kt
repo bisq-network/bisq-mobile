@@ -163,7 +163,7 @@ class PairingQrCodeDecoderTest {
 
         val result = PairingQrCodeDecoder.decode(bytes)
 
-        assertEquals("ws://localhost:8090", result.webSocketUrl)
+        assertEquals("ws://$ANDROID_LOCALHOST:8090", result.webSocketUrl)
     }
 
     @Test

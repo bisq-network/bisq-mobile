@@ -50,6 +50,7 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEven
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.domain.data.datastore.createDataStore
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
@@ -213,7 +214,7 @@ val clientDomainModule =
         single { PairingService(get()) }
         single { SessionApiGateway(get()) }
         single { SessionService(get()) }
-        single { ApiAccessService(get(), get(), get()) }
+        single { ApiAccessService(get(), get()) }
 
         // single { WebSocketHttpClient(get()) }
         single {
@@ -326,4 +327,6 @@ val clientDomainModule =
                 ReplaceFileCorruptionHandler { SensitiveSettings() },
             )
         }
+
+        factory { TrustedNodeSetupUseCase(get(), get(), get(), get(), get(), get()) }
     }

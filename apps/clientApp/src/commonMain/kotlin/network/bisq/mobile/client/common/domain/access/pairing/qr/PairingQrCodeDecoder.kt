@@ -1,9 +1,14 @@
 package network.bisq.mobile.client.common.domain.access.pairing.qr
 
+import network.bisq.mobile.client.common.domain.access.LOCALHOST
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCodeDecoder
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
+import network.bisq.mobile.domain.utils.isIOS
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+
+const val LOOPBACK = "127.0.0.1"
+const val ANDROID_LOCALHOST = "10.0.2.2"
 
 @OptIn(ExperimentalEncodingApi::class)
 object PairingQrCodeDecoder {
@@ -49,12 +54,27 @@ object PairingQrCodeDecoder {
                 reader.readString(PairingQrCodeFormat.MAX_TOR_SECRET_BYTES)
         }
 
+        val adjustedWebSocketUrl = adjustWebSocketUrlForDevice(webSocketUrl)
+        val restApiUrl = webSocketUrlToRestApiUrl(adjustedWebSocketUrl)
         return PairingQrCode(
             version = version,
             pairingCode = pairingCode,
-            webSocketUrl = webSocketUrl,
+            webSocketUrl = adjustedWebSocketUrl,
+            restApiUrl = restApiUrl,
             tlsFingerprint = tlsFingerprint,
             torClientAuthSecret = torClientAuthSecret,
         )
     }
+
+    private fun adjustWebSocketUrlForDevice(url: String): String {
+        if (isIOS()) return url
+        return url
+            .replace(LOOPBACK, ANDROID_LOCALHOST)
+            .replace(LOCALHOST, ANDROID_LOCALHOST)
+    }
+
+    private fun webSocketUrlToRestApiUrl(webSocketUrl: String): String =
+        webSocketUrl
+            .replaceFirst("wss://", "https://")
+            .replaceFirst("ws://", "http://")
 }

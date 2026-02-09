@@ -2,13 +2,13 @@ package network.bisq.mobile.client.common.domain.access.security
 
 import android.annotation.SuppressLint
 import android.util.Base64
+import network.bisq.mobile.client.common.domain.access.pairing.qr.ANDROID_LOCALHOST
+import network.bisq.mobile.client.common.domain.access.pairing.qr.LOOPBACK
 import java.security.MessageDigest
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
-const val LOOPBACK = "127.0.0.1"
 const val LOCALHOST = "localhost"
-const val ANDROID_LOCALHOST = "10.0.2.2"
 
 @SuppressLint("CustomX509TrustManager")
 class TlsTrustManager(

@@ -252,16 +252,8 @@ print_success "All unit tests passed and coverage meets baseline (≥${COVERAGE_
 echo ""
 echo "ℹ️  Note: PRs must also meet ${DIFF_COVERAGE_THRESHOLD}% diff coverage (checked in CI)"
 echo "   To check diff coverage locally before pushing:"
-echo "   pip3 install diff-cover==10.2.0  # or: python3 -m pip install diff-cover==10.2.0"
-echo "   ./gradlew koverXmlReport"
-echo "   bash << 'COVERAGE_EOF'"
-echo "     SRC_ROOTS=()"
-echo "     while IFS= read -r dir; do SRC_ROOTS+=(\"\$dir\"); done < <(find . -type d -path \"*/src/*/kotlin\" -not -path \"*/build/*\" | sed 's|^\\./||')"
-echo "     mkdir -p build/reports/diff-cover"
-echo "     diff-cover build/reports/kover/report.xml --compare-branch=upstream/main --fail-under=${DIFF_COVERAGE_THRESHOLD} \\"
-echo "       --html-report build/reports/diff-cover/diff-coverage.html --src-roots \"\${SRC_ROOTS[@]}\""
-echo "   COVERAGE_EOF"
-echo "   open build/reports/diff-cover/diff-coverage.html  # Opens the visual HTML report"
+echo "     pip3 install diff-cover==10.2.0  # or: python3 -m pip install diff-cover==10.2.0"
+echo "     ./scripts/coverage.sh"
 echo ""
 
 # Success!

@@ -141,8 +141,7 @@ class WebSocketClientService(
             val newApiUrl: Url =
                 httpClientSettings.bisqApiUrl?.takeIf { it.isNotBlank() }?.let {
                     parseUrl(it)
-                }
-                    ?: parseUrl("http://$defaultHost:$defaultPort")!!
+                } ?: parseUrl("http://$defaultHost:$defaultPort")!!
 
             currentClient.value =
                 currentClient.value?.let {
@@ -150,6 +149,7 @@ class WebSocketClientService(
                     it.dispose()
                     null
                 }
+
             val newClient =
                 webSocketClientFactory.createNewClient(
                     httpClient = httpClientService.getClient(),
@@ -157,6 +157,7 @@ class WebSocketClientService(
                     sessionId = httpClientSettings.sessionId,
                     clientId = httpClientSettings.clientId,
                 )
+
             currentClient.value = newClient
             ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
             stateCollectionJob?.cancel()
