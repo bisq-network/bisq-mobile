@@ -27,7 +27,10 @@ val sharedKScanModule = ":shared:kscan"
 
 dependencies {
     debugImplementation(compose.uiTooling)
-    debugImplementation(libs.androidx.test.compose.manifest)
+    // IMPORTANT: This is needed for Robolectric tests to work in both variants
+    // The fact that its needed to be included in the build might be a compose issue
+    // We accept that for now as the lib size is minimal and won't impact the prod code.
+    implementation(libs.androidx.test.compose.manifest)
 }
 
 // -------------------- Kotlin Multiplatform Configuration --------------------
