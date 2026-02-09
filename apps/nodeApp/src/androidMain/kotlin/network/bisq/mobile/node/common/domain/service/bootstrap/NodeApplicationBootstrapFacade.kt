@@ -19,11 +19,12 @@ class NodeApplicationBootstrapFacade(
         super.activate()
         log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
 
-        observeTorState()
-        observeApplicationState()
-
+        // Set initial state before observing - Tor progress will update this
         setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
         setProgress(0f)
+
+        observeTorState()
+        observeApplicationState()
     }
 
     override suspend fun deactivate() {
