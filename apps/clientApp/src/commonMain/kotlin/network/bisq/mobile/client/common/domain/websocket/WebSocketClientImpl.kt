@@ -245,7 +245,10 @@ class WebSocketClientImpl(
         awaitConnection: Boolean,
     ): WebSocketResponse? {
         if (awaitConnection) {
-            awaitConnection()
+            val timeout = WebSocketClient.determineTimeout(apiUrl.host)
+            withTimeout(timeout) {
+                awaitConnection()
+            }
         }
 
         val requestId = webSocketRequest.requestId

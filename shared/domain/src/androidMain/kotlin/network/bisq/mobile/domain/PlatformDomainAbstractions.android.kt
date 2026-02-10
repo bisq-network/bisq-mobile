@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -18,8 +19,6 @@ import kotlinx.serialization.Serializable
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.scope.Scope
 import java.io.ByteArrayOutputStream
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
@@ -37,7 +36,7 @@ actual fun formatDateTime(dateTime: LocalDateTime): String {
     return formatter.format(date)
 }
 
-actual fun encodeURIParam(param: String): String = URLEncoder.encode(param, StandardCharsets.UTF_8.toString())
+actual fun encodeURIParam(param: String): String = Uri.encode(param)
 
 actual fun getDeviceLanguageCode(): String = Locale.getDefault().language
 

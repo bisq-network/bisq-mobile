@@ -14,9 +14,10 @@ import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
 
-private const val MAX_ACCOUNT_FIELD_LENGTH = 1000
-private const val MAX_ACCOUNT_NAME_FIELD_LENGTH = 256
-private const val MIN_ACCOUNT_FIELD_LENGTH = 3
+private const val MIN_ACCOUNT_NAME_FIELD_LENGTH = 2
+private const val MAX_ACCOUNT_NAME_FIELD_LENGTH = 20
+private const val MIN_ACCOUNT_DESC_FIELD_LENGTH = 3
+private const val MAX_ACCOUNT_DESC_FIELD_LENGTH = 1000
 
 open class PaymentAccountsPresenter(
     private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
@@ -239,7 +240,6 @@ open class PaymentAccountsPresenter(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),
                         false,
                     )
-                    _uiState.update { it.copy(showDeleteConfirmationDialog = false) }
                 }.onFailure {
                     log.e { "Couldn't remove account ${selectedAccount.accountName}" }
                     showSnackbar(
@@ -255,7 +255,7 @@ open class PaymentAccountsPresenter(
 
     private fun validateAccountNameField(name: String): String? =
         when {
-            name.length < MIN_ACCOUNT_FIELD_LENGTH ->
+            name.length < MIN_ACCOUNT_NAME_FIELD_LENGTH ->
                 "mobile.user.paymentAccounts.createAccount.validations.name.minLength".i18n()
 
             name.length > MAX_ACCOUNT_NAME_FIELD_LENGTH ->
@@ -266,10 +266,10 @@ open class PaymentAccountsPresenter(
 
     private fun validateAccountDescriptionField(description: String): String? =
         when {
-            description.length < MIN_ACCOUNT_FIELD_LENGTH ->
+            description.length < MIN_ACCOUNT_DESC_FIELD_LENGTH ->
                 "mobile.user.paymentAccounts.createAccount.validations.accountData.minLength".i18n()
 
-            description.length > MAX_ACCOUNT_FIELD_LENGTH ->
+            description.length > MAX_ACCOUNT_DESC_FIELD_LENGTH ->
                 "mobile.user.paymentAccounts.createAccount.validations.accountData.maxLength".i18n()
 
             else -> null
@@ -352,6 +352,7 @@ open class PaymentAccountsPresenter(
     }
 
     private fun onConfirmDeleteAccountClick() {
+        _uiState.update { it.copy(showDeleteConfirmationDialog = false) }
         deleteSelectedAccount()
     }
 }

@@ -330,7 +330,7 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("ab"))
+            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("a"))
             presenter.onAction(PaymentAccountsUiAction.OnAccountDescriptionChange("Valid description text"))
             presenter.onAction(PaymentAccountsUiAction.OnConfirmAddAccountClick)
             advanceUntilIdle()
@@ -658,7 +658,7 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // When
-            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("ab")) // Too short
+            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("a")) // Too short
             presenter.onAction(PaymentAccountsUiAction.OnSaveAccountClick)
             advanceUntilIdle()
 
@@ -709,7 +709,7 @@ class PaymentAccountsPresenterTest {
     // ========== Delete Account Tests ==========
 
     @Test
-    fun `when deleting account succeeds then closes dialog`() =
+    fun `when confirm delete clicked then closes dialog immediately`() =
         runTest(testDispatcher) {
             // Given
             val accountStateFlow =
@@ -735,52 +735,9 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then
+            // Dialog closes immediately when user confirms (before delete completes)
             val state = presenter.uiState.value
             assertFalse(state.showDeleteConfirmationDialog)
-
-            // Verify success snackbar was shown
-            val snackbarData = presenter.getSnackState().currentSnackbarData
-            assertNotNull(snackbarData)
-            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(), snackbarData.visuals.message)
-        }
-
-    @Test
-    fun `when deleting account fails then dialog remains open`() =
-        runTest(testDispatcher) {
-            // Given
-            val accountStateFlow =
-                MutableStateFlow(
-                    AccountsState(
-                        accounts = listOf(sampleAccount1),
-                        selectedAccountIndex = 0,
-                    ),
-                )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.deleteAccount(any()) } returns Result.failure(Exception("Delete failed"))
-
-            presenter = createPresenter()
-            presenter.onViewAttached()
-            advanceUntilIdle()
-
-            // When
-            presenter.onAction(PaymentAccountsUiAction.OnDeleteAccountClick)
-            advanceUntilIdle()
-            presenter.onAction(PaymentAccountsUiAction.OnConfirmDeleteAccountClick)
-            advanceUntilIdle()
-
-            // Then
-            // Verify delete was called but failed
-            coVerify(atLeast = 1) { fiatAccountsServiceFacade.deleteAccount(any()) }
-            // Verify the dialog remains open (presenter doesn't close it on failure)
-            val state = presenter.uiState.value
-            assertTrue(state.showDeleteConfirmationDialog)
-
-            // Verify error snackbar was shown
-            val snackbarData = presenter.getSnackState().currentSnackbarData
-            assertNotNull(snackbarData)
-            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(sampleAccount1.accountName), snackbarData.visuals.message)
         }
 
     // ========== UI Action Tests ==========

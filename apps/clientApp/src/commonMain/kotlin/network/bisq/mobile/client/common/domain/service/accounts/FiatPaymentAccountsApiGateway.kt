@@ -28,7 +28,7 @@ class FiatPaymentAccountsApiGateway(
 
     suspend fun deleteAccount(accountName: String): Result<Unit> {
         val parsedAccountName = encodeURIParam(accountName)
-        return webSocketApiClient.delete("$basePath/$parsedAccountName")
+        return webSocketApiClient.delete("$basePath?accountName=$parsedAccountName")
     }
 
     suspend fun setSelectedAccount(account: FiatAccountVO): Result<Unit> = webSocketApiClient.patch("$basePath/selected", SetSelectedFiatAccountRequest(account))
@@ -41,7 +41,7 @@ class FiatPaymentAccountsApiGateway(
     ): Result<Unit> {
         val parsedAccountName = encodeURIParam(accountName)
         return webSocketApiClient.put(
-            "$basePath/$parsedAccountName",
+            "$basePath?accountName=$parsedAccountName",
             SaveFiatAccountRequest(account = account),
         )
     }
