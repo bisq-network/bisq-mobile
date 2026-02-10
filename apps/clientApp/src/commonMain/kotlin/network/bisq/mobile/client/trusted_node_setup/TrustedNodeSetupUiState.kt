@@ -14,6 +14,7 @@ data class TrustedNodeSetupUiState(
     val timeoutCounter: Long = 0L,
     val showQrCodeView: Boolean = false,
     val showQrCodeError: Boolean = false,
+    val showChangeNodeWarning: Boolean = false,
     val serverVersion: String = EMPTY_STRING,
 ) {
     fun isConnectionInProgress(): Boolean =

@@ -4,21 +4,15 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,16 +35,16 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.button.CloseI
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ScanQrIcon
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -122,6 +116,19 @@ fun TrustedNodeSetupContent(
             onClose = { onAction(TrustedNodeSetupUiAction.OnQrCodeErrorClose) },
         )
     }
+
+    if (uiState.showChangeNodeWarning) {
+        ConfirmationDialog(
+            headlineColor = BisqTheme.colors.warning,
+            headlineLeftIcon = { WarningIcon() },
+            headline = "mobile.trustedNodeSetup.warning".i18n(),
+            message = "mobile.trustedNodeSetup.changeWarning".i18n(),
+            confirmButtonText = "mobile.trustedNodeSetup.continue".i18n(),
+            dismissButtonText = "mobile.trustedNodeSetup.cancel".i18n(),
+            onConfirm = { onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm) },
+            onDismiss = { onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningCancel) },
+        )
+    }
 }
 
 @Composable
@@ -157,19 +164,21 @@ private fun TrustedNodeSetupMainContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             BisqGap.V1()
-            BisqButton(
-                text = "mobile.trustedNodeSetup.pairingCode.scan".i18n(),
-                type =
-                    if (uiState.canScanQrCode(isWorkflow)) {
-                        BisqButtonType.Default
-                    } else {
-                        BisqButtonType.Grey
-                    },
-                onClick = { onAction(TrustedNodeSetupUiAction.OnShowQrCodeView) },
-                leftIcon = { ScanQrIcon() },
-                disabled = !uiState.canScanQrCode(isWorkflow),
-            )
-            BisqGap.V2()
+            if (isWorkflow) {
+                BisqButton(
+                    text = "mobile.trustedNodeSetup.pairingCode.scan".i18n(),
+                    type =
+                        if (uiState.canScanQrCode(isWorkflow)) {
+                            BisqButtonType.Default
+                        } else {
+                            BisqButtonType.Grey
+                        },
+                    onClick = { onAction(TrustedNodeSetupUiAction.OnShowQrCodeView) },
+                    leftIcon = { ScanQrIcon() },
+                    disabled = !uiState.canScanQrCode(isWorkflow),
+                )
+                BisqGap.V2()
+            }
 
             if (isWorkflow) {
                 BisqTextFieldV0(
@@ -237,6 +246,14 @@ private fun TrustedNodeSetupMainContent(
                     disabled = uiState.isTestButtonDisabled(),
                 )
             }
+
+            if (!isWorkflow) {
+                BisqGap.V1()
+                BisqButton(
+                    text = "mobile.trustedNodeSetup.pairWithNewNode".i18n(),
+                    onClick = { onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress) },
+                )
+            }
         }
 
         BisqGap.V2()
@@ -261,12 +278,6 @@ private fun TrustedNodeSetupMainContent(
             )
         }
 
-        if (!isWorkflow) {
-            BisqText.BaseRegular(
-                "mobile.trustedNodeSetup.testConnection.message".i18n(),
-                color = BisqTheme.colors.warning,
-            )
-        }
         BisqGap.V2()
     }
 }
@@ -470,6 +481,25 @@ private fun TrustedNodeSetupContent_Settings_ConnectedPreview() {
                     status = TrustedNodeConnectionStatus.Connected,
                     pairingCodeEntry = PREVIEW_PAIRING_CODE,
                     apiUrl = "http://127.0.0.1:8090",
+                ),
+            onAction = {},
+            snackbarHostState = SnackbarHostState(),
+            isWorkflow = false,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TrustedNodeSetupContent_ChangeNodeWarningPreview() {
+    BisqTheme.Preview {
+        TrustedNodeSetupContent(
+            uiState =
+                TrustedNodeSetupUiState(
+                    status = TrustedNodeConnectionStatus.Connected,
+                    pairingCodeEntry = PREVIEW_PAIRING_CODE,
+                    apiUrl = "http://127.0.0.1:8090",
+                    showChangeNodeWarning = true,
                 ),
             onAction = {},
             snackbarHostState = SnackbarHostState(),

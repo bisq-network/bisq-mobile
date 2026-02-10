@@ -20,4 +20,10 @@ sealed interface TrustedNodeSetupUiAction {
     data class OnQrCodeResult(
         val value: String,
     ) : TrustedNodeSetupUiAction
+
+    data object OnPairWithNewNodePress : TrustedNodeSetupUiAction
+
+    data object OnChangeNodeWarningConfirm : TrustedNodeSetupUiAction
+
+    data object OnChangeNodeWarningCancel : TrustedNodeSetupUiAction
 }

@@ -32,7 +32,7 @@ val clientPresentationModule =
             )
         } bind AppPresenter::class
 
-        single<SplashPresenter> {
+        factory<SplashPresenter> {
             ClientSplashPresenter(
                 get(),
                 get(),
@@ -56,7 +56,7 @@ val clientPresentationModule =
             )
         }
 
-        single<TrustedNodeSetupPresenter> {
+        factory<TrustedNodeSetupPresenter> {
             TrustedNodeSetupPresenter(
                 get(),
                 get(),

@@ -886,33 +886,6 @@ class TrustedNodeSetupContentUiTest {
     }
 
     @Test
-    fun `when settings mode renders then shows test connection warning`() {
-        // Given
-        val uiState =
-            TrustedNodeSetupUiState(
-                status = TrustedNodeConnectionStatus.Connected,
-                pairingCodeEntry = DataEntry(validPairingCode),
-                apiUrl = sampleApiUrl,
-            )
-
-        // When
-        setTestContent {
-            TrustedNodeSetupContent(
-                uiState = uiState,
-                onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
-                isWorkflow = false,
-            )
-        }
-
-        // Then
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onNodeWithText("mobile.trustedNodeSetup.testConnection.message".i18n())
-            .assertIsDisplayed()
-    }
-
-    @Test
     fun `when settings mode renders then does not show pairing code text field`() {
         // Given
         val uiState =
@@ -938,7 +911,7 @@ class TrustedNodeSetupContentUiTest {
     }
 
     @Test
-    fun `when settings mode idle renders then scan button is disabled`() {
+    fun `when settings mode idle renders then scan button is not shown`() {
         // Given
         val uiState =
             TrustedNodeSetupUiState(
@@ -955,12 +928,11 @@ class TrustedNodeSetupContentUiTest {
             )
         }
 
-        // Then - Scan button is disabled in settings mode (canScanQrCode returns false)
+        // Then - Scan button is not shown in settings mode
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.pairingCode.scan".i18n())
-            .assertIsDisplayed()
-            .assertIsNotEnabled()
+            .assertDoesNotExist()
     }
 
     @Test
@@ -987,5 +959,186 @@ class TrustedNodeSetupContentUiTest {
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.cancel".i18n())
             .assertIsDisplayed()
+    }
+
+    // ========== Pair with New Node Button Tests ==========
+
+    @Test
+    fun `when settings mode connected renders then shows pair with new node button`() {
+        // Given
+        val uiState =
+            TrustedNodeSetupUiState(
+                status = TrustedNodeConnectionStatus.Connected,
+                pairingCodeEntry = DataEntry(validPairingCode),
+                apiUrl = sampleApiUrl,
+            )
+
+        // When
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                snackbarHostState = snackbarHostState,
+                isWorkflow = false,
+            )
+        }
+
+        // Then
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.pairWithNewNode".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when pair with new node button clicked then triggers OnPairWithNewNodePress action`() {
+        // Given
+        val uiState =
+            TrustedNodeSetupUiState(
+                status = TrustedNodeConnectionStatus.Connected,
+                pairingCodeEntry = DataEntry(validPairingCode),
+                apiUrl = sampleApiUrl,
+            )
+
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                snackbarHostState = snackbarHostState,
+                isWorkflow = false,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // When
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.pairWithNewNode".i18n())
+            .performScrollTo()
+            .performClick()
+
+        // Then
+        verify { mockOnAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress) }
+    }
+
+    @Test
+    fun `when workflow mode renders then does not show pair with new node button`() {
+        // Given
+        val uiState =
+            TrustedNodeSetupUiState(
+                status = TrustedNodeConnectionStatus.Idle,
+            )
+
+        // When
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                snackbarHostState = snackbarHostState,
+                isWorkflow = true,
+            )
+        }
+
+        // Then
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.pairWithNewNode".i18n())
+            .assertDoesNotExist()
+    }
+
+    // ========== Change Node Warning Dialog Tests ==========
+
+    @Test
+    fun `when change node warning shown then displays warning dialog`() {
+        // Given
+        val uiState =
+            TrustedNodeSetupUiState(
+                status = TrustedNodeConnectionStatus.Connected,
+                pairingCodeEntry = DataEntry(validPairingCode),
+                apiUrl = sampleApiUrl,
+                showChangeNodeWarning = true,
+            )
+
+        // When
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                snackbarHostState = snackbarHostState,
+                isWorkflow = false,
+            )
+        }
+
+        // Then
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.warning".i18n())
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.changeWarning".i18n())
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when change node warning confirm clicked then triggers OnChangeNodeWarningConfirm action`() {
+        // Given
+        val uiState =
+            TrustedNodeSetupUiState(
+                status = TrustedNodeConnectionStatus.Connected,
+                pairingCodeEntry = DataEntry(validPairingCode),
+                apiUrl = sampleApiUrl,
+                showChangeNodeWarning = true,
+            )
+
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                snackbarHostState = snackbarHostState,
+                isWorkflow = false,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // When
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.continue".i18n())
+            .performClick()
+
+        // Then
+        verify { mockOnAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm) }
+    }
+
+    @Test
+    fun `when change node warning cancel clicked then triggers OnChangeNodeWarningCancel action`() {
+        // Given
+        val uiState =
+            TrustedNodeSetupUiState(
+                status = TrustedNodeConnectionStatus.Connected,
+                pairingCodeEntry = DataEntry(validPairingCode),
+                apiUrl = sampleApiUrl,
+                showChangeNodeWarning = true,
+            )
+
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                snackbarHostState = snackbarHostState,
+                isWorkflow = false,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // When
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.cancel".i18n())
+            .performClick()
+
+        // Then
+        verify { mockOnAction(TrustedNodeSetupUiAction.OnChangeNodeWarningCancel) }
     }
 }

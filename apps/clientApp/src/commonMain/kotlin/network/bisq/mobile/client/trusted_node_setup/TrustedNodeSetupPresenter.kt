@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.domain.service.network.KmpTorService
@@ -113,6 +114,17 @@ class TrustedNodeSetupPresenter(
             }
 
             is TrustedNodeSetupUiAction.OnQrCodeResult -> onQrCodeResult(action.value)
+            TrustedNodeSetupUiAction.OnPairWithNewNodePress -> {
+                _uiState.update { it.copy(showChangeNodeWarning = true) }
+            }
+
+            TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm -> {
+                onChangeNodeWarningConfirm()
+            }
+
+            TrustedNodeSetupUiAction.OnChangeNodeWarningCancel -> {
+                _uiState.update { it.copy(showChangeNodeWarning = false) }
+            }
         }
     }
 
@@ -218,6 +230,16 @@ class TrustedNodeSetupPresenter(
         presenterScope.launch {
             navigateTo(NavRoute.Splash) {
                 it.popUpTo(NavRoute.Splash) { inclusive = true }
+            }
+        }
+    }
+
+    private fun onChangeNodeWarningConfirm() {
+        presenterScope.launch {
+            sensitiveSettingsRepository.clear()
+            _uiState.update { it.copy(showChangeNodeWarning = false) }
+            navigateTo(TrustedNodeSetup) {
+                it.popUpTo(NavRoute.TabContainer) { inclusive = true }
             }
         }
     }

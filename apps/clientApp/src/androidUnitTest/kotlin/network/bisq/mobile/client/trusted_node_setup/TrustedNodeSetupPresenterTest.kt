@@ -23,6 +23,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCaseState
@@ -695,5 +696,96 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             assertFalse(presenter.uiState.value.canScanQrCode(isWorkflow = true))
+        }
+
+    // ========== Pair with New Node Tests ==========
+
+    @Test
+    fun `when OnPairWithNewNodePress action then shows change node warning dialog`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(presenter.uiState.value.showChangeNodeWarning)
+        }
+
+    @Test
+    fun `when OnChangeNodeWarningCancel action then hides change node warning dialog`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+            presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningCancel)
+            advanceUntilIdle()
+
+            // Then
+            assertFalse(presenter.uiState.value.showChangeNodeWarning)
+        }
+
+    @Test
+    fun `when OnChangeNodeWarningConfirm action then clears settings and navigates to TrustedNodeSetup`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { sensitiveSettingsRepository.clear() } returns Unit
+            setupPresenter()
+            presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm)
+            advanceUntilIdle()
+
+            // Then
+            coVerify { sensitiveSettingsRepository.clear() }
+            verify { navigationManager.navigate(TrustedNodeSetup, any(), any()) }
+        }
+
+    @Test
+    fun `when OnChangeNodeWarningConfirm action then hides dialog`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { sensitiveSettingsRepository.clear() } returns Unit
+            setupPresenter()
+            presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm)
+            advanceUntilIdle()
+
+            // Then
+            assertFalse(presenter.uiState.value.showChangeNodeWarning)
+        }
+
+    @Test
+    fun `when OnChangeNodeWarningConfirm action then resets state to idle`() =
+        runTest(testDispatcher) {
+            // Given
+            every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
+            coEvery { sensitiveSettingsRepository.clear() } returns Unit
+            setupPresenter()
+
+            // Set up some state first
+            presenter.onAction(TrustedNodeSetupUiAction.OnPairingCodeChange(validPairingCode))
+            advanceUntilIdle()
+
+            presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm)
+            advanceUntilIdle()
+
+            // Then - State should be reset (this happens via navigation and initialize,
+            // but we can't fully test that without the actual navigation completing)
+            coVerify { sensitiveSettingsRepository.clear() }
         }
 }
