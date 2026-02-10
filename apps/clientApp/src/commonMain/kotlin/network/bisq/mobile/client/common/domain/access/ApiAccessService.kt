@@ -436,10 +436,26 @@ class ApiAccessService(
      * Requests pairing with a PairingQrCode.
      * Used by TrustedNodeSetupUseCase for the pairing flow.
      * Returns a Result with the PairingResponse.
+     * Special case: Demo mode returns fake credentials without making an HTTP request.
      */
     suspend fun requestPairing(
         pairingQrCode: PairingQrCode,
     ): Result<PairingResponse> {
+        // Special case for demo mode - return fake credentials without HTTP request
+        if (pairingQrCode.pairingCode.id == DEMO_PAIRING_ID) {
+            log.i { "Demo mode detected - returning fake pairing response" }
+            val demoResponse = PairingResponse(
+                version = 1,
+                clientId = DEMO_CLIENT_ID,
+                clientSecret = DEMO_CLIENT_SECRET,
+                sessionId = DEMO_SESSION_ID,
+                sessionExpiryDate = Long.MAX_VALUE,
+            )
+            // Setup demo mode state
+            setupDemoMode()
+            return Result.success(demoResponse)
+        }
+
         // Now we do a HTTP POST request for pairing.
         // This request is unauthenticated and will return the data we
         // need for establishing an authenticated and authorized
