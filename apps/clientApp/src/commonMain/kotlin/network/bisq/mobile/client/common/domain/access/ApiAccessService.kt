@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
@@ -380,15 +382,38 @@ class ApiAccessService(
     /**
      * Decodes a pairing code string into a PairingQrCode.
      * Used by TrustedNodeSetupPresenter.
+     * Special case: DEMO_PAIRING_CODE bypasses validation and returns a demo PairingQrCode.
      */
-    fun getPairingCodeQr(value: String): Result<PairingQrCode> =
-        try {
-            val code = pairingQrCodeDecoder.decode(value.trim())
+    fun getPairingCodeQr(value: String): Result<PairingQrCode> {
+        val trimmedValue = value.trim()
+
+        // Special case for demo mode - bypass validation
+        if (trimmedValue == DEMO_PAIRING_CODE) {
+            log.i { "Demo pairing code detected - returning demo PairingQrCode" }
+            val demoPairingCode = PairingCode(
+                id = DEMO_PAIRING_ID,
+                expiresAt = Instant.DISTANT_FUTURE,
+                grantedPermissions = Permission.entries.toSet(),
+            )
+            val demoPairingQrCode = PairingQrCode(
+                version = 1,
+                pairingCode = demoPairingCode,
+                webSocketUrl = DEMO_WS_URL,
+                restApiUrl = DEMO_API_URL,
+                tlsFingerprint = null,
+                torClientAuthSecret = null,
+            )
+            return Result.success(demoPairingQrCode)
+        }
+
+        return try {
+            val code = pairingQrCodeDecoder.decode(trimmedValue)
             Result.success(code)
         } catch (e: Exception) {
             log.e(e) { "Decoding pairing code failed." }
             Result.failure(Throwable("mobile.trustedNodeSetup.pairingCode.invalid".i18n()))
         }
+    }
 
     /**
      * Updates settings from a PairingQrCode.
