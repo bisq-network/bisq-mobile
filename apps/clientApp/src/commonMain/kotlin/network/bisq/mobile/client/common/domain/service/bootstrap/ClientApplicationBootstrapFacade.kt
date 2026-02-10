@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.domain.service.bootstrap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
@@ -59,6 +60,19 @@ class ClientApplicationBootstrapFacade(
                         log.w { "RENEW_SESSION state but clientId or clientSecret is null, falling back to pairing flow" }
                         setState("mobile.bootstrap.preparingInitialSetup".i18n())
                         setProgress(1.0f)
+                        return@launch
+                    }
+
+                    // Check for demo mode - skip session renewal and go directly to connect
+                    if (currentSettings.bisqApiUrl == DEMO_API_URL) {
+                        log.i { "Demo mode detected - skipping session renewal" }
+                        isDemo = true
+                        setProgress(0.5f)
+                        setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
+                        serviceScope.launch {
+                            delay(100)
+                            connect()
+                        }
                         return@launch
                     }
 

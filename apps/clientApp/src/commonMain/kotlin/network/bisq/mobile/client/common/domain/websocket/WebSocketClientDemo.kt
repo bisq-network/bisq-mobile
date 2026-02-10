@@ -96,35 +96,49 @@ class WebSocketClientDemo(
 
     private fun fakeResponse(webSocketRequest: WebSocketRequest): WebSocketResponse {
         webSocketRequest as WebSocketRestApiRequest
-        log.d { "responding fake response to path ${webSocketRequest.path}" }
+        log.d { "Demo: responding fake response to path ${webSocketRequest.path}" }
+        val body =
+            when {
+                // Settings
+                webSocketRequest.path.endsWith("settings") -> json.encodeToString(settingsVODemoObj)
+                webSocketRequest.path.endsWith("settings/version") ->
+                    json.encodeToString(apiVersionSettingsVO)
+
+                // User identities
+                webSocketRequest.path.endsWith("user-identities/ids") ->
+                    json.encodeToString(identitiesDemoObj)
+                webSocketRequest.path.endsWith("owned-profiles") ->
+                    json.encodeToString(listOf(userProfileDemoObj))
+                webSocketRequest.path.endsWith("selected/user-profile") ->
+                    json.encodeToString(userProfileDemoObj)
+
+                // User profiles - endpoints that return List<String> or List<UserProfileVO>
+                webSocketRequest.path.endsWith("user-profiles/ignored") -> "[]"
+                webSocketRequest.path.contains("user-profiles?ids=") ->
+                    json.encodeToString(listOf(userProfileDemoObj))
+
+                // Offerbook
+                webSocketRequest.path.endsWith("offerbook/markets") ->
+                    json.encodeToString(marketListDemoObj)
+
+                // Payment accounts - returns List<FiatAccountVO>
+                webSocketRequest.path.contains("payment-accounts/fiat") -> "[]"
+
+                // Reputation - return null-safe defaults
+                webSocketRequest.path.contains("reputation/profile-age/") -> "0"
+                webSocketRequest.path.contains("reputation/score/") ->
+                    json.encodeToString(ReputationScoreVO(totalScore = 0, fiveSystemScore = 0.0, ranking = 0))
+
+                else -> {
+                    log.w { "Demo: unhandled path ${webSocketRequest.path}, returning empty array" }
+                    "[]" // Return empty array by default to avoid JSON parsing errors
+                }
+            }
+        log.d { "Demo: response body length=${body.length} for path ${webSocketRequest.path}" }
         return WebSocketRestApiResponse(
             webSocketRequest.requestId,
             200,
-            body =
-                when {
-                    webSocketRequest.path.endsWith("settings") -> json.encodeToString(settingsVODemoObj)
-                    webSocketRequest.path.endsWith("settings/version") ->
-                        json.encodeToString(
-                            apiVersionSettingsVO,
-                        )
-
-                    webSocketRequest.path.endsWith("user-identities/ids") ->
-                        json.encodeToString(
-                            identitiesDemoObj,
-                        )
-
-                    webSocketRequest.path.endsWith("offerbook/markets") ->
-                        json.encodeToString(
-                            marketListDemoObj,
-                        )
-
-                    webSocketRequest.path.endsWith("selected/user-profile") ->
-                        json.encodeToString(
-                            userProfileDemoObj,
-                        )
-
-                    else -> "{}"
-                },
+            body = body,
         )
     }
 
@@ -135,10 +149,17 @@ class WebSocketClientDemo(
         webSocketEventObserver: WebSocketEventObserver,
     ): WebSocketEventObserver {
         val fakePayload = getFakePayloadForTopic(topic) // Function that returns fake data
+        log.d { "Demo: getFakeSubscription for topic=$topic, payload length=${fakePayload?.length ?: 0}" }
+        if (fakePayload == null) {
+            log.w { "Demo: No fake payload defined for topic=$topic" }
+            return webSocketEventObserver
+        }
 
         val webSocketEvent =
             WebSocketEvent(topic, subscriberId, fakePayload, ModificationType.REPLACE, 0)
+        log.d { "Demo: Setting event for topic=$topic with sequenceNumber=0" }
         webSocketEventObserver.setEvent(webSocketEvent)
+        log.d { "Demo: Event set for topic=$topic" }
 
         return webSocketEventObserver
     }
@@ -164,7 +185,7 @@ object FakeSubscriptionData {
                     80000,
                     4,
                     2,
-                    MarketVO("Bitcoin", "USD"),
+                    MarketVO("BTC", "USD"),
                     CoinVO("BTC", 1, "BTC", 8, 4),
                     FiatVO("USD", 80000, "USD", 4, 2),
                 ),
@@ -173,7 +194,7 @@ object FakeSubscriptionData {
                     75000,
                     4,
                     2,
-                    MarketVO("Bitcoin", "EUR"),
+                    MarketVO("BTC", "EUR"),
                     CoinVO("BTC", 1, "BTC", 8, 4),
                     FiatVO("EUR", 75000, "EUR", 4, 2),
                 ),
@@ -204,7 +225,7 @@ object FakeSubscriptionData {
                                     ),
                             ),
                         direction = DirectionEnum.SELL,
-                        market = MarketVO("Bitcoin", "USD"),
+                        market = MarketVO("BTC", "USD"),
                         amountSpec =
                             QuoteSideFixedAmountSpecVO(
                                 amount = 100,
@@ -218,7 +239,7 @@ object FakeSubscriptionData {
                                         2,
                                         market =
                                             MarketVO(
-                                                baseCurrencyCode = "Bitcoin",
+                                                baseCurrencyCode = "BTC",
                                                 quoteCurrencyCode = "USD",
                                             ),
                                         CoinVO("BTC", 1, "BTC", 8, 4),
@@ -312,7 +333,7 @@ object FakeSubscriptionData {
                                     ),
                             ),
                         direction = DirectionEnum.BUY,
-                        market = MarketVO("Bitcoin", "USD"),
+                        market = MarketVO("BTC", "USD"),
                         amountSpec =
                             QuoteSideFixedAmountSpecVO(
                                 amount = 102,
@@ -326,7 +347,7 @@ object FakeSubscriptionData {
                                         2,
                                         market =
                                             MarketVO(
-                                                baseCurrencyCode = "Bitcoin",
+                                                baseCurrencyCode = "BTC",
                                                 quoteCurrencyCode = "USD",
                                             ),
                                         CoinVO("BTC", 1, "BTC", 8, 4),

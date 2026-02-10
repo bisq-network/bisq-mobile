@@ -390,19 +390,21 @@ class ApiAccessService(
         // Special case for demo mode - bypass validation
         if (trimmedValue == DEMO_PAIRING_CODE) {
             log.i { "Demo pairing code detected - returning demo PairingQrCode" }
-            val demoPairingCode = PairingCode(
-                id = DEMO_PAIRING_ID,
-                expiresAt = Instant.DISTANT_FUTURE,
-                grantedPermissions = Permission.entries.toSet(),
-            )
-            val demoPairingQrCode = PairingQrCode(
-                version = 1,
-                pairingCode = demoPairingCode,
-                webSocketUrl = DEMO_WS_URL,
-                restApiUrl = DEMO_API_URL,
-                tlsFingerprint = null,
-                torClientAuthSecret = null,
-            )
+            val demoPairingCode =
+                PairingCode(
+                    id = DEMO_PAIRING_ID,
+                    expiresAt = Instant.DISTANT_FUTURE,
+                    grantedPermissions = Permission.entries.toSet(),
+                )
+            val demoPairingQrCode =
+                PairingQrCode(
+                    version = 1,
+                    pairingCode = demoPairingCode,
+                    webSocketUrl = DEMO_WS_URL,
+                    restApiUrl = DEMO_API_URL,
+                    tlsFingerprint = null,
+                    torClientAuthSecret = null,
+                )
             return Result.success(demoPairingQrCode)
         }
 
@@ -444,13 +446,14 @@ class ApiAccessService(
         // Special case for demo mode - return fake credentials without HTTP request
         if (pairingQrCode.pairingCode.id == DEMO_PAIRING_ID) {
             log.i { "Demo mode detected - returning fake pairing response" }
-            val demoResponse = PairingResponse(
-                version = 1,
-                clientId = DEMO_CLIENT_ID,
-                clientSecret = DEMO_CLIENT_SECRET,
-                sessionId = DEMO_SESSION_ID,
-                sessionExpiryDate = Long.MAX_VALUE,
-            )
+            val demoResponse =
+                PairingResponse(
+                    version = 1,
+                    clientId = DEMO_CLIENT_ID,
+                    clientSecret = DEMO_CLIENT_SECRET,
+                    sessionId = DEMO_SESSION_ID,
+                    sessionExpiryDate = Long.MAX_VALUE,
+                )
             // Setup demo mode state
             setupDemoMode()
             return Result.success(demoResponse)
