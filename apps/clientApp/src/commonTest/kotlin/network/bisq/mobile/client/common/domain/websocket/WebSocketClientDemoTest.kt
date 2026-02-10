@@ -1,13 +1,20 @@
 package network.bisq.mobile.client.common.domain.websocket
 
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
+import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
+import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.replicated.common.currency.marketListDemoObj
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class WebSocketClientDemoTest {
     private val json = Json { ignoreUnknownKeys = true }
+    private val demoClient = WebSocketClientDemo(json)
 
     @Test
     fun `FakeSubscriptionData offers use valid market codes matching marketListDemoObj`() {
@@ -114,4 +121,188 @@ class WebSocketClientDemoTest {
             )
         }
     }
+
+    // ========== fakeResponse tests (via sendRequestAndAwaitResponse) ==========
+
+    private fun createRequest(path: String) =
+        WebSocketRestApiRequest(requestId = "test-id", method = "GET", path = path, body = "")
+
+    @Test
+    fun `fakeResponse returns settings for settings endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/settings")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            // Settings response should contain isTacAccepted field
+            assertTrue(response.body.contains("isTacAccepted"), "Expected settings response, got: ${response.body}")
+        }
+
+    @Test
+    fun `fakeResponse returns version for settings version endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/settings/version")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertTrue(response.body.isNotEmpty())
+        }
+
+    @Test
+    fun `fakeResponse returns identities for user-identities ids endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/user-identities/ids")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertTrue(response.body.startsWith("["))
+        }
+
+    @Test
+    fun `fakeResponse returns user profile for owned-profiles endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/owned-profiles")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertTrue(response.body.contains("nickName"))
+        }
+
+    @Test
+    fun `fakeResponse returns user profile for selected user-profile endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/selected/user-profile")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertTrue(response.body.contains("nickName"))
+        }
+
+    @Test
+    fun `fakeResponse returns empty array for user-profiles ignored endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/user-profiles/ignored")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertEquals("[]", response.body)
+        }
+
+    @Test
+    fun `fakeResponse returns user profiles for user-profiles with ids query`() =
+        runTest {
+            val request = createRequest("/api/v1/user-profiles?ids=abc,def")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertTrue(response.body.contains("nickName"))
+        }
+
+    @Test
+    fun `fakeResponse returns markets for offerbook markets endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/offerbook/markets")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertTrue(response.body.contains("baseCurrencyCode"))
+        }
+
+    @Test
+    fun `fakeResponse returns empty array for payment-accounts fiat endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/payment-accounts/fiat")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertEquals("[]", response.body)
+        }
+
+    @Test
+    fun `fakeResponse returns zero for reputation profile-age endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/reputation/profile-age/some-id")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertEquals("0", response.body)
+        }
+
+    @Test
+    fun `fakeResponse returns reputation score for reputation score endpoint`() =
+        runTest {
+            val request = createRequest("/api/v1/reputation/score/some-id")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertTrue(response.body.contains("totalScore"))
+        }
+
+    @Test
+    fun `fakeResponse returns empty array for unhandled path`() =
+        runTest {
+            val request = createRequest("/api/v1/unknown/endpoint")
+            val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
+            assertEquals(200, response.statusCode)
+            assertEquals("[]", response.body)
+        }
+
+    // ========== getFakeSubscription tests (via subscribe) ==========
+
+    @Test
+    fun `subscribe returns fake data for MARKET_PRICE topic`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            val result = demoClient.subscribe(Topic.MARKET_PRICE, null, observer)
+            assertNotNull(result)
+            val event = result.webSocketEvent.value
+            assertNotNull(event)
+            assertEquals(Topic.MARKET_PRICE, event.topic)
+            assertNotNull(event.deferredPayload)
+        }
+
+    @Test
+    fun `subscribe returns fake data for OFFERS topic`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            val result = demoClient.subscribe(Topic.OFFERS, null, observer)
+            assertNotNull(result)
+            val event = result.webSocketEvent.value
+            assertNotNull(event)
+            assertEquals(Topic.OFFERS, event.topic)
+        }
+
+    @Test
+    fun `subscribe returns fake data for NUM_OFFERS topic`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            val result = demoClient.subscribe(Topic.NUM_OFFERS, null, observer)
+            assertNotNull(result)
+            val event = result.webSocketEvent.value
+            assertNotNull(event)
+            assertEquals(Topic.NUM_OFFERS, event.topic)
+        }
+
+    @Test
+    fun `subscribe returns observer without event for unsupported topic`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            // TRADES topic is not supported in demo mode (returns null payload)
+            val result = demoClient.subscribe(Topic.TRADES, null, observer)
+            assertNotNull(result)
+            // The observer should be returned but without an event set (null payload case)
+            // This covers lines 154-155 in WebSocketClientDemo.kt
+        }
+
+    // ========== WebSocketClientDemo basic tests ==========
+
+    @Test
+    fun `isDemo returns true`() {
+        assertTrue(demoClient.isDemo())
+    }
+
+    @Test
+    fun `connect returns null and sets Connected state`() =
+        runTest {
+            val error = demoClient.connect()
+            assertEquals(null, error)
+            assertTrue(demoClient.isConnected())
+        }
+
+    @Test
+    fun `disconnect sets Disconnected state`() =
+        runTest {
+            demoClient.connect()
+            demoClient.disconnect()
+            assertTrue(demoClient.webSocketClientStatus.value is ConnectionState.Disconnected)
+        }
 }

@@ -278,8 +278,8 @@ class ApiAccessService(
         proxyOption: BisqProxyOption? = null,
     ) {
         val clientName = _clientName.value
-        try {
-            serviceScope.launch {
+        serviceScope.launch {
+            try {
                 sensitiveSettingsRepository.update { currentSettings ->
                     currentSettings.copy(
                         bisqApiUrl = restApiUrl,
@@ -295,9 +295,9 @@ class ApiAccessService(
                     )
                 }
                 pairingQrCodeDataStored.value = true
+            } catch (e: Exception) {
+                log.e { "updatedSettings failed - ${e.message}" }
             }
-        } catch (ignore: Exception) {
-            log.e { "updatedSettings failed" }
         }
     }
 
@@ -320,24 +320,26 @@ class ApiAccessService(
                 // This request is unauthenticated and will return the data we
                 // need for establishing an authenticated and authorized
                 // websocket connection.
-                val result: Result<PairingResponse> =
-                    pairingService.requestPairing(
-                        _pairingCodeId.value!!,
-                        _clientName.value,
-                    )
-                _pairingResult.value = result
-                if (result.isSuccess) {
-                    log.i { "Pairing request was successful." }
-                    val pairingResponse = result.getOrThrow()
-                    _clientId.value = pairingResponse.clientId
-                    _clientSecret.value = pairingResponse.clientSecret
-                    _sessionId.value = pairingResponse.sessionId
-                    updatedSettings(pairingResponse)
-                } else {
-                    log.w { "Pairing request failed." }
+                try {
+                    val result: Result<PairingResponse> =
+                        pairingService.requestPairing(
+                            _pairingCodeId.value!!,
+                            _clientName.value,
+                        )
+                    _pairingResult.value = result
+                    if (result.isSuccess) {
+                        log.i { "Pairing request was successful." }
+                        val pairingResponse = result.getOrThrow()
+                        _clientId.value = pairingResponse.clientId
+                        _clientSecret.value = pairingResponse.clientSecret
+                        _sessionId.value = pairingResponse.sessionId
+                        updatedSettings(pairingResponse)
+                    } else {
+                        log.w { "Pairing request failed." }
+                    }
+                } finally {
+                    requestPairingJob = null
                 }
-
-                requestPairingJob = null
             }
     }
 

@@ -94,7 +94,8 @@ Most small developers won't qualify for Web Distribution. The alternative is to 
 Edit `gradle.properties`:
 ```properties
 client.ios.version=0.2.0
-client.ios.version.code=4  # Increment for each build
+# Increment for each build
+client.ios.version.code=4
 ```
 
 ### Step 2: Build the KMP Framework
