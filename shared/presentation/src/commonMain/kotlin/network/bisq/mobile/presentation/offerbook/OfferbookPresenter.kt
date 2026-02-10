@@ -394,6 +394,10 @@ open class OfferbookPresenter(
         runCatching {
             _showDeleteConfirmation.value = false
             require(selectedOffer.isMyOffer)
+            if (isDemo()) {
+                showSnackbar("mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(), true)
+                return@runCatching
+            }
             presenterScope.launch {
                 showLoading()
                 val result =
