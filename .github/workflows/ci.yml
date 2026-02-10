@@ -90,7 +90,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-konan-
 
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -127,17 +126,13 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: ./gradlew koverVerify koverXmlReport --no-configuration-cache -x :apps:nodeApp:koverVerify -x :apps:nodeApp:koverXmlReport -x :apps:nodeApp:koverGenerateArtifact --info
 
-      - name: Check diff coverage on PRs (Ubuntu only, excluding nodeApp)
-        if: startsWith(matrix.os, 'ubuntu') && github.event_name == 'pull_request'
-        run: |
-          pip install diff-cover==10.2.0
-
-          # Ensure compare branch exists for diff-cover
-          git fetch origin main
-
-          # Use smart diff coverage analyzer
-          chmod +x scripts/analyze-diff-coverage.sh
-          ./scripts/analyze-diff-coverage.sh origin/main build/reports/kover/report.xml
+      - name: Upload Kover XML report (Ubuntu only)
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v4
+        with:
+          name: kover-report
+          retention-days: 7
+          path: build/reports/kover/report.xml
 
       - name: Upload diff coverage report (Ubuntu only)
         id: coverage_check
@@ -177,6 +172,33 @@ jobs:
           CI: true
         run: |
           ./gradlew :shared:domain:iosSimulatorArm64Test --info
+
+  pr-coverage:
+    name: PR Coverage
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Kover XML report
+        uses: actions/download-artifact@v4
+        with:
+          name: kover-report
+          path: build/reports/kover
+
+      - name: Check diff coverage
+        run: |
+          pip install diff-cover==10.2.0
+
+          # Use smart diff coverage analyzer
+          chmod +x scripts/analyze-diff-coverage.sh
+          ./scripts/analyze-diff-coverage.sh origin/main build/reports/kover/report.xml
+
 
   # --- Node app tests (needs secrets for Maven dependencies) ---
   node-maven:
