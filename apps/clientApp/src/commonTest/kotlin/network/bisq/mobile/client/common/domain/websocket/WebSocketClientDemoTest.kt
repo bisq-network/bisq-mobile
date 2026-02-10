@@ -124,8 +124,7 @@ class WebSocketClientDemoTest {
 
     // ========== fakeResponse tests (via sendRequestAndAwaitResponse) ==========
 
-    private fun createRequest(path: String) =
-        WebSocketRestApiRequest(requestId = "test-id", method = "GET", path = path, body = "")
+    private fun createRequest(path: String) = WebSocketRestApiRequest(requestId = "test-id", method = "GET", path = path, body = "")
 
     @Test
     fun `fakeResponse returns settings for settings endpoint`() =

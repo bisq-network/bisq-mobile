@@ -51,27 +51,31 @@ class ClientApplicationBootstrapFacadeTest : KoinTest {
         sessionService = mockk(relaxed = true)
 
         // Create fake repository
-        sensitiveSettingsRepository = object : SensitiveSettingsRepository {
-            override val data = settingsFlow
-            override suspend fun update(transform: suspend (SensitiveSettings) -> SensitiveSettings) {
-                settingsFlow.value = transform(settingsFlow.value)
+        sensitiveSettingsRepository =
+            object : SensitiveSettingsRepository {
+                override val data = settingsFlow
+
+                override suspend fun update(transform: suspend (SensitiveSettings) -> SensitiveSettings) {
+                    settingsFlow.value = transform(settingsFlow.value)
+                }
+
+                override suspend fun clear() {
+                    settingsFlow.value = SensitiveSettings()
+                }
             }
-            override suspend fun clear() {
-                settingsFlow.value = SensitiveSettings()
-            }
-        }
 
         // Setup KmpTorService mocks
         coEvery { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
         coEvery { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
         coEvery { webSocketClientService.connect() } returns null
 
-        facade = ClientApplicationBootstrapFacade(
-            sensitiveSettingsRepository,
-            webSocketClientService,
-            kmpTorService,
-            sessionService,
-        )
+        facade =
+            ClientApplicationBootstrapFacade(
+                sensitiveSettingsRepository,
+                webSocketClientService,
+                kmpTorService,
+                sessionService,
+            )
     }
 
     @AfterTest
@@ -86,49 +90,53 @@ class ClientApplicationBootstrapFacadeTest : KoinTest {
     // These tests verify the key demo mode detection logic.
 
     @Test
-    fun `DEMO_API_URL constant is correctly defined`() = runTest(testDispatcher) {
-        // Verify the demo API URL constant matches expected value
-        assertTrue(DEMO_API_URL == "http://demo.bisq:21", "DEMO_API_URL should be http://demo.bisq:21")
-    }
+    fun `DEMO_API_URL constant is correctly defined`() =
+        runTest(testDispatcher) {
+            // Verify the demo API URL constant matches expected value
+            assertTrue(DEMO_API_URL == "http://demo.bisq:21", "DEMO_API_URL should be http://demo.bisq:21")
+        }
 
     @Test
-    fun `isDemo flag can be set and read`() = runTest(testDispatcher) {
-        // Given: isDemo is initially false
-        ApplicationBootstrapFacade.isDemo = false
-        assertTrue(!ApplicationBootstrapFacade.isDemo, "isDemo should initially be false")
+    fun `isDemo flag can be set and read`() =
+        runTest(testDispatcher) {
+            // Given: isDemo is initially false
+            ApplicationBootstrapFacade.isDemo = false
+            assertTrue(!ApplicationBootstrapFacade.isDemo, "isDemo should initially be false")
 
-        // When: isDemo is set to true
-        ApplicationBootstrapFacade.isDemo = true
+            // When: isDemo is set to true
+            ApplicationBootstrapFacade.isDemo = true
 
-        // Then: isDemo should be true
-        assertTrue(ApplicationBootstrapFacade.isDemo, "isDemo should be true after setting")
-    }
-
-    @Test
-    fun `facade can be created with demo mode settings`() = runTest(testDispatcher) {
-        // Given: Settings with demo API URL
-        settingsFlow.value = SensitiveSettings(
-            bisqApiUrl = DEMO_API_URL,
-            clientName = "test-client",
-            clientId = "demo-client-id",
-            clientSecret = "demo-client-secret",
-            sessionId = "demo-session-id",
-            selectedProxyOption = BisqProxyOption.NONE,
-        )
-
-        // Then: Facade should be created successfully
-        assertTrue(facade != null, "Facade should be created")
-
-        // Verify settings are correctly stored
-        val settings = sensitiveSettingsRepository.fetch()
-        assertTrue(settings.bisqApiUrl == DEMO_API_URL, "Settings should have demo API URL")
-    }
+            // Then: isDemo should be true
+            assertTrue(ApplicationBootstrapFacade.isDemo, "isDemo should be true after setting")
+        }
 
     @Test
-    fun `facade initial state is correct`() = runTest(testDispatcher) {
-        // Given: Fresh facade
-        // Then: Initial progress should be 0
-        assertTrue(facade.progress.value == 0f, "Initial progress should be 0")
-    }
+    fun `facade can be created with demo mode settings`() =
+        runTest(testDispatcher) {
+            // Given: Settings with demo API URL
+            settingsFlow.value =
+                SensitiveSettings(
+                    bisqApiUrl = DEMO_API_URL,
+                    clientName = "test-client",
+                    clientId = "demo-client-id",
+                    clientSecret = "demo-client-secret",
+                    sessionId = "demo-session-id",
+                    selectedProxyOption = BisqProxyOption.NONE,
+                )
+
+            // Then: Facade should be created successfully
+            assertTrue(facade != null, "Facade should be created")
+
+            // Verify settings are correctly stored
+            val settings = sensitiveSettingsRepository.fetch()
+            assertTrue(settings.bisqApiUrl == DEMO_API_URL, "Settings should have demo API URL")
+        }
+
+    @Test
+    fun `facade initial state is correct`() =
+        runTest(testDispatcher) {
+            // Given: Fresh facade
+            // Then: Initial progress should be 0
+            assertTrue(facade.progress.value == 0f, "Initial progress should be 0")
+        }
 }
-
