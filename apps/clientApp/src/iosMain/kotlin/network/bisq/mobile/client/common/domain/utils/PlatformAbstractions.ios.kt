@@ -3,8 +3,10 @@ package network.bisq.mobile.client.common.domain.utils
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.engine.darwin.certificates.CertificatePinner
 import io.ktor.client.plugins.websocket.WebSockets
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyConfig
+import network.bisq.mobile.domain.utils.getLogger
 
 actual fun createHttpClient(
     host: String,
@@ -20,6 +22,18 @@ actual fun createHttpClient(
         engine {
             proxy = proxyConfig?.config
 
-            // TODO add TLS support
+            tlsFingerprint?.let { fingerprint ->
+                try {
+                    val pinner =
+                        CertificatePinner
+                            .Builder()
+                            .add(host, "sha256/$fingerprint")
+                            .build()
+                    handleChallenge(pinner)
+                } catch (e: Exception) {
+                    getLogger("").e { "Error applying TLS certificate pinning: $fingerprint" }
+                    throw e
+                }
+            }
         }
     }
