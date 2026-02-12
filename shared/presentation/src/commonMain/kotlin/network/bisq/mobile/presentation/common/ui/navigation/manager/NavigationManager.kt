@@ -20,7 +20,7 @@ interface NavigationManager {
     // Navigation State
     val currentTab: StateFlow<TabNavRoute?>
 
-    // Controller Management
+    // Controller Management - NavGraphs call these when composed/disposed
     fun setRootNavController(navController: NavHostController?)
 
     fun setTabNavController(navController: NavHostController?)

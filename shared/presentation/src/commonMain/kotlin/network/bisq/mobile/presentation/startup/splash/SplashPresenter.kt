@@ -18,7 +18,6 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManagerImpl.Companion.NAVIGATE_THROTTLE_MS
 import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class SplashPresenter(
@@ -78,8 +77,7 @@ abstract class SplashPresenter(
         runCatching {
             val profileSettings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
             val deviceSettings: Settings = settingsRepository.fetch()
-            // This delay is to pass the navigation throttling logic
-            delay(NAVIGATE_THROTTLE_MS)
+
             if (!profileSettings.isTacAccepted) {
                 navigateToAgreement()
             } else {
