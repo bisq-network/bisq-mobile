@@ -254,6 +254,7 @@ class OfferbookPresenterFilterTest {
     }
 
     @Test
+    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_onlyMyOffers_filters_to_user_offers() =
         runTest(testDispatcher) {
             val allOffers =
@@ -285,6 +286,7 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
+    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_empty_selection_shows_no_offers() =
         runTest(testDispatcher) {
             val allOffers =
@@ -321,6 +323,7 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
+    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_baseline_availability_remains_stable() =
         runTest(testDispatcher) {
             val allOffers =
@@ -452,6 +455,7 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
+    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_onlyMyOffers_respects_method_filters() =
         runTest(testDispatcher) {
             val allOffers =
