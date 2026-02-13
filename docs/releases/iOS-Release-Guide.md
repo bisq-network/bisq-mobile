@@ -342,6 +342,52 @@ Each version entry has its own `localizedDescription` for release notes:
 
 ---
 
+## App reviews
+
+For a project like ours, generally the main blocker gets to:
+
+
+```
+Guideline 3.1.5(iii) - which requires exchange services only be offered in countries or regions where the app has appropriate licensing and permissions to provide a cryptocurrency exchange.
+```
+
+Resulting in a demand for financial documents proving that we can operate in every country we are releasing
+to.
+
+From all the backs and forth with Apple, the one and only explanation that has proven to work is this one
+
+```
+Subject: Clarification Regarding Cryptocurrency Exchange Services – Bisq Connect
+
+Bisq Connect does not provide cryptocurrency exchange services, operate an exchange, or act as a broker or financial intermediary.
+
+Bisq is a fully decentralized, peer-to-peer open-source protocol. There is no operating company, no central matching engine, and no custodial entity. The Bisq network is composed of independently operated nodes run by individual users.
+
+Bisq Connect is a non-custodial remote interface client that allows a user to connect to their own self-hosted Bisq “trusted node” via secure WebSocket connection.
+Important clarifications:
+
+ - The app does not custody user funds.
+ - The app does not hold private keys.
+ - The app does not execute trades.
+ - The app does not operate or control any exchange infrastructure.
+ - The app does not match counterparties.
+ - The app does not intermediate transactions.
+ - The app does not provide exchange services to users.
+
+All trading logic, offer creation, order matching, transaction signing, and settlement occur entirely on the user-controlled node software outside of the app.
+
+Bisq Connect functions similarly to a remote desktop client or node management interface. It allows users to remotely monitor and interact with software they independently operate.
+
+The app is open source and available at:
+[GitHub](https://github.com/bisq-network/bisq-mobile)
+
+We hope this clarifies that Bisq Connect is client software for interacting with a decentralized protocol, not a cryptocurrency exchange service under Guideline 3.1.5(iii).
+Please let us know if you require any additional technical documentation.
+
+```
+
+---
+
 ## Checklist
 
 Before each release:
