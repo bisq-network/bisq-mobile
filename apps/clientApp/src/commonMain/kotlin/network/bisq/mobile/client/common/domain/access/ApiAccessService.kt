@@ -447,6 +447,12 @@ class ApiAccessService(
                     bisqApiUrl = pairingQrCode.restApiUrl,
                     selectedProxyOption = getProxyOptionFromRestUrl(url),
                     tlsFingerprint = pairingQrCode.tlsFingerprint,
+                    // Clear old credentials so ensurePairingCredentials always
+                    // requests fresh pairing when a new QR code is scanned.
+                    // Old sessions may have expired or the server may have restarted.
+                    clientId = null,
+                    sessionId = null,
+                    clientSecret = null,
                 )
             }
         }

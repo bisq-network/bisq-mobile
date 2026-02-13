@@ -150,6 +150,15 @@ class WebSocketClientService(
                     null
                 }
 
+            // Don't create the WebSocket client until we have valid session credentials.
+            // During the pairing flow, settings are first updated with URL/TLS (credentials null),
+            // then again with credentials after the pairing HTTP POST succeeds.
+            // Connecting without credentials causes 401 on servers with password auth enabled.
+            if (httpClientSettings.sessionId.isNullOrBlank() || httpClientSettings.clientId.isNullOrBlank()) {
+                log.d { "Skipping WebSocket client creation — session credentials not yet available" }
+                return@withLock
+            }
+
             val newClient =
                 webSocketClientFactory.createNewClient(
                     httpClient = httpClientService.getClient(),
