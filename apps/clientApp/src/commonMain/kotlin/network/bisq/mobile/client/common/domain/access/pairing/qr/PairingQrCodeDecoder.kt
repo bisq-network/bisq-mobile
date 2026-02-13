@@ -70,17 +70,28 @@ class PairingQrCodeDecoder(
     }
 
     private fun adjustWebSocketUrlForDevice(url: String): String {
-        if (isIOS()) return url
-        val localhost = androidLocalhost()
-        return url
-            .replace(LOOPBACK, localhost)
-            .replace(LOCALHOST, localhost)
+        if (!environmentController.isSimulator()) return url
+        // Don't replace onion addresses — Tor traffic goes through the Tor proxy, not emulator loopback
+        if (url.contains(".onion")) return url
+        // On emulators/simulators, replace the host with the appropriate loopback
+        // because emulators can't reach LAN IPs — they route to the host via special addresses
+        val emulatorHost = if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
+        return replaceHost(url, emulatorHost)
+    }
+
+    private fun replaceHost(url: String, newHost: String): String {
+        // URL format: scheme://host:port/...
+        val schemeEnd = url.indexOf("://")
+        if (schemeEnd < 0) return url
+        val hostStart = schemeEnd + 3
+        val portOrPathStart = url.indexOf(':', hostStart).takeIf { it >= 0 }
+            ?: url.indexOf('/', hostStart).takeIf { it >= 0 }
+            ?: url.length
+        return url.substring(0, hostStart) + newHost + url.substring(portOrPathStart)
     }
 
     private fun webSocketUrlToRestApiUrl(webSocketUrl: String): String =
         webSocketUrl
             .replaceFirst("wss://", "https://")
             .replaceFirst("ws://", "http://")
-
-    private fun androidLocalhost(): String = if (environmentController.isSimulator()) ANDROID_LOCALHOST else LOOPBACK
 }

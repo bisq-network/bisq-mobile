@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
+import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
@@ -46,8 +47,11 @@ class ApiAccessService(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val httpClientService: HttpClientService,
     private val pairingQrCodeDecoder: PairingQrCodeDecoder,
+    private val environmentController: EnvironmentController,
 ) : ServiceFacade(),
     Logging {
+    private val isSimulator = environmentController.isSimulator()
+
     // Auto-generate client name from platform info
     private val _clientName = MutableStateFlow(generateClientName())
     val clientName: StateFlow<String> = _clientName.asStateFlow()
@@ -114,7 +118,7 @@ class ApiAccessService(
         serviceScope.launch {
             try {
                 val settings = sensitiveSettingsRepository.fetch()
-                val bisqApiUrl = adaptLoopbackForAndroid(settings.bisqApiUrl)
+                val bisqApiUrl = adaptUrlForDevice(settings.bisqApiUrl)
                 if (_webSocketUrl.value.isBlank() && bisqApiUrl.isNotBlank()) {
                     _webSocketUrl.value =
                         restApiUrlToWebSocketUrl(bisqApiUrl)
@@ -185,7 +189,7 @@ class ApiAccessService(
             pairingQrCodeDataStored.value = false
             // Use injected decoder instead of static call
             val pairingQrCode = pairingQrCodeDecoder.decode(trimmedValue)
-            val wsUrl = adaptLoopbackForAndroid(pairingQrCode.webSocketUrl)
+            val wsUrl = adaptUrlForDevice(pairingQrCode.webSocketUrl)
             _webSocketUrl.value = wsUrl
             // Convert WebSocket URL to REST API URL, preserving the port
             // webSocketUrlToRestApiUrl just replaces ws:// with http://, keeping the port intact
@@ -366,12 +370,24 @@ class ApiAccessService(
             .replaceFirst("https", "wss")
             .replaceFirst("http", "ws")
 
-    private fun adaptLoopbackForAndroid(url: String): String {
-        if (isIOS()) return url
+    private fun adaptUrlForDevice(url: String): String {
+        if (!isSimulator) return url
+        // Don't replace onion addresses — Tor traffic goes through the Tor proxy, not emulator loopback
+        if (url.contains(".onion")) return url
+        // On emulators/simulators, replace the host with the appropriate loopback
+        // because emulators can't reach LAN IPs — they route to the host via special addresses
+        val emulatorHost = if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
+        return replaceHost(url, emulatorHost)
+    }
 
-        return url
-            .replace(LOOPBACK, ANDROID_LOCALHOST)
-            .replace(LOCALHOST, ANDROID_LOCALHOST)
+    private fun replaceHost(url: String, newHost: String): String {
+        val schemeEnd = url.indexOf("://")
+        if (schemeEnd < 0) return url
+        val hostStart = schemeEnd + 3
+        val portOrPathStart = url.indexOf(':', hostStart).takeIf { it >= 0 }
+            ?: url.indexOf('/', hostStart).takeIf { it >= 0 }
+            ?: url.length
+        return url.substring(0, hostStart) + newHost + url.substring(portOrPathStart)
     }
 
     fun isIOS(): Boolean {

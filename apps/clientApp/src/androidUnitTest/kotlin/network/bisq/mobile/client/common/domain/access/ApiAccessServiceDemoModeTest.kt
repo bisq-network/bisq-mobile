@@ -22,6 +22,7 @@ import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import org.junit.After
@@ -76,12 +77,17 @@ class ApiAccessServiceDemoModeTest {
         every { sensitiveSettingsRepository.data } returns flowOf(SensitiveSettings())
         coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
 
+        val environmentController =
+            mockk<EnvironmentController> {
+                every { isSimulator() } returns false
+            }
         apiAccessService =
             ApiAccessService(
                 pairingService,
                 sensitiveSettingsRepository,
                 httpClientService,
                 pairingQrCodeDecoder,
+                environmentController,
             )
         // Reset demo mode before each test
         ApplicationBootstrapFacade.isDemo = false

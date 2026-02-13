@@ -20,6 +20,8 @@ import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.domain.data.EnvironmentController
+import io.mockk.every
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import kotlin.test.AfterTest
@@ -68,12 +70,17 @@ class ApiAccessServiceTest {
                 }
             }
 
+        val environmentController =
+            mockk<EnvironmentController> {
+                every { isSimulator() } returns false
+            }
         apiAccessService =
             ApiAccessService(
                 pairingService,
                 sensitiveSettingsRepository,
                 httpClientService,
                 pairingQrCodeDecoder,
+                environmentController,
             )
     }
 

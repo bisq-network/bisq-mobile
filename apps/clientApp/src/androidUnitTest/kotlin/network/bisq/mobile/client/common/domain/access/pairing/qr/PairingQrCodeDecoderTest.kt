@@ -74,7 +74,8 @@ class PairingQrCodeDecoderTest {
         val result = decoder.decode(bytes)
 
         assertEquals(PairingQrCodeFormat.VERSION, result.version)
-        assertEquals("wss://test.example.com:8090", result.webSocketUrl)
+        // On emulator, host is replaced with Android loopback
+        assertEquals("wss://$ANDROID_LOCALHOST:8090", result.webSocketUrl)
         assertNotNull(result.pairingCode)
         assertNull(result.tlsFingerprint)
         assertNull(result.torClientAuthSecret)
@@ -87,7 +88,8 @@ class PairingQrCodeDecoderTest {
 
         val result = decoder.decode(base64)
 
-        assertEquals("wss://base64.test:8090", result.webSocketUrl)
+        // On emulator, host is replaced with Android loopback
+        assertEquals("wss://$ANDROID_LOCALHOST:8090", result.webSocketUrl)
     }
 
     @Test
@@ -144,12 +146,13 @@ class PairingQrCodeDecoderTest {
     }
 
     @Test
-    fun `decode with onion URL works`() {
+    fun `decode with onion URL preserves address even on emulator`() {
         val onionUrl = "wss://abcdefghijklmnopqrstuvwxyz234567.onion:8090"
         val bytes = encodeQrCode(webSocketUrl = onionUrl)
 
         val result = decoder.decode(bytes)
 
+        // Onion URLs are not replaced — Tor traffic goes through the Tor proxy
         assertEquals(onionUrl, result.webSocketUrl)
     }
 
@@ -176,10 +179,25 @@ class PairingQrCodeDecoderTest {
     }
 
     @Test
-    fun `decode with IP address URL works`() {
+    fun `decode with LAN IP on emulator replaces with loopback`() {
         val bytes = encodeQrCode(webSocketUrl = "wss://192.168.1.100:8090")
 
         val result = decoder.decode(bytes)
+
+        // On emulator, LAN IP is replaced with Android loopback
+        assertEquals("wss://$ANDROID_LOCALHOST:8090", result.webSocketUrl)
+    }
+
+    @Test
+    fun `decode with LAN IP on real device preserves address`() {
+        val realDeviceController =
+            mockk<EnvironmentController> {
+                every { isSimulator() } returns false
+            }
+        val realDeviceDecoder = PairingQrCodeDecoder(realDeviceController)
+        val bytes = encodeQrCode(webSocketUrl = "wss://192.168.1.100:8090")
+
+        val result = realDeviceDecoder.decode(bytes)
 
         assertEquals("wss://192.168.1.100:8090", result.webSocketUrl)
     }
