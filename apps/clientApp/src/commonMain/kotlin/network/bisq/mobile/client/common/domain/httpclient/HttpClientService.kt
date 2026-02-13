@@ -91,7 +91,11 @@ class HttpClientService(
             getHttpClientSettingsFlow().collect { newConfig ->
                 if (lastConfig != newConfig) {
                     lastConfig = newConfig
-                    _httpClient.value?.close()
+                    val oldClient = _httpClient.value
+                    // Clear before closing so getClient() waits for the new client
+                    // instead of returning the stale closed client
+                    _httpClient.value = null
+                    oldClient?.close()
                     _httpClient.value = createNewInstance(newConfig)
                     _httpClientChangedFlow.emit(newConfig)
                 }
