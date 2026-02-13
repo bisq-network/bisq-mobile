@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.common.domain.access
 
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,7 +22,6 @@ import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.EnvironmentController
-import io.mockk.every
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import kotlin.test.AfterTest

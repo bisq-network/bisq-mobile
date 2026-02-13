@@ -127,6 +127,30 @@ class TlsTrustManagerTest {
     }
 
     @Test
+    fun `accepts onion host with valid fingerprint regardless of SAN`() {
+        // Cert has SAN for 127.0.0.1, not for the .onion address.
+        // SAN check should be skipped for .onion hosts.
+        val cert = certWithSanAndBytes(LOOPBACK)
+        val onionHost = "m4x6kz3javsc3xyaurp7v3za4yuwaygezmvsrrojfgzeutw2g2fm5rad.onion"
+        val trustManager = TlsTrustManager(onionHost, validFingerprint)
+
+        // Should succeed — SAN mismatch is ignored for .onion, fingerprint matches
+        trustManager.checkServerTrusted(arrayOf(cert), "RSA")
+    }
+
+    @Test
+    fun `rejects onion host with wrong fingerprint`() {
+        val cert = certWithSanAndBytes(LOOPBACK, encoded = "different-cert".toByteArray())
+        val onionHost = "m4x6kz3javsc3xyaurp7v3za4yuwaygezmvsrrojfgzeutw2g2fm5rad.onion"
+        val trustManager = TlsTrustManager(onionHost, validFingerprint)
+
+        // Fingerprint mismatch should still be rejected even for .onion
+        assertFailsWith<SecurityException> {
+            trustManager.checkServerTrusted(arrayOf(cert), "RSA")
+        }
+    }
+
+    @Test
     fun `checkClientTrusted throws UnsupportedOperationException`() {
         val trustManager = TlsTrustManager(LOOPBACK, validFingerprint)
 

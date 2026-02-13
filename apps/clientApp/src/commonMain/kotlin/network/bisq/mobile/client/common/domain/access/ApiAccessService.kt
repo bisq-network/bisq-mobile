@@ -10,7 +10,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
-import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
@@ -19,6 +18,7 @@ import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.getPr
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -380,13 +380,17 @@ class ApiAccessService(
         return replaceHost(url, emulatorHost)
     }
 
-    private fun replaceHost(url: String, newHost: String): String {
+    private fun replaceHost(
+        url: String,
+        newHost: String,
+    ): String {
         val schemeEnd = url.indexOf("://")
         if (schemeEnd < 0) return url
         val hostStart = schemeEnd + 3
-        val portOrPathStart = url.indexOf(':', hostStart).takeIf { it >= 0 }
-            ?: url.indexOf('/', hostStart).takeIf { it >= 0 }
-            ?: url.length
+        val portOrPathStart =
+            url.indexOf(':', hostStart).takeIf { it >= 0 }
+                ?: url.indexOf('/', hostStart).takeIf { it >= 0 }
+                ?: url.length
         return url.substring(0, hostStart) + newHost + url.substring(portOrPathStart)
     }
 

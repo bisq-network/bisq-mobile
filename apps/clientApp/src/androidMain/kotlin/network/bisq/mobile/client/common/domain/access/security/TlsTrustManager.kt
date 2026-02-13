@@ -35,7 +35,13 @@ class TlsTrustManager(
                 } else {
                     expectedHost
                 }
-            if (!SanVerifier.matchesHost(cert, hostToTest)) {
+            // Skip SAN check for .onion hosts: the server cannot include the
+            // onion address in its certificate SAN because the TLS cert is
+            // generated before Tor publishes the hidden service address.
+            // Security is maintained by fingerprint pinning (below) plus
+            // Tor's own cryptographic host authentication.
+            val isOnionHost = hostToTest.endsWith(".onion")
+            if (!isOnionHost && !SanVerifier.matchesHost(cert, hostToTest)) {
                 // In case we had tested with "127.0.0.1" and it failed we will
                 // test again with "localhost".
                 if (hostToTest != LOOPBACK ||
