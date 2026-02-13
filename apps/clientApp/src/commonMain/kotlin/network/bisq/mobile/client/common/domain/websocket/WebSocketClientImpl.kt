@@ -130,6 +130,9 @@ class WebSocketClientImpl(
                                 port = wsPort
                                 path("/websocket")
                             }
+                            // Send session credentials on upgrade for servers with password auth
+                            sessionId?.let { headers.append(Headers.SESSION_ID, it) }
+                            clientId?.let { headers.append(Headers.CLIENT_ID, it) }
                         }
                     }
                 val elapsed = DateUtils.now() - startTime
