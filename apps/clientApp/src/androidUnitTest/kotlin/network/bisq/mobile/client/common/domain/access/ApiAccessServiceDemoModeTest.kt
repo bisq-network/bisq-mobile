@@ -15,11 +15,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
-import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.EnvironmentController
@@ -42,7 +42,6 @@ class ApiAccessServiceDemoModeTest {
     private val testScope = TestScope(testDispatcher)
     private lateinit var pairingService: PairingService
     private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var httpClientService: HttpClientService
     private lateinit var pairingQrCodeDecoder: PairingQrCodeDecoder
     private lateinit var apiAccessService: ApiAccessService
 
@@ -71,7 +70,6 @@ class ApiAccessServiceDemoModeTest {
 
         pairingService = mockk(relaxed = true)
         sensitiveSettingsRepository = mockk(relaxed = true)
-        httpClientService = mockk(relaxed = true)
         pairingQrCodeDecoder = mockk(relaxed = true)
 
         every { sensitiveSettingsRepository.data } returns flowOf(SensitiveSettings())
@@ -85,7 +83,6 @@ class ApiAccessServiceDemoModeTest {
             ApiAccessService(
                 pairingService,
                 sensitiveSettingsRepository,
-                httpClientService,
                 pairingQrCodeDecoder,
                 environmentController,
             )
@@ -111,82 +108,60 @@ class ApiAccessServiceDemoModeTest {
     }
 
     @Test
-    fun `setPairingQrCodeString with demo code sets demo mode`() =
+    fun `getPairingCodeQr with demo code returns demo PairingQrCode`() =
         runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
+            val result = apiAccessService.getPairingCodeQr(DEMO_PAIRING_CODE)
+
+            assertTrue(result.isSuccess)
+            val code = result.getOrThrow()
+            assertEquals(DEMO_API_URL, code.restApiUrl)
+            assertEquals(DEMO_WS_URL, code.webSocketUrl)
+            assertNull(code.tlsFingerprint)
+            assertEquals(Permission.entries.toSet(), code.pairingCode.grantedPermissions)
+        }
+
+    @Test
+    fun `getPairingCodeQr with whitespace-padded demo code returns demo PairingQrCode`() =
+        runTest {
+            val result = apiAccessService.getPairingCodeQr("  $DEMO_PAIRING_CODE  ")
+
+            assertTrue(result.isSuccess)
+            assertEquals(DEMO_API_URL, result.getOrThrow().restApiUrl)
+        }
+
+    @Test
+    fun `requestPairing with demo PairingQrCode sets demo mode flag`() =
+        runTest {
+            val demoPairingQrCode = apiAccessService.getPairingCodeQr(DEMO_PAIRING_CODE).getOrThrow()
+
+            apiAccessService.requestPairing(demoPairingQrCode)
 
             assertTrue(ApplicationBootstrapFacade.isDemo)
         }
 
     @Test
-    fun `setPairingQrCodeString with whitespace-padded demo code sets demo mode`() =
+    fun `requestPairing with demo PairingQrCode returns correct response`() =
         runTest {
-            // Input is trimmed before comparison, so whitespace should be handled
-            apiAccessService.setPairingQrCodeString("  $DEMO_PAIRING_CODE  ")
-            advanceUntilIdle()
+            val demoPairingQrCode = apiAccessService.getPairingCodeQr(DEMO_PAIRING_CODE).getOrThrow()
 
-            assertTrue(ApplicationBootstrapFacade.isDemo)
-            assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
+            val result = apiAccessService.requestPairing(demoPairingQrCode)
+
+            assertTrue(result.isSuccess)
+            val response = result.getOrThrow()
+            assertEquals("demo-client-id", response.clientId)
+            assertEquals("demo-session-id", response.sessionId)
+            assertEquals("demo-client-secret", response.clientSecret)
+            assertEquals(Long.MAX_VALUE, response.sessionExpiryDate)
         }
 
     @Test
-    fun `setPairingQrCodeString with demo code sets correct API URL`() =
-        runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
-
-            assertEquals(DEMO_API_URL, apiAccessService.restApiUrl.value)
-            assertEquals(DEMO_WS_URL, apiAccessService.webSocketUrl.value)
-        }
-
-    @Test
-    fun `setPairingQrCodeString with demo code sets fake credentials`() =
-        runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
-
-            assertEquals("demo-client-id", apiAccessService.clientId.value)
-            assertEquals("demo-client-secret", apiAccessService.clientSecret.value)
-            assertEquals("demo-session-id", apiAccessService.sessionId.value)
-            assertEquals("demo-pairing-id", apiAccessService.pairingCodeId.value)
-        }
-
-    @Test
-    fun `setPairingQrCodeString with demo code grants all permissions`() =
-        runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
-
-            assertEquals(Permission.entries.toSet(), apiAccessService.grantedPermissions.value)
-        }
-
-    @Test
-    fun `setPairingQrCodeString with demo code clears TLS fingerprint`() =
-        runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
-
-            assertNull(apiAccessService.tlsFingerprint.value)
-        }
-
-    @Test
-    fun `setPairingQrCodeString with demo code clears pairing error`() =
-        runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
-
-            assertNull(apiAccessService.pairingCodeError.value)
-        }
-
-    @Test
-    fun `setPairingQrCodeString with demo code updates sensitive settings`() =
+    fun `requestPairing with demo PairingQrCode updates sensitive settings`() =
         runTest {
             val settingsSlot = slot<suspend (SensitiveSettings) -> SensitiveSettings>()
             coEvery { sensitiveSettingsRepository.update(capture(settingsSlot)) } returns Unit
 
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
+            val demoPairingQrCode = apiAccessService.getPairingCodeQr(DEMO_PAIRING_CODE).getOrThrow()
+            apiAccessService.requestPairing(demoPairingQrCode)
 
             coVerify { sensitiveSettingsRepository.update(any()) }
 
@@ -201,42 +176,46 @@ class ApiAccessServiceDemoModeTest {
         }
 
     @Test
-    fun `setPairingQrCodeString with demo code sets pairing result stored`() =
-        runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
-
-            assertTrue(apiAccessService.pairingResultStored.value)
-        }
-
-    @Test
-    fun `setPairingQrCodeString with demo code sets successful pairing result`() =
-        runTest {
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
-
-            val result = apiAccessService.pairingResult.value
-            assertTrue(result != null && result.isSuccess)
-            val response = result.getOrThrow()
-            assertEquals("demo-client-id", response.clientId)
-            assertEquals("demo-session-id", response.sessionId)
-            assertEquals("demo-client-secret", response.clientSecret)
-        }
-
-    @Test
-    fun `setPairingQrCodeString with real code clears demo mode when previously in demo`() =
+    fun `requestPairing with real code clears demo mode when previously in demo`() =
         runTest {
             // First, enter demo mode
-            apiAccessService.setPairingQrCodeString(DEMO_PAIRING_CODE)
-            advanceUntilIdle()
+            val demoPairingQrCode = apiAccessService.getPairingCodeQr(DEMO_PAIRING_CODE).getOrThrow()
+            apiAccessService.requestPairing(demoPairingQrCode)
             assertTrue(ApplicationBootstrapFacade.isDemo)
 
-            // Now enter an invalid (but non-demo) pairing code - this should clear demo mode
-            // even though the code itself will fail to parse
-            apiAccessService.setPairingQrCodeString("some-invalid-real-code")
-            advanceUntilIdle()
+            // Now pair with a real code - mock pairingService to return success
+            val realResponse =
+                PairingResponse(
+                    version = 1,
+                    clientId = "real-client",
+                    clientSecret = "real-secret",
+                    sessionId = "real-session",
+                    sessionExpiryDate = 1234567890L,
+                )
+            coEvery { pairingService.requestPairing(any(), any()) } returns Result.success(realResponse)
 
-            // Demo mode should be cleared before attempting to parse
+            val realCode =
+                apiAccessService.getPairingCodeQr("REAL_CODE").let {
+                    // getPairingCodeQr will fail for non-demo code with relaxed mock,
+                    // so we create a real PairingQrCode directly
+                    network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode(
+                        version = 1,
+                        pairingCode =
+                            network.bisq.mobile.client.common.domain.access.pairing.PairingCode(
+                                id = "real-id",
+                                expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                                grantedPermissions = setOf(Permission.OFFERBOOK),
+                            ),
+                        webSocketUrl = "ws://real.com:8090",
+                        restApiUrl = "http://real.com:8090",
+                        tlsFingerprint = null,
+                        torClientAuthSecret = null,
+                    )
+                }
+
+            apiAccessService.requestPairing(realCode)
+
+            // Demo mode should be cleared
             assertFalse(ApplicationBootstrapFacade.isDemo)
         }
 }
