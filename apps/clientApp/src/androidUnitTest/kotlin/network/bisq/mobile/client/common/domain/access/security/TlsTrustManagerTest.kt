@@ -165,4 +165,17 @@ class TlsTrustManagerTest {
 
         assertTrue(trustManager.acceptedIssuers.isEmpty())
     }
+
+    @Test
+    fun `checkServerTrusted catches exceptions during certificate processing`() {
+        val cert = mockk<X509Certificate>()
+        every { cert.encoded } throws Exception("Test exception during encoding")
+        val trustManager = TlsTrustManager(LOOPBACK, validFingerprint)
+
+        assertFailsWith<SecurityException> {
+            trustManager.checkServerTrusted(arrayOf(cert), "RSA")
+        }.also {
+            assertTrue("TLS trust check failed" in (it.message ?: ""))
+        }
+    }
 }

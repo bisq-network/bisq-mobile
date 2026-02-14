@@ -200,6 +200,32 @@ class ApiAccessServiceTest {
             assertEquals(expectedResponse, result.getOrThrow())
         }
 
+    @Test
+    fun `requestPairing with failing pairingService returns failure`() =
+        runTest {
+            val regularPairingQrCode =
+                PairingQrCode(
+                    version = 1,
+                    pairingCode =
+                        PairingCode(
+                            id = "regular-id",
+                            expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                            grantedPermissions = setOf(Permission.OFFERBOOK),
+                        ),
+                    webSocketUrl = "ws://test.com:8090",
+                    restApiUrl = "http://test.com:8090",
+                    tlsFingerprint = null,
+                    torClientAuthSecret = null,
+                )
+            val expectedError = Exception("Pairing service failed")
+            coEvery { pairingService.requestPairing(any(), any()) } returns Result.failure(expectedError)
+
+            val result = apiAccessService.requestPairing(regularPairingQrCode)
+
+            assertTrue(result.isFailure)
+            assertEquals(expectedError, result.exceptionOrNull())
+        }
+
     // ========== updateSettings() Tests ==========
 
     @Test

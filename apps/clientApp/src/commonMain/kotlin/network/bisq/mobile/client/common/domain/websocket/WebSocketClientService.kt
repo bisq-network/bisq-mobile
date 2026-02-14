@@ -35,7 +35,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrCancel
 
-private data class SubscriptionType(
+internal data class SubscriptionType(
     val topic: Topic,
     val parameter: String?,
 )

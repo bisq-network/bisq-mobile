@@ -203,6 +203,25 @@ class PairingQrCodeDecoderTest {
     }
 
     @Test
+    fun `decode with URL without port replaces host correctly`() {
+        val bytes = encodeQrCode(webSocketUrl = "wss://example.com/websocket")
+
+        val result = decoder.decode(bytes)
+
+        // On emulator, host is replaced; path is preserved; no port in original
+        assertEquals("wss://$ANDROID_LOCALHOST/websocket", result.webSocketUrl)
+    }
+
+    @Test
+    fun `decode with URL without port or path replaces host correctly`() {
+        val bytes = encodeQrCode(webSocketUrl = "wss://example.com")
+
+        val result = decoder.decode(bytes)
+
+        assertEquals("wss://$ANDROID_LOCALHOST", result.webSocketUrl)
+    }
+
+    @Test
     fun `decode preserves pairing code id`() {
         val pairingCodeBytes = encodePairingCodeBytes(id = "unique-pairing-id-123")
         val bytes = encodeQrCode(pairingCodeBytes = pairingCodeBytes)
