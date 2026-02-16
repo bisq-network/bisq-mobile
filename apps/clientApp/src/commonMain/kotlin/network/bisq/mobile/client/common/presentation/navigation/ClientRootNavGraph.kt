@@ -2,6 +2,7 @@ package network.bisq.mobile.client.common.presentation.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -11,8 +12,10 @@ import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
+import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import org.koin.compose.koinInject
 
 // TODO: Coverage exclusion rationale - Compose UI navigation code cannot be unit tested.
 // Requires Compose UI testing framework for proper coverage.
@@ -22,6 +25,8 @@ fun ClientRootNavGraph(
     rootNavController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
+    val navigationManager: NavigationManager = koinInject()
+
     NavHost(
         modifier = modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
@@ -29,6 +34,13 @@ fun ClientRootNavGraph(
     ) {
         addCommonAppRoutes()
         addClientAppRoutes()
+    }
+
+    DisposableEffect(rootNavController) {
+        navigationManager.setRootNavController(rootNavController)
+        onDispose {
+            navigationManager.setRootNavController(null)
+        }
     }
 }
 

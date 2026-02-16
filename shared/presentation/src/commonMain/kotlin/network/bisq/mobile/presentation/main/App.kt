@@ -51,6 +51,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationM
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBanner
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
@@ -122,6 +123,7 @@ fun SafeInsetsContainer(
 /**
  * Main composable view of the application that platforms use to draw.
  */
+@ExcludeFromCoverage
 @Composable
 fun App(
     rootNavController: NavHostController,
@@ -143,22 +145,6 @@ fun App(
             // TODO is that needed? We set the language for i18n in the SettingsServiceFacade
             I18nSupport.setLanguage(languageCode)
             setDefaultLocale(languageCode)
-        }
-    }
-
-    DisposableEffect(rootNavController) {
-        navigationManager.setRootNavController(rootNavController)
-        onDispose {
-            navigationManager.setRootNavController(null)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        ExternalUriHandler.listener = { uri ->
-            navigationManager.navigateFromUri(uri)
-        }
-        onDispose {
-            ExternalUriHandler.listener = null
         }
     }
 
@@ -191,6 +177,15 @@ fun App(
             if (showLoadingDialog) {
                 LoadingDialog()
             }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        ExternalUriHandler.listener = { uri ->
+            navigationManager.navigateFromUri(uri)
+        }
+        onDispose {
+            ExternalUriHandler.listener = null
         }
     }
 }

@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.tabs.tab
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
@@ -37,12 +36,6 @@ fun TabContainerScreen() {
     val tabNavController = rememberNavController()
 
     RememberPresenterLifecycle(presenter)
-    DisposableEffect(tabNavController) {
-        navigationManager.setTabNavController(tabNavController)
-        onDispose {
-            navigationManager.setTabNavController(null)
-        }
-    }
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val currentTab by navigationManager.currentTab.collectAsState()
