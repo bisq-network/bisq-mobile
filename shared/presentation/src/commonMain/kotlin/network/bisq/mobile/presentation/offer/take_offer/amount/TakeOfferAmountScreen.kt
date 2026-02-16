@@ -11,7 +11,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
-import network.bisq.mobile.presentation.common.ui.components.molecules.BisqAmountSelector
+import network.bisq.mobile.presentation.common.ui.components.molecules.amountSelector.BisqAmountSelector
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 import org.koin.compose.koinInject
@@ -57,10 +57,10 @@ fun TakeOfferTradeAmountScreen() {
             formattedMaxAmount = presenter.formattedMaxAmountWithCode,
             formattedFiatAmount = formattedQuoteAmount,
             formattedBtcAmount = formattedBaseAmount,
+            sliderPosition = sliderPosition,
             onSliderValueChange = presenter::onSliderValueChanged,
             onTextValueChange = presenter::onTextValueChanged,
-            validateTextField = presenter::validateTextField,
-            sliderPosition = sliderPosition,
+            isError = !amountValid,
             onSliderValueChangeFinish = presenter::onSliderDragFinished,
         )
     }

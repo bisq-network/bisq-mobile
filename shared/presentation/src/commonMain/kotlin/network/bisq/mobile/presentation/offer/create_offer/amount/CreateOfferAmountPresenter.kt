@@ -138,6 +138,12 @@ class CreateOfferAmountPresenter(
     private val _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val amountValid: StateFlow<Boolean> get() = _amountValid.asStateFlow()
 
+    private val _isMinRangeAmountError: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isMinRangeAmountError: StateFlow<Boolean> get() = _isMinRangeAmountError.asStateFlow()
+
+    private val _isMaxRangeAmountError: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isMaxRangeAmountError: StateFlow<Boolean> get() = _isMaxRangeAmountError.asStateFlow()
+
     // Life cycle
     init {
         createOfferModel = createOfferPresenter.createOfferModel
@@ -245,7 +251,7 @@ class CreateOfferAmountPresenter(
             // Use the same validation logic as validateTextField to ensure consistency
             val maxAmountForValidation = getMaxAmountForValidation()
             val isInRange = exactMinor in minAmount..maxAmountForValidation
-            _amountValid.value = isInRange
+            _isMinRangeAmountError.value = !isInRange
 
             // Store the UNCLAMPED value so user sees what they typed
             quoteSideMinRangeAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
@@ -262,7 +268,7 @@ class CreateOfferAmountPresenter(
             updateAmountLimitInfo()
         } else {
             _formattedQuoteSideMinRangeAmount.value = ""
-            _amountValid.value = false
+            _isMinRangeAmountError.value = true
         }
     }
 
@@ -275,7 +281,7 @@ class CreateOfferAmountPresenter(
             // Use the same validation logic as validateTextField to ensure consistency
             val maxAmountForValidation = getMaxAmountForValidation()
             val isInRange = exactMinor in minAmount..maxAmountForValidation
-            _amountValid.value = isInRange
+            _isMaxRangeAmountError.value = !isInRange
 
             // Store the UNCLAMPED value so user sees what they typed
             quoteSideMaxRangeAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
@@ -292,7 +298,7 @@ class CreateOfferAmountPresenter(
             updateAmountLimitInfo()
         } else {
             _formattedQuoteSideMaxRangeAmount.value = ""
-            _amountValid.value = false
+            _isMaxRangeAmountError.value = true
         }
     }
 
@@ -560,7 +566,7 @@ class CreateOfferAmountPresenter(
                     withCode = true,
                 )
             _amountLimitInfo.value =
-                "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(_formattedReputationBasedMaxAmount.value)
+                "mobile.bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(_formattedReputationBasedMaxAmount.value, formattedMaxAmountWithCode)
 
             if (firstLoad) {
                 // Reset values based on reputation
@@ -617,6 +623,7 @@ class CreateOfferAmountPresenter(
 
     private fun applyMinRangeAmountSliderValue(amount: Float) {
         val separator = getGroupingSeparator().toString()
+        _isMinRangeAmountError.value = false
         _minRangeSliderValue.value = amount
         quoteSideMinRangeAmount =
             FiatVOFactory.from(sliderValueToAmount(minRangeSliderValue.value), quoteCurrencyCode)
@@ -629,6 +636,7 @@ class CreateOfferAmountPresenter(
 
     private fun applyMaxRangeAmountSliderValue(amount: Float) {
         val separator = getGroupingSeparator().toString()
+        _isMaxRangeAmountError.value = false
         _maxRangeSliderValue.value = amount
         quoteSideMaxRangeAmount =
             FiatVOFactory.from(sliderValueToAmount(maxRangeSliderValue.value), quoteCurrencyCode)

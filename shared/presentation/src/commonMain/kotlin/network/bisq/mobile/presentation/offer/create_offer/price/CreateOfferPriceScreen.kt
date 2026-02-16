@@ -15,11 +15,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.atoms.AmountSlider
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.components.atoms.slider.BisqSlider
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.WhyHighPricePopup
@@ -145,7 +145,10 @@ fun CreateOfferPriceScreen() {
                 BisqGap.V1()
 
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    AmountSlider(value = sliderPosition, onValueChange = { onSliderValueChange(it) })
+                    BisqSlider(
+                        value = sliderPosition,
+                        onValueChange = { onSliderValueChange(it) },
+                    )
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

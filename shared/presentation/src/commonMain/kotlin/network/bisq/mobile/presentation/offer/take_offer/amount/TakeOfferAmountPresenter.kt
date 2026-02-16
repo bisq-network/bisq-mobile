@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
+import network.bisq.mobile.domain.getDecimalSeparator
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
@@ -199,11 +200,16 @@ class TakeOfferAmountPresenter(
             return
         }
         try {
-            _amountValid.value = sliderPosition in 0f..1f
             _sliderPosition.value = sliderPosition
             val roundedFiatValue: Long = MonetarySlider.fractionToAmountLong(sliderPosition, minAmount, maxAmount, 10_000L)
             quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
             _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
+
+            val decimalSeparator = getDecimalSeparator()
+            val formattedFiatAmountValueString = _formattedQuoteAmount.value.substringBefore(decimalSeparator)
+
+            _amountValid.value = validateTextField(formattedFiatAmountValueString) == null
+
             priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
             baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
             _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)

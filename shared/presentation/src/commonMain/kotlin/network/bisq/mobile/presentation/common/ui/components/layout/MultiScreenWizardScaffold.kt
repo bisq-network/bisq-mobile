@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.molecules.ConfirmCloseAction
 import network.bisq.mobile.presentation.common.ui.components.molecules.ConfirmCloseOverlay
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.components.molecules.rememberConfirmCloseState
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -115,14 +116,26 @@ fun MultiScreenWizardScaffold(
             }
         }
 
+    val isPreview = LocalInspectionMode.current
+
     scaffold(
         {
             Column {
-                TopBar(
-                    title,
-                    showUserAvatar = showUserAvatar,
-                    extraActions = extraActionsFinal,
-                )
+                if (isPreview) {
+                    // Use pure UI component for previews (no Koin)
+                    TopBarContent(
+                        title = title,
+                        showBackButton = true,
+                        showUserAvatar = showUserAvatar,
+                        extraActions = extraActionsFinal,
+                    )
+                } else {
+                    TopBar(
+                        title,
+                        showUserAvatar = showUserAvatar,
+                        extraActions = extraActionsFinal,
+                    )
+                }
                 BisqStepProgressBar(
                     stepIndex = stepIndex,
                     stepsLength = stepsLength,
