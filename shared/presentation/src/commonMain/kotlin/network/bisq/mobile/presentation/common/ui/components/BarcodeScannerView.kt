@@ -25,7 +25,6 @@ import network.bisq.mobile.presentation.common.ui.utils.rememberCameraPermission
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ncgroup.kscan.Barcode
 import org.ncgroup.kscan.BarcodeFormat
-import org.ncgroup.kscan.BarcodeFormats
 import org.ncgroup.kscan.BarcodeResult
 import org.ncgroup.kscan.ScannerColors
 import org.ncgroup.kscan.ScannerUiOptions
@@ -35,7 +34,7 @@ import org.ncgroup.kscan.ScannerView
 fun BarcodeScannerView(
     codeTypes: List<BarcodeFormat> =
         listOf(
-            BarcodeFormats.FORMAT_QR_CODE,
+            BarcodeFormat.FORMAT_QR_CODE,
         ),
     onCancel: () -> Unit = {},
     onFail: (e: Throwable) -> Unit = {},

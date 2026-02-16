@@ -17,16 +17,6 @@ import platform.AVFoundation.AVCaptureVideoPreviewLayer
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
-import platform.AVFoundation.AVMetadataObjectTypeAztecCode
-import platform.AVFoundation.AVMetadataObjectTypeCode128Code
-import platform.AVFoundation.AVMetadataObjectTypeCode39Code
-import platform.AVFoundation.AVMetadataObjectTypeCode93Code
-import platform.AVFoundation.AVMetadataObjectTypeDataMatrixCode
-import platform.AVFoundation.AVMetadataObjectTypeEAN13Code
-import platform.AVFoundation.AVMetadataObjectTypeEAN8Code
-import platform.AVFoundation.AVMetadataObjectTypePDF417Code
-import platform.AVFoundation.AVMetadataObjectTypeQRCode
-import platform.AVFoundation.AVMetadataObjectTypeUPCECode
 import platform.AVFoundation.videoZoomFactor
 import platform.Foundation.NSLog
 import platform.UIKit.UIApplication
@@ -36,19 +26,15 @@ import platform.UIKit.UIInterfaceOrientationLandscapeLeft
 import platform.UIKit.UIInterfaceOrientationLandscapeRight
 import platform.UIKit.UIInterfaceOrientationPortraitUpsideDown
 import platform.UIKit.UIViewController
+import platform.darwin.DISPATCH_QUEUE_PRIORITY_DEFAULT
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_global_queue
 import platform.darwin.dispatch_get_main_queue
 
 /**
- * A UIViewController that manages the camera preview and barcode scanning.
+ * UIViewController that manages camera preview and barcode scanning using AVFoundation.
  *
- * @property device The AVCaptureDevice to use for capturing video.
- * @property codeTypes A list of BarcodeFormat types to detect.
- * @property onBarcodeSuccess A callback function that is invoked when barcodes are successfully detected.
- * @property onBarcodeFailed A callback function that is invoked when an error occurs during barcode scanning.
- * @property onBarcodeCanceled A callback function that is invoked when barcode scanning is canceled. (Currently not used within this class)
- * @property filter A callback function that is invoked when barcode result is processed. [onBarcodeSuccess] will only be invoked
- * if the invocation of this property resolves to true.
- * @property onMaxZoomRatioAvailable A callback function that is invoked with the maximum available zoom ratio for the camera.
+ * Features duplicate filtering (barcode must be detected twice) and zoom control.
  */
 class CameraViewController(
     private val device: AVCaptureDevice,
@@ -108,7 +94,9 @@ class CameraViewController(
 
         setupMetadataOutput(metadataOutput)
         setupPreviewLayer()
-        captureSession.startRunning()
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)) {
+            captureSession.startRunning()
+        }
     }
 
     private fun setupMetadataOutput(metadataOutput: AVCaptureMetadataOutput) {
@@ -133,15 +121,19 @@ class CameraViewController(
 
     override fun viewWillAppear(animated: Boolean) {
         super.viewWillAppear(animated)
-        if (!captureSession.isRunning()) {
-            captureSession.startRunning()
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)) {
+            if (!captureSession.isRunning()) {
+                captureSession.startRunning()
+            }
         }
     }
 
     override fun viewWillDisappear(animated: Boolean) {
         super.viewWillDisappear(animated)
-        if (captureSession.isRunning()) {
-            captureSession.stopRunning()
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)) {
+            if (captureSession.isRunning()) {
+                captureSession.stopRunning()
+            }
         }
     }
 
@@ -186,15 +178,17 @@ class CameraViewController(
                 Barcode(
                     data = value,
                     format = appSpecificFormat.toString(),
-                    rawBytes = value.encodeToByteArray(),
+                    rawBytes = stringToRawBytes(value),
                 )
 
             if (!filter(barcode)) return
 
             onBarcodeSuccess(listOf(barcode))
             barcodesDetected.clear()
-            if (::captureSession.isInitialized && captureSession.isRunning()) {
-                captureSession.stopRunning()
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)) {
+                if (::captureSession.isInitialized && captureSession.isRunning()) {
+                    captureSession.stopRunning()
+                }
             }
         }
     }
@@ -218,23 +212,13 @@ class CameraViewController(
         }
     }
 
-    private fun getMetadataObjectTypes(): List<AVMetadataObjectType> {
-        if (codeTypes.isEmpty() || codeTypes.contains(BarcodeFormat.FORMAT_ALL_FORMATS)) {
-            return allSupportedAvTypes
-        }
-
-        return codeTypes.mapNotNull { appFormat ->
-            appToAvFormatMap[appFormat]
-        }
-    }
+    private fun getMetadataObjectTypes(): List<AVMetadataObjectType> = BarcodeFormatMapper.toAvTypes(codeTypes)
 
     private fun isRequestedFormat(type: AVMetadataObjectType): Boolean {
         if (codeTypes.contains(BarcodeFormat.FORMAT_ALL_FORMATS)) {
-            return avToAppFormatMap.containsKey(type)
+            return BarcodeFormatMapper.isKnownFormat(type)
         }
-
-        val appFormat = avToAppFormatMap[type] ?: return false
-
+        val appFormat = BarcodeFormatMapper.toAppFormat(type)
         return codeTypes.contains(appFormat)
     }
 
@@ -256,41 +240,25 @@ class CameraViewController(
         connection.videoOrientation = videoOrientation
     }
 
-    private fun AVMetadataObjectType.toFormat(): BarcodeFormat = avToAppFormatMap[this] ?: BarcodeFormat.TYPE_UNKNOWN
-
-    private val avToAppFormatMap: Map<AVMetadataObjectType, BarcodeFormat> =
-        mapOf(
-            AVMetadataObjectTypeQRCode to BarcodeFormat.FORMAT_QR_CODE,
-            AVMetadataObjectTypeEAN13Code to BarcodeFormat.FORMAT_EAN_13,
-            AVMetadataObjectTypeEAN8Code to BarcodeFormat.FORMAT_EAN_8,
-            AVMetadataObjectTypeCode128Code to BarcodeFormat.FORMAT_CODE_128,
-            AVMetadataObjectTypeCode39Code to BarcodeFormat.FORMAT_CODE_39,
-            AVMetadataObjectTypeCode93Code to BarcodeFormat.FORMAT_CODE_93,
-            AVMetadataObjectTypeUPCECode to BarcodeFormat.FORMAT_UPC_E,
-            AVMetadataObjectTypePDF417Code to BarcodeFormat.FORMAT_PDF417,
-            AVMetadataObjectTypeAztecCode to BarcodeFormat.FORMAT_AZTEC,
-            AVMetadataObjectTypeDataMatrixCode to BarcodeFormat.FORMAT_DATA_MATRIX,
-        )
-
-    private val appToAvFormatMap: Map<BarcodeFormat, AVMetadataObjectType> =
-        avToAppFormatMap.entries.associateBy({ it.value }) { it.key }
-
-    val allSupportedAvTypes: List<AVMetadataObjectType> = avToAppFormatMap.keys.toList()
+    private fun AVMetadataObjectType.toFormat(): BarcodeFormat = BarcodeFormatMapper.toAppFormat(this)
 
     fun dispose() {
-        // Best-effort cleanup to avoid retaining camera resources
-        runCatching {
-            if (::captureSession.isInitialized) {
-                if (captureSession.isRunning()) captureSession.stopRunning()
-                // Remove inputs/outputs to break potential retain cycles
-                (captureSession.outputs as? List<AVCaptureOutput>)?.forEach { output ->
-                    runCatching { captureSession.removeOutput(output) }
-                }
-                (captureSession.inputs as? List<AVCaptureDeviceInput>)?.forEach { input ->
-                    runCatching { captureSession.removeInput(input) }
+        // Stop capture session on background thread to avoid UI unresponsiveness
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)) {
+            runCatching {
+                if (::captureSession.isInitialized) {
+                    if (captureSession.isRunning()) captureSession.stopRunning()
+                    // Remove inputs/outputs to break potential retain cycles
+                    (captureSession.outputs as? List<AVCaptureOutput>)?.forEach { output ->
+                        runCatching { captureSession.removeOutput(output) }
+                    }
+                    (captureSession.inputs as? List<AVCaptureDeviceInput>)?.forEach { input ->
+                        runCatching { captureSession.removeInput(input) }
+                    }
                 }
             }
         }
+        // UI cleanup on main thread
         runCatching {
             if (::previewLayer.isInitialized) {
                 previewLayer.removeFromSuperlayer()

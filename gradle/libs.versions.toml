@@ -38,7 +38,7 @@ androidx-multidex = "2.0.1"
 androidx-core-splashscreen = "1.0.1"
 androidx-navigation-compose = "2.9.2"
 androidx-datastore = "1.1.7"
-androidx-camera = "1.5.0"
+androidx-camera = "1.5.3"
 
 # -------------------- UI / Compose --------------------
 compose-material-icons = "1.8.2"
