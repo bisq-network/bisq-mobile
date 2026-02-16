@@ -44,9 +44,17 @@ class ClientConnectivityService(
                 }
             sessionTotalRequests++
         }
+
+        /**
+         * Resets the average trip time tracking. Used by tests to ensure clean state.
+         */
+        internal fun resetAverageTripTime() {
+            averageTripTime = DEFAULT_AVERAGE_TRIP_TIME
+            sessionTotalRequests = 0
+        }
     }
 
-    private var job: Job? = null
+    internal var job: Job? = null
     private val pendingJobs = mutableListOf<Job>()
     private val pendingConnectivityBlocks = mutableListOf<suspend () -> Unit>()
     private val mutex = Mutex()
@@ -91,7 +99,12 @@ class ClientConnectivityService(
                 val previousStatus = _status.value
                 _status.value =
                     when {
-                        !isConnected() -> ConnectivityStatus.RECONNECTING
+                        !isConnected() -> {
+                            // Trigger reconnection attempt to recover from max-retry
+                            // exhaustion or transient network outages
+                            webSocketClientService.triggerReconnect()
+                            ConnectivityStatus.RECONNECTING
+                        }
                         isSlow() -> ConnectivityStatus.REQUESTING_INVENTORY
                         else -> ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
                     }

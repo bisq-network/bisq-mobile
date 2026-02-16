@@ -208,6 +208,8 @@ val clientDomainModule =
                 get(named("WebSocketApiPort")),
                 get(),
                 get(),
+                get(),
+                get(),
             )
         }
 

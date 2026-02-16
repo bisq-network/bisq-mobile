@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.main
 
+import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetupSettings
 import network.bisq.mobile.client.shared.BuildConfig
@@ -7,6 +8,7 @@ import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -18,6 +20,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
  */
 open class ClientMainPresenter(
     private val connectivityService: ClientConnectivityService,
+    private val networkServiceFacade: NetworkServiceFacade,
     settingsServiceFacade: SettingsServiceFacade,
     tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
@@ -47,6 +50,9 @@ open class ClientMainPresenter(
 
     override fun onResume() {
         super.onResume()
+        presenterScope.launch {
+            networkServiceFacade.ensureTorRunning()
+        }
         connectivityService.startMonitoring()
     }
 

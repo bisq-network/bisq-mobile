@@ -1,7 +1,9 @@
 package network.bisq.mobile.presentation.startup.splash
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +30,11 @@ abstract class SplashPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val versionProvider: VersionProvider,
 ) : BasePresenter(mainPresenter) {
+    companion object {
+        private const val MAX_NAVIGATION_RETRIES = 3
+        private const val NAVIGATION_RETRY_DELAY_MS = 1000L
+    }
+
     abstract val state: StateFlow<String>
 
     val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
@@ -74,30 +81,50 @@ abstract class SplashPresenter(
     protected open suspend fun navigateToNextScreen() {
         log.d { "Navigating to next screen" }
 
-        runCatching {
-            val profileSettings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-            val deviceSettings: Settings = settingsRepository.fetch()
-
-            if (!profileSettings.isTacAccepted) {
-                navigateToAgreement()
-            } else {
-                // only fetch profile with connectivity
-                val hasProfile: Boolean = userProfileService.hasUserProfile()
-
-                if (hasProfile) {
-                    // Scenario 1: All good and setup for both androidNode and xClients
-                    navigateToHome()
-                } else if (deviceSettings.firstLaunch) {
-                    // Scenario 2: Loading up for first time for both androidNode and xClients
-                    navigateToOnboarding()
-                } else {
-                    // Scenario 3: Create profile
-                    navigateToCreateProfile()
+        // TODO this logic with delay is a bad practice but couldn't find a better solution to consider all the
+        //      scnearios related to changing security setups on different trusted nodes + reconnection mechanism
+        //      We need to improve this in the near future.
+        for (attempt in 0 until MAX_NAVIGATION_RETRIES) {
+            val result =
+                runCatching {
+                    val profileSettings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
+                    val deviceSettings: Settings = settingsRepository.fetch()
+                    if (!profileSettings.isTacAccepted) {
+                        navigateToAgreement()
+                    } else {
+                        // only fetch profile with connectivity
+                        val hasProfile: Boolean = userProfileService.hasUserProfile()
+                        if (hasProfile) {
+                            // Scenario 1: All good and setup for both androidNode and xClients
+                            navigateToHome()
+                        } else if (deviceSettings.firstLaunch) {
+                            // Scenario 2: Loading up
+                            // for first time for both androidNode and xClients
+                            navigateToOnboarding()
+                        } else {
+                            // Scenario 3: Create profile
+                            navigateToCreateProfile()
+                        }
+                    }
                 }
+
+            if (result.isSuccess) return
+
+            val error = result.exceptionOrNull()!!
+            if (error is CancellationException) {
+                // CancellationException may come from scope cancellation (view detached)
+                // or from a transient WebSocket client disposal during credential handoff.
+                // Bail if our own scope is cancelled; retry otherwise.
+                currentCoroutineContext().ensureActive()
+                if (attempt < MAX_NAVIGATION_RETRIES - 1) {
+                    log.w { "Navigation interrupted, retrying (attempt ${attempt + 2}/$MAX_NAVIGATION_RETRIES)..." }
+                    delay(NAVIGATION_RETRY_DELAY_MS)
+                    continue
+                }
+                return
             }
-        }.onFailure {
-            if (it is CancellationException) return
-            log.e(it) { "Failed to navigate out of splash" }
+            log.e(error) { "Failed to navigate out of splash" }
+            return
         }
     }
 

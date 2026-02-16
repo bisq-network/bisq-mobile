@@ -29,6 +29,7 @@ val clientPresentationModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         } bind AppPresenter::class
 

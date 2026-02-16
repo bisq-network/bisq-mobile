@@ -62,6 +62,7 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SemanticVersion
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import network.bisq.mobile.domain.utils.createUuid
+import kotlin.concurrent.Volatile
 
 class WebSocketClientImpl(
     private val httpClient: HttpClient,
@@ -73,13 +74,18 @@ class WebSocketClientImpl(
 ) : WebSocketClient,
     Logging {
     companion object {
-        const val DELAY_TO_RECONNECT = 3000L
+        const val DELAY_TO_RECONNECT = 2000L
         const val MAX_RECONNECT_ATTEMPTS = 5
-        const val MAX_RECONNECT_DELAY = 30000L // 30 seconds max delay
+        const val MAX_RECONNECT_DELAY = 10000L // 10 seconds max delay
+        const val RECONNECT_CONNECT_TIMEOUT = 30_000L // shorter timeout during reconnect
+        const val STALE_RECONNECT_THRESHOLD_MS = 30_000L // cancel reconnect if stuck this long
     }
 
     private var reconnectAttempts = 0
     private var isReconnecting = atomic(false)
+
+    @Volatile
+    private var reconnectConnectStartMs = 0L
     private var reconnectJob: Job? = null
     private var session: DefaultClientWebSocketSession? = null
     private val webSocketEventObservers =
@@ -193,7 +199,15 @@ class WebSocketClientImpl(
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun reconnect() {
         if (isReconnecting.getAndSet(true)) {
-            log.d { "Reconnect already in progress, skipping" }
+            // If the connect phase has been running longer than the stale threshold,
+            // cancel it so the next triggerReconnect() call can start fresh.
+            val connectStart = reconnectConnectStartMs
+            val elapsed = if (connectStart > 0) DateUtils.now() - connectStart else 0
+            if (elapsed > STALE_RECONNECT_THRESHOLD_MS) {
+                log.d { "Reconnect connect stuck for ${elapsed}ms, cancelling for fresh retry" }
+                reconnectJob?.cancel()
+            }
+            // else: reconnect already in progress, silently skip
             return
         }
         reconnectJob?.cancel()
@@ -229,18 +243,31 @@ class WebSocketClientImpl(
                 log.d { "Waiting ${delayMillis}ms before reconnect attempt" }
                 delay(delayMillis)
                 reconnectAttempts++
-                val timeout = WebSocketClient.determineTimeout(apiUrl.host)
+                // Use shorter timeout during reconnect to avoid long hangs
+                val timeout =
+                    minOf(
+                        WebSocketClient.determineTimeout(apiUrl.host),
+                        RECONNECT_CONNECT_TIMEOUT,
+                    )
+                reconnectConnectStartMs = DateUtils.now()
                 val error = connect(timeout)
+                reconnectConnectStartMs = 0
                 return@async error
             }
         reconnectJob = newReconnectJob
         newReconnectJob.invokeOnCompletion {
+            reconnectConnectStartMs = 0
             isReconnecting.value = false
-            if (it == null && newReconnectJob.getCompleted() != null) {
-                reconnect()
+            if (it == null) {
+                val connectError = newReconnectJob.getCompleted()
+                if (connectError != null && isRetryableError(connectError)) {
+                    reconnect()
+                }
             }
         }
     }
+
+    private fun isRetryableError(error: Throwable): Boolean = error !is UnauthorizedApiAccessException
 
     // Blocking request until we get the associated response
     override suspend fun sendRequestAndAwaitResponse(

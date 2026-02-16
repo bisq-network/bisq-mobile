@@ -45,4 +45,20 @@ abstract class NetworkServiceFacade(
             kmpTorService.stopTor()
         }
     }
+
+    /**
+     * Restarts the Tor daemon if it was stopped (e.g. iOS killed it while backgrounded).
+     * Safe to call when Tor is already running — returns immediately.
+     * Failures are caught and logged to prevent crashes.
+     */
+    suspend fun ensureTorRunning() {
+        if (isTorEnabled() && kmpTorService.state.value is KmpTorService.TorState.Stopped) {
+            log.i { "Tor is stopped, attempting restart..." }
+            try {
+                kmpTorService.startTor()
+            } catch (e: Exception) {
+                log.e(e) { "Failed to start Tor while ensuring it's running" }
+            }
+        }
+    }
 }

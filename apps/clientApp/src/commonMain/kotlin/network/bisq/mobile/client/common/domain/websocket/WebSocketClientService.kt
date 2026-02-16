@@ -17,11 +17,14 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
@@ -32,8 +35,10 @@ import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrCancel
+import kotlin.concurrent.Volatile
 
 internal data class SubscriptionType(
     val topic: Topic,
@@ -50,9 +55,13 @@ class WebSocketClientService(
     private val defaultPort: Int,
     private val httpClientService: HttpClientService,
     private val webSocketClientFactory: WebSocketClientFactory,
+    private val sessionService: SessionService? = null,
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository? = null,
 ) : ServiceFacade(),
     Logging {
     companion object {
+        private const val SESSION_RENEWAL_COOLDOWN_MS = 30_000L
+
         // Initial subscriptions tracked for network banner:
         private val initialSubscriptionTypes =
             setOf(
@@ -62,12 +71,16 @@ class WebSocketClientService(
             )
     }
 
+    @Volatile
+    private var lastSessionRenewalAttemptMs = 0L
+
     private val clientUpdateMutex = Mutex()
     private val _connectionState =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     val connectionState = _connectionState.asStateFlow()
 
     private var stateCollectionJob: Job? = null
+    private var currentClientSettings: HttpClientSettings? = null
 
     private var currentClient = MutableStateFlow<WebSocketClient?>(null)
     private val subscriptionMutex = Mutex()
@@ -127,6 +140,7 @@ class WebSocketClientService(
             httpClientService.disposeClient()
             currentClient.value?.dispose()
             currentClient.value = null
+            currentClientSettings = null
             requestedSubscriptions.value.forEach { entry ->
                 entry.value.resetSequence()
             }
@@ -138,6 +152,15 @@ class WebSocketClientService(
      */
     private suspend fun updateWebSocketClient(httpClientSettings: HttpClientSettings) {
         clientUpdateMutex.withLock {
+            // Skip replacement if current client uses identical settings —
+            // avoids disposing a working connection during startup when
+            // httpClientChangedFlow emits duplicate/equivalent configs
+            // (e.g., from Tor state transitions).
+            if (currentClient.value != null && httpClientSettings == currentClientSettings) {
+                log.d { "WebSocket client settings unchanged, skipping update" }
+                return@withLock
+            }
+
             val newApiUrl: Url =
                 httpClientSettings.bisqApiUrl?.takeIf { it.isNotBlank() }?.let {
                     parseUrl(it)
@@ -147,8 +170,14 @@ class WebSocketClientService(
                 currentClient.value?.let {
                     log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.externalProxyUrl}" }
                     it.dispose()
+                    currentClientSettings = null
                     null
                 }
+
+            // Immediately reflect disconnected state so any code checking
+            // isConnected() during the client transition sees the correct state
+            // (prevents stale Connected from the disposed client).
+            _connectionState.value = ConnectionState.Disconnected()
 
             // Don't create the WebSocket client until we have valid session credentials.
             // During the pairing flow, settings are first updated with URL/TLS (credentials null),
@@ -156,6 +185,10 @@ class WebSocketClientService(
             // Connecting without credentials causes 401 on servers with password auth enabled.
             if (httpClientSettings.sessionId.isNullOrBlank() || httpClientSettings.clientId.isNullOrBlank()) {
                 log.d { "Skipping WebSocket client creation — session credentials not yet available" }
+                stateCollectionJob?.cancel()
+                stateCollectionJob = null
+                currentClientSettings = null
+                _connectionState.value = ConnectionState.Disconnected()
                 return@withLock
             }
 
@@ -168,6 +201,7 @@ class WebSocketClientService(
                 )
 
             currentClient.value = newClient
+            currentClientSettings = httpClientSettings
             ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
             stateCollectionJob?.cancel()
             stateCollectionJob =
@@ -183,17 +217,32 @@ class WebSocketClientService(
                                 }
                             }
                             if (state.error != null) {
-                                if (shouldAttemptReconnect(state.error)) {
+                                if (state.error is UnauthorizedApiAccessException) {
+                                    // Session expired — renew and reconnect with fresh credentials
+                                    serviceScope.launch { attemptSessionRenewal() }
+                                } else if (shouldAttemptReconnect(state.error)) {
                                     // We disconnected abnormally and we have not reached maximum retry
                                     newClient.reconnect()
                                 }
                             }
                         } else if (state is ConnectionState.Connected) {
-                            applySubscriptions(newClient)
+                            try {
+                                applySubscriptions(newClient)
+                            } catch (e: Exception) {
+                                log.e(e) { "Failed to apply subscriptions after reconnection" }
+                            }
                         }
                     }
                 }
             log.d { "WebSocket client updated with url $newApiUrl" }
+
+            // Proactively connect the new client so pending requests
+            // (e.g. getSettings() during splash navigation) aren't left
+            // waiting for an idle disconnected client.
+            serviceScope.launch {
+                val timeout = WebSocketClient.determineTimeout(newApiUrl.host)
+                newClient.connect(timeout)
+            }
         }
     }
 
@@ -277,6 +326,64 @@ class WebSocketClientService(
                 )
             }
             subscriptionsAreApplied = true
+        }
+    }
+
+    /**
+     * Triggers a reconnection attempt on the current client.
+     * Used by [ClientConnectivityService] to recover from max-retry exhaustion
+     * when network connectivity returns.
+     *
+     * Acquires [clientUpdateMutex] to prevent TOCTOU race with [updateWebSocketClient]
+     * that could swap/dispose the client between the null-check and reconnect call.
+     */
+    fun triggerReconnect() {
+        // Use runBlocking to acquire mutex from a non-suspending function
+        // This is safe because the mutex is held only briefly for the check + reconnect call
+        runBlocking {
+            clientUpdateMutex.withLock {
+                val client = currentClient.value ?: return@withLock
+                if (!isConnected()) {
+                    client.reconnect()
+                }
+            }
+        }
+    }
+
+    private suspend fun attemptSessionRenewal() {
+        val sessionSvc = sessionService ?: return
+        val settingsRepo = sensitiveSettingsRepository ?: return
+
+        val now = DateUtils.now()
+        if (now - lastSessionRenewalAttemptMs < SESSION_RENEWAL_COOLDOWN_MS) {
+            log.d { "Session renewal on cooldown, skipping" }
+            return
+        }
+        lastSessionRenewalAttemptMs = now
+
+        try {
+            val settings = settingsRepo.fetch()
+            val clientId = settings.clientId
+            val clientSecret = settings.clientSecret
+            if (clientId == null || clientSecret == null) {
+                log.w { "Cannot renew session — missing clientId or clientSecret" }
+                return
+            }
+
+            log.i { "Attempting session renewal after 401..." }
+            val result = sessionSvc.requestSession(clientId, clientSecret)
+            if (result.isSuccess) {
+                val response = result.getOrThrow()
+                log.i { "Session renewal succeeded, updating settings with new sessionId" }
+                settingsRepo.update { it.copy(sessionId = response.sessionId) }
+                // Note: settingsRepo.update triggers httpClientChangedFlow → updateWebSocketClient()
+                // which creates a new WS client with fresh credentials and connects automatically.
+                // No explicit connect() call needed here - it's handled reactively.
+            } else {
+                log.w { "Session renewal failed: ${result.exceptionOrNull()?.message}" }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Session renewal failed with exception" }
         }
     }
 

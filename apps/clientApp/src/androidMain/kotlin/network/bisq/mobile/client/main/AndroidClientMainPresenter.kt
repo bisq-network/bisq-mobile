@@ -4,6 +4,7 @@ import network.bisq.mobile.client.common.domain.service.network.ClientConnectivi
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -14,6 +15,7 @@ import network.bisq.mobile.presentation.common.service.OpenTradesNotificationSer
  */
 class AndroidClientMainPresenter(
     connectivityService: ClientConnectivityService,
+    networkServiceFacade: NetworkServiceFacade,
     settingsServiceFacade: SettingsServiceFacade,
     tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
@@ -23,6 +25,7 @@ class AndroidClientMainPresenter(
     urlLauncher: UrlLauncher,
 ) : ClientMainPresenter(
         connectivityService,
+        networkServiceFacade,
         settingsServiceFacade,
         tradesServiceFacade,
         userProfileServiceFacade,

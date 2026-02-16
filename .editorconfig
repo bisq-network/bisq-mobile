@@ -39,6 +39,12 @@ ktlint_compose_enabled = true
 # Temporarily disabled to avoid warnings on existing composables that emit content without modifier parameters
 ktlint_compose_modifier-missing-check = disabled
 
+# iOS-specific: Allow wildcard imports for platform frameworks (common convention for KMP iOS interop)
+# These are system frameworks with many types - explicit imports would be very verbose
+# This override applies only to iOS source sets (iosMain) across all modules
+[**/iosMain/**.kt]
+ktlint_standard_no-wildcard-imports = disabled
+
 [*.{json,yml,yaml}]
 indent_size = 2
 
