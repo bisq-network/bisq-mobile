@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.websocket.WebSockets
+import kotlinx.coroutines.Dispatchers
 import network.bisq.mobile.client.common.domain.access.security.TlsTrustManager
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyConfig
 import network.bisq.mobile.client.httpclient.NoDns
@@ -21,6 +22,7 @@ actual fun createHttpClient(
     config(this)
     install(WebSockets)
     engine {
+        dispatcher = Dispatchers.IO
         proxy = proxyConfig?.config
         config {
             if (proxyConfig?.isTorProxy == true) {
