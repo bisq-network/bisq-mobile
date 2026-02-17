@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened ]
     paths:
-      - 'shared/domain/src/commonMain/resources/mobile/**.properties'
+      - 'shared/domain/src/commonMain/resources/mobile/**/*.properties'
       - '.tx/config'
   workflow_run:
     workflows: [ BisqApps ]
@@ -31,7 +31,7 @@ jobs:
           echo "Verifying that i18n resource files match the Transifex configuration..."
 
           # Get all base properties files (excluding language-specific ones)
-          ACTUAL_SOURCE_FILES=$(find shared/domain/src/commonMain/resources/mobile/ -name "*.properties" | grep -v "_[a-z][a-z]\.properties$" | grep -v "_[a-z][a-z]_[A-Z][A-Z]\.properties$" | grep -v "_pcm\.properties$" | sort)
+          ACTUAL_SOURCE_FILES=$(find shared/domain/src/commonMain/resources/mobile/ -name "*.properties" | grep -Ev "_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$" | sort)
           echo "Found source files:"
           echo "$ACTUAL_SOURCE_FILES"
 
@@ -151,7 +151,7 @@ jobs:
             s_args="push -s"
           else
             s_resources=""
-            CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+\.properties$' | grep -v "_[a-z][a-z]\.properties$" | grep -v "_[a-z][a-z]_[A-Z][A-Z]\.properties$" | grep -v "_pcm\.properties$" || true)
+            CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+\.properties$' | grep -Ev "_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$" || true)
             if [ -n "$CHANGED_SOURCE_FILES" ]; then
               for file in $CHANGED_SOURCE_FILES; do
                 resource_slug_line=$(awk -v file="$file" '
@@ -180,11 +180,11 @@ jobs:
 
           # --- Handle TRANSLATION file pushes (-t) with BATCHING ---
           declare -A lang_resources
-          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$' -- || true)
+          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$' -- || true)
 
           if [ -n "$CHANGED_TRANSLATION_FILES" ]; then
             for file in $CHANGED_TRANSLATION_FILES; do
-              lang=$(echo "$file" | sed -E 's/.*_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$/\1/')
+              lang=$(echo "$file" | sed -E 's/.*_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$/\1/')
               resource_slug_line=$(awk -v file="$file" -v lang="$lang" '
                 BEGIN{FS="="}
                 $0 ~ /^\[o:.*:p:.*:r:.*\]$/ {resource=$0}
