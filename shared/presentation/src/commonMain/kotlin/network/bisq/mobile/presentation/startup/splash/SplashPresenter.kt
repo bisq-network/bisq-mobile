@@ -82,7 +82,7 @@ abstract class SplashPresenter(
         log.d { "Navigating to next screen" }
 
         // TODO this logic with delay is a bad practice but couldn't find a better solution to consider all the
-        //      scnearios related to changing security setups on different trusted nodes + reconnection mechanism
+        //      scenarios related to changing security setups on different trusted nodes + reconnection mechanism
         //      We need to improve this in the near future.
         for (attempt in 0 until MAX_NAVIGATION_RETRIES) {
             val result =
@@ -111,19 +111,22 @@ abstract class SplashPresenter(
             if (result.isSuccess) return
 
             val error = result.exceptionOrNull()!!
+
+            // If our own scope is cancelled (view detached), bail immediately.
             if (error is CancellationException) {
-                // CancellationException may come from scope cancellation (view detached)
-                // or from a transient WebSocket client disposal during credential handoff.
-                // Bail if our own scope is cancelled; retry otherwise.
                 currentCoroutineContext().ensureActive()
-                if (attempt < MAX_NAVIGATION_RETRIES - 1) {
-                    log.w { "Navigation interrupted, retrying (attempt ${attempt + 2}/$MAX_NAVIGATION_RETRIES)..." }
-                    delay(NAVIGATION_RETRY_DELAY_MS)
-                    continue
-                }
-                return
             }
-            log.e(error) { "Failed to navigate out of splash" }
+
+            // Retry on any error (network, transient CancellationException, etc.)
+            if (attempt < MAX_NAVIGATION_RETRIES - 1) {
+                log.w { "Navigation failed (attempt ${attempt + 1}/$MAX_NAVIGATION_RETRIES): ${error.message}" }
+                delay(NAVIGATION_RETRY_DELAY_MS)
+                continue
+            }
+
+            // All retries exhausted — navigate to onboarding as fallback to unblock the user
+            log.e(error) { "Navigation failed after $MAX_NAVIGATION_RETRIES attempts, falling back to onboarding" }
+            navigateToOnboarding()
             return
         }
     }
