@@ -4,6 +4,7 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened ]
     paths:
+      - 'shared/domain/src/commonMain/resources/mobile/*.properties'
       - 'shared/domain/src/commonMain/resources/mobile/**/*.properties'
       - '.tx/config'
   workflow_run:
