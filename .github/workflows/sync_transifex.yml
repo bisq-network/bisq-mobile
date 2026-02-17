@@ -152,7 +152,7 @@ jobs:
             s_args="push -s"
           else
             s_resources=""
-            CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+\.properties$' | grep -Ev "_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$" || true)
+            CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^shared/domain/src/commonMain/resources/mobile/.+\.properties$' | grep -Ev "_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$" || true)
             if [ -n "$CHANGED_SOURCE_FILES" ]; then
               for file in $CHANGED_SOURCE_FILES; do
                 resource_slug_line=$(awk -v file="$file" '
@@ -181,7 +181,7 @@ jobs:
 
           # --- Handle TRANSLATION file pushes (-t) with BATCHING ---
           declare -A lang_resources
-          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$' -- || true)
+          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/.+_([a-z]{2,3}([_-][A-Za-z]{2,4})?|pcm)\.properties$' -- || true)
 
           if [ -n "$CHANGED_TRANSLATION_FILES" ]; then
             for file in $CHANGED_TRANSLATION_FILES; do
