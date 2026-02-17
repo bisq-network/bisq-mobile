@@ -1,6 +1,8 @@
 package network.bisq.mobile.client.common.domain.service.network
 
 import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -56,20 +58,20 @@ class ClientConnectivityServiceTest {
     fun `checkConnectivity calls triggerReconnect when not connected`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns false
-            every { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
             delay(300)
 
-            verify(atLeast = 1) { webSocketClientService.triggerReconnect() }
+            coVerify(atLeast = 1) { webSocketClientService.triggerReconnect() }
         }
 
     @Test
     fun `checkConnectivity returns RECONNECTING when not connected`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns false
-            every { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
@@ -97,13 +99,13 @@ class ClientConnectivityServiceTest {
     fun `checkConnectivity does not call triggerReconnect when connected`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns true
-            every { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
             delay(300)
 
-            verify(exactly = 0) { webSocketClientService.triggerReconnect() }
+            coVerify(exactly = 0) { webSocketClientService.triggerReconnect() }
         }
 
     @Test
@@ -111,7 +113,7 @@ class ClientConnectivityServiceTest {
         runBlocking {
             var isConnected = false
             every { webSocketClientService.isConnected() } answers { isConnected }
-            every { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
@@ -207,13 +209,13 @@ class ClientConnectivityServiceTest {
     fun `triggerReconnect called repeatedly while disconnected`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns false
-            every { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
             delay(500)
 
-            verify(atLeast = 3) { webSocketClientService.triggerReconnect() }
+            coVerify(atLeast = 3) { webSocketClientService.triggerReconnect() }
         }
 
     @Test

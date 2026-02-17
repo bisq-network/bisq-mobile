@@ -337,15 +337,11 @@ class WebSocketClientService(
      * Acquires [clientUpdateMutex] to prevent TOCTOU race with [updateWebSocketClient]
      * that could swap/dispose the client between the null-check and reconnect call.
      */
-    fun triggerReconnect() {
-        // Use runBlocking to acquire mutex from a non-suspending function
-        // This is safe because the mutex is held only briefly for the check + reconnect call
-        runBlocking {
-            clientUpdateMutex.withLock {
-                val client = currentClient.value ?: return@withLock
-                if (!isConnected()) {
-                    client.reconnect()
-                }
+    suspend fun triggerReconnect() {
+        clientUpdateMutex.withLock {
+            val client = currentClient.value ?: return@withLock
+            if (!isConnected()) {
+                client.reconnect()
             }
         }
     }
@@ -382,6 +378,8 @@ class WebSocketClientService(
             } else {
                 log.w { "Session renewal failed: ${result.exceptionOrNull()?.message}" }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             log.e(e) { "Session renewal failed with exception" }
         }

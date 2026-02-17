@@ -51,7 +51,11 @@ open class ClientMainPresenter(
     override fun onResume() {
         super.onResume()
         presenterScope.launch {
-            networkServiceFacade.ensureTorRunning()
+            runCatching {
+                networkServiceFacade.ensureTorRunning()
+            }.onFailure { exception ->
+                log.e("Failed to ensure Tor is running", exception)
+            }
         }
         connectivityService.startMonitoring()
     }

@@ -267,7 +267,7 @@ class WebSocketClientImpl(
         }
     }
 
-    private fun isRetryableError(error: Throwable): Boolean = error !is UnauthorizedApiAccessException
+    private fun isRetryableError(error: Throwable) = error !is UnauthorizedApiAccessException && error !is IncompatibleHttpApiVersionException
 
     // Blocking request until we get the associated response
     override suspend fun sendRequestAndAwaitResponse(

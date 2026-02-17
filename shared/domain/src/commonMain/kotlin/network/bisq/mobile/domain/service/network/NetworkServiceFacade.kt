@@ -58,6 +58,7 @@ abstract class NetworkServiceFacade(
                 kmpTorService.startTor()
             } catch (e: Exception) {
                 log.e(e) { "Failed to start Tor while ensuring it's running" }
+                currentCoroutineContext().ensureActive()
             }
         }
     }
