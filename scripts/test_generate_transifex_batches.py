@@ -1,0 +1,38 @@
+import io
+import json
+import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import generate_transifex_batches as g
+
+
+class GenerateTransifexBatchesTests(unittest.TestCase):
+    def test_preserves_locale_format_in_batches(self):
+        batches = g.generate_batches(batch_size=4, locales=["pt_BR", "af_ZA", "de"])
+        self.assertEqual("pt_BR,af_ZA,de", batches[0]["locales"])
+
+    def test_resources_mapping_supports_hyphen_and_underscore_locales(self):
+        batches = [{"id": 1, "locales": "pt_BR,af_ZA,zh-Hans", "name": "batch-1"}]
+        resources = {
+            "pt_BR": "bisq-mobile.mobileproperties",
+            "af_ZA": "bisq-mobile.settingsproperties",
+            "zh-Hans": "bisq-mobile.chatproperties",
+        }
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            g.print_github_actions_json(batches, resources)
+
+        matrix = json.loads(buf.getvalue())
+        self.assertEqual(
+            "bisq-mobile.chatproperties,bisq-mobile.mobileproperties,bisq-mobile.settingsproperties",
+            matrix["include"][0]["resources"],
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

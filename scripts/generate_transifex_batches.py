@@ -38,12 +38,11 @@ PRIORITY_TIERS["standard"] = [
 
 def convert_locale_format(locale: str) -> str:
     """
-    Convert internal locale format to Transifex format.
+    Keep locale codes in repository/.tx format for tx CLI.
 
-    Internal: pt_BR, af_ZA (underscore for region)
-    Transifex: pt-BR, af-ZA (hyphen for region)
+    Examples: pt_BR, af_ZA.
     """
-    return locale.replace("_", "-")
+    return locale
 
 
 def generate_batches(batch_size: int, priority_based: bool = False, locales: Optional[List[str]] = None) -> List[Dict]:
@@ -144,13 +143,11 @@ def print_github_actions_json(batches: List[Dict], resources_map: Optional[Dict[
             batch_resource_set = set()
             batch_locale_list = batch["locales"].split(",")
 
-            for tx_locale in batch_locale_list:
-                # Convert Transifex format (pt-BR) back to internal format (pt_BR)
-                internal_locale = tx_locale.replace("-", "_")
-
-                if internal_locale in resources_map:
+            for locale in batch_locale_list:
+                # Matrix locales already use repository/.tx locale format.
+                if locale in resources_map:
                     # Split comma-separated resources and add to set for deduplication
-                    locale_resources = resources_map[internal_locale].split(",")
+                    locale_resources = resources_map[locale].split(",")
                     batch_resource_set.update(r.strip() for r in locale_resources if r.strip())
 
             # Sort for consistency and join back to comma-separated string
