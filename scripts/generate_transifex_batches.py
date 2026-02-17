@@ -36,15 +36,6 @@ PRIORITY_TIERS["standard"] = [
 ]
 
 
-def convert_locale_format(locale: str) -> str:
-    """
-    Keep locale codes in repository/.tx format for tx CLI.
-
-    Examples: pt_BR, af_ZA.
-    """
-    return locale
-
-
 def generate_batches(batch_size: int, priority_based: bool = False, locales: Optional[List[str]] = None) -> List[Dict]:
     """
     Generate batch configuration for GitHub Actions matrix.
@@ -70,12 +61,10 @@ def generate_batches(batch_size: int, priority_based: bool = False, locales: Opt
 
             for i in range(0, len(tier_locales), batch_size):
                 batch_locales = tier_locales[i:i+batch_size]
-                # Convert to Transifex format
-                tx_locales = [convert_locale_format(loc) for loc in batch_locales]
 
                 batches.append({
                     "id": batch_id,
-                    "locales": ",".join(tx_locales),
+                    "locales": ",".join(batch_locales),
                     "name": f"{tier}-{batch_id}",
                     "tier": tier
                 })
@@ -84,12 +73,10 @@ def generate_batches(batch_size: int, priority_based: bool = False, locales: Opt
         # Simple sequential batching
         for i in range(0, len(target_locales), batch_size):
             batch_locales = target_locales[i:i+batch_size]
-            # Convert to Transifex format
-            tx_locales = [convert_locale_format(loc) for loc in batch_locales]
 
             batches.append({
                 "id": batch_id,
-                "locales": ",".join(tx_locales),
+                "locales": ",".join(batch_locales),
                 "name": f"batch-{batch_id}"
             })
             batch_id += 1

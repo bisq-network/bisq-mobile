@@ -28,10 +28,13 @@ class GenerateTransifexBatchesTests(unittest.TestCase):
             g.print_github_actions_json(batches, resources)
 
         matrix = json.loads(buf.getvalue())
-        self.assertEqual(
-            "bisq-mobile.chatproperties,bisq-mobile.mobileproperties,bisq-mobile.settingsproperties",
-            matrix["include"][0]["resources"],
-        )
+        actual_resources = set(matrix["include"][0]["resources"].split(","))
+        expected_resources = {
+            "bisq-mobile.chatproperties",
+            "bisq-mobile.mobileproperties",
+            "bisq-mobile.settingsproperties",
+        }
+        self.assertSetEqual(expected_resources, actual_resources)
 
 
 if __name__ == "__main__":
