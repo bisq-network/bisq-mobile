@@ -33,7 +33,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 /**
- * Tests the retry and fallback logic in [SplashPresenter.navigateToNextScreen].
+ * Tests the navigation and fallback logic in [SplashPresenter.navigateToNextScreen].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SplashPresenterNavigationTest {
@@ -154,31 +154,10 @@ class SplashPresenterNavigationTest {
         }
 
     @Test
-    fun `retries on getSettings failure and navigates on success`() =
-        runTest {
-            var callCount = 0
-            coEvery { settingsServiceFacade.getSettings() } answers {
-                callCount++
-                if (callCount < 3) {
-                    Result.failure(RuntimeException("Network error"))
-                } else {
-                    Result.success(SettingsVO(isTacAccepted = true))
-                }
-            }
-            coEvery { settingsRepository.fetch() } returns Settings(firstLaunch = false)
-            coEvery { userProfileService.hasUserProfile() } returns true
-
-            val presenter = createPresenter()
-            presenter.callNavigateToNextScreen()
-
-            verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
-        }
-
-    @Test
-    fun `falls back to onboarding after all retries exhausted`() =
+    fun `falls back to onboarding on getSettings failure`() =
         runTest {
             coEvery { settingsServiceFacade.getSettings() } returns
-                Result.failure(RuntimeException("Persistent network error"))
+                Result.failure(RuntimeException("Network error"))
 
             val presenter = createPresenter()
             presenter.callNavigateToNextScreen()
@@ -187,7 +166,7 @@ class SplashPresenterNavigationTest {
         }
 
     @Test
-    fun `retries on hasUserProfile failure and falls back after exhaustion`() =
+    fun `falls back to onboarding on hasUserProfile failure`() =
         runTest {
             coEvery { settingsServiceFacade.getSettings() } returns
                 Result.success(SettingsVO(isTacAccepted = true))
@@ -197,7 +176,6 @@ class SplashPresenterNavigationTest {
             val presenter = createPresenter()
             presenter.callNavigateToNextScreen()
 
-            // After 3 failed attempts, should fallback to onboarding
             verify { navigationManager.navigate(NavRoute.Onboarding, any(), any()) }
         }
 }

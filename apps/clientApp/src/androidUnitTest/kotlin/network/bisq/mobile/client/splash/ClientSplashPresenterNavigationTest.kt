@@ -14,12 +14,12 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.domain.websocket.ConnectionState
-import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
@@ -37,7 +37,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 /**
- * Tests ClientSplashPresenter's WebSocket connectivity checks and navigation logic.
+ * Tests ClientSplashPresenter's connectivity checks and navigation logic.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientSplashPresenterNavigationTest {
@@ -50,10 +50,10 @@ class ClientSplashPresenterNavigationTest {
     private lateinit var applicationBootstrapFacade: ApplicationBootstrapFacade
     private lateinit var mainPresenter: MainPresenter
     private lateinit var versionProvider: VersionProvider
-    private lateinit var webSocketClientService: WebSocketClientService
+    private lateinit var connectivityService: ConnectivityService
 
     private val progressFlow = MutableStateFlow(0f)
-    private val connectionStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+    private val connectivityStatusFlow = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)
 
     @BeforeTest
     fun setUp() {
@@ -65,7 +65,7 @@ class ClientSplashPresenterNavigationTest {
         applicationBootstrapFacade = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         versionProvider = mockk(relaxed = true)
-        webSocketClientService = mockk(relaxed = true)
+        connectivityService = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
 
         every { applicationBootstrapFacade.state } returns MutableStateFlow("")
@@ -77,8 +77,7 @@ class ClientSplashPresenterNavigationTest {
         every { applicationBootstrapFacade.shouldShowProgressToast } returns MutableStateFlow(false)
         every { versionProvider.getAppNameAndVersion(any(), any()) } returns "Test 1.0"
 
-        every { webSocketClientService.connectionState } returns connectionStateFlow
-        every { webSocketClientService.isConnected() } answers { connectionStateFlow.value is ConnectionState.Connected }
+        every { connectivityService.status } returns connectivityStatusFlow
 
         ApplicationBootstrapFacade.isDemo = false
 
@@ -111,14 +110,14 @@ class ClientSplashPresenterNavigationTest {
             applicationBootstrapFacade,
             settingsRepository,
             settingsServiceFacade,
-            webSocketClientService,
+            connectivityService,
             versionProvider,
         )
 
     @Test
-    fun `navigates to trusted node setup when not connected and reconnect times out`() =
+    fun `navigates to trusted node setup when not connected and connectivity wait times out`() =
         runTest(testDispatcher) {
-            // Given: WebSocket is disconnected and stays disconnected
+            // Given: ConnectivityService stays in BOOTSTRAPPING (never reaches CONNECTED)
             coEvery { settingsServiceFacade.getSettings() } returns
                 Result.success(SettingsVO(isTacAccepted = true))
 
@@ -129,8 +128,8 @@ class ClientSplashPresenterNavigationTest {
 
             // When: progress reaches 1.0 triggering navigateToNextScreen
             progressFlow.value = 1.0f
-            // Advance past the 5s CONNECTION_SETTLE_TIMEOUT_MS
-            advanceTimeBy(6_000)
+            // Advance past the 10s CONNECTIVITY_WAIT_TIMEOUT_MS
+            advanceTimeBy(11_000)
             testScheduler.runCurrent()
 
             // Then: should navigate to trusted node setup
@@ -146,8 +145,8 @@ class ClientSplashPresenterNavigationTest {
     @Test
     fun `navigates to home when connected`() =
         runTest(testDispatcher) {
-            // Given: WebSocket is connected
-            connectionStateFlow.value = ConnectionState.Connected
+            // Given: ConnectivityService reports connected with data
+            connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
 
             coEvery { settingsServiceFacade.getSettings() } returns
                 Result.success(SettingsVO(isTacAccepted = true))
@@ -169,7 +168,7 @@ class ClientSplashPresenterNavigationTest {
     @Test
     fun `demo mode skips connectivity check`() =
         runTest(testDispatcher) {
-            // Given: Demo mode is enabled and WebSocket is disconnected
+            // Given: Demo mode is enabled and connectivity is bootstrapping
             ApplicationBootstrapFacade.isDemo = true
 
             coEvery { settingsServiceFacade.getSettings() } returns
@@ -192,7 +191,7 @@ class ClientSplashPresenterNavigationTest {
     @Test
     fun `safety net triggers after timeout when not connected`() =
         runTest(testDispatcher) {
-            // Given: WebSocket stays disconnected, progress never reaches 1.0
+            // Given: ConnectivityService stays in BOOTSTRAPPING, progress never reaches 1.0
             val presenter = createPresenter()
             presenter.onViewAttached()
 
@@ -213,7 +212,7 @@ class ClientSplashPresenterNavigationTest {
     @Test
     fun `safety net does not trigger in demo mode`() =
         runTest(testDispatcher) {
-            // Given: Demo mode is enabled, WebSocket is disconnected
+            // Given: Demo mode is enabled, connectivity is bootstrapping
             ApplicationBootstrapFacade.isDemo = true
 
             val presenter = createPresenter()
@@ -231,5 +230,28 @@ class ClientSplashPresenterNavigationTest {
                     any(),
                 )
             }
+        }
+
+    @Test
+    fun `navigates to home when connectivity reaches REQUESTING_INVENTORY`() =
+        runTest(testDispatcher) {
+            // Given: ConnectivityService reports requesting inventory
+            connectivityStatusFlow.value = ConnectivityStatus.REQUESTING_INVENTORY
+
+            coEvery { settingsServiceFacade.getSettings() } returns
+                Result.success(SettingsVO(isTacAccepted = true))
+            coEvery { settingsRepository.fetch() } returns Settings(firstLaunch = false)
+            coEvery { userProfileService.hasUserProfile() } returns true
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            // When: progress reaches 1.0
+            progressFlow.value = 1.0f
+            advanceUntilIdle()
+
+            // Then: should navigate to TabContainer (home)
+            verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
         }
 }
