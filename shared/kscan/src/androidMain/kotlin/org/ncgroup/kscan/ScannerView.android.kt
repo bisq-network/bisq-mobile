@@ -108,7 +108,7 @@ actual fun ScannerView(
         zoomRatio = zoomRatio,
         onZoomChange = { cameraControl?.setZoomRatio(it) },
         maxZoomRatio = maxZoomRatio,
-        onCancel = { result(BarcodeResult.OnCanceled) },
+        onCancel = { updatedResult(BarcodeResult.OnCanceled) },
     ) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -144,11 +144,11 @@ actual fun ScannerView(
                         getCamera = { camera },
                         codeTypes = codeTypes,
                         onSuccess = { scannedBarcodes ->
-                            result(BarcodeResult.OnSuccess(scannedBarcodes.first()))
+                            updatedResult(BarcodeResult.OnSuccess(scannedBarcodes.first()))
                             provider.unbind(imageAnalysis)
                         },
-                        onFailed = { result(BarcodeResult.OnFailed(Exception(it))) },
-                        onCanceled = { result(BarcodeResult.OnCanceled) },
+                        onFailed = { updatedResult(BarcodeResult.OnFailed(Exception(it))) },
+                        onCanceled = { updatedResult(BarcodeResult.OnCanceled) },
                         filter = filter,
                     ),
                 )
