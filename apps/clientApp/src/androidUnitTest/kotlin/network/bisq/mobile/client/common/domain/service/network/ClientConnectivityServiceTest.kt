@@ -6,7 +6,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -36,6 +35,8 @@ class ClientConnectivityServiceTest {
         Dispatchers.setMain(testDispatcher)
         startKoin { modules(commonTestModule) }
         webSocketClientService = mockk(relaxed = true)
+        // Default: health check passes when connected
+        coEvery { webSocketClientService.sendHealthCheck() } returns true
         clientConnectivityService = ClientConnectivityService(webSocketClientService)
         // Reset static averageTripTime via public API: the averaging formula
         // (current + new) / 2 converges quickly to 0, ensuring isSlow() returns false.
@@ -81,7 +82,7 @@ class ClientConnectivityServiceTest {
         }
 
     @Test
-    fun `checkConnectivity returns CONNECTED_AND_DATA_RECEIVED when connected and not slow`() =
+    fun `checkConnectivity returns CONNECTED_AND_DATA_RECEIVED when connected and health check passes`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns true
 
@@ -96,7 +97,7 @@ class ClientConnectivityServiceTest {
         }
 
     @Test
-    fun `checkConnectivity does not call triggerReconnect when connected`() =
+    fun `checkConnectivity does not call triggerReconnect when connected and healthy`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns true
             coEvery { webSocketClientService.triggerReconnect() } just Runs
@@ -133,9 +134,10 @@ class ClientConnectivityServiceTest {
     @Test
     fun `startMonitoring calls checkConnectivity periodically`() =
         runBlocking {
-            var connectivityCheckCount = 0
-            every { webSocketClientService.isConnected() } answers {
-                connectivityCheckCount++
+            var healthCheckCount = 0
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } answers {
+                healthCheckCount++
                 true
             }
 
@@ -143,15 +145,16 @@ class ClientConnectivityServiceTest {
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
             delay(500)
 
-            assertTrue(connectivityCheckCount >= 3, "Expected at least 3 connectivity checks, got $connectivityCheckCount")
+            assertTrue(healthCheckCount >= 3, "Expected at least 3 health checks, got $healthCheckCount")
         }
 
     @Test
     fun `stopMonitoring cancels periodic checks`() =
         runBlocking {
-            var connectivityCheckCount = 0
-            every { webSocketClientService.isConnected() } answers {
-                connectivityCheckCount++
+            var healthCheckCount = 0
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } answers {
+                healthCheckCount++
                 true
             }
 
@@ -159,11 +162,11 @@ class ClientConnectivityServiceTest {
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
             delay(300)
 
-            val checksBeforeStop = connectivityCheckCount
+            val checksBeforeStop = healthCheckCount
             clientConnectivityService.stopMonitoring()
             delay(500)
 
-            assertTrue(connectivityCheckCount <= checksBeforeStop + 1, "Checks continued after stopMonitoring")
+            assertTrue(healthCheckCount <= checksBeforeStop + 1, "Checks continued after stopMonitoring")
         }
 
     @Test
@@ -228,5 +231,58 @@ class ClientConnectivityServiceTest {
 
             clientConnectivityService.deactivate()
             assertTrue(true)
+        }
+
+    @Test
+    fun `health check failure triggers forceReconnect and RECONNECTING status`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } returns false
+            coEvery { webSocketClientService.forceReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+            coVerify(atLeast = 1) { webSocketClientService.forceReconnect() }
+        }
+
+    @Test
+    fun `health check exception triggers forceReconnect`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } throws RuntimeException("connection dead")
+            coEvery { webSocketClientService.forceReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            coVerify(atLeast = 1) { webSocketClientService.forceReconnect() }
+        }
+
+    @Test
+    fun `recovery after health check failure when server comes back`() =
+        runBlocking {
+            var healthCheckPasses = false
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } answers { healthCheckPasses }
+            coEvery { webSocketClientService.forceReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+
+            // Server comes back
+            healthCheckPasses = true
+            delay(300)
+
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
+                clientConnectivityService.status.value,
+            )
         }
 }

@@ -1,9 +1,12 @@
 package network.bisq.mobile.client.common.domain.service.network
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -95,34 +98,71 @@ class ClientConnectivityService(
 
     private suspend fun checkConnectivity() {
         try {
-            withTimeout(TIMEOUT) {
-                val previousStatus = _status.value
-                _status.value =
-                    when {
-                        !isConnected() -> {
-                            // Trigger reconnection attempt to recover from max-retry
-                            // exhaustion or transient network outages
-                            webSocketClientService.triggerReconnect()
-                            ConnectivityStatus.RECONNECTING
-                        }
-                        isSlow() -> ConnectivityStatus.REQUESTING_INVENTORY
-                        else -> ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+            val previousStatus = _status.value
+            val newStatus =
+                when {
+                    !isConnected() -> {
+                        // Trigger reconnection attempt to recover from max-retry
+                        // exhaustion or transient network outages
+                        webSocketClientService.triggerReconnect()
+                        ConnectivityStatus.RECONNECTING
                     }
-                if (previousStatus != _status.value) {
-                    log.d { "Connectivity transition from $previousStatus to ${_status.value}" }
-                    if (previousStatus == ConnectivityStatus.RECONNECTING) {
-                        runPendingBlocks()
+                    else -> {
+                        // Actively verify the connection with a lightweight request.
+                        // On iOS the Darwin engine does not reliably detect dead TCP
+                        // connections, so isConnected() can return true even when the
+                        // server is down. A real round-trip request detects this.
+                        val alive = isConnectionAlive()
+                        if (!alive) {
+                            log.d { "Health check failed, forcing reconnection" }
+                            webSocketClientService.forceReconnect()
+                            ConnectivityStatus.RECONNECTING
+                        } else if (isSlow()) {
+                            ConnectivityStatus.REQUESTING_INVENTORY
+                        } else {
+                            ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+                        }
                     }
                 }
+            _status.value = newStatus
+            if (previousStatus != newStatus) {
+                log.d { "Connectivity transition from $previousStatus to $newStatus" }
+                if (previousStatus == ConnectivityStatus.RECONNECTING) {
+                    runPendingBlocks()
+                }
             }
-        } catch (e: TimeoutCancellationException) {
-            log.e(e) { "Connectivity check timed out, assuming no connection" }
-            _status.value = ConnectivityStatus.DISCONNECTED
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            log.e(e) { "Failed checking connectivity, assuming no connection" }
+            log.e(e) { "Failed checking connectivity" }
             _status.value = ConnectivityStatus.DISCONNECTED
         }
     }
+
+    /**
+     * Sends a lightweight health check request to verify the server is responsive.
+     * Returns true if a response is received within [TIMEOUT], false otherwise.
+     */
+    private suspend fun isConnectionAlive(): Boolean =
+        try {
+            withTimeout(TIMEOUT) {
+                webSocketClientService.sendHealthCheck()
+            }
+        } catch (e: TimeoutCancellationException) {
+            log.d { "Health check timed out" }
+            false
+        } catch (e: CancellationException) {
+            // If the monitoring coroutine itself is cancelled (stopMonitoring),
+            // propagate so the loop stops. Otherwise the cancellation came from
+            // the WebSocket layer (e.g. OkHttp detecting a dead connection and
+            // disposing the in-flight request) — treat as health check failure.
+            currentCoroutineContext().ensureActive()
+            log.d { "Health check cancelled by WebSocket disconnect" }
+            false
+        } catch (e: Exception) {
+            log.d { "Health check failed: ${e.message}" }
+            false
+        }
 
     private fun runPendingBlocks() {
         serviceScope.launch(Dispatchers.Default) {

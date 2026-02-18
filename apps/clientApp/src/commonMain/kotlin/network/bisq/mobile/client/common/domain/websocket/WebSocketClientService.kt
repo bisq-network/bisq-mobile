@@ -29,6 +29,7 @@ import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetry
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketResponse
+import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.PlatformType
@@ -38,6 +39,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrCancel
+import network.bisq.mobile.domain.utils.createUuid
 import kotlin.concurrent.Volatile
 
 internal data class SubscriptionType(
@@ -343,6 +345,43 @@ class WebSocketClientService(
             if (!isConnected()) {
                 client.reconnect()
             }
+        }
+    }
+
+    /**
+     * Forces a reconnection regardless of current connection state.
+     * Used by [ClientConnectivityService] when a health check fails on a
+     * connection that still reports as connected (stale TCP on iOS).
+     */
+    internal suspend fun forceReconnect() {
+        clientUpdateMutex.withLock {
+            val client = currentClient.value ?: return@withLock
+            client.reconnect()
+        }
+    }
+
+    /**
+     * Sends a lightweight request (settings/version) to verify the connection
+     * is actually alive and the server is responsive.
+     *
+     * @return true if a response was received, false otherwise.
+     */
+    internal suspend fun sendHealthCheck(): Boolean {
+        val client = currentClient.value ?: return false
+        val request =
+            WebSocketRestApiRequest(
+                requestId = createUuid(),
+                method = "GET",
+                path = "/api/v1/settings/version",
+                body = "",
+            )
+        return try {
+            val response = client.sendRequestAndAwaitResponse(request, awaitConnection = false)
+            response != null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            false
         }
     }
 
