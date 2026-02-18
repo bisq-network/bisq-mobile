@@ -107,10 +107,8 @@ class BarcodeAnalyzer(
                 }
             }.addOnFailureListener {
                 onFailed(it)
-                imageProxy.close()
             }.addOnCanceledListener {
                 onCanceled()
-                imageProxy.close()
             }.addOnCompleteListener {
                 // CRITICAL: Always close the proxy after the final attempt
                 imageProxy.close()
