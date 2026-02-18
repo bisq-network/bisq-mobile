@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -64,6 +65,8 @@ actual fun ScannerView(
     var zoomRatio by remember { mutableFloatStateOf(1f) }
     var maxZoomRatio by remember { mutableFloatStateOf(1f) }
 
+    val updatedResult by rememberUpdatedState(result)
+
     LaunchedEffect(camera) {
         camera?.cameraInfo?.torchState?.observe(lifecycleOwner) {
             torchEnabled = it == TorchState.ON
@@ -88,9 +91,9 @@ actual fun ScannerView(
 
     scannerController?.maxZoomRatio = maxZoomRatio
 
-    LaunchedEffect(initializationError, result) {
+    LaunchedEffect(initializationError) {
         if (initializationError != null) {
-            result(BarcodeResult.OnFailed(Exception(initializationError)))
+            updatedResult(BarcodeResult.OnFailed(Exception(initializationError)))
         }
     }
 
@@ -138,7 +141,7 @@ actual fun ScannerView(
                 imageAnalysis.setAnalyzer(
                     ContextCompat.getMainExecutor(ctx),
                     BarcodeAnalyzer(
-                        camera = camera,
+                        getCamera = { camera },
                         codeTypes = codeTypes,
                         onSuccess = { scannedBarcodes ->
                             result(BarcodeResult.OnSuccess(scannedBarcodes.first()))
