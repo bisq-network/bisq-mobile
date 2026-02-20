@@ -1,7 +1,6 @@
 package network.bisq.mobile.domain.formatters
 
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.decimalFormatter
 
 object MarketPriceFormatter {

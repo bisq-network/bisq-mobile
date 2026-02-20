@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice

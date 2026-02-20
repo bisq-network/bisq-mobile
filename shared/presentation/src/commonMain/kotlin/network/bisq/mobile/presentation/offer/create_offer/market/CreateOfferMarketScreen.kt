@@ -11,7 +11,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.MarketCard
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
