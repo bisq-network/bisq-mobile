@@ -8,9 +8,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -25,7 +27,6 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.offer.Tak
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferSuccessDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -53,147 +54,36 @@ fun TakeOfferReviewTradeScreen() {
         stepIndex++
     }
 
-    MultiScreenWizardScaffold(
-        "bisqEasy.takeOffer.progress.review".i18n(),
+    TakeOfferReviewContent(
+        headLine = presenter.headLine,
+        takersDirection = presenter.takersDirection,
+        amountToPay = presenter.amountToPay,
+        amountToReceive = presenter.amountToReceive,
+        price = presenter.price,
+        marketCodes = presenter.marketCodes,
+        priceDetails = presenter.priceDetails,
+        quoteSidePaymentMethodDisplayString = presenter.quoteSidePaymentMethodDisplayString,
+        baseSidePaymentMethodDisplayString = presenter.baseSidePaymentMethodDisplayString,
+        fee = presenter.fee,
+        feeDetails = presenter.feeDetails,
+        isSmallScreen = presenter::isSmallScreen,
         stepIndex = stepIndex,
         stepsLength = takeOfferPresenter.totalSteps,
-        prevOnClick = { presenter.onBack() },
-        nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
-        nextOnClick = { presenter.onTakeOffer() },
-        snackbarHostState = presenter.getSnackState(),
+        showProgressDialog = showProgressDialog,
+        showSuccessDialog = showSuccessDialog,
         isInteractive = isInteractive,
-        shouldBlurBg = showProgressDialog || showSuccessDialog,
-        showUserAvatar = false,
-        closeAction = true,
-        onConfirmedClose = presenter::onClose,
-    ) {
-        BisqGap.V1()
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
-        ) {
-            InfoBox(
-                label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
-                value = presenter.headLine,
-            )
-            if (presenter.takersDirection.isBuy) {
-                if (presenter.isSmallScreen()) {
-                    InfoBoxCurrency(
-                        label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                        value = presenter.amountToPay,
-                    )
-                    InfoBoxSats(
-                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                        value = presenter.amountToReceive,
-                        rightAlign = true,
-                    )
-                } else {
-                    InfoRowContainer {
-                        InfoBoxCurrency(
-                            label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                            value = presenter.amountToPay,
-                        )
-                        InfoBoxSats(
-                            label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                            value = presenter.amountToReceive,
-                            rightAlign = true,
-                        )
-                    }
-                }
-            } else {
-                if (presenter.isSmallScreen()) {
-                    InfoBoxSats(
-                        label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                        value = presenter.amountToPay,
-                    )
-                    InfoBoxCurrency(
-                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                        value = presenter.amountToReceive,
-                        rightAlign = true,
-                    )
-                } else {
-                    InfoRowContainer {
-                        InfoBoxSats(
-                            label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                            value = presenter.amountToPay,
-                        )
-                        InfoBoxCurrency(
-                            label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                            value = presenter.amountToReceive,
-                            rightAlign = true,
-                        )
-                    }
-                }
-            }
-        }
-
-        BisqHDivider()
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
-        ) {
-            InfoBox(
-                label = "bisqEasy.tradeWizard.review.priceDescription.taker".i18n(),
-                valueComposable = {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            BisqText.H6Light(presenter.price)
-                            BisqGap.HQuarter()
-                            BisqText.BaseLightGrey(presenter.marketCodes)
-                        }
-                        BisqText.SmallLightGrey(presenter.priceDetails)
-                    }
-                },
-            )
-
-            InfoBox(
-                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
-                value = presenter.quoteSidePaymentMethodDisplayString,
-            )
-            InfoBox(
-                label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
-                value = presenter.baseSidePaymentMethodDisplayString,
-            )
-
-            InfoBox(
-                label = "bisqEasy.tradeWizard.review.feeDescription".i18n(),
-                valueComposable = {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            BisqText.H6Light(presenter.fee)
-                        }
-                        BisqText.SmallLightGrey(presenter.feeDetails)
-                    }
-                },
-            )
-        }
-    }
-
-    if (showProgressDialog) {
-        TakeOfferProgressDialog()
-    }
-
-    if (showSuccessDialog) {
-        TakeOfferSuccessDialog(
-            onShowTrades = { presenter.onGoToOpenTrades() },
-        )
-    }
+        snackbarHostState = presenter.getSnackState(),
+        onBack = presenter::onBack,
+        onTakeOffer = presenter::onTakeOffer,
+        onClose = presenter::onClose,
+        onGoToOpenTrades = presenter::onGoToOpenTrades,
+    )
 }
 
 @Composable
 fun TakeOfferReviewContent(
-    isInteractive: Boolean,
-    showProgressDialog: Boolean,
-    showSuccessDialog: Boolean,
-    isSmallScreen: Boolean,
     headLine: String,
-    takersIsBuy: Boolean,
+    takersDirection: DirectionEnum,
     amountToPay: String,
     amountToReceive: String,
     price: String,
@@ -203,16 +93,22 @@ fun TakeOfferReviewContent(
     baseSidePaymentMethodDisplayString: String,
     fee: String,
     feeDetails: String,
+    isSmallScreen: () -> Boolean,
+    stepIndex: Int,
+    stepsLength: Int,
+    showProgressDialog: Boolean,
+    showSuccessDialog: Boolean,
+    isInteractive: Boolean,
+    snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onTakeOffer: () -> Unit,
     onClose: () -> Unit,
     onGoToOpenTrades: () -> Unit,
-    snackbarHostState: SnackbarHostState,
 ) {
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.review".i18n(),
-        stepIndex = 4,
-        stepsLength = 4,
+        stepIndex = stepIndex,
+        stepsLength = stepsLength,
         prevOnClick = onBack,
         nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
         nextOnClick = onTakeOffer,
@@ -232,8 +128,8 @@ fun TakeOfferReviewContent(
                 label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
                 value = headLine,
             )
-            if (takersIsBuy) {
-                if (isSmallScreen) {
+            if (takersDirection.isBuy) {
+                if (isSmallScreen()) {
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                         value = amountToPay,
@@ -241,7 +137,6 @@ fun TakeOfferReviewContent(
                     InfoBoxSats(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = amountToReceive,
-                        rightAlign = true,
                     )
                 } else {
                     InfoRowContainer {
@@ -252,12 +147,11 @@ fun TakeOfferReviewContent(
                         InfoBoxSats(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = amountToReceive,
-                            rightAlign = true,
                         )
                     }
                 }
             } else {
-                if (isSmallScreen) {
+                if (isSmallScreen()) {
                     InfoBoxSats(
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                         value = amountToPay,
@@ -265,7 +159,6 @@ fun TakeOfferReviewContent(
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = amountToReceive,
-                        rightAlign = true,
                     )
                 } else {
                     InfoRowContainer {
@@ -276,7 +169,6 @@ fun TakeOfferReviewContent(
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = amountToReceive,
-                            rightAlign = true,
                         )
                     }
                 }
@@ -342,38 +234,188 @@ fun TakeOfferReviewContent(
     }
 }
 
-/**
- * Preview environment is now provided by PreviewEnvironment helper.
- * See: network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
- */
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_Buyer_Preview() {
+    BisqTheme.Preview {
+        TakeOfferReviewContent(
+            headLine = "Buy Bitcoin",
+            takersDirection = DirectionEnum.BUY,
+            amountToPay = "500 USD",
+            amountToReceive = "0.0050",
+            price = "45,000",
+            marketCodes = "USD/BTC",
+            priceDetails = "Market price + 2%",
+            quoteSidePaymentMethodDisplayString = "SEPA, Zelle",
+            baseSidePaymentMethodDisplayString = "Bitcoin Lightning, On-chain",
+            fee = "0.50 USD",
+            feeDetails = "Trade fee (0.1%)",
+            isSmallScreen = { false },
+            stepIndex = 4,
+            stepsLength = 4,
+            showProgressDialog = false,
+            showSuccessDialog = false,
+            isInteractive = true,
+            snackbarHostState = remember { SnackbarHostState() },
+            onBack = {},
+            onTakeOffer = {},
+            onClose = {},
+            onGoToOpenTrades = {},
+        )
+    }
+}
 
 @Preview
 @Composable
-private fun TakeOfferReviewPreview() {
+private fun TakeOfferReviewScreen_Seller_Preview() {
     BisqTheme.Preview {
-        PreviewEnvironment {
-            TakeOfferReviewContent(
-                isInteractive = true,
-                showProgressDialog = false,
-                showSuccessDialog = false,
-                isSmallScreen = false,
-                headLine = "BUY Bitcoin",
-                takersIsBuy = true,
-                amountToPay = "1,000.00 USD",
-                amountToReceive = "0.01000000 BTC",
-                price = "100,000.00",
-                marketCodes = "BTC/USD",
-                priceDetails = "1.0% above market at 99,000.00 USD",
-                quoteSidePaymentMethodDisplayString = "SEPA",
-                baseSidePaymentMethodDisplayString = "On-chain",
-                fee = "Seller pays miner fee",
-                feeDetails = "No trade fees",
-                onBack = {},
-                onTakeOffer = {},
-                onClose = {},
-                onGoToOpenTrades = {},
-                snackbarHostState = SnackbarHostState(),
-            )
-        }
+        TakeOfferReviewContent(
+            headLine = "Sell Bitcoin",
+            takersDirection = DirectionEnum.SELL,
+            amountToPay = "0.0050",
+            amountToReceive = "480 USD",
+            price = "45,000",
+            marketCodes = "USD/BTC",
+            priceDetails = "Market price + 2%",
+            quoteSidePaymentMethodDisplayString = "SEPA",
+            baseSidePaymentMethodDisplayString = "On-chain",
+            fee = "0.50 USD",
+            feeDetails = "Trade fee (0.1%)",
+            isSmallScreen = { false },
+            stepIndex = 4,
+            stepsLength = 4,
+            showProgressDialog = false,
+            showSuccessDialog = false,
+            isInteractive = true,
+            snackbarHostState = remember { SnackbarHostState() },
+            onBack = {},
+            onTakeOffer = {},
+            onClose = {},
+            onGoToOpenTrades = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_SmallScreen_Buyer_Preview() {
+    BisqTheme.Preview {
+        TakeOfferReviewContent(
+            headLine = "Buy Bitcoin",
+            takersDirection = DirectionEnum.BUY,
+            amountToPay = "500 USD",
+            amountToReceive = "0.0050",
+            price = "45,000",
+            marketCodes = "USD/BTC",
+            priceDetails = "Market price + 2%",
+            quoteSidePaymentMethodDisplayString = "SEPA",
+            baseSidePaymentMethodDisplayString = "On-chain",
+            fee = "0.50 USD",
+            feeDetails = "Trade fee (0.1%)",
+            isSmallScreen = { true },
+            stepIndex = 4,
+            stepsLength = 4,
+            showProgressDialog = false,
+            showSuccessDialog = false,
+            isInteractive = true,
+            snackbarHostState = remember { SnackbarHostState() },
+            onBack = {},
+            onTakeOffer = {},
+            onClose = {},
+            onGoToOpenTrades = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_SmallScreen_Seller_Preview() {
+    BisqTheme.Preview {
+        TakeOfferReviewContent(
+            headLine = "Sell Bitcoin",
+            takersDirection = DirectionEnum.SELL,
+            amountToPay = "0.0050",
+            amountToReceive = "480 USD",
+            price = "45,000",
+            marketCodes = "USD/BTC",
+            priceDetails = "Market price + 2%",
+            quoteSidePaymentMethodDisplayString = "SEPA",
+            baseSidePaymentMethodDisplayString = "On-chain",
+            fee = "0.50 USD",
+            feeDetails = "Trade fee (0.1%)",
+            isSmallScreen = { true },
+            stepIndex = 4,
+            stepsLength = 4,
+            showProgressDialog = false,
+            showSuccessDialog = false,
+            isInteractive = true,
+            snackbarHostState = remember { SnackbarHostState() },
+            onBack = {},
+            onTakeOffer = {},
+            onClose = {},
+            onGoToOpenTrades = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_WithProgressDialog_Preview() {
+    BisqTheme.Preview {
+        TakeOfferReviewContent(
+            headLine = "Buy Bitcoin",
+            takersDirection = DirectionEnum.BUY,
+            amountToPay = "500 USD",
+            amountToReceive = "0.0050",
+            price = "45,000",
+            marketCodes = "USD/BTC",
+            priceDetails = "Market price + 2%",
+            quoteSidePaymentMethodDisplayString = "SEPA",
+            baseSidePaymentMethodDisplayString = "On-chain",
+            fee = "0.50 USD",
+            feeDetails = "Trade fee (0.1%)",
+            isSmallScreen = { false },
+            stepIndex = 4,
+            stepsLength = 4,
+            showProgressDialog = true,
+            showSuccessDialog = false,
+            isInteractive = false,
+            snackbarHostState = remember { SnackbarHostState() },
+            onBack = {},
+            onTakeOffer = {},
+            onClose = {},
+            onGoToOpenTrades = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_WithSuccessDialog_Preview() {
+    BisqTheme.Preview {
+        TakeOfferReviewContent(
+            headLine = "Buy Bitcoin",
+            takersDirection = DirectionEnum.BUY,
+            amountToPay = "500 USD",
+            amountToReceive = "0.0050",
+            price = "45,000",
+            marketCodes = "USD/BTC",
+            priceDetails = "Market price + 2%",
+            quoteSidePaymentMethodDisplayString = "SEPA",
+            baseSidePaymentMethodDisplayString = "On-chain",
+            fee = "0.50 USD",
+            feeDetails = "Trade fee (0.1%)",
+            isSmallScreen = { false },
+            stepIndex = 4,
+            stepsLength = 4,
+            showProgressDialog = false,
+            showSuccessDialog = true,
+            isInteractive = false,
+            snackbarHostState = remember { SnackbarHostState() },
+            onBack = {},
+            onTakeOffer = {},
+            onClose = {},
+            onGoToOpenTrades = {},
+        )
     }
 }

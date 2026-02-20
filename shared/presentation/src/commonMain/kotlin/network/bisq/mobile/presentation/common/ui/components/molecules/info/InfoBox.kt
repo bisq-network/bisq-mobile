@@ -9,7 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.molecules.AmountWithCurrency
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class InfoBoxValueType {
     BoldValue,
@@ -87,5 +89,89 @@ fun InfoBox(
                 BisqText.SmallLightGrey(text = label, modifier = Modifier.offset(y = (-4).dp))
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun InfoBox_DefaultPreview() {
+    BisqTheme.Preview {
+        InfoBox(
+            label = "AMOUNT TO PAY",
+            value = "1,000.00 USD",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InfoBox_Style2Preview() {
+    BisqTheme.Preview {
+        InfoBox(
+            label = "Market Price",
+            value = "99,000.00",
+            style = InfoBoxStyle.Style2,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InfoBox_TitleSmallPreview() {
+    BisqTheme.Preview {
+        InfoBox(
+            label = "Total Balance",
+            value = "2.5 BTC",
+            valueType = InfoBoxValueType.TitleSmall,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InfoBox_SmallValuePreview() {
+    BisqTheme.Preview {
+        InfoBox(
+            label = "TRANSACTION ID",
+            value = "abc123...xyz789",
+            valueType = InfoBoxValueType.SmallValue,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InfoBox_WithSubvaluePreview() {
+    BisqTheme.Preview {
+        InfoBox(
+            label = "AMOUNT TO RECEIVE",
+            value = "0.01000000 BTC",
+            subvalue = "Includes 0.1% fee",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InfoBox_RightAlignPreview() {
+    BisqTheme.Preview {
+        InfoBox(
+            label = "PRICE",
+            value = "100,000.00 USD",
+            rightAlign = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InfoBox_ValueComposablePreview() {
+    BisqTheme.Preview {
+        InfoBox(
+            label = "AMOUNT TO RECEIVE",
+            valueComposable = {
+                AmountWithCurrency("60.00 USD")
+            },
+        )
     }
 }
