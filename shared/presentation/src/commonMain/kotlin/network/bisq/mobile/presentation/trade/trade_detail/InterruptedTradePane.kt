@@ -22,7 +22,10 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
@@ -36,6 +39,8 @@ fun InterruptedTradePane() {
     val errorMessageVisible by presenter.errorMessageVisible.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()
     val reportToMediatorButtonVisible by presenter.reportToMediatorButtonVisible.collectAsState()
+    val showNoMediatorAvailableWarningDialog by presenter.showNoMediatorAvailableWarningDialog.collectAsState()
+    val showMediationRequestedDialog by presenter.showMediationRequestedDialog.collectAsState()
 
     Column(
         modifier =
@@ -91,6 +96,25 @@ fun InterruptedTradePane() {
                 modifier = Modifier.fillMaxHeight(),
                 text = "action.close".i18n(),
                 onClick = { presenter.onCloseTrade() },
+            )
+        }
+
+        if (showNoMediatorAvailableWarningDialog) {
+            WarningConfirmationDialog(
+                onConfirm = presenter::onDismissNoMediatorAvailableWarningDialog,
+                onDismiss = presenter::onDismissNoMediatorAvailableWarningDialog,
+                message = "bisqEasy.takeOffer.noMediatorAvailable.warning".i18n(),
+            )
+        }
+
+        if (showMediationRequestedDialog) {
+            ConfirmationDialog(
+                onConfirm = presenter::onDismissMediationRequestedDialog,
+                headline = "bisqEasy.mediation.request.feedback.headline".i18n(),
+                message = "bisqEasy.mediation.request.feedback.msg".i18n(),
+                confirmButtonText = "action.close".i18n(),
+                dismissButtonText = EMPTY_STRING,
+                onDismiss = { presenter.onDismissMediationRequestedDialog() },
             )
         }
     }

@@ -12,9 +12,11 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -41,6 +43,12 @@ class InterruptedTradePresenter(
 
     private val _reportToMediatorButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val reportToMediatorButtonVisible: StateFlow<Boolean> get() = _reportToMediatorButtonVisible.asStateFlow()
+
+    private val _showNoMediatorAvailableWarningDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showNoMediatorAvailableWarningDialog: StateFlow<Boolean> get() = _showNoMediatorAvailableWarningDialog.asStateFlow()
+
+    private val _showMediationRequestedDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showMediationRequestedDialog: StateFlow<Boolean> get() = _showMediationRequestedDialog.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -200,9 +208,31 @@ class InterruptedTradePresenter(
         if (trade == null) return
         presenterScope.launch {
             showLoading()
-            mediationServiceFacade.reportToMediator(trade)
+            mediationServiceFacade
+                .reportToMediator(trade)
+                .onSuccess {
+                    _showMediationRequestedDialog.value = true
+                }.onFailure { error ->
+                    when (error) {
+                        is MediatorNotAvailableException -> {
+                            _showNoMediatorAvailableWarningDialog.value = true
+                        }
+
+                        else -> {
+                            showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
+                        }
+                    }
+                }
             hideLoading()
         }
+    }
+
+    fun onDismissNoMediatorAvailableWarningDialog() {
+        _showNoMediatorAvailableWarningDialog.value = false
+    }
+
+    fun onDismissMediationRequestedDialog() {
+        _showMediationRequestedDialog.value = false
     }
 
     private fun reset() {
@@ -211,5 +241,7 @@ class InterruptedTradePresenter(
         errorMessage = ""
         _errorMessageVisible.value = false
         _reportToMediatorButtonVisible.value = false
+        _showNoMediatorAvailableWarningDialog.value = false
+        _showMediationRequestedDialog.value = false
     }
 }
