@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
+import androidx.compose.foundation.Indication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
@@ -16,7 +17,7 @@ const val DEFAULT_CLICK_DEBOUNCE_MS = 300L
  * within [debounceMs] of each other.
  */
 @Composable
-fun rememberDebouncedClick(
+internal fun rememberDebouncedClick(
     debounceMs: Long = DEFAULT_CLICK_DEBOUNCE_MS,
     onClick: () -> Unit,
 ): () -> Unit {
@@ -39,7 +40,7 @@ fun rememberDebouncedClick(
 fun Modifier.debouncedClickable(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
-    indication: androidx.compose.foundation.Indication? = null,
+    indication: Indication? = null,
     role: Role? = null,
     debounceMs: Long = DEFAULT_CLICK_DEBOUNCE_MS,
     onClick: () -> Unit,

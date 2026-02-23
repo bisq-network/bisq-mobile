@@ -29,8 +29,8 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import org.koin.compose.koinInject
 
-const val MIN_ALLOWED_PERCENTAGE = -0.1
-const val MAX_ALLOWED_PERCENTAGE = 0.5
+private const val MIN_ALLOWED_PERCENTAGE_FRACTION = -0.1f
+private const val MAX_ALLOWED_PERCENTAGE_FRACTION = 0.5f
 
 @Composable
 fun CreateOfferPriceScreen() {
@@ -46,8 +46,8 @@ fun CreateOfferPriceScreen() {
     val showWhyPopup by presenter.showWhyPopup.collectAsState()
     val hintText by presenter.hintText.collectAsState()
 
-    val min = -10f
-    val max = 50f
+    val min = MIN_ALLOWED_PERCENTAGE_FRACTION
+    val max = MAX_ALLOWED_PERCENTAGE_FRACTION
 
     val percentagePrice = formattedPercentagePrice.toDoubleOrNullLocaleAware()?.toFloat() ?: 0f
     val sliderPosition = ((percentagePrice - min) / (max - min)).coerceIn(0f, 1f)
@@ -127,9 +127,9 @@ fun CreateOfferPriceScreen() {
                             it.toDoubleOrNullLocaleAware()
                                 ?: return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.cannotBeEmpty".i18n()
                             val parsedPercent = presenter.calculatePercentageForFixedValue(it)
-                            if (parsedPercent < MIN_ALLOWED_PERCENTAGE) {
+                            if (parsedPercent < MIN_ALLOWED_PERCENTAGE_FRACTION) {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeGreaterThanMarketPrice".i18n()
-                            } else if (parsedPercent > MAX_ALLOWED_PERCENTAGE) {
+                            } else if (parsedPercent > MAX_ALLOWED_PERCENTAGE_FRACTION) {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeLessThanMarketPrice".i18n()
                             }
                             return@BisqTextField null
