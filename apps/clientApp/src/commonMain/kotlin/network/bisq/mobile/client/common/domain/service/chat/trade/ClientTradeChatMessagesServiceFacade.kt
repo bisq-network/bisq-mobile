@@ -51,8 +51,9 @@ class ClientTradeChatMessagesServiceFacade(
         }
         serviceScope.launch(Dispatchers.Default) {
             selectedUserProfileId.collect { _ ->
-                if (selectedTrade.value != null) {
-                    updateChatMessages(tradeId = selectedTrade.value!!.tradeId)
+                val tradeId = selectedTrade.value?.tradeId
+                if (tradeId != null) {
+                    updateChatMessages(tradeId = tradeId)
                 }
             }
         }
