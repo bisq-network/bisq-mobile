@@ -4,14 +4,12 @@ import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.tabs.offers.MarketFilterUtil
 
 class ComputeOfferbookMarketListUseCase(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val mainCurrencies: List<String> = OffersServiceFacade.Companion.mainCurrencies,
 ) : Logging {
     operator fun invoke(
         filter: MarketFilter,
@@ -54,18 +52,11 @@ class ComputeOfferbookMarketListUseCase(
             compareByDescending<MarketListItem> {
                 when (sortBy) {
                     MarketSortBy.MostOffers -> it.numOffers
-                    else -> 0
+                    MarketSortBy.NameAZ, MarketSortBy.NameZA -> it.localeFiatCurrencyName
                 }
-            }.thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
-                .thenBy {
-                    when (sortBy) {
-                        MarketSortBy.NameAZ -> it.localeFiatCurrencyName
-                        MarketSortBy.NameZA -> it.localeFiatCurrencyName
-                        else -> null
-                    }
-                }.let { comparator ->
-                    if (sortBy == MarketSortBy.NameZA) comparator.reversed() else comparator
-                },
+            }.let { comparator ->
+                if (sortBy == MarketSortBy.NameAZ) comparator.reversed() else comparator
+            },
         )
     }
 }

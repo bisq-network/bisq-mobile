@@ -108,7 +108,7 @@ class ComputeOfferbookMarketListUseCaseTest {
     }
 
     @Test
-    fun `sorts by NameAZ with main currencies first`() {
+    fun `sorts by NameAZ of locale fiat name`() {
         val settingsRepository: SettingsRepository = SettingsRepositoryMock()
         val marketPriceServiceFacade =
             FakeMarketPriceServiceFacade(
@@ -126,7 +126,6 @@ class ComputeOfferbookMarketListUseCaseTest {
             )
 
         val result = useCase(MarketFilter.All, "", MarketSortBy.NameAZ, items)
-        // Current behavior: A-Z by localized fiat name (main-currency priority is not applied due to case mismatch).
         assertEquals(listOf("BRL", "CAD", "EUR", "USD"), result.map { it.market.quoteCurrencyCode })
     }
 
@@ -149,7 +148,6 @@ class ComputeOfferbookMarketListUseCaseTest {
             )
 
         val result = useCase(MarketFilter.All, "", MarketSortBy.NameZA, items)
-        // Current behavior: Z-A by localized fiat name (and the whole comparator is reversed).
         assertEquals(listOf("USD", "EUR", "CAD", "BRL"), result.map { it.market.quoteCurrencyCode })
     }
 
