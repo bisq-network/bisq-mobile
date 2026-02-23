@@ -5,6 +5,8 @@ import androidx.datastore.core.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.MarketFilter
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
@@ -61,6 +63,18 @@ open class SettingsRepositoryImpl(
     override suspend fun clear() {
         settingsStore.updateData {
             Settings()
+        }
+    }
+
+    override suspend fun setMarketSortBy(value: MarketSortBy) {
+        settingsStore.updateData {
+            it.copy(marketSortBy = value)
+        }
+    }
+
+    override suspend fun setMarketFilter(value: MarketFilter) {
+        settingsStore.updateData {
+            it.copy(marketFilter = value)
         }
     }
 }

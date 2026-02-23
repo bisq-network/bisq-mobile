@@ -4,23 +4,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.domain.data.model.MarketFilter
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSegmentButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
-
-enum class MarketSortBy {
-    MostOffers,
-    NameAZ,
-    NameZA,
-}
-
-enum class MarketFilter {
-    WithOffers,
-    All,
-}
 
 fun MarketSortBy.getDisplayName(): String =
     when (this) {

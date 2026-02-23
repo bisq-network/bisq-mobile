@@ -29,9 +29,9 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilter
+import network.bisq.mobile.domain.data.model.MarketFilter
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilters
-import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketSortBy
 import network.bisq.mobile.presentation.common.ui.platform.isAffectedBottomSheetDevice
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants

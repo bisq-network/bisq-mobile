@@ -3,10 +3,11 @@ package network.bisq.mobile.node.service.offers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
@@ -29,7 +30,6 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -53,6 +53,10 @@ class NodeOffersServiceFacadeIntegrationTest {
         override suspend fun update(transform: suspend (Settings) -> Settings) {}
 
         override suspend fun clear() {}
+
+        override suspend fun setMarketSortBy(value: MarketSortBy) {}
+
+        override suspend fun setMarketFilter(value: MarketFilter) {}
     }
 
     private fun buildDto(
@@ -95,7 +99,17 @@ class NodeOffersServiceFacadeIntegrationTest {
             isMyOffer = false,
             userProfile = user,
             formattedDate = "",
-            formattedQuoteAmount = AmountFormatter.formatAmount(FiatVOFactory.run { from(amountMinor, market.quoteCurrencyCode) }, true, true),
+            formattedQuoteAmount =
+                AmountFormatter.formatAmount(
+                    FiatVOFactory.run {
+                        from(
+                            amountMinor,
+                            market.quoteCurrencyCode,
+                        )
+                    },
+                    true,
+                    true,
+                ),
             formattedBaseAmount = formattedBaseAmount,
             formattedPrice = formattedPrice,
             formattedPriceSpec = "",

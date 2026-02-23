@@ -3,6 +3,8 @@ package network.bisq.mobile.domain.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.MarketFilter
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 
@@ -24,4 +26,8 @@ interface SettingsRepository {
     suspend fun update(transform: suspend (t: Settings) -> Settings)
 
     suspend fun clear()
+
+    suspend fun setMarketSortBy(value: MarketSortBy)
+
+    suspend fun setMarketFilter(value: MarketFilter)
 }

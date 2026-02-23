@@ -1,40 +1,24 @@
 package network.bisq.mobile.presentation.offerbook
 
-import androidx.navigation.NavHostController
-import androidx.navigation.NavOptionsBuilder
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.createEmptyImage
-import network.bisq.mobile.domain.data.model.TradeReadStateMap
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
-import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
@@ -47,25 +31,20 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
-import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
+import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
+import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 import org.koin.core.context.startKoin
@@ -161,23 +140,8 @@ class OfferbookPresenterFilterTest {
 
     private fun buildPresenterWithOffers(allOffers: List<OfferItemPresentationModel>): OfferbookPresenter {
         // --- Mocks and fakes for MainPresenter ---
-        val tradesServiceFacade = mockk<TradesServiceFacade>()
-        every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
-        val userProfileServiceForMain = FakeUserProfileServiceFacade()
-        val openTradesNotificationService = mockk<OpenTradesNotificationService>(relaxed = true)
-        val settingsService = FakeSettingsServiceFacade()
-        val tradeReadStateRepository = FakeTradeReadStateRepository()
-        val urlLauncher = mockk<UrlLauncher>(relaxed = true)
         val mainPresenter =
-            MainPresenter(
-                tradesServiceFacade,
-                userProfileServiceForMain,
-                openTradesNotificationService,
-                settingsService,
-                tradeReadStateRepository,
-                urlLauncher,
-                TestApplicationLifecycleService(),
-            )
+            MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
         // --- Dependencies for OfferbookPresenter ---
         val offersFlow = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
         val marketFlow =
@@ -515,23 +479,8 @@ class OfferbookPresenterFilterTest {
                 )
 
             // Build presenter with mutable offers flow so we can simulate market changes
-            val tradesServiceFacade = mockk<TradesServiceFacade>()
-            every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
-            val userProfileServiceForMain = FakeUserProfileServiceFacade()
-            val openTradesNotificationService = mockk<OpenTradesNotificationService>(relaxed = true)
-            val settingsService = FakeSettingsServiceFacade()
-            val tradeReadStateRepository = FakeTradeReadStateRepository()
-            val urlLauncher = mockk<UrlLauncher>(relaxed = true)
             val mainPresenter =
-                MainPresenter(
-                    tradesServiceFacade,
-                    userProfileServiceForMain,
-                    openTradesNotificationService,
-                    settingsService,
-                    tradeReadStateRepository,
-                    urlLauncher,
-                    TestApplicationLifecycleService(),
-                )
+                MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
 
             val offersFlow = MutableStateFlow<List<OfferItemPresentationModel>>(initialOffers)
             val marketFlow =
@@ -599,7 +548,12 @@ class OfferbookPresenterFilterTest {
                 listOf(
                     makeOffer("b1", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN")),
                     makeOffer("b2", isMy = false, quoteMethods = listOf("REVOLUT"), baseMethods = listOf("LIGHTNING")),
-                    makeOffer("b3", isMy = false, quoteMethods = listOf("NATIONAL_BANK"), baseMethods = listOf("MAIN_CHAIN")),
+                    makeOffer(
+                        "b3",
+                        isMy = false,
+                        quoteMethods = listOf("NATIONAL_BANK"),
+                        baseMethods = listOf("MAIN_CHAIN"),
+                    ),
                 )
             offersFlow.value = newOffers
             runCurrent()
@@ -619,187 +573,4 @@ class OfferbookPresenterFilterTest {
                 "All visible offers should have WISE or REVOLUT as payment method",
             )
         }
-
-    // --- Minimal helpers/types for tests ---
-
-    private class TestCoroutineJobsManager(
-        private val dispatcher: CoroutineDispatcher,
-        override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null,
-    ) : CoroutineJobsManager {
-        private val scope = CoroutineScope(dispatcher + SupervisorJob())
-        private val ioScope = CoroutineScope(dispatcher + SupervisorJob())
-        private val jobs = mutableSetOf<Job>()
-
-        override suspend fun dispose() {
-            scope.cancel()
-            ioScope.cancel()
-            jobs.clear()
-        }
-
-        override fun getScope(): CoroutineScope = scope
-    }
-
-    private class NoopNavigationManager : NavigationManager {
-        private val _currentTab = MutableStateFlow<TabNavRoute?>(null)
-        override val currentTab: StateFlow<TabNavRoute?> get() = _currentTab.asStateFlow()
-
-        override fun setRootNavController(navController: NavHostController?) {}
-
-        override fun setTabNavController(navController: NavHostController?) {}
-
-        override fun isAtMainScreen(): Boolean = true
-
-        override fun isAtHomeTab(): Boolean = true
-
-        override fun showBackButton(): Boolean = false
-
-        override fun navigate(
-            destination: NavRoute,
-            customSetup: (NavOptionsBuilder) -> Unit,
-            onCompleted: (() -> Unit)?,
-        ) {
-            onCompleted?.invoke()
-        }
-
-        override fun navigateToTab(
-            destination: TabNavRoute,
-            saveStateOnPopUp: Boolean,
-            shouldLaunchSingleTop: Boolean,
-            shouldRestoreState: Boolean,
-        ) {
-            _currentTab.value = destination
-        }
-
-        override fun navigateBackTo(
-            destination: NavRoute,
-            shouldInclusive: Boolean,
-            shouldSaveState: Boolean,
-        ) {
-        }
-
-        override fun navigateFromUri(uri: String) {}
-
-        override fun navigateBack(onCompleted: (() -> Unit)?) {
-            onCompleted?.invoke()
-        }
-    }
-
-    private class FakeSettingsServiceFacade : SettingsServiceFacade {
-        override suspend fun getSettings() = Result.success(settingsVODemoObj)
-
-        override val isTacAccepted: StateFlow<Boolean?> = MutableStateFlow(true)
-
-        override suspend fun confirmTacAccepted(value: Boolean) {}
-
-        override val tradeRulesConfirmed: StateFlow<Boolean> = MutableStateFlow(true)
-
-        override suspend fun confirmTradeRules(value: Boolean) {}
-
-        override val languageCode: StateFlow<String> = MutableStateFlow("en")
-
-        override suspend fun setLanguageCode(value: String) {}
-
-        override val supportedLanguageCodes: StateFlow<Set<String>> = MutableStateFlow(setOf("en"))
-
-        override suspend fun setSupportedLanguageCodes(value: Set<String>) {}
-
-        override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> = MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
-
-        override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {}
-
-        override val closeMyOfferWhenTaken: StateFlow<Boolean> = MutableStateFlow(true)
-
-        override suspend fun setCloseMyOfferWhenTaken(value: Boolean) {}
-
-        override val maxTradePriceDeviation: StateFlow<Double> = MutableStateFlow(0.0)
-
-        override suspend fun setMaxTradePriceDeviation(value: Double) {}
-
-        override val useAnimations: StateFlow<Boolean> = MutableStateFlow(false)
-
-        override suspend fun setUseAnimations(value: Boolean) {}
-
-        override val difficultyAdjustmentFactor: StateFlow<Double> = MutableStateFlow(1.0)
-
-        override suspend fun setDifficultyAdjustmentFactor(value: Double) {}
-
-        override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> = MutableStateFlow(false)
-
-        override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {}
-
-        override val numDaysAfterRedactingTradeData: StateFlow<Int> = MutableStateFlow(30)
-
-        override suspend fun setNumDaysAfterRedactingTradeData(days: Int) {}
-    }
-
-    private class FakeTradeReadStateRepository : TradeReadStateRepository {
-        override val data: Flow<TradeReadStateMap> = flowOf(TradeReadStateMap())
-
-        override suspend fun setCount(
-            tradeId: String,
-            count: Int,
-        ) {
-        }
-
-        override suspend fun clearId(tradeId: String) {}
-    }
-
-    private class FakeUserProfileServiceFacade : UserProfileServiceFacade {
-        override val userProfiles: StateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
-        override val selectedUserProfile: StateFlow<UserProfileVO?> = MutableStateFlow(null)
-        override val ignoredProfileIds: StateFlow<Set<String>> = MutableStateFlow(emptySet())
-        override val numUserProfiles: StateFlow<Int> = MutableStateFlow(1)
-
-        override suspend fun hasUserProfile(): Boolean = true
-
-        override suspend fun generateKeyPair(
-            imageSize: Int,
-            result: (String, String, PlatformImage?) -> Unit,
-        ) {
-        }
-
-        override suspend fun createAndPublishNewUserProfile(nickName: String) {}
-
-        override suspend fun updateAndPublishUserProfile(
-            profileId: String,
-            statement: String?,
-            terms: String?,
-        ) = Result.success(createMockUserProfile("me"))
-
-        override suspend fun getUserIdentityIds(): List<String> = emptyList()
-
-        override suspend fun findUserProfile(profileId: String) = createMockUserProfile(profileId)
-
-        override suspend fun findUserProfiles(ids: List<String>) = ids.map { createMockUserProfile(it) }
-
-        override suspend fun getUserProfileIcon(
-            userProfile: UserProfileVO,
-            size: Number,
-        ) = createEmptyImage()
-
-        override suspend fun getUserProfileIcon(userProfile: UserProfileVO) = createEmptyImage()
-
-        override suspend fun getUserPublishDate(): Long = 0L
-
-        override suspend fun userActivityDetected() {}
-
-        override suspend fun ignoreUserProfile(profileId: String) {}
-
-        override suspend fun undoIgnoreUserProfile(profileId: String) {}
-
-        override suspend fun isUserIgnored(profileId: String): Boolean = false
-
-        override suspend fun getIgnoredUserProfileIds(): Set<String> = emptySet()
-
-        override suspend fun reportUserProfile(
-            accusedUserProfile: UserProfileVO,
-            message: String,
-        ): Result<Unit> = Result.failure(Exception("unused in test"))
-
-        override suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>> = Result.failure(Exception("unused in test"))
-
-        override suspend fun selectUserProfile(id: String): Result<UserProfileVO> = Result.failure(Exception("unused in test"))
-
-        override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> = Result.failure(Exception("unused in test"))
-    }
 }

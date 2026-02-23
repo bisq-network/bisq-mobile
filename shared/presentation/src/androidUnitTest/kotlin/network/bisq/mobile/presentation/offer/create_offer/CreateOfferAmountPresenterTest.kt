@@ -19,7 +19,9 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
@@ -111,6 +113,14 @@ class CreateOfferAmountPresenterTest {
         override suspend fun clear() {
             _data.value = Settings()
         }
+
+        override suspend fun setMarketSortBy(value: MarketSortBy) {
+            _data.value = _data.value.copy(marketSortBy = value)
+        }
+
+        override suspend fun setMarketFilter(value: MarketFilter) {
+            _data.value = _data.value.copy(marketFilter = value)
+        }
     }
 
     private class FakeSettingsServiceFacade : SettingsServiceFacade {
@@ -132,7 +142,8 @@ class CreateOfferAmountPresenterTest {
 
         override suspend fun setSupportedLanguageCodes(value: Set<String>) {}
 
-        override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> = MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
+        override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> =
+            MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
 
         override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {}
 
@@ -309,7 +320,8 @@ class CreateOfferAmountPresenterTest {
         override fun <T> registerObserver(
             flow: Flow<T>,
             onStateChange: suspend (T) -> Unit,
-        ) {}
+        ) {
+        }
 
         override fun unregisterObserver(flow: Flow<*>) {}
 

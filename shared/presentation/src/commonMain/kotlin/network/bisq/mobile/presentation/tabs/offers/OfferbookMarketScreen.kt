@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.domain.data.model.MarketFilter
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
@@ -26,9 +28,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
-import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilters
-import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketSortBy
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle

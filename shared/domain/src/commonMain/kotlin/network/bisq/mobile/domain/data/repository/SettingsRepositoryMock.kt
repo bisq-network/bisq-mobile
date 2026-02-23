@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.MarketFilter
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
@@ -52,6 +54,18 @@ class SettingsRepositoryMock :
     override suspend fun clear() {
         _data.update {
             Settings()
+        }
+    }
+
+    override suspend fun setMarketSortBy(value: MarketSortBy) {
+        _data.update {
+            it.copy(marketSortBy = value)
+        }
+    }
+
+    override suspend fun setMarketFilter(value: MarketFilter) {
+        _data.update {
+            it.copy(marketFilter = value)
         }
     }
 }

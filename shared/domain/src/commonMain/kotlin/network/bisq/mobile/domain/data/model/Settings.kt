@@ -10,6 +10,8 @@ data class Settings(
     val notificationPermissionState: PermissionState = PermissionState.NOT_GRANTED,
     val batteryOptimizationState: BatteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
     val pushNotificationsEnabled: Boolean = false,
+    val marketSortBy: MarketSortBy = MarketSortBy.MostOffers,
+    val marketFilter: MarketFilter = MarketFilter.All,
 )
 
 @Serializable

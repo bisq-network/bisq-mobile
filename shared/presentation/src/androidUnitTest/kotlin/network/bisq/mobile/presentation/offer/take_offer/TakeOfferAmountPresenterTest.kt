@@ -18,7 +18,9 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
@@ -124,6 +126,14 @@ class TakeOfferAmountPresenterTest {
         override suspend fun clear() {
             _data.value = Settings()
         }
+
+        override suspend fun setMarketSortBy(value: MarketSortBy) {
+            _data.value = _data.value.copy(marketSortBy = value)
+        }
+
+        override suspend fun setMarketFilter(value: MarketFilter) {
+            _data.value = _data.value.copy(marketFilter = value)
+        }
     }
 
     private class FakeMarketPriceServiceFacade(
@@ -201,7 +211,8 @@ class TakeOfferAmountPresenterTest {
 
         override suspend fun setSupportedLanguageCodes(value: Set<String>) {}
 
-        override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> = MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
+        override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> =
+            MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
 
         override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {}
 
@@ -307,7 +318,8 @@ class TakeOfferAmountPresenterTest {
         override fun <T> registerObserver(
             flow: Flow<T>,
             onStateChange: suspend (T) -> Unit,
-        ) {}
+        ) {
+        }
 
         override fun unregisterObserver(flow: Flow<*>) {}
 
@@ -369,9 +381,14 @@ class TakeOfferAmountPresenterTest {
 
     private fun makeOfferDto(): OfferItemPresentationDto {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
-        val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L) // $10.0000 .. $100.0000
+        val amountSpec =
+            QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L) // $10.0000 .. $100.0000
         val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) }) // 100 USD per BTC
-        val makerNetworkId = NetworkIdVO(AddressByTransportTypeMapVO(mapOf()), PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"))
+        val makerNetworkId =
+            NetworkIdVO(
+                AddressByTransportTypeMapVO(mapOf()),
+                PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"),
+            )
         val offer =
             BisqEasyOfferVO(
                 id = "offer-1",
