@@ -90,6 +90,8 @@ class ClientTradeChatMessagesServiceFacade(
     }
 
     private suspend fun subscribeChatReactions() {
+        // wait for first open trade to start subscribing so that updateChatMessages works properly
+        tradesServiceFacade.openTradeItems.first { it.isNotEmpty() }
         val observer = apiGateway.subscribeChatReactions()
         observer.webSocketEvent.collect { webSocketEvent ->
             if (webSocketEvent?.deferredPayload == null) {
