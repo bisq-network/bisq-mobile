@@ -535,7 +535,7 @@ class NavigationManagerImplTest {
         }
 
     @Test
-    fun `when rapid navigation calls then all calls are processed`() =
+    fun `when rapid navigation calls then only first is processed due to throttle`() =
         runTest(testDispatcher) {
             // Given
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
@@ -545,20 +545,20 @@ class NavigationManagerImplTest {
             navigationManager.setRootNavController(mockController)
             advanceUntilIdle()
 
-            // When - simulate rapid clicking (10 calls)
+            // When - simulate rapid clicking (10 calls within throttle window)
             repeat(10) {
                 navigationManager.navigate(NavRoute.Splash)
             }
             advanceUntilIdle()
 
-            // Then - verify mutex serialized all calls without dropping any
-            verify(exactly = 10) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
+            // Then - only the first call proceeds, rest are throttled
+            verify(exactly = 1) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     // ========== NavigateToTab Tests ==========
 
     @Test
-    fun `when rapid tab navigation calls then all calls are processed`() =
+    fun `when rapid tab navigation calls then only first is processed due to throttle`() =
         runTest(testDispatcher) {
             // Given
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
@@ -573,15 +573,87 @@ class NavigationManagerImplTest {
             navigationManager.setTabNavController(mockTabController)
             advanceUntilIdle()
 
-            // When - simulate rapid tab switching (10 calls)
+            // When - simulate rapid tab switching (10 calls within throttle window)
             repeat(10) {
                 navigationManager.navigateToTab(NavRoute.TabHome)
             }
             advanceUntilIdle()
 
-            // Then - verify both controllers processed all calls
-            verify(exactly = 10) { mockRootController.navigate<NavRoute>(NavRoute.TabContainer, any<NavOptionsBuilder.() -> Unit>()) }
-            verify(exactly = 10) { mockTabController.navigate<TabNavRoute>(NavRoute.TabHome, any<NavOptionsBuilder.() -> Unit>()) }
+            // Then - only the first call proceeds, rest are throttled
+            verify(exactly = 1) { mockRootController.navigate<NavRoute>(NavRoute.TabContainer, any<NavOptionsBuilder.() -> Unit>()) }
+            verify(exactly = 1) { mockTabController.navigate<TabNavRoute>(NavRoute.TabHome, any<NavOptionsBuilder.() -> Unit>()) }
+        }
+
+    @Test
+    fun `when navigation calls spaced apart then all calls proceed`() =
+        runTest(testDispatcher) {
+            // Given
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
+            val mockController = mockk<NavHostController>(relaxed = true)
+            var fakeTime = 1000L
+            navigationManager.currentTimeMillis = { fakeTime }
+
+            navigationManager.setRootNavController(mockController)
+            advanceUntilIdle()
+
+            // When - navigate with sufficient delay between calls (beyond 300ms throttle)
+            navigationManager.navigate(NavRoute.Splash)
+            advanceUntilIdle()
+            fakeTime += 350
+            navigationManager.navigate(NavRoute.Splash)
+            advanceUntilIdle()
+            fakeTime += 350
+            navigationManager.navigate(NavRoute.Splash)
+            advanceUntilIdle()
+
+            // Then - all 3 calls should proceed since they're spaced > 300ms apart
+            verify(exactly = 3) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
+        }
+
+    @Test
+    fun `when double navigate called rapidly then only first proceeds`() =
+        runTest(testDispatcher) {
+            // Given
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
+            val mockController = mockk<NavHostController>(relaxed = true)
+
+            navigationManager.setRootNavController(mockController)
+            advanceUntilIdle()
+
+            // When - double-tap scenario: two rapid calls
+            navigationManager.navigate(NavRoute.Splash)
+            navigationManager.navigate(NavRoute.Splash)
+            advanceUntilIdle()
+
+            // Then - only the first call should proceed
+            verify(exactly = 1) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
+        }
+
+    @Test
+    fun `when double navigateToTab called rapidly then only first proceeds`() =
+        runTest(testDispatcher) {
+            // Given
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
+            val mockRootController = mockk<NavHostController>(relaxed = true)
+            val mockTabController = mockk<NavHostController>(relaxed = true)
+
+            every { mockRootController.currentBackStack } returns MutableStateFlow(emptyList())
+
+            navigationManager.setRootNavController(mockRootController)
+            navigationManager.setTabNavController(mockTabController)
+            advanceUntilIdle()
+
+            // When - double-tap scenario: two rapid tab navigation calls
+            navigationManager.navigateToTab(NavRoute.TabHome)
+            navigationManager.navigateToTab(NavRoute.TabHome)
+            advanceUntilIdle()
+
+            // Then - only the first call should proceed
+            verify(exactly = 1) { mockRootController.navigate<NavRoute>(NavRoute.TabContainer, any<NavOptionsBuilder.() -> Unit>()) }
+            verify(exactly = 1) { mockTabController.navigate<TabNavRoute>(NavRoute.TabHome, any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     // ========== NavigateFromUri Tests ==========

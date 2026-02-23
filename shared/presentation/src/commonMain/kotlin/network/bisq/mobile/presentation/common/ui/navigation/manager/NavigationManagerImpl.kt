@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -27,6 +28,7 @@ class NavigationManagerImpl(
     Logging {
     companion object {
         private const val GET_CONTROLLER_TIMEOUT_MS = 10000L // 10 seconds timeout for waiting for nav controller
+        private const val NAVIGATE_THROTTLE_MS = 300L // Prevent double-tap navigation
     }
 
     private val rootNavControllerFlow = MutableStateFlow<NavHostController?>(null)
@@ -39,8 +41,21 @@ class NavigationManagerImpl(
     // Single mutex to serialize all calls that touch NavController.
     private val navMutex = Mutex()
 
+    private var lastNavigationTime = 0L
+
+    internal var currentTimeMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() }
+
     // External scope, but we always dispatch to Main when touching NavController.
     private val scope get() = coroutineJobsManager.getScope()
+
+    private fun shouldAllowNavigation(): Boolean {
+        val now = currentTimeMillis()
+        if (now - lastNavigationTime < NAVIGATE_THROTTLE_MS) {
+            return false
+        }
+        lastNavigationTime = now
+        return true
+    }
 
     // Suspend until the root controller is available (with timeout).
     private suspend fun getRootNavController(): NavHostController? =
@@ -132,6 +147,7 @@ class NavigationManagerImpl(
             val rootNav = getRootNavController()
             if (rootNav != null) {
                 navMutex.withLock {
+                    if (!shouldAllowNavigation()) return@withLock
                     runCatching {
                         rootNav.navigate(destination) {
                             customSetup(this)
@@ -155,6 +171,7 @@ class NavigationManagerImpl(
             val rootNav = getRootNavController() ?: return@launch
             val tabNav = getTabNavController() ?: return@launch
             navMutex.withLock {
+                if (!shouldAllowNavigation()) return@withLock
                 runCatching {
                     if (!isAtMainScreen()) {
                         val isTabContainerInBackStack =
