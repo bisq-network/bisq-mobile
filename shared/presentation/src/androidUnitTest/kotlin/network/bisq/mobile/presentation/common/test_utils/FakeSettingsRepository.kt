@@ -37,7 +37,7 @@ internal class FakeSettingsRepository(
     }
 
     override suspend fun update(transform: suspend (t: Settings) -> Settings) {
-        mutableData.update { (it) }
+        mutableData.value = transform(mutableData.value)
     }
 
     override suspend fun clear() {
