@@ -39,6 +39,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import network.bisq.mobile.domain.service.ForegroundDetector
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -52,7 +53,6 @@ import network.bisq.mobile.presentation.common.notification.ForegroundServiceCon
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
-import network.bisq.mobile.presentation.common.test_utils.FakeSettingsRepository
 import network.bisq.mobile.presentation.common.test_utils.FakeTradeReadStateRepository
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
@@ -385,7 +385,7 @@ class TakeOfferAmountPresenterTest {
                     formattedPrice = "100 USD",
                 )
             val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
+            val settingsRepo = SettingsRepositoryMock()
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
