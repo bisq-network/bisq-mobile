@@ -7,7 +7,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -17,13 +16,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
-import network.bisq.mobile.domain.data.model.BatteryOptimizationState
-import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.MarketSortBy
-import network.bisq.mobile.domain.data.model.PermissionState
-import network.bisq.mobile.domain.data.model.Settings
-import network.bisq.mobile.domain.data.model.TradeReadStateMap
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -46,7 +39,6 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.ForegroundDetector
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -60,6 +52,8 @@ import network.bisq.mobile.presentation.common.notification.ForegroundServiceCon
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.test_utils.FakeSettingsRepository
+import network.bisq.mobile.presentation.common.test_utils.FakeTradeReadStateRepository
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -103,37 +97,6 @@ class TakeOfferAmountPresenterTest {
     fun tearDownMainDispatcher() {
         stopKoin()
         Dispatchers.resetMain()
-    }
-
-    private class FakeSettingsRepository : SettingsRepository {
-        private val _data = MutableStateFlow(Settings())
-        override val data: StateFlow<Settings> = _data
-
-        override suspend fun setFirstLaunch(value: Boolean) {}
-
-        override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
-
-        override suspend fun setSelectedMarketCode(value: String) {}
-
-        override suspend fun setNotificationPermissionState(value: PermissionState) {}
-
-        override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {}
-
-        override suspend fun update(transform: suspend (t: Settings) -> Settings) {
-            _data.value = transform(_data.value)
-        }
-
-        override suspend fun clear() {
-            _data.value = Settings()
-        }
-
-        override suspend fun setMarketSortBy(value: MarketSortBy) {
-            _data.value = _data.value.copy(marketSortBy = value)
-        }
-
-        override suspend fun setMarketFilter(value: MarketFilter) {
-            _data.value = _data.value.copy(marketFilter = value)
-        }
     }
 
     private class FakeMarketPriceServiceFacade(
@@ -337,18 +300,6 @@ class TakeOfferAmountPresenterTest {
 
     private class FakeUrlLauncher : UrlLauncher {
         override fun openUrl(url: String) {}
-    }
-
-    private class FakeTradeReadStateRepository : TradeReadStateRepository {
-        override val data: Flow<TradeReadStateMap> = flowOf(TradeReadStateMap())
-
-        override suspend fun setCount(
-            tradeId: String,
-            count: Int,
-        ) {
-        }
-
-        override suspend fun clearId(tradeId: String) {}
     }
 
     private fun makeMainPresenter(): MainPresenter {
