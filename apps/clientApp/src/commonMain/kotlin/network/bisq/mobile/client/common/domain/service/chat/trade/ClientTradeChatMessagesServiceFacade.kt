@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.common.domain.service.chat.trade
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -38,50 +38,39 @@ class ClientTradeChatMessagesServiceFacade(
     private val allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> =
         MutableStateFlow(emptySet())
 
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
     // Misc
     override suspend fun activate() {
         super<ServiceFacade>.activate()
 
-        jobs.add(
-            serviceScope.launch(Dispatchers.Default) {
-                selectedTrade.collect {
-                    if (it != null) {
-                        updateChatMessages(tradeId = it.tradeId)
-                    }
+        serviceScope.launch(Dispatchers.Default) {
+            selectedTrade.collect {
+                if (it != null) {
+                    updateChatMessages(tradeId = it.tradeId)
                 }
-            },
-        )
-        jobs.add(
-            serviceScope.launch(Dispatchers.Default) {
-                selectedUserProfileId.collect { _ ->
-                    if (selectedTrade.value != null) {
-                        updateChatMessages(tradeId = selectedTrade.value!!.tradeId)
-                    }
+            }
+        }
+        serviceScope.launch(Dispatchers.Default) {
+            selectedUserProfileId.collect { _ ->
+                if (selectedTrade.value != null) {
+                    updateChatMessages(tradeId = selectedTrade.value!!.tradeId)
                 }
-            },
-        )
-
-        jobs.add(
-            serviceScope.launch {
-                subscribeTradeChats()
-            },
-        )
-        jobs.add(
-            serviceScope.launch {
-                subscribeChatReactions()
-            },
-        )
+            }
+        }
+        serviceScope.launch {
+            subscribeTradeChats()
+        }
+        serviceScope.launch {
+            subscribeChatReactions()
+        }
     }
 
     override suspend fun deactivate() {
-        jobs.forEach { it.cancel() }
-        jobs.clear()
         super<ServiceFacade>.deactivate()
     }
 
     private suspend fun subscribeTradeChats() {
+        // wait for first open trade to start subscribing so that updateChatMessages works properly
+        tradesServiceFacade.openTradeItems.first { it.isNotEmpty() }
         val observer = apiGateway.subscribeTradeChats()
         observer.webSocketEvent.collect { webSocketEvent ->
             if (webSocketEvent?.deferredPayload == null) {
