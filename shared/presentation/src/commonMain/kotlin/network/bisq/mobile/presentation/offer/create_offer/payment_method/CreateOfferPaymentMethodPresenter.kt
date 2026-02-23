@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
@@ -53,11 +54,6 @@ class CreateOfferPaymentMethodPresenter(
         availableQuoteSidePaymentMethods.update { it + selectedQuoteSidePaymentMethods.value }
     }
 
-    override fun onViewUnattaching() {
-        dismissSnackbar()
-        super.onViewUnattaching()
-    }
-
     fun getQuoteSidePaymentMethodsImagePaths(): List<String> = getPaymentMethodsImagePaths(availableQuoteSidePaymentMethods.value.toList(), "fiat")
 
     fun getBaseSidePaymentMethodsImagePaths(): List<String> =
@@ -71,7 +67,7 @@ class CreateOfferPaymentMethodPresenter(
             selectedQuoteSidePaymentMethods.update { it - value }
         } else {
             if (selectedQuoteSidePaymentMethods.value.size == 4) {
-                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.maxMethodsReached".i18n())
+                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.maxMethodsReached".i18n(), type = SnackbarType.ERROR)
             } else {
                 selectedQuoteSidePaymentMethods.update { it + value }
             }
@@ -127,7 +123,7 @@ class CreateOfferPaymentMethodPresenter(
             commitPaymentToModel()
             navigateTo(NavRoute.CreateOfferSettlementMethod)
         } else {
-            showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n())
+            showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n(), type = SnackbarType.ERROR)
         }
     }
 
@@ -136,7 +132,7 @@ class CreateOfferPaymentMethodPresenter(
             commitSettlementToModel()
             navigateTo(NavRoute.CreateOfferReviewOffer)
         } else {
-            showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
+            showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n(), type = SnackbarType.ERROR)
         }
     }
 

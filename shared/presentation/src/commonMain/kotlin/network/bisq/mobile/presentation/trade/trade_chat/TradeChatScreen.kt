@@ -62,7 +62,6 @@ fun TradeChatScreen(tradeId: String) {
             )
         },
         isInteractive = isInteractive,
-        snackbarHostState = presenter.getSnackState(),
     ) {
         if (readCount == -1) {
             // empty placeholder until we know the readCount

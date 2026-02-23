@@ -93,7 +93,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -119,7 +118,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -149,7 +147,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -175,7 +172,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -201,7 +197,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -231,7 +226,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -263,7 +257,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -290,7 +283,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -317,7 +309,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -344,7 +335,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -374,7 +364,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -406,7 +395,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -444,7 +432,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -484,7 +471,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -518,7 +504,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -550,7 +535,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -582,7 +566,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -614,7 +597,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -646,7 +628,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -681,7 +662,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -710,7 +690,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -742,7 +721,6 @@ class PaymentAccountsContentUiTest {
             PaymentAccountsContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 

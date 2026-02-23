@@ -108,7 +108,6 @@ fun TabContainerScreen() {
             }
         },
         isInteractive = isInteractive,
-        snackbarHostState = presenter.getSnackState(),
         content = { TabNavGraph(tabNavController) },
     )
 }

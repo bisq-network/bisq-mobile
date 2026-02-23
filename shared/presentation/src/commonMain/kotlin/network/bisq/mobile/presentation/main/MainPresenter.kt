@@ -152,6 +152,7 @@ open class MainPresenter(
 
     @CallSuper
     override fun onDestroying() {
+        globalUiManager.dispose()
         // to stop notification service and fully kill app (no zombie mode)
         runBlocking {
             openTradesNotificationService.stopNotificationService()

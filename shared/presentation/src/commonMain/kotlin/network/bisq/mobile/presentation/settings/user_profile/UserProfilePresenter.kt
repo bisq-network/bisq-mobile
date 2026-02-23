@@ -16,6 +16,7 @@ import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.TimeUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute.CreateProfile
 import network.bisq.mobile.presentation.main.MainPresenter
 import kotlin.concurrent.Volatile
@@ -135,9 +136,9 @@ class UserProfilePresenter(
                         safeTerms,
                     )
                 if (result.isSuccess) {
-                    showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
+                    showSnackbar("mobile.settings.userProfile.saveSuccess".i18n())
                 } else {
-                    showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), isError = true)
+                    showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), type = SnackbarType.ERROR)
                 }
             } catch (e: Exception) {
                 log.e(e) { "Failed to save user profile settings" }
@@ -156,7 +157,7 @@ class UserProfilePresenter(
             userProfileServiceFacade
                 .deleteUserProfile(profileId)
                 .onSuccess {
-                    showSnackbar("mobile.settings.userProfile.deleteSuccess".i18n(), isError = false)
+                    showSnackbar("mobile.settings.userProfile.deleteSuccess".i18n())
                 }.onFailure { e ->
                     log.e(e) { "Failed to delete user profile" }
                     onAction(UserProfileUiAction.OnDeleteError)
@@ -173,12 +174,12 @@ class UserProfilePresenter(
             userProfileServiceFacade
                 .selectUserProfile(profileId)
                 .onSuccess {
-                    showSnackbar("mobile.settings.userProfile.selectSuccess".i18n(), isError = false)
+                    showSnackbar("mobile.settings.userProfile.selectSuccess".i18n())
                     _uiState.update { it.copy(isBusyWithAction = false) }
                     enableInteractive()
                 }.onFailure { e ->
                     log.e(e) { "Failed to change user profile" }
-                    showSnackbar("mobile.settings.userProfile.selectFailure".i18n(), isError = true)
+                    showSnackbar("mobile.settings.userProfile.selectFailure".i18n(), type = SnackbarType.ERROR)
                     _uiState.update { it.copy(isBusyWithAction = false) }
                     enableInteractive()
                 }

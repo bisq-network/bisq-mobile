@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -165,7 +166,7 @@ class CreateProfilePresenter(
                     }
                 }.onFailure {
                     disableInteractive()
-                    showSnackbar("mobile.profile.generatingKeyPairFailed".i18n())
+                    showSnackbar("mobile.profile.generatingKeyPairFailed".i18n(), type = SnackbarType.ERROR)
                 }
                 _generateKeyPairInProgress.value = false
                 log.i { "Hide busy animation for generateKeyPair" }

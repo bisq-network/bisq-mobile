@@ -32,6 +32,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.NotificationIds
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -290,8 +291,7 @@ class TradeChatPresenter(
         _showReportUserDialog.value = false
         showSnackbar(
             message = errorMessage,
-            isError = true,
-            duration = SnackbarDuration.Short,
+            type = SnackbarType.ERROR,
         )
     }
 

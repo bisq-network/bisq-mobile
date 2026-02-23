@@ -14,6 +14,7 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketSortBy
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -127,7 +128,7 @@ class OfferbookMarketPresenter(
                 navigateTo(NavRoute.Offerbook)
             }.onFailure { e ->
                 log.e("Market selection failed", e)
-                showSnackbar("Failed to select market. Please try again.")
+                showSnackbar("Failed to select market. Please try again.", type = SnackbarType.ERROR)
             }
     }
 

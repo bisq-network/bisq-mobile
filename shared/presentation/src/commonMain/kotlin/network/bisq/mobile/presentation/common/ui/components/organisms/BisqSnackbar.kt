@@ -16,14 +16,23 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
- * Custom SnackbarVisuals that includes an error state
+ * Enum representing the type of snackbar message for styling
+ */
+enum class SnackbarType {
+    ERROR,
+    WARNING,
+    SUCCESS,
+}
+
+/**
+ * Custom SnackbarVisuals that includes a type for styling
  */
 data class BisqSnackbarVisuals(
     override val message: String,
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = true,
     override val duration: SnackbarDuration = SnackbarDuration.Short,
-    val isError: Boolean = true,
+    val type: SnackbarType = SnackbarType.SUCCESS,
 ) : SnackbarVisuals
 
 @Composable
@@ -31,19 +40,19 @@ fun BisqSnackbar(snackbarHostState: SnackbarHostState) {
     SnackbarHost(
         hostState = snackbarHostState,
         snackbar = { data ->
-            val isError = (data.visuals as? BisqSnackbarVisuals)?.isError ?: false
+            val type = (data.visuals as? BisqSnackbarVisuals)?.type ?: SnackbarType.SUCCESS
             val containerColor =
-                if (isError) {
-                    BisqTheme.colors.danger
-                } else {
-                    BisqTheme.colors.secondary
+                when (type) {
+                    SnackbarType.ERROR -> BisqTheme.colors.danger
+                    SnackbarType.WARNING -> BisqTheme.colors.warning
+                    SnackbarType.SUCCESS -> BisqTheme.colors.secondary
                 }.copy(alpha = 0.95f)
 
             val contentColor =
-                if (isError) {
-                    BisqTheme.colors.dark_grey10
-                } else {
-                    BisqTheme.colors.mid_grey20
+                when (type) {
+                    SnackbarType.ERROR -> BisqTheme.colors.dark_grey10
+                    SnackbarType.WARNING -> BisqTheme.colors.dark_grey10
+                    SnackbarType.SUCCESS -> BisqTheme.colors.white
                 }
 
             Snackbar(
@@ -69,7 +78,7 @@ private fun BisqSnackbarPreview() {
                 BisqSnackbarVisuals(
                     message = "This is a sample message with dismiss action",
                     withDismissAction = true,
-                    isError = false,
+                    type = SnackbarType.SUCCESS,
                 ),
             )
         }
@@ -89,7 +98,7 @@ private fun BisqSnackbar_NoDismissActionPreview() {
                 BisqSnackbarVisuals(
                     message = "This is a sample message",
                     withDismissAction = false,
-                    isError = false,
+                    type = SnackbarType.SUCCESS,
                 ),
             )
         }
@@ -109,7 +118,27 @@ private fun BisqSnackbar_LongMessagePreview() {
                 BisqSnackbarVisuals(
                     message = "This is a longer snackbar message that demonstrates how the component handles multi-line text content",
                     withDismissAction = true,
-                    isError = false,
+                    type = SnackbarType.SUCCESS,
+                ),
+            )
+        }
+
+        BisqSnackbar(snackbarHostState = snackbarHostState)
+    }
+}
+
+@Preview
+@Composable
+private fun BisqSnackbar_WarningPreview() {
+    BisqTheme.Preview {
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            snackbarHostState.showSnackbar(
+                BisqSnackbarVisuals(
+                    message = "This is a warning message",
+                    withDismissAction = true,
+                    type = SnackbarType.WARNING,
                 ),
             )
         }
@@ -129,7 +158,7 @@ private fun BisqSnackbar_ErrorPreview() {
                 BisqSnackbarVisuals(
                     message = "This is a longer snackbar message that demonstrates how the component handles multi-line text content",
                     withDismissAction = true,
-                    isError = true,
+                    type = SnackbarType.ERROR,
                 ),
             )
         }

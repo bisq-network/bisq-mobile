@@ -48,7 +48,6 @@ fun PaymentAccountsScreen() {
     PaymentAccountsContent(
         uiState = uiState,
         onAction = presenter::onAction,
-        snackbarHostState = presenter.getSnackState(),
         topBar = { TopBar("paymentAccounts.headline".i18n()) },
     )
 }
@@ -57,12 +56,10 @@ fun PaymentAccountsScreen() {
 fun PaymentAccountsContent(
     uiState: PaymentAccountsUiState,
     onAction: (PaymentAccountsUiAction) -> Unit,
-    snackbarHostState: SnackbarHostState,
     topBar: @Composable () -> Unit = {},
 ) {
     BisqScaffold(
         topBar = topBar,
-        snackbarHostState = snackbarHostState,
     ) { paddingValues ->
 
         when {
@@ -321,10 +318,6 @@ private fun PreviewTopBar() {
     )
 }
 
-@ExcludeFromCoverage
-@Composable
-private fun previewSnackbarHostState() = remember { SnackbarHostState() }
-
 private val previewOnAction: (PaymentAccountsUiAction) -> Unit = {}
 
 @Preview
@@ -334,7 +327,6 @@ private fun PaymentAccountsScreen_EmptyPreview() {
         PaymentAccountsContent(
             uiState = PaymentAccountsUiState(),
             onAction = previewOnAction,
-            snackbarHostState = previewSnackbarHostState(),
             topBar = { PreviewTopBar() },
         )
     }
@@ -381,7 +373,6 @@ private fun PaymentAccountsScreen_WithAccountsPreview() {
                         ),
                 ),
             onAction = previewOnAction,
-            snackbarHostState = previewSnackbarHostState(),
             topBar = { PreviewTopBar() },
         )
     }
@@ -429,7 +420,6 @@ private fun PaymentAccountsScreen_EditModePreview() {
                     showEditAccountState = true,
                 ),
             onAction = previewOnAction,
-            snackbarHostState = previewSnackbarHostState(),
             topBar = { PreviewTopBar() },
         )
     }
@@ -442,7 +432,6 @@ private fun PaymentAccountsScreen_LoadingPreview() {
         PaymentAccountsContent(
             uiState = PaymentAccountsUiState(isLoadingAccounts = true),
             onAction = previewOnAction,
-            snackbarHostState = previewSnackbarHostState(),
             topBar = { PreviewTopBar() },
         )
     }
@@ -455,7 +444,6 @@ private fun PaymentAccountsScreen_ErrorPreview() {
         PaymentAccountsContent(
             uiState = PaymentAccountsUiState(isLoadingAccountsError = true),
             onAction = previewOnAction,
-            snackbarHostState = previewSnackbarHostState(),
             topBar = { PreviewTopBar() },
         )
     }
@@ -471,7 +459,6 @@ private fun PaymentAccountsScreen_CreateModePreview() {
                     showAddAccountState = true,
                 ),
             onAction = previewOnAction,
-            snackbarHostState = previewSnackbarHostState(),
             topBar = { PreviewTopBar() },
         )
     }

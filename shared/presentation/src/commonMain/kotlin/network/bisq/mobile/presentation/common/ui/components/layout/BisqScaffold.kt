@@ -15,7 +15,6 @@ fun BisqScaffold(
     modifier: Modifier = Modifier,
     topBar: @Composable (() -> Unit) = {},
     bottomBar: @Composable (() -> Unit) = {},
-    snackbarHostState: SnackbarHostState? = null,
     floatingActionButton: @Composable (() -> Unit) = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
@@ -27,11 +26,6 @@ fun BisqScaffold(
         topBar = topBar,
         bottomBar = bottomBar,
         containerColor = BisqTheme.colors.backgroundColor,
-        snackbarHost = {
-            if (snackbarHostState != null) {
-                BisqSnackbar(snackbarHostState = snackbarHostState)
-            }
-        },
         floatingActionButton = floatingActionButton,
         content = content,
     )

@@ -64,7 +64,7 @@ abstract class SplashPresenter(
         presenterScope.launch {
             shouldShowProgressToast.collect { shouldShow ->
                 if (shouldShow) {
-                    showSnackbar("mobile.bootstrap.progress.continuing".i18n(), isError = false)
+                    showSnackbar("mobile.bootstrap.progress.continuing".i18n())
                     applicationBootstrapFacade.setShouldShowProgressToast(false)
                 }
             }

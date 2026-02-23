@@ -58,7 +58,6 @@ fun ClientSupportScreen() {
         topBar = { TopBar("mobile.more.support".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero),
-        snackbarHostState = supportPresenter.getSnackState(),
         isInteractive = isInteractive,
     ) {
         BisqText.H2Light("mobile.support.headline".i18n())

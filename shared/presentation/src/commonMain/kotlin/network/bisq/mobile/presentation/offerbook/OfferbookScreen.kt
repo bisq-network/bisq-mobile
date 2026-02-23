@@ -75,7 +75,6 @@ fun OfferbookScreen() {
         },
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog,
-        snackbarHostState = presenter.getSnackState(),
     ) {
         DirectionToggle(
             selectedDirection,

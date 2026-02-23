@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 
 /**
@@ -43,16 +44,12 @@ class PreviewTopBarPresenter : ITopBarPresenter {
 
     override fun isIOS(): Boolean = false
 
-    override fun getSnackState(): SnackbarHostState = snackbar
-
     override fun showSnackbar(
         message: String,
-        isError: Boolean,
+        type: SnackbarType,
         duration: SnackbarDuration,
     ) {
     }
-
-    override fun dismissSnackbar() {}
 
     override fun isAtHomeTab(): Boolean = true
 

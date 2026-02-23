@@ -55,7 +55,6 @@ fun ReputationScreen() {
         topBar = { TopBar("mobile.more.reputation".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero),
-        snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
     ) {
         BisqText.BaseLight(

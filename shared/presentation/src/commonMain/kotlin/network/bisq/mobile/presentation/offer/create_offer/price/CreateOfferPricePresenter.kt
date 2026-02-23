@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
@@ -97,7 +98,7 @@ class CreateOfferPricePresenter(
                     }
                 }.onFailure { e ->
                     log.e(e) { "Failed to process market price change: ${e.message}" }
-                    showSnackbar("mobile.bisqEasy.tradeWizard.price.updateError".i18n(), isError = true)
+                    showSnackbar("mobile.bisqEasy.tradeWizard.price.updateError".i18n(), type = SnackbarType.ERROR)
                 }
             }
         }
@@ -116,7 +117,7 @@ class CreateOfferPricePresenter(
                 val adjustedPercentageString = PercentageFormatter.format(adjustedPercentage, false)
                 onPercentagePriceChanged(adjustedPercentageString, true)
 
-                showSnackbar("mobile.bisqEasy.tradeWizard.price.adjustedDueToMarketChange".i18n())
+                showSnackbar("mobile.bisqEasy.tradeWizard.price.adjustedDueToMarketChange".i18n(), type = SnackbarType.ERROR)
             } else {
                 // Price is still valid, but we need to update the calculated values based on new market price
                 if (priceType.value == PriceType.PERCENTAGE) {

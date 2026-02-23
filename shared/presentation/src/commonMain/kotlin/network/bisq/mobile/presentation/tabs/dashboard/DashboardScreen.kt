@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,6 +45,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.AmountWithCurrency
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BatteryOptimizationsDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.NotificationPermissionDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -198,7 +198,6 @@ fun DashboardScreen() {
         tradeRulesConfirmed = tradeRulesConfirmed,
         onNavigateToMarkets = presenter::onNavigateToMarkets,
         onOpenTradeGuide = presenter::onOpenTradeGuide,
-        snackbarHostState = presenter.getSnackState(),
         isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
         onPermissionRequest = {
             notifPermLauncher.launch()
@@ -225,6 +224,7 @@ fun DashboardScreen() {
                 presenter.showSnackbar(
                     "mobile.platform.settings.batteryOptimizations.dismissed".i18n(),
                     duration = SnackbarDuration.Indefinite,
+                    type = SnackbarType.WARNING,
                 )
             }
         },
@@ -240,7 +240,6 @@ private fun DashboardContent(
     isInteractive: Boolean,
     marketPrice: String,
     tradeRulesConfirmed: Boolean,
-    snackbarHostState: SnackbarHostState,
     onNavigateToMarkets: () -> Unit,
     onOpenTradeGuide: () -> Unit,
     isPermissionRequestDialogVisible: Boolean,
@@ -253,7 +252,6 @@ private fun DashboardContent(
     val padding = BisqUIConstants.ScreenPadding
     BisqScrollScaffold(
         padding = PaddingValues(all = BisqUIConstants.Zero),
-        snackbarHostState = snackbarHostState,
         verticalArrangement = Arrangement.spacedBy(padding),
         isInteractive = isInteractive,
     ) {
@@ -418,7 +416,6 @@ private fun DashboardContentPreview(
             tradeRulesConfirmed = tradeRulesConfirmed,
             onNavigateToMarkets = {},
             onOpenTradeGuide = {},
-            snackbarHostState = SnackbarHostState(),
             isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
             onPermissionRequest = {},
             onPermissionDeny = { _ -> },

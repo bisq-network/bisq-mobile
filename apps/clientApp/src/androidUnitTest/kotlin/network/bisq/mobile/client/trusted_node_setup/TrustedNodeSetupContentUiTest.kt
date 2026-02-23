@@ -85,7 +85,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -132,7 +131,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -158,7 +156,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -184,7 +181,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -210,7 +206,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -238,7 +233,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -263,7 +257,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -303,7 +296,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -332,7 +324,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -363,7 +354,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -388,7 +378,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -417,7 +406,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -442,7 +430,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -470,7 +457,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -496,7 +482,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -523,7 +508,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -554,7 +538,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -581,7 +564,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -615,7 +597,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -642,7 +623,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -671,7 +651,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -697,7 +676,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -723,7 +701,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -750,7 +727,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -777,7 +753,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = true,
             )
         }
@@ -808,7 +783,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -835,7 +809,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -867,7 +840,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
                 topBar = {
                     TopBarContent(
@@ -898,7 +870,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
             )
         }
@@ -923,7 +894,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
             )
         }
@@ -950,7 +920,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
             )
         }
 
@@ -978,7 +947,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
             )
         }
@@ -1005,7 +973,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
             )
         }
@@ -1035,7 +1002,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = true,
             )
         }
@@ -1065,7 +1031,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
             )
         }
@@ -1095,7 +1060,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
             )
         }
@@ -1126,7 +1090,6 @@ class TrustedNodeSetupContentUiTest {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
-                snackbarHostState = snackbarHostState,
                 isWorkflow = false,
             )
         }

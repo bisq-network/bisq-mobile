@@ -23,6 +23,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -143,7 +144,7 @@ open class DashboardPresenter(
     private suspend fun registerForPushNotifications() {
         if (ApplicationBootstrapFacade.isDemo) {
             log.i { "Demo mode - push notifications not available" }
-            showSnackbar("mobile.pushNotifications.notAvailableInDemoMode".i18n(), isError = false)
+            showSnackbar("mobile.pushNotifications.notAvailableInDemoMode".i18n(), type = SnackbarType.WARNING)
             return
         }
 
@@ -153,7 +154,7 @@ open class DashboardPresenter(
             log.i { "Successfully registered for push notifications" }
         } else {
             log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.message}" }
-            showSnackbar("mobile.pushNotifications.registrationFailed".i18n(), isError = true)
+            showSnackbar("mobile.pushNotifications.registrationFailed".i18n(), type = SnackbarType.ERROR)
         }
     }
 }

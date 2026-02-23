@@ -40,7 +40,6 @@ fun CreateOfferReviewOfferScreen() {
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,
-        snackbarHostState = presenter.getSnackState(),
     ) {
         BisqGap.V1()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {

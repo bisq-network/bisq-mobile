@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -53,14 +54,14 @@ class ClientSupportPresenter(
             try {
                 val result = pushNotificationServiceFacade.registerForPushNotifications()
                 if (result.isSuccess) {
-                    showSnackbar("Device token retrieved successfully", isError = false)
+                    showSnackbar("Device token retrieved successfully")
                 } else {
                     val errorMessage = result.exceptionOrNull()?.message ?: "Unknown error"
-                    showSnackbar("Failed to get device token: $errorMessage", isError = true)
+                    showSnackbar("Failed to get device token: $errorMessage", type = SnackbarType.ERROR)
                 }
             } catch (e: Exception) {
                 val errorMessage = e.message ?: "Unknown error"
-                showSnackbar("Error: $errorMessage", isError = true)
+                showSnackbar("Error: $errorMessage", type = SnackbarType.ERROR)
             } finally {
                 _tokenRequestInProgress.value = false
             }
@@ -69,7 +70,7 @@ class ClientSupportPresenter(
 
     fun onCopyToken(token: String) {
         copyToClipboard(token)
-        showSnackbar("Token copied to clipboard", isError = false)
+        showSnackbar("Token copied to clipboard")
     }
 }
 

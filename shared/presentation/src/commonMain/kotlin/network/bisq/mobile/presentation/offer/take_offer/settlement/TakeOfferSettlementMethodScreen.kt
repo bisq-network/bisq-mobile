@@ -44,7 +44,6 @@ fun TakeOfferSettlementMethodScreen() {
         stepsLength = takeOfferPresenter.totalSteps,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onBaseSideNext() },
-        snackbarHostState = presenter.getSnackState(),
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,

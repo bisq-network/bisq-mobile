@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
@@ -51,11 +52,6 @@ class TakeOfferPaymentMethodPresenter(
         quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
     }
 
-    override fun onViewUnattaching() {
-        dismissSnackbar()
-        super.onViewUnattaching()
-    }
-
     fun onQuoteSidePaymentMethodSelected(paymentMethod: String) {
         quoteSidePaymentMethod.value = paymentMethod
     }
@@ -86,7 +82,7 @@ class TakeOfferPaymentMethodPresenter(
                 navigateTo(NavRoute.TakeOfferReviewTrade)
             }
         } else {
-            showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.fiat.taker".i18n())
+            showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.fiat.taker".i18n(), type = SnackbarType.ERROR)
         }
     }
 
@@ -100,7 +96,7 @@ class TakeOfferPaymentMethodPresenter(
             commitToSettlementMethod()
             navigateTo(NavRoute.TakeOfferReviewTrade)
         } else {
-            showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.btc.taker".i18n())
+            showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.btc.taker".i18n(), type = SnackbarType.ERROR)
         }
     }
 

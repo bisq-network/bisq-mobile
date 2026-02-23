@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -92,7 +93,7 @@ class OpenTradeListPresenter(
             navigateTo(NavRoute.OpenTrade(openTradeItem.tradeId))
         } catch (e: Exception) {
             log.e(e) { "Failed to open trade ${openTradeItem.tradeId}" }
-            showSnackbar("mobile.bisqEasy.openTrades.failed".i18n(e.message ?: "unknown"))
+            showSnackbar("mobile.bisqEasy.openTrades.failed".i18n(e.message ?: "unknown"), type = SnackbarType.ERROR)
         }
     }
 }

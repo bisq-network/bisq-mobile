@@ -93,7 +93,6 @@ fun UserProfileScreen() {
             }
         },
         horizontalAlignment = Alignment.Start,
-        snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
         shouldBlurBg = uiState.shouldBlurBg,
         scrollState = scrollState,

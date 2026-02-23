@@ -30,7 +30,6 @@ fun CreateOfferSettlementMethodScreen() {
         prevOnClick = { presenter.onBack() },
         nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onBaseSideNext() },
-        snackbarHostState = presenter.getSnackState(),
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,

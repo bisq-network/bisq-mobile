@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAc
 import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -140,7 +141,7 @@ open class PaymentAccountsPresenter(
                 it.accountName == accountNameEntry.value && it.accountName != excludeAccountName
             }
         if (isDuplicate) {
-            showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
+            showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n(), type = SnackbarType.ERROR)
             return false
         }
 
@@ -189,11 +190,11 @@ open class PaymentAccountsPresenter(
                 .onSuccess {
                     showSnackbar(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(),
-                        false,
+                        type = SnackbarType.SUCCESS,
                     )
                     _uiState.update { it.copy(showAddAccountState = false) }
                 }.onFailure {
-                    showSnackbar("mobile.error.generic".i18n(), true)
+                    showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
                 }
             hideLoading()
         }
@@ -218,10 +219,9 @@ open class PaymentAccountsPresenter(
                 .onSuccess {
                     showSnackbar(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(),
-                        false,
                     )
                 }.onFailure {
-                    showSnackbar("mobile.error.generic".i18n(), true)
+                    showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
                 }
             hideLoading()
         }
@@ -238,7 +238,6 @@ open class PaymentAccountsPresenter(
                 .onSuccess {
                     showSnackbar(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),
-                        false,
                     )
                 }.onFailure {
                     log.e { "Couldn't remove account ${selectedAccount.accountName}" }
@@ -246,7 +245,7 @@ open class PaymentAccountsPresenter(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(
                             selectedAccount.accountName,
                         ),
-                        isError = true,
+                        type = SnackbarType.ERROR,
                     )
                 }
             hideLoading()

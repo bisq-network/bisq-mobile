@@ -26,6 +26,7 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.main.MainPresenter
 import kotlin.time.Duration.Companion.seconds
 
@@ -192,7 +193,7 @@ class CreateOfferPresenter(
 
     private suspend fun prepareOfferParameters(): OfferParameters {
         if (isDemo()) {
-            showSnackbar("mobile.bisqEasy.offerbook.createOfferDisabledInDemonstrationMode".i18n())
+            showSnackbar("mobile.bisqEasy.offerbook.createOfferDisabledInDemonstrationMode".i18n(), type = SnackbarType.ERROR)
             throw IllegalStateException("Demo mode")
         }
 

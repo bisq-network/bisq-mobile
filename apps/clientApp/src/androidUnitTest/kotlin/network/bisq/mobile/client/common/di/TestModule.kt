@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -115,16 +116,11 @@ val clientTestModule =
 
                 override fun isIOS(): Boolean = false
 
-                override fun getSnackState(): SnackbarHostState = SnackbarHostState()
-
                 override fun showSnackbar(
                     message: String,
-                    isError: Boolean,
+                    type: SnackbarType,
                     duration: SnackbarDuration,
-                ) {
-                }
-
-                override fun dismissSnackbar() {}
+                ) {}
 
                 override fun isAtHomeTab(): Boolean = false
 

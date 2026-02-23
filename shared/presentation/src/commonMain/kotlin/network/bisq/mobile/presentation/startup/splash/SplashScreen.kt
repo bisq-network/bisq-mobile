@@ -40,7 +40,6 @@ fun SplashScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         BisqStaticScaffold(
             verticalArrangement = Arrangement.SpaceBetween,
-            snackbarHostState = presenter.getSnackState(),
         ) {
             Box(
                 modifier = Modifier.fillMaxSize().weight(1f),

@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.common.ui.base
 
 import androidx.annotation.CallSuper
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +20,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbarVisuals
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
@@ -52,15 +51,11 @@ interface ViewPresenter {
 
     fun isIOS(): Boolean
 
-    fun getSnackState(): SnackbarHostState
-
     fun showSnackbar(
         message: String,
-        isError: Boolean = true,
+        type: SnackbarType = SnackbarType.SUCCESS,
         duration: SnackbarDuration = SnackbarDuration.Short,
     )
-
-    fun dismissSnackbar()
 
     /**
      * @return true if user is in home tab, false otherwise
@@ -133,33 +128,16 @@ abstract class BasePresenter(
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> = _isInteractive.asStateFlow()
-    private val snackbarHostState: SnackbarHostState = SnackbarHostState()
 
-    // Global UI manager for app-wide UI state (loading dialogs, etc.)
+    // Global UI manager for app-wide UI state (loading dialogs, snackbars, etc.)
     protected val globalUiManager: GlobalUiManager by inject()
-
-    override fun getSnackState(): SnackbarHostState = snackbarHostState
 
     override fun showSnackbar(
         message: String,
-        isError: Boolean,
+        type: SnackbarType,
         duration: SnackbarDuration,
     ) {
-        presenterScope.launch {
-            snackbarHostState.showSnackbar(
-                BisqSnackbarVisuals(
-                    message = message,
-                    isError = isError,
-                    duration = duration,
-                ),
-            )
-        }
-    }
-
-    override fun dismissSnackbar() {
-        presenterScope.launch {
-            snackbarHostState.currentSnackbarData?.dismiss()
-        }
+        globalUiManager.showSnackbar(message, type, duration)
     }
 
     override fun isSmallScreen(): Boolean = rootPresenter?.isSmallScreen?.value ?: false
@@ -344,6 +322,8 @@ abstract class BasePresenter(
     override fun onViewUnattaching() {
         // Cancel any pending global loading dialog to prevent stuck overlays
         hideLoading()
+        // Dismiss any active snackbar when view detaches (e.g., navigation)
+        globalUiManager.dismissSnackbar()
         // Presenter level support for auto disposal
         CoroutineScope(Dispatchers.Main).launch { jobsManager.dispose() }
     }

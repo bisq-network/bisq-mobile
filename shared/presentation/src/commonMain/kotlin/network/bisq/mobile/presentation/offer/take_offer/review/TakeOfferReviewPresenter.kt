@@ -21,6 +21,7 @@ import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -80,7 +81,7 @@ class TakeOfferReviewPresenter(
             // To ignore the first init message
             takeOfferErrorMessage.drop(1).collect {
                 log.e { "takeOfferErrorMessage: $it" }
-                showSnackbar(it ?: "mobile.takeOffer.unexpectedError".i18n(), true)
+                showSnackbar(it ?: "mobile.takeOffer.unexpectedError".i18n(), type = SnackbarType.ERROR)
             }
         }
 
@@ -132,7 +133,7 @@ class TakeOfferReviewPresenter(
         presenterScope.launch {
             try {
                 if (isDemo()) {
-                    showSnackbar("Take offer is disabled in demo mode")
+                    showSnackbar("Take offer is disabled in demo mode", type = SnackbarType.ERROR)
                 } else {
                     val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
 

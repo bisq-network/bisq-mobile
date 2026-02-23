@@ -30,7 +30,6 @@ fun CreateOfferPaymentMethodScreen() {
         prevOnClick = { presenter.onBack() },
         nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onQuoteSideNext() },
-        snackbarHostState = presenter.getSnackState(),
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,

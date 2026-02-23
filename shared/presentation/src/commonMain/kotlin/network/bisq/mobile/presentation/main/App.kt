@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,10 +33,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.base.SnackbarAction
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
@@ -45,6 +48,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbar
+import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbarVisuals
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorOverlay
 import network.bisq.mobile.presentation.common.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -140,6 +145,32 @@ fun App(
     val showReconnectOverlay by presenter.showReconnectOverlay.collectAsState()
     val showLoadingDialog by globalUiManager.showLoadingDialog.collectAsState()
 
+    // Global snackbar state
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Collect snackbar actions from GlobalUiManager
+    LaunchedEffect(Unit) {
+        globalUiManager.snackbarActions.collect { action ->
+            when (action) {
+                is SnackbarAction.Show -> {
+                    // Launch in child coroutine so collector isn't blocked while snackbar shows
+                    launch {
+                        snackbarHostState.showSnackbar(
+                            BisqSnackbarVisuals(
+                                message = action.message,
+                                type = action.type,
+                                duration = action.duration,
+                            ),
+                        )
+                    }
+                }
+                is SnackbarAction.Dismiss -> {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                }
+            }
+        }
+    }
+
     LaunchedEffect(languageCode) {
         if (languageCode.isNotBlank()) {
             // TODO is that needed? We set the language for i18n in the SettingsServiceFacade
@@ -176,6 +207,14 @@ fun App(
             // Global loading dialog - renders on top of everything (last child = topmost z-order)
             if (showLoadingDialog) {
                 LoadingDialog()
+            }
+
+            // Global snackbar - displays app-wide snackbar notifications at the bottom
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                BisqSnackbar(snackbarHostState = snackbarHostState)
             }
         }
     }

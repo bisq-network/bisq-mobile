@@ -35,6 +35,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
@@ -388,14 +389,14 @@ open class OfferbookPresenter(
         val selectedOffer = this.selectedOffer
         if (selectedOffer == null) {
             _showDeleteConfirmation.value = false
-            showSnackbar("mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(EMPTY_STRING), true)
+            showSnackbar("mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(EMPTY_STRING), type = SnackbarType.ERROR)
             return
         }
         runCatching {
             _showDeleteConfirmation.value = false
             require(selectedOffer.isMyOffer)
             if (isDemo()) {
-                showSnackbar("mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(), true)
+                showSnackbar("mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(), type = SnackbarType.ERROR)
                 return@runCatching
             }
             presenterScope.launch {
@@ -414,7 +415,7 @@ open class OfferbookPresenter(
                         "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
                             selectedOffer.offerId,
                         ),
-                        true,
+                        type = SnackbarType.ERROR,
                     )
                 }
             }
@@ -423,7 +424,7 @@ open class OfferbookPresenter(
             log.e(it) { "Failed to delete offer ${selectedOffer.offerId}" }
             showSnackbar(
                 "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer.offerId),
-                true,
+                type = SnackbarType.ERROR,
             )
             deselectOffer()
         }
@@ -465,7 +466,7 @@ open class OfferbookPresenter(
             log.e(it) { "Failed to take offer ${selectedOffer?.offerId}" }
             showSnackbar(
                 "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(selectedOffer?.offerId ?: ""),
-                true,
+                type = SnackbarType.ERROR,
             )
             deselectOffer()
         }
@@ -656,9 +657,7 @@ open class OfferbookPresenter(
         } catch (e: Exception) {
             enableInteractive()
             log.e(e) { "Failed to create offer" }
-            showSnackbar(
-                if (isDemo()) "mobile.bisqEasy.offerbook.createOfferDisabledInDemoMode".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n(),
-            )
+            showSnackbar(if (isDemo()) "mobile.bisqEasy.offerbook.createOfferDisabledInDemoMode".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n(), type = SnackbarType.ERROR)
         }
     }
 

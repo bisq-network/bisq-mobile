@@ -40,7 +40,6 @@ fun TakeOfferPaymentMethodScreen() {
         stepsLength = takeOfferPresenter.totalSteps,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onQuoteSideNext() },
-        snackbarHostState = presenter.getSnackState(),
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,

@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
@@ -169,7 +170,7 @@ class CreateOfferReviewPresenter(
                     }.onFailure { exception ->
                         if (exception is TimeoutCancellationException) {
                             log.e(exception) { "Create offer timed out: ${exception.message}" }
-                            showSnackbar("mobile.bisqEasy.createOffer.timedOut".i18n(), isError = true)
+                            showSnackbar("mobile.bisqEasy.createOffer.timedOut".i18n(), type = SnackbarType.ERROR)
                         } else {
                             log.e(exception) { "Failed to create offer: ${exception.message}" }
                             // Show the actual error message to help users understand what went wrong
@@ -182,7 +183,7 @@ class CreateOfferReviewPresenter(
                                     else ->
                                         "mobile.bisqEasy.createOffer.failed".i18n()
                                 }
-                            showSnackbar(errorMessage, isError = true)
+                            showSnackbar(errorMessage, type = SnackbarType.ERROR)
                         }
                     }
             } finally {

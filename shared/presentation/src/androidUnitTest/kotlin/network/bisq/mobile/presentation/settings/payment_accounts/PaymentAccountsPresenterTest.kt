@@ -20,6 +20,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
@@ -46,6 +47,7 @@ class PaymentAccountsPresenterTest {
 
     private lateinit var fiatAccountsServiceFacade: FiatAccountsServiceFacade
     private lateinit var mainPresenter: MainPresenter
+    private lateinit var globalUiManager: GlobalUiManager
     private lateinit var presenter: PaymentAccountsPresenter
 
     // Test data
@@ -74,13 +76,14 @@ class PaymentAccountsPresenterTest {
         // Setup mocks
         fiatAccountsServiceFacade = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
+        globalUiManager = mockk(relaxed = true)
 
         startKoin {
             modules(
                 module {
                     single<NavigationManager> { mockk(relaxed = true) }
                     single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
+                    single<GlobalUiManager> { globalUiManager }
                 },
             )
         }
@@ -442,9 +445,7 @@ class PaymentAccountsPresenterTest {
             assertTrue(state.showAddAccountState) // Still in add mode
 
             // Verify duplicate name snackbar was shown
-            val snackbarData = presenter.getSnackState().currentSnackbarData
-            assertNotNull(snackbarData)
-            assertEquals("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n(), snackbarData.visuals.message)
+            coVerify { globalUiManager.showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n(), type = SnackbarType.ERROR, any()) }
         }
 
     // ========== Add Account Tests ==========
@@ -488,9 +489,7 @@ class PaymentAccountsPresenterTest {
             assertFalse(presenter.uiState.value.showAddAccountState) // Dialog should be closed
 
             // Verify success snackbar was shown
-            val snackbarData = presenter.getSnackState().currentSnackbarData
-            assertNotNull(snackbarData)
-            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(), snackbarData.visuals.message)
+            coVerify { globalUiManager.showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(), type = SnackbarType.SUCCESS, any()) }
         }
 
     @Test
@@ -520,9 +519,7 @@ class PaymentAccountsPresenterTest {
             assertTrue(presenter.uiState.value.showAddAccountState)
 
             // Verify error snackbar was shown
-            val snackbarData = presenter.getSnackState().currentSnackbarData
-            assertNotNull(snackbarData)
-            assertEquals("mobile.error.generic".i18n(), snackbarData.visuals.message)
+            coVerify { globalUiManager.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR, any()) }
         }
 
     // ========== Save Account Tests ==========
@@ -561,9 +558,7 @@ class PaymentAccountsPresenterTest {
             coVerify(atLeast = 1) { fiatAccountsServiceFacade.saveAccount(any()) }
 
             // Verify success snackbar was shown
-            val snackbarData = presenter.getSnackState().currentSnackbarData
-            assertNotNull(snackbarData)
-            assertEquals("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(), snackbarData.visuals.message)
+            coVerify { globalUiManager.showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(), type = SnackbarType.SUCCESS, any()) }
         }
 
     @Test
@@ -701,9 +696,7 @@ class PaymentAccountsPresenterTest {
             coVerify(atLeast = 1) { fiatAccountsServiceFacade.saveAccount(any()) }
 
             // Verify error snackbar was shown
-            val snackbarData = presenter.getSnackState().currentSnackbarData
-            assertNotNull(snackbarData)
-            assertEquals("mobile.error.generic".i18n(), snackbarData.visuals.message)
+            coVerify { globalUiManager.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR, any()) }
         }
 
     // ========== Delete Account Tests ==========
@@ -738,6 +731,41 @@ class PaymentAccountsPresenterTest {
             // Dialog closes immediately when user confirms (before delete completes)
             val state = presenter.uiState.value
             assertFalse(state.showDeleteConfirmationDialog)
+
+            // Verify success snackbar was shown
+            coVerify { globalUiManager.showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(), type = SnackbarType.SUCCESS, any()) }
+        }
+
+    @Test
+    fun `when deleting account fails then shows error snackbar`() =
+        runTest(testDispatcher) {
+            // Given
+            val accountStateFlow =
+                MutableStateFlow(
+                    AccountsState(
+                        accounts = listOf(sampleAccount1),
+                        selectedAccountIndex = 0,
+                    ),
+                )
+            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { fiatAccountsServiceFacade.deleteAccount(any()) } returns Result.failure(Exception("Delete error"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnDeleteAccountClick)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmDeleteAccountClick)
+            advanceUntilIdle()
+
+            // Then
+            // Verify error snackbar was shown with account-specific error message
+            coVerify { globalUiManager.showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(sampleAccount1.accountName), type = SnackbarType.ERROR, any()) }
         }
 
     // ========== UI Action Tests ==========

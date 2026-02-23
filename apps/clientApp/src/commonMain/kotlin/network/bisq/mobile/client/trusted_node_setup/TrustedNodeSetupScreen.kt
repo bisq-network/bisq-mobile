@@ -64,7 +64,6 @@ fun TrustedNodeSetupScreen(
     TrustedNodeSetupContent(
         uiState = uiState,
         onAction = presenter::onAction,
-        snackbarHostState = presenter.getSnackState(),
         isWorkflow = isWorkflow,
         topBar =
             if (!isWorkflow) {
@@ -80,14 +79,12 @@ fun TrustedNodeSetupScreen(
 fun TrustedNodeSetupContent(
     uiState: TrustedNodeSetupUiState,
     onAction: (TrustedNodeSetupUiAction) -> Unit,
-    snackbarHostState: SnackbarHostState,
     isWorkflow: Boolean = true,
     topBar: @Composable () -> Unit = {},
 ) {
     BisqScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = topBar,
-        snackbarHostState = snackbarHostState,
         bottomBar = {
             TrustedNodeBottomBar(uiState = uiState)
         },
@@ -330,7 +327,6 @@ private fun TrustedNodeSetupContent_IdlePreview() {
                     status = TrustedNodeConnectionStatus.Idle,
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -347,7 +343,6 @@ private fun TrustedNodeSetupContent_ReadyToTestPreview() {
                     apiUrl = "http://127.0.0.1:8090",
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -365,7 +360,6 @@ private fun TrustedNodeSetupContent_PairingInProgressPreview() {
                     apiUrl = "http://127.0.0.1:8090",
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -382,7 +376,6 @@ private fun TrustedNodeSetupContent_ConnectedPreview() {
                     apiUrl = "http://127.0.0.1:8090",
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -399,7 +392,6 @@ private fun TrustedNodeSetupContent_ErrorPreview() {
                     apiUrl = "http://127.0.0.1:8090",
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -417,7 +409,6 @@ private fun TrustedNodeSetupContent_TorStartingPreview() {
                     pairingCodeEntry = PREVIEW_PAIRING_CODE,
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -432,7 +423,6 @@ private fun TrustedNodeSetupContent_PairingCodeErrorPreview() {
                     pairingCodeEntry = DataEntry("invalid_code", "Invalid pairing code format"),
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -448,7 +438,6 @@ private fun TrustedNodeSetupContent_QrCodeErrorPreview() {
                     showQrCodeError = true,
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -466,7 +455,6 @@ private fun TrustedNodeSetupContent_ApiVersionErrorPreview() {
                     apiUrl = "http://127.0.0.1:8090",
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -483,7 +471,6 @@ private fun TrustedNodeSetupContent_Settings_ConnectedPreview() {
                     apiUrl = "http://127.0.0.1:8090",
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
             isWorkflow = false,
         )
     }
@@ -502,7 +489,6 @@ private fun TrustedNodeSetupContent_ChangeNodeWarningPreview() {
                     showChangeNodeWarning = true,
                 ),
             onAction = {},
-            snackbarHostState = SnackbarHostState(),
             isWorkflow = false,
         )
     }
