@@ -156,7 +156,7 @@ class TakeOfferReviewPresenter(
 
     fun onGoToOpenTrades() {
         setShowTakeOfferSuccessDialog(false)
-        // ensure we go to the my trade tab
+        navigateBackTo(NavRoute.TabContainer)
         navigateToTab(NavRoute.TabOpenTradeList)
     }
 

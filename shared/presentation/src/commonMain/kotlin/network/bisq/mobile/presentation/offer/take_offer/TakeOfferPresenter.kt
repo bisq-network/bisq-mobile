@@ -73,17 +73,19 @@ class TakeOfferPresenter(
 
         // Determine if the offer truly has a selectable range after clamping with trade limits.
         // A RangeAmountSpec may collapse to a single value when the offer's range is narrower
-        // than or equal to the trade amount limits (e.g., min == max after clamping).
+        // than or equal to the trade amount limits. We compare after rounding to the slider step
+        // (10,000 minor units) because the slider can only produce step-rounded values.
         var hasEffectiveRange = false
         if (amountSpec is RangeAmountSpecVO) {
+            val sliderStep = 10_000L
             val tradeLimitMin = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
             val tradeLimitMax = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
             val effectiveMin = maxOf(tradeLimitMin, amountSpec.minAmount)
             val effectiveMax = minOf(tradeLimitMax, amountSpec.maxAmount)
-            hasEffectiveRange = effectiveMax > effectiveMin
+            hasEffectiveRange = (effectiveMax - effectiveMin) >= sliderStep
             if (!hasEffectiveRange) {
-                // Range collapsed — treat as fixed amount using the single valid value
-                val fixedAmount = effectiveMin.coerceAtMost(effectiveMax).coerceAtLeast(effectiveMin)
+                // Range collapsed — treat as fixed amount using the midpoint
+                val fixedAmount = ((effectiveMin + effectiveMax) / 2).coerceIn(effectiveMin, effectiveMax)
                 quoteAmount = FiatVOFactory.from(fixedAmount, quoteCurrencyCode)
                 baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
             }
