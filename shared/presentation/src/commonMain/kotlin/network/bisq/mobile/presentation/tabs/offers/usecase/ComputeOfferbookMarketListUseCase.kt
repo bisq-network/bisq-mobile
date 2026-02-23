@@ -55,7 +55,11 @@ class ComputeOfferbookMarketListUseCase(
                     MarketSortBy.NameAZ, MarketSortBy.NameZA -> it.localeFiatCurrencyName
                 }
             }.let { comparator ->
-                if (sortBy == MarketSortBy.NameAZ) comparator.reversed() else comparator
+                when (sortBy) {
+                    MarketSortBy.MostOffers -> comparator.thenBy { it.localeFiatCurrencyName }
+                    MarketSortBy.NameAZ -> comparator.reversed()
+                    else -> comparator
+                }
             },
         )
     }

@@ -91,7 +91,7 @@ class ComputeOfferbookMarketListUseCaseTest {
         val marketPriceServiceFacade =
             FakeMarketPriceServiceFacade(
                 settingsRepository,
-                marketsWithPrice = setOf("USD", "EUR", "CAD", "BRL"),
+                marketsWithPrice = setOf("USD", "EUR", "CAD", "BRL", "AAA", "CCC", "BBB"),
             )
 
         val useCase = ComputeOfferbookMarketListUseCase(marketPriceServiceFacade)
@@ -101,10 +101,13 @@ class ComputeOfferbookMarketListUseCaseTest {
                 marketItem("EUR", "Euro", numOffers = 10),
                 marketItem("USD", "US Dollar", numOffers = 8),
                 marketItem("BRL", "Brazilian Real", numOffers = 4),
+                marketItem("AAA", "AAA", numOffers = 0),
+                marketItem("CCC", "CCC", numOffers = 0),
+                marketItem("BBB", "BBB", numOffers = 0),
             )
 
         val result = useCase(MarketFilter.All, "", MarketSortBy.MostOffers, items)
-        assertEquals(listOf("EUR", "USD", "CAD", "BRL"), result.map { it.market.quoteCurrencyCode })
+        assertEquals(listOf("EUR", "USD", "CAD", "BRL", "AAA", "BBB", "CCC"), result.map { it.market.quoteCurrencyCode })
     }
 
     @Test
