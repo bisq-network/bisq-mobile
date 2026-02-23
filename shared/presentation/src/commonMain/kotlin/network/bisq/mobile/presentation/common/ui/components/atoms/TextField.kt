@@ -221,10 +221,11 @@ fun BisqTextField(
         }
     }
 
-    // Re-validate, whenever validation function itself changes
-    // Applicable in cases, where the validation() changes based on
-    // change in other parameters like BitcoinLnAddressField::type
-    LaunchedEffect(validation) {
+    // Re-validate whenever the validation function changes or the value changes externally
+    // (e.g., slider updates the price while on the Fixed tab).
+    // Keying on `value` ensures we clear stale validation errors when
+    // the value prop changes from outside (not via user typing).
+    LaunchedEffect(validation, value) {
         if (value.isNotEmpty()) {
             hasInteracted = true
         }

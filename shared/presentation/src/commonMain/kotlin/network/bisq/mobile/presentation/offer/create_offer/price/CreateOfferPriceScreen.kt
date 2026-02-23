@@ -29,8 +29,8 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import org.koin.compose.koinInject
 
-private const val MIN_ALLOWED_PERCENTAGE_FRACTION = -0.1f
-private const val MAX_ALLOWED_PERCENTAGE_FRACTION = 0.5f
+private const val MIN_ALLOWED_PERCENTAGE_FRACTION = -10f
+private const val MAX_ALLOWED_PERCENTAGE_FRACTION = 50f
 
 @Composable
 fun CreateOfferPriceScreen() {
