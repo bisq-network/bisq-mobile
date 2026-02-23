@@ -649,6 +649,7 @@ class CreateOfferAmountPresenter(
 
     private fun applyFixedAmountSliderValue(amount: Float) {
         val separator = getGroupingSeparator().toString()
+        _amountValid.value = true
         _fixedAmountSliderPosition.value = amount
         quoteSideFixedAmount =
             FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition.value), quoteCurrencyCode)
