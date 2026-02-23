@@ -406,7 +406,7 @@ class TakeOfferAmountPresenterTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onSliderValueChanged_is_sampled_and_onSliderDragFinished_updates_immediately() =
+    fun onSliderValueChanged_leading_edge_updates_immediately_and_coalesces_subsequent() =
         runTest {
             // Arrange market prices map (100 USD per BTC)
             val marketUSD = MarketVOFactory.USD
@@ -441,23 +441,28 @@ class TakeOfferAmountPresenterTest {
             val beforeQuote = presenter.formattedQuoteAmount.value
             val beforeBase = presenter.formattedBaseAmount.value
 
-            // Act: drag updates schedule a sampled heavy update; not immediate
+            // Act: leading-edge update fires immediately on first slider interaction
             presenter.onSliderValueChanged(0.75f)
             val midQuote = presenter.formattedQuoteAmount.value
             val midBase = presenter.formattedBaseAmount.value
-            assertEquals(beforeQuote, midQuote)
-            assertEquals(beforeBase, midBase)
+            assertNotEquals(beforeQuote, midQuote)
+            assertNotEquals(beforeBase, midBase)
             assertTrue(presenter.amountValid.value)
 
-            // After debounce window, sampled update should refresh values
+            // Subsequent calls within the sample window are coalesced (not applied immediately)
+            presenter.onSliderValueChanged(0.95f)
+            val coalescedQuote = presenter.formattedQuoteAmount.value
+            assertEquals(midQuote, coalescedQuote)
+
+            // After debounce window, coalesced update is applied
             advanceTimeBy(40)
             runCurrent()
             val afterSampleQuote = presenter.formattedQuoteAmount.value
             val afterSampleBase = presenter.formattedBaseAmount.value
-            assertNotEquals(beforeQuote, afterSampleQuote)
-            assertNotEquals(beforeBase, afterSampleBase)
+            assertNotEquals(midQuote, afterSampleQuote)
+            assertNotEquals(midBase, afterSampleBase)
 
-            // Another drag then immediate release triggers immediate update (no extra wait)
+            // Drag finished flushes any pending value immediately
             val beforeReleaseQuote = presenter.formattedQuoteAmount.value
             val beforeReleaseBase = presenter.formattedBaseAmount.value
             presenter.onSliderValueChanged(0.80f)
