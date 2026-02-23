@@ -49,17 +49,10 @@ class ComputeOfferbookMarketListUseCase(
         }
 
         return afterSearchFilter.sortedWith(
-            compareByDescending<MarketListItem> {
-                when (sortBy) {
-                    MarketSortBy.MostOffers -> it.numOffers
-                    MarketSortBy.NameAZ, MarketSortBy.NameZA -> it.localeFiatCurrencyName
-                }
-            }.let { comparator ->
-                when (sortBy) {
-                    MarketSortBy.MostOffers -> comparator.thenBy { it.localeFiatCurrencyName }
-                    MarketSortBy.NameAZ -> comparator.reversed()
-                    else -> comparator
-                }
+            when (sortBy) {
+                MarketSortBy.MostOffers -> compareByDescending<MarketListItem> { it.numOffers }.thenBy { it.localeFiatCurrencyName }
+                MarketSortBy.NameAZ -> compareBy { it.localeFiatCurrencyName }
+                MarketSortBy.NameZA -> compareByDescending { it.localeFiatCurrencyName }
             },
         )
     }
