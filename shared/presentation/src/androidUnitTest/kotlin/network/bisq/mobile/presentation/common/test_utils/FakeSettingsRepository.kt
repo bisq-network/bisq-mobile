@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.common.test_utils
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
 import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketSortBy
@@ -15,29 +16,39 @@ internal class FakeSettingsRepository(
     private val mutableData = MutableStateFlow(initial)
     override val data: StateFlow<Settings> = mutableData
 
-    override suspend fun setFirstLaunch(value: Boolean) {}
+    override suspend fun setFirstLaunch(value: Boolean) {
+        mutableData.update { it.copy(firstLaunch = value) }
+    }
 
-    override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
+    override suspend fun setShowChatRulesWarnBox(value: Boolean) {
+        mutableData.update { it.copy(showChatRulesWarnBox = value) }
+    }
 
-    override suspend fun setSelectedMarketCode(value: String) {}
+    override suspend fun setSelectedMarketCode(value: String) {
+        mutableData.update { it.copy(selectedMarketCode = value) }
+    }
 
-    override suspend fun setNotificationPermissionState(value: PermissionState) {}
+    override suspend fun setNotificationPermissionState(value: PermissionState) {
+        mutableData.update { it.copy(notificationPermissionState = value) }
+    }
 
-    override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {}
+    override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {
+        mutableData.update { it.copy(batteryOptimizationState = value) }
+    }
 
     override suspend fun update(transform: suspend (t: Settings) -> Settings) {
-        mutableData.value = transform(mutableData.value)
+        mutableData.update { (it) }
     }
 
     override suspend fun clear() {
-        mutableData.value = Settings()
+        mutableData.update { Settings() }
     }
 
     override suspend fun setMarketSortBy(value: MarketSortBy) {
-        mutableData.value = mutableData.value.copy(marketSortBy = value)
+        mutableData.update { it.copy(marketSortBy = value) }
     }
 
     override suspend fun setMarketFilter(value: MarketFilter) {
-        mutableData.value = mutableData.value.copy(marketFilter = value)
+        mutableData.update { it.copy(marketFilter = value) }
     }
 }
