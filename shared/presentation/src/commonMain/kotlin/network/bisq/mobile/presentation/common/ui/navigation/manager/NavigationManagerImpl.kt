@@ -153,7 +153,6 @@ class NavigationManagerImpl(
     ) {
         scope.launch {
             val rootNav = getRootNavController() ?: return@launch
-            val tabNav = getTabNavController() ?: return@launch
             navMutex.withLock {
                 runCatching {
                     if (!isAtMainScreen()) {
@@ -173,6 +172,7 @@ class NavigationManagerImpl(
                     log.e(e) { "Failed to prepare tab container navigation" }
                 }
 
+                val tabNav = getTabNavController() ?: return@launch
                 runCatching {
                     tabNav.navigate(destination) {
                         popUpTo(NavRoute.HomeScreenGraphKey) {
