@@ -55,9 +55,10 @@ print_info "Using base branch: $BASE_BRANCH"
 print_info "Required diff coverage: ${DIFF_COVERAGE_THRESHOLD}%"
 echo ""
 
-# Generate XML coverage report
-echo "📊 Generating coverage report..."
-./gradlew koverXmlReport
+# Generate coverage reports (both XML and HTML)
+echo "📊 Generating coverage reports..."
+./gradlew koverXmlReport koverHtmlReport
+print_info "Kover HTML report available at: $REPO_ROOT/build/reports/kover/html/index.html"
 
 # Build source roots array
 echo "🔍 Finding Kotlin source directories..."
@@ -83,10 +84,12 @@ set +e
 diff-cover build/reports/kover/report.xml \
     --compare-branch="$BASE_BRANCH" \
     --fail-under="$DIFF_COVERAGE_THRESHOLD" \
-    --html-report build/reports/diff-cover/diff-coverage.html \
+    --format html:build/reports/diff-cover/diff-coverage.html \
     --src-roots "${SRC_ROOTS[@]}"
 DIFF_COVER_EXIT_CODE=$?
 set -e
+
+print_info "Diff coverage report available at: $REPO_ROOT/build/reports/diff-cover/diff-coverage.html"
 
 echo ""
 
@@ -96,24 +99,26 @@ else
     print_error "Diff coverage is below the required ${DIFF_COVERAGE_THRESHOLD}%"
     echo ""
     echo "Please add tests for your changes to meet the coverage requirement."
-fi
+    echo ""
+    print_info "Tip: For detailed source code coverage (red/green/yellow line annotations),"
+    print_info "      check the Kover HTML report at:"
+    print_info "      $REPO_ROOT/build/reports/kover/html/index.html"
 
-# Always open the HTML report for review
-REPORT_PATH="$REPO_ROOT/build/reports/diff-cover/diff-coverage.html"
-if [ -f "$REPORT_PATH" ]; then
-    if command -v open &>/dev/null; then
-        echo ""
-        print_info "Opening coverage report..."
-        open "$REPORT_PATH"
-    elif command -v xdg-open &>/dev/null; then
-        echo ""
-        print_info "Opening coverage report..."
-        xdg-open "$REPORT_PATH"
+    # Only open the HTML report for review if coverage fails
+    REPORT_PATH="$REPO_ROOT/build/reports/diff-cover/diff-coverage.html"
+    if [ -f "$REPORT_PATH" ]; then
+        if command -v open &>/dev/null; then
+            print_info "Opening coverage report..."
+            open "$REPORT_PATH" || true
+        elif command -v xdg-open &>/dev/null; then
+            print_info "Opening coverage report..."
+            xdg-open "$REPORT_PATH" || true
+        else
+            print_info "Report available at: $REPORT_PATH"
+        fi
     else
-        print_info "Report available at: $REPORT_PATH"
+        print_error "Coverage report not found at: $REPORT_PATH"
     fi
-else
-    print_error "Coverage report not found at: $REPORT_PATH"
 fi
 
 echo ""
