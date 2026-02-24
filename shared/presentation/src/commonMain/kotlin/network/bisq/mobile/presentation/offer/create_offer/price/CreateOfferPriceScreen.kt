@@ -25,6 +25,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.WhyHighPricePopup
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import org.koin.compose.koinInject
@@ -32,6 +33,7 @@ import org.koin.compose.koinInject
 private const val MIN_ALLOWED_PERCENTAGE_FRACTION = -10f
 private const val MAX_ALLOWED_PERCENTAGE_FRACTION = 50f
 
+@ExcludeFromCoverage
 @Composable
 fun CreateOfferPriceScreen() {
     val presenter: CreateOfferPricePresenter = koinInject()

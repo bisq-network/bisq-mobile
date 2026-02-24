@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import kotlinx.datetime.Clock
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 const val DEFAULT_CLICK_DEBOUNCE_MS = 300L
 
@@ -16,6 +17,7 @@ const val DEFAULT_CLICK_DEBOUNCE_MS = 300L
  * Returns a debounced version of [onClick] that ignores rapid repeated calls
  * within [debounceMs] of each other.
  */
+@ExcludeFromCoverage
 @Composable
 internal fun rememberDebouncedClick(
     debounceMs: Long = DEFAULT_CLICK_DEBOUNCE_MS,
@@ -36,6 +38,7 @@ internal fun rememberDebouncedClick(
  * Use this on any clickable composable that triggers navigation to prevent
  * double-tap from navigating twice.
  */
+@ExcludeFromCoverage
 @Composable
 fun Modifier.debouncedClickable(
     enabled: Boolean = true,

@@ -27,7 +27,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClic
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
+@ExcludeFromCoverage
 @Composable
 fun MarketCard(
     item: MarketListItem,

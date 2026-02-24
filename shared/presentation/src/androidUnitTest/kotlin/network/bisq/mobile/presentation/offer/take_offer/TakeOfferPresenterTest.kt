@@ -9,10 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.UrlLauncher
@@ -31,8 +28,12 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFa
 import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
 import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.FiatPaymentMethodSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
@@ -61,7 +62,6 @@ import network.bisq.mobile.presentation.common.service.OpenTradesNotificationSer
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -69,16 +69,14 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TakeOfferAmountPresenterTest {
+class TakeOfferPresenterTest {
     // --- Fakes (Android/JVM-friendly) ---
     private val testDispatcher = StandardTestDispatcher()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun setUpMainDispatcher() {
         Dispatchers.setMain(testDispatcher)
@@ -96,7 +94,6 @@ class TakeOfferAmountPresenterTest {
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @AfterTest
     fun tearDownMainDispatcher() {
         stopKoin()
@@ -148,7 +145,7 @@ class TakeOfferAmountPresenterTest {
         override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
 
         override suspend fun takeOffer(
-            bisqEasyOffer: OfferVO,
+            bisqEasyOffer: BisqEasyOfferVO,
             takersBaseSideAmount: MonetaryVO,
             takersQuoteSideAmount: MonetaryVO,
             bitcoinPaymentMethod: String,
@@ -367,11 +364,16 @@ class TakeOfferAmountPresenterTest {
         )
     }
 
-    private fun makeOfferDto(): OfferItemPresentationDto {
-        val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
-        val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L) // $10.0000 .. $100.0000
-        val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) }) // 100 USD per BTC
+    private fun makeOfferDto(
+        amountSpec: AmountSpecVO = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L),
+        paymentMethods: List<String> = listOf("SEPA"),
+        btcMethods: List<String> = listOf("BTC"),
+    ): OfferItemPresentationDto {
+        val market = MarketVOFactory.USD
+        val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_000_00L, market) })
         val makerNetworkId = NetworkIdVO(AddressByTransportTypeMapVO(mapOf()), PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"))
+        val quoteSideSpecs = paymentMethods.map { FiatPaymentMethodSpecVO(it, null) }
+        val baseSideSpecs = btcMethods.map { BitcoinPaymentMethodSpecVO(it, null) }
         val offer =
             BisqEasyOfferVO(
                 id = "offer-1",
@@ -382,8 +384,8 @@ class TakeOfferAmountPresenterTest {
                 amountSpec = amountSpec,
                 priceSpec = priceSpec,
                 protocolTypes = emptyList(),
-                baseSidePaymentMethodSpecs = emptyList(),
-                quoteSidePaymentMethodSpecs = emptyList(),
+                baseSidePaymentMethodSpecs = baseSideSpecs,
+                quoteSidePaymentMethodSpecs = quoteSideSpecs,
                 offerOptions = emptyList(),
                 supportedLanguageCodes = emptyList(),
             )
@@ -398,337 +400,219 @@ class TakeOfferAmountPresenterTest {
             formattedBaseAmount = "",
             formattedPrice = "",
             formattedPriceSpec = "",
-            quoteSidePaymentMethods = listOf("SEPA"),
-            baseSidePaymentMethods = listOf("BTC"),
+            quoteSidePaymentMethods = paymentMethods,
+            baseSidePaymentMethods = btcMethods,
             reputationScore = reputation,
         )
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onSliderValueChanged_leading_edge_updates_immediately_and_coalesces_subsequent() =
-        runTest {
-            // Arrange market prices map (100 USD per BTC)
-            val marketUSD = MarketVOFactory.USD
-            val marketUSDItem =
-                MarketPriceItem(
-                    marketUSD,
-                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
-                    formattedPrice = "100 USD",
-                )
-            val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
-            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+    fun selectOfferToTake_fixedAmountSpec_noAmountRange() {
+        // Arrange: USD market at $100,000/BTC
+        val marketUSD = MarketVOFactory.USD
+        val marketUSDItem =
+            MarketPriceItem(
+                marketUSD,
+                with(PriceQuoteVOFactory) { fromPrice(100_000_00L, marketUSD) },
+                formattedPrice = "100000 USD",
+            )
+        val prices = mapOf(marketUSD to marketUSDItem)
+        val settingsRepo = FakeSettingsRepository()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-            // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
+        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
 
-            val mainPresenter = makeMainPresenter()
-            val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val mainPresenter = makeMainPresenter()
+        val tradesServiceFacade = FakeTradesServiceFacade()
+        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
 
-            // Select offer
-            val dto = makeOfferDto()
-            val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+        // Act: Select offer with fixed amount
+        val fixedAmountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L)
+        val dto = makeOfferDto(amountSpec = fixedAmountSpec)
+        val model = OfferItemPresentationModel(dto)
+        presenter.selectOfferToTake(model)
 
-            // Create Amount presenter (runs init)
-            val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+        // Assert: No amount range, amounts are set from the fixed spec
+        assertFalse(presenter.takeOfferModel.hasAmountRange)
+        assertFalse(presenter.showAmountScreen())
+        assertEquals(500_000L, presenter.takeOfferModel.quoteAmount.value)
+        assertTrue(presenter.takeOfferModel.baseAmount.value > 0)
+        assertEquals(1, presenter.totalSteps) // No amount screen added
+    }
 
-            val beforeQuote = presenter.formattedQuoteAmount.value
-            val beforeBase = presenter.formattedBaseAmount.value
-
-            // Act: leading-edge update fires immediately on first slider interaction
-            presenter.onSliderValueChanged(0.75f)
-            val midQuote = presenter.formattedQuoteAmount.value
-            val midBase = presenter.formattedBaseAmount.value
-            assertNotEquals(beforeQuote, midQuote)
-            assertNotEquals(beforeBase, midBase)
-            assertTrue(presenter.amountValid.value)
-
-            // Subsequent calls within the sample window are coalesced (not applied immediately)
-            presenter.onSliderValueChanged(0.95f)
-            val coalescedQuote = presenter.formattedQuoteAmount.value
-            assertEquals(midQuote, coalescedQuote)
-
-            // After debounce window, coalesced update is applied
-            advanceTimeBy(40)
-            runCurrent()
-            val afterSampleQuote = presenter.formattedQuoteAmount.value
-            val afterSampleBase = presenter.formattedBaseAmount.value
-            assertNotEquals(midQuote, afterSampleQuote)
-            assertNotEquals(midBase, afterSampleBase)
-
-            // Drag finished flushes any pending value immediately
-            val beforeReleaseQuote = presenter.formattedQuoteAmount.value
-            val beforeReleaseBase = presenter.formattedBaseAmount.value
-            presenter.onSliderValueChanged(0.80f)
-            presenter.onSliderDragFinished()
-            val afterReleaseQuote = presenter.formattedQuoteAmount.value
-            val afterReleaseBase = presenter.formattedBaseAmount.value
-            assertNotEquals(beforeReleaseQuote, afterReleaseQuote)
-            assertNotEquals(beforeReleaseBase, afterReleaseBase)
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onTextValueChanged_validInput_updatesAmountsAndSlider() =
-        runTest {
-            // Arrange market prices map (100 USD per BTC)
-            val marketUSD = MarketVOFactory.USD
-            val marketUSDItem =
-                MarketPriceItem(
-                    marketUSD,
-                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
-                    formattedPrice = "100 USD",
-                )
-            val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
-            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+    fun selectOfferToTake_wideRange_hasAmountRange() {
+        // Arrange: USD market at $100,000/BTC
+        val marketUSD = MarketVOFactory.USD
+        val marketUSDItem =
+            MarketPriceItem(
+                marketUSD,
+                with(PriceQuoteVOFactory) { fromPrice(100_000_00L, marketUSD) },
+                formattedPrice = "100000 USD",
+            )
+        val prices = mapOf(marketUSD to marketUSDItem)
+        val settingsRepo = FakeSettingsRepository()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-            // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
+        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
 
-            val mainPresenter = makeMainPresenter()
-            val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val mainPresenter = makeMainPresenter()
+        val tradesServiceFacade = FakeTradesServiceFacade()
+        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
 
-            // Select offer
-            val dto = makeOfferDto()
-            val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+        // Act: Select offer with wide range (100_000 to 5_000_000)
+        // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
+        // Effective range: 100_000 to 5_000_000
+        val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
+        val dto = makeOfferDto(amountSpec = rangeSpec)
+        val model = OfferItemPresentationModel(dto)
+        presenter.selectOfferToTake(model)
 
-            // Create Amount presenter (runs init)
-            val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+        // Assert: Has amount range because (5_000_000 - 100_000) >= 10_000
+        assertTrue(presenter.takeOfferModel.hasAmountRange)
+        assertTrue(presenter.showAmountScreen())
+        assertEquals(2, presenter.totalSteps) // Amount screen added
+    }
 
-            // Act: type "50" (which is $50 = 500_000L in minor units)
-            presenter.onTextValueChanged("50")
-            runCurrent()
-
-            // Assert: amounts are updated, amountValid is true, slider position is within [0,1]
-            assertTrue(presenter.formattedQuoteAmount.value.isNotEmpty())
-            assertTrue(presenter.formattedBaseAmount.value.isNotEmpty())
-            assertTrue(presenter.amountValid.value)
-            assertTrue(presenter.sliderPosition.value in 0.0f..1.0f)
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onTextValueChanged_outOfRange_setsAmountInvalid() =
-        runTest {
-            // Arrange market prices map (100 USD per BTC)
-            val marketUSD = MarketVOFactory.USD
-            val marketUSDItem =
-                MarketPriceItem(
-                    marketUSD,
-                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
-                    formattedPrice = "100 USD",
-                )
-            val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
-            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+    fun selectOfferToTake_collapsedRange_noAmountRange_setsFixedAmount() {
+        // Arrange: USD market at $100,000/BTC
+        val marketUSD = MarketVOFactory.USD
+        val marketUSDItem =
+            MarketPriceItem(
+                marketUSD,
+                with(PriceQuoteVOFactory) { fromPrice(100_000_00L, marketUSD) },
+                formattedPrice = "100000 USD",
+            )
+        val prices = mapOf(marketUSD to marketUSDItem)
+        val settingsRepo = FakeSettingsRepository()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-            // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
+        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
 
-            val mainPresenter = makeMainPresenter()
-            val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val mainPresenter = makeMainPresenter()
+        val tradesServiceFacade = FakeTradesServiceFacade()
+        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
 
-            // Select offer
-            val dto = makeOfferDto()
-            val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+        // Act: Select offer where range collapses after clamping
+        // Offer range: 1_070_000 to 1_075_000 (difference = 5_000, which is < 10_000 slider step)
+        // After clamping with trade limits (60_000 to 6_000_000), effective range is still 1_070_000 to 1_075_000
+        // Since (1_075_000 - 1_070_000) = 5_000 < 10_000, range collapses
+        val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 1_070_000L, maxAmount = 1_075_000L)
+        val dto = makeOfferDto(amountSpec = rangeSpec)
+        val model = OfferItemPresentationModel(dto)
+        presenter.selectOfferToTake(model)
 
-            // Create Amount presenter (runs init)
-            val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+        // Assert: Range collapsed, amounts set to midpoint
+        assertFalse(presenter.takeOfferModel.hasAmountRange)
+        assertFalse(presenter.showAmountScreen())
+        // Midpoint: (1_070_000 + 1_075_000) / 2 = 1_072_500
+        assertEquals(1_072_500L, presenter.takeOfferModel.quoteAmount.value)
+        assertTrue(presenter.takeOfferModel.baseAmount.value > 0)
+        assertEquals(1, presenter.totalSteps)
+    }
 
-            // Act: type "1" (which is $1 = 10_000L, below min of ~$6-10)
-            presenter.onTextValueChanged("1")
-            runCurrent()
-
-            // Assert: amountValid is false
-            assertTrue(!presenter.amountValid.value)
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onTextValueChanged_emptyInput_setsAmountInvalid() =
-        runTest {
-            // Arrange market prices map (100 USD per BTC)
-            val marketUSD = MarketVOFactory.USD
-            val marketUSDItem =
-                MarketPriceItem(
-                    marketUSD,
-                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
-                    formattedPrice = "100 USD",
-                )
-            val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
-            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+    fun selectOfferToTake_missingMarketPrice_fallsBackToShowAmountScreen() {
+        // Arrange: Empty prices map (no market price data)
+        val settingsRepo = FakeSettingsRepository()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, emptyMap())
 
-            // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
+        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
 
-            val mainPresenter = makeMainPresenter()
-            val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val mainPresenter = makeMainPresenter()
+        val tradesServiceFacade = FakeTradesServiceFacade()
+        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
 
-            // Select offer
-            val dto = makeOfferDto()
-            val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+        // Act: Select offer with range spec
+        val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
+        val dto = makeOfferDto(amountSpec = rangeSpec)
+        val model = OfferItemPresentationModel(dto)
+        presenter.selectOfferToTake(model)
 
-            // Create Amount presenter (runs init)
-            val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+        // Assert: Falls back to showing amount screen when trade limits are 0
+        assertTrue(presenter.takeOfferModel.hasAmountRange)
+        assertTrue(presenter.showAmountScreen())
+        assertEquals(2, presenter.totalSteps)
+    }
 
-            // Act: type ""
-            presenter.onTextValueChanged("")
-            runCurrent()
-
-            // Assert: amountValid is false and formattedQuoteAmount is empty
-            assertTrue(!presenter.amountValid.value)
-            assertTrue(presenter.formattedQuoteAmount.value.isEmpty())
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onTextValueChanged_initializationFailed_setsAmountInvalid() =
-        runTest {
-            // Arrange: Use a market that's not in the prices map to cause initialization failure
-            val marketMXN = MarketVO("BTC", "MXN", "Bitcoin", "Mexican Peso")
-            val settingsRepo = FakeSettingsRepository()
-            // Empty prices map - no market data available
-            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, emptyMap())
+    fun selectOfferToTake_invertedRange_fallsBackToShowAmountScreen() {
+        // Arrange: USD market at $100,000/BTC
+        val marketUSD = MarketVOFactory.USD
+        val marketUSDItem =
+            MarketPriceItem(
+                marketUSD,
+                with(PriceQuoteVOFactory) { fromPrice(100_000_00L, marketUSD) },
+                formattedPrice = "100000 USD",
+            )
+        val prices = mapOf(marketUSD to marketUSDItem)
+        val settingsRepo = FakeSettingsRepository()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-            // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
+        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
 
-            val mainPresenter = makeMainPresenter()
-            val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val mainPresenter = makeMainPresenter()
+        val tradesServiceFacade = FakeTradesServiceFacade()
+        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
 
-            // Create an offer with MXN market (which has no price data)
-            val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
-            val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, marketMXN) })
-            val makerNetworkId = NetworkIdVO(AddressByTransportTypeMapVO(mapOf()), PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"))
-            val offer =
-                BisqEasyOfferVO(
-                    id = "offer-1",
-                    date = 0L,
-                    makerNetworkId = makerNetworkId,
-                    direction = DirectionEnum.BUY,
-                    market = marketMXN,
-                    amountSpec = amountSpec,
-                    priceSpec = priceSpec,
-                    protocolTypes = emptyList(),
-                    baseSidePaymentMethodSpecs = emptyList(),
-                    quoteSidePaymentMethodSpecs = emptyList(),
-                    offerOptions = emptyList(),
-                    supportedLanguageCodes = emptyList(),
-                )
-            val user = createMockUserProfile("Alice")
-            val reputation = ReputationScoreVO(0, 0.0, 0)
-            val dto =
-                OfferItemPresentationDto(
-                    bisqEasyOffer = offer,
-                    isMyOffer = false,
-                    userProfile = user,
-                    formattedDate = "",
-                    formattedQuoteAmount = "",
-                    formattedBaseAmount = "",
-                    formattedPrice = "",
-                    formattedPriceSpec = "",
-                    quoteSidePaymentMethods = listOf("SEPA"),
-                    baseSidePaymentMethods = listOf("BTC"),
-                    reputationScore = reputation,
-                )
+        // Act: Select offer where min > max trade limit
+        // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
+        // Offer min = 7_000_000 > trade limit max = 6_000_000
+        // This creates an inverted range: effectiveMin > effectiveMax
+        val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 7_000_000L, maxAmount = 10_000_000L)
+        val dto = makeOfferDto(amountSpec = rangeSpec)
+        val model = OfferItemPresentationModel(dto)
+        presenter.selectOfferToTake(model)
 
-            val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+        // Assert: Falls back to showing amount screen for inverted range
+        assertTrue(presenter.takeOfferModel.hasAmountRange)
+        assertTrue(presenter.showAmountScreen())
+        assertEquals(2, presenter.totalSteps)
+    }
 
-            // Create Amount presenter (runs init, should fail)
-            val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
-
-            // Act: type "50"
-            presenter.onTextValueChanged("50")
-            runCurrent()
-
-            // Assert: amountValid is false because initialization failed
-            assertTrue(!presenter.amountValid.value)
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun onSliderDragFinished_flushesLatestPending() =
-        runTest {
-            // Arrange market prices map (100 USD per BTC)
-            val marketUSD = MarketVOFactory.USD
-            val marketUSDItem =
-                MarketPriceItem(
-                    marketUSD,
-                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
-                    formattedPrice = "100 USD",
-                )
-            val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
-            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+    fun selectOfferToTake_multiplePaymentMethods_incrementsTotalSteps() {
+        // Arrange: USD market at $100,000/BTC
+        val marketUSD = MarketVOFactory.USD
+        val marketUSDItem =
+            MarketPriceItem(
+                marketUSD,
+                with(PriceQuoteVOFactory) { fromPrice(100_000_00L, marketUSD) },
+                formattedPrice = "100000 USD",
+            )
+        val prices = mapOf(marketUSD to marketUSDItem)
+        val settingsRepo = FakeSettingsRepository()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-            // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
+        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
 
-            val mainPresenter = makeMainPresenter()
-            val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val mainPresenter = makeMainPresenter()
+        val tradesServiceFacade = FakeTradesServiceFacade()
+        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
 
-            // Select offer
-            val dto = makeOfferDto()
-            val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+        // Act: Select offer with wide range and 2 quote payment methods
+        val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
+        val dto =
+            makeOfferDto(
+                amountSpec = rangeSpec,
+                paymentMethods = listOf("SEPA", "Wise"),
+                btcMethods = listOf("BTC"),
+            )
+        val model = OfferItemPresentationModel(dto)
+        presenter.selectOfferToTake(model)
 
-            // Create Amount presenter (runs init)
-            val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
-
-            // Act: set slider to 0.5, then quickly call onSliderValueChanged(0.6f) then onSliderValueChanged(0.7f)
-            // without advancing time (so 0.7 is pending), then call onSliderDragFinished()
-            presenter.onSliderValueChanged(0.5f)
-            runCurrent() // Apply the leading edge update
-
-            // Quickly change to 0.6f (will be coalesced)
-            presenter.onSliderValueChanged(0.6f)
-            // Quickly change to 0.7f (will overwrite 0.6f in pending)
-            presenter.onSliderValueChanged(0.7f)
-
-            // Without advancing time, call onSliderDragFinished()
-            presenter.onSliderDragFinished()
-            runCurrent()
-
-            // Assert: the final formattedQuoteAmount should reflect the 0.7f position, not 0.6f or 0.5f
-            val finalQuote = presenter.formattedQuoteAmount.value
-            val finalSlider = presenter.sliderPosition.value
-
-            // Verify the slider position is close to 0.7f
-            assertTrue(kotlin.math.abs(finalSlider - 0.7f) < 0.05f, "Expected slider near 0.7 but got $finalSlider")
-            // Verify amounts were updated
-            assertTrue(finalQuote.isNotEmpty())
-            assertTrue(presenter.amountValid.value)
-        }
+        // Assert: Total steps = 1 (base) + 1 (amount) + 1 (payment methods) = 3
+        assertTrue(presenter.takeOfferModel.hasAmountRange)
+        assertTrue(presenter.takeOfferModel.hasMultipleQuoteSidePaymentMethods)
+        assertTrue(presenter.showAmountScreen())
+        assertTrue(presenter.showPaymentMethodsScreen())
+        assertEquals(3, presenter.totalSteps)
+    }
 }

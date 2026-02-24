@@ -39,6 +39,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -102,6 +103,7 @@ fun TopBar(
  * @param connectivityStatus Static connectivity status (for previews only, ignored if connectivityStatusFlow is provided)
  */
 @OptIn(ExperimentalMaterial3Api::class)
+@ExcludeFromCoverage
 @Composable
 fun TopBarContent(
     title: String = "",

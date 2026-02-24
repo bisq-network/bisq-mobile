@@ -49,6 +49,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class BisqTextFieldType {
@@ -81,6 +82,7 @@ enum class BisqTextFieldType {
             "Manual migration is required. See KDoc for details.",
     level = DeprecationLevel.WARNING,
 )
+@ExcludeFromCoverage
 @Composable
 fun BisqTextField(
     modifier: Modifier = Modifier,

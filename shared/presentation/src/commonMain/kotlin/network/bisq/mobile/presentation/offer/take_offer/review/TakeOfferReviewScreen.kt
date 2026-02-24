@@ -27,11 +27,13 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.offer.Tak
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferSuccessDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
+@ExcludeFromCoverage
 @Composable
 fun TakeOfferReviewTradeScreen() {
     val presenter: TakeOfferReviewPresenter = koinInject()
@@ -80,6 +82,7 @@ fun TakeOfferReviewTradeScreen() {
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 fun TakeOfferReviewContent(
     headLine: String,

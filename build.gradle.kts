@@ -285,6 +285,14 @@ tasks.register<Exec>("ktlintFormatAndCheck") {
     workingDir(rootProject.projectDir)
 }
 
+tasks.register<Exec>("koverPRCheck") {
+    description = "Runs Kover to check this branch coverage and fails if coverage is below the threshold"
+    group = "verification"
+
+    commandLine("sh", "-c", "./gradlew koverXmlReport && ./scripts/analyze-diff-coverage.sh upstream/main build/reports/kover/report.xml")
+    workingDir(rootProject.projectDir)
+}
+
 // Run both installGitHooks and verifyKtlintIdePlugin automatically when project is evaluated
 rootProject.tasks.named("prepareKotlinBuildScriptModel").configure {
     dependsOn("installGitHooks", "verifyKtlintIdePlugin")

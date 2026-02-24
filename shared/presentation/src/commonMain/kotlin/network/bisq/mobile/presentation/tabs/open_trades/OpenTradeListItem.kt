@@ -22,7 +22,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileRow
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
+@ExcludeFromCoverage
 @Composable
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,

@@ -28,8 +28,10 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClic
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+@ExcludeFromCoverage
 @Composable
 fun TradeChatRow(
     selectedTrade: TradeItemPresentationModel?,

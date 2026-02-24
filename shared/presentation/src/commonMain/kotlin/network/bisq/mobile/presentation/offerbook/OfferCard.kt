@@ -39,7 +39,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfi
 import network.bisq.mobile.presentation.common.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
+@ExcludeFromCoverage
 @Composable
 fun OfferCard(
     item: OfferItemPresentationModel,
