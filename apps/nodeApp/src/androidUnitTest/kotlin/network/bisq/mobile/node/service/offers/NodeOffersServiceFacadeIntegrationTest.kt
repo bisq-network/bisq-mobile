@@ -99,17 +99,7 @@ class NodeOffersServiceFacadeIntegrationTest {
             isMyOffer = false,
             userProfile = user,
             formattedDate = "",
-            formattedQuoteAmount =
-                AmountFormatter.formatAmount(
-                    FiatVOFactory.run {
-                        from(
-                            amountMinor,
-                            market.quoteCurrencyCode,
-                        )
-                    },
-                    true,
-                    true,
-                ),
+            formattedQuoteAmount = AmountFormatter.formatAmount(FiatVOFactory.run { from(amountMinor, market.quoteCurrencyCode) }, true, true),
             formattedBaseAmount = formattedBaseAmount,
             formattedPrice = formattedPrice,
             formattedPriceSpec = "",

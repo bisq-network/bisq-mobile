@@ -548,12 +548,7 @@ class OfferbookPresenterFilterTest {
                 listOf(
                     makeOffer("b1", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN")),
                     makeOffer("b2", isMy = false, quoteMethods = listOf("REVOLUT"), baseMethods = listOf("LIGHTNING")),
-                    makeOffer(
-                        "b3",
-                        isMy = false,
-                        quoteMethods = listOf("NATIONAL_BANK"),
-                        baseMethods = listOf("MAIN_CHAIN"),
-                    ),
+                    makeOffer("b3", isMy = false, quoteMethods = listOf("NATIONAL_BANK"), baseMethods = listOf("MAIN_CHAIN")),
                 )
             offersFlow.value = newOffers
             runCurrent()
