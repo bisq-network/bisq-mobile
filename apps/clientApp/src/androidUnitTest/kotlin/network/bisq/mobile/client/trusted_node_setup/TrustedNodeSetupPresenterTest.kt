@@ -362,7 +362,7 @@ class TrustedNodeSetupPresenterTest {
         runTest(testDispatcher) {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
-            coEvery { trustedNodeSetupUseCase.execute(any()) } returns true
+            coEvery { trustedNodeSetupUseCase(any()) } returns true
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -375,7 +375,7 @@ class TrustedNodeSetupPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify { trustedNodeSetupUseCase.execute(validPairingQrCode) }
+            coVerify { trustedNodeSetupUseCase(validPairingQrCode) }
         }
 
     @Test
@@ -383,7 +383,7 @@ class TrustedNodeSetupPresenterTest {
         runTest(testDispatcher) {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
-            coEvery { trustedNodeSetupUseCase.execute(any()) } coAnswers {
+            coEvery { trustedNodeSetupUseCase(any()) } coAnswers {
                 delay(5000)
                 true
             }
@@ -406,7 +406,7 @@ class TrustedNodeSetupPresenterTest {
         runTest(testDispatcher) {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
-            coEvery { trustedNodeSetupUseCase.execute(any()) } returns true
+            coEvery { trustedNodeSetupUseCase(any()) } returns true
             setupPresenter()
 
             presenter.onAction(TrustedNodeSetupUiAction.OnPairingCodeChange(validPairingCode))
@@ -418,7 +418,7 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             // Verify use case was executed successfully
-            coVerify { trustedNodeSetupUseCase.execute(validPairingQrCode) }
+            coVerify { trustedNodeSetupUseCase(validPairingQrCode) }
             // Verify navigation to splash screen occurred
             verify { navigationManager.navigate(NavRoute.Splash, any(), any()) }
         }
@@ -428,7 +428,7 @@ class TrustedNodeSetupPresenterTest {
         runTest(testDispatcher) {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
-            coEvery { trustedNodeSetupUseCase.execute(any()) } returns false
+            coEvery { trustedNodeSetupUseCase(any()) } returns false
             setupPresenter()
 
             presenter.onAction(TrustedNodeSetupUiAction.OnPairingCodeChange(validPairingCode))
@@ -440,7 +440,7 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             // Verify use case was executed
-            coVerify { trustedNodeSetupUseCase.execute(validPairingQrCode) }
+            coVerify { trustedNodeSetupUseCase(validPairingQrCode) }
             // Verify navigation did NOT occur
             verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
         }
@@ -456,7 +456,7 @@ class TrustedNodeSetupPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify(exactly = 0) { trustedNodeSetupUseCase.execute(any()) }
+            coVerify(exactly = 0) { trustedNodeSetupUseCase(any()) }
         }
 
     @Test
@@ -464,7 +464,7 @@ class TrustedNodeSetupPresenterTest {
         runTest(testDispatcher) {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
-            coEvery { trustedNodeSetupUseCase.execute(any()) } coAnswers {
+            coEvery { trustedNodeSetupUseCase(any()) } coAnswers {
                 delay(5000)
                 true
             }
@@ -482,7 +482,7 @@ class TrustedNodeSetupPresenterTest {
             advanceUntilIdle()
 
             // Then - use case should be called only once
-            coVerify(exactly = 1) { trustedNodeSetupUseCase.execute(any()) }
+            coVerify(exactly = 1) { trustedNodeSetupUseCase(any()) }
         }
 
     // ========== Cancel Operation Tests ==========
@@ -492,7 +492,7 @@ class TrustedNodeSetupPresenterTest {
         runTest(testDispatcher) {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
-            coEvery { trustedNodeSetupUseCase.execute(any()) } coAnswers {
+            coEvery { trustedNodeSetupUseCase(any()) } coAnswers {
                 delay(10000)
                 true
             }
@@ -522,7 +522,7 @@ class TrustedNodeSetupPresenterTest {
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             val torStartingState = MutableStateFlow(KmpTorService.TorState.Starting)
             every { kmpTorService.state } returns torStartingState
-            coEvery { trustedNodeSetupUseCase.execute(any()) } coAnswers {
+            coEvery { trustedNodeSetupUseCase(any()) } coAnswers {
                 delay(10000)
                 true
             }

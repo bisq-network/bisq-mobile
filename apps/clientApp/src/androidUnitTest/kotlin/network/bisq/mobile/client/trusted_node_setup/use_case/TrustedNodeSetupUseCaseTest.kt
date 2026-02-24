@@ -160,7 +160,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(invalidQrCode)
+            val result = useCase(invalidQrCode)
             advanceUntilIdle()
 
             // Then
@@ -185,7 +185,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(onionPairingQrCode)
+            val result = useCase(onionPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -203,7 +203,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -243,7 +243,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(onionPairingQrCode)
+            val result = useCase(onionPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -272,7 +272,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(onionPairingQrCode)
+            val result = useCase(onionPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -291,7 +291,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(onionPairingQrCode)
+            val result = useCase(onionPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -314,7 +314,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -332,7 +332,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(onionPairingQrCode)
+            val result = useCase(onionPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -357,7 +357,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -386,7 +386,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -415,7 +415,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -448,7 +448,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -468,7 +468,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -492,7 +492,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -513,7 +513,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -539,7 +539,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -572,7 +572,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -596,7 +596,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -619,7 +619,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            val result = useCase.execute(clearnetPairingQrCode)
+            val result = useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then
@@ -652,7 +652,7 @@ class TrustedNodeSetupUseCaseTest {
                 }
 
             // When
-            useCase.execute(clearnetPairingQrCode)
+            useCase(clearnetPairingQrCode)
             advanceUntilIdle()
             job.cancel()
 
@@ -679,7 +679,7 @@ class TrustedNodeSetupUseCaseTest {
                 }
 
             // When
-            useCase.execute(onionPairingQrCode)
+            useCase(onionPairingQrCode)
             advanceUntilIdle()
             job.cancel()
 
@@ -718,7 +718,7 @@ class TrustedNodeSetupUseCaseTest {
                 }
 
             // When
-            useCase.execute(clearnetPairingQrCode)
+            useCase(clearnetPairingQrCode)
             advanceUntilIdle()
             job.cancel()
 
@@ -745,7 +745,7 @@ class TrustedNodeSetupUseCaseTest {
                 }
 
             // When
-            useCase.execute(clearnetPairingQrCode)
+            useCase(clearnetPairingQrCode)
             advanceUntilIdle()
             job.cancel()
 
@@ -763,7 +763,7 @@ class TrustedNodeSetupUseCaseTest {
             useCase = createUseCase()
 
             // When
-            useCase.execute(clearnetPairingQrCode)
+            useCase(clearnetPairingQrCode)
             advanceUntilIdle()
 
             // Then

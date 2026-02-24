@@ -191,7 +191,7 @@ class TrustedNodeSetupPresenter(
 
         connectJob =
             presenterScope.launch {
-                val isSetupSuccess = trustedNodeSetupUseCase.execute(pairingQrCode)
+                val isSetupSuccess = trustedNodeSetupUseCase(pairingQrCode)
                 if (isSetupSuccess) {
                     navigateToSplashScreen()
                 }

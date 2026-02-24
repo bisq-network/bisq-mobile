@@ -59,7 +59,7 @@ class TrustedNodeSetupUseCase(
         private const val HTTP_CLIENT_UPDATE_TIMEOUT_MS = 5000L
     }
 
-    suspend fun execute(pairingQrCode: PairingQrCode): Boolean {
+    suspend operator fun invoke(pairingQrCode: PairingQrCode): Boolean {
         try {
             updateState(TrustedNodeConnectionStatus.SettingUpConnection)
 
