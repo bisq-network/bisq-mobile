@@ -227,8 +227,9 @@ class CreateOfferPricePresenter(
             }
 
             _formattedPercentagePrice.value = PercentageFormatter.format(percentagePriceValue, false)
-            _formattedPercentagePriceValid.value = isValid
-            _formattedPriceValid.value = isValid
+            val rangeValid = isValid(percentagePriceValue)
+            _formattedPercentagePriceValid.value = isValid && rangeValid
+            _formattedPriceValid.value = isValid && rangeValid
 
             if (isBuy.value) {
                 val percentageValue =
