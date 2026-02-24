@@ -80,14 +80,25 @@ class TakeOfferPresenter(
             val sliderStep = 10_000L
             val tradeLimitMin = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
             val tradeLimitMax = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
-            val effectiveMin = maxOf(tradeLimitMin, amountSpec.minAmount)
-            val effectiveMax = minOf(tradeLimitMax, amountSpec.maxAmount)
-            hasEffectiveRange = (effectiveMax - effectiveMin) >= sliderStep
-            if (!hasEffectiveRange) {
-                // Range collapsed — treat as fixed amount using the midpoint
-                val fixedAmount = ((effectiveMin + effectiveMax) / 2).coerceIn(effectiveMin, effectiveMax)
-                quoteAmount = FiatVOFactory.from(fixedAmount, quoteCurrencyCode)
-                baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
+
+            // If market price data is unavailable, getMin/MaxAmountValue return 0.
+            // In that case, fall back to showing the amount screen and let
+            // TakeOfferAmountPresenter handle the degraded state via its runCatching.
+            if (tradeLimitMin > 0 && tradeLimitMax > 0) {
+                val effectiveMin = maxOf(tradeLimitMin, amountSpec.minAmount)
+                val effectiveMax = minOf(tradeLimitMax, amountSpec.maxAmount)
+                hasEffectiveRange = effectiveMax > effectiveMin && (effectiveMax - effectiveMin) >= sliderStep
+                if (!hasEffectiveRange && effectiveMin <= effectiveMax) {
+                    // Range collapsed — treat as fixed amount using the midpoint
+                    val fixedAmount = ((effectiveMin + effectiveMax) / 2).coerceIn(effectiveMin, effectiveMax)
+                    quoteAmount = FiatVOFactory.from(fixedAmount, quoteCurrencyCode)
+                    baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
+                } else if (!hasEffectiveRange) {
+                    // effectiveMin > effectiveMax: inverted range from bad data, show amount screen
+                    hasEffectiveRange = true
+                }
+            } else {
+                hasEffectiveRange = true
             }
         }
         takeOfferModel.hasAmountRange = hasEffectiveRange
