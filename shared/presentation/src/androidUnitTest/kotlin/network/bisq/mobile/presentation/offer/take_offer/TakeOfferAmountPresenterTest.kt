@@ -454,7 +454,7 @@ class TakeOfferAmountPresenterTest {
                     formattedPrice = "100 USD",
                 )
             val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
+            val settingsRepo = SettingsRepositoryMock()
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
@@ -499,7 +499,7 @@ class TakeOfferAmountPresenterTest {
                     formattedPrice = "100 USD",
                 )
             val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
+            val settingsRepo = SettingsRepositoryMock()
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
@@ -541,7 +541,7 @@ class TakeOfferAmountPresenterTest {
                     formattedPrice = "100 USD",
                 )
             val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
+            val settingsRepo = SettingsRepositoryMock()
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
@@ -577,7 +577,7 @@ class TakeOfferAmountPresenterTest {
         runTest {
             // Arrange: Use a market that's not in the prices map to cause initialization failure
             val marketMXN = MarketVO("BTC", "MXN", "Bitcoin", "Mexican Peso")
-            val settingsRepo = FakeSettingsRepository()
+            val settingsRepo = SettingsRepositoryMock()
             // Empty prices map - no market data available
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, emptyMap())
 
@@ -654,7 +654,7 @@ class TakeOfferAmountPresenterTest {
                     formattedPrice = "100 USD",
                 )
             val prices = mapOf(marketUSD to marketUSDItem)
-            val settingsRepo = FakeSettingsRepository()
+            val settingsRepo = SettingsRepositoryMock()
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init

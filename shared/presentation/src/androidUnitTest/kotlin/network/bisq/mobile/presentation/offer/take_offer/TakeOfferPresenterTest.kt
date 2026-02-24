@@ -15,7 +15,9 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.model.BatteryOptimizationState
+import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
@@ -121,6 +123,10 @@ class TakeOfferPresenterTest {
         override suspend fun clear() {
             _data.value = Settings()
         }
+
+        override suspend fun setMarketSortBy(value: MarketSortBy) {}
+
+        override suspend fun setMarketFilter(value: MarketFilter) {}
     }
 
     private class FakeMarketPriceServiceFacade(
