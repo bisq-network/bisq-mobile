@@ -29,6 +29,7 @@ import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecyc
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -95,6 +96,7 @@ class OfferbookMarketPresenterSettingsPersistenceTest {
             marketPriceServiceFacade = marketPriceServiceFacade,
             userProfileServiceFacade = userProfileServiceFacade,
             settingsRepository = settingsRepository,
+            computeOfferbookMarketListUseCase = ComputeOfferbookMarketListUseCase(marketPriceServiceFacade),
         )
     }
 

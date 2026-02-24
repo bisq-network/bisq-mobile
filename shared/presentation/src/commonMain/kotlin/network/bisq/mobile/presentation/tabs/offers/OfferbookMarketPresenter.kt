@@ -27,9 +27,8 @@ class OfferbookMarketPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val settingsRepository: SettingsRepository,
+    private val computeOfferbookMarketListUseCase: ComputeOfferbookMarketListUseCase,
 ) : BasePresenter(mainPresenter) {
-    private val computeOfferbookMarketListUseCase = ComputeOfferbookMarketListUseCase(marketPriceServiceFacade)
-
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
 

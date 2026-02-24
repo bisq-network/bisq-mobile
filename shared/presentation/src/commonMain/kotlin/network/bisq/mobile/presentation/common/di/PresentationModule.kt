@@ -41,6 +41,7 @@ import network.bisq.mobile.presentation.startup.user_agreement.IAgreementPresent
 import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementPresenter
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketPresenter
+import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
 import network.bisq.mobile.presentation.tabs.open_trades.OpenTradeListPresenter
 import network.bisq.mobile.presentation.tabs.tab.ITabContainerPresenter
 import network.bisq.mobile.presentation.tabs.tab.TabContainerPresenter
@@ -126,8 +127,10 @@ val presentationModule =
 
         factory { PaymentAccountsPresenter(get(), get()) }
 
+        factory { ComputeOfferbookMarketListUseCase(get()) }
+
         // Offerbook
-        single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get(), get()) }
+        single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get(), get(), get()) }
 
         // Take offer
         single { TakeOfferPresenter(get(), get(), get()) }
