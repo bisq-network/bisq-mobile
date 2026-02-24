@@ -36,4 +36,5 @@ val dataStoreJson =
         ignoreUnknownKeys = true
         encodeDefaults = true
         explicitNulls = false
+        coerceInputValues = true
     }
