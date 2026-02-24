@@ -1,17 +1,17 @@
-Bisq para Android es una herramienta de comunicación descentralizada peer-to-peer (P2P) diseñada para facilitar conexiones seguras entre usuarios, permitiéndoles intercambiar información directamente sin depender de servidores centralizados. Esta aplicación sirve como puente para personas que buscan interactuar a través de la red Bisq, garantizando privacidad y autonomía en sus comunicaciones.
 
-<b>Características principales:</b>
+Bisq Connect es una aplicación ligera que permite a los usuarios conectarse de forma segura a un nodo Bisq2 de confianza. Al escanear un código QR generado por su nodo, puede establecer un canal de comunicación directo y privado, sin necesidad de escribir manualmente direcciones y contraseñas.
 
-• <b>Comunicación descentralizada:</b> Opera dentro de una red completamente descentralizada, eliminando la necesidad de autoridades centrales y reduciendo puntos únicos de fallo.
+Características principales:
 
-• <b>Enfocado en la privacidad:</b> Tus datos permanecen en tu dispositivo; Bisq para Android no almacena ni rastrea ninguna información del usuario, garantizando privacidad completa.
+- Emparejamiento con código QR: Escanee un código QR desde su nodo Bisq2 para conectarse al instante. El código QR codifica de forma segura la dirección de conexión, las credenciales de cifrado y un token de emparejamiento único que caduca a los 5 minutos.
+- Múltiples modos de conexión: Conéctese a través de su red Wi-Fi local (LAN) con cifrado TLS y fijación de certificado, o de forma remota a través de Tor con autenticación de cliente opcional para máxima privacidad.
+- Autenticación basada en sesión: Tras el emparejamiento, la aplicación utiliza tokens de sesión en lugar de contraseñas. No se almacenan ni transmiten credenciales de texto plano.
+- Sincronización automática de perfiles: Sus perfiles Bisq2 se obtienen automáticamente de su nodo de confianza, sin necesidad de configuración adicional en dispositivos móviles. - Preservación de la privacidad: La aplicación no almacena, rastrea ni comparte datos del usuario. Todas las conexiones están cifradas: TLS para redes locales, Tor para acceso remoto.
+- Ligera y eficiente: Diseñada para minimizar el consumo de CPU, batería y datos, a la vez que ofrece una experiencia de conexión fluida.
+- Acceso controlado por el usuario: Tú eliges a qué nodo conectarte, lo que garantiza un control total sobre tus conexiones.
 
-• <b>Conexiones seguras entre pares:</b> Utiliza protocolos de cifrado robustos para establecer canales seguros entre pares, protegiendo tus interacciones.
+Bisq Connect es una herramienta diseñada para facilitar la interacción entre nodos y mejorar la accesibilidad dentro del ecosistema Bisq.
 
-• <b>Facilita el intercambio de información:</b> Aunque la aplicación no maneja transacciones financieras ni almacena activos, permite a los usuarios coordinarse y comunicarse eficazmente para actividades como organizar intercambios o compartir datos.
-
-• <b>Interfaz fácil de usar:</b> Diseñada con simplicidad en mente, permitiendo que tanto usuarios novatos como experimentados naveguen y utilicen la aplicación con facilidad.
-
-Bisq para Android es una herramienta esencial para aquellos que buscan una plataforma descentralizada para gestionar sus comunicaciones peer-to-peer de forma segura. Al priorizar la privacidad del usuario y eliminar la necesidad de intermediarios centrales, empodera a las personas para mantener el control sobre sus interacciones en el ámbito digital.
-
-<b>Nota:</b> Esta aplicación no incluye funcionalidades de billetera para criptomonedas o monedas fiduciarias y no facilita operaciones comerciales o transacciones financieras directas. Sirve únicamente como facilitador de comunicación dentro de la red Bisq.
+Requisitos:
+- Un nodo Bisq2 ejecutándose en tu ordenador o servidor
+- Android 7.0 o superior (SDK 24)

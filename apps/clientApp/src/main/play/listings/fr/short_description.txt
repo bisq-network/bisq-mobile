@@ -1,0 +1,1 @@
+A utility tool to securely connect to a trusted Bisq Node via WebSocket

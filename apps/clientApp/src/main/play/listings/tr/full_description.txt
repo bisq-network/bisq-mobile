@@ -1,0 +1,24 @@
+Bisq Connect, kullanıcıların güvenilir bir Bisq2 Düğümüne güvenli bir şekilde bağlanmasını sağlayan hafif bir yardımcı uygulamadır. Düğümünüz tarafından oluşturulan bir QR kodunu tarayarak, doğrudan ve özel bir iletişim kanalı kurabilirsiniz; artık adresleri ve şifreleri manuel olarak yazmanıza gerek yok.
+
+Temel Özellikler:
+
+- QR Kod Eşleştirme: Anında bağlanmak için Bisq2 düğümünüzden bir QR kodunu tarayın. QR kodu, bağlantı adresini, şifreleme kimlik bilgilerini ve 5 dakika sonra süresi dolan tek kullanımlık bir eşleştirme belirtecini güvenli bir şekilde kodlar.
+
+- Çoklu Bağlantı Modları: TLS şifrelemesi ve sertifika sabitleme ile yerel WiFi (LAN) üzerinden veya maksimum gizlilik için isteğe bağlı istemci kimlik doğrulamasıyla Tor üzerinden uzaktan bağlanın.
+
+- Oturum Tabanlı Kimlik Doğrulama: Eşleştirmeden sonra uygulama, şifreler yerine oturum belirteçlerini kullanır. Düz metin kimlik bilgileri saklanmaz veya iletilmez.
+
+- Otomatik Profil Senkronizasyonu: Bisq2 profilleriniz güvenilir düğümünüzden otomatik olarak alınır; mobil cihazda ayrı bir kurulum gerekmez.
+
+- Gizliliği Koruma: Uygulama hiçbir kullanıcı verisini saklamaz, izlemez veya paylaşmaz. Tüm bağlantılar şifrelenmiştir: Yerel ağlar için TLS, uzaktan erişim için Tor.
+
+- Hafif ve Verimli: Sorunsuz bir bağlantı deneyimi sağlarken minimum CPU, pil ve veri kullanımı için tasarlanmıştır.
+
+- Kullanıcı Kontrollü Erişim: Hangi düğüme bağlanacağınızı siz seçersiniz, böylece bağlantılarınız üzerinde tam kontrol sahibi olursunuz.
+
+Bisq Connect, Bisq ekosisteminde düğüm etkileşimini kolaylaştırmak ve erişilebilirliği artırmak için tasarlanmış bir yardımcı araçtır.
+
+Gereksinimler:
+
+- Bilgisayarınızda veya sunucunuzda çalışan bir Bisq2 düğümü
+- Android 7.0+ (SDK 24)

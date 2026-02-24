@@ -1,0 +1,25 @@
+Bisq Connect est une application utilitaire légère permettant de se connecter en toute sécurité à un nœud Bisq2 de confiance. En scannant un QR code généré par votre nœud, vous établissez un canal de communication direct et privé, sans avoir à saisir manuellement d'adresses et de mots de passe.
+
+Fonctionnalités clés :
+
+- Appairage par QR code : Scannez un QR code sur votre nœud Bisq2 pour vous connecter instantanément. Le QR code encode de manière sécurisée l'adresse de connexion, les informations d'identification de chiffrement et un jeton d'appairage unique qui expire après 5 minutes.
+
+- Modes de connexion multiples : Connectez-vous via votre réseau Wi-Fi local (LAN) avec chiffrement TLS et épinglage de certificat, ou à distance via Tor avec authentification client optionnelle pour une confidentialité maximale.
+
+- Authentification par session : Après l'appairage, l'application utilise des jetons de session au lieu de mots de passe. Aucune information d'identification en clair n'est stockée ni transmise.
+
+- Synchronisation automatique des profils : Vos profils Bisq2 sont automatiquement récupérés depuis votre nœud de confiance ; aucune configuration supplémentaire n'est requise sur mobile. - Protection de la vie privée : L’application ne stocke, ne suit ni ne partage aucune donnée utilisateur. Toutes les connexions sont chiffrées : TLS pour les réseaux locaux,
+
+Tor pour l’accès distant.
+
+- Légère et efficace : Conçue pour une consommation minimale de ressources (CPU, batterie et données) tout en offrant une expérience de connexion fluide.
+
+- Contrôle d’accès : Vous choisissez le nœud auquel vous connecter, ce qui vous garantit un contrôle total sur vos connexions.
+
+Bisq Connect est un outil utilitaire conçu pour faciliter l’interaction entre les nœuds et améliorer l’accessibilité au sein de l’écosystème Bisq.
+
+Configuration requise :
+
+- Un nœud Bisq2 exécuté sur votre ordinateur ou serveur
+
+- Android 7.0+ (SDK 24)

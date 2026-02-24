@@ -1,0 +1,1 @@
+Alat bantu untuk terhubung ke Node tepercaya Bisq secara aman.

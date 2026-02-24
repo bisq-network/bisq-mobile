@@ -1,0 +1,1 @@
+Một công cụ tiện ích để kết nối an toàn với một nút tin cậy Bisq.

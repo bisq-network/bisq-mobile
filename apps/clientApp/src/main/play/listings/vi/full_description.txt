@@ -1,0 +1,34 @@
+Bisq Connect là một ứng dụng tiện ích nhẹ cho phép người dùng kết nối an toàn với một nút Bisq2 đáng tin cậy. Bằng cách quét mã QR
+
+được tạo bởi nút của bạn, bạn có thể thiết lập một kênh liên lạc trực tiếp và riêng tư — không cần phải nhập thủ công
+
+địa chỉ và mật khẩu nữa.
+
+Các tính năng chính:
+
+- Ghép nối bằng mã QR: Quét mã QR từ nút Bisq2 của bạn để kết nối ngay lập tức. Mã QR mã hóa an toàn địa chỉ kết nối, thông tin xác thực mã hóa và mã thông báo ghép nối một lần hết hạn sau 5 phút.
+
+- Nhiều chế độ kết nối: Kết nối qua WiFi (LAN) cục bộ của bạn với mã hóa TLS và ghim chứng chỉ, hoặc từ xa
+
+qua Tor với xác thực máy khách tùy chọn để bảo mật tối đa.
+
+- Xác thực dựa trên phiên: Sau khi ghép nối, ứng dụng sử dụng mã thông báo phiên thay vì mật khẩu. Không có thông tin xác thực dạng văn bản thuần nào được lưu trữ hoặc truyền đi.
+
+- Đồng bộ hóa hồ sơ tự động: Hồ sơ Bisq2 của bạn được tự động lấy từ nút đáng tin cậy của bạn — không cần thiết lập riêng
+trên thiết bị di động.
+
+- Bảo vệ quyền riêng tư: Ứng dụng không lưu trữ, theo dõi hoặc chia sẻ bất kỳ dữ liệu người dùng nào. Tất cả các kết nối đều được mã hóa: TLS cho mạng cục bộ
+
+mạng, Tor cho truy cập từ xa.
+
+- Nhẹ và Hiệu quả: Được thiết kế để sử dụng tối thiểu CPU, pin và dữ liệu trong khi vẫn cung cấp trải nghiệm kết nối liền mạch.
+
+- Truy cập do người dùng kiểm soát: Bạn chọn nút nào để kết nối, đảm bảo kiểm soát hoàn toàn các kết nối của mình.
+
+Bisq Connect là một công cụ tiện ích nhằm tạo điều kiện thuận lợi cho tương tác giữa các nút và tăng cường khả năng truy cập trong hệ sinh thái Bisq.
+
+Yêu cầu:
+
+- Một nút Bisq2 đang chạy trên máy tính hoặc máy chủ của bạn
+
+- Android 7.0 trở lên (SDK 24)

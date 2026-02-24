@@ -1,17 +1,21 @@
-Bisq pro Android je decentralizovaný peer-to-peer (P2P) komunikační nástroj navržený k usnadnění bezpečných spojení mezi uživateli, který jim umožňuje vyměňovat si informace přímo bez spoléhání na centralizované servery. Tato aplikace slouží jako most pro jednotlivce, kteří chtějí komunikovat přes síť Bisq, a zajišťuje soukromí a autonomii v jejich komunikaci.
+Bisq Connect je lehká utilita, která uživatelům umožňuje bezpečně se připojit k důvěryhodnému uzlu Bisq2. Naskenováním QR kódu vygenerovaného vaším uzlem můžete vytvořit přímý a soukromý komunikační kanál – žádné ruční zadávání adres a hesel.
 
-<b>Klíčové funkce:</b>
+Klíčové vlastnosti:
 
-• <b>Decentralizovaná komunikace:</b> Pracujte v plně decentralizované síti, která eliminuje potřebu centrálních autorit a snižuje jednotlivé body selhání.
+- Párování s QR kódem: Naskenujte QR kód z vašeho uzlu Bisq2 pro okamžité připojení. QR kód bezpečně zakóduje adresu připojení, šifrovací přihlašovací údaje a jednorázový token pro párování, jehož platnost vyprší po 5 minutách.
 
-• <b>Zaměřeno na soukromí:</b> Vaše data zůstávají na vašem zařízení; Bisq pro Android neukládá ani nesleduje žádné informace o uživatelích, čímž zajišťuje úplné soukromí.
+- Více režimů připojení: Připojte se přes místní Wi-Fi (LAN) se šifrováním TLS a připínáním certifikátu nebo vzdáleně přes Tor s volitelným ověřováním klienta pro maximální soukromí.
 
-• <b>Bezpečná spojení mezi uzly:</b> Využívejte robustní šifrovací protokoly k vytvoření bezpečných kanálů mezi uzly, které chrání vaše interakce.
+- Ověřování na základě relace: Po spárování aplikace používá tokeny relace místo hesel. Žádné přihlašovací údaje v prostém textu se neukládají ani nepřenášejí.
 
-• <b>Usnadňuje výměnu informací:</b> Ačkoli aplikace nezpracovává finanční transakce ani neukládá aktiva, umožňuje uživatelům efektivně se koordinovat a komunikovat pro aktivity, jako je organizování obchodů nebo sdílení dat.
+- Automatická synchronizace profilů: Vaše profily Bisq2 se automaticky načítají z vašeho důvěryhodného uzlu – není nutné žádné samostatné nastavení na mobilním zařízení.
 
-• <b>Uživatelsky přívětivé rozhraní:</b> Navrženo s ohledem na jednoduchost, což umožňuje jak začátečníkům, tak zkušeným uživatelům snadno se v aplikaci orientovat a používat ji.
+- Ochrana soukromí: Aplikace neukládá, nesleduje ani nesdílí žádná uživatelská data. Všechna připojení jsou šifrována: TLS pro lokální sítě, Tor pro vzdálený přístup.
+- Lehký a efektivní: Navrženo pro minimální využití CPU, baterie a dat a zároveň poskytuje bezproblémové připojení. prostředí.
+- Přístup řízený uživatelem: Vy si vyberete, ke kterému uzlu se připojíte, a zajistíte si tak úplnou kontrolu nad svými připojeními.
 
-Bisq pro Android je nezbytný nástroj pro ty, kteří hledají decentralizovanou platformu pro bezpečnou správu své peer-to-peer komunikace. Upřednostněním soukromí uživatelů a eliminací potřeby centrálních zprostředkovatelů umožňuje jednotlivcům udržet kontrolu nad svými interakcemi v digitálním prostoru.
+Bisq Connect je nástroj určený k usnadnění interakce uzlů a zlepšení přístupnosti v rámci ekosystému Bisq.
 
-<b>Poznámka:</b> Tato aplikace neobsahuje funkce peněženky pro kryptoměny nebo fiat měny a neusnadňuje přímé obchodování nebo finanční transakce. Slouží výhradně jako komunikační facilitátor v rámci sítě Bisq.
+Požadavky:
+- Uzel Bisq2 spuštěný na vašem počítači nebo serveru
+- Android 7.0+ (SDK 24)

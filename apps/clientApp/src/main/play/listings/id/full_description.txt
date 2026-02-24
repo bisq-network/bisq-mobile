@@ -1,0 +1,19 @@
+Bisq Connect adalah aplikasi utilitas ringan yang memungkinkan pengguna untuk terhubung secara aman ke Node Bisq2 tepercaya. Dengan memindai kode QR yang dihasilkan oleh node Anda, Anda dapat membuat saluran komunikasi langsung dan pribadi — tidak perlu lagi mengetik alamat dan kata sandi secara manual.
+
+Fitur Utama:
+
+- Pemasangan Kode QR: Pindai kode QR dari node Bisq2 Anda untuk terhubung secara instan. Kode QR secara aman mengenkode alamat koneksi, kredensial enkripsi, dan token pemasangan satu kali yang kedaluwarsa setelah 5 menit.
+- Beberapa Mode Koneksi: Terhubung melalui WiFi lokal (LAN) Anda dengan enkripsi TLS dan pengikatan sertifikat, atau dari jarak jauh melalui Tor dengan otentikasi klien opsional untuk privasi maksimal.
+- Otentikasi Berbasis Sesi: Setelah pemasangan, aplikasi menggunakan token sesi sebagai pengganti kata sandi. Tidak ada kredensial teks biasa yang disimpan atau ditransmisikan.
+- Sinkronisasi Profil Otomatis: Profil Bisq2 Anda diambil secara otomatis dari node tepercaya Anda — tidak diperlukan pengaturan terpisah di perangkat seluler.
+- Menjaga Privasi: Aplikasi ini tidak menyimpan, melacak, atau membagikan data pengguna apa pun. Semua koneksi dienkripsi: TLS untuk jaringan lokal,
+Tor untuk akses jarak jauh.
+- Ringan & Efisien: Dirancang untuk penggunaan CPU, baterai, dan data minimal sambil memberikan pengalaman koneksi yang lancar.
+- Akses yang Dikendalikan Pengguna: Anda memilih node mana yang akan dihubungkan, memastikan kendali penuh atas koneksi Anda.
+
+Bisq Connect adalah alat bantu yang dimaksudkan untuk memfasilitasi interaksi node dan meningkatkan aksesibilitas dalam ekosistem Bisq.
+
+Persyaratan:
+
+- Node Bisq2 yang berjalan di komputer atau server Anda
+- Android 7.0+ (SDK 24)
