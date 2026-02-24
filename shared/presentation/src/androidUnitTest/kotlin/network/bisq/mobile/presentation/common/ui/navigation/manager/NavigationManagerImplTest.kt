@@ -215,12 +215,7 @@ class NavigationManagerImplTest {
             val mockTabController = mockk<NavHostController>(relaxed = true)
 
             // Setup: tab controller throws on navigate
-            every {
-                mockTabController.navigate<TabNavRoute>(
-                    any<TabNavRoute>(),
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            } throws IllegalStateException("Navigation failed")
+            every { mockTabController.navigate<TabNavRoute>(any<TabNavRoute>(), any<NavOptionsBuilder.() -> Unit>()) } throws IllegalStateException("Navigation failed")
             every { mockRootController.currentBackStack } returns MutableStateFlow(emptyList())
 
             navigationManager.setRootNavController(mockRootController)
@@ -246,13 +241,7 @@ class NavigationManagerImplTest {
             val mockController = mockk<NavHostController>(relaxed = true)
 
             // Setup: controller throws on popBackStack
-            every {
-                mockController.popBackStack(
-                    any<NavRoute>(),
-                    any(),
-                    any(),
-                )
-            } throws IllegalStateException("Pop failed")
+            every { mockController.popBackStack(any<NavRoute>(), any(), any()) } throws IllegalStateException("Pop failed")
 
             navigationManager.setRootNavController(mockController)
             advanceUntilIdle()
@@ -284,12 +273,7 @@ class NavigationManagerImplTest {
             // Setup: graph has deep link but navigate will fail
             every { mockController.graph } returns mockGraph
             every { mockGraph.hasDeepLink(mockNavUri) } returns true
-            every {
-                mockController.navigate(
-                    mockNavUri,
-                    any<NavOptions>(),
-                )
-            } throws IllegalStateException("Navigation failed")
+            every { mockController.navigate(mockNavUri, any<NavOptions>()) } throws IllegalStateException("Navigation failed")
 
             navigationManager.setRootNavController(mockController)
             advanceUntilIdle()
@@ -321,12 +305,7 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // Then
-            verify(exactly = 1) {
-                mockController.navigate<NavRoute>(
-                    NavRoute.Splash,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
+            verify(exactly = 1) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     @Test
@@ -350,18 +329,8 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // Then - verify both controllers received navigate calls
-            verify(exactly = 1) {
-                mockRootController.navigate<NavRoute>(
-                    NavRoute.TabContainer,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
-            verify(exactly = 1) {
-                mockTabController.navigate<TabNavRoute>(
-                    NavRoute.TabHome,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
+            verify(exactly = 1) { mockRootController.navigate<NavRoute>(NavRoute.TabContainer, any<NavOptionsBuilder.() -> Unit>()) }
+            verify(exactly = 1) { mockTabController.navigate<TabNavRoute>(NavRoute.TabHome, any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     @Test
@@ -386,19 +355,9 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // Then - verify TabContainer navigation was NOT called (skipped because at main screen)
-            verify(exactly = 0) {
-                mockRootController.navigate<NavRoute>(
-                    NavRoute.TabContainer,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
+            verify(exactly = 0) { mockRootController.navigate<NavRoute>(NavRoute.TabContainer, any<NavOptionsBuilder.() -> Unit>()) }
             // But tab navigation was still called
-            verify(exactly = 1) {
-                mockTabController.navigate<TabNavRoute>(
-                    NavRoute.TabHome,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
+            verify(exactly = 1) { mockTabController.navigate<TabNavRoute>(NavRoute.TabHome, any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     @Test
@@ -513,12 +472,7 @@ class NavigationManagerImplTest {
             every { mockRootGraph.hasDeepLink(mockNavUri) } returns false
             every { mockTabController.graph } returns mockTabGraph
             every { mockTabGraph.hasDeepLink(mockNavUri) } returns true
-            every {
-                mockTabController.navigate(
-                    mockNavUri,
-                    any<NavOptions>(),
-                )
-            } throws IllegalStateException("Tab nav failed")
+            every { mockTabController.navigate(mockNavUri, any<NavOptions>()) } throws IllegalStateException("Tab nav failed")
 
             navigationManager.setRootNavController(mockRootController)
             navigationManager.setTabNavController(mockTabController)
@@ -545,13 +499,7 @@ class NavigationManagerImplTest {
 
             // Setup backstack with 2 entries (size > 1)
             val mockBackStackEntry = mockk<NavBackStackEntry>()
-            every { mockController.currentBackStack } returns
-                MutableStateFlow(
-                    listOf(
-                        mockBackStackEntry,
-                        mockBackStackEntry,
-                    ),
-                )
+            every { mockController.currentBackStack } returns MutableStateFlow(listOf(mockBackStackEntry, mockBackStackEntry))
 
             navigationManager.setRootNavController(mockController)
             advanceUntilIdle()
@@ -601,12 +549,7 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // Then - verify mutex serialized all calls without dropping any
-            verify(exactly = 10) {
-                mockController.navigate<NavRoute>(
-                    NavRoute.Splash,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
+            verify(exactly = 10) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     // ========== NavigateToTab Tests ==========
@@ -634,18 +577,8 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // Then - verify both controllers processed all calls
-            verify(exactly = 10) {
-                mockRootController.navigate<NavRoute>(
-                    NavRoute.TabContainer,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
-            verify(exactly = 10) {
-                mockTabController.navigate<TabNavRoute>(
-                    NavRoute.TabHome,
-                    any<NavOptionsBuilder.() -> Unit>(),
-                )
-            }
+            verify(exactly = 10) { mockRootController.navigate<NavRoute>(NavRoute.TabContainer, any<NavOptionsBuilder.() -> Unit>()) }
+            verify(exactly = 10) { mockTabController.navigate<TabNavRoute>(NavRoute.TabHome, any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     // ========== NavigateFromUri Tests ==========
