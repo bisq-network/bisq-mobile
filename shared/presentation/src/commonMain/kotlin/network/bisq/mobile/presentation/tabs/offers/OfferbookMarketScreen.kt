@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -108,24 +107,22 @@ private fun OfferbookMarketScreenContent(
 
         BisqGap.V1()
 
-        // Give the list a new identity when filter/sort changes so scroll resets to top
-        key(filter, sortBy) {
-            val listState = rememberLazyListState()
-            val firstKey = marketItems.firstOrNull()?.market?.marketCodes
-            // Scroll to top after the new sorted/filtered content is applied
-            LaunchedEffect(firstKey) {
-                if (firstKey != null) {
-                    listState.scrollToItem(0)
-                }
+        val listState = rememberLazyListState()
+
+        // Scroll to top whenever filter, sort, or search criteria changes
+        LaunchedEffect(filter, sortBy, searchText) {
+            if (marketItems.isNotEmpty()) {
+                listState.scrollToItem(0)
             }
-            LazyColumn(state = listState) {
-                items(marketItems, key = { it.market.marketCodes }) { item ->
-                    MarketCard(
-                        item = item,
-                        hasIgnoredUsers = hasIgnoredUsers,
-                        onClick = { onMarketSelect(item) },
-                    )
-                }
+        }
+
+        LazyColumn(state = listState) {
+            items(marketItems, key = { it.market.marketCodes }) { item ->
+                MarketCard(
+                    item = item,
+                    hasIgnoredUsers = hasIgnoredUsers,
+                    onClick = { onMarketSelect(item) },
+                )
             }
         }
 
