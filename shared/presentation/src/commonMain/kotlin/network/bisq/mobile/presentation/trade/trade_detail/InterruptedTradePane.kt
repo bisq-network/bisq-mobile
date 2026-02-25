@@ -102,7 +102,9 @@ fun InterruptedTradePane() {
         if (showNoMediatorAvailableWarningDialog) {
             WarningConfirmationDialog(
                 onConfirm = presenter::onDismissNoMediatorAvailableWarningDialog,
-                onDismiss = presenter::onDismissNoMediatorAvailableWarningDialog,
+                onDismiss = { },
+                dismissButtonText = EMPTY_STRING,
+                confirmButtonText = "action.close".i18n(),
                 message = "bisqEasy.takeOffer.noMediatorAvailable.warning".i18n(),
             )
         }
