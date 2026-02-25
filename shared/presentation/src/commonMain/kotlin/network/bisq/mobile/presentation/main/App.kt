@@ -153,6 +153,8 @@ fun App(
         globalUiManager.snackbarActions.collect { action ->
             when (action) {
                 is SnackbarAction.Show -> {
+                    // Dismiss any existing snackbar first, then show the new one
+                    snackbarHostState.currentSnackbarData?.dismiss()
                     // Launch in child coroutine so collector isn't blocked while snackbar shows
                     launch {
                         snackbarHostState.showSnackbar(
