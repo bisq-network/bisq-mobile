@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.offer.create_offer.review
 
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.formatters.AmountFormatter

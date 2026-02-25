@@ -24,9 +24,7 @@ data class MarketVO(
     val quoteCurrencyCode: String,
     val baseCurrencyName: String = baseCurrencyCode,
     val quoteCurrencyName: String = quoteCurrencyCode,
-) {
-    val marketCodes = "$baseCurrencyCode/$quoteCurrencyCode"
-}
+)
 
 val marketListDemoObj =
     listOf(

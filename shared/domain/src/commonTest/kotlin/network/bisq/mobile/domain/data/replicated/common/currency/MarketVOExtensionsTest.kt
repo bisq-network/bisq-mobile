@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.data.replicated.common.currency
 
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
