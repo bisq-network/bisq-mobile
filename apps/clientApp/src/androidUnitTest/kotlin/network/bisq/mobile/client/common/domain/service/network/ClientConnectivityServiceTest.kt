@@ -293,7 +293,8 @@ class ClientConnectivityServiceTest {
             every { webSocketClientService.isConnected() } returns true
 
             clientConnectivityService.activate()
-            delay(6_000) // wait for default 5s start delay + first check
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
 
             // Verify connected
             assertEquals(
@@ -301,7 +302,7 @@ class ClientConnectivityServiceTest {
                 clientConnectivityService.status.value,
             )
 
-            // Full lifecycle restart
+            // Full lifecycle restart (activate internally calls startMonitoring with default delays)
             clientConnectivityService.deactivate()
             clientConnectivityService.activate()
 
@@ -312,12 +313,13 @@ class ClientConnectivityServiceTest {
                 "Status should be BOOTSTRAPPING after deactivate/activate cycle",
             )
 
-            // After monitoring restarts and runs, status should recover
-            delay(6_000) // wait for default 5s start delay + first check
+            // Override the default monitoring with short delays to verify it recovers
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
             assertEquals(
                 ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
                 clientConnectivityService.status.value,
-                "Monitoring should resume and detect connectivity after activate",
+                "Monitoring should detect connectivity after activate",
             )
         }
 

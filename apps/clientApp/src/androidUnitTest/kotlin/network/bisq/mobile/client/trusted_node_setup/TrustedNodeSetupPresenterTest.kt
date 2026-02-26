@@ -749,7 +749,7 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             coVerify { sensitiveSettingsRepository.clear() }
-            verify { navigationManager.navigate(match { navRoute -> navRoute is TrustedNodeSetup }, any(), any()) }
+            verify { navigationManager.navigate(match { navRoute -> navRoute is TrustedNodeSetup && !navRoute.showConnectionFailed }, any(), any()) }
         }
 
     @Test
@@ -818,6 +818,24 @@ class TrustedNodeSetupPresenterTest {
             coVerify { applicationLifecycleService.deactivate() }
             coVerify { applicationLifecycleService.activate() }
             verify { navigationManager.navigate(NavRoute.Splash, any(), any()) }
+        }
+
+    @Test
+    fun `re-shows connection failed warning when lifecycle restart fails`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { applicationLifecycleService.deactivate() } throws RuntimeException("deactivate failed")
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showConnectionFailed = true)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnConnectionFailedRetryPress)
+            advanceUntilIdle()
+
+            // Then: dialog should be re-shown, no navigation should occur
+            assertTrue(presenter.uiState.value.showConnectionFailedWarning)
+            verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
         }
 
     @Test

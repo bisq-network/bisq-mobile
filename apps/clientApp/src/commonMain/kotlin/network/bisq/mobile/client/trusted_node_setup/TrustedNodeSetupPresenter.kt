@@ -268,18 +268,28 @@ class TrustedNodeSetupPresenter(
 
             // TODO this client networking reset is a good candidate for the new UseCase component if we were to
             //      reuse this
-            try {
-                // Full lifecycle restart: deactivate then reactivate all services
-                // This ensures fresh coroutine scopes for the retry attempt
-                applicationLifecycleService.deactivate()
-                applicationLifecycleService.activate()
-            } finally {
-                hideLoading()
-            }
+            val restartSucceeded =
+                try {
+                    // Full lifecycle restart: deactivate then reactivate all services
+                    // This ensures fresh coroutine scopes for the retry attempt
+                    applicationLifecycleService.deactivate()
+                    applicationLifecycleService.activate()
+                    true
+                } catch (e: Exception) {
+                    log.e(e) { "Lifecycle restart failed during retry" }
+                    false
+                } finally {
+                    hideLoading()
+                }
 
-            // Navigate to Splash to trigger fresh bootstrap attempt
-            navigateTo(NavRoute.Splash) {
-                it.popUpTo<TrustedNodeSetup> { inclusive = true }
+            if (restartSucceeded) {
+                // Navigate to Splash to trigger fresh bootstrap attempt
+                navigateTo(NavRoute.Splash) {
+                    it.popUpTo<TrustedNodeSetup> { inclusive = true }
+                }
+            } else {
+                // Re-show the connection failed dialog so the user can retry
+                _uiState.update { it.copy(showConnectionFailedWarning = true) }
             }
         }
     }
