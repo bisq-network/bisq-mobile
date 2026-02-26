@@ -189,4 +189,10 @@ class BarcodeAnalyzer(
         val appFormat = BarcodeFormatMapper.toAppFormat(mlKitBarcode.format)
         return codeTypes.contains(appFormat)
     }
+
+    fun close() {
+        scanner.close()
+        barcodesDetected.clear()
+        hasSuccessfullyProcessedBarcode = false
+    }
 }

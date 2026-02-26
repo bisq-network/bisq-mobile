@@ -60,6 +60,7 @@ actual fun ScannerView(
 
     var camera: Camera? by remember { mutableStateOf(null) }
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
+    var barcodeAnalyzer: BarcodeAnalyzer? by remember { mutableStateOf(null) }
 
     var torchEnabled by remember { mutableStateOf(false) }
     var zoomRatio by remember { mutableFloatStateOf(1f) }
@@ -150,7 +151,7 @@ actual fun ScannerView(
                         onFailed = { updatedResult(BarcodeResult.OnFailed(Exception(it))) },
                         onCanceled = { updatedResult(BarcodeResult.OnCanceled) },
                         filter = filter,
-                    ),
+                    ).also { barcodeAnalyzer = it },
                 )
 
                 camera =
@@ -167,6 +168,8 @@ actual fun ScannerView(
                 previewView
             },
             onRelease = {
+                barcodeAnalyzer?.close()
+                barcodeAnalyzer = null
                 provider.unbindAll()
             },
         )
@@ -174,6 +177,8 @@ actual fun ScannerView(
 
     DisposableEffect(Unit) {
         onDispose {
+            barcodeAnalyzer?.close()
+            barcodeAnalyzer = null
             cameraProvider?.unbindAll()
             camera = null
             cameraControl = null
