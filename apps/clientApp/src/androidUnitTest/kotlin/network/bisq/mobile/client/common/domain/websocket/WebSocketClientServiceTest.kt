@@ -433,6 +433,95 @@ class WebSocketClientServiceTest {
         }
 
     @Test
+    fun `deactivate disconnects client and resets subscription state`() =
+        runTest(testDispatcher) {
+            // Given - activated service with a connected client
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Verify connected state
+            assertTrue(webSocketClientService.isConnected())
+
+            // When
+            webSocketClientService.deactivate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then - client should have been disconnected
+            coVerify { mockWsClient.disconnect() }
+            // Connection state should be Disconnected
+            assertTrue(webSocketClientService.connectionState.value is ConnectionState.Disconnected)
+            // isConnected should return false
+            assertFalse(webSocketClientService.isConnected())
+        }
+
+    @Test
+    fun `activate after deactivate starts fresh and can reconnect`() =
+        runTest(testDispatcher) {
+            // Given - activate, create client, then deactivate
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.deactivate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // When - reactivate
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Emit settings again to trigger new client creation
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id-2",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then - a new client should be created (factory called again)
+            verify(atLeast = 2) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    @Test
     fun `session renewal does not trigger when sensitiveSettingsRepository is null`() =
         runTest(testDispatcher) {
             // Given - service without sensitiveSettingsRepository

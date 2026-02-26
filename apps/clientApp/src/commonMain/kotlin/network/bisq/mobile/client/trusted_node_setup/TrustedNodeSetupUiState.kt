@@ -15,6 +15,7 @@ data class TrustedNodeSetupUiState(
     val showQrCodeView: Boolean = false,
     val showQrCodeError: Boolean = false,
     val showChangeNodeWarning: Boolean = false,
+    val showConnectionFailedWarning: Boolean = false,
     val serverVersion: String = EMPTY_STRING,
 ) {
     fun isConnectionInProgress(): Boolean =

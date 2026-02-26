@@ -42,6 +42,7 @@ val clientPresentationModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         }
 
@@ -59,6 +60,7 @@ val clientPresentationModule =
 
         factory<TrustedNodeSetupPresenter> {
             TrustedNodeSetupPresenter(
+                get(),
                 get(),
                 get(),
                 get(),

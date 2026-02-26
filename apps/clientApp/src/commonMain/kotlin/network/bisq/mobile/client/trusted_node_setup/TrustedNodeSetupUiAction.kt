@@ -26,4 +26,8 @@ sealed interface TrustedNodeSetupUiAction {
     data object OnChangeNodeWarningConfirm : TrustedNodeSetupUiAction
 
     data object OnChangeNodeWarningCancel : TrustedNodeSetupUiAction
+
+    data object OnConnectionFailedRetryPress : TrustedNodeSetupUiAction
+
+    data object OnConnectionFailedPairWithNewNodePress : TrustedNodeSetupUiAction
 }

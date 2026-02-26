@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.toRoute
 import network.bisq.mobile.client.common.presentation.support.ClientSupportScreen
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -52,5 +53,8 @@ fun NavGraphBuilder.addClientAppRoutes() {
 
     // Client-specific screens
     addScreen<TrustedNodeSetupSettings> { TrustedNodeSetupScreen(isWorkflow = false) }
-    addScreen<TrustedNodeSetup> { TrustedNodeSetupScreen() }
+    addScreen<TrustedNodeSetup> { entry ->
+        val showConnectionFailed = entry.toRoute<TrustedNodeSetup>().showConnectionFailed
+        TrustedNodeSetupScreen(showConnectionFailed = showConnectionFailed)
+    }
 }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -25,6 +26,7 @@ class ClientSplashPresenter(
     settingsServiceFacade: SettingsServiceFacade,
     private val connectivityService: ConnectivityService,
     versionProvider: VersionProvider,
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository,
 ) : SplashPresenter(
         mainPresenter,
         applicationBootstrapFacade,
@@ -34,8 +36,8 @@ class ClientSplashPresenter(
         versionProvider,
     ) {
     companion object {
-        private const val CONNECTIVITY_WAIT_TIMEOUT_MS = 10_000L
-        private const val CONNECTIVITY_SAFETY_NET_TIMEOUT_MS = 20_000L
+        private const val CONNECTIVITY_WAIT_TIMEOUT_MS = 15_000L
+        private const val CONNECTIVITY_SAFETY_NET_TIMEOUT_MS = 45_000L
     }
 
     private var hasNavigated = false
@@ -45,15 +47,46 @@ class ClientSplashPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        if (!ApplicationBootstrapFacade.isDemo) {
-            // Safety net: if connectivity is not established within timeout,
-            // redirect to trusted node setup regardless of bootstrap progress.
-            presenterScope.launch {
-                delay(CONNECTIVITY_SAFETY_NET_TIMEOUT_MS)
-                if (!hasNavigated) {
-                    log.d { "Connectivity safety net triggered, navigating to trusted node setup" }
-                    hasNavigated = true
-                    navigateToTrustedNodeSetup()
+        presenterScope.launch {
+            // Check early if we have no saved trusted node configuration
+            val settings = sensitiveSettingsRepository.fetch()
+            if (settings.bisqApiUrl.isEmpty() || settings.clientId == null || settings.clientSecret == null) {
+                log.d { "No saved trusted node configuration, navigating to pairing screen" }
+                hasNavigated = true
+                navigateToTrustedNodeSetup()
+                return@launch
+            }
+
+            // Only set up observers/safety net if we have valid settings
+            if (!ApplicationBootstrapFacade.isDemo) {
+                // React immediately when Tor or bootstrap fails (e.g., flight mode / no internet)
+                presenterScope.launch {
+                    applicationBootstrapFacade.torBootstrapFailed.first { it }
+                    if (!hasNavigated) {
+                        log.d { "Tor bootstrap failed, navigating to trusted node setup" }
+                        hasNavigated = true
+                        navigateToTrustedNodeSetup(showConnectionFailed = true)
+                    }
+                }
+
+                presenterScope.launch {
+                    applicationBootstrapFacade.isBootstrapFailed.first { it }
+                    if (!hasNavigated) {
+                        log.d { "Bootstrap failed, navigating to trusted node setup" }
+                        hasNavigated = true
+                        navigateToTrustedNodeSetup(showConnectionFailed = true)
+                    }
+                }
+
+                // Safety net: if connectivity is not established within timeout,
+                // redirect to trusted node setup regardless of bootstrap progress.
+                presenterScope.launch {
+                    delay(CONNECTIVITY_SAFETY_NET_TIMEOUT_MS)
+                    if (!hasNavigated) {
+                        log.d { "Connectivity safety net triggered, navigating to trusted node setup" }
+                        hasNavigated = true
+                        navigateToTrustedNodeSetup(showConnectionFailed = true)
+                    }
                 }
             }
         }
@@ -79,15 +112,15 @@ class ClientSplashPresenter(
 
             if (!connected) {
                 log.d { "No connectivity detected, navigating to trusted node setup" }
-                navigateToTrustedNodeSetup()
+                navigateToTrustedNodeSetup(showConnectionFailed = true)
                 return
             }
         }
         super.navigateToNextScreen()
     }
 
-    private fun navigateToTrustedNodeSetup() {
-        navigateTo(TrustedNodeSetup) {
+    private fun navigateToTrustedNodeSetup(showConnectionFailed: Boolean = false) {
+        navigateTo(TrustedNodeSetup(showConnectionFailed = showConnectionFailed)) {
             it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }

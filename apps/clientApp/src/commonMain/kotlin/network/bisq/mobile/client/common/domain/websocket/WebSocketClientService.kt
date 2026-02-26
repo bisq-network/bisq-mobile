@@ -130,6 +130,22 @@ class WebSocketClientService(
 
     override suspend fun deactivate() {
         stopFlow.tryEmit(Unit)
+
+        // Disconnect the WebSocket and reset subscription state so that
+        // a subsequent activate() starts with a clean slate.
+        // Without this, subscriptionsAreApplied stays true and the
+        // stateCollectionJob (which calls applySubscriptions on connect)
+        // is dead — leaving subscriptions registered but uncollected.
+        stateCollectionJob?.cancel()
+        stateCollectionJob = null
+        currentClient.value?.disconnect()
+        subscriptionMutex.withLock {
+            subscriptionsAreApplied = false
+            requestedSubscriptions.value.forEach { it.value.resetSequence() }
+            requestedSubscriptions.value = LinkedHashMap()
+        }
+        _connectionState.value = ConnectionState.Disconnected()
+
         super.deactivate()
     }
 

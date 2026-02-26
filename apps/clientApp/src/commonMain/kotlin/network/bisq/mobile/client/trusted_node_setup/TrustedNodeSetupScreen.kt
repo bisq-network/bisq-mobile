@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,12 +50,13 @@ import org.koin.compose.koinInject
 @Composable
 fun TrustedNodeSetupScreen(
     isWorkflow: Boolean = true,
+    showConnectionFailed: Boolean = false,
 ) {
     val presenter: TrustedNodeSetupPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    LaunchedEffect(isWorkflow) {
-        presenter.initialize(isWorkflow)
+    LaunchedEffect(isWorkflow, showConnectionFailed) {
+        presenter.initialize(isWorkflow, showConnectionFailed)
     }
 
     val uiState by presenter.uiState.collectAsState()
@@ -124,6 +124,20 @@ fun TrustedNodeSetupContent(
             dismissButtonText = "mobile.trustedNodeSetup.cancel".i18n(),
             onConfirm = { onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm) },
             onDismiss = { onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningCancel) },
+        )
+    }
+
+    if (uiState.showConnectionFailedWarning) {
+        ConfirmationDialog(
+            headlineColor = BisqTheme.colors.danger,
+            headline = "mobile.trustedNodeSetup.status.failed".i18n(),
+            message = "mobile.trustedNodeSetup.connectionFailed.message".i18n(),
+            confirmButtonText = "mobile.action.retry".i18n(),
+            dismissButtonText = "mobile.trustedNodeSetup.pairWithNewNode".i18n(),
+            onConfirm = { onAction(TrustedNodeSetupUiAction.OnConnectionFailedRetryPress) },
+            onDismiss = { onAction(TrustedNodeSetupUiAction.OnConnectionFailedPairWithNewNodePress) },
+            dismissOnClickOutside = false,
+            verticalButtonPlacement = true,
         )
     }
 }

@@ -39,6 +39,40 @@ abstract class ApplicationLifecycleService(
         }
     }
 
+    /**
+     * Public suspend method to deactivate all service facades.
+     * This can be called to trigger a full lifecycle restart.
+     * Waits for deactivation to complete.
+     */
+    suspend fun deactivate() {
+        if (isTerminating.value) {
+            log.w { "Cannot deactivate: app is terminating" }
+            return
+        }
+        try {
+            deactivateServiceFacades()
+        } catch (e: Exception) {
+            log.e(e) { "Error during deactivateServiceFacades" }
+        }
+    }
+
+    /**
+     * Public suspend method to activate all service facades.
+     * This can be called to trigger a full lifecycle restart.
+     * Waits for activation to complete.
+     */
+    suspend fun activate() {
+        if (isTerminating.value) {
+            log.w { "Cannot activate: app is terminating" }
+            return
+        }
+        try {
+            activateServiceFacades()
+        } catch (e: Exception) {
+            onUnrecoverableError(e)
+        }
+    }
+
     protected open fun onUnrecoverableError(e: Throwable) {
         log.e(e) { "Unrecoverable error detected. Application must be restarted. Stopping services." }
         serviceScope.launch {

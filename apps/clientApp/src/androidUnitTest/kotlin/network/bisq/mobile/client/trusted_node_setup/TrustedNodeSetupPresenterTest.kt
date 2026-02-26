@@ -27,6 +27,7 @@ import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetu
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCaseState
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -60,6 +61,7 @@ class TrustedNodeSetupPresenterTest {
     private lateinit var trustedNodeSetupUseCase: TrustedNodeSetupUseCase
     private lateinit var apiAccessService: ApiAccessService
     private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
+    private lateinit var applicationLifecycleService: ApplicationLifecycleService
     private lateinit var navigationManager: NavigationManager
     private lateinit var presenter: TrustedNodeSetupPresenter
 
@@ -95,6 +97,7 @@ class TrustedNodeSetupPresenterTest {
         trustedNodeSetupUseCase = mockk(relaxed = true)
         apiAccessService = mockk(relaxed = true)
         sensitiveSettingsRepository = mockk(relaxed = true)
+        applicationLifecycleService = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
 
         startKoin {
@@ -130,6 +133,7 @@ class TrustedNodeSetupPresenterTest {
             trustedNodeSetupUseCase,
             apiAccessService,
             sensitiveSettingsRepository,
+            applicationLifecycleService,
         )
 
     private fun TestScope.setupPresenter() {
@@ -745,7 +749,7 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             coVerify { sensitiveSettingsRepository.clear() }
-            verify { navigationManager.navigate(TrustedNodeSetup, any(), any()) }
+            verify { navigationManager.navigate(match { navRoute -> navRoute is TrustedNodeSetup }, any(), any()) }
         }
 
     @Test
@@ -763,6 +767,73 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             assertFalse(presenter.uiState.value.showChangeNodeWarning)
+        }
+
+    // ========== Connection Failed Warning Tests ==========
+
+    @Test
+    fun `shows connection failed warning when initialized with showConnectionFailed true`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = true, showConnectionFailed = true)
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(presenter.uiState.value.showConnectionFailedWarning)
+        }
+
+    @Test
+    fun `does NOT show connection failed warning when initialized without flag`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = true)
+            advanceUntilIdle()
+
+            // Then
+            assertFalse(presenter.uiState.value.showConnectionFailedWarning)
+        }
+
+    @Test
+    fun `hides connection failed warning on retry press`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { applicationLifecycleService.deactivate() } returns Unit
+            coEvery { applicationLifecycleService.activate() } returns Unit
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showConnectionFailed = true)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnConnectionFailedRetryPress)
+            advanceUntilIdle()
+
+            // Then
+            assertFalse(presenter.uiState.value.showConnectionFailedWarning)
+            coVerify { applicationLifecycleService.deactivate() }
+            coVerify { applicationLifecycleService.activate() }
+            verify { navigationManager.navigate(NavRoute.Splash, any(), any()) }
+        }
+
+    @Test
+    fun `hides connection failed warning on pair with new node press`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showConnectionFailed = true)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnConnectionFailedPairWithNewNodePress)
+            advanceUntilIdle()
+
+            // Then
+            assertFalse(presenter.uiState.value.showConnectionFailedWarning)
         }
 
     @Test

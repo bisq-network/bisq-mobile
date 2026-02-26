@@ -14,6 +14,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -51,9 +54,12 @@ class ClientSplashPresenterNavigationTest {
     private lateinit var mainPresenter: MainPresenter
     private lateinit var versionProvider: VersionProvider
     private lateinit var connectivityService: ConnectivityService
+    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
 
     private val progressFlow = MutableStateFlow(0f)
     private val connectivityStatusFlow = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)
+    private val torBootstrapFailedFlow = MutableStateFlow(false)
+    private val bootstrapFailedFlow = MutableStateFlow(false)
 
     @BeforeTest
     fun setUp() {
@@ -66,13 +72,22 @@ class ClientSplashPresenterNavigationTest {
         mainPresenter = mockk(relaxed = true)
         versionProvider = mockk(relaxed = true)
         connectivityService = mockk(relaxed = true)
+        sensitiveSettingsRepository = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
+
+        // Default: have valid sensitive settings so tests don't auto-redirect to pairing
+        coEvery { sensitiveSettingsRepository.fetch() } returns
+            SensitiveSettings(
+                bisqApiUrl = "http://test:8080",
+                clientId = "test-client-id",
+                clientSecret = "test-client-secret",
+            )
 
         every { applicationBootstrapFacade.state } returns MutableStateFlow("")
         every { applicationBootstrapFacade.progress } returns progressFlow
         every { applicationBootstrapFacade.isTimeoutDialogVisible } returns MutableStateFlow(false)
-        every { applicationBootstrapFacade.isBootstrapFailed } returns MutableStateFlow(false)
-        every { applicationBootstrapFacade.torBootstrapFailed } returns MutableStateFlow(false)
+        every { applicationBootstrapFacade.isBootstrapFailed } returns bootstrapFailedFlow
+        every { applicationBootstrapFacade.torBootstrapFailed } returns torBootstrapFailedFlow
         every { applicationBootstrapFacade.currentBootstrapStage } returns MutableStateFlow("")
         every { applicationBootstrapFacade.shouldShowProgressToast } returns MutableStateFlow(false)
         every { versionProvider.getAppNameAndVersion(any(), any()) } returns "Test 1.0"
@@ -99,6 +114,8 @@ class ClientSplashPresenterNavigationTest {
     @AfterTest
     fun tearDown() {
         ApplicationBootstrapFacade.isDemo = false
+        torBootstrapFailedFlow.value = false
+        bootstrapFailedFlow.value = false
         stopKoin()
         Dispatchers.resetMain()
     }
@@ -112,10 +129,11 @@ class ClientSplashPresenterNavigationTest {
             settingsServiceFacade,
             connectivityService,
             versionProvider,
+            sensitiveSettingsRepository,
         )
 
     @Test
-    fun `navigates to trusted node setup when not connected and connectivity wait times out`() =
+    fun `navigates to trusted node setup with connection failed flag when not connected`() =
         runTest(testDispatcher) {
             // Given: ConnectivityService stays in BOOTSTRAPPING (never reaches CONNECTED)
             coEvery { settingsServiceFacade.getSettings() } returns
@@ -123,19 +141,69 @@ class ClientSplashPresenterNavigationTest {
 
             val presenter = createPresenter()
             presenter.onViewAttached()
-            // Only run currently queued tasks (don't advance past the 20s safety net)
+            // Only run currently queued tasks (don't advance past the 30s safety net)
             testScheduler.runCurrent()
 
             // When: progress reaches 1.0 triggering navigateToNextScreen
             progressFlow.value = 1.0f
-            // Advance past the 10s CONNECTIVITY_WAIT_TIMEOUT_MS
-            advanceTimeBy(11_000)
+            // Advance past the 15s CONNECTIVITY_WAIT_TIMEOUT_MS
+            advanceTimeBy(16_000)
             testScheduler.runCurrent()
 
-            // Then: should navigate to trusted node setup
+            // Then: should navigate to trusted node setup with showConnectionFailed = true
             verify {
                 navigationManager.navigate(
-                    match { it.toString().contains("TrustedNodeSetup") },
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                    },
+                    any(),
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `navigates to trusted node setup immediately when Tor bootstrap fails`() =
+        runTest(testDispatcher) {
+            // Given: ConnectivityService stays in BOOTSTRAPPING
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            // When: Tor bootstrap fails (e.g., flight mode / no internet)
+            torBootstrapFailedFlow.value = true
+            advanceUntilIdle()
+
+            // Then: should navigate to trusted node setup with showConnectionFailed = true
+            verify {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                    },
+                    any(),
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `navigates to trusted node setup immediately when bootstrap fails`() =
+        runTest(testDispatcher) {
+            // Given: ConnectivityService stays in BOOTSTRAPPING
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            // When: General bootstrap fails
+            bootstrapFailedFlow.value = true
+            advanceUntilIdle()
+
+            // Then: should navigate to trusted node setup with showConnectionFailed = true
+            verify {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                    },
                     any(),
                     any(),
                 )
@@ -195,14 +263,17 @@ class ClientSplashPresenterNavigationTest {
             val presenter = createPresenter()
             presenter.onViewAttached()
 
-            // When: CONNECTIVITY_SAFETY_NET_TIMEOUT_MS (20s) elapses
-            advanceTimeBy(21_000)
-            testScheduler.runCurrent()
+            // When: CONNECTIVITY_SAFETY_NET_TIMEOUT_MS (40s) elapses
+            // Use advanceUntilIdle to ensure all coroutines complete
+            advanceTimeBy(45_000)
+            advanceUntilIdle()
 
-            // Then: should navigate to trusted node setup
+            // Then: should navigate to trusted node setup with showConnectionFailed = true
             verify {
                 navigationManager.navigate(
-                    match { it.toString().contains("TrustedNodeSetup") },
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                    },
                     any(),
                     any(),
                 )
@@ -218,14 +289,38 @@ class ClientSplashPresenterNavigationTest {
             val presenter = createPresenter()
             presenter.onViewAttached()
 
-            // When: 20s elapses
-            advanceTimeBy(21_000)
-            testScheduler.runCurrent()
+            // When: 45s elapses with advanceUntilIdle
+            advanceTimeBy(45_000)
+            advanceUntilIdle()
 
             // Then: safety net should NOT trigger (no navigation to TrustedNodeSetup)
             verify(exactly = 0) {
                 navigationManager.navigate(
-                    match { it.toString().contains("TrustedNodeSetup") },
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup
+                    },
+                    any(),
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `navigates to trusted node setup WITHOUT connection failed when no saved configuration`() =
+        runTest(testDispatcher) {
+            // Given: No saved trusted node configuration (first-time user)
+            coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Then: should navigate to trusted node setup with showConnectionFailed = false
+            verify {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup && !navRoute.showConnectionFailed
+                    },
                     any(),
                     any(),
                 )
