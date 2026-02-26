@@ -83,6 +83,20 @@ abstract class ApplicationBootstrapFacade(
     }
 
     override suspend fun activate() {
+        // Reset all transient state for a fresh bootstrap attempt.
+        // Without this, a deactivate/activate cycle (e.g. retry after connection failure)
+        // would leave stale flags that cause observers to fire immediately.
+        _torBootstrapFailed.value = false
+        _isBootstrapFailed.value = false
+        _isTimeoutDialogVisible.value = false
+        _shouldShowProgressToast.value = false
+        _currentBootstrapStage.value = ""
+        bootstrapSuccessful = false
+        currentTimeoutJob?.cancel()
+        currentTimeoutJob = null
+        torProgressCollectJob?.cancel()
+        torProgressCollectJob = null
+
         super.activate()
     }
 

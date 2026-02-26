@@ -62,6 +62,16 @@ class ClientConnectivityService(
     private val pendingConnectivityBlocks = mutableListOf<suspend () -> Unit>()
     private val mutex = Mutex()
 
+    override suspend fun activate() {
+        super.activate()
+        startMonitoring()
+    }
+
+    override suspend fun deactivate() {
+        stopMonitoring()
+        super.deactivate()
+    }
+
     /**
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
      * @param period of time in ms to check connectivity

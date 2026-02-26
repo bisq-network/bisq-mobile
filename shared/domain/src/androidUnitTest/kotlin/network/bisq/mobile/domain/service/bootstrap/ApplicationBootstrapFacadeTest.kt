@@ -101,6 +101,66 @@ class ApplicationBootstrapFacadeTest : KoinTest {
         }
 
     @Test
+    fun `activate resets transient state after failure cycle`() =
+        runTest(testDispatcher) {
+            val kmpTorService = mockk<KmpTorService>(relaxed = true)
+            val facade = TestFacade(kmpTorService)
+
+            // Simulate a failure cycle: set all transient state to non-default values
+            facade.setTorBootstrapFailed(true)
+            facade.setBootstrapFailed(true)
+            facade.setTimeoutDialogVisible(true)
+            facade.setShouldShowProgressToast(true)
+            facade.setCurrentBootstrapStage("some-stage")
+            facade.onInitializedPublic() // sets bootstrapSuccessful = true
+            facade.setState("failed state")
+            facade.setProgress(0.75f)
+
+            // Verify the failure state is set
+            assertTrue(facade.torBootstrapFailed.value)
+            assertTrue(facade.isBootstrapFailed.value)
+
+            // Deactivate then activate (simulating retry)
+            facade.deactivate()
+            facade.activate()
+            advanceUntilIdle()
+
+            // All transient state should be reset
+            assertFalse(facade.torBootstrapFailed.value, "torBootstrapFailed should be reset")
+            assertFalse(facade.isBootstrapFailed.value, "isBootstrapFailed should be reset")
+            assertFalse(facade.isTimeoutDialogVisible.value, "isTimeoutDialogVisible should be reset")
+            assertFalse(facade.shouldShowProgressToast.value, "shouldShowProgressToast should be reset")
+            assertEquals("", facade.currentBootstrapStage.value, "currentBootstrapStage should be reset")
+        }
+
+    @Test
+    fun `activate resets bootstrapSuccessful so timeouts can fire again`() =
+        runTest(testDispatcher) {
+            val kmpTorService = mockk<KmpTorService>(relaxed = true)
+            val facade = TestFacade(kmpTorService)
+
+            // Complete a successful bootstrap
+            facade.onInitializedPublic() // sets bootstrapSuccessful = true
+
+            // startTimeoutForStage should return early when bootstrapSuccessful is true
+            facade.startTimeoutForStagePublic("stage-after-success")
+            testScheduler.advanceTimeBy(90_001)
+            advanceUntilIdle()
+            assertFalse(facade.isTimeoutDialogVisible.value, "Timeout should not fire after successful bootstrap")
+
+            // Deactivate and reactivate
+            facade.deactivate()
+            facade.activate()
+            advanceUntilIdle()
+
+            // Now timeouts should work again (bootstrapSuccessful was reset)
+            facade.startTimeoutForStagePublic("stage-after-reactivate")
+            testScheduler.advanceTimeBy(90_001)
+            advanceUntilIdle()
+            assertTrue(facade.isTimeoutDialogVisible.value, "Timeout should fire after reactivation")
+        }
+
+    @Test
     fun `tor bootstrap progress updates applied to state`() =
         runTest(testDispatcher) {
             val kmpTorService = mockk<KmpTorService>(relaxed = true)
