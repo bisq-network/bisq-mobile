@@ -23,6 +23,7 @@ import network.bisq.mobile.domain.utils.Logging
  */
 class RequestResponseHandler(
     private val sendFunction: suspend (WebSocketMessage) -> Unit,
+    private val quiet: Boolean = false,
 ) : Logging {
     private var requestId: String? = null
     private var deferredWebSocketResponse: CompletableDeferred<WebSocketResponse>? = null
@@ -32,7 +33,7 @@ class RequestResponseHandler(
         webSocketRequest: WebSocketRequest,
         timeoutMillis: Long = 30_000,
     ): WebSocketResponse? {
-        log.i { "Sending request with ID: ${webSocketRequest.requestId}" }
+        if (!quiet) log.d { "Sending request with ID: ${webSocketRequest.requestId}" }
         mutex.withLock {
             require(requestId == null) { "RequestResponseHandler is designed to be used only once per request ID" }
             requestId = webSocketRequest.requestId
@@ -59,7 +60,7 @@ class RequestResponseHandler(
     }
 
     suspend fun onWebSocketResponse(webSocketResponse: WebSocketResponse) {
-        log.i { "Received response for request ID: ${webSocketResponse.requestId}" }
+        if (!quiet) log.d { "Received response for request ID: ${webSocketResponse.requestId}" }
         mutex.withLock {
             require(webSocketResponse.requestId == requestId) { "Request ID of response does not match our request ID" }
             deferredWebSocketResponse?.complete(webSocketResponse)
@@ -67,7 +68,7 @@ class RequestResponseHandler(
     }
 
     suspend fun dispose() {
-        log.i { "Disposing request handler for ID: $requestId" }
+        if (!quiet) log.d { "Disposing request handler for ID: $requestId" }
         mutex.withLock {
             deferredWebSocketResponse?.cancel()
             deferredWebSocketResponse = null

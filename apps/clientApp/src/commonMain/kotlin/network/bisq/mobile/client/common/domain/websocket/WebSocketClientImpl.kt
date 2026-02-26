@@ -78,6 +78,7 @@ class WebSocketClientImpl(
         const val MAX_RECONNECT_ATTEMPTS = 5
         const val MAX_RECONNECT_DELAY = 10000L // 10 seconds max delay
         const val RECONNECT_CONNECT_TIMEOUT = 30_000L // shorter timeout during reconnect
+        const val HEALTH_CHECK_PATH = "/api/v1/settings/version"
         const val STALE_RECONNECT_THRESHOLD_MS = 30_000L // cancel reconnect if stuck this long
     }
 
@@ -92,6 +93,7 @@ class WebSocketClientImpl(
         ConcurrentMap<String, WebSocketEventObserver>()
     private val requestResponseHandlers =
         mutableMapOf<String, RequestResponseHandler>()
+    private val healthCheckRequestIds = mutableSetOf<String>()
     private val connectionMutex = Mutex()
     private val requestResponseHandlersMutex = Mutex()
 
@@ -282,7 +284,8 @@ class WebSocketClientImpl(
         }
 
         val requestId = webSocketRequest.requestId
-        val requestResponseHandler = RequestResponseHandler(this::send)
+        val isHealthCheck = webSocketRequest is WebSocketRestApiRequest && webSocketRequest.path == HEALTH_CHECK_PATH
+        val requestResponseHandler = RequestResponseHandler(this::send, quiet = isHealthCheck)
         requestResponseHandlersMutex.withLock {
             requestResponseHandlers[requestId] = requestResponseHandler
         }
@@ -365,9 +368,17 @@ class WebSocketClientImpl(
     }
 
     private suspend fun send(message: WebSocketMessage) {
-        log.i { "Send message $message" }
+        val isHealthCheck = message is WebSocketRestApiRequest && message.path == HEALTH_CHECK_PATH
+        if (isHealthCheck) {
+            healthCheckRequestIds.add(message.requestId)
+        }
+        if (!isHealthCheck) {
+            log.d { "Send message $message" }
+        }
         val jsonString: String = json.encodeToString(message)
-        log.i { "Send raw text $jsonString" }
+        if (!isHealthCheck) {
+            log.d { "Send raw text $jsonString" }
+        }
         session?.send(Frame.Text(jsonString))
     }
 
@@ -378,13 +389,18 @@ class WebSocketClientImpl(
                 if (frame is Frame.Text) {
                     val message = frame.readText()
                     // todo add input validation
-                    log.d { "Received raw text $message" }
                     val webSocketMessage: WebSocketMessage =
                         json.decodeFromString(
                             WebSocketMessage.serializer(),
                             message,
                         )
-                    log.i { "Received webSocketMessage $webSocketMessage" }
+                    val isHealthCheckResponse =
+                        webSocketMessage is WebSocketResponse &&
+                            healthCheckRequestIds.remove(webSocketMessage.requestId)
+                    if (!isHealthCheckResponse) {
+                        log.d { "Received raw text $message" }
+                        log.d { "Received webSocketMessage $webSocketMessage" }
+                    }
                     if (webSocketMessage is WebSocketResponse) {
                         onWebSocketResponse(webSocketMessage)
                     } else if (webSocketMessage is WebSocketEvent) {
@@ -443,7 +459,7 @@ class WebSocketClientImpl(
             WebSocketRestApiRequest(
                 requestId,
                 "GET",
-                "/api/v1/settings/version",
+                HEALTH_CHECK_PATH,
                 "",
             )
         val response =

@@ -388,7 +388,7 @@ class WebSocketClientService(
             WebSocketRestApiRequest(
                 requestId = createUuid(),
                 method = "GET",
-                path = "/api/v1/settings/version",
+                path = WebSocketClientImpl.HEALTH_CHECK_PATH,
                 body = "",
             )
         return try {
