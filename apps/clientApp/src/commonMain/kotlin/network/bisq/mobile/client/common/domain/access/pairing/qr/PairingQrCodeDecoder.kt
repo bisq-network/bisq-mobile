@@ -3,8 +3,9 @@ package network.bisq.mobile.client.common.domain.access.pairing.qr
 import network.bisq.mobile.client.common.domain.access.LOCALHOST
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCodeDecoder
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.EnvironmentController
-import network.bisq.mobile.domain.utils.isIOS
+import network.bisq.mobile.domain.getPlatformInfo
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -75,7 +76,7 @@ class PairingQrCodeDecoder(
         if (url.contains(".onion")) return url
         // On emulators/simulators, replace the host with the appropriate loopback
         // because emulators can't reach LAN IPs — they route to the host via special addresses
-        val emulatorHost = if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
+        val emulatorHost = if (getPlatformInfo().type == PlatformType.IOS) LOCALHOST else ANDROID_LOCALHOST
         return replaceHost(url, emulatorHost)
     }
 

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -185,8 +186,7 @@ abstract class BasePresenter(
     }
 
     override fun isIOS(): Boolean {
-        val platformInfo = getPlatformInfo()
-        val isIOS = platformInfo.name.lowercase().contains("ios")
+        val isIOS = getPlatformInfo().type == PlatformType.IOS
         log.d { "isIOS = $isIOS" }
         return isIOS
     }

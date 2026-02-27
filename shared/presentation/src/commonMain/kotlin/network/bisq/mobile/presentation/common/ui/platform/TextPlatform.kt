@@ -2,20 +2,19 @@ package network.bisq.mobile.presentation.common.ui.platform
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
+import network.bisq.mobile.domain.PlatformType
+import network.bisq.mobile.domain.getPlatformInfo
 
 // Expect/actual helper to provide a PlatformTextStyle that disables font padding on platforms that support it.
 // On platforms that don't support this flag (e.g., iOS), return null to keep defaults.
 expect fun platformTextStyleNoFontPadding(): PlatformTextStyle?
-
-// Returns true if running on iOS platform
-expect fun isIOSPlatform(): Boolean
 
 // Returns the appropriate color for custom payment icon overlay letters.
 // iOS needs a lighter color due to different text rendering that makes dark text barely visible.
 fun customPaymentOverlayLetterColor(
     darkColor: Color,
     lightColor: Color,
-): Color = if (isIOSPlatform()) lightColor else darkColor
+): Color = if (getPlatformInfo().type == PlatformType.IOS) lightColor else darkColor
 
 // Colors for custom payment icon backgrounds (matching Bisq2 desktop custom-payment-*.png)
 // These are used on iOS where the PNG images don't render correctly

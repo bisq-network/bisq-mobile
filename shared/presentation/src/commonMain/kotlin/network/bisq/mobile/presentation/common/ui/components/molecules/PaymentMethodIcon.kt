@@ -14,11 +14,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.PlatformType
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.common.ui.platform.CUSTOM_PAYMENT_BACKGROUND_COLORS
 import network.bisq.mobile.presentation.common.ui.platform.customPaymentOverlayLetterColor
-import network.bisq.mobile.presentation.common.ui.platform.isIOSPlatform
 import network.bisq.mobile.presentation.common.ui.platform.platformTextStyleNoFontPadding
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.customPaymentIconIndex
@@ -81,7 +82,7 @@ fun PaymentMethodIcon(
         modifier = Modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
-        if (isMissingIcon && isIOSPlatform()) {
+        if (isMissingIcon && getPlatformInfo().type == PlatformType.IOS) {
             // For custom icons on iOS, use a programmatic colored background
             val bgColor =
                 CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(customIndex) {
