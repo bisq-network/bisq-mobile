@@ -23,6 +23,9 @@ val bisqCoreVersion: String by extra {
 val bisqApiVersion: String by extra {
     findTomlVersion("bisq-api")
 }
+val bisqDesktopPairingVersion: String by extra {
+    findTomlVersion("bisq-desktop-pairing")
+}
 
 // NOTE: The following allow us to configure each app type independently and link for example with gradle.properties
 // local.properties overrides any property if you need to setup for example local networking
@@ -38,6 +41,7 @@ buildConfig {
         buildConfigField("IOS_APP_VERSION", project.findProperty("client.ios.version").toString())
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BISQ_API_VERSION", bisqApiVersion)
+        buildConfigField("BISQ_DESKTOP_PAIRING_VERSION", bisqDesktopPairingVersion)
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         // networking setup
         buildConfigField("WS_PORT", project.findProperty("client.x.trustednode.port").toString())

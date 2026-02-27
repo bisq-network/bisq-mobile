@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CloseIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ScanQrIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
@@ -42,6 +43,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.Co
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -166,9 +168,7 @@ private fun TrustedNodeSetupMainContent(
         }
 
         BisqText.LargeRegular(text = "mobile.trustedNodeSetup.info".i18n())
-        BisqGap.V1()
-
-        // TODO add mobile.trustedNodeSetup.info.detail as overlay
+        BisqGap.V2()
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -197,6 +197,7 @@ private fun TrustedNodeSetupMainContent(
                     placeholder = "mobile.trustedNodeSetup.pairingCode.textField.prompt".i18n(),
                     value = uiState.pairingCodeEntry.value,
                     singleLine = true,
+                    readOnly = true,
                     enabled = !uiState.isConnectionInProgress(),
                     onValueChange = { value ->
                         onAction(TrustedNodeSetupUiAction.OnPairingCodeChange(value))
@@ -289,6 +290,41 @@ private fun TrustedNodeSetupMainContent(
             )
         }
 
+        BisqGap.V2()
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
+        ) {
+            BisqText.BaseRegularGrey(
+                text = "mobile.trustedNodeSetup.compatibility".i18n(),
+                textAlign = TextAlign.Center,
+            )
+            BisqGap.V1()
+            BisqText.BaseRegularGrey(
+                modifier = Modifier.padding(start = 16.dp),
+                text =
+                    "mobile.trustedNodeSetup.compatibility.desktop"
+                        .i18n(BuildConfig.BISQ_DESKTOP_PAIRING_VERSION),
+            )
+            BisqGap.VHalf()
+            BisqText.BaseRegularGrey(
+                modifier = Modifier.padding(start = 16.dp),
+                text =
+                    "mobile.trustedNodeSetup.compatibility.headless"
+                        .i18n(BuildConfig.BISQ_API_VERSION),
+            )
+        }
+        BisqGap.V2()
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            LinkButton(
+                text =
+                    "mobile.trustedNodeSetup.help"
+                        .i18n("mobile.trustedNodeSetup.help.link".i18n()),
+                link = BisqLinks.BISQ_CONNECT_WIKI_URL,
+            )
+        }
         BisqGap.V2()
     }
 }

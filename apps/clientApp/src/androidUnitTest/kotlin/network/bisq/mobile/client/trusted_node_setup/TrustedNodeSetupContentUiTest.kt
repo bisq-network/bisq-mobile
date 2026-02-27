@@ -3,6 +3,9 @@ package network.bisq.mobile.client.trusted_node_setup
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -111,6 +114,7 @@ class TrustedNodeSetupContentUiTest {
         // Then - Test & Save button is disabled (empty pairing code)
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.testAndSave".i18n())
+            .performScrollTo()
             .assertIsDisplayed()
             .assertIsNotEnabled()
     }
@@ -195,7 +199,7 @@ class TrustedNodeSetupContentUiTest {
     // ========== Pairing Code Entry Tests ==========
 
     @Test
-    fun `when pairing code entered then triggers OnPairingCodeChange action`() {
+    fun `when pairing code field renders then it is read only`() {
         // Given
         val uiState =
             TrustedNodeSetupUiState(
@@ -211,13 +215,12 @@ class TrustedNodeSetupContentUiTest {
 
         composeTestRule.waitForIdle()
 
-        // When
+        // Then - field exists but is not editable (read-only)
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.pairingCode.textField.prompt".i18n())
-            .performTextInput("test_code")
-
-        // Then
-        verify { mockOnAction(TrustedNodeSetupUiAction.OnPairingCodeChange("test_code")) }
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.IsEditable, false))
     }
 
     @Test
@@ -269,16 +272,19 @@ class TrustedNodeSetupContentUiTest {
         // Then - Paste button is displayed (trailingIcon)
         composeTestRule
             .onNodeWithContentDescription("Paste icon")
+            .performScrollTo()
             .assertIsDisplayed()
 
         // Then - Close/Clear button is displayed (suffix, shows when field has text)
         composeTestRule
             .onNodeWithContentDescription("close")
+            .performScrollTo()
             .assertIsDisplayed()
 
         // Then - Test & Save button is enabled (field has text, status is idle)
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.testAndSave".i18n())
+            .performScrollTo()
             .assertIsDisplayed()
             .assertIsEnabled()
     }
@@ -304,6 +310,7 @@ class TrustedNodeSetupContentUiTest {
         // When - Click the close/clear button
         composeTestRule
             .onNodeWithContentDescription("close")
+            .performScrollTo()
             .performClick()
 
         // Then - Verify action to clear the field
@@ -331,9 +338,11 @@ class TrustedNodeSetupContentUiTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.apiUrl".i18n())
+            .performScrollTo()
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithText(sampleApiUrl)
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -361,6 +370,7 @@ class TrustedNodeSetupContentUiTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.cancelWithTimeout".i18n("30"))
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -386,6 +396,7 @@ class TrustedNodeSetupContentUiTest {
         // When
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.cancelWithTimeout".i18n("30"))
+            .performScrollTo()
             .performClick()
 
         // Then
@@ -515,11 +526,13 @@ class TrustedNodeSetupContentUiTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.torState".i18n(), useUnmergedTree = true)
+            .performScrollTo()
             .assertIsDisplayed()
 
         // Also verify the progress percentage is displayed (rendered as separate Text in a Row)
         composeTestRule
             .onNodeWithText(" 45%", useUnmergedTree = true)
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -605,6 +618,7 @@ class TrustedNodeSetupContentUiTest {
         // When
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.testAndSave".i18n())
+            .performScrollTo()
             .performClick()
 
         // Then
@@ -658,6 +672,7 @@ class TrustedNodeSetupContentUiTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.testAndSave".i18n())
+            .performScrollTo()
             .assertIsDisplayed()
             .assertIsEnabled()
     }
@@ -927,6 +942,7 @@ class TrustedNodeSetupContentUiTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.cancel".i18n())
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -1103,5 +1119,66 @@ class TrustedNodeSetupContentUiTest {
 
         // Then
         verify { mockOnAction(TrustedNodeSetupUiAction.OnChangeNodeWarningCancel) }
+    }
+
+    // ========== Compatibility & Help Link Tests ==========
+
+    @Test
+    fun `when idle state renders then shows compatibility version info`() {
+        // Given
+        val uiState = TrustedNodeSetupUiState()
+
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // Then
+        composeTestRule
+            .onNodeWithText("mobile.trustedNodeSetup.compatibility".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(
+                "mobile.trustedNodeSetup.compatibility.desktop"
+                    .i18n(BuildConfig.BISQ_DESKTOP_PAIRING_VERSION),
+                useUnmergedTree = true,
+            ).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(
+                "mobile.trustedNodeSetup.compatibility.headless"
+                    .i18n(BuildConfig.BISQ_API_VERSION),
+                useUnmergedTree = true,
+            ).performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when idle state renders then shows help link`() {
+        // Given
+        val uiState = TrustedNodeSetupUiState()
+
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // Then
+        composeTestRule
+            .onNodeWithText(
+                "mobile.trustedNodeSetup.help"
+                    .i18n("mobile.trustedNodeSetup.help.link".i18n()),
+                useUnmergedTree = true,
+            ).performScrollTo()
+            .assertIsDisplayed()
     }
 }
