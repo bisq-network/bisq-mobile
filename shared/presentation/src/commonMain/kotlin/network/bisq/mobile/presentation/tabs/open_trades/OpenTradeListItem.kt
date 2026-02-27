@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
@@ -83,13 +84,18 @@ fun OpenTradeListItem(
                     color = BisqTheme.colors.primary,
                 )
                 BisqGap.VHalf()
+                val priceDisplay =
+                    PriceSpecFormatter.formatPriceWithSpec(
+                        item.formattedPrice,
+                        item.bisqEasyOffer.priceSpec,
+                    )
                 Row(modifier = Modifier.padding(top = 1.dp)) {
-                    if (item.formattedPrice.length > 18) {
+                    if (priceDisplay.length > 18) {
                         BisqText.XSmallRegularGrey("@ ")
-                        BisqText.XSmallRegular(item.formattedPrice)
+                        BisqText.XSmallRegular(priceDisplay)
                     } else {
                         BisqText.SmallRegularGrey("@ ")
-                        BisqText.SmallRegular(item.formattedPrice)
+                        BisqText.SmallRegular(priceDisplay)
                     }
                 }
                 BisqGap.VQuarter()

@@ -33,7 +33,8 @@ data class TradeItemPresentationModel(
     val formattedTime: String get() = tradeItemPresentationDto.formattedTime
     val market: String get() = tradeItemPresentationDto.market
     val price: Long get() = tradeItemPresentationDto.price
-    val formattedPrice: String get() = PriceSpecFormatter.getFormattedPriceSpec(bisqEasyOffer.priceSpec, true)
+    val formattedPrice: String get() = tradeItemPresentationDto.formattedPrice
+    val formattedPriceSpec: String get() = PriceSpecFormatter.getFormattedPriceSpec(bisqEasyOffer.priceSpec, true)
     val baseAmount: Long get() = tradeItemPresentationDto.baseAmount
     val formattedBaseAmount: String get() = NumberFormatter.btcFormat(baseAmount)
     val quoteAmount: Long get() = tradeItemPresentationDto.quoteAmount

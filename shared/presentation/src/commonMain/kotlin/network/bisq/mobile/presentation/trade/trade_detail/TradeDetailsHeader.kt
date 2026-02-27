@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isSell
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -193,10 +194,15 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                         verticalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.weight(2f),
                     ) {
+                        val priceDisplay =
+                            PriceSpecFormatter.formatPriceWithSpec(
+                                item.formattedPrice,
+                                item.bisqEasyOffer.priceSpec,
+                            )
                         if (presenter.isSmallScreen()) {
                             InfoBox(
                                 label = "bisqEasy.openTrades.table.price".i18n(),
-                                value = item.formattedPrice,
+                                value = priceDisplay,
                             )
                             BisqGap.V1()
                             InfoBox(
@@ -206,7 +212,7 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                         } else {
                             InfoRow(
                                 label1 = "bisqEasy.openTrades.table.price".i18n(),
-                                value1 = item.formattedPrice,
+                                value1 = priceDisplay,
                                 label2 = "bisqEasy.openTrades.tradeDetails.tradeDate".i18n(),
                                 value2 = "${item.formattedDate} ${item.formattedTime}",
                             )

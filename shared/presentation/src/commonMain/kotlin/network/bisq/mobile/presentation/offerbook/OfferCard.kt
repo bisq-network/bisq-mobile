@@ -26,6 +26,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
@@ -162,8 +163,14 @@ fun OfferCard(
 
             BisqGap.VHalf()
 
+            val formattedPrice by item.formattedPrice.collectAsState()
+            val priceDisplay =
+                PriceSpecFormatter.formatPriceWithSpec(
+                    formattedPrice,
+                    item.bisqEasyOffer.priceSpec,
+                )
             AutoResizeText(
-                text = "@ " + item.formattedPriceSpec,
+                text = "@ $priceDisplay",
                 textStyle = BisqTheme.typography.smallLight,
                 maxLines = 1,
             )

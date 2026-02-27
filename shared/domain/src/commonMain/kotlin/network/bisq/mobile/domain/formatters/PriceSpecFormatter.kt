@@ -40,6 +40,15 @@ object PriceSpecFormatter {
             else -> "bisqEasy.tradeWizard.review.chatMessage.marketPrice".i18n()
         }
 
+    fun formatPriceWithSpec(
+        formattedPrice: String,
+        priceSpec: PriceSpecVO,
+    ): String {
+        if (priceSpec is FixPriceSpecVO) return formattedPrice
+        val abbreviated = getFormattedPriceSpec(priceSpec, abbreviated = true)
+        return "$formattedPrice ($abbreviated)"
+    }
+
     fun getFormattedPriceSpecWithOfferPrice(
         priceSpec: PriceSpecVO,
         offerPrice: String,
