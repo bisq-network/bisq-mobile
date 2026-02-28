@@ -271,11 +271,11 @@
 
 
 # End of content from /Users/rodvar/Projects/bisq-mobile/shared/kscan/build/intermediates/consumer_proguard_dir/release/exportReleaseConsumerProguardFiles/lib0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/8930f29115b9d5ec285ef44cf6316591/transformed/camera-video-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/7bc54b2fc7a3207e4c6fe21377fcf469/transformed/camera-video-1.5.0/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/8930f29115b9d5ec285ef44cf6316591/transformed/camera-video-1.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/9761f8d849f4c9fd002d3ce201a7c919/transformed/camera-extensions-1.5.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/7bc54b2fc7a3207e4c6fe21377fcf469/transformed/camera-video-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/6165daae90c488b1764065f3d5b0e42a/transformed/camera-extensions-1.5.0/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -297,8 +297,8 @@
 -keep class androidx.camera.extensions.internal.sessionprocessor.StillCaptureProcessor** {*;}
 -keep class androidx.camera.extensions.internal.sessionprocessor.PreviewProcessor** {*;}
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/9761f8d849f4c9fd002d3ce201a7c919/transformed/camera-extensions-1.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/36c809efffae62fdf41ecaa59259869c/transformed/camera-camera2-1.5.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/6165daae90c488b1764065f3d5b0e42a/transformed/camera-extensions-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/b81be6c18b38b1ee5b39de79ab8e8906/transformed/camera-camera2-1.5.0/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -319,12 +319,12 @@
 -keepclassmembers class * extends android.hardware.camera2.CameraCaptureSession$CaptureCallback {
     public void onReadoutStarted(android.hardware.camera2.CameraCaptureSession,android.hardware.camera2.CaptureRequest,long,long);
 }
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/36c809efffae62fdf41ecaa59259869c/transformed/camera-camera2-1.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/ffb115d3eca91e88631f51103575d902/transformed/camera-lifecycle-1.5.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/b81be6c18b38b1ee5b39de79ab8e8906/transformed/camera-camera2-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/023537152ec464bd2ec275f702406aff/transformed/camera-lifecycle-1.5.0/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/ffb115d3eca91e88631f51103575d902/transformed/camera-lifecycle-1.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/82a93b47f3b0f0a11386ad0f87f82aa9/transformed/camera-core-1.5.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/023537152ec464bd2ec275f702406aff/transformed/camera-lifecycle-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/c7170a0cc7de8df86c2b16a15da217dd/transformed/camera-core-1.5.0/proguard.txt
 # Copyright (C) 2023 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -344,16 +344,16 @@
 # QuirkSettings.
 -keep,allowshrinking class ** extends androidx.camera.core.impl.Quirk
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/82a93b47f3b0f0a11386ad0f87f82aa9/transformed/camera-core-1.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/ec796895345df1b756aa20c0a8c5df25/transformed/camera-view-1.5.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/c7170a0cc7de8df86c2b16a15da217dd/transformed/camera-core-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/261084f59c4ac4b779a3914035e04970/transformed/camera-view-1.5.0/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/ec796895345df1b756aa20c0a8c5df25/transformed/camera-view-1.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/739a8d892216b73a89304df48c4bc237/transformed/coil-core-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/261084f59c4ac4b779a3914035e04970/transformed/camera-view-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/b4f289cd636074166a2fdc1202596c34/transformed/coil-core-release/proguard.txt
 -dontwarn coil3.PlatformContext
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/739a8d892216b73a89304df48c4bc237/transformed/coil-core-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/3bc2395565cbb0dfd73c75a9bfd35e82/transformed/barcode-scanning-17.3.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/b4f289cd636074166a2fdc1202596c34/transformed/coil-core-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/5e4c6aef8ca9468966303a8239319747/transformed/barcode-scanning-17.3.0/proguard.txt
 # We keep all fields for every generated proto file as the runtime uses
 # reflection over them that ProGuard cannot detect. Without this keep
 # rule, fields may be removed that would cause runtime failures.
@@ -367,8 +367,8 @@
     native <methods>;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/3bc2395565cbb0dfd73c75a9bfd35e82/transformed/barcode-scanning-17.3.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/0ca6a6efe34428ac902557c6412ce84c/transformed/common-18.11.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/5e4c6aef8ca9468966303a8239319747/transformed/barcode-scanning-17.3.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/ec2ed0e27ecae1f290ca33cb2494f6c0/transformed/common-18.11.0/proguard.txt
 # Annotations are implemented as attributes, so we have to explicitly keep them.
 # Catch all which encompasses attributes like RuntimeVisibleParameterAnnotations
 # and RuntimeVisibleTypeAnnotations
@@ -390,8 +390,8 @@
     @com.google.android.apps.common.proguard.UsedBy* *;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/0ca6a6efe34428ac902557c6412ce84c/transformed/common-18.11.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/76a5e4f2c0ca5d813da364ad28f3f272/transformed/appcompat-1.7.1/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/ec2ed0e27ecae1f290ca33cb2494f6c0/transformed/common-18.11.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/100ee9aabc0b047d905c4c1f104bba15/transformed/appcompat-1.7.1/proguard.txt
 # Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -411,8 +411,8 @@
   <methods>;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/76a5e4f2c0ca5d813da364ad28f3f272/transformed/appcompat-1.7.1/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/703e6dfed31893cc7412803562970bc3/transformed/play-services-base-18.5.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/100ee9aabc0b047d905c4c1f104bba15/transformed/appcompat-1.7.1/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1e85b56bdea8b8ab88cb30fd746822a3/transformed/play-services-base-18.5.0/proguard.txt
 # b/35135904 Ensure that proguard will not strip the mResultGuardian.
 -keepclassmembers class com.google.android.gms.common.api.internal.BasePendingResult {
   com.google.android.gms.common.api.internal.BasePendingResult$ReleasableResultGuardian mResultGuardian;
@@ -420,12 +420,12 @@
 
 
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/703e6dfed31893cc7412803562970bc3/transformed/play-services-base-18.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/5233573ba484c70294cf950cb92c3018/transformed/play-services-tasks-18.2.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1e85b56bdea8b8ab88cb30fd746822a3/transformed/play-services-base-18.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/b7f1dfce6ebd8ceaccee2f2b5034e363/transformed/play-services-tasks-18.2.0/proguard.txt
 
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/5233573ba484c70294cf950cb92c3018/transformed/play-services-tasks-18.2.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/71739808fad838156a0cbe11331e9361/transformed/play-services-basement-18.4.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/b7f1dfce6ebd8ceaccee2f2b5034e363/transformed/play-services-tasks-18.2.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/51f22fa25207fde2714b198d12e0a995/transformed/play-services-basement-18.4.0/proguard.txt
 # Needed when building against pre-Marshmallow SDK.
 -dontwarn android.security.NetworkSecurityPolicy
 
@@ -503,8 +503,8 @@
 
 
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/71739808fad838156a0cbe11331e9361/transformed/play-services-basement-18.4.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/895f544de764266e1573efc7b9b89eef/transformed/fragment-1.8.8/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/51f22fa25207fde2714b198d12e0a995/transformed/play-services-basement-18.4.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/042731f147217314b5ae20a2d4f8be45/transformed/fragment-1.8.8/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -535,12 +535,12 @@
     public <init>();
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/895f544de764266e1573efc7b9b89eef/transformed/fragment-1.8.8/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/f3c6fcd0eabdafd5fcb08e81a1903c71/transformed/navigation-runtime-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/042731f147217314b5ae20a2d4f8be45/transformed/fragment-1.8.8/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1fda06f53e84a784fc0323beba329b30/transformed/navigation-runtime-release/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/f3c6fcd0eabdafd5fcb08e81a1903c71/transformed/navigation-runtime-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/d1d4246aca1e9faaafc37449ca1475a4/transformed/navigation-common-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1fda06f53e84a784fc0323beba329b30/transformed/navigation-runtime-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/0f5a0493134007ec50445a27813ee38c/transformed/navigation-common-release/proguard.txt
 # Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -570,12 +570,12 @@
 -keepattributes RuntimeVisibleAnnotations
 -keep,allowobfuscation,allowshrinking class * extends androidx.navigation.Navigator
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/d1d4246aca1e9faaafc37449ca1475a4/transformed/navigation-common-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/a9545b8dd8dee2da19de98ffe631d741/transformed/navigation-compose-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/0f5a0493134007ec50445a27813ee38c/transformed/navigation-common-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/55aebf318f9626ffe30820ad9b5f6b6e/transformed/navigation-compose-release/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/a9545b8dd8dee2da19de98ffe631d741/transformed/navigation-compose-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/b4c701bbb283fc874ee2c0602f0ade33/transformed/animation-core-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/55aebf318f9626ffe30820ad9b5f6b6e/transformed/navigation-compose-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/3ae8fafd43145b4a497f53450b7bdd6a/transformed/animation-core-release/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -601,16 +601,16 @@
     static java.lang.Void throw*ExceptionForNullCheck(...);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/b4c701bbb283fc874ee2c0602f0ade33/transformed/animation-core-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/436af40a58b33939eacd332d220cdf20/transformed/material-ripple-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/3ae8fafd43145b4a497f53450b7bdd6a/transformed/animation-core-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/3a561355853a045a0dcaad31b0bdbdc2/transformed/material-ripple-release/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/436af40a58b33939eacd332d220cdf20/transformed/material-ripple-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1612673c60a351f141fbbb1b0390788c/transformed/animation-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/3a561355853a045a0dcaad31b0bdbdc2/transformed/material-ripple-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/5ac202bea9af1afaec38d6141ded9030/transformed/animation-release/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1612673c60a351f141fbbb1b0390788c/transformed/animation-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/82e522d13dffb4f7aa079a951d993482/transformed/foundation-layout-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/5ac202bea9af1afaec38d6141ded9030/transformed/animation-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/31ccd5c5fbdb0d057978db26add9980d/transformed/foundation-layout-release/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -636,8 +636,8 @@
     static java.lang.Void throw*ExceptionForNullCheck(...);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/82e522d13dffb4f7aa079a951d993482/transformed/foundation-layout-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/745fc22d562910cca6fe66af811fe666/transformed/foundation-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/31ccd5c5fbdb0d057978db26add9980d/transformed/foundation-layout-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/6340486eb85d9d0c2914c278fdcc76b0/transformed/foundation-release/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -662,8 +662,8 @@
 }
 
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/745fc22d562910cca6fe66af811fe666/transformed/foundation-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/d7eb17e8996111367ebb99a75faa0ac8/transformed/ui-unit/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/6340486eb85d9d0c2914c278fdcc76b0/transformed/foundation-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/efe8c9e0a6ea587afafd0fb191517004/transformed/ui-unit/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -689,12 +689,12 @@
     static java.lang.Void throw*ExceptionForNullCheck(...);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/d7eb17e8996111367ebb99a75faa0ac8/transformed/ui-unit/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/07124b02d11f16a958e65af7e5dc3f14/transformed/ui-geometry/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/efe8c9e0a6ea587afafd0fb191517004/transformed/ui-unit/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/3cbb9ffcd5fd9a41db7261c549af9fe0/transformed/ui-geometry/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/07124b02d11f16a958e65af7e5dc3f14/transformed/ui-geometry/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/029ec8badd80740046f49452706b42c0/transformed/ui-graphics-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/3cbb9ffcd5fd9a41db7261c549af9fe0/transformed/ui-geometry/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/c7558ce9fda8c5ff03f81c82c81ddc10/transformed/ui-graphics-release/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -727,8 +727,8 @@
     public boolean isHardwareAccelerated();
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/029ec8badd80740046f49452706b42c0/transformed/ui-graphics-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/8245a65c8fbba7477dc2aa0f3718f9ba/transformed/ui-util/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/c7558ce9fda8c5ff03f81c82c81ddc10/transformed/ui-graphics-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1e1a4f3728ea330f8c106a8433ff3b49/transformed/ui-util/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -754,8 +754,8 @@
     static java.lang.Void throw*ExceptionForNullCheck(...);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/8245a65c8fbba7477dc2aa0f3718f9ba/transformed/ui-util/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/42b8addb67ba89b9fe946509a8c104cb/transformed/ui-text/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1e1a4f3728ea330f8c106a8433ff3b49/transformed/ui-util/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1db0d7237561c10a7fc04a883b2b6a71/transformed/ui-text/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -781,20 +781,20 @@
     static java.lang.Void throw*ExceptionForNullCheck(...);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/42b8addb67ba89b9fe946509a8c104cb/transformed/ui-text/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/af9e9846de97dfc42a3a4127af5b4bce/transformed/ui-tooling-preview/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1db0d7237561c10a7fc04a883b2b6a71/transformed/ui-text/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/a8de8935704b3fce32403e7d953dea76/transformed/ui-tooling-preview/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/af9e9846de97dfc42a3a4127af5b4bce/transformed/ui-tooling-preview/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/5fe57c8d4c9dd30173c2061317dd8f15/transformed/ui-test-manifest-1.9.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/a8de8935704b3fce32403e7d953dea76/transformed/ui-tooling-preview/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/e0157f197aaf7b1889cf57ef04aab830/transformed/ui-test-manifest-1.9.0/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/5fe57c8d4c9dd30173c2061317dd8f15/transformed/ui-test-manifest-1.9.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1e5a3e1364ee54a802920a1afa3a90f3/transformed/runtime-annotation/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/e0157f197aaf7b1889cf57ef04aab830/transformed/ui-test-manifest-1.9.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/2b0169a795f212f90d07945a55ec994c/transformed/runtime-annotation/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1e5a3e1364ee54a802920a1afa3a90f3/transformed/runtime-annotation/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/8d7092755d74bf8bf881f21164e30c9f/transformed/runtime/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/2b0169a795f212f90d07945a55ec994c/transformed/runtime-annotation/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/eca2ac378128844015fa20a6fb193f2a/transformed/runtime/proguard.txt
 -assumenosideeffects public class androidx.compose.runtime.ComposerKt {
     void sourceInformation(androidx.compose.runtime.Composer,java.lang.String);
     void sourceInformationMarkerStart(androidx.compose.runtime.Composer,int,java.lang.String);
@@ -830,16 +830,16 @@
 }
 
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/8d7092755d74bf8bf881f21164e30c9f/transformed/runtime/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/b14d951933b724667d1e82b57de5a708/transformed/runtime-saveable/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/eca2ac378128844015fa20a6fb193f2a/transformed/runtime/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/5fd4d17e492658e5c39fcd013c5edd06/transformed/runtime-saveable/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/b14d951933b724667d1e82b57de5a708/transformed/runtime-saveable/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/d6589470a1e58dfbb5c6301280c9d55e/transformed/savedstate-ktx-1.3.3/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/5fd4d17e492658e5c39fcd013c5edd06/transformed/runtime-saveable/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/81e1e7cd181be04216cf4f66c5f61091/transformed/savedstate-ktx-1.3.3/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/d6589470a1e58dfbb5c6301280c9d55e/transformed/savedstate-ktx-1.3.3/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/97a60f5dbe9220f4bbbbe1d2d1001d94/transformed/savedstate-compose/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/81e1e7cd181be04216cf4f66c5f61091/transformed/savedstate-ktx-1.3.3/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/bc5ce9b6ecb07c5cbad0f5d1faa79959/transformed/savedstate-compose/proguard.txt
 # Workaround for https://issuetracker.google.com/issues/346808608
 #
 # `androidx.savedstate.compose.LocalSavedStateRegistryOwner` will reflectively lookup for
@@ -859,8 +859,8 @@
     public static *** getLocalSavedStateRegistryOwner();
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/97a60f5dbe9220f4bbbbe1d2d1001d94/transformed/savedstate-compose/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/4a572af1690acd90618cce841579b42e/transformed/savedstate-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/bc5ce9b6ecb07c5cbad0f5d1faa79959/transformed/savedstate-compose/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/e2d72317aca62e09de02c4c225797557/transformed/savedstate-release/proguard.txt
 # Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -879,12 +879,12 @@
     <init>();
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/4a572af1690acd90618cce841579b42e/transformed/savedstate-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/4dd5f2fc3fcebbe18c36c9db1e50ea7f/transformed/core-ktx-1.16.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/e2d72317aca62e09de02c4c225797557/transformed/savedstate-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/c40ee63447b06421e0913e55baa4f4a9/transformed/core-ktx-1.16.0/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/4dd5f2fc3fcebbe18c36c9db1e50ea7f/transformed/core-ktx-1.16.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/6a44434d16cd7dd6c5335d2294c42c98/transformed/vectordrawable-animated-1.1.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/c40ee63447b06421e0913e55baa4f4a9/transformed/core-ktx-1.16.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/0cc93de9d4c4ab937cbfdcd038ea31e1/transformed/vectordrawable-animated-1.1.0/proguard.txt
 # Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -905,14 +905,14 @@
    *** get*();
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/6a44434d16cd7dd6c5335d2294c42c98/transformed/vectordrawable-animated-1.1.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/6a20125c95d5c16a9eb49baf5a8f99d0/transformed/graphics-path-1.0.1/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/0cc93de9d4c4ab937cbfdcd038ea31e1/transformed/vectordrawable-animated-1.1.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/e0c4eee5758e0dcbcf82d2ee85313c4f/transformed/graphics-path-1.0.1/proguard.txt
 -keepclasseswithmembers class androidx.graphics.path.** {
     native <methods>;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/6a20125c95d5c16a9eb49baf5a8f99d0/transformed/graphics-path-1.0.1/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/17ff847878bfff52a5670ec74f8d1c02/transformed/core-1.16.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/e0c4eee5758e0dcbcf82d2ee85313c4f/transformed/graphics-path-1.0.1/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/9d814530868a646dc5206ac5cfe0e077/transformed/core-1.16.0/proguard.txt
 # Never inline methods, but allow shrinking and obfuscation.
 -keepclassmembernames,allowobfuscation,allowshrinking class androidx.core.view.ViewCompat$Api* {
   <methods>;
@@ -930,12 +930,12 @@
   <methods>;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/17ff847878bfff52a5670ec74f8d1c02/transformed/core-1.16.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/410624efe1ca8bdd5b11ddd7fe168953/transformed/lifecycle-process-2.9.4/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/9d814530868a646dc5206ac5cfe0e077/transformed/core-1.16.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/c3f11b1729a1695190efb12273ace910/transformed/lifecycle-process-2.9.4/proguard.txt
 # this rule is need to work properly when app is compiled with api 28, see b/142778206
 -keepclassmembers class * extends androidx.lifecycle.EmptyActivityLifecycleCallbacks { *; }
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/410624efe1ca8bdd5b11ddd7fe168953/transformed/lifecycle-process-2.9.4/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/0249d71ec55a60325f2b7fb775e96027/transformed/lifecycle-runtime-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/c3f11b1729a1695190efb12273ace910/transformed/lifecycle-process-2.9.4/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/e7caa927f68a4a1a309e5b27a687ae14/transformed/lifecycle-runtime-release/proguard.txt
 -keepattributes AnnotationDefault,
                 RuntimeVisibleAnnotations,
                 RuntimeVisibleParameterAnnotations,
@@ -963,28 +963,28 @@
 # Also this rule prevents registerIn from being inlined.
 -keepclassmembers class androidx.lifecycle.ReportFragment$LifecycleCallbacks { *; }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/0249d71ec55a60325f2b7fb775e96027/transformed/lifecycle-runtime-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/8c336e7163cbd0a85a87217e3e16ea79/transformed/lifecycle-viewmodel-ktx-2.9.4/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/e7caa927f68a4a1a309e5b27a687ae14/transformed/lifecycle-runtime-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/dfc74ea9b466d20334df12d6e91ff542/transformed/lifecycle-viewmodel-ktx-2.9.4/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/8c336e7163cbd0a85a87217e3e16ea79/transformed/lifecycle-viewmodel-ktx-2.9.4/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/0763f114969f7c20fdcbc7e7b653dbdd/transformed/lifecycle-livedata-core-ktx-2.9.4/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/dfc74ea9b466d20334df12d6e91ff542/transformed/lifecycle-viewmodel-ktx-2.9.4/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/2b55e054cc9f111f6f875c33cbc4ad0e/transformed/lifecycle-livedata-core-ktx-2.9.4/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/0763f114969f7c20fdcbc7e7b653dbdd/transformed/lifecycle-livedata-core-ktx-2.9.4/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/b3e28c2fd92b45c29a3894edcccdd227/transformed/lifecycle-livedata-core-2.9.4/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/2b55e054cc9f111f6f875c33cbc4ad0e/transformed/lifecycle-livedata-core-ktx-2.9.4/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/215e695698afa9f9d98a41a996d5ff49/transformed/lifecycle-livedata-core-2.9.4/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/b3e28c2fd92b45c29a3894edcccdd227/transformed/lifecycle-livedata-core-2.9.4/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/146233013fff7e64cb22fe6a0916044a/transformed/lifecycle-livedata-2.9.4/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/215e695698afa9f9d98a41a996d5ff49/transformed/lifecycle-livedata-core-2.9.4/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/d977ff0c522556508c21220010ec1efa/transformed/lifecycle-livedata-2.9.4/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/146233013fff7e64cb22fe6a0916044a/transformed/lifecycle-livedata-2.9.4/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/a45b35589fada8cb05efe84f377a6f41/transformed/rules/lib/META-INF/proguard/androidx-lifecycle-lifecycle-common-java8.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/d977ff0c522556508c21220010ec1efa/transformed/lifecycle-livedata-2.9.4/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/90a28d142f90766a3f1d1fc6bdacfeae/transformed/rules/lib/META-INF/proguard/androidx-lifecycle-lifecycle-common-java8.pro
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/a45b35589fada8cb05efe84f377a6f41/transformed/rules/lib/META-INF/proguard/androidx-lifecycle-lifecycle-common-java8.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/7f276d1757fac55a667856ca70dd1c4b/transformed/lifecycle-viewmodel-savedstate-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/90a28d142f90766a3f1d1fc6bdacfeae/transformed/rules/lib/META-INF/proguard/androidx-lifecycle-lifecycle-common-java8.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/d8a22f3caa2a933713b9df30e1af201c/transformed/lifecycle-viewmodel-savedstate-release/proguard.txt
 -keepclassmembers,allowobfuscation class * extends androidx.lifecycle.ViewModel {
     <init>(androidx.lifecycle.SavedStateHandle);
 }
@@ -993,8 +993,8 @@
     <init>(android.app.Application,androidx.lifecycle.SavedStateHandle);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/7f276d1757fac55a667856ca70dd1c4b/transformed/lifecycle-viewmodel-savedstate-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/4476b4b193e903804b2fe44477edca76/transformed/lifecycle-viewmodel-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/d8a22f3caa2a933713b9df30e1af201c/transformed/lifecycle-viewmodel-savedstate-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/bf3ffe28a0926d90911760b490092584/transformed/lifecycle-viewmodel-release/proguard.txt
 -keepclassmembers,allowobfuscation class * extends androidx.lifecycle.ViewModel {
     <init>();
 }
@@ -1003,8 +1003,8 @@
     <init>(android.app.Application);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/4476b4b193e903804b2fe44477edca76/transformed/lifecycle-viewmodel-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/eb9486407763636249c43e79bfee0d71/transformed/lifecycle-runtime-compose-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/bf3ffe28a0926d90911760b490092584/transformed/lifecycle-viewmodel-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/904137917582a6c62a09033b6e442fed/transformed/lifecycle-runtime-compose-release/proguard.txt
 # Workaround for https://issuetracker.google.com/issues/346808608
 #
 # `androidx.lifecycle.compose.LocalLifecycleOwner` will reflectively lookup for
@@ -1024,12 +1024,12 @@
     public static *** getLocalLifecycleOwner();
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/eb9486407763636249c43e79bfee0d71/transformed/lifecycle-runtime-compose-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/79cb1ccb4e0e8a9135f4987c877f5f76/transformed/lifecycle-viewmodel-compose-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/904137917582a6c62a09033b6e442fed/transformed/lifecycle-runtime-compose-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/93520fca586d3ca11fc9b0d80347acc3/transformed/lifecycle-viewmodel-compose-release/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/79cb1ccb4e0e8a9135f4987c877f5f76/transformed/lifecycle-viewmodel-compose-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/f5c333a8053ef136427b4df36ac81bb8/transformed/ui-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/93520fca586d3ca11fc9b0d80347acc3/transformed/lifecycle-viewmodel-compose-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/4fdcb645d7066f5bdbf44d1de22d03b4/transformed/ui-release/proguard.txt
 # Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -1086,8 +1086,8 @@
 }
 
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/f5c333a8053ef136427b4df36ac81bb8/transformed/ui-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/be0b4b99263ecc63e23067dd0271a65a/transformed/rules/lib/META-INF/proguard/ktor.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/4fdcb645d7066f5bdbf44d1de22d03b4/transformed/ui-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/416456c354d9d4edcdf3f6696ee4f535/transformed/rules/lib/META-INF/proguard/ktor.pro
 # Most of volatile fields are updated with AtomicFU and should not be mangled/removed
 -keepclassmembers class io.ktor.** {
     volatile <fields>;
@@ -1101,8 +1101,8 @@
 -keep class io.ktor.client.engine.** implements io.ktor.client.HttpClientEngineContainer
 
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/be0b4b99263ecc63e23067dd0271a65a/transformed/rules/lib/META-INF/proguard/ktor.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/82ad9cc0f0f60ae5f30d302c96641f17/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-common.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/416456c354d9d4edcdf3f6696ee4f535/transformed/rules/lib/META-INF/proguard/ktor.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/a59e45fd5f20aef19638da318b3a2cc7/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-common.pro
 # Keep `Companion` object fields of serializable classes.
 # This avoids serializer lookup through `getDeclaredClasses` as done for named companion objects.
 -if @kotlinx.serialization.Serializable class **
@@ -1153,8 +1153,8 @@
     private ** descriptor;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/82ad9cc0f0f60ae5f30d302c96641f17/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-common.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/82ad9cc0f0f60ae5f30d302c96641f17/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-r8.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/a59e45fd5f20aef19638da318b3a2cc7/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-common.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/a59e45fd5f20aef19638da318b3a2cc7/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-r8.pro
 # Rule to save runtime annotations on serializable class.
 # If the R8 full mode is used, annotations are removed from classes-files.
 #
@@ -1181,8 +1181,8 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/82ad9cc0f0f60ae5f30d302c96641f17/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-r8.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/0b2c03718e62bd3ea6024afed7089c98/transformed/rules/lib/META-INF/com.android.tools/r8-from-1.6.0/coroutines.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/a59e45fd5f20aef19638da318b3a2cc7/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-r8.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/8d34f5d04a88618bd3498ec38cf5366f/transformed/rules/lib/META-INF/com.android.tools/r8-from-1.6.0/coroutines.pro
 # Allow R8 to optimize away the FastServiceLoader.
 # Together with ServiceLoader optimization in R8
 # this results in direct instantiation when loading Dispatchers.Main
@@ -1206,8 +1206,8 @@
     boolean getRECOVER_STACK_TRACES() return false;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/0b2c03718e62bd3ea6024afed7089c98/transformed/rules/lib/META-INF/com.android.tools/r8-from-1.6.0/coroutines.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/3503b1747a0ba79037567af4fefac649/transformed/rules/lib/META-INF/com.android.tools/r8/coroutines.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/8d34f5d04a88618bd3498ec38cf5366f/transformed/rules/lib/META-INF/com.android.tools/r8-from-1.6.0/coroutines.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/ca846c7a9d67b44849d86822cedf18d1/transformed/rules/lib/META-INF/com.android.tools/r8/coroutines.pro
 # When editing this file, update the following files as well:
 # - META-INF/proguard/coroutines.pro
 # - META-INF/com.android.tools/proguard/coroutines.pro
@@ -1235,8 +1235,8 @@
 
 # An annotation used for build tooling, won't be directly accessed.
 -dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/3503b1747a0ba79037567af4fefac649/transformed/rules/lib/META-INF/com.android.tools/r8/coroutines.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1988f798f83c7ead12d6edc3ef619e06/transformed/okhttp-release/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/ca846c7a9d67b44849d86822cedf18d1/transformed/rules/lib/META-INF/com.android.tools/r8/coroutines.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/567d1a38bf1cd9903ee527590fd98cdb/transformed/okhttp-release/proguard.txt
 # JSR 305 annotations are for embedding nullability information.
 -dontwarn javax.annotation.**
 
@@ -1249,8 +1249,8 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1988f798f83c7ead12d6edc3ef619e06/transformed/okhttp-release/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/40f6deed1047d49530d3848209943371/transformed/startup-runtime-1.2.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/567d1a38bf1cd9903ee527590fd98cdb/transformed/okhttp-release/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/f85ca3ea23bbdb7640deef94ba01e6cd/transformed/startup-runtime-1.2.0/proguard.txt
 # It's important that we preserve initializer names, given they are used in the AndroidManifest.xml.
 -keepnames class * extends androidx.startup.Initializer
 
@@ -1264,52 +1264,52 @@
 
 -assumenosideeffects class androidx.startup.StartupLogger { public static <methods>; }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/40f6deed1047d49530d3848209943371/transformed/startup-runtime-1.2.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/648ea94a399326bcdbb75a7a133148f6/transformed/featurecombinationquery-1.5.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/f85ca3ea23bbdb7640deef94ba01e6cd/transformed/startup-runtime-1.2.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/ce7dfa5a6238bafe06723befbfa962c0/transformed/featurecombinationquery-1.5.0/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/648ea94a399326bcdbb75a7a133148f6/transformed/featurecombinationquery-1.5.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/c2bc72f92320a53056eea7306cf751cb/transformed/versionedparcelable-1.1.1/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/ce7dfa5a6238bafe06723befbfa962c0/transformed/featurecombinationquery-1.5.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/0d8d66b958d35693ac37ec1ea32fc389/transformed/versionedparcelable-1.1.1/proguard.txt
 -keep class * implements androidx.versionedparcelable.VersionedParcelable
 -keep public class android.support.**Parcelizer { *; }
 -keep public class androidx.**Parcelizer { *; }
 -keep public class androidx.versionedparcelable.ParcelImpl
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/c2bc72f92320a53056eea7306cf751cb/transformed/versionedparcelable-1.1.1/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/40ce9f1e6c78fbe6643b43f2be43341e/transformed/rules/lib/META-INF/proguard/androidx-collection-collection-ktx.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/0d8d66b958d35693ac37ec1ea32fc389/transformed/versionedparcelable-1.1.1/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/704d9e9c14e8b40336bffcb7890f5c46/transformed/rules/lib/META-INF/proguard/androidx-collection-collection-ktx.pro
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/40ce9f1e6c78fbe6643b43f2be43341e/transformed/rules/lib/META-INF/proguard/androidx-collection-collection-ktx.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/72511ee08a87aa0231d7bd3b32e72c14/transformed/transport-backend-cct-2.3.3/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/704d9e9c14e8b40336bffcb7890f5c46/transformed/rules/lib/META-INF/proguard/androidx-collection-collection-ktx.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/65dc636aba963dd57fbc48d6c80eed45/transformed/transport-backend-cct-2.3.3/proguard.txt
 -dontwarn com.google.auto.value.AutoValue
 -dontwarn com.google.auto.value.AutoValue$Builder
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/72511ee08a87aa0231d7bd3b32e72c14/transformed/transport-backend-cct-2.3.3/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/918ed3ed749d93cf0a494ca1f1a030ff/transformed/transport-runtime-2.2.6/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/65dc636aba963dd57fbc48d6c80eed45/transformed/transport-backend-cct-2.3.3/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/93e5649563e22847194f50b6d7302af8/transformed/transport-runtime-2.2.6/proguard.txt
 -dontwarn com.google.auto.value.AutoValue
 -dontwarn com.google.auto.value.AutoValue$Builder
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/918ed3ed749d93cf0a494ca1f1a030ff/transformed/transport-runtime-2.2.6/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/ae53b6937f9078e6bc1b5c96f45f0f61/transformed/transport-api-2.2.1/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/93e5649563e22847194f50b6d7302af8/transformed/transport-runtime-2.2.6/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/b614664a5542988f75ec3b93e6be1262/transformed/transport-api-2.2.1/proguard.txt
 -dontwarn com.google.auto.value.AutoValue
 -dontwarn com.google.auto.value.AutoValue$Builder
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/ae53b6937f9078e6bc1b5c96f45f0f61/transformed/transport-api-2.2.1/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/defa0f210c0bad5fbaa95c18eb427719/transformed/firebase-components-16.1.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/b614664a5542988f75ec3b93e6be1262/transformed/transport-api-2.2.1/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/86a68885ec572ae1a48e977be9a11ecf/transformed/firebase-components-16.1.0/proguard.txt
 -dontwarn com.google.firebase.components.Component$Instantiation
 -dontwarn com.google.firebase.components.Component$ComponentType
 
 -keep class * implements com.google.firebase.components.ComponentRegistrar
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/defa0f210c0bad5fbaa95c18eb427719/transformed/firebase-components-16.1.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/a2302665226f6d6106f2bb991dbd2573/transformed/firebase-encoders-json-17.1.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/86a68885ec572ae1a48e977be9a11ecf/transformed/firebase-components-16.1.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/24294fd170cbb53c18c5481c9eec6ec3/transformed/firebase-encoders-json-17.1.0/proguard.txt
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/a2302665226f6d6106f2bb991dbd2573/transformed/firebase-encoders-json-17.1.0/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/bead9ec2a5c991221234e86975bb6c7a/transformed/exifinterface-1.4.1/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/24294fd170cbb53c18c5481c9eec6ec3/transformed/firebase-encoders-json-17.1.0/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/e38dfb3a3b91795e3e643b0504143cb4/transformed/exifinterface-1.4.1/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/bead9ec2a5c991221234e86975bb6c7a/transformed/exifinterface-1.4.1/proguard.txt
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/1844e8fb101e9d58fe8b17da2b922aec/transformed/rules/lib/META-INF/proguard/androidx-annotations.pro
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/e38dfb3a3b91795e3e643b0504143cb4/transformed/exifinterface-1.4.1/proguard.txt
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/31506ca23ec087281212c32f8b36d7a2/transformed/rules/lib/META-INF/proguard/androidx-annotations.pro
 -keep,allowobfuscation @interface androidx.annotation.Keep
 -keep @androidx.annotation.Keep class * {*;}
 
@@ -1329,11 +1329,11 @@
   @androidx.annotation.DoNotInline <methods>;
 }
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/1844e8fb101e9d58fe8b17da2b922aec/transformed/rules/lib/META-INF/proguard/androidx-annotations.pro
-# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/f224d0a17ec2199b97122b84e2f17138/transformed/core-viewtree-1.0.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/31506ca23ec087281212c32f8b36d7a2/transformed/rules/lib/META-INF/proguard/androidx-annotations.pro
+# The proguard configuration file for the following section is /Users/rodvar/.gradle/caches/8.14.3/transforms/fdec5d4f6490bf156fe92c5b440b50a7/transformed/core-viewtree-1.0.0/proguard.txt
 # Intentionally empty proguard rules to indicate this library is safe to shrink
 
-# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/f224d0a17ec2199b97122b84e2f17138/transformed/core-viewtree-1.0.0/proguard.txt
+# End of content from /Users/rodvar/.gradle/caches/8.14.3/transforms/fdec5d4f6490bf156fe92c5b440b50a7/transformed/core-viewtree-1.0.0/proguard.txt
 # The proguard configuration file for the following section is <unknown>
 
 # End of content from <unknown>
