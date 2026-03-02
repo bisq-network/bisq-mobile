@@ -271,11 +271,19 @@ class TradeDetailsHeaderPresenter(
             showLoading()
             when (tradeCloseType.value) {
                 TradeCloseType.REJECT -> {
-                    tradesServiceFacade.rejectTrade()
+                    tradesServiceFacade
+                        .rejectTrade()
+                        .onFailure { exception ->
+                            handleError(exception)
+                        }
                 }
 
                 TradeCloseType.CANCEL -> {
-                    tradesServiceFacade.cancelTrade()
+                    tradesServiceFacade
+                        .cancelTrade()
+                        .onFailure { exception ->
+                            handleError(exception)
+                        }
                 }
 
                 else -> Unit

@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.offer.create_offer.review
 
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
@@ -255,22 +254,14 @@ class CreateOfferReviewPresenter(
                     .onSuccess {
                         navigateToOfferbookTab()
                     }.onFailure { exception ->
-                        if (exception is TimeoutCancellationException) {
-                            log.e(exception) { "Create offer timed out: ${exception.message}" }
-                            showSnackbar("mobile.bisqEasy.createOffer.timedOut".i18n(), type = SnackbarType.ERROR)
-                        } else {
-                            log.e(exception) { "Failed to create offer: ${exception.message}" }
-                            // Show the actual error message to help users understand what went wrong
-                            val errorMessage =
-                                when {
-                                    exception.message?.contains("banned", ignoreCase = true) == true ->
-                                        "mobile.bisqEasy.createOffer.userBanned".i18n()
-                                    exception.message != null ->
-                                        "mobile.bisqEasy.createOffer.failedWithReason".i18n(exception.message!!)
-                                    else ->
-                                        "mobile.bisqEasy.createOffer.failed".i18n()
-                                }
-                            showSnackbar(errorMessage, type = SnackbarType.ERROR)
+                        handleError(exception, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n()) { exception ->
+                            val bannedError = exception.message?.contains("banned", ignoreCase = true) == true
+                            if (bannedError) {
+                                showSnackbar("mobile.bisqEasy.createOffer.userBanned".i18n(), type = SnackbarType.ERROR)
+                                return@handleError true
+                            } else {
+                                return@handleError false
+                            }
                         }
                     }
             } finally {

@@ -8,7 +8,6 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BitcoinLightningNormalization
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -113,13 +112,12 @@ class BuyerState1aPresenter(
         setShowInvalidAddressDialog(false)
         presenterScope.launch {
             showLoading()
-            val result = tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData)
+            tradesServiceFacade
+                .buyerSendBitcoinPaymentData(bitcoinPaymentData)
+                .onFailure { exception ->
+                    handleError(exception)
+                }
             hideLoading()
-
-            if (result.isFailure) {
-                log.e(result.exceptionOrNull()) { "Failed to send bitcoin payment data" }
-                showSnackbar("mobile.bisqEasy.tradeState.error.sendPaymentData".i18n(), type = SnackbarType.ERROR)
-            }
         }
     }
 

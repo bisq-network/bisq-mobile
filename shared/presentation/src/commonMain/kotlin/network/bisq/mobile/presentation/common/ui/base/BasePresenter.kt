@@ -5,6 +5,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -482,5 +483,26 @@ abstract class BasePresenter(
     private fun blockInteractivityForBriefMoment() {
         disableInteractive()
         enableInteractive()
+    }
+
+    /**
+     * Handles common errors by showing timeout or generic snackbars.
+     */
+    protected fun handleError(
+        exception: Throwable,
+        defaultMessage: String = "mobile.error.generic".i18n(),
+        customHandler: ((Throwable) -> Boolean)? = null,
+    ) {
+        log.e(exception) { "Network error: ${exception.message}" }
+        val handled = customHandler?.invoke(exception) == true
+        if (handled) return
+
+        val errorMessage =
+            if (exception is TimeoutCancellationException) {
+                "mobile.error.requestTimedOut".i18n()
+            } else {
+                defaultMessage
+            }
+        showSnackbar(errorMessage, SnackbarType.ERROR)
     }
 }

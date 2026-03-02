@@ -193,8 +193,8 @@ open class PaymentAccountsPresenter(
                         type = SnackbarType.SUCCESS,
                     )
                     _uiState.update { it.copy(showAddAccountState = false) }
-                }.onFailure {
-                    showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+                }.onFailure { exception ->
+                    handleError(exception)
                 }
             hideLoading()
         }
@@ -220,8 +220,8 @@ open class PaymentAccountsPresenter(
                     showSnackbar(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(),
                     )
-                }.onFailure {
-                    showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+                }.onFailure { exception ->
+                    handleError(exception)
                 }
             hideLoading()
         }
@@ -239,14 +239,12 @@ open class PaymentAccountsPresenter(
                     showSnackbar(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),
                     )
-                }.onFailure {
-                    log.e { "Couldn't remove account ${selectedAccount.accountName}" }
-                    showSnackbar(
+                }.onFailure { exception ->
+                    val defaultMessage =
                         "mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(
                             selectedAccount.accountName,
-                        ),
-                        type = SnackbarType.ERROR,
-                    )
+                        )
+                    handleError(exception, defaultMessage)
                 }
             hideLoading()
         }
