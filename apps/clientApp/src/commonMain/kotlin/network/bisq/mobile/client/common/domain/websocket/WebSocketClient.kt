@@ -13,7 +13,7 @@ interface WebSocketClient {
         const val TOR_CONNECT_TIMEOUT = 60_000L
 
         fun determineTimeout(host: String): Long =
-            if (host.endsWith(".onion")) {
+            if (host.contains(".onion")) {
                 TOR_CONNECT_TIMEOUT
             } else {
                 CLEARNET_CONNECT_TIMEOUT
