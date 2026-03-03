@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.tabs.offers
 
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.CoroutineScope
@@ -9,7 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -17,21 +15,13 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketSortBy
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
-import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.OfferbookMarketPresenterTestFactory
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -97,46 +87,11 @@ class OfferbookMarketPresenterLifecycleTest {
         }
     }
 
-    private fun createPresenter(
-        settingsRepository: SettingsRepository,
-        offersServiceFacade: OffersServiceFacade =
-            mockk<OffersServiceFacade>(relaxed = true).also {
-                every { it.offerbookMarketItems } returns MutableStateFlow(emptyList())
-            },
-    ): OfferbookMarketPresenter {
-        val mainPresenter =
-            MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
-
-        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
-        every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
-
-        val marketPriceServiceFacade =
-            object : MarketPriceServiceFacade(settingsRepository) {
-                override fun findMarketPriceItem(marketVO: MarketVO) = null
-
-                override fun findUSDMarketPriceItem() = null
-
-                override fun refreshSelectedFormattedMarketPrice() {
-                }
-
-                override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
-            }
-
-        return OfferbookMarketPresenter(
-            mainPresenter = mainPresenter,
-            offersServiceFacade = offersServiceFacade,
-            marketPriceServiceFacade = marketPriceServiceFacade,
-            userProfileServiceFacade = userProfileServiceFacade,
-            settingsRepository = settingsRepository,
-            computeOfferbookMarketListUseCase = ComputeOfferbookMarketListUseCase(marketPriceServiceFacade),
-        )
-    }
-
     @Test
     fun `filter survives tab switch lifecycle`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = createPresenter(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
 
             // Simulate first tab enter
             presenter.onViewAttached()
@@ -173,7 +128,7 @@ class OfferbookMarketPresenterLifecycleTest {
     fun `sortBy survives tab switch lifecycle`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = createPresenter(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
 
             // Simulate first tab enter
             presenter.onViewAttached()
@@ -206,13 +161,13 @@ class OfferbookMarketPresenterLifecycleTest {
         }
 
     @Test
-    fun `filter reflects DataStore value on reattach`() =
+    fun `filter reflects DataStore value on attach`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
             // Pre-set a non-default filter in DataStore
             settingsRepository.setMarketFilter(MarketFilter.WithOffers)
 
-            val presenter = createPresenter(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
 
             // Simulate tab enter — should sync from DataStore
             presenter.onViewAttached()
@@ -225,7 +180,7 @@ class OfferbookMarketPresenterLifecycleTest {
     fun `filter and sortBy work through multiple tab switches`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = createPresenter(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
 
             // First cycle
             presenter.onViewAttached()
