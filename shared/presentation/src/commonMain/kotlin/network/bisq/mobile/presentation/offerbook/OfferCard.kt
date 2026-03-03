@@ -19,13 +19,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.createEmptyImage
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
+import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.displayString
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
+import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
@@ -41,6 +58,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @ExcludeFromCoverage
 @Composable
@@ -83,7 +101,6 @@ fun OfferCard(
         }
 
     val height = 150.dp
-    val maxUsernameChars = 24
 
     Row(
         modifier =
@@ -118,7 +135,7 @@ fun OfferCard(
             modifier = Modifier.weight(3.0F).fillMaxHeight(),
         ) {
             Row(
-                modifier = Modifier.height(32.dp), // Fixed height to prevent pushing content down
+                modifier = Modifier.height(40.dp), // Fixed height to prevent pushing content down
             ) {
                 if (isMyOffer) {
                     BisqText.BaseRegular(
@@ -136,13 +153,10 @@ fun OfferCard(
 
                     BisqGap.HHalf()
 
-//                    BisqText.baseRegularHighlight(
-//                        text = userName.truncate(11),
-//                        color = directionalLabelColor,
-//                    )
                     AutoResizeText(
-                        userName.truncate(maxUsernameChars),
+                        text = userName,
                         color = directionalLabelColor,
+                        overflow = TextOverflow.Ellipsis,
                         textStyle = BisqTheme.typography.smallRegular,
                         maxLines = 2,
                         modifier =
@@ -153,6 +167,7 @@ fun OfferCard(
                                     BisqTheme.colors.mid_grey10,
                                 ).padding(top = 4.dp, bottom = 2.dp)
                                 .align(Alignment.CenterVertically),
+                        minimumFontSize = 10.sp,
                     )
                 }
             }
@@ -190,5 +205,185 @@ fun OfferCard(
 
             BisqGap.VHalf()
         }
+    }
+}
+
+// Helper function to create a mock user profile icon provider for previews
+private val previewUserProfileIconProvider: suspend (UserProfileVO) -> PlatformImage = { _ ->
+    createEmptyImage()
+}
+
+// Helper function to create a mock offer item for previews
+private fun createMockOfferItem(
+    direction: DirectionEnum,
+    isMyOffer: Boolean = false,
+    isInvalidDueToReputation: Boolean = false,
+    userName: String = "Satoshi",
+    formattedQuoteAmount: String = "500 EUR",
+    formattedPrice: String = "50,000",
+): OfferItemPresentationModel {
+    val userProfile = createMockUserProfile(userName)
+    val market = MarketVO("BTC", "EUR", "Bitcoin", "Euro")
+    val amountSpec = QuoteSideFixedAmountSpecVO(500_00)
+    val priceSpec = FixPriceSpecVO(PriceQuoteVOFactory.fromPrice(50_000L, market))
+    val makerNetworkId =
+        NetworkIdVO(
+            AddressByTransportTypeMapVO(mapOf()),
+            PubKeyVO(PublicKeyVO("pub"), keyId = "key", hash = "hash", id = "id"),
+        )
+    val bisqEasyOffer =
+        BisqEasyOfferVO(
+            id = "offer-123",
+            date = 0L,
+            makerNetworkId = makerNetworkId,
+            direction = direction,
+            market = market,
+            amountSpec = amountSpec,
+            priceSpec = priceSpec,
+            protocolTypes = emptyList(),
+            baseSidePaymentMethodSpecs = emptyList(),
+            quoteSidePaymentMethodSpecs = emptyList(),
+            offerOptions = emptyList(),
+            supportedLanguageCodes = listOf("en"),
+        )
+    val reputationScore =
+        ReputationScoreVO(
+            totalScore = 1000L,
+            fiveSystemScore = 5.0,
+            ranking = 42,
+        )
+    val dto =
+        OfferItemPresentationDto(
+            bisqEasyOffer = bisqEasyOffer,
+            isMyOffer = isMyOffer,
+            userProfile = userProfile,
+            formattedDate = "2024-01-15",
+            formattedQuoteAmount = formattedQuoteAmount,
+            formattedBaseAmount = "0.01 BTC",
+            formattedPrice = formattedPrice,
+            formattedPriceSpec = "Fix",
+            quoteSidePaymentMethods = listOf("SEPA", "PayPal"),
+            baseSidePaymentMethods = listOf("Bitcoin"),
+            reputationScore = reputationScore,
+        )
+    return OfferItemPresentationModel(dto).apply {
+        this.isInvalidDueToReputation = isInvalidDueToReputation
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_BuyPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL, // Maker sells, so taker buys
+                    userName = "SatoshiNakamoto",
+                    formattedQuoteAmount = "500 EUR",
+                    formattedPrice = "50,000",
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_SellPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.BUY, // Maker buys, so taker sells
+                    userName = "BitcoinTrader",
+                    formattedQuoteAmount = "1,000 EUR",
+                    formattedPrice = "52,000",
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_MyOfferBuyPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.BUY,
+                    isMyOffer = true,
+                    userName = "MyUser",
+                    formattedQuoteAmount = "300 EUR",
+                    formattedPrice = "49,000",
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_MyOfferSellPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    isMyOffer = true,
+                    userName = "MyUser",
+                    formattedQuoteAmount = "800 EUR",
+                    formattedPrice = "51,000",
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_InvalidReputationPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    isInvalidDueToReputation = true,
+                    userName = "LowReputationUser",
+                    formattedQuoteAmount = "200 EUR",
+                    formattedPrice = "48,000",
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_LongUserNamePreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    userName = "Max100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100Char",
+                    formattedQuoteAmount = "1,500 EUR",
+                    formattedPrice = "53,000",
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
     }
 }
