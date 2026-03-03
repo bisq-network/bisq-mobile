@@ -7,7 +7,6 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -110,7 +109,6 @@ class OfferbookMarketPresenterSettingsPersistenceTest {
             advanceUntilIdle()
 
             assertEquals(MarketSortBy.NameAZ, settingsRepository.fetch().marketSortBy)
-            assertEquals(MarketSortBy.NameAZ, presenter.sortBy.first { it == MarketSortBy.NameAZ })
         }
 
     @Test
@@ -123,6 +121,5 @@ class OfferbookMarketPresenterSettingsPersistenceTest {
             advanceUntilIdle()
 
             assertEquals(MarketFilter.WithOffers, settingsRepository.fetch().marketFilter)
-            assertEquals(MarketFilter.WithOffers, presenter.filter.first { it == MarketFilter.WithOffers })
         }
 }

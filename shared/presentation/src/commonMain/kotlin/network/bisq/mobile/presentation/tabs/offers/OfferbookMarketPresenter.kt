@@ -1,15 +1,14 @@
 package network.bisq.mobile.presentation.tabs.offers
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketSortBy
+import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -32,33 +31,23 @@ class OfferbookMarketPresenter(
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
 
-    val hasIgnoredUsers: StateFlow<Boolean> =
-        userProfileServiceFacade.ignoredProfileIds
-            .map { it.isNotEmpty() }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                false,
-            )
-    val sortBy: StateFlow<MarketSortBy> =
-        settingsRepository.data.map { it.marketSortBy }.stateIn(
-            presenterScope,
-            SharingStarted.WhileSubscribed(5_000),
-            MarketSortBy.MostOffers,
-        )
+    // Using MutableStateFlow instead of stateIn(presenterScope) so these survive
+    // scope disposal on tab switch. Synced from DataStore in onViewAttached().
+    // See https://github.com/bisq-network/bisq-mobile/issues/1197
+    private val _hasIgnoredUsers = MutableStateFlow(false)
+    val hasIgnoredUsers: StateFlow<Boolean> = _hasIgnoredUsers.asStateFlow()
+
+    private val _sortBy = MutableStateFlow(Settings().marketSortBy)
+    val sortBy: StateFlow<MarketSortBy> = _sortBy.asStateFlow()
+
+    private val _filter = MutableStateFlow(Settings().marketFilter)
+    val filter: StateFlow<MarketFilter> = _filter.asStateFlow()
 
     fun setSortBy(newValue: MarketSortBy) {
         presenterScope.launch {
             settingsRepository.setMarketSortBy(newValue)
         }
     }
-
-    val filter: StateFlow<MarketFilter> =
-        settingsRepository.data.map { it.marketFilter }.stateIn(
-            presenterScope,
-            SharingStarted.WhileSubscribed(5_000),
-            MarketFilter.WithOffers,
-        )
 
     fun setFilter(newValue: MarketFilter) {
         presenterScope.launch {
@@ -89,8 +78,27 @@ class OfferbookMarketPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        syncSettingsFromDataStore()
+        syncIgnoredUsers()
         observeMarketListItems()
         observeGlobalMarketPrices()
+    }
+
+    private fun syncSettingsFromDataStore() {
+        presenterScope.launch {
+            settingsRepository.data.collect { settings ->
+                _filter.value = settings.marketFilter
+                _sortBy.value = settings.marketSortBy
+            }
+        }
+    }
+
+    private fun syncIgnoredUsers() {
+        presenterScope.launch {
+            userProfileServiceFacade.ignoredProfileIds
+                .map { it.isNotEmpty() }
+                .collect { _hasIgnoredUsers.value = it }
+        }
     }
 
     private fun observeMarketListItems() {
