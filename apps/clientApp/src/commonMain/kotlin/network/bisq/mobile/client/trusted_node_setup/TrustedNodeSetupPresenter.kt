@@ -254,7 +254,8 @@ class TrustedNodeSetupPresenter(
     private fun onChangeNodeWarningConfirm() {
         presenterScope.launch {
             sensitiveSettingsRepository.clear()
-            _uiState.update { it.copy(showChangeNodeWarning = false) }
+            pairingQrCode = null
+            _uiState.value = TrustedNodeSetupUiState()
             navigateTo(TrustedNodeSetup()) {
                 it.popUpTo(NavRoute.TabContainer) { inclusive = true }
             }
