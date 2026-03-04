@@ -16,12 +16,14 @@
  */
 package network.bisq.mobile.domain.data.replicated.settings
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 
 @Serializable
 data class SettingsVO(
     val isTacAccepted: Boolean = false,
+    @SerialName("bisqEasyTradeRulesConfirmed")
     val tradeRulesConfirmed: Boolean = false,
     val closeMyOfferWhenTaken: Boolean = false,
     val languageCode: String = "en",
