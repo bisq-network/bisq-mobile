@@ -83,6 +83,8 @@ class NodeOffersServiceFacade(
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
+    private var userProfilesPin: Pin? = null
+    private var userProfileRefreshJob: Job? = null
 
     // Job for processing offers asynchronously - cancelled when switching markets
     private var offerProcessingJob: Job? = null
@@ -93,6 +95,9 @@ class NodeOffersServiceFacade(
 
         // React to ignore/unignore to update both lists and counts immediately
         observeIgnoredProfiles()
+
+        // Re-process offers when new user profiles arrive from P2P network
+        observeUserProfiles()
 
         // Restore the previously selected market from settings (if any) and select its channel
         // This avoids loading ALL offers at startup (memory/CPU optimization)
@@ -157,20 +162,38 @@ class NodeOffersServiceFacade(
         ignoredIdsJob =
             serviceScope.launch {
                 userProfileServiceFacade.ignoredProfileIds.collectLatest {
-                    // Re-filter current selected channel's list items
-                    selectedChannel?.let { ch ->
-                        val listItems =
-                            ch.chatMessages
-                                .filter { it.hasBisqEasyOffer() }
-                                .filter { isValidOfferbookMessage(it) }
-                                .mapNotNull { createOfferItemPresentationModel(it) }
-                                .distinctBy { it.bisqEasyOffer.id }
-                        _offerbookListItems.value = listItems
-                    }
-                    // Refresh counts for all markets
-                    numOffersObservers.forEach { it.refresh() }
+                    refreshCurrentChannelOffersAndCounts()
                 }
             }
+    }
+
+    private fun refreshCurrentChannelOffersAndCounts() {
+        selectedChannel?.let { ch ->
+            val listItems =
+                ch.chatMessages
+                    .filter { it.hasBisqEasyOffer() }
+                    .filter { isValidOfferbookMessage(it) }
+                    .mapNotNull { createOfferItemPresentationModel(it) }
+                    .distinctBy { it.bisqEasyOffer.id }
+            _offerbookListItems.value = listItems
+        }
+        numOffersObservers.forEach { it.refresh() }
+    }
+
+    private fun observeUserProfiles() {
+        userProfilesPin?.unbind()
+        userProfilesPin =
+            userProfileService.userProfileById.addObserver(
+                Runnable {
+                    // Debounce: during initial P2P sync, hundreds of profiles arrive rapidly
+                    userProfileRefreshJob?.cancel()
+                    userProfileRefreshJob =
+                        serviceScope.launch {
+                            delay(500)
+                            refreshCurrentChannelOffersAndCounts()
+                        }
+                },
+            )
     }
 
     override suspend fun deactivate() {
@@ -186,6 +209,10 @@ class NodeOffersServiceFacade(
         ignoredIdsJob = null
         offerProcessingJob?.cancel()
         offerProcessingJob = null
+        userProfilesPin?.unbind()
+        userProfilesPin = null
+        userProfileRefreshJob?.cancel()
+        userProfileRefreshJob = null
         numOffersObservers.forEach { it.dispose() }
         numOffersObservers.clear()
 
@@ -456,7 +483,8 @@ class NodeOffersServiceFacade(
 
     private fun isValidOfferbookMessage(message: BisqEasyOfferbookMessage): Boolean {
         // Mirrors Bisq main: see bisqEasyOfferbookMessageService.isValid(message)
-        return isNotBanned(message) &&
+        return isAuthorProfileAvailable(message) &&
+            isNotBanned(message) &&
             isNotIgnored(message) &&
             (
                 isTextMessage(message) || isBuyOffer(message) ||
@@ -465,6 +493,8 @@ class NodeOffersServiceFacade(
                     )
             )
     }
+
+    private fun isAuthorProfileAvailable(message: BisqEasyOfferbookMessage): Boolean = userProfileService.findUserProfile(message.authorUserProfileId).isPresent
 
     private fun isNotBanned(message: BisqEasyOfferbookMessage): Boolean {
         val authorUserProfileId = message.authorUserProfileId

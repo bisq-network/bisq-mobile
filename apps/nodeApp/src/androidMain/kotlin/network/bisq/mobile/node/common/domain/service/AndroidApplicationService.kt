@@ -24,6 +24,7 @@ import bisq.application.State
 import bisq.bisq_easy.BisqEasyService
 import bisq.bonded_roles.BondedRolesService
 import bisq.bonded_roles.bonded_role.AuthorizedBondedRolesService
+import bisq.bonded_roles.release.AppType
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
 import bisq.burningman.BurningmanService
 import bisq.chat.ChatService
@@ -34,9 +35,8 @@ import bisq.contract.ContractService
 import bisq.identity.IdentityService
 import bisq.network.NetworkService
 import bisq.network.NetworkServiceConfig
-import bisq.offer.OfferService
-import bisq.bonded_roles.release.AppType
 import bisq.notifications.NotificationService
+import bisq.offer.OfferService
 import bisq.security.SecurityService
 import bisq.settings.DontShowAgainService
 import bisq.settings.FavouriteMarketsService
