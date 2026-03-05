@@ -1,7 +1,7 @@
 [versions]
 
 # -------------------- Project Specific --------------------
-bisq-core = "2.1.8"
+bisq-core = "2.1.9"
 # Update this commit hash when bisq2 JARs are regenerated (even with same version) to bust CI cache
 bisq-core-commit = "798b9d45648b527b92473eca1646ff748cd78049"
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing
@@ -200,6 +200,7 @@ bisq-core-contract = { module = "bisq:contract", version.ref = "bisq-core" }
 bisq-core-i18n = { module = "bisq:i18n", version.ref = "bisq-core" }
 bisq-core-identity = { module = "bisq:identity", version.ref = "bisq-core" }
 bisq-core-bisq-easy = { module = "bisq:bisq-easy", version.ref = "bisq-core" }
+bisq-core-notifications = { module = "bisq:notifications", version.ref = "bisq-core" }
 
 # -------------------- Bisq Core Transitive Dependencies --------------------
 chimp-jsocks = { module = 'com.github.chimp1984:jsocks', version.ref = 'chimp-jsocks-lib' }

@@ -84,7 +84,7 @@ class NodeSettingsServiceFacade(
     override val tradeRulesConfirmed: StateFlow<Boolean> get() = _tradeRulesConfirmed.asStateFlow()
 
     override suspend fun confirmTradeRules(value: Boolean) {
-        settingsService.setTradeRulesConfirmed(value)
+        settingsService.setBisqEasyTradeRulesConfirmed(value)
     }
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
@@ -180,7 +180,7 @@ class NodeSettingsServiceFacade(
                 _isTacAccepted.value = isTacAccepted
             }
         tradeRulesConfirmedPin =
-            settingsService.tradeRulesConfirmed.addObserver { isConfirmed ->
+            settingsService.bisqEasyTradeRulesConfirmed.addObserver { isConfirmed ->
                 _tradeRulesConfirmed.value = isConfirmed
             }
         settingsService.closeMyOfferWhenTaken.addObserver { value ->

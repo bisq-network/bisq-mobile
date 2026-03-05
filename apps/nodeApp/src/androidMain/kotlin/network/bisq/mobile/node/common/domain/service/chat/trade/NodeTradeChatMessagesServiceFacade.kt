@@ -53,20 +53,18 @@ class NodeTradeChatMessagesServiceFacade(
 
         channelsPin =
             bisqEasyOpenTradeChannelService.channels.addObserver(
-                object : CollectionObserver<BisqEasyOpenTradeChannel?> {
-                    override fun add(channel: BisqEasyOpenTradeChannel?) {
-                        if (channel != null) {
-                            handleChannelAdded(channel)
-                        }
+                object : CollectionObserver<BisqEasyOpenTradeChannel> {
+                    override fun onAdded(channel: BisqEasyOpenTradeChannel) {
+                        handleChannelAdded(channel)
                     }
 
-                    override fun remove(element: Any) {
+                    override fun onRemoved(element: Any) {
                         if (element is BisqEasyOpenTradeChannel) {
                             handleChannelRemoved(element)
                         }
                     }
 
-                    override fun clear() {
+                    override fun onCleared() {
                         handleChannelsCleared()
                     }
                 },
@@ -129,7 +127,7 @@ class NodeTradeChatMessagesServiceFacade(
         pins +=
             channel.chatMessages.addObserver(
                 object : CollectionObserver<BisqEasyOpenTradeMessage> {
-                    override fun add(message: BisqEasyOpenTradeMessage) {
+                    override fun onAdded(message: BisqEasyOpenTradeMessage) {
                         if (message.chatMessageType == ChatMessageType.TAKE_BISQ_EASY_OFFER) {
                             return
                         }
@@ -174,11 +172,11 @@ class NodeTradeChatMessagesServiceFacade(
                         openTradeItem.bisqEasyOpenTradeChannelModel.addChatMessages(model)
                     }
 
-                    override fun remove(element: Any) {
+                    override fun onRemoved(element: Any) {
                         // Private messages cannot be removed
                     }
 
-                    override fun clear() {
+                    override fun onCleared() {
                     }
                 },
             )

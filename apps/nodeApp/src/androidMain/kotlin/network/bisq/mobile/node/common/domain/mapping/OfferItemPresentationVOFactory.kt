@@ -39,14 +39,17 @@ object OfferItemPresentationVOFactory {
         marketPriceService: MarketPriceService,
         reputationService: ReputationService,
         bisqEasyOfferbookMessage: BisqEasyOfferbookMessage,
-    ): OfferItemPresentationDto {
+    ): OfferItemPresentationDto? {
         val bisqEasyOffer = bisqEasyOfferbookMessage.bisqEasyOffer.get()
         val bisqEasyOfferVO = Mappings.BisqEasyOfferMapping.fromBisq2Model(bisqEasyOffer)
         val isMyOffer = bisqEasyOfferbookMessage.isMyMessage(userIdentityService)
 
         val authorUserProfileId = bisqEasyOfferbookMessage.authorUserProfileId
         val optionalAuthorUserProfile = userProfileService.findUserProfile(authorUserProfileId)
-        check(optionalAuthorUserProfile.isPresent) { "AuthorUserProfile with userProfileId $authorUserProfileId is not present." }
+        if (!optionalAuthorUserProfile.isPresent) {
+            // User profile not yet synced from P2P network — skip this offer for now
+            return null
+        }
         val userProfile = optionalAuthorUserProfile.get()
         val authorUserProfile = Mappings.UserProfileMapping.fromBisq2Model(userProfile)
 

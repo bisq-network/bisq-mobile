@@ -341,6 +341,7 @@ dependencies {
     implementation(libs.bisq.core.chat)
     implementation(libs.bisq.core.presentation)
     implementation(libs.bisq.core.bisq.easy)
+    implementation(libs.bisq.core.notifications)
 
     // Bisq2 network modules
     implementation(libs.bisq.core.network.network)

@@ -218,6 +218,7 @@ class Mappings {
                 ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> ChatMessageType.TAKE_BISQ_EASY_OFFER
                 ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE -> ChatMessageType.PROTOCOL_LOG_MESSAGE
                 ChatMessageTypeEnum.CHAT_RULES_WARNING -> ChatMessageType.CHAT_RULES_WARNING
+                ChatMessageTypeEnum.EXPIRED_MESSAGES_INDICATOR -> ChatMessageType.EXPIRED_MESSAGES_INDICATOR
             }
 
         fun fromBisq2Model(value: ChatMessageType): ChatMessageTypeEnum =
@@ -227,6 +228,7 @@ class Mappings {
                 ChatMessageType.TAKE_BISQ_EASY_OFFER -> ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER
                 ChatMessageType.PROTOCOL_LOG_MESSAGE -> ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE
                 ChatMessageType.CHAT_RULES_WARNING -> ChatMessageTypeEnum.CHAT_RULES_WARNING
+                ChatMessageType.EXPIRED_MESSAGES_INDICATOR -> ChatMessageTypeEnum.EXPIRED_MESSAGES_INDICATOR
             }
     }
 
@@ -1125,7 +1127,7 @@ class Mappings {
         fun from(settingsService: SettingsService): SettingsVO =
             SettingsVO(
                 settingsService.isTacAccepted.get(),
-                settingsService.tradeRulesConfirmed.get(),
+                settingsService.bisqEasyTradeRulesConfirmed.get(),
                 settingsService.closeMyOfferWhenTaken.get(),
                 settingsService.languageTag.get(),
                 settingsService.supportedLanguageTags,

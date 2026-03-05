@@ -29,8 +29,9 @@ class NodeFiatAccountsServiceFacade(
 
     override suspend fun executeGetSelectedAccount(): Result<FiatAccountVO?> =
         runCatching {
-            if (accountService.selectedAccount.isPresent) {
-                val bisq2Account = accountService.selectedAccount.get()
+            val optionalAccount = accountService.findSelectedAccount()
+            if (optionalAccount.isPresent) {
+                val bisq2Account = optionalAccount.get()
                 if (bisq2Account !is UserDefinedFiatAccount) {
                     throw IllegalStateException("Selected account is not a UserDefinedFiatAccount but ${bisq2Account::class.simpleName}")
                 }
@@ -57,8 +58,12 @@ class NodeFiatAccountsServiceFacade(
             val userDefinedAccount =
                 account as? UserDefinedFiatAccountVO
                     ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
-            accountService.updatePaymentAccount(
-                accountName,
+            // updatePaymentAccount was removed in Bisq2 2.1.9; use remove + add
+            val existingAccount = accountService.accountByNameMap[accountName]
+            if (existingAccount != null) {
+                accountService.removePaymentAccount(existingAccount)
+            }
+            accountService.addPaymentAccount(
                 UserDefinedFiatAccountMapping.toBisq2Model(userDefinedAccount),
             )
         }

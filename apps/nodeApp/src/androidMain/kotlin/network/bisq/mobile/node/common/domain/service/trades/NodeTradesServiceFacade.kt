@@ -19,7 +19,7 @@ import bisq.common.observable.collection.CollectionObserver
 import bisq.contract.bisq_easy.BisqEasyContract
 import bisq.i18n.Res
 import bisq.offer.bisq_easy.BisqEasyOffer
-import bisq.support.mediation.MediationRequestService
+import bisq.support.mediation.bisq_easy.BisqEasyMediationRequestService
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
 import bisq.trade.bisq_easy.protocol.BisqEasyProtocol
@@ -88,7 +88,7 @@ class NodeTradesServiceFacade(
     private val bisqEasyOpenTradeChannelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
     private val leavePrivateChatManager: LeavePrivateChatManager by lazy { applicationService.chatService.get().leavePrivateChatManager }
     private val bisqEasyTradeService: BisqEasyTradeService by lazy { applicationService.tradeService.get().bisqEasyTradeService }
-    private val mediationRequestService: MediationRequestService by lazy { applicationService.supportService.get().mediationRequestService }
+    private val mediationRequestService: BisqEasyMediationRequestService by lazy { applicationService.supportService.get().bisqEasyMediationRequestService }
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
     private val userProfileService: UserProfileService by lazy { applicationService.userService.get().userProfileService }
     private val reputationService: ReputationService by lazy { applicationService.userService.get().reputationService }
@@ -113,20 +113,18 @@ class NodeTradesServiceFacade(
 
         tradesPin =
             bisqEasyTradeService.trades.addObserver(
-                object : CollectionObserver<BisqEasyTrade?> {
-                    override fun add(trade: BisqEasyTrade?) {
-                        if (trade != null) {
-                            handleTradeAdded(trade)
-                        }
+                object : CollectionObserver<BisqEasyTrade> {
+                    override fun onAdded(trade: BisqEasyTrade) {
+                        handleTradeAdded(trade)
                     }
 
-                    override fun remove(element: Any) {
+                    override fun onRemoved(element: Any) {
                         if (element is BisqEasyTrade) {
                             handleTradeRemoved(element)
                         }
                     }
 
-                    override fun clear() {
+                    override fun onCleared() {
                         handleTradesCleared()
                     }
                 },
@@ -134,20 +132,18 @@ class NodeTradesServiceFacade(
 
         channelsPin =
             bisqEasyOpenTradeChannelService.channels.addObserver(
-                object : CollectionObserver<BisqEasyOpenTradeChannel?> {
-                    override fun add(channel: BisqEasyOpenTradeChannel?) {
-                        if (channel != null) {
-                            handleChannelAdded(channel)
-                        }
+                object : CollectionObserver<BisqEasyOpenTradeChannel> {
+                    override fun onAdded(channel: BisqEasyOpenTradeChannel) {
+                        handleChannelAdded(channel)
                     }
 
-                    override fun remove(element: Any) {
+                    override fun onRemoved(element: Any) {
                         if (element is BisqEasyOpenTradeChannel) {
                             handleChannelRemoved(element)
                         }
                     }
 
-                    override fun clear() {
+                    override fun onCleared() {
                         handleChannelsCleared()
                     }
                 },
@@ -250,7 +246,9 @@ class NodeTradesServiceFacade(
         withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                bisqEasyTradeService.removeTrade(trade)
+                val myUserProfile = channel.myUserIdentity.userProfile
+                val peerUserProfile = channel.peer
+                bisqEasyTradeService.removeTrade(trade, myUserProfile, peerUserProfile)
                 leavePrivateChatManager.leaveChannel(channel)
                 _selectedTrade.value = null
                 Result.success(Unit)

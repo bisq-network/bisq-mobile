@@ -3,7 +3,7 @@ package network.bisq.mobile.node.common.domain.service.mediation
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
 import bisq.contract.bisq_easy.BisqEasyContract
 import bisq.i18n.Res
-import bisq.support.mediation.MediationRequestService
+import bisq.support.mediation.bisq_easy.BisqEasyMediationRequestService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -20,7 +20,7 @@ class NodeMediationServiceFacade(
     MediationServiceFacade {
     // Dependencies
     private val channelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
-    private val mediationRequestService: MediationRequestService by lazy { applicationService.supportService.get().mediationRequestService }
+    private val mediationRequestService: BisqEasyMediationRequestService by lazy { applicationService.supportService.get().bisqEasyMediationRequestService }
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()

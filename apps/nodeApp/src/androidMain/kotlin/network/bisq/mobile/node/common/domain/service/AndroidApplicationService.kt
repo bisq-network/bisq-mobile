@@ -35,7 +35,8 @@ import bisq.identity.IdentityService
 import bisq.network.NetworkService
 import bisq.network.NetworkServiceConfig
 import bisq.offer.OfferService
-import bisq.presentation.notifications.SystemNotificationService
+import bisq.bonded_roles.release.AppType
+import bisq.notifications.NotificationService
 import bisq.security.SecurityService
 import bisq.settings.DontShowAgainService
 import bisq.settings.FavouriteMarketsService
@@ -102,8 +103,8 @@ class AndroidApplicationService(
             Supplier { applicationService.bisqEasyService }
         var supportService: Supplier<SupportService> =
             Supplier { applicationService.supportService }
-        var systemNotificationService: Supplier<SystemNotificationService> =
-            Supplier { applicationService.systemNotificationService }
+        var notificationService: Supplier<NotificationService> =
+            Supplier { applicationService.notificationService }
         var tradeService: Supplier<TradeService> =
             Supplier { applicationService.tradeService }
         var alertNotificationsService: Supplier<AlertNotificationsService> =
@@ -173,7 +174,6 @@ class AndroidApplicationService(
             networkService,
             bondedRolesConfig.isIgnoreSecurityManager,
         )
-    val accountService = AccountService(persistenceService)
     val burningManService = BurningmanService(authorizedBondedRolesService)
     val offerService = OfferService(networkService, identityService, persistenceService)
     val contractService = ContractService(securityService)
@@ -185,10 +185,11 @@ class AndroidApplicationService(
             networkService,
             bondedRolesService,
         )
+    val accountService = AccountService(persistenceService, networkService, userService, bondedRolesService)
     val chatService: ChatService
     val settingsService = SettingsService(persistenceService)
     val supportService: SupportService
-    val systemNotificationService = SystemNotificationService(Optional.empty())
+    val notificationService: NotificationService
     val tradeService: TradeService
     val bisqEasyService: BisqEasyService
     val alertNotificationsService: AlertNotificationsService
@@ -197,13 +198,20 @@ class AndroidApplicationService(
     val languageRepository: LanguageRepository
 
     init {
+        notificationService =
+            NotificationService(
+                persistenceService,
+                bondedRolesService.mobileNotificationRelayClient,
+                Optional.empty(),
+            )
+
         chatService =
             ChatService(
                 persistenceService,
                 networkService,
                 userService,
                 settingsService,
-                systemNotificationService,
+                notificationService,
             )
 
         supportService =
@@ -231,6 +239,7 @@ class AndroidApplicationService(
                 settingsService,
                 accountService,
                 burningManService,
+                AppType.MOBILE_NODE,
             )
 
         bisqEasyService =
@@ -247,12 +256,12 @@ class AndroidApplicationService(
                 chatService,
                 settingsService,
                 supportService,
-                systemNotificationService,
+                notificationService,
                 tradeService,
             )
 
         alertNotificationsService =
-            AlertNotificationsService(settingsService, bondedRolesService.alertService)
+            AlertNotificationsService(settingsService, bondedRolesService.alertService, AppType.MOBILE_NODE)
 
         favouriteMarketsService = FavouriteMarketsService(settingsService)
 
@@ -292,18 +301,18 @@ class AndroidApplicationService(
                 log.i("identityService completed, starting bondedRolesService.initialize()")
                 bondedRolesService.initialize()
             }.thenCompose { result: Boolean? ->
-                log.i("bondedRolesService completed, starting accountService.initialize()")
-                accountService.initialize()
-            }.thenCompose { result: Boolean? ->
-                log.i("accountService completed, starting contractService.initialize()")
+                log.i("bondedRolesService completed, starting contractService.initialize()")
                 contractService.initialize()
             }.thenCompose { result: Boolean? ->
                 log.i("contractService completed, starting userService.initialize()")
                 userService.initialize()
+            }.thenCompose { result: Boolean? ->
+                log.i("userService completed, starting accountService.initialize()")
+                accountService.initialize()
             }.thenCompose { result: Boolean? -> settingsService.initialize() }
+            .thenCompose { result: Boolean? -> notificationService.initialize() }
             .thenCompose { result: Boolean? -> offerService.initialize() }
             .thenCompose { result: Boolean? -> chatService.initialize() }
-            .thenCompose { result: Boolean? -> systemNotificationService.initialize() }
             .thenCompose { result: Boolean? -> supportService.initialize() }
             .thenCompose { result: Boolean? -> tradeService.initialize() }
             .thenCompose { result: Boolean? -> alertNotificationsService.initialize() }
@@ -355,7 +364,7 @@ class AndroidApplicationService(
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->
-                    systemNotificationService
+                    notificationService
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->

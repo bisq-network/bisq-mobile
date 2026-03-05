@@ -163,7 +163,7 @@ class NodeOffersServiceFacade(
                             ch.chatMessages
                                 .filter { it.hasBisqEasyOffer() }
                                 .filter { isValidOfferbookMessage(it) }
-                                .map { createOfferItemPresentationModel(it) }
+                                .mapNotNull { createOfferItemPresentationModel(it) }
                                 .distinctBy { it.bisqEasyOffer.id }
                         _offerbookListItems.value = listItems
                     }
@@ -366,7 +366,7 @@ class NodeOffersServiceFacade(
             chatMessages.addObserver(
                 object : CollectionObserver<BisqEasyOfferbookMessage> {
                     // We get all already existing offers applied at channel selection
-                    override fun addAll(values: Collection<BisqEasyOfferbookMessage>) {
+                    override fun onAllAdded(values: Collection<out BisqEasyOfferbookMessage>) {
                         val currentChannel = channel
                         // Process offers asynchronously to avoid blocking the main thread
                         // This prevents ANRs when selecting markets with many offers
@@ -378,7 +378,7 @@ class NodeOffersServiceFacade(
                                         values
                                             .filter { it.hasBisqEasyOffer() }
                                             .filter { isValidOfferbookMessage(it) }
-                                            .map { createOfferItemPresentationModel(it) }
+                                            .mapNotNull { createOfferItemPresentationModel(it) }
 
                                     // Update UI state on main thread
                                     withContext(Dispatchers.Main) {
@@ -400,7 +400,7 @@ class NodeOffersServiceFacade(
                     }
 
                     // Newly added messages
-                    override fun add(message: BisqEasyOfferbookMessage) {
+                    override fun onAdded(message: BisqEasyOfferbookMessage) {
                         if (!message.hasBisqEasyOffer() || !isValidOfferbookMessage(message)) {
                             return
                         }
@@ -408,7 +408,7 @@ class NodeOffersServiceFacade(
                         // Process single offer asynchronously to avoid blocking main thread
                         // Using Default dispatcher for CPU-intensive work (formatting, reputation calculations)
                         serviceScope.launch(Dispatchers.Default) {
-                            val listItem = createOfferItemPresentationModel(message)
+                            val listItem = createOfferItemPresentationModel(message) ?: return@launch
                             withContext(Dispatchers.Main) {
                                 // Only update if we're still on the same channel
                                 if (selectedChannel == currentChannel) {
@@ -420,7 +420,7 @@ class NodeOffersServiceFacade(
                         }
                     }
 
-                    override fun remove(message: Any) {
+                    override fun onRemoved(message: Any) {
                         if (message is BisqEasyOfferbookMessage && message.bisqEasyOffer.isPresent) {
                             val offerId = message.bisqEasyOffer.get().id
                             _offerbookListItems.update { current ->
@@ -435,14 +435,14 @@ class NodeOffersServiceFacade(
                         }
                     }
 
-                    override fun clear() {
+                    override fun onCleared() {
                         _offerbookListItems.update { emptyList() }
                     }
                 },
             )
     }
 
-    private fun createOfferItemPresentationModel(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferItemPresentationModel {
+    private fun createOfferItemPresentationModel(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferItemPresentationModel? {
         val offerItemPresentationDto =
             OfferItemPresentationVOFactory.create(
                 userProfileService,
@@ -450,7 +450,7 @@ class NodeOffersServiceFacade(
                 marketPriceService,
                 reputationService,
                 bisqEasyOfferbookMessage,
-            )
+            ) ?: return null
         return OfferItemPresentationModel(offerItemPresentationDto)
     }
 
