@@ -1,92 +1,5 @@
 # iOS Release Guide
 
-<!--
-================================================================================
-TODO: UPDATE AFTER DISTRIBUTION METHODS ARE CONFIRMED
-================================================================================
-This guide documents distribution methods that are PENDING confirmation. See:
-https://github.com/bisq-network/bisq-mobile/issues/936#issuecomment-3858661062
-
-Current status (as of Feb 2026):
-- TestFlight: Pending Apple review (may or may not pass external testing)
-- EU AltStore PAL: Requires notarization via App Store Connect (untested)
-- Non-EU Sideloading: Available but limited (100 devices, 7-day refresh)
-
-Once we confirm which distribution methods work, update this guide accordingly.
-================================================================================
--->
-
-This guide documents the manual release process for Bisq Connect iOS.
-
-## Distribution Methods
-
-### EU Market (AltStore PAL) - PENDING
-
-Since iOS 17.4, Apple allows alternative app distribution in the EU under the Digital Markets Act (DMA).
-
-**Requirements:**
-1. App must be **notarized by Apple** via App Store Connect
-2. Must agree to **Alternative Terms Addendum for Apps in the EU**
-3. Notarized IPA hosted on GitHub, referenced in `apps.json`
-
-**Key Benefits:**
-- No 7-day expiration (unlike ad-hoc sideloading)
-- No device UUID registration required
-- Notarization review is less strict than App Store review (security-focused, not content-focused)
-
-**Limitations:**
-- EU-only (device region must be set to EU country)
-- Requires iOS 17.4+ for installation via AltStore PAL
-- Must go through App Store Connect (no command-line notarization for iOS)
-
-### Non-EU Market (Sideloading)
-
-For users outside the EU, we provide Ad-Hoc signed IPAs.
-
-**Requirements:**
-- Device UUIDs must be registered in Apple Developer Portal
-- Users install via AltStore (free version) or similar tools
-
-**Limitations:**
-- 100 device limit per year
-- Apps require weekly refresh (7-day certificate)
-
----
-
-## ⚠️ Important: iOS Notarization Reality
-
-**iOS notarization is completely different from macOS notarization!**
-
-| Platform | Notarization Method |
-|----------|---------------------|
-| **macOS** | `xcrun notarytool` command line ✅ |
-| **iOS** | App Store Connect web interface only ❌ no CLI |
-
-The `xcrun notarytool` command does **NOT** work for iOS IPAs. All iOS apps for EU alternative distribution must be uploaded to App Store Connect.
-
-### Notarization vs App Store Review
-
-| Aspect | App Store Review | Notarization Only |
-|--------|------------------|-------------------|
-| Content policies | ✅ Enforced | ❌ Not checked |
-| Business model | ✅ Reviewed | ❌ Not checked |
-| Malware/security | ✅ Checked | ✅ Checked |
-| Privacy basics | ✅ Checked | ✅ Checked |
-| Fraud prevention | ✅ Checked | ✅ Checked |
-
-**If your app was rejected from the App Store for content/policy reasons, it may still pass notarization.**
-
-### Web Distribution Eligibility (Direct from Website)
-
-To distribute directly from your own website (not via AltStore PAL), Apple requires:
-- ❌ **Organization account** (Individual accounts don't qualify)
-- ✅ **2+ years continuous membership**
-- ❌ **1M+ first annual installs in EU** in prior calendar year
-
-Most small developers won't qualify for Web Distribution. The alternative is to distribute via a marketplace like AltStore PAL.
-
----
-
 ## iOS Release Process
 
 ### Step 1: Update Version Numbers
@@ -123,6 +36,8 @@ cd iosClient && pod install && cd ..
 
 ### Step 4a: Export for EU (Notarization)
 
+> **Note:** We are not doing this for now
+
 1. In Xcode Organizer (Window → Organizer), select the archive
 2. Click **Distribute App**
 3. Select **Custom**
@@ -148,37 +63,7 @@ This creates the sideload IPA: `Bisq Connect.ipa` → rename to `BisqConnect-0.2
 > - **App Store Connect** = Uses Distribution cert, can be notarized, works with AltStore PAL (EU)
 > - **Ad Hoc** = Uses Distribution cert + Ad-Hoc profile, requires registered device UUIDs, works with AltStore free (worldwide)
 
-### Step 5: Notarize the IPA via App Store Connect
-
-> ⚠️ **Important:** iOS notarization must be done through App Store Connect, NOT via `xcrun notarytool`.
-> The `xcrun notarytool` command only works for macOS apps.
-
-**Option A: Using Transporter App (Recommended)**
-
-1. Download [Transporter](https://apps.apple.com/app/transporter/id1450874784) from the Mac App Store
-2. Sign in with your Apple Developer account
-3. Drag and drop the IPA file into Transporter
-4. Click "Deliver" to upload to App Store Connect
-5. Wait for processing (usually 5-15 minutes)
-
-**Option B: Using App Store Connect Web Interface**
-
-1. Go to [App Store Connect](https://appstoreconnect.apple.com)
-2. Navigate to your app → "TestFlight" or "Distribution" section
-3. Upload the IPA using the web interface
-4. Wait for processing
-
-**After Upload:**
-
-1. Go to App Store Connect → Your App → "Distribution" tab
-2. Select "Notarization Only" (not App Store submission)
-3. Wait for notarization to complete (usually 5-30 minutes)
-4. Download the notarized IPA from App Store Connect
-
-> **Note:** The exact UI flow may vary. Apple's documentation for EU alternative distribution
-> is at: https://developer.apple.com/help/app-store-connect/distribute-in-the-european-union/
-
-### Step 6: Rename and Prepare IPA
+### Step 5: Rename and Prepare IPA
 
 ```bash
 # Rename with version
@@ -219,14 +104,6 @@ git push origin main
 ```
 
 GitHub Pages will automatically update (may take a few minutes).
-
-### Step 10: Verify Installation
-
-1. On an EU-region iPhone with **AltStore PAL** installed
-2. Go to Sources → Add Source
-3. Enter: `https://bisq-network.github.io/bisq-mobile/apps.json`
-4. Install Bisq Connect
-5. Verify app launches and functions correctly
 
 ---
 
