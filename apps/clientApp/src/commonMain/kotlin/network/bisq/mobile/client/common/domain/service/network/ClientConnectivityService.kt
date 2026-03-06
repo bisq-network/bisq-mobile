@@ -12,18 +12,23 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.domain.PlatformInfo
+import network.bisq.mobile.domain.PlatformType
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 
 class ClientConnectivityService(
     private val webSocketClientService: WebSocketClientService,
+    private val platformInfo: PlatformInfo = getPlatformInfo(),
 ) : ConnectivityService(),
     Logging {
     companion object {
         const val TIMEOUT = 5000L
         const val PERIOD = 5000L // default check every 5 sec
         const val ROUND_TRIP_SLOW_THRESHOLD = 500L
+        internal const val IOS_FORCE_RECREATE_CYCLES = 12 // ~60s at default 5s period
 
         private const val DEFAULT_AVERAGE_TRIP_TIME = -1L // invalid
         const val MIN_REQUESTS_TO_ASSESS_SPEED = 3 // invalid
@@ -61,6 +66,7 @@ class ClientConnectivityService(
     private val pendingJobs = mutableListOf<Job>()
     private val pendingConnectivityBlocks = mutableListOf<suspend () -> Unit>()
     private val mutex = Mutex()
+    private var consecutiveReconnectingCycles = 0
 
     override suspend fun activate() {
         super.activate()
@@ -112,12 +118,23 @@ class ClientConnectivityService(
             val newStatus =
                 when {
                     !isConnected() -> {
-                        // Trigger reconnection attempt to recover from max-retry
-                        // exhaustion or transient network outages
-                        webSocketClientService.triggerReconnect()
+                        consecutiveReconnectingCycles++
+                        if (shouldForceClientRecreation()) {
+                            // iOS: Darwin engine's NSURLSession may not create functional
+                            // WebSocket connections after repeated failures on the same
+                            // session. Force full client recreation with a fresh NSURLSession.
+                            log.i { "iOS: forcing client recreation after $consecutiveReconnectingCycles failed cycles" }
+                            webSocketClientService.forceClientRecreation()
+                            consecutiveReconnectingCycles = 0
+                        } else {
+                            // Trigger reconnection attempt to recover from max-retry
+                            // exhaustion or transient network outages
+                            webSocketClientService.triggerReconnect()
+                        }
                         ConnectivityStatus.RECONNECTING
                     }
                     else -> {
+                        consecutiveReconnectingCycles = 0
                         // Actively verify the connection with a lightweight request.
                         // On iOS the Darwin engine does not reliably detect dead TCP
                         // connections, so isConnected() can return true even when the
@@ -148,6 +165,10 @@ class ClientConnectivityService(
             _status.value = ConnectivityStatus.DISCONNECTED
         }
     }
+
+    private fun shouldForceClientRecreation(): Boolean =
+        platformInfo.type == PlatformType.IOS &&
+            consecutiveReconnectingCycles >= IOS_FORCE_RECREATE_CYCLES
 
     /**
      * Sends a lightweight health check request to verify the server is responsive.

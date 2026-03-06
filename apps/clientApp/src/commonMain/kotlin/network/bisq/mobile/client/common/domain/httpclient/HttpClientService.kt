@@ -150,6 +150,26 @@ class HttpClientService(
     }
 
     /**
+     * Disposes the current HTTP client and recreates it from the last known settings.
+     * Used on iOS to get a fresh NSURLSession when the old one can no longer create
+     * functional WebSocket connections after repeated disconnections.
+     *
+     * Unlike [disposeClient], this immediately creates a new client and emits the
+     * settings change so [WebSocketClientService] picks it up reactively.
+     */
+    suspend fun recreateClient() {
+        val config = lastConfig ?: return
+        val oldClient = _httpClient.value
+        _httpClient.value = null
+        oldClient?.close()
+        lastConfig = null
+        // Treat as new config by resetting lastConfig first
+        lastConfig = config
+        _httpClient.value = createNewInstance(config)
+        _httpClientChangedFlow.emit(config)
+    }
+
+    /**
      * Suspends until the HTTP client has been created/updated and is ready for use.
      * This should be called before making requests that depend on updated settings.
      * @param timeoutMs Maximum time to wait for the client to be ready (default 5000ms)

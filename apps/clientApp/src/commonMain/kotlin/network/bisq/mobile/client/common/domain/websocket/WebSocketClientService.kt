@@ -377,6 +377,38 @@ class WebSocketClientService(
     }
 
     /**
+     * Forces full client recreation: disposes the current WebSocket client and
+     * re-triggers [updateWebSocketClient] with the same settings, producing a
+     * brand-new [HttpClient] and [WebSocketClientImpl].
+     *
+     * Used on iOS where the Darwin engine's NSURLSession may not create
+     * functional WebSocket connections after repeated disconnections on the
+     * same session instance.
+     */
+    internal suspend fun forceClientRecreation() {
+        clientUpdateMutex.withLock {
+            val settings = currentClientSettings ?: return@withLock
+            log.i { "Forcing full client recreation to recover stale iOS NSURLSession" }
+            // Dispose current client and clear settings so updateWebSocketClient
+            // treats the next call as a fresh configuration
+            currentClient.value?.dispose()
+            currentClient.value = null
+            stateCollectionJob?.cancel()
+            stateCollectionJob = null
+            subscriptionMutex.withLock {
+                subscriptionsAreApplied = false
+                requestedSubscriptions.value.forEach { it.value.resetSequence() }
+            }
+            _connectionState.value = ConnectionState.Disconnected()
+            currentClientSettings = null
+            // Re-trigger with same settings — this creates fresh httpClient + wsClient
+            // Must release clientUpdateMutex first since updateWebSocketClient acquires it
+        }
+        // Call outside the lock since updateWebSocketClient acquires clientUpdateMutex
+        httpClientService.recreateClient()
+    }
+
+    /**
      * Sends a lightweight request (settings/version) to verify the connection
      * is actually alive and the server is responsive.
      *

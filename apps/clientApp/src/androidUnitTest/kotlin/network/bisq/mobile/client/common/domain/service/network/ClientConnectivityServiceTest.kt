@@ -15,6 +15,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.domain.PlatformInfo
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import org.junit.After
 import org.junit.Before
@@ -37,11 +39,25 @@ class ClientConnectivityServiceTest {
         webSocketClientService = mockk(relaxed = true)
         // Default: health check passes when connected
         coEvery { webSocketClientService.sendHealthCheck() } returns true
-        clientConnectivityService = ClientConnectivityService(webSocketClientService)
+        clientConnectivityService = ClientConnectivityService(webSocketClientService, androidPlatformInfo)
         // Reset static averageTripTime via public API: the averaging formula
         // (current + new) / 2 converges quickly to 0, ensuring isSlow() returns false.
         repeat(20) { ClientConnectivityService.newRequestRoundTripTime(0) }
     }
+
+    private val androidPlatformInfo =
+        object : PlatformInfo {
+            override val name = "Android Test"
+            override val type = PlatformType.ANDROID
+        }
+
+    private val iosPlatformInfo =
+        object : PlatformInfo {
+            override val name = "iOS Test"
+            override val type = PlatformType.IOS
+        }
+
+    private fun createIosService(): ClientConnectivityService = ClientConnectivityService(webSocketClientService, iosPlatformInfo)
 
     @After
     fun tearDown() {
@@ -345,5 +361,91 @@ class ClientConnectivityServiceTest {
                 ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
                 clientConnectivityService.status.value,
             )
+        }
+
+    // ///////////////////////////////////////////////////////////////////////////
+    // iOS-specific reconnection recovery tests
+    // ///////////////////////////////////////////////////////////////////////////
+
+    @Test
+    fun `iOS calls forceClientRecreation after threshold disconnected cycles`() =
+        runBlocking {
+            val iosService = createIosService()
+            every { webSocketClientService.isConnected() } returns false
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.forceClientRecreation() } just Runs
+
+            iosService.activate()
+            // Use period shorter than threshold to hit it quickly
+            // Threshold is IOS_FORCE_RECREATE_CYCLES (12), so we need 12+ cycles
+            iosService.startMonitoring(period = 50, startDelay = 0)
+            delay(50 * 15) // enough for >12 cycles
+
+            coVerify(atLeast = 1) { webSocketClientService.forceClientRecreation() }
+            iosService.stopMonitoring()
+        }
+
+    @Test
+    fun `Android never calls forceClientRecreation even after many disconnected cycles`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns false
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.forceClientRecreation() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 50, startDelay = 0)
+            delay(50 * 20) // well past the iOS threshold
+
+            coVerify(exactly = 0) { webSocketClientService.forceClientRecreation() }
+        }
+
+    @Test
+    fun `iOS resets reconnecting counter when connection recovers`() =
+        runBlocking {
+            val iosService = createIosService()
+            var connected = false
+            every { webSocketClientService.isConnected() } answers { connected }
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.forceClientRecreation() } just Runs
+
+            iosService.activate()
+            iosService.startMonitoring(period = 50, startDelay = 0)
+            // Accumulate some disconnected cycles (but below threshold)
+            delay(50 * 5)
+
+            // Connection recovers
+            connected = true
+            delay(50 * 3)
+
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
+                iosService.status.value,
+            )
+
+            // Disconnect again — counter should have reset, so forceClientRecreation
+            // should not be called yet (we haven't hit the threshold again)
+            connected = false
+            delay(50 * 5) // only 5 cycles, below threshold of 12
+
+            coVerify(exactly = 0) { webSocketClientService.forceClientRecreation() }
+            iosService.stopMonitoring()
+        }
+
+    @Test
+    fun `iOS uses triggerReconnect before reaching threshold`() =
+        runBlocking {
+            val iosService = createIosService()
+            every { webSocketClientService.isConnected() } returns false
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.forceClientRecreation() } just Runs
+
+            iosService.activate()
+            iosService.startMonitoring(period = 50, startDelay = 0)
+            // Only run a few cycles, below threshold
+            delay(50 * 5)
+
+            coVerify(atLeast = 1) { webSocketClientService.triggerReconnect() }
+            coVerify(exactly = 0) { webSocketClientService.forceClientRecreation() }
+            iosService.stopMonitoring()
         }
 }
