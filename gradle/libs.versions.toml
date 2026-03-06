@@ -83,7 +83,7 @@ compose-rules = "0.4.26"
 # -------------------- Bisq Core Transitive Dependencies --------------------
 chimp-jsocks-lib = { strictly = '567e1cd6' }
 failsafe-lib = { strictly = '3.2.4' }
-bouncycastle-lib = { strictly = '1.78.1' }
+bouncycastle-lib = { strictly = '1.79' }
 google-guava-lib = { strictly = '33.2.1-jre' }
 apache-httpcomponents-httpclient-lib = { strictly = '4.5.14' } # 5.3.1 would be better but has lot of API changes
 lombok-lib = { strictly = '1.18.34' }
