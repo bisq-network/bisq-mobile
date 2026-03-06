@@ -3,5 +3,5 @@ BUNDLE_ID=network.bisq.mobile.ios
 APP_NAME=Bisq Connect
 
 // Version - synced from gradle.properties by Gradle task :apps:clientApp:syncIosVersion
-APP_VERSION=0.1.1
+APP_VERSION=0.2.0
 APP_VERSION_CODE=9
