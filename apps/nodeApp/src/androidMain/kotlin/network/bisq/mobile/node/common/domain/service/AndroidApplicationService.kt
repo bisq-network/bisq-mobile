@@ -364,10 +364,6 @@ class AndroidApplicationService(
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->
-                    notificationService
-                        .shutdown()
-                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
-                }.thenCompose { result: Boolean? ->
                     chatService
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
@@ -376,7 +372,15 @@ class AndroidApplicationService(
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->
+                    notificationService
+                        .shutdown()
+                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
+                }.thenCompose { result: Boolean? ->
                     settingsService
+                        .shutdown()
+                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
+                }.thenCompose { result: Boolean? ->
+                    accountService
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->
@@ -385,10 +389,6 @@ class AndroidApplicationService(
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->
                     contractService
-                        .shutdown()
-                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
-                }.thenCompose { result: Boolean? ->
-                    accountService
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->

@@ -167,17 +167,23 @@ class NodeOffersServiceFacade(
             }
     }
 
-    private fun refreshCurrentChannelOffersAndCounts() {
+    private suspend fun refreshCurrentChannelOffersAndCounts() {
         selectedChannel?.let { ch ->
             val listItems =
-                ch.chatMessages
-                    .filter { it.hasBisqEasyOffer() }
-                    .filter { isValidOfferbookMessage(it) }
-                    .mapNotNull { createOfferItemPresentationModel(it) }
-                    .distinctBy { it.bisqEasyOffer.id }
-            _offerbookListItems.value = listItems
+                withContext(Dispatchers.Default) {
+                    ch.chatMessages
+                        .filter { it.hasBisqEasyOffer() }
+                        .filter { isValidOfferbookMessage(it) }
+                        .mapNotNull { createOfferItemPresentationModel(it) }
+                        .distinctBy { it.bisqEasyOffer.id }
+                }
+            withContext(Dispatchers.Main) {
+                _offerbookListItems.value = listItems
+            }
         }
-        numOffersObservers.forEach { it.refresh() }
+        withContext(Dispatchers.Main) {
+            numOffersObservers.forEach { it.refresh() }
+        }
     }
 
     private fun observeUserProfiles() {

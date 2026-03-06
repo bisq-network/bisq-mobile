@@ -291,7 +291,7 @@ configurations.all {
 }
 
 // Force Bisq2 core dependency versions in unit tests to match production
-// Robolectric 4.16 brings bcprov-jdk18on:1.81, but Bisq2 requires 1.78.1
+// Robolectric 4.16 brings bcprov-jdk18on:1.81, but Bisq2 requires 1.79
 configurations.matching { it.name.contains("UnitTest") }.configureEach {
     resolutionStrategy {
         force("${libs.bouncycastle.prov.get().module}:${libs.versions.bouncycastle.lib.get()}")
