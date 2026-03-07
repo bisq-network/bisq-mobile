@@ -3,7 +3,7 @@ package network.bisq.mobile.node.common.domain.mapping
 import bisq.account.accounts.AccountOrigin
 import bisq.account.accounts.fiat.UserDefinedFiatAccount
 import bisq.account.accounts.fiat.UserDefinedFiatAccountPayload
-import bisq.account.timestamp.KeyAlgorithm
+import bisq.account.timestamp.KeyType
 import bisq.common.util.StringUtils
 import bisq.security.keys.KeyGeneration
 import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountPayloadVO
@@ -13,7 +13,7 @@ object UserDefinedFiatAccountMapping {
     fun toBisq2Model(value: UserDefinedFiatAccountVO): UserDefinedFiatAccount {
         val payload = UserDefinedFiatAccountPayloadMapping.toBisq2Model(value.accountPayload)
         val keyPair = KeyGeneration.generateDefaultEcKeyPair()
-        val keyAlgorithm = KeyAlgorithm.EC
+        val keyAlgorithm = KeyType.EC
         return UserDefinedFiatAccount(
             StringUtils.createUid(),
             System.currentTimeMillis(),
