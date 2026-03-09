@@ -56,6 +56,16 @@ fun ShineOverlay(
 private fun ShineCanvasOverlay(modifier: Modifier = Modifier) {
     val anim = remember { Animatable(INITIAL_SHINE) }
     var isAnimating by remember { mutableStateOf(false) }
+    // Pre-allocate color stops to avoid per-frame allocation inside Canvas
+    val colorStops =
+        remember {
+            arrayOf(
+                0.0f to Color.Transparent,
+                0.35f to Color.White.copy(alpha = 0.3f),
+                0.65f to Color.White.copy(alpha = 0.3f),
+                1.0f to Color.Transparent,
+            )
+        }
     LaunchedEffect(Unit) {
         while (true) {
             delay(nextDuration().toLong())
@@ -74,18 +84,6 @@ private fun ShineCanvasOverlay(modifier: Modifier = Modifier) {
         val t = anim.value
         val start = Offset(t * GRADIENT_OFFSET_FACTOR, t * GRADIENT_OFFSET_FACTOR)
         val end = Offset((t + 1) * GRADIENT_OFFSET_FACTOR, (t + 1) * GRADIENT_OFFSET_FACTOR)
-        val brush =
-            Brush.linearGradient(
-                colorStops =
-                    arrayOf(
-                        0.0f to Color.Transparent,
-                        0.35f to Color.White.copy(alpha = 0.3f),
-                        0.65f to Color.White.copy(alpha = 0.3f),
-                        1.0f to Color.Transparent,
-                    ),
-                start = start,
-                end = end,
-            )
-        drawRect(brush = brush)
+        drawRect(brush = Brush.linearGradient(colorStops = colorStops, start = start, end = end))
     }
 }

@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
@@ -418,9 +417,10 @@ abstract class BasePresenter(
 
     private fun cleanup() {
         try {
-            runBlocking {
-                jobsManager.dispose()
-            }
+            // Fire-and-forget on Default dispatcher to avoid blocking the main thread.
+            // Using runBlocking here caused iOS CA Fence hangs (>500ms main-thread block)
+            // when called during view teardown inside a Core Animation transaction.
+            CoroutineScope(Dispatchers.Default).launch { jobsManager.dispose() }
             // copy to avoid concurrency exception - no problem with multiple on destroy calls
             dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {

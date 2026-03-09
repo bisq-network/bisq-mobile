@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.main
 
 import androidx.annotation.CallSuper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -153,15 +155,27 @@ open class MainPresenter(
     @CallSuper
     override fun onDestroying() {
         globalUiManager.dispose()
+        cleanupNotificationService()
+        super.onDestroying()
+    }
+
+    open fun cleanupNotificationService() {
+        if (isIOS()) {
+            // Fire-and-forget on Default dispatcher to avoid blocking the main thread.
+            // Using runBlocking here caused iOS CA Fence hangs during view teardown.
+            CoroutineScope(Dispatchers.Default).launch {
+                openTradesNotificationService.stopNotificationService()
+            }
+        } else {
+            clenupNotificationServiceSync()
+        }
+    }
+
+    protected fun clenupNotificationServiceSync() {
         // to stop notification service and fully kill app (no zombie mode)
         runBlocking {
             openTradesNotificationService.stopNotificationService()
         }
-        super.onDestroying()
-    }
-
-    open fun reactivateServices() {
-        // do nth
     }
 
     override fun setIsMainContentVisible(value: Boolean) {

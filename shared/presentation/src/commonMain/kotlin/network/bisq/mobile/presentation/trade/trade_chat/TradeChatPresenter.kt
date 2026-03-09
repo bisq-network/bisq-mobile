@@ -151,14 +151,18 @@ class TradeChatPresenter(
                         .sortedByDescending { it.date }
                 }.collect { messages ->
                     _sortedChatMessages.value = messages
-                    for (message in messages) {
-                        val userProfile = message.senderUserProfile
-                        if (_userProfileIconByProfileId.value[userProfile.id] == null) {
-                            val image =
-                                userProfileServiceFacade.getUserProfileIcon(
-                                    userProfile,
-                                )
-                            _userProfileIconByProfileId.update { it + (userProfile.id to image) }
+                    // Load user profile icons off the main thread to avoid
+                    // blocking UI rendering (iOS CA Fence hang prevention)
+                    withContext(Dispatchers.IO) {
+                        for (message in messages) {
+                            val userProfile = message.senderUserProfile
+                            if (_userProfileIconByProfileId.value[userProfile.id] == null) {
+                                val image =
+                                    userProfileServiceFacade.getUserProfileIcon(
+                                        userProfile,
+                                    )
+                                _userProfileIconByProfileId.update { it + (userProfile.id to image) }
+                            }
                         }
                     }
                 }
