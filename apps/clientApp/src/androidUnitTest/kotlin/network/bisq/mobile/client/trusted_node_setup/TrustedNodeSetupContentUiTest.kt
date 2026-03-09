@@ -1145,14 +1145,14 @@ class TrustedNodeSetupContentUiTest {
         composeTestRule
             .onNodeWithText(
                 "mobile.trustedNodeSetup.compatibility.desktop"
-                    .i18n(BuildConfig.BISQ_DESKTOP_PAIRING_VERSION),
+                    .i18n(BuildConfig.BISQ_DESKTOP_PAIRING_VERSION) + "+",
                 useUnmergedTree = true,
             ).performScrollTo()
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithText(
                 "mobile.trustedNodeSetup.compatibility.headless"
-                    .i18n(BuildConfig.BISQ_API_VERSION),
+                    .i18n(BuildConfig.BISQ_API_VERSION) + "+",
                 useUnmergedTree = true,
             ).performScrollTo()
             .assertIsDisplayed()

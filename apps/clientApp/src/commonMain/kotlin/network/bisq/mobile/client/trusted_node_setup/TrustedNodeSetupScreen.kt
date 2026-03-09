@@ -303,14 +303,14 @@ private fun TrustedNodeSetupMainContent(
                 modifier = Modifier.padding(start = 16.dp),
                 text =
                     "mobile.trustedNodeSetup.compatibility.desktop"
-                        .i18n(BuildConfig.BISQ_DESKTOP_PAIRING_VERSION),
+                        .i18n(BuildConfig.BISQ_DESKTOP_PAIRING_VERSION) + "+",
             )
             BisqGap.VHalf()
             BisqText.BaseRegularGrey(
                 modifier = Modifier.padding(start = 16.dp),
                 text =
                     "mobile.trustedNodeSetup.compatibility.headless"
-                        .i18n(BuildConfig.BISQ_API_VERSION),
+                        .i18n(BuildConfig.BISQ_API_VERSION) + "+",
             )
         }
         BisqGap.V2()
