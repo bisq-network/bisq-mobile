@@ -26,6 +26,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -70,6 +71,8 @@ class HttpClientService(
     @Volatile
     private var lastConfig: HttpClientSettings? = null
 
+    private val _generation = atomic(0L)
+
     private var _httpClient: MutableStateFlow<HttpClient?> =
         MutableStateFlow(null)
     private val _httpClientChangedFlow =
@@ -97,6 +100,7 @@ class HttpClientService(
                     _httpClient.value = null
                     oldClient?.close()
                     _httpClient.value = createNewInstance(newConfig)
+                    _generation.incrementAndGet()
                     _httpClientChangedFlow.emit(newConfig)
                 }
             }
@@ -166,20 +170,27 @@ class HttpClientService(
         // Treat as new config by resetting lastConfig first
         lastConfig = config
         _httpClient.value = createNewInstance(config)
+        _generation.incrementAndGet()
         _httpClientChangedFlow.emit(config)
     }
 
     /**
-     * Suspends until the HTTP client has been created/updated and is ready for use.
-     * This should be called before making requests that depend on updated settings.
-     * @param timeoutMs Maximum time to wait for the client to be ready (default 5000ms)
+     * Suspends until the HTTP client has been rebuilt since this method was called.
+     *
+     * Internally snapshots a generation counter at call time and waits until a
+     * newer client is available, avoiding stale replays from the shared flow.
+     *
+     * @param timeoutMs Maximum time to wait (default 5000ms)
      * @return true if client is ready, false if timeout occurred
      */
-    suspend fun awaitClientReady(timeoutMs: Long = 5000): Boolean =
-        kotlinx.coroutines.withTimeoutOrNull(timeoutMs) {
-            httpClientChangedFlow.first()
+    suspend fun awaitClientReady(timeoutMs: Long = 5000): Boolean {
+        val genAtCall = _generation.value
+        return kotlinx.coroutines.withTimeoutOrNull(timeoutMs) {
+            if (_generation.value > genAtCall) return@withTimeoutOrNull true
+            httpClientChangedFlow.first { _generation.value > genAtCall }
             true
         } ?: false
+    }
 
     /**
      * Add authentication headers to the request if available

@@ -56,6 +56,11 @@ class PermissionTest {
     }
 
     @Test
+    fun `fromId returns correct permission for MOBILE_DEVICES`() {
+        assertEquals(Permission.MOBILE_DEVICES, Permission.fromId(10))
+    }
+
+    @Test
     fun `fromId throws for invalid id`() {
         assertFailsWith<IllegalArgumentException> {
             Permission.fromId(100)
