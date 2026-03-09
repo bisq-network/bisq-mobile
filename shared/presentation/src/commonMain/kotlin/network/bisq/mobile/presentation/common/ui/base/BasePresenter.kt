@@ -6,6 +6,7 @@ import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -417,10 +418,10 @@ abstract class BasePresenter(
 
     private fun cleanup() {
         try {
-            // Fire-and-forget on Default dispatcher to avoid blocking the main thread.
-            // Using runBlocking here caused iOS CA Fence hangs (>500ms main-thread block)
-            // when called during view teardown inside a Core Animation transaction.
-            CoroutineScope(Dispatchers.Default).launch { jobsManager.dispose() }
+            // Cancel scope synchronously. scope.cancel() is non-blocking so this
+            // doesn't cause the iOS CA Fence hangs that runBlocking did.
+            // No scope recreation needed — presenter is being destroyed.
+            runCatching { presenterScope.cancel() }
             // copy to avoid concurrency exception - no problem with multiple on destroy calls
             dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {

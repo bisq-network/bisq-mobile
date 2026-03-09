@@ -20,6 +20,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.delay
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import kotlin.random.Random
 
 const val INITIAL_SHINE = -1.0f
@@ -52,6 +53,7 @@ fun ShineOverlay(
     }
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun ShineCanvasOverlay(modifier: Modifier = Modifier) {
     val anim = remember { Animatable(INITIAL_SHINE) }

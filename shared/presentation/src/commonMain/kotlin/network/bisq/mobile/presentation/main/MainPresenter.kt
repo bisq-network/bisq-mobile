@@ -164,14 +164,18 @@ open class MainPresenter(
             // Fire-and-forget on Default dispatcher to avoid blocking the main thread.
             // Using runBlocking here caused iOS CA Fence hangs during view teardown.
             CoroutineScope(Dispatchers.Default).launch {
-                openTradesNotificationService.stopNotificationService()
+                runCatching {
+                    openTradesNotificationService.stopNotificationService()
+                }.onFailure { e ->
+                    log.w(e) { "Failed to stop notification service during iOS cleanup" }
+                }
             }
         } else {
-            clenupNotificationServiceSync()
+            cleanupNotificationServiceSync()
         }
     }
 
-    protected fun clenupNotificationServiceSync() {
+    protected fun cleanupNotificationServiceSync() {
         // to stop notification service and fully kill app (no zombie mode)
         runBlocking {
             openTradesNotificationService.stopNotificationService()
