@@ -13,6 +13,7 @@ enum class Permission(
     TRADES(7),
     USER_IDENTITIES(8),
     USER_PROFILES(9),
+    MOBILE_DEVICES(10),
     ;
 
     companion object {
