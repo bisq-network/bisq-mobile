@@ -72,6 +72,13 @@ class TrustedNodeSetupUseCase(
             apiAccessService.updateSettings(pairingQrCode)
 
             val proxySettings = determineProxySettings(pairingQrCode, newApiUrl.host)
+
+            // Wait for HttpClientService to pick up the new settings before making
+            // the pairing HTTP request. On iOS (Darwin engine), the reactive update
+            // runs on Dispatchers.Default and may not have completed yet, causing the
+            // pairing request to hit the old (stale) base URL.
+            httpClientService.awaitClientReady()
+
             val (clientId, sessionId) = ensurePairingCredentials(pairingQrCode)
             val tlsFingerprint = pairingQrCode.tlsFingerprint
 
