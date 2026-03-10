@@ -111,7 +111,7 @@ class WebSocketApiClient(
             require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
             val body = response.body
             if (response.isSuccess()) {
-                if (response.httpStatusCode == HttpStatusCode.NoContent) {
+                if (response.httpStatusCode == HttpStatusCode.NoContent || T::class == Unit::class) {
                     return handleNoContent()
                 } else {
                     val decodeFromString = json.decodeFromString<T>(body)
