@@ -148,10 +148,16 @@ open class DashboardPresenter(
             return
         }
 
+        if (pushNotificationServiceFacade.isDeviceRegistered.value) {
+            log.d { "Device already registered - skipping" }
+            return
+        }
+
         log.i { "User granted notification permission - registering for push notifications" }
         val result = pushNotificationServiceFacade.registerForPushNotifications()
         if (result.isSuccess) {
             log.i { "Successfully registered for push notifications" }
+            showSnackbar("mobile.pushNotifications.registrationSuccess".i18n(), type = SnackbarType.INFO)
         } else {
             log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.message}" }
             showSnackbar("mobile.pushNotifications.registrationFailed".i18n(), type = SnackbarType.ERROR)
