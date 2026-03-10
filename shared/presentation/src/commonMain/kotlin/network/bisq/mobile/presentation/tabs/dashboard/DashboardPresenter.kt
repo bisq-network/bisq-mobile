@@ -128,9 +128,12 @@ open class DashboardPresenter(
         presenterScope.launch {
             settingsRepository.setNotificationPermissionState(state)
 
-            // If permission was granted, register for push notifications
             if (state == PermissionState.GRANTED) {
                 registerForPushNotifications()
+            } else if (state == PermissionState.NOT_GRANTED || state == PermissionState.DENIED) {
+                // User revoked notification permission (e.g. from iOS Settings).
+                // Reset registration state so re-enabling triggers re-registration.
+                pushNotificationServiceFacade.unregisterFromPushNotifications()
             }
         }
     }
@@ -157,7 +160,7 @@ open class DashboardPresenter(
         val result = pushNotificationServiceFacade.registerForPushNotifications()
         if (result.isSuccess) {
             log.i { "Successfully registered for push notifications" }
-            showSnackbar("mobile.pushNotifications.registrationSuccess".i18n(), type = SnackbarType.INFO)
+            showSnackbar("mobile.pushNotifications.registrationSuccess".i18n(), type = SnackbarType.SUCCESS)
         } else {
             log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.message}" }
             showSnackbar("mobile.pushNotifications.registrationFailed".i18n(), type = SnackbarType.ERROR)
