@@ -31,7 +31,6 @@ import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersPrese
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsPresenter
 import network.bisq.mobile.presentation.settings.reputation.ReputationPresenter
 import network.bisq.mobile.presentation.settings.resources.ResourcesPresenter
-import network.bisq.mobile.presentation.settings.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
 import network.bisq.mobile.presentation.settings.support.SupportPresenter
 import network.bisq.mobile.presentation.settings.user_profile.IUserProfilePresenter
@@ -121,7 +120,7 @@ val presentationModule =
             )
         }
 
-        factory { SettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
+        factory { SettingsPresenter(get(), get(), get()) }
 
         factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 

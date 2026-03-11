@@ -5,6 +5,7 @@ import network.bisq.mobile.client.shared.BuildConfig
 // We use non-printing characters as separator. See: https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
 const val ARGS_SEPARATOR: Char = 0x1f.toChar()
 const val PARAM_SEPARATOR: Char = 0x1e.toChar()
+const val DEFAULT_LANGUAGE_CODE = "en"
 
 var bundles: List<ResourceBundle> = GeneratedResourceBundles_en.bundles.values.map { ResourceBundle(it) }
 
@@ -31,17 +32,17 @@ class I18nSupport {
         var isReady: Boolean = false
             private set
 
-        var currentLanguage: String = "en"
+        var currentLanguage: String = DEFAULT_LANGUAGE_CODE
             private set
 
-        fun initialize(languageCode: String = "en") {
+        fun initialize(languageCode: String = DEFAULT_LANGUAGE_CODE) {
             setLanguage(languageCode)
             isReady = true
         }
 
-        fun setLanguage(languageCode: String = "en") {
+        fun setLanguage(languageCode: String = DEFAULT_LANGUAGE_CODE) {
             val bundleMapsByName = LANGUAGE_CODE_TO_BUNDLE_MAP[languageCode]
-            val resolvedLanguageCode = if (bundleMapsByName == null) "en" else languageCode
+            val resolvedLanguageCode = if (bundleMapsByName == null) DEFAULT_LANGUAGE_CODE else languageCode
             currentLanguage = resolvedLanguageCode
             val resolvedBundles = bundleMapsByName ?: GeneratedResourceBundles_en.bundles
             bundles = resolvedBundles.values.map { ResourceBundle(it) }
