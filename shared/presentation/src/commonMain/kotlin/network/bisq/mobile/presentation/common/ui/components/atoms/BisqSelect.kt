@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,8 +27,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
@@ -226,6 +223,12 @@ fun <T> BisqSelect(
     val onTriggerClickState = rememberUpdatedState(onTriggerClick)
 
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(expanded) {
+        if (!expanded) {
+            focusManager.clearFocus()
+        }
+    }
 
     val triggerModifier =
         Modifier

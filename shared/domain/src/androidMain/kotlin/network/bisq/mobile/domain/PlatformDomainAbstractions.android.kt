@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
+import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.Currency
 import java.util.Date
@@ -156,13 +157,19 @@ actual fun getDecimalSeparator(): Char = DecimalFormatSymbols(Locale.getDefault(
 
 actual fun getGroupingSeparator(): Char = DecimalFormatSymbols(Locale.getDefault()).groupingSeparator
 
-actual fun String.toDoubleOrNullLocaleAware(): Double? =
-    try {
-        val javaLocale = Locale.getDefault()
-        NumberFormat.getInstance(javaLocale).parse(this)?.toDouble()
-    } catch (e: Exception) {
+actual fun String.toDoubleOrNullLocaleAware(): Double? {
+    val trimmedString = this.trim()
+    val format = NumberFormat.getInstance(Locale.getDefault())
+    val parsePosition = ParsePosition(0)
+
+    val parsedNumber = format.parse(trimmedString, parsePosition)
+
+    return if (parsedNumber != null && parsePosition.index == trimmedString.length) {
+        parsedNumber.toDouble()
+    } else {
         null
     }
+}
 
 actual fun getLocaleCurrencyName(currencyCode: String): String {
     val javaLocale = Locale.getDefault()

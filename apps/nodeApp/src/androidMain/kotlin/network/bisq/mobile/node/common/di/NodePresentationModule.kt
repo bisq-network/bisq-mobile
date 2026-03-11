@@ -14,7 +14,6 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPre
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
-import network.bisq.mobile.presentation.settings.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
 import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
@@ -26,7 +25,7 @@ import org.koin.dsl.module
 
 val androidNodePresentationModule =
     module {
-        factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
+        factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) }
 
         factory {
             NodeOnboardingPresenter(

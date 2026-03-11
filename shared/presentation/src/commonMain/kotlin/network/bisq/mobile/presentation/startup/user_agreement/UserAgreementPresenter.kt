@@ -25,15 +25,15 @@ open class UserAgreementPresenter(
     override fun onAcceptTerms() {
         showLoading()
         presenterScope.launch {
-            try {
-                settingsServiceFacade.confirmTacAccepted(true)
-                navigateToOnboarding()
-                showSnackbar("mobile.startup.agreement.welcome".i18n())
-            } catch (e: Exception) {
-                log.e(e) { "Failed to save user agreement acceptance" }
-            } finally {
-                hideLoading()
-            }
+            settingsServiceFacade
+                .confirmTacAccepted(true)
+                .onSuccess {
+                    navigateToOnboarding()
+                    showSnackbar("mobile.startup.agreement.welcome".i18n())
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
+            hideLoading()
         }
     }
 

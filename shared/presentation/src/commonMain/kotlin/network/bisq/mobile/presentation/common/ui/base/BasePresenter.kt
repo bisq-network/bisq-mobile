@@ -56,6 +56,7 @@ interface ViewPresenter {
     fun showSnackbar(
         message: String,
         type: SnackbarType = SnackbarType.SUCCESS,
+        position: SnackbarPosition = SnackbarPosition.BOTTOM,
         duration: SnackbarDuration = SnackbarDuration.Short,
     )
 
@@ -137,9 +138,10 @@ abstract class BasePresenter(
     override fun showSnackbar(
         message: String,
         type: SnackbarType,
+        position: SnackbarPosition,
         duration: SnackbarDuration,
     ) {
-        globalUiManager.showSnackbar(message, type, duration)
+        globalUiManager.showSnackbar(message, type, duration, position)
     }
 
     override fun isSmallScreen(): Boolean = rootPresenter?.isSmallScreen?.value ?: false
@@ -492,6 +494,7 @@ abstract class BasePresenter(
     protected fun handleError(
         exception: Throwable,
         defaultMessage: String = "mobile.error.generic".i18n(),
+        position: SnackbarPosition = SnackbarPosition.BOTTOM,
         customHandler: ((Throwable) -> Boolean)? = null,
     ) {
         log.e(exception) { "Network error: ${exception.message}" }
@@ -504,6 +507,6 @@ abstract class BasePresenter(
             } else {
                 defaultMessage
             }
-        showSnackbar(errorMessage, SnackbarType.ERROR)
+        showSnackbar(errorMessage, SnackbarType.ERROR, position)
     }
 }

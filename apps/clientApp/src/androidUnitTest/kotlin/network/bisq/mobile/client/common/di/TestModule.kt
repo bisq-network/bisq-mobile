@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.common.di
 
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
@@ -16,6 +15,7 @@ import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -119,6 +119,7 @@ val clientTestModule =
                 override fun showSnackbar(
                     message: String,
                     type: SnackbarType,
+                    position: SnackbarPosition,
                     duration: SnackbarDuration,
                 ) {}
 

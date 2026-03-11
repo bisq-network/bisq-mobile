@@ -22,7 +22,6 @@ import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
@@ -188,49 +187,35 @@ class TakeOfferPresenterTest {
     private class FakeSettingsServiceFacade : SettingsServiceFacade {
         override suspend fun getSettings() = Result.success(settingsVODemoObj)
 
-        override val isTacAccepted: StateFlow<Boolean?> = MutableStateFlow(true)
-
-        override suspend fun confirmTacAccepted(value: Boolean) {}
+        override suspend fun confirmTacAccepted(value: Boolean) = Result.success(Unit)
 
         override val tradeRulesConfirmed: StateFlow<Boolean> = MutableStateFlow(true)
 
-        override suspend fun confirmTradeRules(value: Boolean) {}
+        override suspend fun confirmTradeRules(value: Boolean) = Result.success(Unit)
 
         override val languageCode: StateFlow<String> = MutableStateFlow("en")
 
-        override suspend fun setLanguageCode(value: String) {}
+        override suspend fun setLanguageCode(value: String) = Result.success(Unit)
 
-        override val supportedLanguageCodes: StateFlow<Set<String>> = MutableStateFlow(setOf("en"))
+        override suspend fun setSupportedLanguageCodes(value: Set<String>) = Result.success(Unit)
 
-        override suspend fun setSupportedLanguageCodes(value: Set<String>) {}
+        override suspend fun setCloseMyOfferWhenTaken(value: Boolean) = Result.success(Unit)
 
-        override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> = MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
-
-        override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {}
-
-        override val closeMyOfferWhenTaken: StateFlow<Boolean> = MutableStateFlow(true)
-
-        override suspend fun setCloseMyOfferWhenTaken(value: Boolean) {}
-
-        override val maxTradePriceDeviation: StateFlow<Double> = MutableStateFlow(0.0)
-
-        override suspend fun setMaxTradePriceDeviation(value: Double) {}
+        override suspend fun setMaxTradePriceDeviation(value: Double) = Result.success(Unit)
 
         override val useAnimations: StateFlow<Boolean> = MutableStateFlow(false)
 
-        override suspend fun setUseAnimations(value: Boolean) {}
+        override suspend fun setUseAnimations(value: Boolean) = Result.success(Unit)
 
         override val difficultyAdjustmentFactor: StateFlow<Double> = MutableStateFlow(1.0)
 
-        override suspend fun setDifficultyAdjustmentFactor(value: Double) {}
+        override suspend fun setDifficultyAdjustmentFactor(value: Double) = Result.success(Unit)
 
         override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> = MutableStateFlow(false)
 
-        override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {}
+        override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) = Result.success(Unit)
 
-        override val numDaysAfterRedactingTradeData: StateFlow<Int> = MutableStateFlow(30)
-
-        override suspend fun setNumDaysAfterRedactingTradeData(days: Int) {}
+        override suspend fun setNumDaysAfterRedactingTradeData(days: Int) = Result.success(Unit)
     }
 
     private class FakeUserProfileServiceFacade : UserProfileServiceFacade {

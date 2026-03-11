@@ -46,7 +46,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonTyp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.context.LocalAnimationsEnabled
-import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.LoadingDialog
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.LoadingOverlay
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbar
 import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbarVisuals
@@ -143,6 +143,7 @@ fun App(
     val showAnimation by presenter.showAnimation.collectAsState()
     val showAllConnectionsLostDialogue by presenter.showAllConnectionsLostDialogue.collectAsState()
     val showReconnectOverlay by presenter.showReconnectOverlay.collectAsState()
+    val isLoadingBlocking by globalUiManager.isLoadingBlocking.collectAsState()
     val showLoadingDialog by globalUiManager.showLoadingDialog.collectAsState()
 
     // Global snackbar state
@@ -162,6 +163,7 @@ fun App(
                                 message = action.message,
                                 type = action.type,
                                 duration = action.duration,
+                                position = action.position,
                             ),
                         )
                     }
@@ -206,18 +208,14 @@ fun App(
                 ReconnectingOverlay(onClick = { presenter.onRestartApp() })
             }
 
-            // Global loading dialog - renders on top of everything (last child = topmost z-order)
-            if (showLoadingDialog) {
-                LoadingDialog()
-            }
+            // Global loading overlay - blocks interaction immediately, shows dialog after grace delay
+            LoadingOverlay(
+                isBlocking = isLoadingBlocking,
+                showDialog = showLoadingDialog,
+            )
 
-            // Global snackbar - displays app-wide snackbar notifications at the bottom
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.BottomCenter,
-            ) {
-                BisqSnackbar(snackbarHostState = snackbarHostState)
-            }
+            // Global snackbar - displays app-wide snackbar notifications
+            BisqSnackbar(snackbarHostState = snackbarHostState)
         }
     }
 

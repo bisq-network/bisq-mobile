@@ -19,6 +19,14 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 
 /**
+ * Enum representing the position of the snackbar on screen
+ */
+enum class SnackbarPosition {
+    TOP,
+    BOTTOM,
+}
+
+/**
  * Sealed class representing all snackbar actions for the unified SharedFlow
  */
 sealed class SnackbarAction {
@@ -26,6 +34,7 @@ sealed class SnackbarAction {
         val message: String,
         val type: SnackbarType = SnackbarType.SUCCESS,
         val duration: SnackbarDuration = SnackbarDuration.Short,
+        val position: SnackbarPosition = SnackbarPosition.BOTTOM,
     ) : SnackbarAction()
 
     data object Dismiss : SnackbarAction()
@@ -40,6 +49,9 @@ class GlobalUiManager(
     dispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+
+    private val _isLoadingBlocking = MutableStateFlow(false)
+    val isLoadingBlocking: StateFlow<Boolean> = _isLoadingBlocking.asStateFlow()
 
     private val _showLoadingDialog = MutableStateFlow(false)
     val showLoadingDialog: StateFlow<Boolean> = _showLoadingDialog.asStateFlow()
@@ -56,10 +68,12 @@ class GlobalUiManager(
 
     /**
      * Schedule showing a loading dialog after a grace delay.
-     * If the operation completes before the delay expires, the dialog never appears (avoiding flicker).
+     * Immediately blocks screen interaction. If the operation completes before the delay expires,
+     * the dialog never appears (avoiding flicker).
      * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
      */
     fun scheduleShowLoading() {
+        _isLoadingBlocking.value = true
         loadingJob?.cancel()
         loadingJob =
             scope.launch {
@@ -70,9 +84,11 @@ class GlobalUiManager(
 
     /**
      * Hide the loading dialog and cancel any scheduled show.
+     * Also removes the blocking overlay.
      */
     fun hideLoading() {
         loadingJob?.cancel()
+        _isLoadingBlocking.value = false
         _showLoadingDialog.value = false
     }
 
@@ -84,8 +100,9 @@ class GlobalUiManager(
         message: String,
         type: SnackbarType = SnackbarType.SUCCESS,
         duration: SnackbarDuration = SnackbarDuration.Short,
+        position: SnackbarPosition = SnackbarPosition.BOTTOM,
     ) {
-        _snackbarActions.tryEmit(SnackbarAction.Show(message, type, duration))
+        _snackbarActions.tryEmit(SnackbarAction.Show(message, type, duration, position))
     }
 
     /**
