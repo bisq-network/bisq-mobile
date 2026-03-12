@@ -4,43 +4,42 @@
 
 # Bisq Mobile
 
-## Releases
+<br/>
 
-- **GitHub Releases (all APKs & changelogs):**
-  https://github.com/bisq-network/bisq-mobile/releases
+## Download
 
-- **Bisq Easy Node for Android (full Bisq2 node):**
+<table align="center">
+  <tr>
+    <th>Bisq Easy Node <em>(Android)</em></th>
+    <th>Bisq Connect <em>(Android)</em></th>
+    <th>Bisq Connect <em>(iOS)</em></th>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.node">
+        <img alt="Get Bisq Easy on Google Play" src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" height="50" />
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.client">
+        <img alt="Get Bisq Connect on Google Play" src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" height="50" />
+      </a>
+    </td>
+    <td align="center">
+      <!-- TODO: Replace with actual TestFlight link when available -->
+      <a href="https://bisq-network.github.io/bisq-mobile/">
+        <img alt="Download on TestFlight" src="https://developer.apple.com/assets/elements/icons/testflight/testflight-64x64_2x.png" height="50" />
+      </a>
+      <br/><em>TestFlight</em>
+    </td>
+  </tr>
+</table>
 
 <p align="center">
-  <!-- Bisq Easy Node (Android) -->
-  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.node">
-    <img
-      alt="Get Bisq Easy on Google Play"
-      src="docs/listings/node/ic_playstore.png"
-      height="60" />
-  </a>
+  <strong><a href="https://github.com/bisq-network/bisq-mobile/releases">All releases & changelogs on GitHub</a></strong>
   <br/>
-  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.node"><strong>Bisq Easy on Google Play</strong></a>
+  <a href="https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)">Learn how to use Bisq Connect</a>
 </p>
-
-- **Bisq Connect for Android (trusted node client):**
-  - Learn how to use Bisq Connect: https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)
-
-<p align="center">
-  <!-- Bisq Connect (Android) - enable link when Play listing is live -->
-  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.client">
-    <img
-      alt="Get Bisq Connect on Google Play"
-      src="docs/listings/connect/android/ic_playstore.png"
-      height="60" />
-  </a>
-  <br/>
-  <a href="https://play.google.com/store/apps/details?id=network.bisq.mobile.client"><strong>Bisq Connect on Google Play</strong></a>
-</p>
-
-- **Bisq Connect for iOS:**
-  Planned for the end of this year (out-of-store distribution). See the wiki:
-  https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)
 
 
 ## Docs Index
@@ -65,6 +64,7 @@
    - [UI independently built](#ui-independently-built)
    - [Encourage Rich Domain well-test models](#encourage-rich-domain-well-test-models)
    - [Presenters guide the orchestra](#presenters-guide-the-orchestra)
+   - [Use Cases encapsulate complex workflows](#use-cases-encapsulate-complex-workflows)
    - [Repositories key for reactive UI](#repositories-key-for-reactive-ui)
    - [Services allow us to have different networking sources](#services-allow-us-to-have-different-networking-sources)
    - [What about Lifecycle and main view components](#what-about-lifecycle-and-main-view-components)
@@ -236,14 +236,15 @@ Though this can evolve, this is the initial structure of this KMP project:
 
 ![Apps Design Architecture](docs/bisqapps_design_arch.png)
 
-This project uses the [MVP](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93presenter) (Model-View-Presenter) Design Pattern with small variations (__introducing Repositories & we allow reusal of presenters under specific conditions__) in the following way:
+This project uses the [MVP](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93presenter) (Model-View-Presenter) Design Pattern with variations (__introducing Use Cases, Repositories, and allowing reuse of presenters under specific conditions__) in the following way:
 
- - **Dumb Views**: Each View will define it's desired presenter behaviour. For example, for the `AppView` it would define the `AppPresenter` interface. This includes which data its interested in observing and the commands it needs to trigger from user interactions.
- - **UI indepdently built**The view will react to changes in the presenter observed data, and call the methods it needs to inform the presenter about user actions. In this way __each view can be created idependently without strictly needing anything else__
- - **Encourage Rich Domain well-test models** Same goes for the Models, they can be built (and unit tested) without needing anything else, simple POKOs (Plain Old Kotlin Objects - meaning no external deps). Ideally business logic should go here and the result of executing a business model logic should be put back into the repository for all observers to know.
- - **Presenters guide the orchestra** When you want to bring interaction to life, create a presenter (or reuse one if the view is small enough) and implement the interface you defined when doing the view (`AppPresenter` interface for example). That presenter will generally modify/observe the models through a repository and/or a service. The most important thing is that mutable/unmutable observability should happen here connecting those fields that the view needs with the real data as appropiate case-by-case.
- - **Repositories key for reactive UI** Now for the presenter to connect to the domain models we use repositories which is basically a storage of data (that abstracts where that data is stored in). The repositories also expose the data in an observable way, so the presenter can satisfy the requested data from the view from the data of the domain model in the ways it see fit. Sometimes it would just be a pathrough. The resposities could also have caching strategy, and persistance. For most of the use cases so far we don't see a strong need for persistance in most of them (with the exception of settings-related repositories) - more on this soon
- - **Services allow us to have different networking sources** we are developing 3 apps divided in 2 groups: `node` and `client`. Each group has a very distinct networking setup. We need each type of app build to have only the networking it needs. The proposed separation of concerns not only allows a clean architecture but also allows faster development focus on each complexity separately. We found that for the `androidNode` it makes sense to handle all the domain stuff directly using domain models in the services without connecting to a repository since the bisq-core jars manage all the persistance. You have the option to decide how to connect this in your presenter.
+ - **Dumb Views**: Each View defines its desired presenter behaviour. For example, for the `AppView` it would define the `AppPresenter` interface. This includes which data it's interested in observing and the commands it needs to trigger from user interactions.
+ - **UI independently built**: The view reacts to changes in the presenter observed data, and calls the methods it needs to inform the presenter about user actions. In this way __each view can be created independently without strictly needing anything else__.
+ - **Encourage Rich Domain well-tested models**: Same goes for the Models — they can be built (and unit tested) without needing anything else, simple POKOs (Plain Old Kotlin Objects — meaning no external deps). Ideally business logic should go here and the result of executing a business model logic should be put back into the repository for all observers to know.
+ - **Presenters guide the orchestra**: When you want to bring interaction to life, create a presenter (or reuse one if the view is small enough) and implement the interface you defined when doing the view (`AppPresenter` interface for example). That presenter will generally modify/observe the models through a repository and/or a service. The most important thing is that mutable/immutable observability should happen here connecting those fields that the view needs with the real data as appropriate case-by-case.
+ - **Use Cases encapsulate complex workflows**: (`NEW!`) When a presenter needs to orchestrate a multi-step process involving several services and repositories, that logic is extracted into a **Use Case** class. Use cases own their own `StateFlow`-based state, coordinate services and repositories in sequence, and expose a clean `execute()` entry point. Presenters observe the use case state and delegate complex operations to it. This keeps presenters lean (focused on UI state mapping) and makes the workflow logic independently testable and reusable across multiple presenters. See `TrustedNodeSetupUseCase` for a reference implementation.
+ - **Repositories key for reactive UI**: For the presenter (or use case) to connect to the domain models we use repositories which is basically a storage of data (that abstracts where that data is stored in). The repositories also expose the data in an observable way, so the presenter can satisfy the requested data from the view from the data of the domain model in the ways it see fit. Sometimes it would just be a passthrough. The repositories could also have caching strategy, and persistence. For most of the use cases so far we don't see a strong need for persistence in most of them (with the exception of settings-related repositories) — more on this soon.
+ - **Services allow us to have different networking sources**: We are developing 3 apps divided in 2 groups: `node` and `client`. Each group has a very distinct networking setup. We need each type of app build to have only the networking it needs. The proposed separation of concerns not only allows a clean architecture but also allows faster development focus on each complexity separately. We found that for the `androidNode` it makes sense to handle all the domain stuff directly using domain models in the services without connecting to a repository since the bisq-core jars manage all the persistence. You have the option to decide how to connect this in your presenter.
 
 
 ### What about Lifecycle and main view components
@@ -278,5 +279,3 @@ Then you can inject it in the `@Composable` function using `koinInject()`.
 - Kotlin Compose UI allows us to share UI code easily across the 3 apps.
 
 If you are interested in seeing the POCs related to the R&D before this project kicked-off please refer to [this branch](https://github.com/bisq-network/bisq-mobile/tree/pocs)
-
-This project is tested with BrowserStack
