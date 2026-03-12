@@ -1,12 +1,12 @@
 package network.bisq.mobile.client.common.domain.service.bootstrap
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -17,6 +17,7 @@ import network.bisq.mobile.i18n.i18n
 class ClientApplicationBootstrapFacade(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val webSocketClientService: WebSocketClientService,
+    private val httpClientService: HttpClientService,
     kmpTorService: KmpTorService,
     private val sessionService: SessionService,
 ) : ApplicationBootstrapFacade(kmpTorService) {
@@ -70,7 +71,7 @@ class ClientApplicationBootstrapFacade(
                         setProgress(0.5f)
                         setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
                         serviceScope.launch {
-                            delay(100)
+                            httpClientService.awaitClientReady()
                             connect()
                         }
                         return@launch
@@ -96,8 +97,8 @@ class ClientApplicationBootstrapFacade(
                         sensitiveSettingsRepository.update { updatedSettings }
 
                         serviceScope.launch {
-                            // Without delay its not working
-                            delay(100)
+                            // Wait for HttpClientService to pick up new sessionId
+                            httpClientService.awaitClientReady()
                             connect()
                         }
                     } else {
