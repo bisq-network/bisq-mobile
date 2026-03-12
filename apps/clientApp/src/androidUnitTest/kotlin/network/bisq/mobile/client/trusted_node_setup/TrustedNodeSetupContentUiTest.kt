@@ -694,10 +694,11 @@ class TrustedNodeSetupContentUiTest {
             )
         }
 
-        // Then
+        // Then - scroll to button first since auto-scroll may have moved viewport
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("mobile.trustedNodeSetup.pairingCode.scan".i18n())
+            .performScrollTo()
             .assertIsDisplayed()
             .assertIsNotEnabled()
     }

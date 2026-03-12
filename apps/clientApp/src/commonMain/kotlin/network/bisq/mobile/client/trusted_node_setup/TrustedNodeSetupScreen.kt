@@ -151,11 +151,19 @@ private fun TrustedNodeSetupMainContent(
     isWorkflow: Boolean,
     paddingValues: PaddingValues,
 ) {
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(uiState.isConnectionInProgress()) {
+        if (uiState.isConnectionInProgress()) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(paddingValues)
                 .padding(16.dp),
     ) {
