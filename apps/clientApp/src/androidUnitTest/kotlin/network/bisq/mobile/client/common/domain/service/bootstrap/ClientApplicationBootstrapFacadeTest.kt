@@ -14,6 +14,7 @@ import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
+import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -33,6 +34,7 @@ class ClientApplicationBootstrapFacadeTest : KoinTest {
 
     private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
     private lateinit var webSocketClientService: WebSocketClientService
+    private lateinit var httpClientService: HttpClientService
     private lateinit var kmpTorService: KmpTorService
     private lateinit var sessionService: SessionService
     private lateinit var facade: ClientApplicationBootstrapFacade
@@ -69,10 +71,14 @@ class ClientApplicationBootstrapFacadeTest : KoinTest {
         coEvery { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
         coEvery { webSocketClientService.connect() } returns null
 
+        httpClientService = mockk(relaxed = true)
+        coEvery { httpClientService.awaitClientReady(any()) } returns true
+
         facade =
             ClientApplicationBootstrapFacade(
                 sensitiveSettingsRepository,
                 webSocketClientService,
+                httpClientService,
                 kmpTorService,
                 sessionService,
             )
