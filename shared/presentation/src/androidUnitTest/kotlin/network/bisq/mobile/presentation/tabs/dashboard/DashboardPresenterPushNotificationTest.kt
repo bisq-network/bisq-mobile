@@ -13,8 +13,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.domain.PlatformInfo
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -52,6 +55,14 @@ class DashboardPresenterPushNotificationTest {
         Dispatchers.setMain(testDispatcher)
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
+
+        // Mock platform as iOS since push notification logic is iOS-only
+        mockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
+        every { getPlatformInfo() } returns
+            object : PlatformInfo {
+                override val name = "iOS"
+                override val type = PlatformType.IOS
+            }
 
         val koinModule =
             module {
@@ -102,6 +113,7 @@ class DashboardPresenterPushNotificationTest {
         stopKoin()
         Dispatchers.resetMain()
         unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        unmockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
     }
 
     @Test
@@ -172,5 +184,21 @@ class DashboardPresenterPushNotificationTest {
 
             coVerify(exactly = 0) { pushNotificationServiceFacade.unregisterFromPushNotifications() }
             coVerify(exactly = 0) { pushNotificationServiceFacade.registerForPushNotifications() }
+        }
+
+    @Test
+    fun `Android platform skips push notification registration entirely`() =
+        runBlocking {
+            // Override platform mock to Android
+            every { getPlatformInfo() } returns
+                object : PlatformInfo {
+                    override val name = "Android"
+                    override val type = PlatformType.ANDROID
+                }
+
+            presenter.saveNotificationPermissionState(PermissionState.GRANTED)
+
+            coVerify(exactly = 0) { pushNotificationServiceFacade.registerForPushNotifications() }
+            coVerify(exactly = 0) { pushNotificationServiceFacade.unregisterFromPushNotifications() }
         }
 }

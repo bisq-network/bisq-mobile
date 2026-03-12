@@ -125,6 +125,9 @@ open class DashboardPresenter(
     }
 
     fun saveNotificationPermissionState(state: PermissionState) {
+        if (!isIOS()) {
+            return
+        }
         presenterScope.launch {
             settingsRepository.setNotificationPermissionState(state)
 
