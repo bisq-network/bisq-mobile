@@ -45,7 +45,7 @@ fun BisqSnackbar(snackbarHostState: SnackbarHostState) {
                 when (type) {
                     SnackbarType.ERROR -> BisqTheme.colors.danger
                     SnackbarType.WARNING -> BisqTheme.colors.warning
-                    SnackbarType.SUCCESS -> BisqTheme.colors.secondary
+                    SnackbarType.SUCCESS -> BisqTheme.colors.primaryDim
                 }.copy(alpha = 0.95f)
 
             val contentColor =
