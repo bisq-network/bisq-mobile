@@ -70,7 +70,11 @@
    - [What about Lifecycle and main view components](#what-about-lifecycle-and-main-view-components)
    - [When it’s acceptable to reuse a presenter for my view](#when-its-acceptable-to-reuse-a-presenter-for-my-view)
 
-4. [Why KMP](#why-kmp)
+4. [Push Notifications](#push-notifications)
+   - [Android: Decentralized P2P monitoring](#android-decentralized-p2p-monitoring)
+   - [iOS (Bisq Connect): E2E encrypted relay via APNs](#ios-bisq-connect-e2e-encrypted-relay-via-apns)
+
+5. [Why KMP](#why-kmp)
 
 ## Goal
 
@@ -269,6 +273,46 @@ It's ok to reuse an existing presenter for your view if:
 To reuse an existing presenter you would have to make it extend your view defined presenter interface and do the right `Koin bind` on its Koin repository definition.
 
 Then you can inject it in the `@Composable` function using `koinInject()`.
+
+## Push Notifications
+
+The project implements two distinct push notification strategies, each with different trade-offs between decentralization and reliability.
+
+### Android: Decentralized P2P monitoring
+
+Both Android apps (Bisq Easy Node and Bisq Connect) use a fully **decentralized, peer-to-peer foreground service** approach. The `OpenTradesNotificationService` runs as an Android foreground service, maintaining a persistent notification while monitoring trade state changes and new chat messages in real time over the existing WebSocket/P2P connection.
+
+**How it works:**
+
+- On app start, a foreground service is launched immediately (before heavy initialization) to satisfy Android's strict timing requirements
+- The service observes trade flows and chat messages via `TradesServiceFacade` and `OffersServiceFacade`
+- When the app moves to the background, the foreground service keeps the connection alive and delivers local notifications for trade events (state changes, new messages, new trades taken)
+- No external servers are involved — notifications are generated entirely on-device from live P2P data
+
+**Trade-off:** This approach is fully private and decentralized — no third-party servers ever see your trade activity. However, if the app is fully killed (e.g. the user swipes it away, or the device restarts), the foreground service stops and no notifications will be delivered until the user opens the app again. Android's OS-level restrictions on background execution make this an inherent limitation of the decentralized approach.
+
+### iOS (Bisq Connect): E2E encrypted relay via APNs
+
+iOS does not allow apps to maintain persistent background connections — the OS suspends apps within seconds of backgrounding and terminates WebSocket connections. A decentralized monitoring approach like Android's is not feasible on iOS.
+
+To provide reliable push notifications on iOS, Bisq Connect uses **Apple Push Notification service (APNs)** with end-to-end encryption, following a model similar to Signal and ProtonMail. This was the most privacy-preserving solution that still delivers a top-class notification experience.
+
+**How it works:**
+
+1. The iOS device generates a device-specific encryption key pair and stores the private key locally
+2. During registration, the device shares its public key and APNs device token with the trusted Bisq2 node
+3. When a trade event occurs, the Bisq2 node encrypts the notification payload using the device's public key
+4. The encrypted payload is forwarded to a **bisq-relay server** ([bisq-relay project](https://github.com/bisq-network/bisq-relay)) which passes it to APNs
+5. APNs routes the notification to the iOS device
+6. The app decrypts the payload locally using its private key
+
+**What is protected:**
+- The notification content (trade details, messages) is **end-to-end encrypted** — neither the relay server nor Apple can read it
+- Only the generic notification metadata and timing/frequency are visible to Apple (this is unavoidable with APNs)
+
+**Trade-off:** This delivers reliable, always-on push notifications even when the app is fully killed. The cost is the introduction of centralized infrastructure: a 24/7 **bisq-relay server** and Apple's APNs servers sit in the notification path. While neither can see the notification content thanks to E2E encryption, they do participate in the delivery chain, which is a departure from Bisq's fully decentralized philosophy for this specific platform.
+
+For more details on the iOS implementation design, see [issue #895](https://github.com/bisq-network/bisq-mobile/issues/895).
 
 ## Why KMP
 
