@@ -125,18 +125,17 @@ open class DashboardPresenter(
     }
 
     fun saveNotificationPermissionState(state: PermissionState) {
-        if (!isIOS()) {
-            return
-        }
         presenterScope.launch {
             settingsRepository.setNotificationPermissionState(state)
 
-            if (state == PermissionState.GRANTED) {
-                registerForPushNotifications()
-            } else if (state == PermissionState.NOT_GRANTED || state == PermissionState.DENIED) {
-                // User revoked notification permission (e.g. from iOS Settings).
-                // Reset registration state so re-enabling triggers re-registration.
-                pushNotificationServiceFacade.unregisterFromPushNotifications()
+            if (isIOS()) {
+                if (state == PermissionState.GRANTED) {
+                    registerForPushNotifications()
+                } else if (state == PermissionState.NOT_GRANTED || state == PermissionState.DENIED) {
+                    // User revoked notification permission (e.g. from iOS Settings).
+                    // Reset registration state so re-enabling triggers re-registration.
+                    pushNotificationServiceFacade.unregisterFromPushNotifications()
+                }
             }
         }
     }
