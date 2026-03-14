@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

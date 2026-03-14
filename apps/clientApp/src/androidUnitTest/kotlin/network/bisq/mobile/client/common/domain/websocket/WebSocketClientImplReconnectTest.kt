@@ -26,6 +26,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class WebSocketClientImplReconnectTest {
     private val testDispatcher = StandardTestDispatcher()
+
     private lateinit var testScope: TestScope
     private lateinit var json: Json
     private val apiUrl = Url("http://localhost:8080")
@@ -33,6 +34,7 @@ class WebSocketClientImplReconnectTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+
         testScope = TestScope(testDispatcher + SupervisorJob())
         json = Json { ignoreUnknownKeys = true }
     }

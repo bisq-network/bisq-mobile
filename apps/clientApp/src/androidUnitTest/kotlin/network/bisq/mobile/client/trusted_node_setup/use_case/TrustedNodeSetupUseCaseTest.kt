@@ -37,8 +37,8 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import org.junit.After
+import org.junit.Before
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -96,9 +96,10 @@ class TrustedNodeSetupUseCaseTest {
             torClientAuthSecret = null,
         )
 
-    @BeforeTest
+    @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+
         I18nSupport.setLanguage()
 
         // Setup mocks
@@ -134,7 +135,7 @@ class TrustedNodeSetupUseCaseTest {
         every { wsClientService.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
     }
 
-    @AfterTest
+    @After
     fun tearDown() {
         Dispatchers.resetMain()
     }

@@ -21,6 +21,7 @@ val appName = project.findProperty("node.name") as String
 // -------------------- Module References --------------------
 val sharedPresentationModule = ":shared:presentation"
 val sharedDomainModule = ":shared:domain"
+val sharedTestUtilsModule = ":shared:test-utils"
 val nodeAppModuleName = "nodeApp"
 
 // -------------------- Kotlin Multiplatform Configuration --------------------
@@ -63,6 +64,9 @@ kotlin {
             implementation(libs.junit)
             implementation(libs.mockk)
             implementation(libs.robolectric)
+
+            // Test utilities
+            implementation(project(sharedTestUtilsModule))
         }
     }
 }

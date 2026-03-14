@@ -20,11 +20,11 @@ import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeD
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.EnvironmentController
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -41,7 +41,7 @@ class ApiAccessServiceTest {
     // Fake repository for testing
     private val settingsFlow = MutableStateFlow(SensitiveSettings())
 
-    @BeforeTest
+    @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
@@ -80,7 +80,7 @@ class ApiAccessServiceTest {
             )
     }
 
-    @AfterTest
+    @After
     fun tearDown() {
         stopKoin()
         Dispatchers.resetMain()

@@ -12,8 +12,8 @@ import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import network.bisq.mobile.domain.di.testModule
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.test.KoinTest

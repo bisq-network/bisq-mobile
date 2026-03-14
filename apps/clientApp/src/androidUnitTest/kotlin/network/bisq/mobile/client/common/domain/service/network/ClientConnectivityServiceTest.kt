@@ -29,12 +29,14 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientConnectivityServiceTest {
     private val testDispatcher = StandardTestDispatcher()
+
     private lateinit var clientConnectivityService: ClientConnectivityService
     private lateinit var webSocketClientService: WebSocketClientService
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+
         startKoin { modules(commonTestModule) }
         webSocketClientService = mockk(relaxed = true)
         // Default: health check passes when connected

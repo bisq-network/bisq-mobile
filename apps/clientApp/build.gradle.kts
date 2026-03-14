@@ -24,6 +24,7 @@ val clientAppModuleName = "clientApp"
 val sharedPresentationModule = ":shared:presentation"
 val sharedDomainModule = ":shared:domain"
 val sharedKScanModule = ":shared:kscan"
+val sharedTestUtilsModule = ":shared:test-utils"
 
 dependencies {
     debugImplementation(compose.uiTooling)
@@ -185,6 +186,9 @@ kotlin {
             implementation(libs.junit)
             implementation(libs.mockk)
             implementation(libs.robolectric)
+
+            // Test utilities
+            implementation(project(sharedTestUtilsModule))
         }
     }
 }

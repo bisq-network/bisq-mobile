@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.data.repository
+package network.bisq.mobile.test.mocks
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,6 +9,7 @@ import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketSortBy
 import network.bisq.mobile.domain.data.model.PermissionState
 import network.bisq.mobile.domain.data.model.Settings
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
 
 class SettingsRepositoryMock :

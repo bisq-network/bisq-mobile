@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.common.test_utils
+package network.bisq.mobile.test.mocks
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

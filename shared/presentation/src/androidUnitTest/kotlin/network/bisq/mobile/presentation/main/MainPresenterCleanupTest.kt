@@ -9,7 +9,6 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -23,7 +22,6 @@ import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
-import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import org.koin.core.context.startKoin
@@ -65,8 +63,8 @@ class MainPresenterCleanupTest {
     @AfterTest
     fun tearDown() {
         stopKoin()
-        Dispatchers.resetMain()
         unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+        Dispatchers.resetMain()
     }
 
     @Test

@@ -29,11 +29,11 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import org.junit.After
+import org.junit.Before
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -50,7 +50,7 @@ class ClientMainPresenterTest {
     private lateinit var applicationLifecycleService: ApplicationLifecycleService
     private lateinit var urlLauncher: UrlLauncher
 
-    @BeforeTest
+    @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
@@ -94,7 +94,7 @@ class ClientMainPresenterTest {
         }
     }
 
-    @AfterTest
+    @After
     fun tearDown() {
         stopKoin()
         Dispatchers.resetMain()

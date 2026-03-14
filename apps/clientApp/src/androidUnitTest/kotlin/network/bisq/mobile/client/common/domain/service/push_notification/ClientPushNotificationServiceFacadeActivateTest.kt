@@ -22,9 +22,9 @@ import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.main.ApplicationContextProvider
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.junit.Test
 import org.koin.core.module.Module
 import org.koin.dsl.module

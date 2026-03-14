@@ -11,7 +11,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -56,7 +55,7 @@ class ApiAccessServiceDemoModeTest {
         }
 
     @Before
-    fun setup() {
+    fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
         // Start Koin with test module
@@ -93,8 +92,8 @@ class ApiAccessServiceDemoModeTest {
     @After
     fun tearDown() {
         stopKoin()
-        Dispatchers.resetMain()
         ApplicationBootstrapFacade.isDemo = false
+        Dispatchers.resetMain()
     }
 
     @Test

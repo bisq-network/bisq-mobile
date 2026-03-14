@@ -7,7 +7,6 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -32,11 +31,11 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
+import org.junit.After
+import org.junit.Before
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 /**
@@ -61,7 +60,7 @@ class ClientSplashPresenterNavigationTest {
     private val torBootstrapFailedFlow = MutableStateFlow(false)
     private val bootstrapFailedFlow = MutableStateFlow(false)
 
-    @BeforeTest
+    @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
@@ -111,7 +110,7 @@ class ClientSplashPresenterNavigationTest {
         }
     }
 
-    @AfterTest
+    @After
     fun tearDown() {
         ApplicationBootstrapFacade.isDemo = false
         torBootstrapFailedFlow.value = false

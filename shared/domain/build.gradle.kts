@@ -86,6 +86,9 @@ buildConfig {
 //    buildConfigField("com.github.gmazzo.buildconfig.demos.kts.SomeData", "DATA", "SomeData(\"a\", 1)")
 }
 
+// -------------------- Module References --------------------
+val sharedTestUtilsModule = ":shared:test-utils"
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -142,6 +145,9 @@ kotlin {
 
             // Koin
             implementation(libs.koin.test)
+
+            // Test utilities
+            implementation(project(sharedTestUtilsModule))
         }
 
         androidUnitTest.dependencies {

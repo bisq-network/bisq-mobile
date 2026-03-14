@@ -23,9 +23,9 @@ import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.main.ApplicationContextProvider
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -36,6 +36,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientPushNotificationServiceFacadeIntegrationTest {
     private val testDispatcher = StandardTestDispatcher()
+
     private lateinit var facade: ClientPushNotificationServiceFacade
     private lateinit var apiGateway: PushNotificationApiGateway
     private lateinit var settingsRepository: SettingsRepositoryMock
@@ -65,7 +66,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
         )
 
     @Before
-    fun setup() {
+    fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
         // Setup Android context mock for getDeviceId()
@@ -97,8 +98,8 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
 
     @After
     fun tearDown() {
-        Dispatchers.resetMain()
         unmockkStatic(Settings.Secure::class)
+        Dispatchers.resetMain()
     }
 
     @Test

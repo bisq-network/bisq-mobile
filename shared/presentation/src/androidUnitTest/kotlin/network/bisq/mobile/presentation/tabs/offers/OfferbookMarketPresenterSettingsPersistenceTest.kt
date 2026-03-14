@@ -12,13 +12,13 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.data.model.MarketFilter
 import network.bisq.mobile.domain.data.model.MarketSortBy
-import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.OfferbookMarketPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module

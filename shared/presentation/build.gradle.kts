@@ -20,6 +20,9 @@ dependencies {
 
 version = project.findProperty("shared.version") as String
 
+// -------------------- Module References --------------------
+val sharedTestUtilsModule = ":shared:test-utils"
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -95,6 +98,9 @@ kotlin {
             implementation(libs.junit)
             implementation(libs.mockk)
             implementation(libs.robolectric)
+
+            // Test utilities
+            implementation(project(sharedTestUtilsModule))
         }
 
         val commonTest by getting {
@@ -105,6 +111,9 @@ kotlin {
                 // Compose
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.uiTest)
+
+                // Test utilities
+                implementation(project(sharedTestUtilsModule))
             }
         }
     }

@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -20,16 +19,15 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
+import org.junit.After
+import org.junit.Before
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
-import org.koin.test.KoinTest
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientApplicationBootstrapFacadeTest : KoinTest {
+class ClientApplicationBootstrapFacadeTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
@@ -41,9 +39,10 @@ class ClientApplicationBootstrapFacadeTest : KoinTest {
 
     private val settingsFlow = MutableStateFlow(SensitiveSettings())
 
-    @BeforeTest
+    @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+
         startKoin { modules(commonTestModule) }
         ApplicationBootstrapFacade.isDemo = false
 
@@ -84,11 +83,11 @@ class ClientApplicationBootstrapFacadeTest : KoinTest {
             )
     }
 
-    @AfterTest
+    @After
     fun tearDown() {
         stopKoin()
-        Dispatchers.resetMain()
         ApplicationBootstrapFacade.isDemo = false
+        Dispatchers.resetMain()
     }
 
     // ========== Demo Mode Detection Tests ==========

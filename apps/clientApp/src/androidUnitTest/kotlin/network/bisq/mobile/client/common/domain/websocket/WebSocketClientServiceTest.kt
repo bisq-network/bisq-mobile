@@ -35,6 +35,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class WebSocketClientServiceTest {
     private val testDispatcher = StandardTestDispatcher()
+
     private lateinit var webSocketClientService: WebSocketClientService
     private lateinit var httpClientService: HttpClientService
     private lateinit var webSocketClientFactory: WebSocketClientFactory
@@ -46,6 +47,7 @@ class WebSocketClientServiceTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+
         startKoin { modules(commonTestModule) }
 
         httpClientService = mockk(relaxed = true)

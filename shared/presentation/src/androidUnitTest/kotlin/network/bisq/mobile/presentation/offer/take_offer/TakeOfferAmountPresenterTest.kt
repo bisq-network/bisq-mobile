@@ -38,7 +38,6 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import network.bisq.mobile.domain.service.ForegroundDetector
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -57,6 +56,7 @@ import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecyc
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module

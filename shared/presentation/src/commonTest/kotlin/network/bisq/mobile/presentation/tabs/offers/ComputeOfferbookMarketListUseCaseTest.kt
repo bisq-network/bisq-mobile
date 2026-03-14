@@ -8,10 +8,10 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

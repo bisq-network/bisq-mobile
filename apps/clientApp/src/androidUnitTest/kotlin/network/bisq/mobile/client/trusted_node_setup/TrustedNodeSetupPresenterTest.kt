@@ -36,11 +36,11 @@ import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
+import org.junit.After
+import org.junit.Before
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -84,7 +84,7 @@ class TrustedNodeSetupPresenterTest {
             torClientAuthSecret = null,
         )
 
-    @BeforeTest
+    @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
@@ -117,7 +117,7 @@ class TrustedNodeSetupPresenterTest {
         every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
     }
 
-    @AfterTest
+    @After
     fun tearDown() {
         try {
             stopKoin()
