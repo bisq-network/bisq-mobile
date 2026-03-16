@@ -198,4 +198,68 @@ class GlobalUiManagerTest {
             // Then: Dialog hidden
             assertFalse(globalUiManager.showLoadingDialog.value)
         }
+
+    @Test
+    fun initialState_isLoadingBlockingIsFalse() {
+        // Given
+        val globalUiManager = GlobalUiManager(testDispatcher)
+
+        // Then
+        assertFalse(globalUiManager.isLoadingBlocking.value)
+    }
+
+    @Test
+    fun scheduleShowLoading_isLoadingBlockingIsTrueImmediately() =
+        runTest(testDispatcher) {
+            // Given
+            val globalUiManager = GlobalUiManager(testDispatcher)
+
+            // When
+            globalUiManager.scheduleShowLoading()
+
+            // Then: isLoadingBlocking is true immediately (no grace delay)
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+            // But showLoadingDialog is still false (grace delay not expired)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+        }
+
+    @Test
+    fun hideLoading_setsIsLoadingBlockingToFalse() =
+        runTest(testDispatcher) {
+            // Given
+            val globalUiManager = GlobalUiManager(testDispatcher)
+
+            // When: Schedule and verify blocking is active
+            globalUiManager.scheduleShowLoading()
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+
+            // When: Hide loading
+            globalUiManager.hideLoading()
+
+            // Then: Both states are false
+            assertFalse(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+        }
+
+    @Test
+    fun scheduleShowLoading_afterGraceDelay_bothStatesTrue() =
+        runTest(testDispatcher) {
+            // Given
+            val globalUiManager = GlobalUiManager(testDispatcher)
+
+            // When
+            globalUiManager.scheduleShowLoading()
+
+            // Then: Initially blocking is true, dialog is false
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+
+            // When: Wait for grace delay (150ms)
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
+
+            // Then: Both states are true
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+            assertTrue(globalUiManager.showLoadingDialog.value)
+        }
 }

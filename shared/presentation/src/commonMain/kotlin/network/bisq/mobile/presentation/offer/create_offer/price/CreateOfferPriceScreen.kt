@@ -102,7 +102,7 @@ fun CreateOfferPriceScreen() {
                         validation = {
                             val parsedValue = it.toDoubleOrNullLocaleAware()
                             if (parsedValue == null) {
-                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.cannotBeEmpty".i18n()
+                                return@BisqTextField "mobile.validation.valueCannotBeEmpty".i18n()
                             } else if (parsedValue < -10) {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeGreaterThanMarketPrice".i18n()
                             } else if (parsedValue > 50) {
@@ -127,7 +127,7 @@ fun CreateOfferPriceScreen() {
                         onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
                         validation = {
                             it.toDoubleOrNullLocaleAware()
-                                ?: return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.cannotBeEmpty".i18n()
+                                ?: return@BisqTextField "mobile.validation.valueCannotBeEmpty".i18n()
                             // calculatePercentageForFixedValue returns a fraction (e.g. 0.1 for 10%),
                             // convert to display percentage to match the constants used by the slider/percentage tab.
                             val parsedPercent = presenter.calculatePercentageForFixedValue(it) * 100

@@ -276,6 +276,8 @@ class TrustedNodeSetupUseCase(
             }
 
             else -> {
+                // String comparison used intentionally: ConnectException/SocketException are JVM-only
+                // and not available on iOS. iOS-specific network exceptions should be handled similarly when identified.
                 if (error::class.simpleName == "ConnectException" || error::class.simpleName == "SocketException") {
                     updateState(
                         TrustedNodeConnectionStatus.Failed(
