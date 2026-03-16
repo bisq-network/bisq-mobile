@@ -7,14 +7,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.StarRating
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.LanguageIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 
 @Composable
 fun UserProfile(
@@ -47,7 +51,13 @@ fun UserProfile(
         Row(verticalAlignment = Alignment.CenterVertically) {
             LanguageIcon()
             BisqText.SmallRegularGrey(" : ")
-            BisqText.SmallRegular(supportedLanguageCodes.joinToString(", ").uppercase())
+            AutoResizeText(
+                text = supportedLanguageCodes.joinToString(", ").uppercase(),
+                overflow = TextOverflow.Ellipsis,
+                textStyle = BisqTheme.typography.smallRegular,
+                maxLines = 2,
+                minimumFontSize = 10.sp,
+            )
         }
     }
 }

@@ -44,7 +44,6 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
-import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -221,6 +220,7 @@ private fun createMockOfferItem(
     userName: String = "Satoshi",
     formattedQuoteAmount: String = "500 EUR",
     formattedPrice: String = "50,000",
+    supportedLanguageCodes: List<String> = listOf("en"),
 ): OfferItemPresentationModel {
     val userProfile = createMockUserProfile(userName)
     val market = MarketVO("BTC", "EUR", "Bitcoin", "Euro")
@@ -244,7 +244,7 @@ private fun createMockOfferItem(
             baseSidePaymentMethodSpecs = emptyList(),
             quoteSidePaymentMethodSpecs = emptyList(),
             offerOptions = emptyList(),
-            supportedLanguageCodes = listOf("en"),
+            supportedLanguageCodes = supportedLanguageCodes,
         )
     val reputationScore =
         ReputationScoreVO(
@@ -381,6 +381,47 @@ private fun OfferCard_LongUserNamePreview() {
                     userName = "Max100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100CharMax100Char",
                     formattedQuoteAmount = "1,500 EUR",
                     formattedPrice = "53,000",
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_ManySupportedLanguageCodesPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    userName = "PolyglotTrader",
+                    formattedQuoteAmount = "750 EUR",
+                    formattedPrice = "50,500",
+                    supportedLanguageCodes = listOf("en", "de", "es"),
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_MyOfferManySupportedLanguageCodesPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.BUY,
+                    isMyOffer = true,
+                    userName = "MyPolyglotUser",
+                    formattedQuoteAmount = "1,200 EUR",
+                    formattedPrice = "49,800",
+                    supportedLanguageCodes = listOf("en", "de", "es", "fr", "pt", "it", "nl", "tr", "pl", "ru"),
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
