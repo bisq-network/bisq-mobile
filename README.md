@@ -27,7 +27,7 @@
     </td>
     <td align="center">
       <!-- TODO: Replace with actual TestFlight link when available -->
-      <a href="https://bisq-network.github.io/bisq-mobile/">
+      <a href="https://testflight.apple.com/join/abBmehCw">
         <img alt="Download on TestFlight" src="https://developer.apple.com/assets/elements/icons/testflight/testflight-64x64_2x.png" height="50" />
       </a>
       <br/><em>TestFlight</em>
