@@ -436,7 +436,7 @@ fun CreateCryptoAccount_Step3_Review(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 PaymentMethodIcon(
-                    methodId = if (cryptoType == CryptoAccountType.MONERO) "XMR" else cryptoName,
+                    methodId = if (cryptoType == CryptoAccountType.MONERO) "XMR" else "OTHER",
                     isPaymentMethod = false,
                     size = BisqUIConstants.ScreenPadding2X,
                     contentDescription = displayCryptoName,

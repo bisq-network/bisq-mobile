@@ -139,7 +139,6 @@ enum class OpenPrivateChatVariant {
 /**
  * Stateless implementation. Renders either variant based on [variant] parameter.
  *
- * @param peerProfileId  Passed through to the click handler.
  * @param peerName       Used in accessibility labels.
  * @param isOpeningChat  True while the channel is being created/fetched.
  * @param variant        ICON_BUTTON or TEXT_BUTTON.
@@ -147,7 +146,6 @@ enum class OpenPrivateChatVariant {
  */
 @Composable
 fun OpenPrivateChatContent(
-    peerProfileId: String,
     peerName: String,
     isOpeningChat: Boolean,
     variant: OpenPrivateChatVariant,

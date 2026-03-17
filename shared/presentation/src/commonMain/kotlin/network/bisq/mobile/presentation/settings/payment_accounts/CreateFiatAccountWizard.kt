@@ -200,15 +200,13 @@ private val customFormFields =
  *   FlowRow of risk filter chips: [All] [Very Low] [Low] [Moderate]
  *   Vertical list of PaymentTypeCard rows (one per matching method)
  *
- * The filter chips use BisqChip with Outline type when selected to provide a
- * clear "active" state without requiring a separate selected/unselected design.
- * The "All" chip acts as a reset; selecting any risk-level chip deactivates "All".
+ * The filter chips use RiskFilterChip with outline/active state toggling.
+ * The "All" chip acts as a reset — selecting any risk-level chip deactivates "All",
+ * and selecting "All" clears the risk-level selection.
  *
- * PaymentTypeCard is reused from the create-offer wizard payment method step for
- * consistency. It shows: icon + method name. We add a chargeback risk badge to the
- * right end — this information is absent from the existing PaymentTypeCard, so we
- * extend the row with a trailing badge composable rather than modifying the shared
- * component.
+ * PaymentMethodSelectionRow extends the PaymentTypeCard visual pattern by adding a
+ * trailing chargeback-risk badge. This avoids modifying the shared PaymentTypeCard
+ * component while providing risk context inline.
  *
  * @param methods Full list of available payment methods to display
  * @param searchQuery Current search query string
@@ -691,6 +689,27 @@ fun CreateFiatAccountWizard_Step1Preview(
     var searchQuery by remember { mutableStateOf(initialSearch) }
     var activeFilter by remember { mutableStateOf(initialFilter) }
     var selectedMethodId by remember { mutableStateOf(initialSelectedMethodId) }
+
+    // Clear selection when filter/search hides the selected method
+    val visibleMethodIds =
+        methods
+            .filter { method ->
+                (searchQuery.isBlank() || method.displayName.contains(searchQuery, ignoreCase = true)) &&
+                    (
+                        activeFilter == RiskFilter.ALL || method.chargebackRisk ==
+                            when (activeFilter) {
+                                RiskFilter.VERY_LOW -> SimulatedChargebackRisk.VERY_LOW
+                                RiskFilter.LOW -> SimulatedChargebackRisk.LOW
+                                RiskFilter.MODERATE -> SimulatedChargebackRisk.MODERATE
+                                RiskFilter.ALL -> null
+                            }
+                    )
+            }.map { it.methodId }
+            .toSet()
+
+    if (selectedMethodId != null && selectedMethodId !in visibleMethodIds) {
+        selectedMethodId = null
+    }
 
     MultiScreenWizardScaffold(
         title = "Add Fiat Account",
