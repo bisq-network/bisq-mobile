@@ -523,7 +523,7 @@ private fun CryptoReviewRow(
  * Full wizard shell for Step 1 — crypto type selection.
  */
 @Composable
-fun CreateCryptoAccountWizard_Step1Preview(
+private fun CreateCryptoAccountWizard_Step1Preview(
     initialSelectedType: CryptoAccountType? = null,
 ) {
     var selectedType by remember { mutableStateOf(initialSelectedType) }
@@ -550,7 +550,7 @@ fun CreateCryptoAccountWizard_Step1Preview(
  * Full wizard shell for Step 2 — Monero form.
  */
 @Composable
-fun CreateCryptoAccountWizard_Step2MoneroPreview() {
+private fun CreateCryptoAccountWizard_Step2MoneroPreview() {
     var accountName by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
 
@@ -579,7 +579,7 @@ fun CreateCryptoAccountWizard_Step2MoneroPreview() {
  * Full wizard shell for Step 2 — Other Crypto form with error state.
  */
 @Composable
-fun CreateCryptoAccountWizard_Step2OtherPreview() {
+private fun CreateCryptoAccountWizard_Step2OtherPreview() {
     var accountName by remember { mutableStateOf("Litecoin Hot Wallet") }
     var cryptoName by remember { mutableStateOf("Litecoin") }
     var address by remember { mutableStateOf("invalid-address-entered-by-mistake") }
@@ -609,7 +609,7 @@ fun CreateCryptoAccountWizard_Step2OtherPreview() {
  * Full wizard shell for Step 3 — Monero review.
  */
 @Composable
-fun CreateCryptoAccountWizard_Step3MoneroPreview() {
+private fun CreateCryptoAccountWizard_Step3MoneroPreview() {
     MultiScreenWizardScaffold(
         title = "Add Crypto Account",
         stepIndex = 3,

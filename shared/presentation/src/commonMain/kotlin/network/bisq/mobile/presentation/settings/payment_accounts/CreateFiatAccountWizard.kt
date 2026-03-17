@@ -620,55 +620,7 @@ private fun ReviewFieldRow(
     }
 }
 
-// -------------------------------------------------------------------------------------
-// Chargeback risk badge (shared between steps 1 row and step 3 review)
-// Defined here because this file uses it — the same logic also lives in PaymentAccountCard.kt
-// In production, extract to a shared internal helper or a shared atom.
-// -------------------------------------------------------------------------------------
-
-@Composable
-private fun ChargebackRiskBadge(risk: SimulatedChargebackRisk) {
-    val riskColor =
-        when (risk) {
-            SimulatedChargebackRisk.VERY_LOW -> BisqTheme.colors.primary
-            SimulatedChargebackRisk.LOW -> BisqTheme.colors.warning
-            SimulatedChargebackRisk.MODERATE -> BisqTheme.colors.danger
-        }
-    val riskLabel =
-        when (risk) {
-            SimulatedChargebackRisk.VERY_LOW -> "Chargeback risk: Very Low"
-            SimulatedChargebackRisk.LOW -> "Chargeback risk: Low"
-            SimulatedChargebackRisk.MODERATE -> "Chargeback risk: Moderate"
-        }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
-        color = riskColor.copy(alpha = 0.12f),
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = BisqUIConstants.ScreenPadding,
-                        vertical = BisqUIConstants.ScreenPaddingHalf,
-                    ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-        ) {
-            Surface(
-                modifier =
-                    Modifier
-                        .padding(vertical = BisqUIConstants.ScreenPaddingQuarter)
-                        .size(width = 3.dp, height = 16.dp),
-                shape = RoundedCornerShape(2.dp),
-                color = riskColor,
-            ) {}
-            BisqText.SmallRegular(riskLabel, color = riskColor)
-        }
-    }
-}
+// ChargebackRiskBadge is defined in PaymentAccountCard.kt and used here via internal visibility.
 
 // -------------------------------------------------------------------------------------
 // Full wizard composables (for @Preview)
@@ -680,7 +632,7 @@ private fun ChargebackRiskBadge(risk: SimulatedChargebackRisk) {
  * Production implementation hoists state to a presenter.
  */
 @Composable
-fun CreateFiatAccountWizard_Step1Preview(
+private fun CreateFiatAccountWizard_Step1Preview(
     methods: List<SimulatedPaymentMethod> = allPaymentMethods,
     initialSearch: String = "",
     initialFilter: RiskFilter = RiskFilter.ALL,
@@ -738,7 +690,7 @@ fun CreateFiatAccountWizard_Step1Preview(
  * Full wizard shell for Step 2 — custom method form.
  */
 @Composable
-fun CreateFiatAccountWizard_Step2CustomPreview() {
+private fun CreateFiatAccountWizard_Step2CustomPreview() {
     var fieldValues by remember {
         mutableStateOf(mapOf("accountName" to "", "accountData" to ""))
     }
@@ -765,7 +717,7 @@ fun CreateFiatAccountWizard_Step2CustomPreview() {
  * Full wizard shell for Step 2 — structured method form (SEPA example).
  */
 @Composable
-fun CreateFiatAccountWizard_Step2StructuredPreview() {
+private fun CreateFiatAccountWizard_Step2StructuredPreview() {
     var fieldValues by remember {
         mutableStateOf(
             mapOf(
@@ -798,7 +750,7 @@ fun CreateFiatAccountWizard_Step2StructuredPreview() {
  * Full wizard shell for Step 3 — review and confirm.
  */
 @Composable
-fun CreateFiatAccountWizard_Step3Preview() {
+private fun CreateFiatAccountWizard_Step3Preview() {
     MultiScreenWizardScaffold(
         title = "Add Fiat Account",
         stepIndex = 3,

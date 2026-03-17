@@ -112,14 +112,14 @@ data class SimulatedCryptoAccount(
 // -------------------------------------------------------------------------------------
 
 @Composable
-private fun chargebackRiskColor(risk: SimulatedChargebackRisk): Color =
+internal fun chargebackRiskColor(risk: SimulatedChargebackRisk): Color =
     when (risk) {
         SimulatedChargebackRisk.VERY_LOW -> BisqTheme.colors.primary
         SimulatedChargebackRisk.LOW -> BisqTheme.colors.warning
         SimulatedChargebackRisk.MODERATE -> BisqTheme.colors.danger
     }
 
-private fun chargebackRiskLabel(risk: SimulatedChargebackRisk): String =
+internal fun chargebackRiskLabel(risk: SimulatedChargebackRisk): String =
     when (risk) {
         SimulatedChargebackRisk.VERY_LOW -> "Chargeback risk: Very Low"
         SimulatedChargebackRisk.LOW -> "Chargeback risk: Low"
@@ -194,7 +194,7 @@ private fun CurrencyBadge(currency: String) {
 }
 
 @Composable
-private fun ChargebackRiskBadge(risk: SimulatedChargebackRisk) {
+internal fun ChargebackRiskBadge(risk: SimulatedChargebackRisk) {
     val riskColor = chargebackRiskColor(risk)
 
     Surface(

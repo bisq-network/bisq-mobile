@@ -58,8 +58,7 @@
  *
  * ## Privacy consideration
  * The button should only be shown for profiles that are NOT the local user's own
- * profile. The presenter must enforce this. The view receives [isOwnProfile] and
- * renders nothing if true.
+ * profile. The presenter must enforce this by not rendering the button for own profiles.
  *
  * ## i18n
  * mobile.privateChats.openChat = "Send private message"
@@ -204,7 +203,8 @@ fun OpenPrivateChatIconButton(
 ) {
     val contentDesc = "mobile.privateChats.openChat".i18n() + " $peerName"
     IconButton(
-        onClick = { if (!isLoading) onClick() },
+        onClick = onClick,
+        enabled = !isLoading,
         modifier = modifier.semantics { contentDescription = contentDesc },
     ) {
         Surface(

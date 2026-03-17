@@ -25,6 +25,7 @@ abstract class NetworkServiceFacade(
             try {
                 kmpTorService.startTor()
             } catch (e: CancellationException) {
+                log.w { "Service Activation job cancelled, rethrowing exception" }
                 throw e
             } catch (e: Exception) {
                 log.e(e) { "Tor service failed to start" }
@@ -57,6 +58,7 @@ abstract class NetworkServiceFacade(
             try {
                 kmpTorService.startTor()
             } catch (e: CancellationException) {
+                log.w { "Ensure tor running job cancelled, rethrowing exception" }
                 throw e
             } catch (e: Exception) {
                 log.e(e) { "Failed to start Tor while ensuring it's running" }

@@ -73,8 +73,12 @@ class NetworkServiceFacadeTest : KoinTest {
     @Test
     fun `ensureTorRunning catches non-cancellation exception and returns`() =
         runTest {
-            val facade = createFacade(torEnabled = true)
-            coEvery { kmpTorService.startTor(any(), any()) } throws RuntimeException("tor error")
+            // Set up the throwing stub BEFORE creating the facade to avoid
+            // any interaction ordering issues with MockK's relaxed mock.
+            coEvery { kmpTorService.startTor(any(), any()) } answers { throw RuntimeException("tor error") }
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
+            every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
+            val facade = TestNetworkServiceFacade(kmpTorService, torEnabled = true)
             // Should not throw - exception is caught and logged
             facade.ensureTorRunning()
         }
