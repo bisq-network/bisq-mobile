@@ -128,7 +128,7 @@ enum class PaymentAccountTab {
  * @param selectedTab Currently selected tab (controls which list is shown)
  * @param fiatAccounts List of saved fiat accounts to display
  * @param cryptoAccounts List of saved crypto accounts to display
- * @param onTabSelected Called when the user switches tabs
+ * @param onTabSelect Called when the user switches tabs
  * @param onAddFiatAccountClick Called when "Add Fiat Account" is tapped
  * @param onAddCryptoAccountClick Called when "Add Crypto Account" is tapped
  * @param onEditFiatAccount Called with account when user taps Edit on a fiat card
@@ -142,7 +142,7 @@ fun PaymentAccountsRedesignContent(
     selectedTab: PaymentAccountTab,
     fiatAccounts: List<SimulatedFiatAccount>,
     cryptoAccounts: List<SimulatedCryptoAccount>,
-    onTabSelected: (PaymentAccountTab) -> Unit,
+    onTabSelect: (PaymentAccountTab) -> Unit,
     onAddFiatAccountClick: () -> Unit,
     onAddCryptoAccountClick: () -> Unit,
     onEditFiatAccount: (SimulatedFiatAccount) -> Unit,
@@ -151,34 +151,38 @@ fun PaymentAccountsRedesignContent(
     onDeleteCryptoAccount: (SimulatedCryptoAccount) -> Unit,
     topBar: @Composable () -> Unit = {},
 ) {
-    val tabItems = listOf(
-        PaymentAccountTab.FIAT to "Fiat",
-        PaymentAccountTab.CRYPTO to "Crypto",
-    )
+    val tabItems =
+        listOf(
+            PaymentAccountTab.FIAT to "Fiat",
+            PaymentAccountTab.CRYPTO to "Crypto",
+        )
 
     BisqScrollScaffold(
         topBar = topBar,
         bottomBar = {
             // Pinned add-account button — never scrolls out of reach
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = BisqUIConstants.ScreenPadding2X,
-                        vertical = BisqUIConstants.ScreenPadding,
-                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = BisqUIConstants.ScreenPadding2X,
+                            vertical = BisqUIConstants.ScreenPadding,
+                        ),
             ) {
                 BisqButton(
-                    text = if (selectedTab == PaymentAccountTab.FIAT) {
-                        "Add Fiat Account"
-                    } else {
-                        "Add Crypto Account"
-                    },
-                    onClick = if (selectedTab == PaymentAccountTab.FIAT) {
-                        onAddFiatAccountClick
-                    } else {
-                        onAddCryptoAccountClick
-                    },
+                    text =
+                        if (selectedTab == PaymentAccountTab.FIAT) {
+                            "Add Fiat Account"
+                        } else {
+                            "Add Crypto Account"
+                        },
+                    onClick =
+                        if (selectedTab == PaymentAccountTab.FIAT) {
+                            onAddFiatAccountClick
+                        } else {
+                            onAddCryptoAccountClick
+                        },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -188,7 +192,7 @@ fun PaymentAccountsRedesignContent(
         BisqSegmentButton(
             value = selectedTab,
             items = tabItems,
-            onValueChange = { onTabSelected(it.first) },
+            onValueChange = { onTabSelect(it.first) },
         )
 
         BisqGap.V1()
@@ -282,9 +286,10 @@ private fun CryptoAccountList(
 @Composable
 private fun FiatEmptyState() {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = BisqUIConstants.ScreenPadding2X),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = BisqUIConstants.ScreenPadding2X),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
     ) {
@@ -314,9 +319,10 @@ private fun FiatEmptyState() {
 @Composable
 private fun CryptoEmptyState() {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = BisqUIConstants.ScreenPadding2X),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = BisqUIConstants.ScreenPadding2X),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
     ) {
@@ -341,42 +347,44 @@ private fun CryptoEmptyState() {
 // Preview helpers
 // -------------------------------------------------------------------------------------
 
-private val previewFiatAccounts = listOf(
-    SimulatedFiatAccount(
-        accountName = "Primary SEPA",
-        methodId = "SEPA",
-        methodDisplayName = "SEPA",
-        currencies = listOf("EUR"),
-        chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
-    ),
-    SimulatedFiatAccount(
-        accountName = "Revolut USD",
-        methodId = "REVOLUT",
-        methodDisplayName = "Revolut",
-        currencies = listOf("USD", "EUR"),
-        chargebackRisk = SimulatedChargebackRisk.LOW,
-    ),
-    SimulatedFiatAccount(
-        accountName = "Zelle — Chase",
-        methodId = "ZELLE",
-        methodDisplayName = "Zelle",
-        currencies = listOf("USD"),
-        chargebackRisk = SimulatedChargebackRisk.MODERATE,
-    ),
-)
+private val previewFiatAccounts =
+    listOf(
+        SimulatedFiatAccount(
+            accountName = "Primary SEPA",
+            methodId = "SEPA",
+            methodDisplayName = "SEPA",
+            currencies = listOf("EUR"),
+            chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
+        ),
+        SimulatedFiatAccount(
+            accountName = "Revolut USD",
+            methodId = "REVOLUT",
+            methodDisplayName = "Revolut",
+            currencies = listOf("USD", "EUR"),
+            chargebackRisk = SimulatedChargebackRisk.LOW,
+        ),
+        SimulatedFiatAccount(
+            accountName = "Zelle — Chase",
+            methodId = "ZELLE",
+            methodDisplayName = "Zelle",
+            currencies = listOf("USD"),
+            chargebackRisk = SimulatedChargebackRisk.MODERATE,
+        ),
+    )
 
-private val previewCryptoAccounts = listOf(
-    SimulatedCryptoAccount(
-        accountName = "Cold Storage XMR",
-        cryptoType = "XMR",
-        address = "49A6bqH8sDLxpzymNFVPMzxCRnzN1FUkBHmELFUmBz3mRTymR9R9yQcEgAf6WkqmhVm",
-    ),
-    SimulatedCryptoAccount(
-        accountName = "Litecoin Hot",
-        cryptoType = "LTC",
-        address = "ltc1qnxrw5d5g9h2k7m8p0q3s4t6u7v8w9x0y1z2a3b",
-    ),
-)
+private val previewCryptoAccounts =
+    listOf(
+        SimulatedCryptoAccount(
+            accountName = "Cold Storage XMR",
+            cryptoType = "XMR",
+            address = "49A6bqH8sDLxpzymNFVPMzxCRnzN1FUkBHmELFUmBz3mRTymR9R9yQcEgAf6WkqmhVm",
+        ),
+        SimulatedCryptoAccount(
+            accountName = "Litecoin Hot",
+            cryptoType = "LTC",
+            address = "ltc1qnxrw5d5g9h2k7m8p0q3s4t6u7v8w9x0y1z2a3b",
+        ),
+    )
 
 @ExcludeFromCoverage
 @Composable
@@ -401,7 +409,7 @@ private fun PaymentAccountsRedesign_FiatWithAccountsPreview() {
             selectedTab = PaymentAccountTab.FIAT,
             fiatAccounts = previewFiatAccounts,
             cryptoAccounts = previewCryptoAccounts,
-            onTabSelected = {},
+            onTabSelect = {},
             onAddFiatAccountClick = previewNoOp,
             onAddCryptoAccountClick = previewNoOp,
             onEditFiatAccount = previewNoOpFiat,
@@ -422,7 +430,7 @@ private fun PaymentAccountsRedesign_FiatEmptyPreview() {
             selectedTab = PaymentAccountTab.FIAT,
             fiatAccounts = emptyList(),
             cryptoAccounts = emptyList(),
-            onTabSelected = {},
+            onTabSelect = {},
             onAddFiatAccountClick = previewNoOp,
             onAddCryptoAccountClick = previewNoOp,
             onEditFiatAccount = previewNoOpFiat,
@@ -443,7 +451,7 @@ private fun PaymentAccountsRedesign_CryptoWithAccountsPreview() {
             selectedTab = PaymentAccountTab.CRYPTO,
             fiatAccounts = previewFiatAccounts,
             cryptoAccounts = previewCryptoAccounts,
-            onTabSelected = {},
+            onTabSelect = {},
             onAddFiatAccountClick = previewNoOp,
             onAddCryptoAccountClick = previewNoOp,
             onEditFiatAccount = previewNoOpFiat,
@@ -464,7 +472,7 @@ private fun PaymentAccountsRedesign_CryptoEmptyPreview() {
             selectedTab = PaymentAccountTab.CRYPTO,
             fiatAccounts = emptyList(),
             cryptoAccounts = emptyList(),
-            onTabSelected = {},
+            onTabSelect = {},
             onAddFiatAccountClick = previewNoOp,
             onAddCryptoAccountClick = previewNoOp,
             onEditFiatAccount = previewNoOpFiat,

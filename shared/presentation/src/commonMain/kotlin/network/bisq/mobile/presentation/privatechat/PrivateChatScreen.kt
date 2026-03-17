@@ -191,11 +191,12 @@ private fun PrivateChatScreen_WithMessagesPreview() {
 
             // Simulated message area (grey placeholder — represents ChatMessageList)
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .background(BisqTheme.colors.backgroundColor)
-                    .padding(BisqUIConstants.ScreenPadding),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(BisqTheme.colors.backgroundColor)
+                        .padding(BisqUIConstants.ScreenPadding),
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
@@ -233,10 +234,11 @@ private fun PrivateChatScreen_EmptyPreview() {
             SimulatedPeerChatHeader(name = "SatoshiFan#1234", stars = 4.5)
 
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .background(BisqTheme.colors.backgroundColor),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(BisqTheme.colors.backgroundColor),
                 contentAlignment = Alignment.Center,
             ) {
                 BisqText.BaseLight(
@@ -305,19 +307,24 @@ private fun LeaveChatIconButton_Preview() {
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun SimulatedPeerChatHeader(name: String, stars: Double) {
+private fun SimulatedPeerChatHeader(
+    name: String,
+    stars: Double,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BisqTheme.colors.backgroundColor)
-            .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(BisqTheme.colors.backgroundColor)
+                .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf),
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(BisqUIConstants.topBarAvatarSize)
-                .background(BisqTheme.colors.dark_grey50, shape = CircleShape),
+            modifier =
+                Modifier
+                    .size(BisqUIConstants.topBarAvatarSize)
+                    .background(BisqTheme.colors.dark_grey50, shape = CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             BisqText.SmallMedium(text = name.first().toString(), color = BisqTheme.colors.mid_grey30)
@@ -337,9 +344,10 @@ private fun SimulatedInboundBubble(text: String) {
             Modifier.size(28.dp).background(BisqTheme.colors.dark_grey50, shape = CircleShape),
         )
         Box(
-            modifier = Modifier
-                .background(BisqTheme.colors.dark_grey40, shape = RoundedCornerShape(12.dp))
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.dark_grey40, shape = RoundedCornerShape(12.dp))
+                    .padding(BisqUIConstants.ScreenPadding),
         ) {
             BisqText.BaseLight(text = text, color = BisqTheme.colors.white)
         }
@@ -353,9 +361,10 @@ private fun SimulatedOutboundBubble(text: String) {
         horizontalArrangement = Arrangement.End,
     ) {
         Box(
-            modifier = Modifier
-                .background(BisqTheme.colors.primaryDisabled, shape = RoundedCornerShape(12.dp))
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.primaryDisabled, shape = RoundedCornerShape(12.dp))
+                    .padding(BisqUIConstants.ScreenPadding),
         ) {
             BisqText.BaseLight(text = text, color = BisqTheme.colors.white)
         }
@@ -365,18 +374,20 @@ private fun SimulatedOutboundBubble(text: String) {
 @Composable
 private fun SimulatedChatInputField() {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BisqTheme.colors.secondary)
-            .padding(BisqUIConstants.ScreenPadding),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(BisqTheme.colors.secondary)
+                .padding(BisqUIConstants.ScreenPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
     ) {
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .background(BisqTheme.colors.dark_grey40, shape = RoundedCornerShape(BisqUIConstants.textFieldBorderRadius))
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .background(BisqTheme.colors.dark_grey40, shape = RoundedCornerShape(BisqUIConstants.textFieldBorderRadius))
+                    .padding(BisqUIConstants.ScreenPadding),
         ) {
             BisqText.BaseLight(text = "Write a message...", color = BisqTheme.colors.mid_grey20)
         }

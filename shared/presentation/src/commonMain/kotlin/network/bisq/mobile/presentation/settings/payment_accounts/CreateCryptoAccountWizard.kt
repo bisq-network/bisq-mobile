@@ -171,8 +171,9 @@ fun CreateCryptoAccount_Step1_SelectType(
             cryptoType = CryptoAccountType.MONERO,
             methodId = "XMR",
             title = "Monero (XMR)",
-            description = "Privacy-preserving cryptocurrency. Recommended for Bisq Easy trades. " +
-                "Use a sub-address for each trade to avoid address reuse.",
+            description =
+                "Privacy-preserving cryptocurrency. Recommended for Bisq Easy trades. " +
+                    "Use a sub-address for each trade to avoid address reuse.",
             isSelected = selectedType == CryptoAccountType.MONERO,
             onSelect = { onTypeSelect(CryptoAccountType.MONERO) },
         )
@@ -182,8 +183,9 @@ fun CreateCryptoAccount_Step1_SelectType(
             cryptoType = CryptoAccountType.OTHER,
             methodId = "OTHER",
             title = "Other Cryptocurrency",
-            description = "Add an account for any other supported cryptocurrency. " +
-                "You will specify the currency name and receiving address.",
+            description =
+                "Add an account for any other supported cryptocurrency. " +
+                    "You will specify the currency name and receiving address.",
             isSelected = selectedType == CryptoAccountType.OTHER,
             onSelect = { onTypeSelect(CryptoAccountType.OTHER) },
         )
@@ -227,16 +229,18 @@ private fun CryptoTypeCard(
         onClick = onSelect,
         shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
         color = if (isSelected) BisqTheme.colors.primaryDim else BisqTheme.colors.dark_grey40,
-        border = if (isSelected) {
-            androidx.compose.foundation.BorderStroke(1.dp, BisqTheme.colors.primary)
-        } else {
-            null
-        },
+        border =
+            if (isSelected) {
+                androidx.compose.foundation.BorderStroke(1.dp, BisqTheme.colors.primary)
+            } else {
+                null
+            },
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(BisqUIConstants.ScreenPadding2X),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(BisqUIConstants.ScreenPadding2X),
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
         ) {
@@ -327,11 +331,12 @@ fun CreateCryptoAccount_Step2_EnterAddress(
             value = accountName,
             onValueChange = onAccountNameChange,
             label = "Account Name",
-            placeholder = if (cryptoType == CryptoAccountType.MONERO) {
-                "e.g. My XMR Wallet"
-            } else {
-                "e.g. Litecoin Hot Wallet"
-            },
+            placeholder =
+                if (cryptoType == CryptoAccountType.MONERO) {
+                    "e.g. My XMR Wallet"
+                } else {
+                    "e.g. Litecoin Hot Wallet"
+                },
         )
 
         // Crypto name — only for OTHER type
@@ -348,23 +353,26 @@ fun CreateCryptoAccount_Step2_EnterAddress(
         BisqTextFieldV0(
             value = address,
             onValueChange = onAddressChange,
-            label = if (cryptoType == CryptoAccountType.MONERO) {
-                "Monero Address"
-            } else {
-                "Wallet Address"
-            },
-            placeholder = if (cryptoType == CryptoAccountType.MONERO) {
-                "4... or 8... (95 characters)"
-            } else {
-                "Paste your receiving address"
-            },
+            label =
+                if (cryptoType == CryptoAccountType.MONERO) {
+                    "Monero Address"
+                } else {
+                    "Wallet Address"
+                },
+            placeholder =
+                if (cryptoType == CryptoAccountType.MONERO) {
+                    "4... or 8... (95 characters)"
+                } else {
+                    "Paste your receiving address"
+                },
             minLines = 2,
             isError = showAddressError,
-            bottomMessage = if (showAddressError) {
-                "Invalid address format. Please check and try again."
-            } else {
-                null
-            },
+            bottomMessage =
+                if (showAddressError) {
+                    "Invalid address format. Please check and try again."
+                } else {
+                    null
+                },
         )
 
         // Method-specific hints
@@ -496,7 +504,10 @@ fun CreateCryptoAccount_Step3_Review(
  * A labeled key-value row in the crypto review summary card.
  */
 @Composable
-private fun CryptoReviewRow(label: String, value: String) {
+private fun CryptoReviewRow(
+    label: String,
+    value: String,
+) {
     Column {
         BisqText.SmallLight(label, color = BisqTheme.colors.mid_grey20)
         BisqGap.VQuarter()

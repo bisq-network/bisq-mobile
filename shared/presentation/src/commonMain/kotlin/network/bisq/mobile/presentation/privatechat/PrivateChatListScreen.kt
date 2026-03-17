@@ -131,9 +131,10 @@ private fun PrivateChatListLoadingState() {
 @Composable
 private fun PrivateChatListEmptyState(onNavigateToOfferbook: () -> Unit) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = BisqUIConstants.ScreenPadding2X),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = BisqUIConstants.ScreenPadding2X),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -183,10 +184,11 @@ private fun PrivateChatListScreen_PopulatedPreview() {
         // In production, replace with actual PrivateChatConversationVO instances
         // using createMockUserProfile() from domain test helpers.
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(BisqTheme.colors.backgroundColor)
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(BisqTheme.colors.backgroundColor)
+                    .padding(BisqUIConstants.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         ) {
             TopBarContent(
@@ -198,12 +200,13 @@ private fun PrivateChatListScreen_PopulatedPreview() {
             repeat(4) { index ->
                 SimulatedConversationRow(
                     name = listOf("SatoshiFan#1234", "BitcoinBee#5678", "CryptoNomad#9012", "PeerNode#3456")[index],
-                    preview = listOf(
-                        "Sure, let me know when you're ready.",
-                        "You: Thanks for the quick response!",
-                        "Hello! I saw your offer in the offerbook.",
-                        "What payment methods do you accept?",
-                    )[index],
+                    preview =
+                        listOf(
+                            "Sure, let me know when you're ready.",
+                            "You: Thanks for the quick response!",
+                            "Hello! I saw your offer in the offerbook.",
+                            "What payment methods do you accept?",
+                        )[index],
                     time = listOf("2 min", "3 h", "Yesterday", "Mon")[index],
                     stars = listOf(4.5, 3.8, 2.1, 4.9)[index],
                     unread = listOf(3, 0, 1, 0)[index],
@@ -226,9 +229,10 @@ private fun PrivateChatListScreen_PopulatedPreview() {
 private fun PrivateChatListScreen_EmptyPreview() {
     BisqTheme.Preview {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(BisqTheme.colors.backgroundColor),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(BisqTheme.colors.backgroundColor),
         ) {
             TopBarContent(title = "Private Messages", showBackButton = true)
             PrivateChatListEmptyState(onNavigateToOfferbook = {})
@@ -244,9 +248,10 @@ private fun PrivateChatListScreen_EmptyPreview() {
 private fun PrivateChatListScreen_LoadingPreview() {
     BisqTheme.Preview {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(BisqTheme.colors.backgroundColor),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(BisqTheme.colors.backgroundColor),
         ) {
             TopBarContent(title = "Private Messages", showBackButton = true)
             PrivateChatListLoadingState()
@@ -301,9 +306,10 @@ private fun SimulatedConversationRow(
     unread: Int,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalfQuarter),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalfQuarter),
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -322,10 +328,11 @@ private fun SimulatedConversationRow(
             },
         ) {
             Box(
-                modifier = Modifier
-                    .size(BisqUIConstants.ScreenPadding4X)
-                    .clip(RoundedCornerShape(BisqUIConstants.ScreenPadding2X))
-                    .background(BisqTheme.colors.dark_grey50),
+                modifier =
+                    Modifier
+                        .size(BisqUIConstants.ScreenPadding4X)
+                        .clip(RoundedCornerShape(BisqUIConstants.ScreenPadding2X))
+                        .background(BisqTheme.colors.dark_grey50),
                 contentAlignment = Alignment.Center,
             ) {
                 BisqText.SmallMedium(text = name.first().toString(), color = BisqTheme.colors.mid_grey30)

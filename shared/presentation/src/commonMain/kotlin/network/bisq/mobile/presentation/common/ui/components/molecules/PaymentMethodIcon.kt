@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -68,8 +69,11 @@ fun PaymentMethodIcon(
     iconPathOverride: String? = null,
 ) {
     val trimmedId = methodId.trim()
+    val inPreview = LocalInspectionMode.current
     val hasKnownIcon = if (isPaymentMethod) hasKnownPaymentIcon(trimmedId) else hasKnownSettlementIcon(trimmedId)
-    val isMissingIcon = !hasKnownIcon
+    // In preview mode, DynamicImage/AsyncImage can't load resources, so treat all icons as missing
+    // to render the programmatic colored-background-with-letter fallback instead.
+    val isMissingIcon = !hasKnownIcon || inPreview
 
     val customIndex = if (isMissingIcon) customPaymentIconIndex(trimmedId, CUSTOM_PAYMENT_ICON_IDS.size) else 0
     val overlayLetter = if (isMissingIcon) (trimmedId.firstOrNull()?.uppercase() ?: "?") else null
@@ -82,8 +86,8 @@ fun PaymentMethodIcon(
         modifier = Modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
-        if (isMissingIcon && getPlatformInfo().type == PlatformType.IOS) {
-            // For custom icons on iOS, use a programmatic colored background
+        if (isMissingIcon && (getPlatformInfo().type == PlatformType.IOS || inPreview)) {
+            // For custom icons on iOS or in preview mode, use a programmatic colored background
             val bgColor =
                 CUSTOM_PAYMENT_BACKGROUND_COLORS.getOrElse(customIndex) {
                     CUSTOM_PAYMENT_BACKGROUND_COLORS[0]

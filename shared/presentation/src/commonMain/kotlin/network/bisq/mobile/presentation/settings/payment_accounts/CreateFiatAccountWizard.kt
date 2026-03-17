@@ -92,7 +92,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -102,15 +101,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCard
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqChip
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqChipType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethodIcon
-import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentTypeCard
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -155,38 +152,41 @@ data class SimulatedFormField(
 )
 
 // Sample data used across multiple preview variants
-private val allPaymentMethods = listOf(
-    SimulatedPaymentMethod("SEPA", "SEPA", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
-    SimulatedPaymentMethod("SEPA_INSTANT", "SEPA Instant", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
-    SimulatedPaymentMethod("FASTER_PAYMENTS", "Faster Payments", listOf("GBP"), SimulatedChargebackRisk.VERY_LOW),
-    SimulatedPaymentMethod("PIX", "PIX", listOf("BRL"), SimulatedChargebackRisk.VERY_LOW),
-    SimulatedPaymentMethod("BIZUM", "Bizum", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
-    SimulatedPaymentMethod("REVOLUT", "Revolut", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW),
-    SimulatedPaymentMethod("WISE", "Wise", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW),
-    SimulatedPaymentMethod("INTERAC_E_TRANSFER", "Interac e-Transfer", listOf("CAD"), SimulatedChargebackRisk.LOW),
-    SimulatedPaymentMethod("STRIKE", "Strike", listOf("USD"), SimulatedChargebackRisk.LOW),
-    SimulatedPaymentMethod("ZELLE", "Zelle", listOf("USD"), SimulatedChargebackRisk.MODERATE),
-    SimulatedPaymentMethod("ACH_TRANSFER", "ACH Transfer", listOf("USD"), SimulatedChargebackRisk.MODERATE),
-    SimulatedPaymentMethod("CASH_APP", "Cash App", listOf("USD"), SimulatedChargebackRisk.MODERATE),
-    SimulatedPaymentMethod("NATIONAL_BANK", "National Bank Transfer", listOf("*"), SimulatedChargebackRisk.LOW),
-    SimulatedPaymentMethod("CUSTOM", "Custom", listOf("*"), SimulatedChargebackRisk.LOW),
-)
+private val allPaymentMethods =
+    listOf(
+        SimulatedPaymentMethod("SEPA", "SEPA", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
+        SimulatedPaymentMethod("SEPA_INSTANT", "SEPA Instant", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
+        SimulatedPaymentMethod("FASTER_PAYMENTS", "Faster Payments", listOf("GBP"), SimulatedChargebackRisk.VERY_LOW),
+        SimulatedPaymentMethod("PIX", "PIX", listOf("BRL"), SimulatedChargebackRisk.VERY_LOW),
+        SimulatedPaymentMethod("BIZUM", "Bizum", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
+        SimulatedPaymentMethod("REVOLUT", "Revolut", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW),
+        SimulatedPaymentMethod("WISE", "Wise", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW),
+        SimulatedPaymentMethod("INTERAC_E_TRANSFER", "Interac e-Transfer", listOf("CAD"), SimulatedChargebackRisk.LOW),
+        SimulatedPaymentMethod("STRIKE", "Strike", listOf("USD"), SimulatedChargebackRisk.LOW),
+        SimulatedPaymentMethod("ZELLE", "Zelle", listOf("USD"), SimulatedChargebackRisk.MODERATE),
+        SimulatedPaymentMethod("ACH_TRANSFER", "ACH Transfer", listOf("USD"), SimulatedChargebackRisk.MODERATE),
+        SimulatedPaymentMethod("CASH_APP", "Cash App", listOf("USD"), SimulatedChargebackRisk.MODERATE),
+        SimulatedPaymentMethod("NATIONAL_BANK", "National Bank Transfer", listOf("*"), SimulatedChargebackRisk.LOW),
+        SimulatedPaymentMethod("CUSTOM", "Custom", listOf("*"), SimulatedChargebackRisk.LOW),
+    )
 
-private val sepaFormFields = listOf(
-    SimulatedFormField("accountHolder", "Account Holder Name", "Full name as on bank account"),
-    SimulatedFormField("iban", "IBAN", "e.g. DE89 3704 0044 0532 0130 00"),
-    SimulatedFormField("bic", "BIC / SWIFT", "e.g. COBADEFFXXX"),
-)
+private val sepaFormFields =
+    listOf(
+        SimulatedFormField("accountHolder", "Account Holder Name", "Full name as on bank account"),
+        SimulatedFormField("iban", "IBAN", "e.g. DE89 3704 0044 0532 0130 00"),
+        SimulatedFormField("bic", "BIC / SWIFT", "e.g. COBADEFFXXX"),
+    )
 
-private val customFormFields = listOf(
-    SimulatedFormField("accountName", "Account Name", "e.g. My PayPal"),
-    SimulatedFormField(
-        "accountData",
-        "Account Data",
-        "Enter your payment details here…",
-        isMultiLine = true,
-    ),
-)
+private val customFormFields =
+    listOf(
+        SimulatedFormField("accountName", "Account Name", "e.g. My PayPal"),
+        SimulatedFormField(
+            "accountData",
+            "Account Data",
+            "Enter your payment details here…",
+            isMultiLine = true,
+        ),
+    )
 
 // -------------------------------------------------------------------------------------
 // Step 1: Select Payment Method
@@ -229,16 +229,20 @@ fun CreateFiatAccount_Step1_SelectMethod(
     onRiskFilterChange: (RiskFilter) -> Unit,
     onMethodSelect: (String) -> Unit,
 ) {
-    val filteredMethods = methods
-        .filter { method ->
-            (searchQuery.isBlank() || method.displayName.contains(searchQuery, ignoreCase = true)) &&
-                (activeRiskFilter == RiskFilter.ALL || method.chargebackRisk == when (activeRiskFilter) {
-                    RiskFilter.VERY_LOW -> SimulatedChargebackRisk.VERY_LOW
-                    RiskFilter.LOW -> SimulatedChargebackRisk.LOW
-                    RiskFilter.MODERATE -> SimulatedChargebackRisk.MODERATE
-                    RiskFilter.ALL -> null
-                })
-        }
+    val filteredMethods =
+        methods
+            .filter { method ->
+                (searchQuery.isBlank() || method.displayName.contains(searchQuery, ignoreCase = true)) &&
+                    (
+                        activeRiskFilter == RiskFilter.ALL || method.chargebackRisk ==
+                            when (activeRiskFilter) {
+                                RiskFilter.VERY_LOW -> SimulatedChargebackRisk.VERY_LOW
+                                RiskFilter.LOW -> SimulatedChargebackRisk.LOW
+                                RiskFilter.MODERATE -> SimulatedChargebackRisk.MODERATE
+                                RiskFilter.ALL -> null
+                            }
+                    )
+            }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
@@ -329,11 +333,12 @@ private fun PaymentMethodSelectionRow(
     isSelected: Boolean,
     onSelect: () -> Unit,
 ) {
-    val riskColor = when (method.chargebackRisk) {
-        SimulatedChargebackRisk.VERY_LOW -> BisqTheme.colors.primary
-        SimulatedChargebackRisk.LOW -> BisqTheme.colors.warning
-        SimulatedChargebackRisk.MODERATE -> BisqTheme.colors.danger
-    }
+    val riskColor =
+        when (method.chargebackRisk) {
+            SimulatedChargebackRisk.VERY_LOW -> BisqTheme.colors.primary
+            SimulatedChargebackRisk.LOW -> BisqTheme.colors.warning
+            SimulatedChargebackRisk.MODERATE -> BisqTheme.colors.danger
+        }
 
     // Outer clickable card — wraps PaymentTypeCard pattern but adds trailing badge
     Surface(
@@ -342,12 +347,13 @@ private fun PaymentMethodSelectionRow(
         color = if (isSelected) BisqTheme.colors.primaryDim else BisqTheme.colors.dark_grey50,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding2X,
-                    vertical = BisqUIConstants.ScreenPadding,
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = BisqUIConstants.ScreenPadding2X,
+                        vertical = BisqUIConstants.ScreenPadding,
+                    ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
@@ -376,16 +382,18 @@ private fun PaymentMethodSelectionRow(
                 color = riskColor.copy(alpha = 0.15f),
             ) {
                 BisqText.SmallRegular(
-                    text = when (method.chargebackRisk) {
-                        SimulatedChargebackRisk.VERY_LOW -> "Very Low"
-                        SimulatedChargebackRisk.LOW -> "Low"
-                        SimulatedChargebackRisk.MODERATE -> "Moderate"
-                    },
+                    text =
+                        when (method.chargebackRisk) {
+                            SimulatedChargebackRisk.VERY_LOW -> "Very Low"
+                            SimulatedChargebackRisk.LOW -> "Low"
+                            SimulatedChargebackRisk.MODERATE -> "Moderate"
+                        },
                     color = riskColor,
-                    modifier = Modifier.padding(
-                        horizontal = BisqUIConstants.ScreenPaddingHalf,
-                        vertical = BisqUIConstants.ScreenPaddingQuarter,
-                    ),
+                    modifier =
+                        Modifier.padding(
+                            horizontal = BisqUIConstants.ScreenPaddingHalf,
+                            vertical = BisqUIConstants.ScreenPaddingQuarter,
+                        ),
                 )
             }
         }
@@ -414,10 +422,11 @@ private fun RiskFilterChip(
         BisqText.SmallRegular(
             label,
             color = if (isSelected) color else BisqTheme.colors.mid_grey20,
-            modifier = Modifier.padding(
-                horizontal = BisqUIConstants.ScreenPadding,
-                vertical = BisqUIConstants.ScreenPaddingHalf,
-            ),
+            modifier =
+                Modifier.padding(
+                    horizontal = BisqUIConstants.ScreenPadding,
+                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                ),
         )
     }
 }
@@ -602,7 +611,10 @@ fun CreateFiatAccount_Step3_Review(
  * Label in subdued grey (SmallLight), value in white (BaseRegular).
  */
 @Composable
-private fun ReviewFieldRow(label: String, value: String) {
+private fun ReviewFieldRow(
+    label: String,
+    value: String,
+) {
     Column {
         BisqText.SmallLight(label, color = BisqTheme.colors.mid_grey20)
         BisqGap.VQuarter()
@@ -618,16 +630,18 @@ private fun ReviewFieldRow(label: String, value: String) {
 
 @Composable
 private fun ChargebackRiskBadge(risk: SimulatedChargebackRisk) {
-    val riskColor = when (risk) {
-        SimulatedChargebackRisk.VERY_LOW -> BisqTheme.colors.primary
-        SimulatedChargebackRisk.LOW -> BisqTheme.colors.warning
-        SimulatedChargebackRisk.MODERATE -> BisqTheme.colors.danger
-    }
-    val riskLabel = when (risk) {
-        SimulatedChargebackRisk.VERY_LOW -> "Chargeback risk: Very Low"
-        SimulatedChargebackRisk.LOW -> "Chargeback risk: Low"
-        SimulatedChargebackRisk.MODERATE -> "Chargeback risk: Moderate"
-    }
+    val riskColor =
+        when (risk) {
+            SimulatedChargebackRisk.VERY_LOW -> BisqTheme.colors.primary
+            SimulatedChargebackRisk.LOW -> BisqTheme.colors.warning
+            SimulatedChargebackRisk.MODERATE -> BisqTheme.colors.danger
+        }
+    val riskLabel =
+        when (risk) {
+            SimulatedChargebackRisk.VERY_LOW -> "Chargeback risk: Very Low"
+            SimulatedChargebackRisk.LOW -> "Chargeback risk: Low"
+            SimulatedChargebackRisk.MODERATE -> "Chargeback risk: Moderate"
+        }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -635,18 +649,21 @@ private fun ChargebackRiskBadge(risk: SimulatedChargebackRisk) {
         color = riskColor.copy(alpha = 0.12f),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding,
-                    vertical = BisqUIConstants.ScreenPaddingHalf,
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = BisqUIConstants.ScreenPadding,
+                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                    ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         ) {
             Surface(
-                modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPaddingQuarter)
-                    .size(width = 3.dp, height = 16.dp),
+                modifier =
+                    Modifier
+                        .padding(vertical = BisqUIConstants.ScreenPaddingQuarter)
+                        .size(width = 3.dp, height = 16.dp),
                 shape = RoundedCornerShape(2.dp),
                 color = riskColor,
             ) {}
@@ -773,18 +790,20 @@ fun CreateFiatAccountWizard_Step3Preview() {
         closeAction = true,
     ) {
         CreateFiatAccount_Step3_Review(
-            selectedMethod = SimulatedPaymentMethod(
-                methodId = "SEPA",
-                displayName = "SEPA",
-                currencies = listOf("EUR"),
-                chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
-            ),
+            selectedMethod =
+                SimulatedPaymentMethod(
+                    methodId = "SEPA",
+                    displayName = "SEPA",
+                    currencies = listOf("EUR"),
+                    chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
+                ),
             formFields = sepaFormFields,
-            fieldValues = mapOf(
-                "accountHolder" to "Satoshi Nakamoto",
-                "iban" to "DE89 3704 0044 0532 0130 00",
-                "bic" to "COBADEFFXXX",
-            ),
+            fieldValues =
+                mapOf(
+                    "accountHolder" to "Satoshi Nakamoto",
+                    "iban" to "DE89 3704 0044 0532 0130 00",
+                    "bic" to "COBADEFFXXX",
+                ),
         )
     }
 }

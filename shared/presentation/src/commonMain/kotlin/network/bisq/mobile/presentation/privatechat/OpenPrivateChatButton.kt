@@ -258,11 +258,12 @@ fun OpenPrivateChatTextButton(
     modifier: Modifier = Modifier,
 ) {
     BisqButton(
-        text = if (isLoading) {
-            "mobile.privateChats.openChat.loading".i18n() // "Opening..."
-        } else {
-            "mobile.privateChats.openChat".i18n() // "Send private message"
-        },
+        text =
+            if (isLoading) {
+                "mobile.privateChats.openChat.loading".i18n() // "Opening..."
+            } else {
+                "mobile.privateChats.openChat".i18n() // "Send private message"
+            },
         onClick = onClick,
         disabled = isLoading,
         modifier = modifier.fillMaxWidth(),
@@ -282,19 +283,21 @@ fun OpenPrivateChatTextButton(
 private fun OpenPrivateChatButton_IconVariant_IdlePreview() {
     BisqTheme.Preview {
         Column(
-            modifier = Modifier
-                .background(BisqTheme.colors.backgroundColor)
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.backgroundColor)
+                    .padding(BisqUIConstants.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
             BisqText.SmallRegular("In offer row context:", color = BisqTheme.colors.mid_grey20)
 
             // Simulated offer row with avatar + name + chat button
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BisqTheme.colors.dark_grey40, shape = RoundedCornerShape(BisqUIConstants.BorderRadius))
-                    .padding(BisqUIConstants.ScreenPadding),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(BisqTheme.colors.dark_grey40, shape = RoundedCornerShape(BisqUIConstants.BorderRadius))
+                        .padding(BisqUIConstants.ScreenPadding),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -335,9 +338,10 @@ private fun OpenPrivateChatButton_IconVariant_IdlePreview() {
 private fun OpenPrivateChatButton_IconVariant_LoadingPreview() {
     BisqTheme.Preview {
         Box(
-            modifier = Modifier
-                .background(BisqTheme.colors.backgroundColor)
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.backgroundColor)
+                    .padding(BisqUIConstants.ScreenPadding),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
@@ -369,9 +373,10 @@ private fun OpenPrivateChatButton_IconVariant_LoadingPreview() {
 private fun OpenPrivateChatButton_TextVariant_IdlePreview() {
     BisqTheme.Preview {
         Column(
-            modifier = Modifier
-                .background(BisqTheme.colors.dark_grey50)
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.dark_grey50)
+                    .padding(BisqUIConstants.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
             // Simulated profile card header
@@ -406,9 +411,10 @@ private fun OpenPrivateChatButton_TextVariant_IdlePreview() {
 private fun OpenPrivateChatButton_TextVariant_LoadingPreview() {
     BisqTheme.Preview {
         Box(
-            modifier = Modifier
-                .background(BisqTheme.colors.dark_grey50)
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.dark_grey50)
+                    .padding(BisqUIConstants.ScreenPadding),
         ) {
             OpenPrivateChatTextButton(isLoading = true, onClick = {})
         }
@@ -423,9 +429,10 @@ private fun OpenPrivateChatButton_TextVariant_LoadingPreview() {
 private fun OpenPrivateChatButton_BothVariantsComparisonPreview() {
     BisqTheme.Preview {
         Column(
-            modifier = Modifier
-                .background(BisqTheme.colors.backgroundColor)
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.backgroundColor)
+                    .padding(BisqUIConstants.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
         ) {
             BisqText.SmallRegular("ICON_BUTTON variant (for rows):", color = BisqTheme.colors.mid_grey20)
@@ -458,9 +465,10 @@ private fun OpenPrivateChatButton_BothVariantsComparisonPreview() {
 private fun OpenPrivateChatButton_OwnProfile_RenderNothingPreview() {
     BisqTheme.Preview {
         Box(
-            modifier = Modifier
-                .background(BisqTheme.colors.backgroundColor)
-                .padding(BisqUIConstants.ScreenPadding),
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.backgroundColor)
+                    .padding(BisqUIConstants.ScreenPadding),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
