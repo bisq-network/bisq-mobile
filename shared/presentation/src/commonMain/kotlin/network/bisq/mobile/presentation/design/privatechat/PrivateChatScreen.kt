@@ -76,7 +76,7 @@
  * "Leave chat" → "Chat verlassen" (30% longer) — the icon-only button in the
  * TopBar avoids this problem entirely.
  */
-package network.bisq.mobile.presentation.privatechat
+package network.bisq.mobile.presentation.design.privatechat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

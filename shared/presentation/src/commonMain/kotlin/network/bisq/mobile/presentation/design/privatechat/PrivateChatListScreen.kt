@@ -61,7 +61,7 @@
  * - Blocked users: hide OpenPrivateChatButton when peer is in ignoredProfileIds.
  * - Performance: consider lazy-loading messages and paginating after 50 conversations.
  */
-package network.bisq.mobile.presentation.privatechat
+package network.bisq.mobile.presentation.design.privatechat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

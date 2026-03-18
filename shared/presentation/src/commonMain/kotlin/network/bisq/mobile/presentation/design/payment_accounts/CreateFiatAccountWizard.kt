@@ -81,7 +81,7 @@
  * - "Back" and "Next" buttons inherit from MultiScreenWizardScaffold defaults
  *   ("action.back" / "action.next") — already localized in 14 languages.
  */
-package network.bisq.mobile.presentation.settings.payment_accounts
+package network.bisq.mobile.presentation.design.payment_accounts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

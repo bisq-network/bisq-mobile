@@ -69,7 +69,7 @@
  *   German expansions for these are ~40% longer; the button uses fillMaxWidth so this
  *   is safe as long as we don't also add a left icon.
  */
-package network.bisq.mobile.presentation.settings.payment_accounts
+package network.bisq.mobile.presentation.design.payment_accounts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

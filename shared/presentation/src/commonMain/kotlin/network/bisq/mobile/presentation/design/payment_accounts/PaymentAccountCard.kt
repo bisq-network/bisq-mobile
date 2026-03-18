@@ -44,7 +44,7 @@
  * - "Edit" / "Delete" use existing action.edit / paymentAccounts.deleteAccount keys.
  * - Currency codes are ISO 4217 — no localization needed.
  */
-package network.bisq.mobile.presentation.settings.payment_accounts
+package network.bisq.mobile.presentation.design.payment_accounts
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically

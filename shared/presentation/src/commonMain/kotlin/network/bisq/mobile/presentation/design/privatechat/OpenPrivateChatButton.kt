@@ -68,7 +68,7 @@
  * Content description for icon variant: "mobile.privateChats.openChat".i18n() + " " + peerName
  * This gives screen readers: "Send private message to SatoshiFan#1234"
  */
-package network.bisq.mobile.presentation.privatechat
+package network.bisq.mobile.presentation.design.privatechat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

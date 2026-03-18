@@ -80,7 +80,7 @@
  * "Monero" and "XMR" are proper nouns — do NOT translate them in i18n files.
  * Crypto currency names should always render in their original form.
  */
-package network.bisq.mobile.presentation.settings.payment_accounts
+package network.bisq.mobile.presentation.design.payment_accounts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
