@@ -18,7 +18,6 @@ import org.koin.core.context.stopKoin
 import org.koin.test.KoinTest
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -71,12 +70,6 @@ class NetworkServiceFacadeTest : KoinTest {
             coVerify(exactly = 0) { kmpTorService.startTor(any(), any()) }
         }
 
-    // Flaky on CI (ubuntu/JDK21): MockK coEvery + runTest interaction causes the
-    // RuntimeException to leak through runTest's uncaught exception handler even though
-    // ensureTorRunning correctly catches it (STANDARD_OUT confirms the catch block runs).
-    // Passes consistently on macOS. The production code is verified by the log output.
-    // TODO: Revisit when MockK or kotlinx-coroutines-test is upgraded.
-    @Ignore
     @Test
     fun `ensureTorRunning catches non-cancellation exception and returns`() =
         runTest {
