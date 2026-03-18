@@ -208,12 +208,16 @@ Default networking setup for the WebSocket (WS) connection can be found in `grad
 
 **Designs**
 
-androidNode + xClient screens are designed in Figma.
-Yet to differentiate between which screens goes into which.
+New feature designs are generated as working Compose `@Preview` composables placed in:
+```
+shared/presentation/src/commonMain/kotlin/.../presentation/design/<feature>/
+```
 
-Figma link: https://www.figma.com/design/IPnuicxGKIZXq28gybxOgp/Xchange?node-id=7-759&t=LV9Gx9XgJRvXu5YQ-1
+These are created by an AI design agent that can generate designs from scratch or adapt them from the Bisq2 Desktop codebase. The composables are fully previewable in Android Studio and serve as the reference for implementation. When picking up a GitHub issue that requires UI work, check if designs have been uploaded (look for the `designs-uploaded` label). If not, request them before starting implementation.
 
-Though the figma design captures most of the functionality, it's an evolving document. It will be updated with new screens, flow updates, based on discussions happening in GH issues / matrix.
+Developers should move design composables into the appropriate production package during implementation. Unused designs are easy to locate and clean up since they all live under the `design/` package.
+
+The original Figma designs (legacy reference): https://www.figma.com/design/IPnuicxGKIZXq28gybxOgp/Xchange?node-id=7-759&t=LV9Gx9XgJRvXu5YQ-1
 
 **Navigation Implementation**
 
