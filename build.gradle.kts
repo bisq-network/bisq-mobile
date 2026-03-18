@@ -17,6 +17,7 @@ object KoverExclusions {
         listOf(
             "*ComposableSingletons*",
             "bisqapps.*.generated.resources.*",
+            "network.bisq.mobile.presentation.design.*",
         )
 }
 
