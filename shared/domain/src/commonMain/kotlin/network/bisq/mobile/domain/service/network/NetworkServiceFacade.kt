@@ -1,7 +1,6 @@
 package network.bisq.mobile.domain.service.network
 
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -25,10 +24,11 @@ abstract class NetworkServiceFacade(
         if (isTorEnabled()) {
             try {
                 kmpTorService.startTor()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Tor service failed to start" }
                 // ApplicationBootstrapFacade observes tor state & triggers dialog in SplashPresenter
-                currentCoroutineContext().ensureActive()
             }
             // suspend until tor is started
             // this is fine because:
@@ -56,9 +56,10 @@ abstract class NetworkServiceFacade(
             log.i { "Tor is stopped, attempting restart..." }
             try {
                 kmpTorService.startTor()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Failed to start Tor while ensuring it's running" }
-                currentCoroutineContext().ensureActive()
             }
         }
     }
