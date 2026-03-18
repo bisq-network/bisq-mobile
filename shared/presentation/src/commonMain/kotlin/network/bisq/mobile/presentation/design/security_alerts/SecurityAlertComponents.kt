@@ -106,8 +106,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -136,7 +135,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
  * @param requiresUpdate True when the EMERGENCY alert enforces a minimum app version.
  * @param minVersion The minimum required version string, e.g. "2.1.8". Empty if not applicable.
  */
-data class SecurityAlertUiState(
+internal data class SecurityAlertUiState(
     val id: String,
     val alertLevel: AlertLevel,
     val headline: String,
@@ -156,7 +155,7 @@ data class SecurityAlertUiState(
  *
  * BAN and BANNED_ACCOUNT_DATA are not surfaced as UI alerts on mobile.
  */
-enum class AlertLevel {
+internal enum class AlertLevel {
     INFO,
     WARN,
     EMERGENCY,
@@ -165,7 +164,7 @@ enum class AlertLevel {
 /**
  * Actions the user can trigger from alert UI surfaces.
  */
-sealed interface SecurityAlertUiAction {
+internal sealed interface SecurityAlertUiAction {
     /**
      * User tapped the dismiss/close button on the alert banner.
      * The presenter should call AlertNotificationsService.dismissAlert() for [alertId],
@@ -251,7 +250,7 @@ private fun alertIcon(level: AlertLevel): ImageVector =
  * @param level Drives the background color and icon.
  */
 @Composable
-fun AlertLevelBadge(
+internal fun AlertLevelBadge(
     level: AlertLevel,
     modifier: Modifier = Modifier,
 ) {
@@ -291,7 +290,7 @@ fun AlertLevelBadge(
  * @param count Number of *additional* queued alerts beyond the currently displayed one.
  */
 @Composable
-fun PendingAlertsCounter(
+internal fun PendingAlertsCounter(
     count: Int,
     modifier: Modifier = Modifier,
 ) {
@@ -344,7 +343,7 @@ fun PendingAlertsCounter(
  * @param onDismiss Called when the user taps the close button. Receives the alert ID.
  */
 @Composable
-fun SecurityAlertBanner(
+internal fun SecurityAlertBanner(
     alert: SecurityAlertUiState,
     onDismiss: (alertId: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -363,7 +362,7 @@ fun SecurityAlertBanner(
                     width = 4.dp,
                     color = accentColor,
                     shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp),
-                ).semantics { contentDescription = "securityAlert_${alert.alertLevel.name}" },
+                ).testTag("securityAlert_${alert.alertLevel.name}"),
     ) {
         // Left accent strip is implemented via the border above; add left padding to clear it.
         Column(
@@ -422,7 +421,7 @@ fun SecurityAlertBanner(
                     Modifier
                         .align(Alignment.Top)
                         .padding(top = BisqUIConstants.ScreenPaddingQuarter)
-                        .semantics { contentDescription = "dismissAlert" },
+                        .testTag("dismissAlert"),
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -471,7 +470,7 @@ fun SecurityAlertBanner(
  * @param alert The active EMERGENCY alert with haltTrading=true.
  */
 @Composable
-fun EmergencyHaltDialog(
+internal fun EmergencyHaltDialog(
     alert: SecurityAlertUiState,
     modifier: Modifier = Modifier,
 ) {
@@ -486,7 +485,7 @@ fun EmergencyHaltDialog(
                     color = BisqTheme.colors.danger,
                     shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
                 ).padding(BisqUIConstants.ScreenPadding2X)
-                .semantics { contentDescription = "emergencyHaltDialog" },
+                .testTag("emergencyHaltDialog"),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -564,7 +563,7 @@ fun EmergencyHaltDialog(
  * @param onUpdateNow Called when the user taps "Update Now". Presenter opens the app store.
  */
 @Composable
-fun VersionGateDialog(
+internal fun VersionGateDialog(
     alert: SecurityAlertUiState,
     onUpdateNow: () -> Unit,
     modifier: Modifier = Modifier,
@@ -580,7 +579,7 @@ fun VersionGateDialog(
                     color = BisqTheme.colors.warning,
                     shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
                 ).padding(BisqUIConstants.ScreenPadding2X)
-                .semantics { contentDescription = "versionGateDialog" },
+                .testTag("versionGateDialog"),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
