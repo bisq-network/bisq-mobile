@@ -56,7 +56,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
+import network.bisq.mobile.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SemanticVersion

@@ -11,11 +11,11 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.connected_and_data_received
 import bisqapps.shared.presentation.generated.resources.no_connections
 import bisqapps.shared.presentation.generated.resources.requesting_inventory
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus
-import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
+import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants

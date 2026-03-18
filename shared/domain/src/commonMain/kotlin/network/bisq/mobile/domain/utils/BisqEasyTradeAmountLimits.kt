@@ -2,22 +2,22 @@ package network.bisq.mobile.domain.utils
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.fromFaceValue
-import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toQuoteSideMonetary
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.from
+import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.fromFaceValue
+import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.toQuoteSideMonetary
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import kotlin.math.roundToLong
 
 object BisqEasyTradeAmountLimits {

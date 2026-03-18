@@ -10,8 +10,8 @@ import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(

@@ -2,9 +2,9 @@ package network.bisq.mobile.client.common.di
 
 import network.bisq.mobile.client.common.domain.service.push_notification.NoOpClientPushNotificationServiceFacade
 import network.bisq.mobile.client.main.ClientMainActivity
-import network.bisq.mobile.domain.service.AppForegroundController
-import network.bisq.mobile.domain.service.ForegroundDetector
-import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.service.AppForegroundController
+import network.bisq.mobile.data.service.ForegroundDetector
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceControllerImpl
 import network.bisq.mobile.presentation.common.notification.NotificationController

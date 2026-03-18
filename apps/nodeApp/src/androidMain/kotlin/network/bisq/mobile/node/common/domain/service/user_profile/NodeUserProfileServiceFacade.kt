@@ -19,11 +19,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService

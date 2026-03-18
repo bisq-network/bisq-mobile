@@ -8,8 +8,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import network.bisq.mobile.domain.helper.ResourceUtils
-import network.bisq.mobile.domain.service.AppForegroundController
+import network.bisq.mobile.data.service.AppForegroundController
+import network.bisq.mobile.data.utils.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.notification.model.NotificationPressAction

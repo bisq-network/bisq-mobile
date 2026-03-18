@@ -1,7 +1,7 @@
 package network.bisq.mobile.presentation.offer.take_offer.payment_method
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType

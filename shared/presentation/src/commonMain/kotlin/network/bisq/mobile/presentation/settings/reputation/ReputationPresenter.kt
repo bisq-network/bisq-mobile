@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter

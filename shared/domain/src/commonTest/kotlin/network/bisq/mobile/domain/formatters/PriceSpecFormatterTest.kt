@@ -1,12 +1,12 @@
 package network.bisq.mobile.domain.formatters
 
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.i18n.I18nSupport
 import kotlin.test.BeforeTest
 import kotlin.test.Test

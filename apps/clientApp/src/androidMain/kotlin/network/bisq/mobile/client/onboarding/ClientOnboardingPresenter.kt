@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.onboarding
 
-import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter

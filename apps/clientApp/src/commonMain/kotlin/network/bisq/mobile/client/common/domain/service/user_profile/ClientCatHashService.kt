@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.user_profile
 
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 
 interface ClientCatHashService<T> {
     companion object {

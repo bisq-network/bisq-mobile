@@ -1,8 +1,8 @@
 package network.bisq.mobile.presentation.tabs.offers
 
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.domain.utils.Logging
 

@@ -15,9 +15,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.domain.PlatformInfo
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.domain.model.PlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

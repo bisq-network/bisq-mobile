@@ -1,15 +1,15 @@
 package network.bisq.mobile.presentation.offer.create_offer.review
 
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.from
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter

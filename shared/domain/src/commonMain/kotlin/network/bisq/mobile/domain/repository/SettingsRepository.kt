@@ -1,0 +1,33 @@
+package network.bisq.mobile.domain.repository
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.PermissionState
+import network.bisq.mobile.data.model.Settings
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketSortBy
+
+interface SettingsRepository {
+    val data: Flow<Settings>
+
+    suspend fun fetch() = data.first()
+
+    suspend fun setFirstLaunch(value: Boolean)
+
+    suspend fun setShowChatRulesWarnBox(value: Boolean)
+
+    suspend fun setSelectedMarketCode(value: String)
+
+    suspend fun setNotificationPermissionState(value: PermissionState)
+
+    suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState)
+
+    suspend fun update(transform: suspend (t: Settings) -> Settings)
+
+    suspend fun clear()
+
+    suspend fun setMarketSortBy(value: MarketSortBy)
+
+    suspend fun setMarketFilter(value: MarketFilter)
+}

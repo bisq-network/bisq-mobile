@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage

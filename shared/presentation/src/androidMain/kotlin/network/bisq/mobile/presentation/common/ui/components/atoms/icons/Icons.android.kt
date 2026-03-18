@@ -2,6 +2,6 @@ package network.bisq.mobile.presentation.common.ui.components.atoms.icons
 
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
-import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.data.utils.PlatformImage
 
 actual fun getPlatformImagePainter(platformImage: PlatformImage): Painter = BitmapPainter(platformImage.bitmap)

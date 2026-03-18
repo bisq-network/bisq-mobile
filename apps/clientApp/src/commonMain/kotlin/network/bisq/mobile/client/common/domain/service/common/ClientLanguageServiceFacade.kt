@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.common
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.domain.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.common.LanguageServiceFacade
 
 class ClientLanguageServiceFacade : LanguageServiceFacade() {
     private val defaultLanguage: MutableStateFlow<String> = MutableStateFlow("en")

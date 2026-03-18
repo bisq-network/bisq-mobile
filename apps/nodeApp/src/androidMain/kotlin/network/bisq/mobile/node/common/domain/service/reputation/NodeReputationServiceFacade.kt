@@ -4,9 +4,9 @@ import bisq.user.reputation.ReputationScore
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 

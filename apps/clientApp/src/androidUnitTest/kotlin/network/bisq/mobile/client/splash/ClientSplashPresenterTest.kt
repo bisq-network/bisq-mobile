@@ -8,7 +8,7 @@ import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

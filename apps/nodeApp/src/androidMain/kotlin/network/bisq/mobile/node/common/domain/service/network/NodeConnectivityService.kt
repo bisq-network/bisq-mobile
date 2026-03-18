@@ -3,7 +3,7 @@ package network.bisq.mobile.node.common.domain.service.network
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.data.service.network.ConnectivityService
 
 class NodeConnectivityService(
     private val nodeNetworkServiceFacade: NodeNetworkServiceFacade,

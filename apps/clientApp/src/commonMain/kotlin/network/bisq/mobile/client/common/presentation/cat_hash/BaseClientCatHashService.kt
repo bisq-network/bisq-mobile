@@ -8,10 +8,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientCatHashService
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
-import network.bisq.mobile.domain.service.BaseService
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.service.BaseService
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.concat
 import okio.ByteString.Companion.decodeBase64

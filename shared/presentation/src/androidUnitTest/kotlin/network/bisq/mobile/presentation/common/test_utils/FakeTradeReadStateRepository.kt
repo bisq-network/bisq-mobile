@@ -3,8 +3,8 @@ package network.bisq.mobile.presentation.common.test_utils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.domain.data.model.TradeReadStateMap
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
+import network.bisq.mobile.data.model.TradeReadStateMap
+import network.bisq.mobile.domain.repository.TradeReadStateRepository
 
 internal class FakeTradeReadStateRepository(
     initial: TradeReadStateMap = TradeReadStateMap(),

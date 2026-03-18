@@ -11,9 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText

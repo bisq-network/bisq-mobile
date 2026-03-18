@@ -7,9 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants

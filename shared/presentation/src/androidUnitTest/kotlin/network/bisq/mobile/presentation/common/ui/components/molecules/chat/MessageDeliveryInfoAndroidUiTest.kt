@@ -4,8 +4,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
-import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryStatusEnum
+import network.bisq.mobile.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
+import network.bisq.mobile.data.replicated.network.confidential.ack.MessageDeliveryStatusEnum
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme

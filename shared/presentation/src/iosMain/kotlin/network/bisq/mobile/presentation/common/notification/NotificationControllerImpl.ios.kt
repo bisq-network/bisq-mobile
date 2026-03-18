@@ -4,7 +4,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.service.AppForegroundController
+import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.notification.model.NotificationButton
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig

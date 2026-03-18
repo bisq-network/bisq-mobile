@@ -4,9 +4,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 

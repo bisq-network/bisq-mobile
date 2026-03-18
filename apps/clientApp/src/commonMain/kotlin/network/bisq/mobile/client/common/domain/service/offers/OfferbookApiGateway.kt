@@ -4,11 +4,10 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.utils.Logging
 
 class OfferbookApiGateway(
@@ -18,7 +17,7 @@ class OfferbookApiGateway(
     private val basePath = "offerbook"
 
     // Requests
-    suspend fun getMarkets(): Result<List<MarketVO>> = webSocketApiClient.get("$basePath/markets")
+    suspend fun getMarkets(): Result<List<network.bisq.mobile.data.replicated.common.currency.MarketVO>> = webSocketApiClient.get("$basePath/markets")
 
     suspend fun getNumOffersByMarketCode(): Result<Map<String, Int>> = webSocketApiClient.get("$basePath/markets/offers/count")
 
@@ -28,7 +27,7 @@ class OfferbookApiGateway(
 
     suspend fun publishOffer(
         direction: DirectionEnum,
-        market: MarketVO,
+        market: network.bisq.mobile.data.replicated.common.currency.MarketVO,
         bitcoinPaymentMethods: Set<String>,
         fiatPaymentMethods: Set<String>,
         amountSpec: AmountSpecVO,

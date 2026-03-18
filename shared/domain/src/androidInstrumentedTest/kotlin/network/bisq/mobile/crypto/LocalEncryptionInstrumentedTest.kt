@@ -2,6 +2,8 @@ package network.bisq.mobile.crypto
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.test.runTest
+import network.bisq.mobile.data.crypto.decrypt
+import network.bisq.mobile.data.crypto.encrypt
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith

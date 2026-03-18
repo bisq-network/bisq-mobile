@@ -1,8 +1,8 @@
 package network.bisq.mobile.domain.formatters
 
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.i18n.i18n
 
 object PriceSpecFormatter {

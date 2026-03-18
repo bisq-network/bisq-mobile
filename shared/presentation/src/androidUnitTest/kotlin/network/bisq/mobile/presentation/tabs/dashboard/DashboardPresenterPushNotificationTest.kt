@@ -13,16 +13,16 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.PlatformInfo
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.data.model.PermissionState
-import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.network.NetworkServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.model.PermissionState
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.network.NetworkServiceFacade
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -57,7 +57,7 @@ class DashboardPresenterPushNotificationTest {
         every { getScreenWidthDp() } returns 480
 
         // Mock platform as iOS since push notification logic is iOS-only
-        mockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
+        mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
         every { getPlatformInfo() } returns
             object : PlatformInfo {
                 override val name = "iOS"
@@ -113,7 +113,7 @@ class DashboardPresenterPushNotificationTest {
         stopKoin()
         Dispatchers.resetMain()
         unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        unmockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
+        unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
     }
 
     @Test

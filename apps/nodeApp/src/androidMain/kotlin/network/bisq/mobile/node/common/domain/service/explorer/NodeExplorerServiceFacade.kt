@@ -3,9 +3,9 @@ package network.bisq.mobile.node.common.domain.service.explorer
 import bisq.bonded_roles.explorer.ExplorerService
 import bisq.bonded_roles.explorer.dto.Tx
 import kotlinx.coroutines.future.await
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.explorer.ExplorerResult
-import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.explorer.ExplorerResult
+import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCause
 import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCauseMessage
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService

@@ -2,13 +2,13 @@ package network.bisq.mobile.node.main
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
-import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
-import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.UrlLauncher
+import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.main.MainPresenter

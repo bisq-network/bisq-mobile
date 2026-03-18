@@ -4,9 +4,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18nEncode
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter

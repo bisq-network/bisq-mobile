@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.settings.user_profile
 
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 
 sealed interface UserProfileUiAction {
     data class OnStatementChange(

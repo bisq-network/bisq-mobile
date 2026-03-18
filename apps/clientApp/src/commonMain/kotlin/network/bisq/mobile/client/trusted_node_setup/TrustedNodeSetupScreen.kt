@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.BarcodeScannerView
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton

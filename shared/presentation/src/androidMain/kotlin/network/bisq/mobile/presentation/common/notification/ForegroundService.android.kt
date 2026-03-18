@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.helper.ResourceUtils
+import network.bisq.mobile.data.utils.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute

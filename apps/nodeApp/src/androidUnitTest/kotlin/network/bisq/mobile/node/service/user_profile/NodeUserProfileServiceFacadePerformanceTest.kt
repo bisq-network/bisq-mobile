@@ -6,8 +6,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.userProfileDemoObj
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

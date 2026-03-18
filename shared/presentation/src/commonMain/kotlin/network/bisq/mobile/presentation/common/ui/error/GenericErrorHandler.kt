@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.setupUncaughtExceptionHandler
+import network.bisq.mobile.data.utils.setupUncaughtExceptionHandler
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.getLogger

@@ -2,8 +2,8 @@ package network.bisq.mobile.presentation.common.ui.platform
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 
 // Expect/actual helper to provide a PlatformTextStyle that disables font padding on platforms that support it.
 // On platforms that don't support this flag (e.g., iOS), return null to keep defaults.

@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.utils.decrypt
 import network.bisq.mobile.domain.utils.encrypt
 import network.bisq.mobile.i18n.i18n

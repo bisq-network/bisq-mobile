@@ -19,7 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage

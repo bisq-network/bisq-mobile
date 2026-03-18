@@ -5,12 +5,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory.from
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING

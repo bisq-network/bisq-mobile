@@ -4,7 +4,7 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.utils.Logging
 
 class ReputationApiGateway(

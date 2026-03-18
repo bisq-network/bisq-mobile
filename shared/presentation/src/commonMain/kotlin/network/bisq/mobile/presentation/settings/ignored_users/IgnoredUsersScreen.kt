@@ -13,9 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton

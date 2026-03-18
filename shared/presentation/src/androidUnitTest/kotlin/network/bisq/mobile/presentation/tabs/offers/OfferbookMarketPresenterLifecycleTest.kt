@@ -13,8 +13,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.data.model.MarketFilter
-import network.bisq.mobile.domain.data.model.MarketSortBy
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketSortBy
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.OfferbookMarketPresenterTestFactory

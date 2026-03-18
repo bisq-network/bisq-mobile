@@ -41,7 +41,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import network.bisq.mobile.domain.getDecimalSeparator
+import network.bisq.mobile.data.utils.getDecimalSeparator
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.PasswordIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.PasteIconButton

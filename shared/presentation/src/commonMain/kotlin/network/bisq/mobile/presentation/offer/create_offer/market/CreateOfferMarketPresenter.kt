@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute

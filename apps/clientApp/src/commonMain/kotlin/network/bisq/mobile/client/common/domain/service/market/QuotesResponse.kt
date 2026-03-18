@@ -1,9 +1,8 @@
 package network.bisq.mobile.client.common.domain.service.market
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 
 @Serializable
 data class QuotesResponse(
-    val quotes: Map<String, PriceQuoteVO>,
+    val quotes: Map<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO>,
 )

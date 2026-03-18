@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.parser
 
-import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
+import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 
 object PriceParser {
     fun parse(value: String): Double {

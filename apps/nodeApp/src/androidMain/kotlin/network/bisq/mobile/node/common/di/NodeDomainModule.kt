@@ -3,27 +3,28 @@ package network.bisq.mobile.node.common.di
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Debug
-import network.bisq.mobile.domain.AndroidUrlLauncher
-import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.service.AppForegroundController
-import network.bisq.mobile.domain.service.ForegroundDetector
-import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
-import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
-import network.bisq.mobile.domain.service.common.LanguageServiceFacade
-import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
-import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.network.KmpTorService
-import network.bisq.mobile.domain.service.network.NetworkServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.service.AppForegroundController
+import network.bisq.mobile.data.service.ForegroundDetector
+import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
+import network.bisq.mobile.data.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.mediation.MediationServiceFacade
+import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.data.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.NetworkServiceFacade
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.AndroidUrlLauncher
+import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -179,7 +180,7 @@ val androidNodeDomainModule =
         }
 
         // Push notification service - no-op for node app
-        single<network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade> {
+        single<PushNotificationServiceFacade> {
             NoOpPushNotificationServiceFacade()
         }
     }

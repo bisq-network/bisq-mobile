@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.service.user_profile
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.data.replicated.security.keys.KeyPairVO
-import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
+import network.bisq.mobile.data.replicated.security.keys.KeyPairVO
+import network.bisq.mobile.data.replicated.security.pow.ProofOfWorkVO
 
 @Serializable
 data class KeyMaterialResponse(

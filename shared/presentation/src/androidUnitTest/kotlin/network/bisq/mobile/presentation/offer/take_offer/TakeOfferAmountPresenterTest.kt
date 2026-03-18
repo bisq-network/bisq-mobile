@@ -13,37 +13,37 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.createEmptyImage
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
-import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
-import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
-import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.service.ForegroundDetector
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.trades.TakeOfferStatus
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.model.market.MarketPriceItem
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
+import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
+import network.bisq.mobile.data.replicated.settings.settingsVODemoObj
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.ForegroundDetector
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.trades.TakeOfferStatus
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.data.utils.UrlLauncher
+import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -66,7 +66,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TakeOfferAmountPresenterTest {

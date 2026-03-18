@@ -8,18 +8,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.replicated.chat.CitationVO
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
-import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.replicated.chat.CitationVO
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
+import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 
 class ClientTradeChatMessagesServiceFacade(
     private val tradesServiceFacade: TradesServiceFacade,

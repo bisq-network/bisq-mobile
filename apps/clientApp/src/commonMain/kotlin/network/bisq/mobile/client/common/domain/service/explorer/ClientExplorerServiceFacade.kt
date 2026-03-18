@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.service.explorer
 
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.explorer.ExplorerResult
-import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.explorer.ExplorerResult
+import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 
 class ClientExplorerServiceFacade(
     private val apiGateway: ExplorerApiGateway,

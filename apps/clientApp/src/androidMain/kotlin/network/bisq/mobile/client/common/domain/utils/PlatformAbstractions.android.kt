@@ -6,7 +6,7 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.websocket.WebSockets
 import network.bisq.mobile.client.common.domain.access.security.TlsTrustManager
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyConfig
-import network.bisq.mobile.client.httpclient.NoDns
+import network.bisq.mobile.data.utils.NoDns
 import network.bisq.mobile.domain.utils.getLogger
 import java.security.SecureRandom
 import java.util.concurrent.TimeUnit

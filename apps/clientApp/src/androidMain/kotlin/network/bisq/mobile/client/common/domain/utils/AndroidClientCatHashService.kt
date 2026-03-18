@@ -21,7 +21,7 @@ import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import network.bisq.mobile.client.common.presentation.cat_hash.BaseClientCatHashService
-import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil
 import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil.PATH_TO_DRAWABLE

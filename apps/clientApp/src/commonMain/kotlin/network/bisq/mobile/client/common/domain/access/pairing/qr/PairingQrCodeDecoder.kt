@@ -3,9 +3,9 @@ package network.bisq.mobile.client.common.domain.access.pairing.qr
 import network.bisq.mobile.client.common.domain.access.LOCALHOST
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCodeDecoder
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.data.EnvironmentController
-import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.data.utils.EnvironmentController
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 

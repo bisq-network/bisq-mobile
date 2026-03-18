@@ -2,13 +2,13 @@ package network.bisq.mobile.node.common.domain.service.market_price
 
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.common.observable.Pin
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
-import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.data.model.market.MarketPriceItem
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.Mappings.MarketMapping
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService

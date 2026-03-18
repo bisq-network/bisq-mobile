@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import network.bisq.mobile.domain.data.model.MarketFilter
-import network.bisq.mobile.domain.data.model.MarketSortBy
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketSortBy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSegmentButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap

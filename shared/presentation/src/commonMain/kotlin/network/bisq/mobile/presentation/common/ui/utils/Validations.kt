@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.utils
 
-import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
+import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
 
 // Ref: bisq2:common/src/main/java/bisq/common/validation/LightningInvoiceValidation.java

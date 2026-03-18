@@ -19,7 +19,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.domain.data.EnvironmentController
+import network.bisq.mobile.data.utils.EnvironmentController
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

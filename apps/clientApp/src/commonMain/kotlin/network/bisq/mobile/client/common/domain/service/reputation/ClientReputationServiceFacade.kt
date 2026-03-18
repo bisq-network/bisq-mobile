@@ -5,9 +5,9 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 
 class ClientReputationServiceFacade(
     val apiGateway: ReputationApiGateway,

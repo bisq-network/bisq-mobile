@@ -3,7 +3,7 @@ package network.bisq.mobile.client.main
 import network.bisq.mobile.client.common.di.androidClientDomainModule
 import network.bisq.mobile.client.common.di.androidClientPresentationModule
 import network.bisq.mobile.client.common.di.clientModules
-import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.presentation.main.MainApplication
 import org.koin.android.ext.android.get
 import org.koin.core.module.Module

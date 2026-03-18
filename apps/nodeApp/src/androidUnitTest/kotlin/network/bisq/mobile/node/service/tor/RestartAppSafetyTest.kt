@@ -1,7 +1,7 @@
 package network.bisq.mobile.node.service.tor
 
 import kotlinx.coroutines.runBlocking
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.KmpTorService
 import okio.Path.Companion.toPath
 import java.io.File
 import java.nio.file.Files

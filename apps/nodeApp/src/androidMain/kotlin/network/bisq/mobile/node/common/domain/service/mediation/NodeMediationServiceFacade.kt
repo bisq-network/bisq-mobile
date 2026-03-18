@@ -7,10 +7,10 @@ import bisq.support.mediation.bisq_easy.BisqEasyMediationRequestService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.mediation.MediationServiceFacade
+import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 

@@ -25,9 +25,9 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.dummy_user_profile_icon
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.BackHandler
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText

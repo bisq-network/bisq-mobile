@@ -16,13 +16,13 @@ import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
 import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
-import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
-import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
-import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
+import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
+import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
+import network.bisq.mobile.data.replicated.security.pow.ProofOfWorkVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.main.ApplicationContextProvider
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.junit.Test
@@ -56,8 +56,17 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
             avatarVersion = 0,
             networkId =
                 NetworkIdVO(
-                    addressByTransportTypeMap = AddressByTransportTypeMapVO(emptyMap()),
-                    pubKey = PubKeyVO(publicKey = PublicKeyVO("testPublicKey"), keyId = "key", hash = "hash", id = "id"),
+                    addressByTransportTypeMap =
+                        AddressByTransportTypeMapVO(
+                            emptyMap(),
+                        ),
+                    pubKey =
+                        PubKeyVO(
+                            publicKey = PublicKeyVO("testPublicKey"),
+                            keyId = "key",
+                            hash = "hash",
+                            id = "id",
+                        ),
                 ),
             proofOfWork = ProofOfWorkVO("payload", 1L, "challenge", 2.0, "sol", 100L),
             applicationVersion = "1.0.0",

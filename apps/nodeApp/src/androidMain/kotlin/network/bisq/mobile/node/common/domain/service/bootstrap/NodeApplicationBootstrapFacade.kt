@@ -3,8 +3,8 @@ package network.bisq.mobile.node.common.domain.service.bootstrap
 import bisq.application.State
 import bisq.common.observable.Observable
 import bisq.common.observable.Pin
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 

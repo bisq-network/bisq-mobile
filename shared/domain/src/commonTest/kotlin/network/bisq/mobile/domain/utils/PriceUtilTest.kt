@@ -1,9 +1,9 @@
 package network.bisq.mobile.domain.utils
 
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

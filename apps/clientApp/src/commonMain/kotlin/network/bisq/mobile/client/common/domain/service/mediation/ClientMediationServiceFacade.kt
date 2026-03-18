@@ -1,10 +1,10 @@
 package network.bisq.mobile.client.common.domain.service.mediation
 
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.mediation.MediationServiceFacade
+import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 
 class ClientMediationServiceFacade(
     val apiGateway: MediationApiGateway,

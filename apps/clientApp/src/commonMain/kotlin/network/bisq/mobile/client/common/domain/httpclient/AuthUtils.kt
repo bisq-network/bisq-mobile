@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.httpclient
 
 import io.ktor.http.Url
-import network.bisq.mobile.crypto.hmacSha256
-import network.bisq.mobile.crypto.nextSecureRandomBytes
+import network.bisq.mobile.data.crypto.hmacSha256
+import network.bisq.mobile.data.crypto.nextSecureRandomBytes
 
 object AuthUtils {
     fun generateAuthHash(

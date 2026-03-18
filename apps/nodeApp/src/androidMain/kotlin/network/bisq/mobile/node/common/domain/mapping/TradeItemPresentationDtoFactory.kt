@@ -24,8 +24,8 @@ import bisq.trade.bisq_easy.BisqEasyTradeFormatter
 import bisq.trade.bisq_easy.BisqEasyTradeUtils
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 
 object TradeItemPresentationDtoFactory {
     fun create(

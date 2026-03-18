@@ -32,7 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isSell
+import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isSell
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton

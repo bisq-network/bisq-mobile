@@ -28,7 +28,7 @@ import bisq.presentation.formatters.PriceFormatter
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import java.text.DateFormat
 import java.util.Date
 

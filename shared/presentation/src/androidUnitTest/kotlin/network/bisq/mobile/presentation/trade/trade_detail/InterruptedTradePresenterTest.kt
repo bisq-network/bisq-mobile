@@ -13,10 +13,10 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.service.mediation.MediationServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager

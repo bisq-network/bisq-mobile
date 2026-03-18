@@ -45,10 +45,10 @@ import network.bisq.mobile.client.common.domain.httpclient.exception.Unauthorize
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.utils.createHttpClient
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.network.KmpTorService
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import kotlin.concurrent.Volatile

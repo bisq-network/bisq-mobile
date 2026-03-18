@@ -8,12 +8,23 @@ import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.websocket.WebSockets
 import kotlinx.cinterop.ExperimentalForeignApi
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyConfig
-import network.bisq.mobile.crypto.getSha256
+import network.bisq.mobile.data.crypto.getSha256
 import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.getLogger
-import network.bisq.mobile.ios.toByteArray
-import platform.Foundation.*
-import platform.Security.*
+import network.bisq.mobile.domain.utils.toByteArray
+import platform.Foundation.CFBridgingRelease
+import platform.Foundation.NSData
+import platform.Foundation.NSURLAuthenticationChallenge
+import platform.Foundation.NSURLAuthenticationMethodServerTrust
+import platform.Foundation.NSURLCredential
+import platform.Foundation.NSURLSessionAuthChallengeCancelAuthenticationChallenge
+import platform.Foundation.NSURLSessionAuthChallengeDisposition
+import platform.Foundation.NSURLSessionAuthChallengePerformDefaultHandling
+import platform.Foundation.NSURLSessionAuthChallengeUseCredential
+import platform.Foundation.credentialForTrust
+import platform.Foundation.serverTrust
+import platform.Security.SecCertificateCopyData
+import platform.Security.SecTrustGetCertificateAtIndex
 
 /** File-level logger for TLS challenge handler to avoid allocation per invocation */
 private val tlsLog = getLogger("TlsFingerprint")

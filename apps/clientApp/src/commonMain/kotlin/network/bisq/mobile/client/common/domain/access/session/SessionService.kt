@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.common.domain.access.session
 
 import network.bisq.mobile.client.common.domain.access.session.dto.SessionRequestDto
-import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
 class SessionService(

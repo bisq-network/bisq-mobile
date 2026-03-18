@@ -3,7 +3,7 @@ package network.bisq.mobile.presentation.guide.trade_guide
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks

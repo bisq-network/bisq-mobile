@@ -1,0 +1,81 @@
+package network.bisq.mobile.data.repository
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.IOException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.PermissionState
+import network.bisq.mobile.data.model.Settings
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketSortBy
+import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.domain.utils.Logging
+
+open class SettingsRepositoryImpl(
+    private val settingsStore: DataStore<Settings>,
+) : SettingsRepository,
+    Logging {
+    override val data: Flow<Settings>
+        get() =
+            settingsStore.data.catch { exception ->
+                if (exception is IOException) {
+                    log.e("Error reading Settings datastore", exception)
+                    emit(Settings())
+                } else {
+                    throw exception
+                }
+            }
+
+    override suspend fun setFirstLaunch(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(firstLaunch = value)
+        }
+    }
+
+    override suspend fun setShowChatRulesWarnBox(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(showChatRulesWarnBox = value)
+        }
+    }
+
+    override suspend fun setSelectedMarketCode(value: String) {
+        settingsStore.updateData {
+            it.copy(selectedMarketCode = value)
+        }
+    }
+
+    override suspend fun setNotificationPermissionState(value: PermissionState) {
+        settingsStore.updateData {
+            it.copy(notificationPermissionState = value)
+        }
+    }
+
+    override suspend fun setBatteryOptimizationPermissionState(value: BatteryOptimizationState) {
+        settingsStore.updateData {
+            it.copy(batteryOptimizationState = value)
+        }
+    }
+
+    override suspend fun update(transform: suspend (t: Settings) -> Settings) {
+        settingsStore.updateData(transform)
+    }
+
+    override suspend fun clear() {
+        settingsStore.updateData {
+            Settings()
+        }
+    }
+
+    override suspend fun setMarketSortBy(value: MarketSortBy) {
+        settingsStore.updateData {
+            it.copy(marketSortBy = value)
+        }
+    }
+
+    override suspend fun setMarketFilter(value: MarketFilter) {
+        settingsStore.updateData {
+            it.copy(marketFilter = value)
+        }
+    }
+}

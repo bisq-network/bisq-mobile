@@ -12,7 +12,9 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.di.testModule
+import network.bisq.mobile.data.di.testModule
+import network.bisq.mobile.data.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.test.KoinTest
@@ -63,7 +65,8 @@ class NetworkServiceFacadeTest : KoinTest {
     @Test
     fun `ensureTorRunning does nothing when tor already started`() =
         runTest {
-            every { kmpTorService.state } returns MutableStateFlow<KmpTorService.TorState>(KmpTorService.TorState.Started)
+            every { kmpTorService.state } returns
+                MutableStateFlow<KmpTorService.TorState>(KmpTorService.TorState.Started)
             every { kmpTorService.bootstrapProgress } returns MutableStateFlow(100)
             val facade = TestNetworkServiceFacade(kmpTorService, torEnabled = true)
             facade.ensureTorRunning()

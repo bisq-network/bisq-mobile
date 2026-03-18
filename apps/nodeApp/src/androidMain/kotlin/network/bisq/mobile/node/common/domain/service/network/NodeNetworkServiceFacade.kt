@@ -11,8 +11,8 @@ import bisq.network.p2p.node.Node
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.domain.service.network.KmpTorService
-import network.bisq.mobile.domain.service.network.NetworkServiceFacade
+import network.bisq.mobile.data.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
 class NodeNetworkServiceFacade(

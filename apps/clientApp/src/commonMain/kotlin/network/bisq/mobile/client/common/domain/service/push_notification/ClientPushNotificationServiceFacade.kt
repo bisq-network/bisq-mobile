@@ -6,10 +6,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -26,7 +27,7 @@ class ClientPushNotificationServiceFacade(
     private val settingsRepository: SettingsRepository,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val pushNotificationTokenProvider: PushNotificationTokenProvider,
-    private val userProfileServiceFacade: network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : ServiceFacade(),
     PushNotificationServiceFacade,
     Logging {

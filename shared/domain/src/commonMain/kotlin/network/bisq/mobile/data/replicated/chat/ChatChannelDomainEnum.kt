@@ -1,0 +1,12 @@
+package network.bisq.mobile.data.replicated.chat
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+enum class ChatChannelDomainEnum {
+    BISQ_EASY_OFFERBOOK,
+    BISQ_EASY_OPEN_TRADES,
+    DISCUSSION,
+    SUPPORT,
+    MU_SIG_OPEN_TRADES,
+}

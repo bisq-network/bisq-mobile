@@ -4,12 +4,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.domain.data.model.BatteryOptimizationState
-import network.bisq.mobile.domain.data.model.MarketFilter
-import network.bisq.mobile.domain.data.model.MarketSortBy
-import network.bisq.mobile.domain.data.model.PermissionState
-import network.bisq.mobile.domain.data.model.Settings
-import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.PermissionState
+import network.bisq.mobile.data.model.Settings
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketSortBy
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
 
 class SettingsRepositoryMock :

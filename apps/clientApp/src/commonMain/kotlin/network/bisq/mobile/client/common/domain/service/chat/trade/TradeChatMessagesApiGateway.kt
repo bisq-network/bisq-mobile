@@ -4,10 +4,10 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.replicated.chat.CitationVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.replicated.chat.CitationVO
+import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
+import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.utils.Logging
 
 class TradeChatMessagesApiGateway(

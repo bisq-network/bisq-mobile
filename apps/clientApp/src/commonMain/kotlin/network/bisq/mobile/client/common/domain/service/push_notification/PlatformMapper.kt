@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
-import network.bisq.mobile.domain.PlatformType
+import network.bisq.mobile.domain.model.PlatformType
 
 /**
  * Maps between the domain PlatformType and the push notification Platform enum.

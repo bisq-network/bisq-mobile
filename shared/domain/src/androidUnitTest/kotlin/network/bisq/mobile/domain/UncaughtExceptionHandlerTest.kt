@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain
 
+import network.bisq.mobile.data.utils.setupUncaughtExceptionHandler
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean

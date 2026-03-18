@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.settings.user_profile
 
-import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

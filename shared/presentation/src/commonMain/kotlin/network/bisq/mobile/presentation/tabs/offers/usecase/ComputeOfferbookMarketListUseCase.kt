@@ -1,9 +1,9 @@
 package network.bisq.mobile.presentation.tabs.offers.usecase
 
-import network.bisq.mobile.domain.data.model.MarketFilter
-import network.bisq.mobile.domain.data.model.MarketSortBy
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketSortBy
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.tabs.offers.MarketFilterUtil

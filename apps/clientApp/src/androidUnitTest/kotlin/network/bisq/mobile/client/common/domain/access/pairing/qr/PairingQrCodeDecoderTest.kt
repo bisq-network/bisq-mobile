@@ -6,7 +6,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.utils.BinaryEncodingUtils
 import network.bisq.mobile.client.common.domain.utils.BinaryWriter
-import network.bisq.mobile.domain.data.EnvironmentController
+import network.bisq.mobile.data.utils.EnvironmentController
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test

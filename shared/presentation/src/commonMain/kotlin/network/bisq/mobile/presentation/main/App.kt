@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.setDefaultLocale
+import network.bisq.mobile.data.utils.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager

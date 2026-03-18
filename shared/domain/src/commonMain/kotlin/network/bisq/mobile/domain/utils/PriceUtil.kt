@@ -1,15 +1,15 @@
 package network.bisq.mobile.domain.utils
 
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.asDouble
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.asDouble
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
+import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.MathUtils.roundTo
 import kotlin.math.pow
 

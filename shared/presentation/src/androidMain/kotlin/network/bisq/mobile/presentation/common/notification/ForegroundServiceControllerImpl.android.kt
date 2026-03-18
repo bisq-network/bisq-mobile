@@ -9,7 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.service.AppForegroundController
+import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
 
 /**

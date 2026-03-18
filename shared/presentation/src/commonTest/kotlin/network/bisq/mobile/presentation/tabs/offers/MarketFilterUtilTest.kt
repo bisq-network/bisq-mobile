@@ -1,7 +1,7 @@
 package network.bisq.mobile.presentation.tabs.offers
 
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

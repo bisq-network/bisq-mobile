@@ -1,11 +1,11 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
+import network.bisq.mobile.domain.model.PlatformType
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -216,7 +216,7 @@ class ClientPushNotificationServiceFacadeTest {
     @Test
     fun `when mapping IOS PlatformType then returns IOS Platform`() {
         // Given
-        val platformType = network.bisq.mobile.domain.PlatformType.IOS
+        val platformType = PlatformType.IOS
 
         // When
         val platform = PlatformMapper.fromPlatformType(platformType)
@@ -228,7 +228,7 @@ class ClientPushNotificationServiceFacadeTest {
     @Test
     fun `when mapping ANDROID PlatformType then returns ANDROID Platform`() {
         // Given
-        val platformType = network.bisq.mobile.domain.PlatformType.ANDROID
+        val platformType = PlatformType.ANDROID
 
         // When
         val platform = PlatformMapper.fromPlatformType(platformType)

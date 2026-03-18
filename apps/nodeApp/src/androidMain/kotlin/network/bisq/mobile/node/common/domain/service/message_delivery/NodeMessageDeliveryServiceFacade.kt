@@ -4,8 +4,8 @@ import bisq.chat.ChatMessageType
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import bisq.common.observable.Pin
 import bisq.network.p2p.services.confidential.ack.MessageDeliveryStatus
-import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
-import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
+import network.bisq.mobile.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
+import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 

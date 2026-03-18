@@ -5,9 +5,9 @@ import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute

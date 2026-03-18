@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.formatters
 
-import network.bisq.mobile.domain.decimalFormatter
+import network.bisq.mobile.data.utils.decimalFormatter
 import network.bisq.mobile.domain.utils.MathUtils.roundTo
 
 object PercentageFormatter {

@@ -33,8 +33,8 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import org.junit.After

@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountPayloadVO
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
-import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -106,7 +106,7 @@ open class PaymentAccountsPresenter(
     private fun observeAccounts() {
         presenterScope.launch {
             fiatAccountsServiceFacade.accountState.collect { state ->
-                val accounts = state.accounts.filterIsInstance<UserDefinedFiatAccountVO>()
+                val accounts = state.accounts.filterIsInstance<UserDefinedFiatAccountDto>()
                 val selectedAccount = accounts.getOrNull(state.selectedAccountIndex)
                 _uiState.update {
                     it.copy(
@@ -165,11 +165,11 @@ open class PaymentAccountsPresenter(
     private fun createAccountVO(
         name: String,
         description: String,
-    ): UserDefinedFiatAccountVO =
-        UserDefinedFiatAccountVO(
+    ): UserDefinedFiatAccountDto =
+        UserDefinedFiatAccountDto(
             accountName = name,
             accountPayload =
-                UserDefinedFiatAccountPayloadVO(
+                UserDefinedFiatAccountPayloadDto(
                     accountData = description,
                 ),
         )

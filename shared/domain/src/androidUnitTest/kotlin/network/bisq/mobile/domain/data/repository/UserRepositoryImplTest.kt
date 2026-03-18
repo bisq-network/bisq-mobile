@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.data.repository
+package network.bisq.mobile.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
@@ -10,7 +10,7 @@ import io.mockk.slot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import network.bisq.mobile.domain.data.model.User
+import network.bisq.mobile.data.model.User
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

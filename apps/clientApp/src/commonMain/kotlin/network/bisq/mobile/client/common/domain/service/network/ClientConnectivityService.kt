@@ -11,11 +11,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService.Companion.TIMEOUT
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.domain.PlatformInfo
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 

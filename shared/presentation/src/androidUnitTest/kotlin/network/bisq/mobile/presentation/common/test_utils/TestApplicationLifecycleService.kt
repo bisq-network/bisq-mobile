@@ -1,9 +1,9 @@
 package network.bisq.mobile.presentation.common.test_utils
 
 import io.mockk.mockk
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.network.KmpTorService
 
 /**
  * Lightweight reusable ApplicationLifecycleService for unit tests.

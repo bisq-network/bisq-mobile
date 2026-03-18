@@ -10,13 +10,12 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Subscription
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
-import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.trades.TakeOfferStatus
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.trades.TakeOfferStatus
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
 
 /**
  * Client implementation of TradesServiceFacade with enhanced trade state synchronization.
@@ -83,8 +82,8 @@ class ClientTradesServiceFacade(
     // API
     override suspend fun takeOffer(
         bisqEasyOffer: BisqEasyOfferVO,
-        takersBaseSideAmount: MonetaryVO,
-        takersQuoteSideAmount: MonetaryVO,
+        takersBaseSideAmount: network.bisq.mobile.data.replicated.common.monetary.MonetaryVO,
+        takersQuoteSideAmount: network.bisq.mobile.data.replicated.common.monetary.MonetaryVO,
         bitcoinPaymentMethod: String,
         fiatPaymentMethod: String,
         takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,

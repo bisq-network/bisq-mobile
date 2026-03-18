@@ -1,10 +1,10 @@
 package network.bisq.mobile.client.offerbook
 
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientUserProfileServiceFacade
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter

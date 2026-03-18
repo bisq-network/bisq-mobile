@@ -5,11 +5,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.network.NetworkServiceFacade
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.network.NetworkServiceFacade
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter

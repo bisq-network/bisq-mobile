@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.utils
 
-import network.bisq.mobile.domain.getLocaleCurrencyName
+import network.bisq.mobile.data.utils.getLocaleCurrencyName
 
 object CurrencyUtils {
     fun getLocaleFiatCurrencyName(

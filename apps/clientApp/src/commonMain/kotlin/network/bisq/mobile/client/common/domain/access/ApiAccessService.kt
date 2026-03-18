@@ -10,10 +10,10 @@ import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeD
 import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.getProxyOptionFromRestUrl
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.domain.data.EnvironmentController
-import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.utils.EnvironmentController
+import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 

@@ -33,10 +33,10 @@ import bisqapps.shared.presentation.generated.resources.icon_markets
 import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.data.model.BatteryOptimizationState
-import network.bisq.mobile.domain.data.model.PermissionState
-import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.PermissionState
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton

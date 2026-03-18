@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.common.domain.access.session.SessionService
@@ -32,10 +31,10 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketResp
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrCancel

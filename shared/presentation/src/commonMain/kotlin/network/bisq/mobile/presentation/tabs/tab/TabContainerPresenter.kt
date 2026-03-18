@@ -1,7 +1,7 @@
 package network.bisq.mobile.presentation.tabs.tab
 
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter

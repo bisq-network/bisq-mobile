@@ -9,9 +9,9 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
-import network.bisq.mobile.ios.cfDictionaryOf
-import network.bisq.mobile.ios.toByteArray
-import network.bisq.mobile.ios.toNSData
+import network.bisq.mobile.domain.utils.cfDictionaryOf
+import network.bisq.mobile.domain.utils.toByteArray
+import network.bisq.mobile.domain.utils.toNSData
 import platform.Foundation.NSError
 import platform.Security.SecItemDelete
 import platform.Security.kSecAttrAccount

@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.service.settings
 
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
-import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
+import network.bisq.mobile.data.replicated.settings.ApiVersionSettingsVO
+import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.utils.Logging
 
 class SettingsApiGateway(

@@ -3,8 +3,8 @@ package network.bisq.mobile.client.common.domain.service.push_notification
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
 /**

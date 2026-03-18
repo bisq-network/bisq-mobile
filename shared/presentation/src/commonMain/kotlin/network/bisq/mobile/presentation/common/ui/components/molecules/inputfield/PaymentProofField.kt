@@ -3,7 +3,7 @@ package network.bisq.mobile.presentation.common.ui.components.molecules.inputfie
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.utils.BitcoinTransactionValidation

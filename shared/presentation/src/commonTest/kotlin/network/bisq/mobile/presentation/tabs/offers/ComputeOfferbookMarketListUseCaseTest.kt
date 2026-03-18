@@ -1,15 +1,15 @@
 package network.bisq.mobile.presentation.tabs.offers
 
-import network.bisq.mobile.domain.data.model.MarketFilter
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.MarketSortBy
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
-import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.setDefaultLocale
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketPriceItem
+import network.bisq.mobile.data.model.market.MarketSortBy
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.utils.setDefaultLocale
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import kotlin.test.BeforeTest

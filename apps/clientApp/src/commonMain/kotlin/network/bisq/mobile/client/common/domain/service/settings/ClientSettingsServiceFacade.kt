@@ -3,10 +3,10 @@ package network.bisq.mobile.client.common.domain.service.settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
-import network.bisq.mobile.domain.service.ServiceFacade
-import network.bisq.mobile.domain.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.replicated.settings.SettingsVO
+import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
 

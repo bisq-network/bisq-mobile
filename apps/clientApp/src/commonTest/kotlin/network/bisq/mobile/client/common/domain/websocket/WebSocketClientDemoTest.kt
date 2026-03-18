@@ -6,7 +6,9 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.replicated.common.currency.marketListDemoObj
+import network.bisq.mobile.data.replicated.common.currency.marketListDemoObj
+import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -45,7 +47,7 @@ class WebSocketClientDemoTest {
             // Check if priceSpec has a market (FixPriceSpecVO has priceQuote with market)
             val priceSpecMarket =
                 when (priceSpec) {
-                    is network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO ->
+                    is FixPriceSpecVO ->
                         priceSpec.priceQuote.market
                     else -> null
                 }
@@ -95,7 +97,7 @@ class WebSocketClientDemoTest {
     @Test
     fun `FakeSubscriptionData offers can be serialized and deserialized`() {
         val serialized = json.encodeToString(FakeSubscriptionData.offers)
-        val deserialized = json.decodeFromString<List<network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto>>(serialized)
+        val deserialized = json.decodeFromString<List<OfferItemPresentationDto>>(serialized)
 
         assertEquals(FakeSubscriptionData.offers.size, deserialized.size)
         deserialized.forEachIndexed { index, dto ->

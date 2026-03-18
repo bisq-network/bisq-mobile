@@ -13,9 +13,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.PlatformInfo
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -99,7 +99,7 @@ class MainPresenterCleanupTest {
     fun `cleanupNotificationService uses fire-and-forget on iOS`() =
         runBlocking {
             // Mock getPlatformInfo to return iOS
-            mockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
+            mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
             val iosPlatformInfo =
                 object : PlatformInfo {
                     override val name = "iOS"
@@ -117,13 +117,13 @@ class MainPresenterCleanupTest {
             delay(200)
             coVerify { notificationService.stopNotificationService() }
 
-            unmockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
+            unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
         }
 
     @Test
     fun `cleanupNotificationService logs error on iOS when service fails`() =
         runBlocking {
-            mockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
+            mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
             val iosPlatformInfo =
                 object : PlatformInfo {
                     override val name = "iOS"
@@ -141,6 +141,6 @@ class MainPresenterCleanupTest {
             presenter.cleanupNotificationService()
             delay(200)
 
-            unmockkStatic("network.bisq.mobile.domain.PlatformDomainAbstractions_androidKt")
+            unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
         }
 }

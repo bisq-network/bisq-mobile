@@ -17,8 +17,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
-import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryStatusEnum
+import network.bisq.mobile.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
+import network.bisq.mobile.data.replicated.network.confidential.ack.MessageDeliveryStatusEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqIconButton

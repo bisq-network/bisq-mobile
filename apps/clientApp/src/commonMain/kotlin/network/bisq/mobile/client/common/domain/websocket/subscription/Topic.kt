@@ -2,12 +2,12 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.common.domain.service.trades.TradePropertiesDto
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
-import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
+import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 

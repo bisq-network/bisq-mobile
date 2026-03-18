@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.data.model.BaseModel
-import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.data.model.BaseModel
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport

@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.service.trades
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.data.replicated.contract.RoleEnum
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.data.replicated.contract.RoleEnum
+import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 
 @Serializable
 data class TradePropertiesDto(

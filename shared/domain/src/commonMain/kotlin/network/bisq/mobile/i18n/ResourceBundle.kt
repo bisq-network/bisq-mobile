@@ -1,7 +1,7 @@
 package network.bisq.mobile.i18n
 
 import kotlinx.datetime.Clock
-import network.bisq.mobile.domain.loadProperties
+import network.bisq.mobile.data.utils.loadProperties
 import network.bisq.mobile.domain.utils.getLogger
 
 class ResourceBundle(

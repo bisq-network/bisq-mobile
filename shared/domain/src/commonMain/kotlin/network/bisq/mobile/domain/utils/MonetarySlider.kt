@@ -1,7 +1,7 @@
 package network.bisq.mobile.domain.utils
 
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
+import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
 import kotlin.math.roundToLong
 
 /**

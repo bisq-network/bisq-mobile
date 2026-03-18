@@ -6,11 +6,11 @@ import bisq.account.accounts.fiat.UserDefinedFiatAccountPayload
 import bisq.account.timestamp.KeyType
 import bisq.common.util.StringUtils
 import bisq.security.keys.KeyGeneration
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountPayloadVO
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
 
 object UserDefinedFiatAccountMapping {
-    fun toBisq2Model(value: UserDefinedFiatAccountVO): UserDefinedFiatAccount {
+    fun toBisq2Model(value: UserDefinedFiatAccountDto): UserDefinedFiatAccount {
         val payload = UserDefinedFiatAccountPayloadMapping.toBisq2Model(value.accountPayload)
         val keyPair = KeyGeneration.generateDefaultEcKeyPair()
         val keyAlgorithm = KeyType.EC
@@ -25,22 +25,22 @@ object UserDefinedFiatAccountMapping {
         )
     }
 
-    fun fromBisq2Model(value: UserDefinedFiatAccount): UserDefinedFiatAccountVO =
-        UserDefinedFiatAccountVO(
+    fun fromBisq2Model(value: UserDefinedFiatAccount): UserDefinedFiatAccountDto =
+        UserDefinedFiatAccountDto(
             value.accountName,
             UserDefinedFiatAccountPayloadMapping.fromBisq2Model(value.accountPayload),
         )
 }
 
 object UserDefinedFiatAccountPayloadMapping {
-    fun toBisq2Model(value: UserDefinedFiatAccountPayloadVO): UserDefinedFiatAccountPayload =
+    fun toBisq2Model(value: UserDefinedFiatAccountPayloadDto): UserDefinedFiatAccountPayload =
         UserDefinedFiatAccountPayload(
             StringUtils.createUid(),
             value.accountData,
         )
 
-    fun fromBisq2Model(value: UserDefinedFiatAccountPayload): UserDefinedFiatAccountPayloadVO =
-        UserDefinedFiatAccountPayloadVO(
+    fun fromBisq2Model(value: UserDefinedFiatAccountPayload): UserDefinedFiatAccountPayloadDto =
+        UserDefinedFiatAccountPayloadDto(
             value.accountData,
         )
 }

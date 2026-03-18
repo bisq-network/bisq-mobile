@@ -2,20 +2,19 @@ package network.bisq.mobile.node.common.domain.service.accounts
 
 import bisq.account.AccountService
 import bisq.account.accounts.fiat.UserDefinedFiatAccount
-import network.bisq.mobile.domain.data.replicated.account.fiat.FiatAccountVO
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
-import network.bisq.mobile.domain.data.replicated.account.payment_method.FiatPaymentRailEnum
-import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRailEnum
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.FiatAccountDto
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.node.common.domain.mapping.UserDefinedFiatAccountMapping
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
-import kotlin.IllegalStateException
 
 class NodeFiatAccountsServiceFacade(
     applicationService: AndroidApplicationService.Provider,
 ) : FiatAccountsServiceFacade() {
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
 
-    override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRailEnum>?): Result<List<FiatAccountVO>> {
+    override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRailEnum>?): Result<List<FiatAccountDto>> {
         // Note: paymentRails filtering not yet implemented in node
         // Currently returns only UserDefinedFiatAccount (CUSTOM rail)
         return runCatching {
@@ -27,7 +26,7 @@ class NodeFiatAccountsServiceFacade(
         }
     }
 
-    override suspend fun executeGetSelectedAccount(): Result<FiatAccountVO?> =
+    override suspend fun executeGetSelectedAccount(): Result<FiatAccountDto?> =
         runCatching {
             val optionalAccount = accountService.findSelectedAccount()
             if (optionalAccount.isPresent) {
@@ -41,10 +40,10 @@ class NodeFiatAccountsServiceFacade(
             }
         }
 
-    override suspend fun executeAddAccount(account: FiatAccountVO): Result<Unit> =
+    override suspend fun executeAddAccount(account: FiatAccountDto): Result<Unit> =
         runCatching {
             val userDefinedAccount =
-                account as? UserDefinedFiatAccountVO
+                account as? UserDefinedFiatAccountDto
                     ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
             val bisq2Account = UserDefinedFiatAccountMapping.toBisq2Model(userDefinedAccount)
             accountService.addPaymentAccount(bisq2Account)
@@ -52,11 +51,11 @@ class NodeFiatAccountsServiceFacade(
 
     override suspend fun executeSaveAccount(
         accountName: String,
-        account: FiatAccountVO,
+        account: FiatAccountDto,
     ): Result<Unit> =
         runCatching {
             val userDefinedAccount =
-                account as? UserDefinedFiatAccountVO
+                account as? UserDefinedFiatAccountDto
                     ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
             // updatePaymentAccount was removed in Bisq2 2.1.9; use remove + add
             val existingAccount = accountService.accountByNameMap[accountName]
@@ -75,16 +74,16 @@ class NodeFiatAccountsServiceFacade(
                 throw IllegalStateException("Account not found: $accountName")
             }
             val userDefinedAccount =
-                account as? UserDefinedFiatAccountVO
+                account as? UserDefinedFiatAccountDto
                     ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
             val bisq2Account = UserDefinedFiatAccountMapping.toBisq2Model(userDefinedAccount)
             accountService.removePaymentAccount(bisq2Account)
         }
 
-    override suspend fun executeSetSelectedAccount(account: FiatAccountVO): Result<Unit> =
+    override suspend fun executeSetSelectedAccount(account: FiatAccountDto): Result<Unit> =
         runCatching {
             val userDefinedAccount =
-                account as? UserDefinedFiatAccountVO
+                account as? UserDefinedFiatAccountDto
                     ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
             accountService.setSelectedAccount(
                 UserDefinedFiatAccountMapping.toBisq2Model(userDefinedAccount),

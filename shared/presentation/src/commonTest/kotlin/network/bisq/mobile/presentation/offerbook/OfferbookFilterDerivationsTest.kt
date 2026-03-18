@@ -1,19 +1,19 @@
 package network.bisq.mobile.presentation.offerbook
 
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
-import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
-import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
-import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
+import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
+import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

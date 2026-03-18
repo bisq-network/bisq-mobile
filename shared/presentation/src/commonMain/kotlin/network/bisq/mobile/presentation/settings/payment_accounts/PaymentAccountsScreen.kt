@@ -9,15 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountPayloadVO
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.components.LoadingState
@@ -338,24 +336,24 @@ private fun PaymentAccountsScreen_WithAccountsPreview() {
     BisqTheme.Preview {
         val sampleAccounts =
             listOf(
-                UserDefinedFiatAccountVO(
+                UserDefinedFiatAccountDto(
                     accountName = "PayPal Account",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadVO(
+                        UserDefinedFiatAccountPayloadDto(
                             accountData = "user@example.com",
                         ),
                 ),
-                UserDefinedFiatAccountVO(
+                UserDefinedFiatAccountDto(
                     accountName = "Bank Transfer",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadVO(
+                        UserDefinedFiatAccountPayloadDto(
                             accountData = "IBAN: DE89370400440532013000",
                         ),
                 ),
-                UserDefinedFiatAccountVO(
+                UserDefinedFiatAccountDto(
                     accountName = "Revolut",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadVO(
+                        UserDefinedFiatAccountPayloadDto(
                             accountData = "+1234567890",
                         ),
                 ),
@@ -384,24 +382,24 @@ private fun PaymentAccountsScreen_EditModePreview() {
     BisqTheme.Preview {
         val sampleAccounts =
             listOf(
-                UserDefinedFiatAccountVO(
+                UserDefinedFiatAccountDto(
                     accountName = "PayPal Account",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadVO(
+                        UserDefinedFiatAccountPayloadDto(
                             accountData = "user@example.com",
                         ),
                 ),
-                UserDefinedFiatAccountVO(
+                UserDefinedFiatAccountDto(
                     accountName = "Bank Transfer",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadVO(
+                        UserDefinedFiatAccountPayloadDto(
                             accountData = "IBAN: DE89370400440532013000",
                         ),
                 ),
-                UserDefinedFiatAccountVO(
+                UserDefinedFiatAccountDto(
                     accountName = "Revolut",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadVO(
+                        UserDefinedFiatAccountPayloadDto(
                             accountData = "+1234567890",
                         ),
                 ),

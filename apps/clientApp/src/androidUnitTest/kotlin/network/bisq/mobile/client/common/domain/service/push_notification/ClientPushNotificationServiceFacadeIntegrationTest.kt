@@ -17,13 +17,13 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
-import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
-import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
-import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
+import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
+import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
+import network.bisq.mobile.data.replicated.security.pow.ProofOfWorkVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.main.ApplicationContextProvider
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.junit.After
@@ -54,8 +54,17 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             avatarVersion = 1,
             networkId =
                 NetworkIdVO(
-                    addressByTransportTypeMap = AddressByTransportTypeMapVO(mapOf()),
-                    pubKey = PubKeyVO(publicKey = PublicKeyVO("testPublicKey"), keyId = "key", hash = "hash", id = "id"),
+                    addressByTransportTypeMap =
+                        AddressByTransportTypeMapVO(
+                            mapOf(),
+                        ),
+                    pubKey =
+                        PubKeyVO(
+                            publicKey = PublicKeyVO("testPublicKey"),
+                            keyId = "key",
+                            hash = "hash",
+                            id = "id",
+                        ),
                 ),
             terms = "",
             statement = "",

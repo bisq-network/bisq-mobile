@@ -20,7 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.BarcodeScannerView
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton

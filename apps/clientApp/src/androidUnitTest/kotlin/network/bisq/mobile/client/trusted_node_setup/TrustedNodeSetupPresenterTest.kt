@@ -27,8 +27,8 @@ import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetu
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCaseState
-import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport

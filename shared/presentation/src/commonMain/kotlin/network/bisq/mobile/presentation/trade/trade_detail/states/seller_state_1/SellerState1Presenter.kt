@@ -4,9 +4,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
-import network.bisq.mobile.domain.service.accounts.FiatAccountsServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
@@ -17,7 +17,7 @@ class SellerState1Presenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
 ) : BasePresenter(mainPresenter) {
-    private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
+    private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountDto>>(emptyList())
     val accounts = _accounts.asStateFlow()
 
     private val _paymentAccountDataEntry =
@@ -39,7 +39,7 @@ class SellerState1Presenter(
             fiatAccountsServiceFacade
                 .getAccounts()
                 .onSuccess { accounts ->
-                    val userDefinedAccounts = accounts.filterIsInstance<UserDefinedFiatAccountVO>()
+                    val userDefinedAccounts = accounts.filterIsInstance<UserDefinedFiatAccountDto>()
                     _accounts.value = userDefinedAccounts
                     userDefinedAccounts.firstOrNull()?.let { account ->
                         _paymentAccountDataEntry.value =

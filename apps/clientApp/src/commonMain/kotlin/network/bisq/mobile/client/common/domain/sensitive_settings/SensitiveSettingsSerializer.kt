@@ -4,9 +4,9 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.okio.OkioSerializer
 import io.ktor.utils.io.core.toByteArray
 import kotlinx.serialization.SerializationException
-import network.bisq.mobile.crypto.decrypt
-import network.bisq.mobile.crypto.encrypt
-import network.bisq.mobile.domain.data.datastore.dataStoreJson
+import network.bisq.mobile.data.crypto.decrypt
+import network.bisq.mobile.data.crypto.encrypt
+import network.bisq.mobile.data.datastore.dataStoreJson
 import okio.BufferedSink
 import okio.BufferedSource
 

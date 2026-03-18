@@ -12,9 +12,9 @@ import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.BuildNodeConfig
-import network.bisq.mobile.domain.data.EnvironmentController
-import network.bisq.mobile.domain.di.domainModule
-import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.di.dataModule
+import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.node.common.di.androidNodeDomainModule
 import network.bisq.mobile.node.common.di.androidNodePresentationModule
 import network.bisq.mobile.node.common.domain.utils.moveDirReplace
@@ -31,7 +31,7 @@ import java.security.Security
  * Bisq Android Node Application definition
  */
 class NodeMainApplication : MainApplication() {
-    override fun getKoinModules(): List<Module> = listOf(domainModule, androidNodeDomainModule, presentationModule, androidNodePresentationModule)
+    override fun getKoinModules(): List<Module> = listOf(dataModule, androidNodeDomainModule, presentationModule, androidNodePresentationModule)
 
     override fun onCreated() {
         // Use runBlocking for essential system initialization that must complete before app continues

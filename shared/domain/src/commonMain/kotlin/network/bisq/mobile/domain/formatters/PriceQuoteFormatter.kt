@@ -1,9 +1,9 @@
 package network.bisq.mobile.domain.formatters
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.decimalFormatter
+import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.data.utils.decimalFormatter
 
 object PriceQuoteFormatter {
     fun format(

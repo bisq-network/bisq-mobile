@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.trusted_node_setup
 
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 

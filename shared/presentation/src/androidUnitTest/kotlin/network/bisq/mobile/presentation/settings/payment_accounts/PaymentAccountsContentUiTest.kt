@@ -12,8 +12,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountPayloadVO
-import network.bisq.mobile.domain.data.replicated.account.fiat.UserDefinedFiatAccountVO
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -40,19 +40,19 @@ class PaymentAccountsContentUiTest {
 
     // Test data
     private val sampleAccount1 =
-        UserDefinedFiatAccountVO(
+        UserDefinedFiatAccountDto(
             accountName = "PayPal Account",
             accountPayload =
-                UserDefinedFiatAccountPayloadVO(
+                UserDefinedFiatAccountPayloadDto(
                     accountData = "user@example.com",
                 ),
         )
 
     private val sampleAccount2 =
-        UserDefinedFiatAccountVO(
+        UserDefinedFiatAccountDto(
             accountName = "Bank Transfer",
             accountPayload =
-                UserDefinedFiatAccountPayloadVO(
+                UserDefinedFiatAccountPayloadDto(
                     accountData = "IBAN: DE89370400440532013000",
                 ),
         )

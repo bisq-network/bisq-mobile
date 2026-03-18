@@ -2,8 +2,8 @@ package network.bisq.mobile.presentation.common.ui.components.organisms.dialogs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 

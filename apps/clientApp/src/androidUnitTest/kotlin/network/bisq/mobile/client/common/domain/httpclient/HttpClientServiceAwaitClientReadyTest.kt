@@ -7,14 +7,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.VersionProvider
 import org.koin.core.module.Module
 import org.koin.dsl.module

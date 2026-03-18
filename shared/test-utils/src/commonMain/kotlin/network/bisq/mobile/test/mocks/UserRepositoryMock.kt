@@ -2,8 +2,8 @@ package network.bisq.mobile.test.mocks
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.model.User
-import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.data.model.User
+import network.bisq.mobile.domain.repository.UserRepository
 
 /**
  * Mock implementation of UserRepository for testing.

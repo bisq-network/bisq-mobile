@@ -14,14 +14,13 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
-import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme

@@ -15,17 +15,16 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.model.offerbook.OfferbookMarket
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.offers.OfferFormattingUtil
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -109,7 +108,7 @@ class ClientOffersServiceFacade(
 
     override suspend fun createOffer(
         direction: DirectionEnum,
-        market: MarketVO,
+        market: network.bisq.mobile.data.replicated.common.currency.MarketVO,
         bitcoinPaymentMethods: Set<String>,
         fiatPaymentMethods: Set<String>,
         amountSpec: AmountSpecVO,
@@ -345,7 +344,7 @@ class ClientOffersServiceFacade(
             }
     }
 
-    private fun fillMarketListItems(markets: List<MarketVO>) {
+    private fun fillMarketListItems(markets: List<network.bisq.mobile.data.replicated.common.currency.MarketVO>) {
         val marketListItems =
             markets.map { marketVO ->
                 MarketListItem.from(marketVO)

@@ -4,14 +4,14 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetupSettings
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
-import network.bisq.mobile.domain.service.network.NetworkServiceFacade
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.network.NetworkServiceFacade
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.UrlLauncher
+import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.main.MainPresenter
 

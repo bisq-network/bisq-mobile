@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.common.domain.service.accounts
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.data.replicated.account.fiat.FiatAccountVO
+import network.bisq.mobile.data.replicated.api.dto.account.fiat.FiatAccountDto
 
 @Serializable
 data class SetSelectedFiatAccountRequest(
-    val selectedAccount: FiatAccountVO,
+    val selectedAccount: FiatAccountDto,
 )

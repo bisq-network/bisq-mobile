@@ -66,7 +66,7 @@ import bisqapps.shared.presentation.generated.resources.icon_web_link
 import bisqapps.shared.presentation.generated.resources.leave_chat_green
 import bisqapps.shared.presentation.generated.resources.remove_offer
 import bisqapps.shared.presentation.generated.resources.up_arrow
-import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import org.jetbrains.compose.resources.DrawableResource

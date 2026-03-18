@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.message_delivery
 
-import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
-import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
+import network.bisq.mobile.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
+import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 
 // TODO impl
 class ClientMessageDeliveryServiceFacade : MessageDeliveryServiceFacade() {

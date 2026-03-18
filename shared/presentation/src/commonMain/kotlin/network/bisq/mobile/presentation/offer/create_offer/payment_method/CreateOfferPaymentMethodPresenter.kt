@@ -2,7 +2,7 @@ package network.bisq.mobile.presentation.offer.create_offer.payment_method
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
