@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -51,9 +52,14 @@ class ClientSplashPresenter(
             // Check early if we have no saved trusted node configuration
             val settings = sensitiveSettingsRepository.fetch()
             if (settings.bisqApiUrl.isEmpty() || settings.clientId == null || settings.clientSecret == null) {
-                log.d { "No saved trusted node configuration, navigating to pairing screen" }
+                val keystoreWasInvalidated = SensitiveSettingsSerializer.keystoreInvalidated.value
+                if (keystoreWasInvalidated) {
+                    log.w { "Keystore invalidated (OS upgrade?), credentials lost. User must re-pair." }
+                } else {
+                    log.d { "No saved trusted node configuration, navigating to pairing screen" }
+                }
                 hasNavigated = true
-                navigateToTrustedNodeSetup()
+                navigateToTrustedNodeSetup(showKeystoreError = keystoreWasInvalidated)
                 return@launch
             }
 
@@ -119,8 +125,16 @@ class ClientSplashPresenter(
         super.navigateToNextScreen()
     }
 
-    private fun navigateToTrustedNodeSetup(showConnectionFailed: Boolean = false) {
-        navigateTo(TrustedNodeSetup(showConnectionFailed = showConnectionFailed)) {
+    private fun navigateToTrustedNodeSetup(
+        showConnectionFailed: Boolean = false,
+        showKeystoreError: Boolean = false,
+    ) {
+        navigateTo(
+            TrustedNodeSetup(
+                showConnectionFailed = showConnectionFailed,
+                showKeystoreError = showKeystoreError,
+            ),
+        ) {
             it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }

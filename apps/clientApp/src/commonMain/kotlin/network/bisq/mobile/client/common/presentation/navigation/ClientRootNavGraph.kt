@@ -54,7 +54,10 @@ fun NavGraphBuilder.addClientAppRoutes() {
     // Client-specific screens
     addScreen<TrustedNodeSetupSettings> { TrustedNodeSetupScreen(isWorkflow = false) }
     addScreen<TrustedNodeSetup> { entry ->
-        val showConnectionFailed = entry.toRoute<TrustedNodeSetup>().showConnectionFailed
-        TrustedNodeSetupScreen(showConnectionFailed = showConnectionFailed)
+        val route = entry.toRoute<TrustedNodeSetup>()
+        TrustedNodeSetupScreen(
+            showConnectionFailed = route.showConnectionFailed,
+            showKeystoreError = route.showKeystoreError,
+        )
     }
 }

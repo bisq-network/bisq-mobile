@@ -3,6 +3,9 @@ package network.bisq.mobile.client.common.domain.sensitive_settings
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.okio.OkioSerializer
 import io.ktor.utils.io.core.toByteArray
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.SerializationException
 import network.bisq.mobile.crypto.decrypt
 import network.bisq.mobile.crypto.encrypt
@@ -13,6 +16,18 @@ import okio.BufferedSource
 object SensitiveSettingsSerializer : OkioSerializer<SensitiveSettings> {
     override val defaultValue: SensitiveSettings
         get() = SensitiveSettings()
+
+    /**
+     * True when a [GeneralSecurityException] (e.g. [javax.crypto.AEADBadTagException]) was
+     * caught during deserialization. This signals that the Android Keystore key was
+     * invalidated (typically by an OS upgrade or factory-reset of biometrics) and the
+     * encrypted pairing credentials could not be recovered.
+     *
+     * The splash screen reads this flag to show an explanatory dialog before landing the
+     * user on the trusted-node setup screen to re-pair.
+     */
+    private val _keystoreInvalidated = MutableStateFlow(false)
+    val keystoreInvalidated: StateFlow<Boolean> = _keystoreInvalidated.asStateFlow()
 
     override suspend fun readFrom(source: BufferedSource): SensitiveSettings {
         if (source.exhausted()) return defaultValue
@@ -28,6 +43,16 @@ object SensitiveSettingsSerializer : OkioSerializer<SensitiveSettings> {
             throw CorruptionException("Cannot read SensitiveSettings", e)
         } catch (e: IllegalStateException) {
             throw CorruptionException("Cannot decrypt SensitiveSettings", e)
+        } catch (e: Exception) {
+            // Catches platform-specific crypto exceptions such as
+            // javax.crypto.AEADBadTagException (Android Keystore key invalidated after OS upgrade)
+            // and any other unexpected decryption failures.
+            _keystoreInvalidated.value = true
+            throw CorruptionException(
+                "Keystore key invalidated — encrypted SensitiveSettings unrecoverable. " +
+                    "User must re-pair with their trusted node.",
+                e,
+            )
         }
     }
 

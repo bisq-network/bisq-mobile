@@ -30,4 +30,6 @@ sealed interface TrustedNodeSetupUiAction {
     data object OnConnectionFailedRetryPress : TrustedNodeSetupUiAction
 
     data object OnConnectionFailedPairWithNewNodePress : TrustedNodeSetupUiAction
+
+    data object OnKeystoreErrorDismiss : TrustedNodeSetupUiAction
 }

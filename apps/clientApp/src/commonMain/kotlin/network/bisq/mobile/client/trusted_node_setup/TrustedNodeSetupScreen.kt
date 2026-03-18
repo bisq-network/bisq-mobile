@@ -53,12 +53,13 @@ import org.koin.compose.koinInject
 fun TrustedNodeSetupScreen(
     isWorkflow: Boolean = true,
     showConnectionFailed: Boolean = false,
+    showKeystoreError: Boolean = false,
 ) {
     val presenter: TrustedNodeSetupPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    LaunchedEffect(isWorkflow, showConnectionFailed) {
-        presenter.initialize(isWorkflow, showConnectionFailed)
+    LaunchedEffect(isWorkflow, showConnectionFailed, showKeystoreError) {
+        presenter.initialize(isWorkflow, showConnectionFailed, showKeystoreError)
     }
 
     val uiState by presenter.uiState.collectAsState()
@@ -126,6 +127,19 @@ fun TrustedNodeSetupContent(
             dismissButtonText = "mobile.trustedNodeSetup.cancel".i18n(),
             onConfirm = { onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm) },
             onDismiss = { onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningCancel) },
+        )
+    }
+
+    if (uiState.showKeystoreError) {
+        ConfirmationDialog(
+            headlineColor = BisqTheme.colors.warning,
+            headlineLeftIcon = { WarningIcon() },
+            headline = "mobile.trustedNodeSetup.keystoreError.headline".i18n(),
+            message = "mobile.trustedNodeSetup.keystoreError.message".i18n(),
+            confirmButtonText = "mobile.trustedNodeSetup.keystoreError.ok".i18n(),
+            dismissButtonText = "",
+            dismissOnClickOutside = false,
+            onConfirm = { onAction(TrustedNodeSetupUiAction.OnKeystoreErrorDismiss) },
         )
     }
 

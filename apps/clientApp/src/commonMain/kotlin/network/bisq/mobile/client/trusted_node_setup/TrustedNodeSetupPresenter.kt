@@ -50,6 +50,7 @@ class TrustedNodeSetupPresenter(
     suspend fun initialize(
         isWorkflow: Boolean,
         showConnectionFailed: Boolean = false,
+        showKeystoreError: Boolean = false,
     ) {
         this.isWorkflow = isWorkflow
         if (!isWorkflow) {
@@ -59,6 +60,10 @@ class TrustedNodeSetupPresenter(
                     apiUrl = settings.bisqApiUrl,
                     status = TrustedNodeConnectionStatus.Connected,
                 )
+            }
+        } else if (showKeystoreError) {
+            _uiState.update {
+                it.copy(showKeystoreError = true)
             }
         } else if (showConnectionFailed) {
             _uiState.update {
@@ -141,6 +146,10 @@ class TrustedNodeSetupPresenter(
 
             TrustedNodeSetupUiAction.OnConnectionFailedPairWithNewNodePress -> {
                 _uiState.update { it.copy(showConnectionFailedWarning = false) }
+            }
+
+            TrustedNodeSetupUiAction.OnKeystoreErrorDismiss -> {
+                _uiState.update { it.copy(showKeystoreError = false) }
             }
         }
     }
