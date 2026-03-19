@@ -144,8 +144,6 @@ androidx-test-compose-manifest = { module = "androidx.compose.ui:ui-test-manifes
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 junit = { module = "junit:junit", version.ref = "junit" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-mockk-common = { module = "io.mockk:mockk-common", version.ref = "mockk" }
-mockk-darwin = { module = "io.mockk:mockk-darwin", version.ref = "mockk" }
 
 
 # -------------------- Multiplatform Libraries --------------------

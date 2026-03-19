@@ -46,6 +46,9 @@ actual fun createHttpClient(
             tlsFingerprint?.let { fingerprint ->
                 handleChallenge { _, _, challenge, completionHandler ->
                     handleTlsChallenge(fingerprint, challenge) { disposition, credential ->
+                        // Ktor Darwin engine types completionHandler as (Int, ...) in metadata
+                        // but (Long, ...) on arm64. Cast to Function2<Any?, Any?, Unit> so both
+                        // targets compile — safe at runtime since disposition is always numeric.
                         @Suppress("UNCHECKED_CAST")
                         (completionHandler as Function2<Any?, Any?, Unit>)(disposition, credential)
                     }
