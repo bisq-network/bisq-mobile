@@ -6,6 +6,7 @@ import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
 import network.bisq.mobile.data.replicated.identity.IdentityVO
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
