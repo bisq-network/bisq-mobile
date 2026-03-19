@@ -28,7 +28,7 @@ class BisqEasyOpenTradeChannelModel(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
     private val _chatMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(emptySet())
-    val chatMessages: StateFlow<Set<BisqEasyOpenTradeMessageModel>> get() = _chatMessages.asStateFlow()
+    val chatMessages: StateFlow<Set<BisqEasyOpenTradeMessageModel>> = _chatMessages.asStateFlow()
     val chatChannelNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
     val userProfileIdsOfActiveParticipants: MutableSet<String> = mutableSetOf()
