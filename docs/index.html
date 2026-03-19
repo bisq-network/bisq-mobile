@@ -6,15 +6,21 @@
     <title>Bisq Connect for iOS</title>
     <style>
         :root {
-            --bisq-green: #25B135;
-            --bisq-dark: #1a1a1a;
-            --bisq-light: #f5f5f5;
+            --bisq-green: #56AE48;
+            --bisq-green-dim: #448B39;
+            --bisq-green-dark: #0A2F0F;
+            --bisq-bg: #1c1c1c;
+            --bisq-card: #242424;
+            --bisq-card-border: #2b2b2b;
+            --bisq-text: #e3e3e3;
+            --bisq-text-muted: #808080;
+            --bisq-text-dim: #b2b2b2;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bisq-dark);
-            color: var(--bisq-light);
+            background: #151515;
+            color: var(--bisq-text);
             line-height: 1.6;
             padding: 2rem;
             max-width: 800px;
@@ -22,31 +28,57 @@
         }
         h1, h2, h3 { color: var(--bisq-green); margin-bottom: 1rem; }
         h1 { font-size: 2.5rem; text-align: center; margin-bottom: 0.5rem; }
-        .subtitle { text-align: center; color: #aaa; font-size: 1.1rem; margin-bottom: 2rem; }
+        .subtitle { text-align: center; color: var(--bisq-text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
         .logo { text-align: center; margin-bottom: 2rem; }
         .logo img { width: 120px; height: 120px; border-radius: 24px; }
-        .section { background: #2a2a2a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
-        .cta-section { text-align: center; background: #1e3a1e; border: 2px solid var(--bisq-green); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .section {
+            background: var(--bisq-card);
+            border: 1px solid var(--bisq-card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .cta-section {
+            text-align: center;
+            background: var(--bisq-green-dark);
+            border: 1px solid var(--bisq-green-dim);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
         .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-right: 0.5rem; }
-        .badge-recommended { background: var(--bisq-green); color: white; }
-        .badge-advanced { background: #666; color: white; }
+        .badge-recommended { background: var(--bisq-green-dim); color: white; }
+        .badge-advanced { background: #383838; color: var(--bisq-text-dim); }
         ol, ul { margin-left: 1.5rem; margin-bottom: 1rem; }
         li { margin-bottom: 0.5rem; }
-        code { background: #333; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.9rem; word-break: break-all; }
+        code { background: #2b2b2b; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.9rem; word-break: break-all; color: var(--bisq-text-dim); }
         a { color: var(--bisq-green); text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .btn { display: inline-block; background: var(--bisq-green); color: white; padding: 1rem 2rem; border-radius: 10px; font-weight: 600; font-size: 1.1rem; margin-top: 1rem; transition: background 0.2s; }
-        .btn:hover { background: #1e9a2c; text-decoration: none; }
-        .warning { background: #4a3000; border-left: 4px solid #ffa500; padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
-        .info { background: #003366; border-left: 4px solid #0088ff; padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        a:hover { text-decoration: underline; color: #56C262; }
+        .btn {
+            display: inline-block;
+            background: var(--bisq-green-dim);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: var(--bisq-green); text-decoration: none; }
+        .warning { background: #2b2200; border-left: 4px solid #FF9823; padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        .info { background: #0A2F0F; border-left: 4px solid var(--bisq-green-dim); padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
         .steps { counter-reset: step-counter; list-style: none; margin-left: 0; }
         .steps li { counter-increment: step-counter; position: relative; padding-left: 2.5rem; margin-bottom: 1rem; }
-        .steps li::before { content: counter(step-counter); position: absolute; left: 0; top: 0; width: 1.8rem; height: 1.8rem; background: var(--bisq-green); color: white; border-radius: 50%; text-align: center; line-height: 1.8rem; font-weight: 600; font-size: 0.9rem; }
+        .steps li::before { content: counter(step-counter); position: absolute; left: 0; top: 0; width: 1.8rem; height: 1.8rem; background: var(--bisq-green-dim); color: white; border-radius: 50%; text-align: center; line-height: 1.8rem; font-weight: 600; font-size: 0.9rem; }
         .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
-        .feature-item { background: #333; border-radius: 8px; padding: 1rem; }
+        .feature-item { background: #2b2b2b; border: 1px solid #383838; border-radius: 8px; padding: 1rem; }
         .feature-item strong { color: var(--bisq-green); }
         @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } h1 { font-size: 1.8rem; } }
-        footer { text-align: center; margin-top: 3rem; color: #888; font-size: 0.9rem; }
+        footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--bisq-card-border); color: var(--bisq-text-muted); font-size: 0.9rem; }
+        p { color: var(--bisq-text-dim); }
+        h2 + p, h3 + p { color: var(--bisq-text-dim); }
+        strong { color: var(--bisq-text); }
     </style>
 </head>
 <body>
@@ -57,9 +89,9 @@
     <p class="subtitle">Remote access to your Bisq 2 node, from your pocket.</p>
 
     <div class="cta-section">
-        <p>Available now via Apple TestFlight</p>
+        <p style="color: var(--bisq-text);">Available now via Apple TestFlight</p>
         <a href="https://testflight.apple.com/join/abBmehCw" class="btn">Install Bisq Connect</a>
-        <p style="margin-top: 1rem; color: #aaa; font-size: 0.9rem;">
+        <p style="margin-top: 1rem; color: var(--bisq-text-muted); font-size: 0.9rem;">
             Requires iOS 16.0 or later
         </p>
     </div>
