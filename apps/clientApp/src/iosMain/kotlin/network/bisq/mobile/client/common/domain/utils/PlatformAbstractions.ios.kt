@@ -45,7 +45,10 @@ actual fun createHttpClient(
 
             tlsFingerprint?.let { fingerprint ->
                 handleChallenge { _, _, challenge, completionHandler ->
-                    handleTlsChallenge(fingerprint, challenge, completionHandler)
+                    handleTlsChallenge(fingerprint, challenge) { disposition, credential ->
+                        @Suppress("UNCHECKED_CAST")
+                        (completionHandler as Function2<Any?, Any?, Unit>)(disposition, credential)
+                    }
                 }
             }
         }
@@ -64,7 +67,7 @@ actual fun createHttpClient(
 private fun handleTlsChallenge(
     expectedFingerprint: String,
     challenge: NSURLAuthenticationChallenge,
-    completionHandler: (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit,
+    completionHandler: (Long, NSURLCredential?) -> Unit,
 ) {
     val protectionSpace = challenge.protectionSpace
 

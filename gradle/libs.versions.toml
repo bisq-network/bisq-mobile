@@ -18,7 +18,7 @@ kotlinx-serialization = "1.9.0"
 atomicfu = "0.29.0"
 compose-plugin = "1.8.2"
 ksp = "2.2.10-2.0.2"
-kover = "0.9.4"
+kover = "0.9.7"
 
 # -------------------- Android --------------------
 #noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
@@ -54,7 +54,7 @@ kmp-tor-resource = "408.17.0"
 ## we can't upgrade to 2.5.0 - it breaks iOS
 #kmp-tor = "2.5.0"
 #kmp-tor-resource = "408.19.0"
-kermit = "2.0.8"
+kermit = "2.1.0"
 
 # -------------------- Testing --------------------
 androidx-test = "1.7.0"
@@ -63,7 +63,7 @@ androidx-test-compose = "1.9.0"
 androidx-test-espresso = "3.7.0"
 robolectric = "4.16"
 junit = "4.13.2"
-mockk = "1.13.12"
+mockk = "1.14.9"
 
 # -------------------- Networking --------------------
 ktor = "3.3.2"
@@ -77,8 +77,8 @@ buildconfig = "5.5.4"
 protobuf = "0.9.4"
 protob = "4.28.2"
 process-phoenix = "3.0.0"
-ktlint = "14.0.1"
-compose-rules = "0.4.26"
+ktlint = "14.2.0"
+compose-rules = "0.4.28"
 
 # -------------------- Bisq Core Transitive Dependencies --------------------
 chimp-jsocks-lib = { strictly = '567e1cd6' }
