@@ -7,6 +7,7 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.crypto.decrypt
+import network.bisq.mobile.crypto.encrypt
 import okio.Buffer
 import org.junit.After
 import org.junit.Before
@@ -17,15 +18,17 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SensitiveSettingsSerializerTest {
+    private val decryptFqn = "network.bisq.mobile.crypto.LocalEncryption_androidKt"
+
     @Before
     fun setUp() {
-        mockkStatic(::decrypt)
+        mockkStatic(decryptFqn)
         resetKeystoreInvalidatedFlag()
     }
 
     @After
     fun tearDown() {
-        unmockkStatic(::decrypt)
+        unmockkStatic(decryptFqn)
         resetKeystoreInvalidatedFlag()
     }
 
@@ -42,6 +45,18 @@ class SensitiveSettingsSerializerTest {
 
     private fun bufferWith(data: ByteArray): Buffer = Buffer().apply { write(data) }
 
+    private fun mockDecryptThrows(exception: Throwable) {
+        coEvery {
+            decrypt(any(), any())
+        } throws exception
+    }
+
+    private fun mockDecryptReturns(data: ByteArray) {
+        coEvery {
+            decrypt(any(), any())
+        } returns data
+    }
+
     @Test
     fun `readFrom returns default when source is exhausted`() =
         runTest {
@@ -52,9 +67,7 @@ class SensitiveSettingsSerializerTest {
     @Test
     fun `readFrom sets keystoreInvalidated when AEADBadTagException occurs`() =
         runTest {
-            // Simulate AEADBadTagException via class name matching
-            val aeadException = javax.crypto.AEADBadTagException("Tag mismatch")
-            coEvery { decrypt(any()) } throws aeadException
+            mockDecryptThrows(javax.crypto.AEADBadTagException("Tag mismatch"))
 
             assertFalse(SensitiveSettingsSerializer.keystoreInvalidated.value)
 
@@ -69,8 +82,7 @@ class SensitiveSettingsSerializerTest {
     fun `readFrom sets keystoreInvalidated when exception has AEADBadTagException in cause chain`() =
         runTest {
             val rootCause = javax.crypto.AEADBadTagException("Tag mismatch")
-            val wrapper = RuntimeException("Decrypt failed", rootCause)
-            coEvery { decrypt(any()) } throws wrapper
+            mockDecryptThrows(RuntimeException("Decrypt failed", rootCause))
 
             assertFailsWith<CorruptionException> {
                 SensitiveSettingsSerializer.readFrom(bufferWith(byteArrayOf(1, 2, 3)))
@@ -82,8 +94,7 @@ class SensitiveSettingsSerializerTest {
     @Test
     fun `readFrom rethrows non-keystore exceptions without setting flag`() =
         runTest {
-            val genericException = RuntimeException("Some other error")
-            coEvery { decrypt(any()) } throws genericException
+            mockDecryptThrows(RuntimeException("Some other error"))
 
             val thrown =
                 assertFailsWith<RuntimeException> {
@@ -97,7 +108,7 @@ class SensitiveSettingsSerializerTest {
     @Test
     fun `readFrom wraps SerializationException as CorruptionException`() =
         runTest {
-            coEvery { decrypt(any()) } returns "not valid json".toByteArray()
+            mockDecryptReturns("not valid json".toByteArray())
 
             assertFailsWith<CorruptionException> {
                 SensitiveSettingsSerializer.readFrom(bufferWith(byteArrayOf(1, 2, 3)))
@@ -109,7 +120,7 @@ class SensitiveSettingsSerializerTest {
     @Test
     fun `readFrom wraps IllegalStateException as CorruptionException`() =
         runTest {
-            coEvery { decrypt(any()) } throws IllegalStateException("Bad state")
+            mockDecryptThrows(IllegalStateException("Bad state"))
 
             assertFailsWith<CorruptionException> {
                 SensitiveSettingsSerializer.readFrom(bufferWith(byteArrayOf(1, 2, 3)))
@@ -121,7 +132,7 @@ class SensitiveSettingsSerializerTest {
     @Test
     fun `readFrom wraps IllegalArgumentException as CorruptionException`() =
         runTest {
-            coEvery { decrypt(any()) } throws IllegalArgumentException("Bad arg")
+            mockDecryptThrows(IllegalArgumentException("Bad arg"))
 
             assertFailsWith<CorruptionException> {
                 SensitiveSettingsSerializer.readFrom(bufferWith(byteArrayOf(1, 2, 3)))
@@ -133,8 +144,7 @@ class SensitiveSettingsSerializerTest {
     @Test
     fun `readFrom handles BadPaddingException as keystore invalidation`() =
         runTest {
-            val badPaddingException = javax.crypto.BadPaddingException("pad error")
-            coEvery { decrypt(any()) } throws badPaddingException
+            mockDecryptThrows(javax.crypto.BadPaddingException("pad error"))
 
             assertFailsWith<CorruptionException> {
                 SensitiveSettingsSerializer.readFrom(bufferWith(byteArrayOf(1, 2, 3)))
