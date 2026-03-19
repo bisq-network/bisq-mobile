@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -194,8 +195,13 @@ class MainPresenterUnreadBadgeTest {
                     TestApplicationLifecycleService(),
                 )
 
+            advanceUntilIdle()
+
             // Collect the unread messages map
-            val unreadMap = presenter.tradesWithUnreadMessages.first()
+            val unreadMap =
+                presenter.tradesWithUnreadMessages.first { unreadMap ->
+                    unreadMap.isNotEmpty()
+                }
 
             // Assertions
             // Trade1: 3 messages - 1 ignored = 2 visible, read 1, unread 1
