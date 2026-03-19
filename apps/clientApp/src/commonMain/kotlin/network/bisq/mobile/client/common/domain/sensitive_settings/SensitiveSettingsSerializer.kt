@@ -44,16 +44,36 @@ object SensitiveSettingsSerializer : OkioSerializer<SensitiveSettings> {
         } catch (e: IllegalStateException) {
             throw CorruptionException("Cannot decrypt SensitiveSettings", e)
         } catch (e: Exception) {
-            // Catches platform-specific crypto exceptions such as
-            // javax.crypto.AEADBadTagException (Android Keystore key invalidated after OS upgrade)
-            // and any other unexpected decryption failures.
-            _keystoreInvalidated.value = true
-            throw CorruptionException(
-                "Keystore key invalidated — encrypted SensitiveSettings unrecoverable. " +
-                    "User must re-pair with their trusted node.",
-                e,
-            )
+            if (e.isKeystoreInvalidation()) {
+                _keystoreInvalidated.value = true
+                throw CorruptionException(
+                    "Keystore key invalidated — encrypted SensitiveSettings unrecoverable. " +
+                        "User must re-pair with their trusted node.",
+                    e,
+                )
+            }
+            throw e
         }
+    }
+
+    /**
+     * Walks the exception cause chain looking for known Android Keystore
+     * invalidation errors by simple class name (we cannot reference the
+     * Java types directly from commonMain).
+     */
+    private fun Throwable.isKeystoreInvalidation(): Boolean {
+        val keystoreExceptions =
+            setOf(
+                "AEADBadTagException",
+                "KeyPermanentlyInvalidatedException",
+                "BadPaddingException",
+            )
+        var current: Throwable? = this
+        while (current != null) {
+            if (current::class.simpleName in keystoreExceptions) return true
+            current = current.cause
+        }
+        return false
     }
 
     override suspend fun writeTo(

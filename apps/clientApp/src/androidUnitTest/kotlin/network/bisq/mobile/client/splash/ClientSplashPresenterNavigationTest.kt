@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -115,8 +116,25 @@ class ClientSplashPresenterNavigationTest {
         ApplicationBootstrapFacade.isDemo = false
         torBootstrapFailedFlow.value = false
         bootstrapFailedFlow.value = false
+        resetKeystoreInvalidatedFlag()
         stopKoin()
         Dispatchers.resetMain()
+    }
+
+    /**
+     * Resets the static [SensitiveSettingsSerializer.keystoreInvalidated] flag between tests
+     * using reflection, since there is no public reset method on the object singleton.
+     */
+    private fun resetKeystoreInvalidatedFlag() {
+        try {
+            val field = SensitiveSettingsSerializer::class.java.getDeclaredField("_keystoreInvalidated")
+            field.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            val flow = field.get(SensitiveSettingsSerializer) as MutableStateFlow<Boolean>
+            flow.value = false
+        } catch (_: Exception) {
+            // Ignore if reflection fails — flag may already be false
+        }
     }
 
     private fun createPresenter(): ClientSplashPresenter =
@@ -319,6 +337,37 @@ class ClientSplashPresenterNavigationTest {
                 navigationManager.navigate(
                     match { navRoute ->
                         navRoute is TrustedNodeSetup && !navRoute.showConnectionFailed
+                    },
+                    any(),
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `navigates to trusted node setup with keystore error when keystore is invalidated`() =
+        runTest(testDispatcher) {
+            // Given: No saved configuration (defaults returned after corruption handler)
+            // and keystoreInvalidated flag is set
+            coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
+
+            // Simulate the keystoreInvalidated flag being set by the serializer
+            val field = SensitiveSettingsSerializer::class.java.getDeclaredField("_keystoreInvalidated")
+            field.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            (field.get(SensitiveSettingsSerializer) as MutableStateFlow<Boolean>).value = true
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Then: should navigate to trusted node setup with showKeystoreError = true
+            verify {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup &&
+                            navRoute.showKeystoreError &&
+                            !navRoute.showConnectionFailed
                     },
                     any(),
                     any(),

@@ -854,6 +854,68 @@ class TrustedNodeSetupPresenterTest {
             assertFalse(presenter.uiState.value.showConnectionFailedWarning)
         }
 
+    // ========== Keystore Error Tests ==========
+
+    @Test
+    fun `shows keystore error dialog when initialized with showKeystoreError true`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = true, showKeystoreError = true)
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(presenter.uiState.value.showKeystoreError)
+        }
+
+    @Test
+    fun `does NOT show keystore error dialog when initialized without flag`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = true)
+            advanceUntilIdle()
+
+            // Then
+            assertFalse(presenter.uiState.value.showKeystoreError)
+        }
+
+    @Test
+    fun `hides keystore error dialog on dismiss action`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showKeystoreError = true)
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.showKeystoreError)
+
+            // When
+            presenter.onAction(TrustedNodeSetupUiAction.OnKeystoreErrorDismiss)
+            advanceUntilIdle()
+
+            // Then
+            assertFalse(presenter.uiState.value.showKeystoreError)
+        }
+
+    @Test
+    fun `keystore error takes priority over connection failed`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+
+            // When: both flags set, but keystore error should win (checked first)
+            presenter.initialize(isWorkflow = true, showKeystoreError = true, showConnectionFailed = true)
+            advanceUntilIdle()
+
+            // Then: keystore error shown, connection failed NOT shown
+            assertTrue(presenter.uiState.value.showKeystoreError)
+            assertFalse(presenter.uiState.value.showConnectionFailedWarning)
+        }
+
     @Test
     fun `when OnChangeNodeWarningConfirm action then resets state to idle`() =
         runTest(testDispatcher) {
