@@ -52,7 +52,12 @@ class BisqEasyOpenTradeChannelModelTest {
         val storedMessage = channelModel.chatMessages.value.single()
         assertEquals(1, channelModel.chatMessages.value.size)
         assertSame(updated, storedMessage)
-        assertEquals(2, storedMessage.chatReactions.value.single().reactionId)
+        assertEquals(
+            2,
+            storedMessage.chatReactions.value
+                .single()
+                .reactionId,
+        )
     }
 
     private fun createChannelDto(

@@ -51,7 +51,7 @@ class BisqEasyOpenTradeMessageModel(
     val citationString: String get() = citation?.text ?: ""
     val isMyMessage: Boolean get() = senderUserProfileId == myUserProfileId
 
-    private val _messageDeliveryStatus get() = MutableStateFlow<Map<String, MessageDeliveryInfoVO>>(emptyMap())
+    private val _messageDeliveryStatus = MutableStateFlow<Map<String, MessageDeliveryInfoVO>>(emptyMap())
     val messageDeliveryStatus = _messageDeliveryStatus.asStateFlow()
 
     fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean = myUserProfileId == reaction.senderUserProfile.id
