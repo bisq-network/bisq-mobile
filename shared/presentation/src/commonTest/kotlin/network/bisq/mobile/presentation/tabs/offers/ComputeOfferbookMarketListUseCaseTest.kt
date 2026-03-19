@@ -40,7 +40,7 @@ class ComputeOfferbookMarketListUseCaseTest {
                 marketItem("JPY", "Japanese Yen", numOffers = 1),
             )
 
-        val result = useCase(MarketFilter.All, "", MarketSortBy.MostOffers, items)
+        val result = useCase(MarketFilter.All, "", MarketSortBy.MostOffers, "en", items)
         assertEquals(listOf("EUR", "USD"), result.map { it.market.quoteCurrencyCode }.sorted())
     }
 
@@ -60,7 +60,7 @@ class ComputeOfferbookMarketListUseCaseTest {
                 marketItem("EUR", "Euro", numOffers = 2),
             )
 
-        val result = useCase(MarketFilter.WithOffers, "", MarketSortBy.MostOffers, items)
+        val result = useCase(MarketFilter.WithOffers, "", MarketSortBy.MostOffers, "en", items)
         assertEquals(listOf("EUR"), result.map { it.market.quoteCurrencyCode })
     }
 
@@ -81,7 +81,7 @@ class ComputeOfferbookMarketListUseCaseTest {
                 marketItem("CAD", "Canadian Dollar", numOffers = 1),
             )
 
-        val result = useCase(MarketFilter.All, "can", MarketSortBy.NameAZ, items)
+        val result = useCase(MarketFilter.All, "can", MarketSortBy.NameAZ, "en", items)
         assertEquals(listOf("CAD"), result.map { it.market.quoteCurrencyCode })
     }
 
@@ -106,7 +106,7 @@ class ComputeOfferbookMarketListUseCaseTest {
                 marketItem("BBB", "BBB", numOffers = 0),
             )
 
-        val result = useCase(MarketFilter.All, "", MarketSortBy.MostOffers, items)
+        val result = useCase(MarketFilter.All, "", MarketSortBy.MostOffers, "en", items)
         assertEquals(listOf("EUR", "USD", "CAD", "BRL", "AAA", "BBB", "CCC"), result.map { it.market.quoteCurrencyCode })
     }
 
@@ -128,7 +128,7 @@ class ComputeOfferbookMarketListUseCaseTest {
                 marketItem("BRL", "Brazilian Real", numOffers = 0),
             )
 
-        val result = useCase(MarketFilter.All, "", MarketSortBy.NameAZ, items)
+        val result = useCase(MarketFilter.All, "", MarketSortBy.NameAZ, "en", items)
         assertEquals(listOf("BRL", "CAD", "EUR", "USD"), result.map { it.market.quoteCurrencyCode })
     }
 
@@ -150,7 +150,7 @@ class ComputeOfferbookMarketListUseCaseTest {
                 marketItem("CAD", "Canadian Dollar", numOffers = 0),
             )
 
-        val result = useCase(MarketFilter.All, "", MarketSortBy.NameZA, items)
+        val result = useCase(MarketFilter.All, "", MarketSortBy.NameZA, "en", items)
         assertEquals(listOf("USD", "EUR", "CAD", "BRL"), result.map { it.market.quoteCurrencyCode })
     }
 

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -104,7 +105,8 @@ open class MainPresenter(
                             .associate { it.first to it.second }
                     }
                 }
-            }.stateIn(
+            }.flowOn(Dispatchers.Default)
+            .stateIn(
                 presenterScope,
                 SharingStarted.Lazily,
                 emptyMap(),

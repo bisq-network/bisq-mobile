@@ -1,9 +1,9 @@
 package network.bisq.mobile.presentation.tabs.offers
 
 import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.model.offerbook.withLocaleFiatCurrencyNames
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -57,22 +57,14 @@ object MarketFilterUtil : Logging {
     fun filterAndSortMarketsForCreateOffer(
         markets: List<MarketListItem>,
         searchText: String,
+        languageCode: String,
         marketPriceServiceFacade: MarketPriceServiceFacade,
     ): List<MarketListItem> {
-        val translatedMarkets =
-            markets.map { item ->
-                item.copy(
-                    localeFiatCurrencyName =
-                        CurrencyUtils.getLocaleFiatCurrencyName(
-                            item.market.quoteCurrencyCode,
-                            item.market.quoteCurrencyName,
-                        ),
-                )
-            }
-        log.d { "CreateOffer filtering pipeline - input: ${translatedMarkets.size} markets, search: '$searchText'" }
+        val localizedMarkets = markets.withLocaleFiatCurrencyNames(languageCode)
+        log.d { "CreateOffer filtering pipeline - input: ${localizedMarkets.size} markets, search: '$searchText'" }
 
-        val withPriceData = filterMarketsWithPriceData(translatedMarkets, marketPriceServiceFacade)
-        log.d { "CreateOffer after price filtering: ${withPriceData.size}/${translatedMarkets.size} markets have price data" }
+        val withPriceData = filterMarketsWithPriceData(localizedMarkets, marketPriceServiceFacade)
+        log.d { "CreateOffer after price filtering: ${withPriceData.size}/${localizedMarkets.size} markets have price data" }
 
         val sorted = sortMarketsStandard(withPriceData)
 

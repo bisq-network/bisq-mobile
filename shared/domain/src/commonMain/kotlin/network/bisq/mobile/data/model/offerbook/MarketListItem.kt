@@ -26,6 +26,7 @@ data class MarketListItem(
     val market: MarketVO,
     val numOffers: Int,
     val localeFiatCurrencyName: String,
+    val localizedCurrencyLocaleTag: String = "",
 ) {
     companion object {
         fun from(
@@ -42,8 +43,45 @@ data class MarketListItem(
             )
     }
 
+    fun withLocaleFiatCurrencyName(languageCode: String): MarketListItem {
+        if (localizedCurrencyLocaleTag == languageCode && localeFiatCurrencyName.isNotBlank()) {
+            return this
+        }
+
+        return copy(
+            localeFiatCurrencyName =
+                CurrencyUtils.getLocaleFiatCurrencyName(
+                    market.quoteCurrencyCode,
+                    market.quoteCurrencyName,
+                ),
+            localizedCurrencyLocaleTag = languageCode,
+        )
+    }
+
     override fun toString(): String =
         "MarketListItem(market=$market, " +
             "numOffers=$numOffers, " +
             "localeFiatCurrencyName=$localeFiatCurrencyName)"
+}
+
+fun List<MarketListItem>.withLocaleFiatCurrencyNames(languageCode: String): List<MarketListItem> {
+    var localizedItems: ArrayList<MarketListItem>? = null
+
+    // Reuse the original list unless at least one item needs a locale-specific update.
+    for (index in indices) {
+        val item = this[index]
+        val localizedItem = item.withLocaleFiatCurrencyName(languageCode)
+
+        if (localizedItems != null) {
+            localizedItems.add(localizedItem)
+        } else if (localizedItem !== item) {
+            localizedItems = ArrayList(size)
+            for (existingIndex in 0 until index) {
+                localizedItems.add(this[existingIndex])
+            }
+            localizedItems.add(localizedItem)
+        }
+    }
+
+    return localizedItems ?: this
 }

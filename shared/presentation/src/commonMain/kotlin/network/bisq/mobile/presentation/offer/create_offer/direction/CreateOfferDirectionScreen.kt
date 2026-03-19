@@ -31,6 +31,8 @@ fun CreateOfferDirectionScreen() {
     RememberPresenterLifecycle(presenter)
 
     val showSellerReputationWarning by presenter.showSellerReputationWarning.collectAsState()
+    val marketName by presenter.marketName.collectAsState()
+    val headline by presenter.headline.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.progress.directionAndMarket".i18n(),
@@ -43,9 +45,9 @@ fun CreateOfferDirectionScreen() {
         closeAction = !showSellerReputationWarning,
         onConfirmedClose = presenter::onClose,
     ) {
-        if (presenter.marketName != null) {
-            val full = presenter.headline
-            val name = presenter.marketName!!
+        val name = marketName
+        if (name != null) {
+            val full = headline
             val start = full.indexOf(name)
             if (start >= 0) {
                 val annotated =
@@ -69,7 +71,7 @@ fun CreateOfferDirectionScreen() {
             }
         } else {
             AutoResizeText(
-                presenter.headline,
+                headline,
                 color = BisqTheme.colors.white,
                 textStyle = BisqTheme.typography.h3Light,
                 maxLines = 1,

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -27,28 +28,36 @@ class CreateOfferDirectionPresenter(
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
     var direction: DirectionEnum = createOfferPresenter.createOfferModel.direction
-    val marketName: String?
-        get() =
-            createOfferPresenter.createOfferModel.market?.let { market ->
-                CurrencyUtils.getLocaleFiatCurrencyName(
-                    market.quoteCurrencyCode,
-                    market.quoteCurrencyName,
-                )
-            }
-    val headline: String
-        get() {
-            val market = createOfferPresenter.createOfferModel.market
-            return if (market != null) {
-                val fiatName =
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val marketName: StateFlow<String?> =
+        mainPresenter.languageCode
+            .mapLatest { _ ->
+                createOfferPresenter.createOfferModel.market?.let { market ->
                     CurrencyUtils.getLocaleFiatCurrencyName(
                         market.quoteCurrencyCode,
                         market.quoteCurrencyName,
                     )
-                "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
-            } else {
-                "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
-            }
-        }
+                }
+            }.stateIn(
+                presenterScope,
+                SharingStarted.WhileSubscribed(5000),
+                null,
+            )
+
+    val headline: StateFlow<String> =
+        marketName
+            .map { localizedMarketName ->
+                if (localizedMarketName != null) {
+                    "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(localizedMarketName)
+                } else {
+                    "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
+                }
+            }.stateIn(
+                presenterScope,
+                SharingStarted.WhileSubscribed(5000),
+                "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n(),
+            )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val reputationTotalScore =

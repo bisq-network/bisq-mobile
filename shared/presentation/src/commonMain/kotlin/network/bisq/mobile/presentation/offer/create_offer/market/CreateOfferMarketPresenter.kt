@@ -1,10 +1,12 @@
 package network.bisq.mobile.presentation.offer.create_offer.market
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.model.offerbook.MarketListItem
@@ -71,18 +73,20 @@ class CreateOfferMarketPresenter(
             offersServiceFacade.offerbookMarketItems,
             _marketPriceUpdated,
             mainPresenter.languageCode,
-        ) { searchText, marketList, _, _ ->
+        ) { searchText, marketList, _, languageCode ->
             // Use shared filtering utility for consistent behavior
             MarketFilterUtil.filterAndSortMarketsForCreateOffer(
                 marketList,
                 searchText,
+                languageCode,
                 marketPriceServiceFacade,
             )
-        }.stateIn(
-            presenterScope,
-            SharingStarted.Lazily,
-            emptyList(),
-        )
+        }.flowOn(Dispatchers.Default)
+            .stateIn(
+                presenterScope,
+                SharingStarted.Lazily,
+                emptyList(),
+            )
 
     init {
         val createOfferModel = createOfferPresenter.createOfferModel

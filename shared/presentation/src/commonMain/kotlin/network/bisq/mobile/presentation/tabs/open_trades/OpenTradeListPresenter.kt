@@ -1,9 +1,12 @@
 package network.bisq.mobile.presentation.tabs.open_trades
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -48,11 +51,12 @@ class OpenTradeListPresenter(
                 mainPresenter.languageCode,
             ) { _, openTrades, _ ->
                 openTrades
-            }.collect { openTrades ->
-                _sortedOpenTradeItems.value =
-                    openTrades.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
-                _isLoadingTrades.value = false
-            }
+                    .sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
+            }.flowOn(Dispatchers.Default)
+                .collect { openTrades ->
+                    _sortedOpenTradeItems.value = openTrades
+                    _isLoadingTrades.value = false
+                }
         }
     }
 
