@@ -248,7 +248,7 @@ class NodeTradesServiceFacade(
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val myUserProfile = channel.myUserIdentity.userProfile
                 val peerUserProfile = channel.peer
-                bisqEasyTradeService.removeTrade(trade, myUserProfile, peerUserProfile)
+                bisqEasyTradeService.closeTrade(trade, myUserProfile, peerUserProfile)
                 leavePrivateChatManager.leaveChannel(channel)
                 _selectedTrade.value = null
                 Result.success(Unit)

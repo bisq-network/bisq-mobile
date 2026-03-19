@@ -1,8 +1,7 @@
 [versions]
 
 # -------------------- Project Specific --------------------
-# TODO update to 2.1.10 once desktop is released and mobile branch rebased
-bisq-core = "2.1.9"
+bisq-core = "2.1.10"
 # Update this commit hash when bisq2 JARs are regenerated (even with same version) to bust CI cache
 bisq-core-commit = "ddb0446366c5346faa9593a040d7fc60e6c4c720"
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing

@@ -21,7 +21,6 @@ import bisq.contract.bisq_easy.BisqEasyContract
 import bisq.presentation.formatters.DateFormatter
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeFormatter
-import bisq.trade.bisq_easy.BisqEasyTradeUtils
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationDto
@@ -44,7 +43,7 @@ object TradeItemPresentationDtoFactory {
         val formattedDate: String = DateFormatter.formatDate(date)
         val formattedTime: String = DateFormatter.formatTime(date)
         val market: String = trade.offer.market.toString()
-        val price: Long = BisqEasyTradeUtils.getPriceQuote(trade).value
+        val price: Long = contract.marketPrice
         val priceString: String = BisqEasyTradeFormatter.formatPriceWithCode(trade)
         val baseAmount: Long = contract.baseSideAmount
         val baseAmountString: String = BisqEasyTradeFormatter.formatBaseSideAmount(trade)
