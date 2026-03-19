@@ -20,38 +20,38 @@ class BisqEasyOpenTradeMessageModel(
     myUserProfile: UserProfileVO,
     chatReactions: List<BisqEasyOpenTradeMessageReactionVO>,
 ) {
-    val senderUserProfile: UserProfileVO = bisqEasyOpenTradeMessage.senderUserProfile
+    val senderUserProfile: UserProfileVO get() = bisqEasyOpenTradeMessage.senderUserProfile
     private val myUserProfileId = myUserProfile.id
 
     private val _chatReactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> =
         MutableStateFlow(
             chatReactions,
         )
-    val chatReactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> get() = _chatReactions.asStateFlow()
+    val chatReactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = _chatReactions.asStateFlow()
 
     // Delegates of BisqEasyOpenTradeMessageDto
-    val id: String = bisqEasyOpenTradeMessage.messageId
-    val text: String? = bisqEasyOpenTradeMessage.text
-    val citation: CitationVO? = bisqEasyOpenTradeMessage.citation
-    val date: Long = bisqEasyOpenTradeMessage.date
-    val chatMessageType: ChatMessageTypeEnum = bisqEasyOpenTradeMessage.chatMessageType
-    val tradeId: String = bisqEasyOpenTradeMessage.tradeId
-    val mediator: UserProfileVO? = bisqEasyOpenTradeMessage.mediator
-    val bisqEasyOffer: BisqEasyOfferVO? = bisqEasyOpenTradeMessage.bisqEasyOffer
-    val citationAuthorUserName = bisqEasyOpenTradeMessage.citationAuthorUserProfile?.userName
+    val id: String get() = bisqEasyOpenTradeMessage.messageId
+    val text: String? get() = bisqEasyOpenTradeMessage.text
+    val citation: CitationVO? get() = bisqEasyOpenTradeMessage.citation
+    val date: Long get() = bisqEasyOpenTradeMessage.date
+    val chatMessageType: ChatMessageTypeEnum get() = bisqEasyOpenTradeMessage.chatMessageType
+    val tradeId: String get() = bisqEasyOpenTradeMessage.tradeId
+    val mediator: UserProfileVO? get() = bisqEasyOpenTradeMessage.mediator
+    val bisqEasyOffer: BisqEasyOfferVO? get() = bisqEasyOpenTradeMessage.bisqEasyOffer
+    val citationAuthorUserName get() = bisqEasyOpenTradeMessage.citationAuthorUserProfile?.userName
 
-    val textString: String = text ?: ""
+    val textString: String get() = text ?: ""
 
     // Used for protocol log message
-    var decodedText: String = text?.let { I18nSupport.decode(it) } ?: ""
+    val decodedText: String get() = text?.let { I18nSupport.decode(it) } ?: ""
 
-    val dateString: String = DateUtils.toDateTime(date)
-    val senderUserProfileId = senderUserProfile.id
-    val senderUserName = senderUserProfile.userName
-    val citationString: String = citation?.text ?: ""
-    val isMyMessage: Boolean = senderUserProfileId == myUserProfileId
+    val dateString: String get() = DateUtils.toDateTime(date)
+    val senderUserProfileId get() = senderUserProfile.id
+    val senderUserName get() = senderUserProfile.userName
+    val citationString: String get() = citation?.text ?: ""
+    val isMyMessage: Boolean get() = senderUserProfileId == myUserProfileId
 
-    private val _messageDeliveryStatus = MutableStateFlow<Map<String, MessageDeliveryInfoVO>>(emptyMap())
+    private val _messageDeliveryStatus get() = MutableStateFlow<Map<String, MessageDeliveryInfoVO>>(emptyMap())
     val messageDeliveryStatus = _messageDeliveryStatus.asStateFlow()
 
     fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean = myUserProfileId == reaction.senderUserProfile.id
@@ -69,4 +69,13 @@ class BisqEasyOpenTradeMessageModel(
             _messageDeliveryStatus.update { it + entry }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BisqEasyOpenTradeMessageModel) return false
+
+        return id == other.id
+    }
+
+    override fun hashCode(): Int = id.hashCode()
 }

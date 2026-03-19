@@ -68,10 +68,17 @@ class BisqEasyOpenTradeChannelModel(
     }
 
     fun addChatMessages(message: BisqEasyOpenTradeMessageModel) {
-        _chatMessages.update { it + message }
+        // last write wins
+        // relying on equals and hashcode is not enough for us
+        // because while the message id can stay the same, reactions and messageDeliveryStatus can be updated
+        _chatMessages.update { current ->
+            current
+                .filterNot { it.id == message.id }
+                .toSet() + message
+        }
     }
 
     fun setAllChatMessages(messages: Set<BisqEasyOpenTradeMessageModel>) {
-        _chatMessages.value = messages
+        _chatMessages.value = messages.associateBy { it.id }.values.toSet()
     }
 }
