@@ -32,6 +32,7 @@ data class MarketListItem(
         fun from(
             market: MarketVO,
             numOffers: Int = 0,
+            languageCode: String = "",
         ): MarketListItem =
             MarketListItem(
                 market,
@@ -40,6 +41,7 @@ data class MarketListItem(
                     market.quoteCurrencyCode,
                     market.quoteCurrencyName,
                 ),
+                localizedCurrencyLocaleTag = languageCode,
             )
     }
 
