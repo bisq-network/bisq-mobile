@@ -1,8 +1,8 @@
 package network.bisq.mobile.i18n
 
-import kotlinx.datetime.Clock
 import network.bisq.mobile.data.utils.loadProperties
 import network.bisq.mobile.domain.utils.getLogger
+import kotlin.time.Clock
 
 class ResourceBundle(
     val map: Map<String, String>,

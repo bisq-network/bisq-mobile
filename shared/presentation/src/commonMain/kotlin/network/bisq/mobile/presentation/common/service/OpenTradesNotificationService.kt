@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Clock
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -33,6 +32,7 @@ import network.bisq.mobile.presentation.common.notification.model.NotificationPr
 import network.bisq.mobile.presentation.common.notification.model.android.AndroidNotificationCategory
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import kotlin.concurrent.Volatile
+import kotlin.time.Clock
 
 /**
  * Service to manage notifications for open trades

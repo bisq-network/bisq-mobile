@@ -8,8 +8,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import kotlinx.datetime.Clock
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import kotlin.time.Clock
 
 const val DEFAULT_CLICK_DEBOUNCE_MS = 300L
 

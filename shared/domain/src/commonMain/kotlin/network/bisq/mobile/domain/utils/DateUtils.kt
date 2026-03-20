@@ -1,6 +1,5 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -9,6 +8,7 @@ import kotlinx.datetime.until
 import network.bisq.mobile.data.utils.formatDateTime
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
+import kotlin.time.Clock
 
 object DateUtils {
     // Allow clock injection for testing
@@ -26,10 +26,10 @@ object DateUtils {
 
         // Calculate the difference
         val period = creationDate.until(currentDate, DateTimeUnit.DAY)
-        val years = period / 365
+        val years = (period / 365).toInt()
         val remainingDaysAfterYears = period % 365
-        val months = remainingDaysAfterYears / 30
-        val days = remainingDaysAfterYears % 30
+        val months = (remainingDaysAfterYears / 30).toInt()
+        val days = (remainingDaysAfterYears % 30).toInt()
 
         // Format the result
         return Triple(years, months, days)

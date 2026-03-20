@@ -161,6 +161,6 @@ class CreateOfferPaymentMethodPresenter(
         directory: String,
     ) = list.map { paymentMethod ->
         val fileName = paymentMethod.lowercase().replace("-", "_")
-        "drawable/payment/$directory/$fileName.png"
+        "files/payment/$directory/$fileName.png"
     }
 }

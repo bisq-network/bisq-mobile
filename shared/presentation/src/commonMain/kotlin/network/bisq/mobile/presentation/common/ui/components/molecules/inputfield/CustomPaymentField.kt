@@ -42,8 +42,8 @@ fun CustomPaymentField(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DynamicImage(
-            path = "drawable/payment/fiat/add_custom_grey.png",
-            fallbackPath = "drawable/payment/fiat/custom_payment_1.png",
+            path = "files/payment/fiat/add_custom_grey.png",
+            fallbackPath = "files/payment/fiat/custom_payment_1.png",
             contentDescription = "mobile.components.paymentTypeCard.customPaymentMethod".i18n(value),
             modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
         )

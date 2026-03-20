@@ -32,8 +32,8 @@
  * ======================================================================================
  * ASSETS USED
  * ======================================================================================
- * - Payment method icons: drawable/payment/fiat/{method_id}.png via PaymentMethodIcon
- * - Currency flag icons: drawable/markets/fiat/market_{code}.png via DynamicImage
+ * - Payment method icons: files/payment/fiat/{method_id}.png via PaymentMethodIcon
+ * - Currency flag icons: files/markets/fiat/market_{code}.png via DynamicImage
  * - Both are existing assets already used in the offerbook and create-offer flows.
  *
  * ======================================================================================
@@ -163,7 +163,7 @@ private fun AccountCardActions(
 
 /**
  * Currency badge with flag icon from existing market assets.
- * Uses DynamicImage to load drawable/markets/fiat/market_{code}.png.
+ * Uses DynamicImage to load files/markets/fiat/market_{code}.png.
  * Falls back to text-only if the image is not available.
  */
 @Composable
@@ -182,7 +182,7 @@ private fun CurrencyBadge(currency: String) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             DynamicImage(
-                path = "drawable/markets/fiat/market_${currency.lowercase()}.png",
+                path = "files/markets/fiat/market_${currency.lowercase()}.png",
                 modifier = Modifier.size(16.dp),
             )
             BisqText.SmallRegular(

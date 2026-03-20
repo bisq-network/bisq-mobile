@@ -22,6 +22,8 @@ import java.io.IOException
 object AndroidImageUtil : Logging {
     const val PATH_TO_DRAWABLE =
         "composeResources/bisqapps.shared.presentation.generated.resources/drawable/"
+    const val PATH_TO_FILES =
+        "composeResources/bisqapps.shared.presentation.generated.resources/files/"
 
     fun composeImage(
         context: Context,

@@ -79,7 +79,7 @@ fun WalletGuideReceiving() {
             contentAlignment = Alignment.Center,
         ) {
             DynamicImage(
-                "drawable/wallet_guide/blue_wallet_qr.png",
+                "files/wallet_guide/blue_wallet_qr.png",
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -90,7 +90,7 @@ fun WalletGuideReceiving() {
                 exit = fadeOut(animationSpec = tween(1000)),
             ) {
                 DynamicImage(
-                    "drawable/wallet_guide/blue_wallet_tx.png",
+                    "files/wallet_guide/blue_wallet_tx.png",
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier.fillMaxWidth(),
                 )

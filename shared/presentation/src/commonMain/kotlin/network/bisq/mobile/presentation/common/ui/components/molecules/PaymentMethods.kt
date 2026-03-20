@@ -28,7 +28,7 @@ fun PaymentMethods(
             }
         }
         DynamicImage(
-            "drawable/payment/interchangeable_grey.png",
+            "files/payment/interchangeable_grey.png",
             modifier = Modifier.size(16.dp),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {

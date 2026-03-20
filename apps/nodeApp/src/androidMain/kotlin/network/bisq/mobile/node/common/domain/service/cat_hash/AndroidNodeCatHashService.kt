@@ -23,14 +23,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import bisq.user.cathash.CatHashService
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil
-import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil.PATH_TO_DRAWABLE
+import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil.PATH_TO_FILES
 import java.io.File
 import java.nio.file.Path
 
 /**
  * Cat Hash implementation for Android node
  */
-const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
+const val CAT_HASH_PATH = PATH_TO_FILES + "cathash/"
 
 class AndroidNodeCatHashService(
     private val context: Context,

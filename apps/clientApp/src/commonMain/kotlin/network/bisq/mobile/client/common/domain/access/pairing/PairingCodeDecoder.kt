@@ -26,7 +26,7 @@ object PairingCodeDecoder {
 
         val id = reader.readString()
         val expiresAt =
-            Instant.Companion.fromEpochMilliseconds(reader.readLong())
+            Instant.fromEpochMilliseconds(reader.readLong())
 
         val numPermissions = reader.readInt()
         require(numPermissions in 0..Permission.entries.size) {

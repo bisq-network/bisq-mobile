@@ -24,10 +24,10 @@ import network.bisq.mobile.client.common.presentation.cat_hash.BaseClientCatHash
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil
-import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil.PATH_TO_DRAWABLE
+import network.bisq.mobile.presentation.common.ui.utils.AndroidImageUtil.PATH_TO_FILES
 import java.io.File
 
-const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
+const val CAT_HASH_PATH = PATH_TO_FILES + "cathash/"
 
 class AndroidClientCatHashService(
     private val context: Context,

@@ -27,7 +27,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.datetime.Clock
 import network.bisq.mobile.data.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrNull
@@ -35,6 +34,7 @@ import network.bisq.mobile.i18n.i18n
 import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
+import kotlin.time.Clock
 
 /**
  * We use the external tor setup of Bisq Easy and use the kmp-tor runtime.

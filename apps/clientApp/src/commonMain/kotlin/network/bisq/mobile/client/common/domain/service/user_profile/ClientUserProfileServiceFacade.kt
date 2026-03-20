@@ -18,7 +18,6 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -36,6 +35,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
+import kotlin.time.Clock
 
 @OptIn(ExperimentalEncodingApi::class)
 class ClientUserProfileServiceFacade(

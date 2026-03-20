@@ -17,7 +17,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
@@ -43,6 +42,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 /**

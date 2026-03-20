@@ -27,7 +27,7 @@ fun customPaymentIconIndex(
     return nonNegative % customPaymentIconLength
 }
 
-// Payment methods that have dedicated icon files in drawable/payment/fiat/
+// Payment methods that have dedicated icon files in files/payment/fiat/
 private val KNOWN_FIAT_PAYMENT_ICONS =
     setOf(
         "ACH_TRANSFER",
@@ -53,7 +53,7 @@ private val KNOWN_FIAT_PAYMENT_ICONS =
         "ZELLE",
     )
 
-// Settlement methods that have dedicated icon files in drawable/payment/bitcoin/
+// Settlement methods that have dedicated icon files in files/payment/bitcoin/
 private val KNOWN_SETTLEMENT_ICONS =
     setOf(
         "BTC",

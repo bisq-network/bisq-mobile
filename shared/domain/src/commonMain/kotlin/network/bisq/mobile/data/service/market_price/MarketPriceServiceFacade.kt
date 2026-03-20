@@ -6,12 +6,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
+import kotlin.time.Clock
 
 abstract class MarketPriceServiceFacade(
     private val settingsRepository: SettingsRepository,

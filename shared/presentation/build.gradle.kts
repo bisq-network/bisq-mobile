@@ -31,7 +31,6 @@ kotlin {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
-    iosX64()
     iosArm64()
     iosSimulatorArm64()
 
@@ -337,7 +336,7 @@ class SwiftBridgeConfiguration {
                         "-import-objc-header",
                         headerFile.absolutePath,
                         "-target",
-                        "$simulatorArch-apple-ios13.0-simulator",
+                        "$simulatorArch-apple-ios16.0-simulator",
                         swiftFile.absolutePath,
                     )
 
@@ -373,13 +372,13 @@ class SwiftBridgeConfiguration {
 
         kotlin {
             configureSwiftBridgeCinterops(
-                listOf(iosX64(), iosArm64(), iosSimulatorArm64()),
+                listOf(iosArm64(), iosSimulatorArm64()),
                 interopDir,
                 bridgeModules,
             )
 
             configureSwiftBridgeLinking(
-                listOf(iosX64(), iosArm64(), iosSimulatorArm64()),
+                listOf(iosArm64(), iosSimulatorArm64()),
                 bridgeModules,
             )
         }

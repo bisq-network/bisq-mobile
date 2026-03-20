@@ -47,8 +47,8 @@ val CUSTOM_PAYMENT_ICON_IDS =
  * For methods without known icons, displays a colored background with an overlay letter.
  *
  * @param methodId The payment/settlement method ID (will be trimmed internally)
- * @param isPaymentMethod True for fiat payment methods (uses drawable/payment/fiat/),
- *                        False for settlement methods (uses drawable/payment/bitcoin/)
+ * @param isPaymentMethod True for fiat payment methods (uses files/payment/fiat/),
+ *                        False for settlement methods (uses files/payment/bitcoin/)
  * @param size The size of the icon
  * @param alpha Optional alpha value for the icon (default 1f)
  * @param cornerRadius Corner radius for the fallback background (default 4.dp)
@@ -77,9 +77,9 @@ fun PaymentMethodIcon(
 
     val customIndex = if (isMissingIcon) customPaymentIconIndex(trimmedId, CUSTOM_PAYMENT_ICON_IDS.size) else 0
     val overlayLetter = if (isMissingIcon) (trimmedId.firstOrNull()?.uppercase() ?: "?") else null
-    val fallbackPath = if (isMissingIcon) "drawable/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png" else null
+    val fallbackPath = if (isMissingIcon) "files/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png" else null
 
-    val basePath = if (isPaymentMethod) "drawable/payment/fiat" else "drawable/payment/bitcoin"
+    val basePath = if (isPaymentMethod) "files/payment/fiat" else "files/payment/bitcoin"
     val iconPath = iconPathOverride ?: "$basePath/${trimmedId.lowercase().replace("-", "_")}.png"
 
     Box(

@@ -37,7 +37,7 @@ fun WalletGuideNewWallet() {
         BisqGap.V2()
 
         DynamicImage(
-            "drawable/wallet_guide/blue_wallet_create.png",
+            "files/wallet_guide/blue_wallet_create.png",
             contentScale = ContentScale.FillWidth,
             modifier = Modifier.fillMaxWidth(),
         )

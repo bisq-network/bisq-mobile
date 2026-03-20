@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.datetime.Clock
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientCatHashService
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
@@ -20,6 +19,7 @@ import okio.Path
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Clock
 
 abstract class BaseClientCatHashService(
     private val baseDirPath: String,

@@ -82,7 +82,7 @@ fun MarketCard(
             // If the image is not available we get an exception here and we cannot use try/catch
             // Is DynamicImage needed? If so we can pass it as
             DynamicImage(
-                "drawable/markets/fiat/market_${item.market.quoteCurrencyCode
+                "files/markets/fiat/market_${item.market.quoteCurrencyCode
                     .lowercase()
                     .replace("-", "_")}.png",
                 modifier = Modifier.size(36.dp),

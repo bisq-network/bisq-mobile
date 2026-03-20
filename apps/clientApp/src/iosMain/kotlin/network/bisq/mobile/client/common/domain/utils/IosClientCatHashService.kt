@@ -14,7 +14,9 @@ import platform.UIKit.UIImagePNGRepresentation
 
 const val PATH_TO_DRAWABLE =
     "compose-resources/composeResources/bisqapps.shared.presentation.generated.resources/drawable/"
-const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
+const val PATH_TO_FILES =
+    "compose-resources/composeResources/bisqapps.shared.presentation.generated.resources/files/"
+const val CAT_HASH_PATH = PATH_TO_FILES + "cathash/"
 
 class IosClientCatHashService(
     baseDirPath: String,

@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import kotlin.test.AfterTest
@@ -17,6 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 
 class GlobalPriceUpdateTest {
     private lateinit var settingsRepository: SettingsRepository
