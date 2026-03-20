@@ -7,7 +7,6 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.websocket.WebSockets
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.Dispatchers
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyConfig
 import network.bisq.mobile.data.crypto.getSha256
 import network.bisq.mobile.domain.utils.base64ToByteArray
@@ -42,7 +41,6 @@ actual fun createHttpClient(
             pingIntervalMillis = 15_000 // not supported by okhttp engine
         }
         engine {
-            dispatcher = Dispatchers.IO
             proxy = proxyConfig?.config
 
             tlsFingerprint?.let { fingerprint ->
