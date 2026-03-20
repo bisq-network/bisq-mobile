@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../apps/clientApp"
 
 SPEC CHECKSUMS:
-  clientApp: e4bae9b32bbdb3fe64aecaa746234499f2f0cb36
+  clientApp: 7d51212e10414b11462cc1fcf6c72badb1d1d208
 
 PODFILE CHECKSUM: ec5b5b69704747770d600d7bd4f638a5cf9a33c8
 
