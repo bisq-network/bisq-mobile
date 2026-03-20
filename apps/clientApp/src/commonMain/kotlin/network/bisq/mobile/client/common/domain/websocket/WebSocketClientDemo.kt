@@ -121,7 +121,7 @@ class WebSocketClientDemo(
                 webSocketRequest.path.endsWith("offerbook/markets") ->
                     json.encodeToString(marketListDemoObj)
 
-                // Payment accounts - returns List<FiatAccountVO>
+                // Payment accounts - returns List<FiatAccount>
                 webSocketRequest.path.contains("payment-accounts/fiat") -> "[]"
 
                 // Reputation - return null-safe defaults

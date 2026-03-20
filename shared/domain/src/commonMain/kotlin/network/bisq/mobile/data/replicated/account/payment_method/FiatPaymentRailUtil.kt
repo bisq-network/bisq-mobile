@@ -46,12 +46,14 @@ object FiatPaymentRailUtil {
             listOf(
                 "AT",
                 "BE",
+                "BG",
                 "CY",
                 "DE",
                 "EE",
                 "FI",
                 "FR",
                 "GR",
+                "HR",
                 "IE",
                 "IT",
                 "LV",
@@ -68,6 +70,27 @@ object FiatPaymentRailUtil {
                 "SM",
                 "VA",
             )
+
+    val sepaNonEuroCountries: List<String>
+        get() =
+            listOf(
+                "CZ",
+                "DK",
+                "GB",
+                "HU",
+                "PL",
+                "RO",
+                "SE",
+                "IS",
+                "NO",
+                "LI",
+                "CH",
+                "JE",
+                "GI",
+            )
+
+    val allSepaCountryCodes: List<String>
+        get() = (sepaEuroCountries + sepaNonEuroCountries).distinct().sorted()
 
     val wiseCountries: List<String>
         // https://wise.com/help/articles/2571907/what-currencies-can-i-send-to-and-from?origin=related-article-2571942
@@ -188,6 +211,14 @@ object FiatPaymentRailUtil {
             )
         }
 
+    fun getAdvancedCashCurrencyCodes(): List<String> = listOf("BRL", "EUR", "GBP", "KZT", "RUB", "UAH", "USD")
+
+    fun getMoneseCurrencyCodes(): List<String> = listOf("EUR", "GBP", "RON")
+
+    fun getPayseraCurrencyCodes(): List<String> = listOf("BGN", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "NOK", "PLN", "RON", "SEK", "USD")
+
+    fun getPerfectMoneyCurrencyCodes(): List<String> = listOf("EUR", "USD")
+
     val revolutCountries: List<String>
         // https://help.revolut.com/help/wealth/exchanging-money/what-currencies-are-available/what-currencies-are-supported-for-holding-and-exchange/
         get() {
@@ -236,7 +267,6 @@ object FiatPaymentRailUtil {
             return listOf(
                 "AED",
                 "AUD",
-                "BGN",
                 "CAD",
                 "CHF",
                 "CZK",

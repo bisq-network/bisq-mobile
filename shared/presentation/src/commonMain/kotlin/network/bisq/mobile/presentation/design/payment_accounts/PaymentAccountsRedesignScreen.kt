@@ -12,7 +12,7 @@
  * (PaymentAccountsScreen.kt) with a tab-based view that separates Fiat and Crypto
  * accounts — matching the two-section structure of the Bisq2 desktop.
  *
- * The existing screen only supports UserDefinedFiatAccountVO (free-text name + data).
+ * The existing screen only supports UserDefinedFiatAccount (free-text name + data).
  * This redesign anticipates the full payment method registry (40+ fiat rails, Monero,
  * other crypto) that will be needed for MuSig trade settlement.
  *
@@ -76,10 +76,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton

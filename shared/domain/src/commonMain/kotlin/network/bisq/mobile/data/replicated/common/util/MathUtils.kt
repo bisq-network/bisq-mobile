@@ -1,4 +1,4 @@
-package network.bisq.mobile.data.replicated.common
+package network.bisq.mobile.data.replicated.common.util
 
 import kotlin.math.pow
 import kotlin.math.round

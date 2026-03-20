@@ -18,8 +18,8 @@ package network.bisq.mobile.data.replicated.common.monetary
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.data.replicated.common.roundDouble
-import network.bisq.mobile.data.replicated.common.scaleDownByPowerOf10
+import network.bisq.mobile.data.replicated.common.util.roundDouble
+import network.bisq.mobile.data.replicated.common.util.scaleDownByPowerOf10
 
 @Serializable
 sealed interface MonetaryVO {

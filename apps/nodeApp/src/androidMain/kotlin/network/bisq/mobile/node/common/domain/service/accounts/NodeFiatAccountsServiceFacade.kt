@@ -44,7 +44,7 @@ class NodeFiatAccountsServiceFacade(
         runCatching {
             val userDefinedAccount =
                 account as? UserDefinedFiatAccountDto
-                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
+                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccount but ${account::class.simpleName}")
             val bisq2Account = UserDefinedFiatAccountMapping.toBisq2Model(userDefinedAccount)
             accountService.addPaymentAccount(bisq2Account)
         }
@@ -56,7 +56,7 @@ class NodeFiatAccountsServiceFacade(
         runCatching {
             val userDefinedAccount =
                 account as? UserDefinedFiatAccountDto
-                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
+                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccount but ${account::class.simpleName}")
             // updatePaymentAccount was removed in Bisq2 2.1.9; use remove + add
             val existingAccount = accountService.accountByNameMap[accountName]
             if (existingAccount != null) {
@@ -75,7 +75,7 @@ class NodeFiatAccountsServiceFacade(
             }
             val userDefinedAccount =
                 account as? UserDefinedFiatAccountDto
-                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
+                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccount but ${account::class.simpleName}")
             val bisq2Account = UserDefinedFiatAccountMapping.toBisq2Model(userDefinedAccount)
             accountService.removePaymentAccount(bisq2Account)
         }
@@ -84,7 +84,7 @@ class NodeFiatAccountsServiceFacade(
         runCatching {
             val userDefinedAccount =
                 account as? UserDefinedFiatAccountDto
-                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccountVO but ${account::class.simpleName}")
+                    ?: throw IllegalStateException("Account is not a UserDefinedFiatAccount but ${account::class.simpleName}")
             accountService.setSelectedAccount(
                 UserDefinedFiatAccountMapping.toBisq2Model(userDefinedAccount),
             )

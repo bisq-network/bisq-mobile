@@ -128,6 +128,7 @@ kotlin {
             implementation(libs.bignum)
             implementation(libs.kmp.tor.runtime)
             implementation(libs.logging.kermit)
+            implementation(libs.kphonenumber)
             api(libs.okio) // api to allow platform specific path conversion for kmp-tor
 
             configurations.all {

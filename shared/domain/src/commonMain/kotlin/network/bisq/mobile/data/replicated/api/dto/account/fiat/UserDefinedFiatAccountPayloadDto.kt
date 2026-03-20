@@ -11,10 +11,11 @@ data class UserDefinedFiatAccountPayloadDto(
     }
 
     init {
-        require(accountData.length <= MAX_DATA_LENGTH) { "Account data exceeds max length" }
+        verify()
     }
 
     fun verify() {
+        require(accountData.length <= MAX_DATA_LENGTH) { "Account data exceeds max length" }
         require(accountData.isNotBlank()) { "Account data cannot be blank" }
     }
 }

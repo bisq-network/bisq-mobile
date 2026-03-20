@@ -24,21 +24,21 @@ import kotlinx.serialization.json.jsonPrimitive
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRailEnum
 
 /**
- * Custom serializer for FiatAccountVO that uses content-based polymorphic deserialization.
+ * Custom serializer for FiatAccount that uses content-based polymorphic deserialization.
  * Determines the concrete type based on the 'paymentRail' field in the JSON.
  */
 object FiatAccountDtoSerializer : JsonContentPolymorphicSerializer<FiatAccountDto>(FiatAccountDto::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<FiatAccountDto> {
         val paymentRailValue =
             element.jsonObject["paymentRail"]?.jsonPrimitive?.content
-                ?: throw IllegalArgumentException("Missing 'paymentRail' field in FiatAccountVO JSON")
+                ?: throw IllegalArgumentException("Missing 'paymentRail' field in FiatAccount JSON")
 
         return when (paymentRailValue) {
             FiatPaymentRailEnum.CUSTOM.name -> UserDefinedFiatAccountDto.serializer()
             // TODO: Add more cases when implemented:
             // FiatPaymentRailEnum.SEPA.name -> SepaAccountVO.serializer()
-            // FiatPaymentRailEnum.REVOLUT.name -> RevolutAccountVO.serializer()
-            // FiatPaymentRailEnum.ZELLE.name -> ZelleAccountVO.serializer()
+            // FiatPaymentRailEnum.REVOLUT.name -> RevolutAccount.serializer()
+            // FiatPaymentRailEnum.ZELLE.name -> ZelleAccount.serializer()
             // FiatPaymentRailEnum.STRIKE.name -> StrikeAccountVO.serializer()
             // etc.
             else -> throw IllegalArgumentException(

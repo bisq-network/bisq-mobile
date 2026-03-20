@@ -35,8 +35,8 @@ sealed interface FiatAccountDto {
 
     // TODO: Add more implementations when needed:
     // - SepaAccountVO
-    // - RevolutAccountVO
-    // - ZelleAccountVO
+    // - RevolutAccount
+    // - ZelleAccount
     // - StrikeAccountVO
     // etc.
 }

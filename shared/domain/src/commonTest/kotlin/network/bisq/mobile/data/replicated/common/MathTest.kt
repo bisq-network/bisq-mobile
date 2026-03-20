@@ -1,5 +1,7 @@
 package network.bisq.mobile.data.replicated.common
 
+import network.bisq.mobile.data.replicated.common.util.roundDouble
+import network.bisq.mobile.data.replicated.common.util.scaleDownByPowerOf10
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
