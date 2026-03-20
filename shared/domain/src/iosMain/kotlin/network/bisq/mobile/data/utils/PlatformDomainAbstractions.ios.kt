@@ -311,6 +311,14 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
     )
 
     setUnhandledExceptionHook { throwable ->
+        // On Kotlin/Native, CancellationException (which extends IllegalStateException) can escape
+        // structured concurrency and reach this hook during normal coroutine lifecycle events
+        // (e.g., scope cancellation, Ktor WebSocket teardown). These are benign — just log and ignore.
+        if (throwable is kotlin.coroutines.cancellation.CancellationException) {
+            println("Ignoring escaped CancellationException: ${throwable.message}")
+            return@setUnhandledExceptionHook
+        }
+
         dispatch_async(dispatch_get_main_queue()) {
             try {
                 globalOnCrash?.invoke(throwable)
