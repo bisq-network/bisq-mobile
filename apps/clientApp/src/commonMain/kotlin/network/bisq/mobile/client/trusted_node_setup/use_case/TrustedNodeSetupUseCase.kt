@@ -24,6 +24,7 @@ import network.bisq.mobile.client.common.domain.websocket.exception.Incompatible
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.OperationCancelledException
 import network.bisq.mobile.i18n.i18n
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -259,7 +260,9 @@ class TrustedNodeSetupUseCase(
                 updateState(TrustedNodeConnectionStatus.Failed("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut"))
             }
 
-            is CancellationException -> {
+            is OperationCancelledException,
+            is CancellationException,
+            -> {
                 updateState(TrustedNodeConnectionStatus.Idle)
             }
 

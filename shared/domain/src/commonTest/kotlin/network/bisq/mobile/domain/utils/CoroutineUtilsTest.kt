@@ -1,6 +1,5 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -23,12 +22,12 @@ class CoroutineUtilsTest {
         }
 
     @Test
-    fun `awaitOrCancel throws CancellationException when cancel flow emits first`() =
+    fun `awaitOrCancel throws OperationCancelledException when cancel flow emits first`() =
         runTest {
             val valueFlow = MutableSharedFlow<String>()
             val cancelFlow = flowOf(Unit)
 
-            assertFailsWith<CancellationException> {
+            assertFailsWith<OperationCancelledException> {
                 awaitOrCancel(valueFlow, cancelFlow)
             }
         }
@@ -40,7 +39,7 @@ class CoroutineUtilsTest {
             val cancelFlow = flowOf(Unit)
 
             val exception =
-                assertFailsWith<CancellationException> {
+                assertFailsWith<OperationCancelledException> {
                     awaitOrCancel(valueFlow, cancelFlow, "Custom cancel message")
                 }
             assertEquals("Custom cancel message", exception.message)
@@ -53,7 +52,7 @@ class CoroutineUtilsTest {
             val cancelFlow = flowOf(Unit)
 
             val exception =
-                assertFailsWith<CancellationException> {
+                assertFailsWith<OperationCancelledException> {
                     awaitOrCancel(valueFlow, cancelFlow)
                 }
             assertEquals("Operation cancelled", exception.message)
