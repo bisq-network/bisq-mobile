@@ -37,6 +37,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import network.bisq.mobile.client.common.domain.access.utils.Headers
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
@@ -389,22 +393,35 @@ class WebSocketClientImpl(
                 if (frame is Frame.Text) {
                     try {
                         val message = frame.readText()
-                        // todo add input validation
+
+                        // Extract requestId from raw JSON to avoid SIGSEGV on Kotlin/Native
+                        // when accessing properties on polymorphically-deserialized sealed objects.
+                        // kotlinx-serialization 1.10.0 + Kotlin/Native 2.3.20 can produce objects
+                        // with corrupted string fields that crash on property access.
+                        val jsonElement: JsonObject? =
+                            try {
+                                json.parseToJsonElement(message).jsonObject
+                            } catch (_: Exception) {
+                                null
+                            }
+                        val rawRequestId = jsonElement?.get("requestId")?.jsonPrimitive?.contentOrNull
+
+                        val isHealthCheckResponse =
+                            rawRequestId != null && healthCheckRequestIds.remove(rawRequestId)
+                        if (!isHealthCheckResponse) {
+                            log.d { "Received raw text $message" }
+                        }
+
                         val webSocketMessage: WebSocketMessage =
                             json.decodeFromString(
                                 WebSocketMessage.serializer(),
                                 message,
                             )
-                        val isHealthCheckResponse =
-                            webSocketMessage is WebSocketResponse &&
-                                webSocketMessage.requestId != null &&
-                                healthCheckRequestIds.remove(webSocketMessage.requestId)
                         if (!isHealthCheckResponse) {
-                            log.d { "Received raw text $message" }
                             log.d { "Received webSocketMessage $webSocketMessage" }
                         }
                         if (webSocketMessage is WebSocketResponse) {
-                            onWebSocketResponse(webSocketMessage)
+                            onWebSocketResponse(webSocketMessage, rawRequestId)
                         } else if (webSocketMessage is WebSocketEvent) {
                             onWebSocketEvent(webSocketMessage)
                         }
@@ -443,13 +460,18 @@ class WebSocketClientImpl(
         currentCoroutineContext().ensureActive()
     }
 
-    private suspend fun onWebSocketResponse(response: WebSocketResponse) {
-        val requestId = response.requestId
+    private suspend fun onWebSocketResponse(
+        response: WebSocketResponse,
+        safeRequestId: String?,
+    ) {
+        // Use the pre-extracted requestId from raw JSON to avoid SIGSEGV on Kotlin/Native
+        // when accessing properties on polymorphically-deserialized sealed objects.
+        val requestId = safeRequestId
         if (requestId == null) {
-            log.w { "Received WebSocketResponse with null requestId, ignoring: $response" }
+            log.w { "Received WebSocketResponse with null requestId, ignoring" }
             return
         }
-        requestResponseHandlers[requestId]?.onWebSocketResponse(response)
+        requestResponseHandlers[requestId]?.onWebSocketResponse(response, requestId)
     }
 
     private suspend fun onWebSocketEvent(event: WebSocketEvent) {

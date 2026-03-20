@@ -59,10 +59,16 @@ class RequestResponseHandler(
         }
     }
 
-    suspend fun onWebSocketResponse(webSocketResponse: WebSocketResponse) {
-        if (!quiet) log.d { "Received response for request ID: ${webSocketResponse.requestId}" }
+    suspend fun onWebSocketResponse(
+        webSocketResponse: WebSocketResponse,
+        safeRequestId: String? = null,
+    ) {
+        // Use pre-extracted requestId from raw JSON when available to avoid SIGSEGV (iOS post Kotlin upgrade)
+        // on Kotlin/Native from accessing properties on polymorphically-deserialized objects.
+        val responseRequestId = safeRequestId ?: webSocketResponse.requestId
+        if (!quiet) log.d { "Received response for request ID: $responseRequestId" }
         mutex.withLock {
-            require(webSocketResponse.requestId == requestId) { "Request ID of response does not match our request ID" }
+            require(responseRequestId == requestId) { "Request ID of response does not match our request ID" }
             deferredWebSocketResponse?.complete(webSocketResponse)
         }
     }
