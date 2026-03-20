@@ -11,20 +11,20 @@ bisq-desktop-pairing = "2.1.10"
 bisq-api = "2.1.8"
 
 # -------------------- Kotlin & JetBrains --------------------
-kotlin = "2.2.10"
+kotlin = "2.3.20"
 kotlinx-coroutines = "1.10.2"
-kotlinx-datetime = "0.4.0"
-kotlinx-serialization = "1.9.0"
-atomicfu = "0.29.0"
-compose-plugin = "1.8.2"
-ksp = "2.2.10-2.0.2"
+kotlinx-datetime = "0.7.1"
+kotlinx-serialization = "1.10.0"
+atomicfu = "0.31.0"
+compose-plugin = "1.10.2"
+ksp = "2.3.6"
 kover = "0.9.7"
 
 # -------------------- Android --------------------
 #noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
-agp = "8.10.1"
+agp = "8.13.2"
 android-ndk = "26.1.10909125"
-android-compileSdk = "35"
+android-compileSdk = "36"
 android-targetSdk = "35"
 android-minSdk = "24"
 # TODO analyse lowering back to API 31 when Bisq2 full J17 support is returned and we can get rid of desugaring
@@ -43,8 +43,8 @@ androidx-datastore = "1.1.7"
 androidx-camera = "1.5.3"
 
 # -------------------- UI / Compose --------------------
-compose-material-icons = "1.8.2"
-coil-compose = "3.3.0"
+compose-material-icons = "1.10.2"
+coil-compose = "3.4.0"
 
 # -------------------- Multiplatform Libraries --------------------
 bignum-lib = "0.3.10"
@@ -70,7 +70,7 @@ ktor = "3.3.2"
 okio = "3.16.0"
 
 # -------------------- Dependency Injection --------------------
-koin = "4.1.0"
+koin = "4.2.0"
 
 # -------------------- Build & Utilities --------------------
 buildconfig = "5.5.4"
