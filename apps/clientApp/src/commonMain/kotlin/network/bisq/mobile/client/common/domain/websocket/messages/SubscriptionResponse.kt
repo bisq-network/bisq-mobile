@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("SubscriptionResponse")
 data class SubscriptionResponse(
-    override val requestId: String,
+    override val requestId: String? = null,
     val payload: String? = null,
     val errorMessage: String? = null,
 ) : WebSocketResponse

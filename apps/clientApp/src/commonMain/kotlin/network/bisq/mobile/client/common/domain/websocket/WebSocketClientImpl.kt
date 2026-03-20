@@ -387,24 +387,31 @@ class WebSocketClientImpl(
         try {
             for (frame in session.incoming) {
                 if (frame is Frame.Text) {
-                    val message = frame.readText()
-                    // todo add input validation
-                    val webSocketMessage: WebSocketMessage =
-                        json.decodeFromString(
-                            WebSocketMessage.serializer(),
-                            message,
-                        )
-                    val isHealthCheckResponse =
-                        webSocketMessage is WebSocketResponse &&
-                            healthCheckRequestIds.remove(webSocketMessage.requestId)
-                    if (!isHealthCheckResponse) {
-                        log.d { "Received raw text $message" }
-                        log.d { "Received webSocketMessage $webSocketMessage" }
-                    }
-                    if (webSocketMessage is WebSocketResponse) {
-                        onWebSocketResponse(webSocketMessage)
-                    } else if (webSocketMessage is WebSocketEvent) {
-                        onWebSocketEvent(webSocketMessage)
+                    try {
+                        val message = frame.readText()
+                        // todo add input validation
+                        val webSocketMessage: WebSocketMessage =
+                            json.decodeFromString(
+                                WebSocketMessage.serializer(),
+                                message,
+                            )
+                        val isHealthCheckResponse =
+                            webSocketMessage is WebSocketResponse &&
+                                webSocketMessage.requestId != null &&
+                                healthCheckRequestIds.remove(webSocketMessage.requestId)
+                        if (!isHealthCheckResponse) {
+                            log.d { "Received raw text $message" }
+                            log.d { "Received webSocketMessage $webSocketMessage" }
+                        }
+                        if (webSocketMessage is WebSocketResponse) {
+                            onWebSocketResponse(webSocketMessage)
+                        } else if (webSocketMessage is WebSocketEvent) {
+                            onWebSocketEvent(webSocketMessage)
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        log.e(e) { "Failed to process incoming WebSocket frame" }
                     }
                 }
             }
@@ -437,9 +444,12 @@ class WebSocketClientImpl(
     }
 
     private suspend fun onWebSocketResponse(response: WebSocketResponse) {
-        requestResponseHandlers[response.requestId]?.onWebSocketResponse(
-            response,
-        )
+        val requestId = response.requestId
+        if (requestId == null) {
+            log.w { "Received WebSocketResponse with null requestId, ignoring: $response" }
+            return
+        }
+        requestResponseHandlers[requestId]?.onWebSocketResponse(response)
     }
 
     private suspend fun onWebSocketEvent(event: WebSocketEvent) {

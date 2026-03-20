@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("WebSocketRestApiResponse")
 data class WebSocketRestApiResponse(
-    override val requestId: String,
+    override val requestId: String? = null,
     val statusCode: Int, // Http Status code
     val body: String, // In error case the error message
 ) : WebSocketResponse {
