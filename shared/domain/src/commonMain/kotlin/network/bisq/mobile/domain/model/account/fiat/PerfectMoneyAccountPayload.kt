@@ -20,7 +20,7 @@ data class PerfectMoneyAccountPayload(
     fun verify() {
         PaymentAccountValidation.validateCurrencyCodes(
             listOf(selectedCurrencyCode),
-            FiatPaymentRailUtil.getPerfectMoneyCurrencyCodes(),
+            FiatPaymentRailUtil.perfectMoneyCurrencyCodes,
             "Perfect Money currency codes",
         )
         NetworkDataValidation.validateRequiredText(accountNr, ACCOUNT_NR_MIN_LENGTH, ACCOUNT_NR_MAX_LENGTH)

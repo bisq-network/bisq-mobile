@@ -159,3 +159,5 @@ val fiatCurrencyMap: Map<String, String> =
         "TMT" to "Turkmenistani Manat",
         "BRL" to "Brazilian Real",
     )
+
+val allFiatCurrencyCodes: List<String> = fiatCurrencyMap.keys.toList()

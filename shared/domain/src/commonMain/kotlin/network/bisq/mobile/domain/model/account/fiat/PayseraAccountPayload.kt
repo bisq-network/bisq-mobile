@@ -15,7 +15,7 @@ data class PayseraAccountPayload(
     fun verify() {
         PaymentAccountValidation.validateCurrencyCodes(
             selectedCurrencyCodes,
-            FiatPaymentRailUtil.getPayseraCurrencyCodes(),
+            FiatPaymentRailUtil.payseraCurrencyCodes,
             "Paysera currency codes",
         )
         require(EmailValidation.isValid(email)) { "Email is invalid" }

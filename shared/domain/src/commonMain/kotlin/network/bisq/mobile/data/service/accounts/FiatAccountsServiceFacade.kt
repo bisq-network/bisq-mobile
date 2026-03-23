@@ -4,9 +4,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRailEnum
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.FiatAccountDto
+import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.domain.model.account.fiat.FiatAccount
 
 abstract class FiatAccountsServiceFacade : ServiceFacade() {
     private val _accountState = MutableStateFlow(AccountsState())
@@ -15,23 +15,23 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
         get() = _accountState.value
 
     // Abstract methods for backend-specific operations
-    protected abstract suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRailEnum>? = null): Result<List<FiatAccountDto>>
+    protected abstract suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>? = null): Result<List<FiatAccount>>
 
-    protected abstract suspend fun executeGetSelectedAccount(): Result<FiatAccountDto?>
+    protected abstract suspend fun executeGetSelectedAccount(): Result<FiatAccount?>
 
-    protected abstract suspend fun executeAddAccount(account: FiatAccountDto): Result<Unit>
+    protected abstract suspend fun executeAddAccount(account: FiatAccount): Result<Unit>
 
     protected abstract suspend fun executeSaveAccount(
         accountName: String,
-        account: FiatAccountDto,
+        account: FiatAccount,
     ): Result<Unit>
 
-    protected abstract suspend fun executeDeleteAccount(accountName: String): Result<Unit>
+    protected abstract suspend fun executeDeleteAccount(account: FiatAccount): Result<Unit>
 
-    protected abstract suspend fun executeSetSelectedAccount(account: FiatAccountDto): Result<Unit>
+    protected abstract suspend fun executeSetSelectedAccount(account: FiatAccount): Result<Unit>
 
     // Concrete implementations with shared business logic
-    suspend fun getAccounts(paymentRails: Set<FiatPaymentRailEnum>? = null): Result<List<FiatAccountDto>> =
+    suspend fun getAccounts(paymentRails: Set<FiatPaymentRail>? = null): Result<List<FiatAccount>> =
         runCatching {
             val accounts = executeGetAccounts(paymentRails).getOrThrow()
             val sortedAccounts = getSortedAccounts(accounts)
@@ -56,7 +56,7 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
             }
         }
 
-    suspend fun addAccount(account: FiatAccountDto): Result<Unit> =
+    suspend fun addAccount(account: FiatAccount): Result<Unit> =
         runCatching {
             executeAddAccount(account).getOrThrow()
             val accounts = _accountState.value.accounts
@@ -71,7 +71,7 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
             setSelectedAccountIndex(selectedIndex)
         }
 
-    suspend fun saveAccount(account: FiatAccountDto): Result<Unit> =
+    suspend fun saveAccount(account: FiatAccount): Result<Unit> =
         runCatching {
             val accountName = getCurrentSelectedAccount()?.accountName
             if (accountName == null) throw IllegalStateException("No account selected")
@@ -87,10 +87,10 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
             }
         }
 
-    suspend fun deleteAccount(account: FiatAccountDto): Result<Unit> =
+    suspend fun deleteAccount(account: FiatAccount): Result<Unit> =
         runCatching {
             val selectedAccount = getCurrentSelectedAccount()
-            executeDeleteAccount(account.accountName).getOrThrow()
+            executeDeleteAccount(account).getOrThrow()
             val accountList = getAccountsExcluding(account.accountName)
             val newSelectedIndex =
                 if (selectedAccount?.accountName == account.accountName && accountList.isNotEmpty()) {
@@ -119,9 +119,9 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
         }
 
     // Protected helper methods
-    protected fun getSortedAccounts(accounts: List<FiatAccountDto>) = accounts.sortedBy { it.accountName }
+    protected fun getSortedAccounts(accounts: List<FiatAccount>) = accounts.sortedBy { it.accountName }
 
     protected fun getCurrentSelectedAccount() = currentState.accounts.getOrNull(currentState.selectedAccountIndex)
 
-    protected fun getAccountsExcluding(accountName: String): List<FiatAccountDto> = currentState.accounts.filter { it.accountName != accountName }
+    protected fun getAccountsExcluding(accountName: String): List<FiatAccount> = currentState.accounts.filter { it.accountName != accountName }
 }

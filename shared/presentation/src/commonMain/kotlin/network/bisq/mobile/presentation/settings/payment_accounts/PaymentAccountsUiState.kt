@@ -1,10 +1,10 @@
 package network.bisq.mobile.presentation.settings.payment_accounts
 
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 
 data class PaymentAccountsUiState(
-    val accounts: List<UserDefinedFiatAccountDto> = emptyList(),
+    val accounts: List<UserDefinedFiatAccount> = emptyList(),
     val selectedAccountIndex: Int = -1,
     val isLoadingAccounts: Boolean = false,
     val isLoadingAccountsError: Boolean = false,

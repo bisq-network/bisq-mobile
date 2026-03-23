@@ -17,7 +17,7 @@ data class MoneseAccountPayload(
         require(mobileNr.isNotBlank()) { "mobileNr must not be blank" }
         PaymentAccountValidation.validateCurrencyCodes(
             selectedCurrencyCodes,
-            FiatPaymentRailUtil.getMoneseCurrencyCodes(),
+            FiatPaymentRailUtil.moneseCurrencyCodes,
             "Monese currency codes",
         )
     }

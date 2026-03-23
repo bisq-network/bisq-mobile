@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -106,7 +106,7 @@ open class PaymentAccountsPresenter(
     private fun observeAccounts() {
         presenterScope.launch {
             fiatAccountsServiceFacade.accountState.collect { state ->
-                val accounts = state.accounts.filterIsInstance<UserDefinedFiatAccountDto>()
+                val accounts = state.accounts.filterIsInstance<UserDefinedFiatAccount>()
                 val selectedAccount = accounts.getOrNull(state.selectedAccountIndex)
                 _uiState.update {
                     it.copy(
@@ -162,14 +162,14 @@ open class PaymentAccountsPresenter(
         return true
     }
 
-    private fun createAccountVO(
+    private fun createAccount(
         name: String,
         description: String,
-    ): UserDefinedFiatAccountDto =
-        UserDefinedFiatAccountDto(
+    ): UserDefinedFiatAccount =
+        UserDefinedFiatAccount(
             accountName = name,
             accountPayload =
-                UserDefinedFiatAccountPayloadDto(
+                UserDefinedFiatAccountPayload(
                     accountData = description,
                 ),
         )
@@ -184,7 +184,7 @@ open class PaymentAccountsPresenter(
 
         presenterScope.launch {
             showLoading()
-            val newAccount = createAccountVO(newName, newDescription)
+            val newAccount = createAccount(newName, newDescription)
             fiatAccountsServiceFacade
                 .addAccount(newAccount)
                 .onSuccess {
@@ -213,7 +213,7 @@ open class PaymentAccountsPresenter(
 
         presenterScope.launch {
             showLoading()
-            val newAccount = createAccountVO(newName, newDescription)
+            val newAccount = createAccount(newName, newDescription)
             fiatAccountsServiceFacade
                 .saveAccount(newAccount)
                 .onSuccess {

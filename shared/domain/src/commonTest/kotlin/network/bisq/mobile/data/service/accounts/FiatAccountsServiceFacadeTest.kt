@@ -8,10 +8,10 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.di.testModule
-import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRailEnum
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.FiatAccountDto
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
+import network.bisq.mobile.domain.model.account.fiat.FiatAccount
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.test.KoinTest
@@ -37,37 +37,37 @@ class FiatAccountsServiceFacadeTest : KoinTest {
 
     // Test data
     private val accountA =
-        UserDefinedFiatAccountDto(
+        UserDefinedFiatAccount(
             accountName = "Account A",
             accountPayload =
-                UserDefinedFiatAccountPayloadDto(
+                UserDefinedFiatAccountPayload(
                     accountData = "accountA@example.com",
                 ),
         )
 
     private val accountB =
-        UserDefinedFiatAccountDto(
+        UserDefinedFiatAccount(
             accountName = "Account B",
             accountPayload =
-                UserDefinedFiatAccountPayloadDto(
+                UserDefinedFiatAccountPayload(
                     accountData = "accountB@example.com",
                 ),
         )
 
     private val accountC =
-        UserDefinedFiatAccountDto(
+        UserDefinedFiatAccount(
             accountName = "Account C",
             accountPayload =
-                UserDefinedFiatAccountPayloadDto(
+                UserDefinedFiatAccountPayload(
                     accountData = "accountC@example.com",
                 ),
         )
 
     private val accountZ =
-        UserDefinedFiatAccountDto(
+        UserDefinedFiatAccount(
             accountName = "Zebra Account",
             accountPayload =
-                UserDefinedFiatAccountPayloadDto(
+                UserDefinedFiatAccountPayload(
                     accountData = "zebra@example.com",
                 ),
         )
@@ -140,8 +140,8 @@ class FiatAccountsServiceFacadeTest : KoinTest {
     fun `when getAccounts with payment rails filter then passes filter to backend`() =
         runTest(testDispatcher) {
             // Given
-            val paymentRails = setOf(FiatPaymentRailEnum.ACH_TRANSFER, FiatPaymentRailEnum.SEPA)
-            var capturedFilter: Set<FiatPaymentRailEnum>? = null
+            val paymentRails = setOf(FiatPaymentRail.ACH_TRANSFER, FiatPaymentRail.SEPA)
+            var capturedFilter: Set<FiatPaymentRail>? = null
             testFacade.mockExecuteGetAccounts = { filter ->
                 capturedFilter = filter
                 Result.success(listOf(accountA))
@@ -360,10 +360,10 @@ class FiatAccountsServiceFacadeTest : KoinTest {
 
             // Create updated account with new name
             val updatedAccount =
-                UserDefinedFiatAccountDto(
+                UserDefinedFiatAccount(
                     accountName = "Account Z Updated",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadDto(
+                        UserDefinedFiatAccountPayload(
                             accountData = "updated@example.com",
                         ),
                 )
@@ -390,10 +390,10 @@ class FiatAccountsServiceFacadeTest : KoinTest {
         runTest(testDispatcher) {
             // Given - no selected account (index -1)
             val updatedAccount =
-                UserDefinedFiatAccountDto(
+                UserDefinedFiatAccount(
                     accountName = "Updated",
                     accountPayload =
-                        UserDefinedFiatAccountPayloadDto(
+                        UserDefinedFiatAccountPayload(
                             accountData = "test@example.com",
                         ),
                 )
@@ -578,7 +578,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
             testFacade.setSelectedAccountIndex(0) // Select first
             advanceUntilIdle()
 
-            var capturedAccount: FiatAccountDto? = null
+            var capturedAccount: FiatAccount? = null
             testFacade.mockExecuteSetSelectedAccount = { account ->
                 capturedAccount = account
                 Result.success(Unit)
@@ -787,41 +787,41 @@ class FiatAccountsServiceFacadeTest : KoinTest {
      * of abstract methods for testing purposes.
      */
     private class TestFiatAccountsServiceFacade : FiatAccountsServiceFacade() {
-        var mockExecuteGetAccounts: (Set<FiatPaymentRailEnum>?) -> Result<List<FiatAccountDto>> =
+        var mockExecuteGetAccounts: (Set<FiatPaymentRail>?) -> Result<List<FiatAccount>> =
             { Result.success(emptyList()) }
 
-        var mockExecuteGetSelectedAccount: () -> Result<FiatAccountDto?> =
+        var mockExecuteGetSelectedAccount: () -> Result<FiatAccount?> =
             { Result.success(null) }
 
-        var mockExecuteAddAccount: (FiatAccountDto) -> Result<Unit> =
+        var mockExecuteAddAccount: (FiatAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        var mockExecuteSaveAccount: (String, FiatAccountDto) -> Result<Unit> =
+        var mockExecuteSaveAccount: (String, FiatAccount) -> Result<Unit> =
             { _, _ -> Result.success(Unit) }
 
-        var mockExecuteDeleteAccount: (String) -> Result<Unit> =
+        var mockExecuteDeleteAccount: (FiatAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        var mockExecuteSetSelectedAccount: (FiatAccountDto) -> Result<Unit> =
+        var mockExecuteSetSelectedAccount: (FiatAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRailEnum>?): Result<List<FiatAccountDto>> = mockExecuteGetAccounts(paymentRails)
+        override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>?): Result<List<FiatAccount>> = mockExecuteGetAccounts(paymentRails)
 
-        override suspend fun executeGetSelectedAccount(): Result<FiatAccountDto?> = mockExecuteGetSelectedAccount()
+        override suspend fun executeGetSelectedAccount(): Result<FiatAccount?> = mockExecuteGetSelectedAccount()
 
-        override suspend fun executeAddAccount(account: FiatAccountDto): Result<Unit> = mockExecuteAddAccount(account)
+        override suspend fun executeAddAccount(account: FiatAccount): Result<Unit> = mockExecuteAddAccount(account)
 
         override suspend fun executeSaveAccount(
             accountName: String,
-            account: FiatAccountDto,
+            account: FiatAccount,
         ): Result<Unit> = mockExecuteSaveAccount(accountName, account)
 
-        override suspend fun executeDeleteAccount(accountName: String): Result<Unit> = mockExecuteDeleteAccount(accountName)
+        override suspend fun executeDeleteAccount(account: FiatAccount): Result<Unit> = mockExecuteDeleteAccount(account)
 
-        override suspend fun executeSetSelectedAccount(account: FiatAccountDto): Result<Unit> = mockExecuteSetSelectedAccount(account)
+        override suspend fun executeSetSelectedAccount(account: FiatAccount): Result<Unit> = mockExecuteSetSelectedAccount(account)
 
         // Expose protected methods for testing
-        fun testGetSortedAccounts(accounts: List<FiatAccountDto>) = getSortedAccounts(accounts)
+        fun testGetSortedAccounts(accounts: List<FiatAccount>) = getSortedAccounts(accounts)
 
         fun testGetCurrentSelectedAccount() = getCurrentSelectedAccount()
 

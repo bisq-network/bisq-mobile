@@ -16,24 +16,24 @@
  */
 package network.bisq.mobile.data.replicated.account.payment_method
 
-import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRailEnumExtensions.supportsCurrency
+import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRailExtensions.supportsCurrency
 
 object FiatPaymentRailUtil {
-    fun getPaymentRails(currencyCode: String): List<FiatPaymentRailEnum> =
-        FiatPaymentRailEnum.entries.filter { fiatPaymentRail ->
+    fun getPaymentRails(currencyCode: String): List<FiatPaymentRail> =
+        FiatPaymentRail.entries.filter { fiatPaymentRail ->
             when {
                 // For EUR, we don't add NATIONAL_BANK as SEPA is the common payment rail for EUR
                 // SWIFT is added to support non-EUR countries offering EUR accounts like Switzerland
-                currencyCode == "EUR" && fiatPaymentRail == FiatPaymentRailEnum.NATIONAL_BANK -> false
+                currencyCode == "EUR" && fiatPaymentRail == FiatPaymentRail.NATIONAL_BANK -> false
 
                 // We add NATIONAL_BANK to all others
-                fiatPaymentRail == FiatPaymentRailEnum.NATIONAL_BANK -> true
+                fiatPaymentRail == FiatPaymentRail.NATIONAL_BANK -> true
 
                 // Temporarily we won't show custom payment method
-                fiatPaymentRail == FiatPaymentRailEnum.CUSTOM -> false
+                fiatPaymentRail == FiatPaymentRail.CUSTOM -> false
 
-                // If a payment method don't have any countryCodes and currencyCodes, we add it for all countries
-                fiatPaymentRail.currencyCodes.isEmpty() && fiatPaymentRail.countryCodes.isEmpty() -> true
+                // If a payment method does not have any currencyCodes, we add it for all currencies
+                fiatPaymentRail.currencyCodes.isEmpty() -> true
 
                 else -> fiatPaymentRail.supportsCurrency(currencyCode)
             }
@@ -41,259 +41,261 @@ object FiatPaymentRailUtil {
 
     fun getPaymentRailNames(currencyCode: String): List<String> = getPaymentRails(currencyCode).map { it.name }
 
-    val sepaEuroCountries: List<String>
-        get() =
-            listOf(
-                "AT",
-                "BE",
-                "BG",
-                "CY",
-                "DE",
-                "EE",
-                "FI",
-                "FR",
-                "GR",
-                "HR",
-                "IE",
-                "IT",
-                "LV",
-                "LT",
-                "LU",
-                "MC",
-                "MT",
-                "NL",
-                "PT",
-                "SK",
-                "SI",
-                "ES",
-                "AD",
-                "SM",
-                "VA",
-            )
+    val sepaEuroCountries: List<String> =
+        listOf(
+            "AT",
+            "BE",
+            "BG",
+            "CY",
+            "DE",
+            "EE",
+            "FI",
+            "FR",
+            "GR",
+            "HR",
+            "IE",
+            "IT",
+            "LV",
+            "LT",
+            "LU",
+            "MC",
+            "MT",
+            "NL",
+            "PT",
+            "SK",
+            "SI",
+            "ES",
+            "AD",
+            "SM",
+            "VA",
+        )
 
-    val sepaNonEuroCountries: List<String>
-        get() =
-            listOf(
-                "CZ",
-                "DK",
-                "GB",
-                "HU",
-                "PL",
-                "RO",
-                "SE",
-                "IS",
-                "NO",
-                "LI",
-                "CH",
-                "JE",
-                "GI",
-            )
+    val sepaNonEuroCountries: List<String> =
+        listOf(
+            "CZ",
+            "DK",
+            "GB",
+            "HU",
+            "PL",
+            "RO",
+            "SE",
+            "IS",
+            "NO",
+            "LI",
+            "CH",
+            "JE",
+            "GI",
+        )
 
-    val allSepaCountryCodes: List<String>
-        get() = (sepaEuroCountries + sepaNonEuroCountries).distinct().sorted()
+    val allSepaCountryCodes = (sepaEuroCountries + sepaNonEuroCountries).distinct().sorted()
 
-    val wiseCountries: List<String>
-        // https://wise.com/help/articles/2571907/what-currencies-can-i-send-to-and-from?origin=related-article-2571942
-        get() {
-            val list: MutableList<String> =
-                ArrayList(
-                    listOf(
-                        "AR",
-                        "AU",
-                        "BD",
-                        "BR",
-                        "BG",
-                        "CA",
-                        "CL",
-                        "CN",
-                        "CO",
-                        "CR",
-                        "CZ",
-                        "DK",
-                        "EG",
-                        "GE",
-                        "GH",
-                        "HK",
-                        "HU",
-                        "IN",
-                        "ID",
-                        "IL",
-                        "JP",
-                        "KE",
-                        "MY",
-                        "MX",
-                        "MA",
-                        "NP",
-                        "NZ",
-                        "NO",
-                        "PK",
-                        "PH",
-                        "PL",
-                        "RO",
-                        "SG",
-                        "ZA",
-                        "KR",
-                        "LK",
-                        "SE",
-                        "CH",
-                        "TZ",
-                        "TH",
-                        "TR",
-                        "UG",
-                        "UA",
-                        "AE",
-                        "GB",
-                        "US",
-                        "UY",
-                        "VN",
-                        "ZM",
-                    ),
-                )
-            list.addAll(sepaEuroCountries)
-            return list
-        }
+    // Took all currencies from: https://wise.com/help/articles/2571907/what-currencies-can-i-send-to-and-from
+    val wiseCurrencies: List<String> =
+        listOf(
+            "AED",
+            "ARS",
+            "AUD",
+            "BDT",
+            "BGN",
+            "BRL",
+            "BWP",
+            "CAD",
+            "CHF",
+            "CLP",
+            "CNY",
+            "COP",
+            "CRC",
+            "CZK",
+            "DKK",
+            "EGP",
+            "EUR",
+            "FJD",
+            "GEL",
+            "GHS",
+            "GBP",
+            "HKD",
+            "HUF",
+            "IDR",
+            "ILS",
+            "INR",
+            "JPY",
+            "KES",
+            "KRW",
+            "LKR",
+            "MAD",
+            "MXN",
+            "MYR",
+            "NOK",
+            "NPR",
+            "NZD",
+            "PHP",
+            "PKR",
+            "PLN",
+            "RON",
+            "SEK",
+            "SGD",
+            "THB",
+            "TRY",
+            "UAH",
+            "UGX",
+            "USD",
+            "UYU",
+            "VND",
+            "ZAR",
+            "ZMW",
+        )
 
-    val wiseCurrencies: List<String>
-        // Took all currencies from: https://wise.com/help/articles/2571907/what-currencies-can-i-send-to-and-from
-        get() {
-            return listOf(
-                "AED",
-                "ARS",
-                "AUD",
-                "BDT",
-                "BGN",
-                "BRL",
-                "BWP",
-                "CAD",
-                "CHF",
-                "CLP",
-                "CNY",
-                "COP",
-                "CRC",
-                "CZK",
-                "DKK",
-                "EGP",
-                "EUR",
-                "FJD",
-                "GEL",
-                "GHS",
-                "GBP",
-                "HKD",
-                "HUF",
-                "IDR",
-                "ILS",
-                "INR",
-                "JPY",
-                "KES",
-                "KRW",
-                "LKR",
-                "MAD",
-                "MXN",
-                "MYR",
-                "NOK",
-                "NPR",
-                "NZD",
-                "PHP",
-                "PKR",
-                "PLN",
-                "RON",
-                "SEK",
-                "SGD",
-                "THB",
-                "TRY",
-                "UAH",
-                "UGX",
-                "USD",
-                "UYU",
-                "VND",
-                "ZAR",
-                "ZMW",
-            )
-        }
+    val advancedCashCurrencyCodes: List<String> = listOf("BRL", "EUR", "GBP", "KZT", "RUB", "UAH", "USD")
 
-    fun getAdvancedCashCurrencyCodes(): List<String> = listOf("BRL", "EUR", "GBP", "KZT", "RUB", "UAH", "USD")
+    val moneseCurrencyCodes: List<String> = listOf("EUR", "GBP", "RON")
 
-    fun getMoneseCurrencyCodes(): List<String> = listOf("EUR", "GBP", "RON")
+    val payseraCurrencyCodes: List<String> =
+        listOf(
+            "AUD",
+            "BYN",
+            "CAD",
+            "CHF",
+            "CNY",
+            "CZK",
+            "DKK",
+            "EUR",
+            "GBP",
+            "GEL",
+            "HKD",
+            "HUF",
+            "ILS",
+            "INR",
+            "JPY",
+            "KZT",
+            "MXN",
+            "NOK",
+            "NZD",
+            "PHP",
+            "PLN",
+            "RON",
+            "RSD",
+            "RUB",
+            "SEK",
+            "SGD",
+            "THB",
+            "TRY",
+            "USD",
+            "ZAR",
+        )
 
-    fun getPayseraCurrencyCodes(): List<String> = listOf("BGN", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "NOK", "PLN", "RON", "SEK", "USD")
+    val perfectMoneyCurrencyCodes: List<String> = listOf("EUR", "USD")
 
-    fun getPerfectMoneyCurrencyCodes(): List<String> = listOf("EUR", "USD")
+    val upholdCurrencyCodes: List<String> =
+        listOf(
+            "AED",
+            "ARS",
+            "AUD",
+            "BRL",
+            "CAD",
+            "CHF",
+            "CNY",
+            "DKK",
+            "EUR",
+            "GBP",
+            "HKD",
+            "ILS",
+            "INR",
+            "JPY",
+            "KES",
+            "MXN",
+            "NOK",
+            "NZD",
+            "PHP",
+            "PLN",
+            "SEK",
+            "SGD",
+            "USD",
+        )
 
-    val revolutCountries: List<String>
-        // https://help.revolut.com/help/wealth/exchanging-money/what-currencies-are-available/what-currencies-are-supported-for-holding-and-exchange/
-        get() {
-            return listOf(
-                "AT",
-                "BE",
-                "BG",
-                "HR",
-                "CY",
-                "CZ",
-                "DK",
-                "EE",
-                "FI",
-                "FR",
-                "DE",
-                "GR",
-                "HU",
-                "IS",
-                "IE",
-                "IT",
-                "LV",
-                "LI",
-                "LT",
-                "LU",
-                "MT",
-                "NL",
-                "NO",
-                "PL",
-                "PT",
-                "RO",
-                "SK",
-                "SI",
-                "ES",
-                "SE",
-                "GB",
-                "AU",
-                "CA",
-                "SG",
-                "CH",
-                "US",
-            )
-        }
+    val amazonGiftCardCurrencyCodes: List<String> = listOf("AUD", "CAD", "EUR", "GBP", "INR", "JPY", "SAR", "SEK", "SGD", "TRY", "USD")
 
-    val revolutCurrencies: List<String>
-        get() {
-            return listOf(
-                "AED",
-                "AUD",
-                "CAD",
-                "CHF",
-                "CZK",
-                "DKK",
-                "EUR",
-                "GBP",
-                "HKD",
-                "HUF",
-                "ILS",
-                "ISK",
-                "JPY",
-                "MAD",
-                "MXN",
-                "NOK",
-                "NZD",
-                "PLN",
-                "QAR",
-                "RON",
-                "RSD",
-                "RUB",
-                "SAR",
-                "SEK",
-                "SGD",
-                "THB",
-                "TRY",
-                "USD",
-                "ZAR",
-            )
-        }
+    val moneyGramCurrencyCodes: List<String> =
+        listOf(
+            "AED",
+            "ARS",
+            "AUD",
+            "BND",
+            "CAD",
+            "CHF",
+            "CZK",
+            "DKK",
+            "EUR",
+            "FJD",
+            "GBP",
+            "HKD",
+            "HUF",
+            "IDR",
+            "ILS",
+            "INR",
+            "JPY",
+            "KRW",
+            "KWD",
+            "LKR",
+            "MAD",
+            "MGA",
+            "MXN",
+            "MYR",
+            "NOK",
+            "NZD",
+            "OMR",
+            "PEN",
+            "PGK",
+            "PHP",
+            "PKR",
+            "PLN",
+            "SAR",
+            "SBD",
+            "SCR",
+            "SEK",
+            "SGD",
+            "THB",
+            "TOP",
+            "TRY",
+            "TWD",
+            "USD",
+            "VND",
+            "VUV",
+            "WST",
+            "XOF",
+            "XPF",
+            "ZAR",
+        )
+
+    val revolutCurrencies: List<String> =
+        listOf(
+            "AED",
+            "AUD",
+            "CAD",
+            "CHF",
+            "CZK",
+            "DKK",
+            "EUR",
+            "GBP",
+            "HKD",
+            "HUF",
+            "ILS",
+            "ISK",
+            "JPY",
+            "MAD",
+            "MXN",
+            "NOK",
+            "NZD",
+            "PLN",
+            "QAR",
+            "RON",
+            "RSD",
+            "RUB",
+            "SAR",
+            "SEK",
+            "SGD",
+            "THB",
+            "TRY",
+            "USD",
+            "ZAR",
+        )
 }

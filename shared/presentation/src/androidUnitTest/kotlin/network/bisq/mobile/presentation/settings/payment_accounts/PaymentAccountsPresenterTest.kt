@@ -12,10 +12,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.service.accounts.AccountsState
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.i18n
@@ -52,19 +53,19 @@ class PaymentAccountsPresenterTest {
 
     // Test data
     private val sampleAccount1 =
-        UserDefinedFiatAccountDto(
+        UserDefinedFiatAccount(
             accountName = "PayPal Account",
             accountPayload =
-                UserDefinedFiatAccountPayloadDto(
+                UserDefinedFiatAccountPayload(
                     accountData = "user@example.com",
                 ),
         )
 
     private val sampleAccount2 =
-        UserDefinedFiatAccountDto(
+        UserDefinedFiatAccount(
             accountName = "Bank Transfer",
             accountPayload =
-                UserDefinedFiatAccountPayloadDto(
+                UserDefinedFiatAccountPayload(
                     accountData = "IBAN: DE89370400440532013000",
                 ),
         )
@@ -484,7 +485,7 @@ class PaymentAccountsPresenterTest {
             val accountState = accountStateFlow.value
             assertEquals(1, accountState.accounts.size)
             assertEquals("New Account", accountState.accounts[0].accountName)
-            val payload = accountState.accounts[0].accountPayload as UserDefinedFiatAccountPayloadDto
+            val payload = accountState.accounts[0].accountPayload as UserDefinedFiatAccountPayload
             assertEquals("account@example.com", payload.accountData)
             assertFalse(presenter.uiState.value.showAddAccountState) // Dialog should be closed
 

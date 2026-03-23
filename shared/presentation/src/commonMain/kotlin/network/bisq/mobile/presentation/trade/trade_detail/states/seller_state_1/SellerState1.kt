@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqDropdown
@@ -50,7 +50,7 @@ fun SellerState1(
 @Composable
 fun SellerState1Content(
     paymentAccountDataEntry: DataEntry,
-    accounts: List<UserDefinedFiatAccountDto>,
+    accounts: List<UserDefinedFiatAccount>,
     selectedIndex: Int,
     onPaymentDataInput: (String) -> Unit,
     onAccountSelect: (Int) -> Unit,
@@ -101,24 +101,24 @@ private val previewOnSendPaymentData: () -> Unit = {}
 private fun SellerState1_WithAccountsAndDataPreview() {
     val sampleAccounts =
         listOf(
-            UserDefinedFiatAccountDto(
+            UserDefinedFiatAccount(
                 accountName = "PayPal Account",
                 accountPayload =
-                    UserDefinedFiatAccountPayloadDto(
+                    UserDefinedFiatAccountPayload(
                         accountData = "user@example.com",
                     ),
             ),
-            UserDefinedFiatAccountDto(
+            UserDefinedFiatAccount(
                 accountName = "Bank Transfer",
                 accountPayload =
-                    UserDefinedFiatAccountPayloadDto(
+                    UserDefinedFiatAccountPayload(
                         accountData = "IBAN: DE89370400440532013000",
                     ),
             ),
-            UserDefinedFiatAccountDto(
+            UserDefinedFiatAccount(
                 accountName = "Revolut",
                 accountPayload =
-                    UserDefinedFiatAccountPayloadDto(
+                    UserDefinedFiatAccountPayload(
                         accountData = "+1234567890",
                     ),
             ),
@@ -141,17 +141,17 @@ private fun SellerState1_WithAccountsAndDataPreview() {
 private fun SellerState1_WithAccountsEmptyDataPreview() {
     val sampleAccounts =
         listOf(
-            UserDefinedFiatAccountDto(
+            UserDefinedFiatAccount(
                 accountName = "PayPal Account",
                 accountPayload =
-                    UserDefinedFiatAccountPayloadDto(
+                    UserDefinedFiatAccountPayload(
                         accountData = "user@example.com",
                     ),
             ),
-            UserDefinedFiatAccountDto(
+            UserDefinedFiatAccount(
                 accountName = "Bank Transfer",
                 accountPayload =
-                    UserDefinedFiatAccountPayloadDto(
+                    UserDefinedFiatAccountPayload(
                         accountData = "IBAN: DE89370400440532013000",
                     ),
             ),

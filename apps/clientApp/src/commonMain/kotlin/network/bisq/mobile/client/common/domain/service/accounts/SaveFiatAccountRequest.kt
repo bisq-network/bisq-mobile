@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.accounts
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.data.replicated.api.dto.account.fiat.FiatAccountDto
+import network.bisq.mobile.data.model.account.fiat.FiatAccountDto
 
 @Serializable
 data class SaveFiatAccountRequest(

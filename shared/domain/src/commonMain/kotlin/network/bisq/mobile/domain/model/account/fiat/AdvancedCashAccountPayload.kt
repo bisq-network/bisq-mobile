@@ -15,7 +15,7 @@ data class AdvancedCashAccountPayload(
     fun verify() {
         PaymentAccountValidation.validateCurrencyCodes(
             selectedCurrencyCodes,
-            FiatPaymentRailUtil.getAdvancedCashCurrencyCodes(),
+            FiatPaymentRailUtil.advancedCashCurrencyCodes,
             "Advanced Cash currency codes",
         )
         require(AdvancedCashAccountNrValidation.isValid(accountNr)) {
