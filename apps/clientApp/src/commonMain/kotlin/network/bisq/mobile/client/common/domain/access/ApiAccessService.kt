@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.common.domain.access
 
-import kotlinx.datetime.Instant
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
@@ -16,6 +15,7 @@ import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
+import kotlin.time.Instant
 
 const val LOCALHOST = "localhost"
 

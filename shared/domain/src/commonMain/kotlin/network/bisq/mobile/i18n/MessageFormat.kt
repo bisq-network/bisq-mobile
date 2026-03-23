@@ -23,7 +23,7 @@ object MessageFormat {
                 // Replace with the corresponding argument if it exists
                 val indices = args.indices
                 if (index in indices) {
-                    args[index].toString() ?: "null"
+                    args[index].toString()
                 } else {
                     throw IllegalArgumentException("Missing argument for placeholder: ${matchResult.value}")
                 }

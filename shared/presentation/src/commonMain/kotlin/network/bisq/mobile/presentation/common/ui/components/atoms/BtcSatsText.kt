@@ -99,7 +99,7 @@ private fun formatSatsToDisplay(
         val decimalSeparator = getDecimalSeparator()
         val parts = formattedBtcAmountValue.split(decimalSeparator)
         val integerPart = parts[0]
-        val fractionalPart = parts[1] ?: ""
+        val fractionalPart = parts[1]
 
         val formattedFractional =
             fractionalPart

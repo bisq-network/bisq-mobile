@@ -120,7 +120,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -176,7 +176,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "regular-id",
-                            expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -209,7 +209,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "regular-id",
-                            expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -237,7 +237,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -270,7 +270,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
                             grantedPermissions = emptySet(),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -296,7 +296,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
                             grantedPermissions = emptySet(),
                         ),
                     webSocketUrl = "",

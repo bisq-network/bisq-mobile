@@ -1,7 +1,6 @@
 package network.bisq.mobile.domain.utils
 
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
@@ -9,6 +8,7 @@ import network.bisq.mobile.data.utils.formatDateTime
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 object DateUtils {
     // Allow clock injection for testing

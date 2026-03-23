@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.common.domain.access.pairing
 
-import kotlinx.datetime.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 class PairingCodeTest {
     @Test

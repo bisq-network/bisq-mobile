@@ -202,7 +202,7 @@ class ApiAccessServiceDemoModeTest {
                         pairingCode =
                             network.bisq.mobile.client.common.domain.access.pairing.PairingCode(
                                 id = "real-id",
-                                expiresAt = kotlinx.datetime.Instant.DISTANT_FUTURE,
+                                expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
                                 grantedPermissions = setOf(Permission.OFFERBOOK),
                             ),
                         webSocketUrl = "ws://real.com:8090",

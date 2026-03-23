@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.common.domain.access.pairing
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 data class PairingCode(
     val id: String,

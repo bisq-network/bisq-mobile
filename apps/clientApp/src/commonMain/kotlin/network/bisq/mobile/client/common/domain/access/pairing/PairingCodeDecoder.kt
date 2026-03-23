@@ -1,10 +1,10 @@
 package network.bisq.mobile.client.common.domain.access.pairing
 
-import kotlinx.datetime.Instant
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
 import network.bisq.mobile.domain.utils.getLogger
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Instant
 
 @OptIn(ExperimentalEncodingApi::class)
 object PairingCodeDecoder {

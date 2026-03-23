@@ -116,7 +116,7 @@ actual fun encodeURIParam(param: String): String =
         .stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLPathAllowedCharacterSet)
         ?: param
 
-actual fun getDeviceLanguageCode(): String = NSLocale.currentLocale.languageCode ?: "en"
+actual fun getDeviceLanguageCode(): String = NSLocale.currentLocale.languageCode
 
 private var globalOnCrash: ((Throwable) -> Unit)? = null
 
@@ -482,7 +482,7 @@ private fun endsWithUnescapedBackslash(s: String): Boolean {
 
 fun NSDictionary.entriesAsMap(): Map<String, String> {
     val map = mutableMapOf<String, String>()
-    val keys = this.allKeys as List<*> // `allKeys` provides a list of keys
+    val keys = this.allKeys // `allKeys` provides a list of keys
     for (key in keys) {
         val keyString = key.toString()
         val valueString = this.objectForKey(key).toString()
@@ -503,9 +503,7 @@ actual class PlatformImage(
     actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val nsData = data.toNSData()
-            val image =
-                UIImage(data = nsData)
-                    ?: throw IllegalArgumentException("Failed to decode image data")
+            val image = UIImage(data = nsData)
             return PlatformImage(image)
         }
     }
@@ -583,7 +581,7 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
             locale = defaultLocale
         }
     val number = formatter.numberFromString(this)
-    return number?.doubleValue?.toDouble()
+    return number?.doubleValue
 }
 
 actual fun getLocaleCurrencyName(currencyCode: String): String {

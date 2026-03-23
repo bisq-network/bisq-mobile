@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.common.domain.access.pairing
 
-import kotlinx.datetime.Instant
 import network.bisq.mobile.client.common.domain.utils.BinaryEncodingUtils
 import network.bisq.mobile.client.common.domain.utils.BinaryWriter
 import kotlin.io.encoding.Base64
@@ -9,6 +8,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 @OptIn(ExperimentalEncodingApi::class)
 class PairingCodeDecoderTest {
