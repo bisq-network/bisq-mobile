@@ -1,3 +1,37 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:9deebbe5faeeb67a181e26e9538178b6a4ecf0022a3eb3950c8ccdd51a1df04a
-size 727
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "network.bisq.mobile.node",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 36,
+      "versionName": "0.4.1",
+      "outputFile": "Bisq_Easy-0.4.1.apk"
+    }
+  ],
+  "elementType": "File",
+  "baselineProfiles": [
+    {
+      "minApi": 28,
+      "maxApi": 30,
+      "baselineProfiles": [
+        "baselineProfiles/1/Bisq_Easy-0.4.1.dm"
+      ]
+    },
+    {
+      "minApi": 31,
+      "maxApi": 2147483647,
+      "baselineProfiles": [
+        "baselineProfiles/0/Bisq_Easy-0.4.1.dm"
+      ]
+    }
+  ],
+  "minSdkVersionForDexing": 33
+}
