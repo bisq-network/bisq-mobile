@@ -28,6 +28,7 @@ import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ApiAccessServiceTest {
@@ -120,7 +121,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
+                            expiresAt = Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -176,7 +177,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "regular-id",
-                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
+                            expiresAt = Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -209,7 +210,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "regular-id",
-                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
+                            expiresAt = Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -237,7 +238,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
+                            expiresAt = Instant.DISTANT_FUTURE,
                             grantedPermissions = setOf(Permission.OFFERBOOK),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -270,7 +271,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
+                            expiresAt = Instant.DISTANT_FUTURE,
                             grantedPermissions = emptySet(),
                         ),
                     webSocketUrl = "ws://test.com:8090",
@@ -296,7 +297,7 @@ class ApiAccessServiceTest {
                     pairingCode =
                         PairingCode(
                             id = "test-id",
-                            expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
+                            expiresAt = Instant.DISTANT_FUTURE,
                             grantedPermissions = emptySet(),
                         ),
                     webSocketUrl = "",

@@ -34,6 +34,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ApiAccessServiceDemoModeTest {
@@ -202,7 +203,7 @@ class ApiAccessServiceDemoModeTest {
                         pairingCode =
                             network.bisq.mobile.client.common.domain.access.pairing.PairingCode(
                                 id = "real-id",
-                                expiresAt = kotlin.time.Instant.DISTANT_FUTURE,
+                                expiresAt = Instant.DISTANT_FUTURE,
                                 grantedPermissions = setOf(Permission.OFFERBOOK),
                             ),
                         webSocketUrl = "ws://real.com:8090",

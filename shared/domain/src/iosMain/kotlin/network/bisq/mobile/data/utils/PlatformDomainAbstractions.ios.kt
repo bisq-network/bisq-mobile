@@ -503,7 +503,11 @@ actual class PlatformImage(
     actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val nsData = data.toNSData()
-            val image = UIImage(data = nsData)
+
+            @Suppress("USELESS_ELVIS")
+            val image =
+                UIImage(data = nsData)
+                    ?: throw IllegalArgumentException("Failed to decode image data")
             return PlatformImage(image)
         }
     }
