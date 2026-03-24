@@ -116,10 +116,13 @@ class ClientConnectivityService(
     private suspend fun checkConnectivity() {
         try {
             val previousStatus = _status.value
+            val connected = isConnected()
+            log.d { "Health cycle: isConnected=$connected, previousStatus=$previousStatus" }
             val newStatus =
                 when {
-                    !isConnected() -> {
+                    !connected -> {
                         consecutiveReconnectingCycles++
+                        log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
                         if (shouldForceClientRecreation()) {
                             // iOS: Darwin engine's NSURLSession may not create functional
                             // WebSocket connections after repeated failures on the same
@@ -141,6 +144,7 @@ class ClientConnectivityService(
                         // connections, so isConnected() can return true even when the
                         // server is down. A real round-trip request detects this.
                         val alive = isConnectionAlive()
+                        log.d { "Health check result: alive=$alive" }
                         if (!alive) {
                             log.d { "Health check failed, forcing reconnection" }
                             webSocketClientService.forceReconnect()
