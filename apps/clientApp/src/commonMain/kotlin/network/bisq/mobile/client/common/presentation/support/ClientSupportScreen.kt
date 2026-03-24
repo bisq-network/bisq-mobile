@@ -46,7 +46,6 @@ fun ClientSupportScreen() {
     RememberPresenterLifecycle(supportPresenter)
     RememberPresenterLifecycle(clientPresenter)
 
-    val isInteractive by supportPresenter.isInteractive.collectAsState()
     val reportUrl by supportPresenter.reportUrl.collectAsState()
 
     // Client-specific push notification state
@@ -58,7 +57,6 @@ fun ClientSupportScreen() {
         topBar = { TopBar("mobile.more.support".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero),
-        isInteractive = isInteractive,
     ) {
         BisqText.H2Light("mobile.support.headline".i18n())
         BisqGap.V2()

@@ -242,28 +242,28 @@ class TradeChatPresenter(
 
     fun onConfirmedIgnoreUser(id: String) {
         presenterScope.launch {
-            disableInteractive()
+            showLoading()
             try {
                 userProfileServiceFacade.ignoreUserProfile(id)
                 hideIgnoreUserPopup()
             } catch (e: Exception) {
                 log.e(e) { "Failed to ignore user $id" }
             } finally {
-                enableInteractive()
+                hideLoading()
             }
         }
     }
 
     fun onConfirmedUndoIgnoreUser(id: String) {
         presenterScope.launch {
-            disableInteractive()
+            showLoading()
             try {
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
                 hideUndoIgnoreUserPopup()
             } catch (e: Exception) {
                 log.e(e) { "Failed to undo ignore user $id" }
             } finally {
-                enableInteractive()
+                hideLoading()
             }
         }
     }

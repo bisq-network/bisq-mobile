@@ -19,17 +19,13 @@ fun TradeGuideOverview() {
     val presenter: TradeGuideOverviewPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
-
     TradeGuideOverviewContent(
-        isInteractive = isInteractive,
         prevClick = presenter::prevClick,
         nextClick = presenter::overviewNextClick,
     )
 }
 
 @Composable fun TradeGuideOverviewContent(
-    isInteractive: Boolean,
     prevClick: () -> Unit,
     nextClick: () -> Unit,
 ) {
@@ -42,7 +38,6 @@ fun TradeGuideOverview() {
         prevOnClick = prevClick,
         nextOnClick = nextClick,
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
     ) {
         BisqText.H3Light("bisqEasy.tradeGuide.welcome.headline".i18n())
 
@@ -58,7 +53,6 @@ private fun TradeGuideOverviewContentPreview(
 ) {
     BisqTheme.Preview(language = language) {
         TradeGuideOverviewContent(
-            isInteractive = true,
             prevClick = {},
             nextClick = {},
         )

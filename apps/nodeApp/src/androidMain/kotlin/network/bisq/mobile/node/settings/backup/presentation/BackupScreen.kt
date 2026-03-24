@@ -45,13 +45,11 @@ fun BackupScreen() {
     val presenter: BackupPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val uiState by presenter.uiState.collectAsState()
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.backupAndRestore".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
     ) {
         BisqText.SmallLight(
             text = "mobile.resources.backup.info".i18n(),

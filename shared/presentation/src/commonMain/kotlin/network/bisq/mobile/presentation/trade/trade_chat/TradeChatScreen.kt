@@ -33,7 +33,6 @@ fun TradeChatScreen(tradeId: String) {
         presenter.initialize(tradeId)
     }
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val selectedTrade by presenter.selectedTrade.collectAsState()
     val sortedChatMessages by presenter.sortedChatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
@@ -61,7 +60,6 @@ fun TradeChatScreen(tradeId: String) {
                     ),
             )
         },
-        isInteractive = isInteractive,
     ) {
         if (readCount == -1) {
             // empty placeholder until we know the readCount

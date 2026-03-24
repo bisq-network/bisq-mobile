@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.offer.create_offer.review
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.common.monetary.CoinVO
@@ -42,6 +44,9 @@ class CreateOfferReviewPresenter(
     var isRangeOffer: Boolean = false
 
     override val blockInteractivityOnAttached: Boolean = true
+
+    private val _isCreateOfferBtnEnabled = MutableStateFlow(true)
+    val isCreateOfferBtnEnabled = _isCreateOfferBtnEnabled.asStateFlow()
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
@@ -240,36 +245,26 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        // TODO we need to have a general BasePresenter helper fun so every network blocking call trigggered
-        // by the user gets handled consistently and uses all the guards we have in place.
-        // these interactivity guards were here before and go erased and now restored
-        if (!isInteractive.value) return
-
-        disableInteractive()
+        _isCreateOfferBtnEnabled.value = false
+        showLoading()
         presenterScope.launch {
-            try {
-                showLoading()
-                createOfferPresenter
-                    .createOffer()
-                    .onSuccess {
-                        navigateToOfferbookTab()
-                    }.onFailure { exception ->
-                        handleError(exception, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n()) { exception ->
-                            val bannedError = exception.message?.contains("banned", ignoreCase = true) == true
-                            if (bannedError) {
-                                showSnackbar("mobile.bisqEasy.createOffer.userBanned".i18n(), type = SnackbarType.ERROR)
-                                return@handleError true
-                            } else {
-                                return@handleError false
-                            }
+            createOfferPresenter
+                .createOffer()
+                .onSuccess {
+                    navigateToOfferbookTab()
+                }.onFailure { exception ->
+                    handleError(exception, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n()) { exception ->
+                        val bannedError = exception.message?.contains("banned", ignoreCase = true) == true
+                        if (bannedError) {
+                            showSnackbar("mobile.bisqEasy.createOffer.userBanned".i18n(), type = SnackbarType.ERROR)
+                            return@handleError true
+                        } else {
+                            return@handleError false
                         }
                     }
-            } finally {
-                hideLoading()
-                // Re-enable interactivity with the standard perceptible delay
-                // so upstream UI (wizard scaffold) can unlock controls.
-                enableInteractive()
-            }
+                    _isCreateOfferBtnEnabled.value = true
+                }
+            hideLoading()
         }
     }
 }

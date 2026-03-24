@@ -65,7 +65,6 @@ fun DashboardScreen() {
     val offersOnline: Number by presenter.offersOnline.collectAsState()
     val publishedProfiles: Number by presenter.publishedProfiles.collectAsState()
     val numConnections by presenter.numConnections.collectAsState()
-    val isInteractive by presenter.isInteractive.collectAsState()
     val marketPrice by presenter.marketPrice.collectAsState()
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val notifPermissionState by presenter.savedNotifPermissionState.collectAsState()
@@ -193,7 +192,6 @@ fun DashboardScreen() {
         publishedProfiles = publishedProfiles,
         showNumConnections = showNumConnections,
         numConnections = numConnections,
-        isInteractive = isInteractive,
         marketPrice = marketPrice,
         tradeRulesConfirmed = tradeRulesConfirmed,
         onNavigateToMarkets = presenter::onNavigateToMarkets,
@@ -237,7 +235,6 @@ private fun DashboardContent(
     publishedProfiles: Number,
     showNumConnections: Boolean,
     numConnections: Number,
-    isInteractive: Boolean,
     marketPrice: String,
     tradeRulesConfirmed: Boolean,
     onNavigateToMarkets: () -> Unit,
@@ -253,7 +250,6 @@ private fun DashboardContent(
     BisqScrollScaffold(
         padding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.spacedBy(padding),
-        isInteractive = isInteractive,
     ) {
         Column {
             HomeInfoCard(
@@ -411,7 +407,6 @@ private fun DashboardContentPreview(
             publishedProfiles = 2,
             showNumConnections = true,
             numConnections = 8,
-            isInteractive = true,
             marketPrice = "111247.40 BTC/USD",
             tradeRulesConfirmed = tradeRulesConfirmed,
             onNavigateToMarkets = {},

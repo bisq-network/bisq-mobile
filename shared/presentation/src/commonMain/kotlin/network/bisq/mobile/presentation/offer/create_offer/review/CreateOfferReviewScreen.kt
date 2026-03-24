@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,11 +32,14 @@ fun CreateOfferReviewOfferScreen() {
     val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
+    val isCreateOfferBtnEnabled by presenter.isCreateOfferBtnEnabled.collectAsState()
+
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
         stepIndex = if (createPresenter.skipCurrency) 6 else 7,
         stepsLength = if (createPresenter.skipCurrency) 6 else 7,
         prevOnClick = { presenter.onBack() },
+        nextDisabled = !isCreateOfferBtnEnabled,
         nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
         nextOnClick = { presenter.onCreateOffer() },
         showUserAvatar = false,

@@ -107,9 +107,7 @@ open class DashboardPresenter(
     }
 
     fun onNavigateToMarkets() {
-        disableInteractive()
         navigateToTradingTab()
-        enableInteractive()
     }
 
     fun onOpenTradeGuide() {
