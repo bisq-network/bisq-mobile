@@ -21,10 +21,12 @@ import kotlin.coroutines.resume
  * iOS implementation of PushNotificationTokenProvider.
  * Registers with APNs to get a device token.
  *
- * Note: The actual registration for remote notifications must be triggered from Swift
- * (AppDelegate) because UIApplication.registerForRemoteNotifications() is not directly
- * accessible from Kotlin/Native. This class provides the callback mechanism to receive
- * the token once it's available.
+ * Communication with Swift:
+ * - Swift calls [setRegistrationTrigger] at app launch to provide a callback
+ *   that invokes UIApplication.registerForRemoteNotifications().
+ * - When Kotlin needs a token, [requestDeviceToken] invokes the callback directly.
+ * - Swift's AppDelegate delivers the token back via [onTokenReceived] or
+ *   reports failure via [onTokenRegistrationFailed].
  */
 class IosPushNotificationTokenProvider :
     PushNotificationTokenProvider,
@@ -35,11 +37,20 @@ class IosPushNotificationTokenProvider :
         // Using atomic to ensure thread-safe access from both coroutines and Swift callbacks
         private val pendingTokenRequestRef = atomic<CompletableDeferred<String>?>(null)
 
-        // Flag to signal that registration should be triggered
-        private var shouldRegister = false
+        // Callback provided by Swift to trigger UIApplication.registerForRemoteNotifications()
+        private val registrationTriggerRef = atomic<(() -> Unit)?>(null)
 
         // Mutex for thread-safe access when creating new deferred
         private val mutex = Mutex()
+
+        /**
+         * Called from Swift at app launch to provide the registration trigger callback.
+         * The callback should call UIApplication.shared.registerForRemoteNotifications()
+         * on the main thread.
+         */
+        fun setRegistrationTrigger(trigger: () -> Unit) {
+            registrationTriggerRef.value = trigger
+        }
 
         /**
          * Called from AppDelegate when a device token is received.
@@ -55,37 +66,6 @@ class IosPushNotificationTokenProvider :
          */
         fun onTokenRegistrationFailed(error: Throwable) {
             pendingTokenRequestRef.getAndSet(null)?.completeExceptionally(error)
-        }
-
-        /**
-         * Check if registration should be triggered.
-         * Called from Swift to determine if registerForRemoteNotifications should be called.
-         */
-        fun shouldTriggerRegistration(): Boolean {
-            val result = shouldRegister
-            shouldRegister = false
-            return result
-        }
-
-        // Flag to signal that the polling timer should be restarted
-        private var shouldRestartPolling = false
-
-        /**
-         * Check if the polling timer should be restarted.
-         * Called from Swift to determine if startRegistrationCheckTimer should be called again.
-         */
-        fun shouldRestartRegistrationPolling(): Boolean {
-            val result = shouldRestartPolling
-            shouldRestartPolling = false
-            return result
-        }
-
-        /**
-         * Request that the Swift polling timer be restarted.
-         * This is needed when re-registration is required after the initial timer was invalidated.
-         */
-        fun requestPollingRestart() {
-            shouldRestartPolling = true
         }
     }
 
@@ -119,10 +99,17 @@ class IosPushNotificationTokenProvider :
             mutex.withLock {
                 pendingTokenRequestRef.value?.takeIf { !it.isCompleted } ?: CompletableDeferred<String>().also {
                     pendingTokenRequestRef.value = it
-                    shouldRegister = true // Signal that registration should be triggered
-                    // Request polling restart in case the timer was previously invalidated
-                    requestPollingRestart()
-                    log.i { "Requesting device token registration..." }
+                    // Trigger registration directly via the Swift callback
+                    val trigger = registrationTriggerRef.value
+                    if (trigger != null) {
+                        log.i { "Requesting device token registration..." }
+                        trigger()
+                    } else {
+                        log.e { "Registration trigger not set - Swift callback not registered" }
+                        it.completeExceptionally(
+                            PushNotificationException("Registration trigger not available. Ensure setRegistrationTrigger is called from Swift at app launch."),
+                        )
+                    }
                 }
             }
 
