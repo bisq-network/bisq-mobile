@@ -1,17 +1,7 @@
 #!/bin/bash
 
 # Pre-push hook for Bisq Mobile
-# Runs Git LFS pre-push, ktlint check and unit tests before allowing push
-
-# --- Git LFS ---
-# Required for pushing LFS-tracked files (mappings/)
-command -v git-lfs >/dev/null 2>&1 || { printf >&2 "\n%s\n\n" "This repository is configured for Git LFS but 'git-lfs' was not found on your path. Install it with 'brew install git-lfs' (macOS) or 'apt install git-lfs' (Linux)."; exit 2; }
-git lfs pre-push "$@"
-LFS_EXIT=$?
-if [ $LFS_EXIT -ne 0 ]; then
-    echo "❌ Git LFS pre-push failed"
-    exit $LFS_EXIT
-fi
+# Runs ktlint check and unit tests before allowing push
 
 echo "🔍 Running pre-push checks..."
 echo ""

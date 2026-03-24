@@ -150,32 +150,13 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
  - Java: 21.0.6.fx-zulu JDK (sdkman env file is avail in project root)
  - Ruby: v3+ (for iOS Cocoapods 1.15+)
- - Git LFS: Required for managing large mapping files. Install with `brew install git-lfs` (macOS) or `apt install git-lfs` (Linux), then run `git lfs install --manual` once.
  - IDE: We recommend using Android Studio with the Kotlin Multiplatform Mobile (KMP) plugin. For iOS testing you will need XCode installed and updated.
 
 ### Getting started
 
-#### Cloning the repository
-
-For a **faster clone** (recommended for most contributors), use a shallow clone to skip downloading historical mapping files:
-
-```bash
-git clone --depth 1 git@github.com:bisq-network/bisq-mobile.git
-```
-
-If you need the full git history (e.g. for `git blame` or bisecting):
-
-```bash
-git clone git@github.com:bisq-network/bisq-mobile.git
-```
-
-> **Note:** This repository uses [Git LFS](https://git-lfs.github.com/) for R8/ProGuard mapping files in the `mappings/` directory. Make sure `git-lfs` is installed before cloning so these files are fetched correctly. Git hooks in `.githooks/` are automatically configured on Gradle sync and include the required LFS hooks.
-
-#### Building & running
-
- 1. Get [sdkman](https://sdkman.io/) installed since the project uses JDK
+ 1. Get [sdkman](https://sdkman.io/) installed since the project uses JDK 
  2. Open Android Studio with the Kotlin Multiplatform Mobile plugin installed and open the project root folder.
- 3. Wait for the Gradle sync to complete and download the dependencies. This will let you know what's missing in your machine to run the project.
+ 3. Wait for the Gradle sync to complete and download the dependencies. This will let you know what's missing in your machine to run the project. 
     1. If you are on a MacOS computer building the iOS app you can go ahead and run `setup_ios.sh` script and build the project and run it in your device or emulator.
     2. For Android it can run on any machine, just run the preconfigured run configurations `clientApp` and/or `nodeApp` in Android Studio
 
