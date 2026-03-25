@@ -17,6 +17,7 @@ replay_pid*
 **/target/
 xcuserdata
 local.properties
+mappings
 
 # bisq2 sym link
 bisq2
