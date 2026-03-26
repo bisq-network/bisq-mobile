@@ -335,12 +335,16 @@ class WebSocketClientService(
             val subs = requestedSubscriptions.value
             log.d { "applying subscriptions on WS client, entry count: ${subs.size}" }
             subs.forEach { entry ->
-                entry.value.resetSequence()
-                client.subscribe(
-                    entry.key.topic,
-                    entry.key.parameter,
-                    entry.value,
-                )
+                try {
+                    entry.value.resetSequence()
+                    client.subscribe(
+                        entry.key.topic,
+                        entry.key.parameter,
+                        entry.value,
+                    )
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to subscribe to topic ${entry.key.topic}; skipping" }
+                }
             }
             subscriptionsAreApplied = true
         }
