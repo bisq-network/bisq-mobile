@@ -406,7 +406,7 @@ class OpenTradesNotificationService(
     /**
      * Handle trade state notifications for both initial states and state changes
      */
-    private suspend fun handleTradeStateNotification(
+    internal suspend fun handleTradeStateNotification(
         trade: TradeItemPresentationModel,
         state: BisqEasyTradeStateEnum,
     ) {
@@ -508,13 +508,16 @@ class OpenTradesNotificationService(
             }
 
             // Early trade states that might be missed - offer taking notifications
+            // Only notify the maker — the taker already knows since they initiated the action
             BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST -> {
-                notify(
-                    trade,
-                    NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
-                    "mobile.openTradeNotifications.offerTaken.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.offerTaken.message".i18n(trade.peersUserName),
-                )
+                if (trade.bisqEasyTradeModel.isMaker) {
+                    notify(
+                        trade,
+                        NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
+                        "mobile.openTradeNotifications.offerTaken.title".i18n(trade.shortTradeId),
+                        "mobile.openTradeNotifications.offerTaken.message".i18n(trade.peersUserName),
+                    )
+                }
             }
 
             // Maker states - when someone takes the user's offer (user is maker)
