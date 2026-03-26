@@ -83,6 +83,7 @@
  */
 package network.bisq.mobile.presentation.design.payment_accounts
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -91,8 +92,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -101,6 +105,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -108,6 +113,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethodIcon
+import network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -130,6 +136,25 @@ enum class RiskFilter {
 }
 
 /**
+ * Simulated country availability for a payment method.
+ * Maps to Bisq2's FiatPaymentRail.supportedCountries:
+ *   - Single country (e.g., ACH_TRANSFER → US)
+ *   - Regional list (e.g., SEPA → 37 SEPA zone countries)
+ *   - All countries (e.g., National Bank, Cash by Mail, F2F)
+ *
+ * Production implementation derives this from FiatPaymentRail + CountryRepository.
+ */
+sealed class SimulatedCountryAvailability {
+    /** Available in all countries worldwide */
+    data object Worldwide : SimulatedCountryAvailability()
+
+    /** Available in a specific set of countries (by ISO 3166 2-letter codes) */
+    data class Countries(
+        val codes: List<String>,
+    ) : SimulatedCountryAvailability()
+}
+
+/**
  * Simulated payment method entry for the Step 1 selection list.
  * Production implementation sources this from FiatPaymentRailEnum + backend API.
  */
@@ -138,6 +163,7 @@ data class SimulatedPaymentMethod(
     val displayName: String,
     val currencies: List<String>,
     val chargebackRisk: SimulatedChargebackRisk,
+    val countryAvailability: SimulatedCountryAvailability = SimulatedCountryAvailability.Worldwide,
 )
 
 /**
@@ -151,23 +177,109 @@ data class SimulatedFormField(
     val isMultiLine: Boolean = false,
 )
 
+// Representative SEPA zone countries (37 total, matching Bisq2's FiatPaymentRailUtil)
+internal val sepaCountries =
+    listOf(
+        "AT",
+        "BE",
+        "BG",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "EE",
+        "ES",
+        "FI",
+        "FR",
+        "GB",
+        "GI",
+        "GR",
+        "HR",
+        "HU",
+        "IE",
+        "IS",
+        "IT",
+        "JE",
+        "LI",
+        "LT",
+        "LU",
+        "LV",
+        "MC",
+        "MT",
+        "NL",
+        "NO",
+        "PL",
+        "PT",
+        "RO",
+        "SE",
+        "SI",
+        "SK",
+        "SM",
+        "VA",
+        "CH",
+    )
+
+// Representative Revolut-supported countries (subset — full list is ~30 countries)
+internal val revolutCountries =
+    listOf(
+        "AT",
+        "AU",
+        "BE",
+        "BG",
+        "CA",
+        "CH",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "EE",
+        "ES",
+        "FI",
+        "FR",
+        "GB",
+        "GR",
+        "HR",
+        "HU",
+        "IE",
+        "IS",
+        "IT",
+        "JP",
+        "LI",
+        "LT",
+        "LU",
+        "LV",
+        "MT",
+        "NL",
+        "NO",
+        "NZ",
+        "PL",
+        "PT",
+        "RO",
+        "SE",
+        "SG",
+        "SI",
+        "SK",
+        "US",
+    )
+
 // Sample data used across multiple preview variants
+// Country mappings replicate Bisq2's FiatPaymentRail.supportedCountries
 private val allPaymentMethods =
     listOf(
-        SimulatedPaymentMethod("SEPA", "SEPA", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
-        SimulatedPaymentMethod("SEPA_INSTANT", "SEPA Instant", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
-        SimulatedPaymentMethod("FASTER_PAYMENTS", "Faster Payments", listOf("GBP"), SimulatedChargebackRisk.VERY_LOW),
-        SimulatedPaymentMethod("PIX", "PIX", listOf("BRL"), SimulatedChargebackRisk.VERY_LOW),
-        SimulatedPaymentMethod("BIZUM", "Bizum", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW),
-        SimulatedPaymentMethod("REVOLUT", "Revolut", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW),
-        SimulatedPaymentMethod("WISE", "Wise", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW),
-        SimulatedPaymentMethod("INTERAC_E_TRANSFER", "Interac e-Transfer", listOf("CAD"), SimulatedChargebackRisk.LOW),
-        SimulatedPaymentMethod("STRIKE", "Strike", listOf("USD"), SimulatedChargebackRisk.LOW),
-        SimulatedPaymentMethod("ZELLE", "Zelle", listOf("USD"), SimulatedChargebackRisk.MODERATE),
-        SimulatedPaymentMethod("ACH_TRANSFER", "ACH Transfer", listOf("USD"), SimulatedChargebackRisk.MODERATE),
-        SimulatedPaymentMethod("CASH_APP", "Cash App", listOf("USD"), SimulatedChargebackRisk.MODERATE),
-        SimulatedPaymentMethod("NATIONAL_BANK", "National Bank Transfer", listOf("*"), SimulatedChargebackRisk.LOW),
-        SimulatedPaymentMethod("CUSTOM", "Custom", listOf("*"), SimulatedChargebackRisk.LOW),
+        SimulatedPaymentMethod("SEPA", "SEPA", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW, SimulatedCountryAvailability.Countries(sepaCountries)),
+        SimulatedPaymentMethod("SEPA_INSTANT", "SEPA Instant", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW, SimulatedCountryAvailability.Countries(sepaCountries)),
+        SimulatedPaymentMethod("FASTER_PAYMENTS", "Faster Payments", listOf("GBP"), SimulatedChargebackRisk.VERY_LOW, SimulatedCountryAvailability.Countries(listOf("GB"))),
+        SimulatedPaymentMethod("PIX", "PIX", listOf("BRL"), SimulatedChargebackRisk.VERY_LOW, SimulatedCountryAvailability.Countries(listOf("BR"))),
+        SimulatedPaymentMethod("BIZUM", "Bizum", listOf("EUR"), SimulatedChargebackRisk.VERY_LOW, SimulatedCountryAvailability.Countries(listOf("ES"))),
+        SimulatedPaymentMethod("REVOLUT", "Revolut", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW, SimulatedCountryAvailability.Countries(revolutCountries)),
+        SimulatedPaymentMethod("WISE", "Wise", listOf("EUR", "USD", "GBP"), SimulatedChargebackRisk.LOW, SimulatedCountryAvailability.Worldwide),
+        SimulatedPaymentMethod("INTERAC_E_TRANSFER", "Interac e-Transfer", listOf("CAD"), SimulatedChargebackRisk.LOW, SimulatedCountryAvailability.Countries(listOf("CA"))),
+        SimulatedPaymentMethod("STRIKE", "Strike", listOf("USD"), SimulatedChargebackRisk.LOW, SimulatedCountryAvailability.Countries(listOf("US"))),
+        SimulatedPaymentMethod("ZELLE", "Zelle", listOf("USD"), SimulatedChargebackRisk.MODERATE, SimulatedCountryAvailability.Countries(listOf("US"))),
+        SimulatedPaymentMethod("ACH_TRANSFER", "ACH Transfer", listOf("USD"), SimulatedChargebackRisk.MODERATE, SimulatedCountryAvailability.Countries(listOf("US"))),
+        SimulatedPaymentMethod("CASH_APP", "Cash App", listOf("USD"), SimulatedChargebackRisk.MODERATE, SimulatedCountryAvailability.Countries(listOf("US"))),
+        SimulatedPaymentMethod("NATIONAL_BANK", "National Bank Transfer", listOf("*"), SimulatedChargebackRisk.LOW, SimulatedCountryAvailability.Worldwide),
+        SimulatedPaymentMethod("CUSTOM", "Custom", listOf("*"), SimulatedChargebackRisk.LOW, SimulatedCountryAvailability.Worldwide),
     )
 
 private val sepaFormFields =
@@ -242,6 +354,9 @@ fun CreateFiatAccount_Step1_SelectMethod(
                     )
             }
 
+    // Bottom sheet state for showing full country list
+    var countrySheetMethod by remember { mutableStateOf<SimulatedPaymentMethod?>(null) }
+
     Column(
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
     ) {
@@ -308,19 +423,37 @@ fun CreateFiatAccount_Step1_SelectMethod(
                         method = method,
                         isSelected = method.methodId == selectedMethodId,
                         onSelect = { onMethodSelect(method.methodId) },
+                        onShowCountries = { countrySheetMethod = method },
                     )
                 }
             }
         }
+    }
+
+    // Country list bottom sheet — shown when tapping "N countries" on a regional method
+    countrySheetMethod?.let { method ->
+        val countries = (method.countryAvailability as? SimulatedCountryAvailability.Countries)?.codes ?: return@let
+        CountryListBottomSheet(
+            methodName = method.displayName,
+            countryCodes = countries,
+            onDismiss = { countrySheetMethod = null },
+        )
     }
 }
 
 /**
  * A single row in the payment method selection list.
  *
- * Extends PaymentTypeCard's visual pattern by adding a trailing chargeback risk
- * badge. The badge provides the critical risk signal at the point of selection —
- * it should not require the user to tap into a detail view to discover risk level.
+ * Extends PaymentTypeCard's visual pattern by adding:
+ *   - A trailing chargeback risk badge for immediate risk visibility
+ *   - A country availability subtitle showing where the method is available
+ *
+ * Country subtitle rendering:
+ *   - Single country: full country name (e.g., "United States")
+ *   - Regional list (≤5 countries): all codes listed (e.g., "DE, FR, IT, ES, NL")
+ *   - Regional list (>5 countries): first 3 codes + tappable "+N more" link
+ *     that opens a bottom sheet with the full country list
+ *   - Worldwide: "Available worldwide"
  *
  * The row uses dark_grey50 background (same as PaymentTypeCard) and primaryDim
  * when selected for consistency with the create-offer wizard.
@@ -330,6 +463,7 @@ private fun PaymentMethodSelectionRow(
     method: SimulatedPaymentMethod,
     isSelected: Boolean,
     onSelect: () -> Unit,
+    onShowCountries: () -> Unit,
 ) {
     val riskColor =
         when (method.chargebackRisk) {
@@ -363,7 +497,7 @@ private fun PaymentMethodSelectionRow(
                 contentDescription = method.displayName,
             )
 
-            // Method name + currencies
+            // Method name + currencies + country availability
             Column(modifier = Modifier.weight(1f)) {
                 BisqText.BaseRegular(method.displayName)
                 if (method.currencies.isNotEmpty() && method.currencies != listOf("*")) {
@@ -372,6 +506,11 @@ private fun PaymentMethodSelectionRow(
                         color = BisqTheme.colors.mid_grey20,
                     )
                 }
+                // Country availability subtitle
+                CountryAvailabilitySubtitle(
+                    availability = method.countryAvailability,
+                    onShowFullList = onShowCountries,
+                )
             }
 
             // Chargeback risk badge (trailing)
@@ -397,6 +536,203 @@ private fun PaymentMethodSelectionRow(
         }
     }
 }
+
+// -------------------------------------------------------------------------------------
+// Country availability components
+// -------------------------------------------------------------------------------------
+
+/**
+ * Compact country availability subtitle for payment method rows and account cards.
+ * Shared across CreateFiatAccountWizard and PaymentAccountCard.
+ *
+ * Rendering strategy:
+ *   - Worldwide → "Available worldwide" in subdued grey
+ *   - Single country → full country name via ISO code lookup
+ *   - ≤5 countries → comma-separated codes
+ *   - >5 countries → first 3 codes + tappable "+N more" link (underlined, primary color)
+ *
+ * The "+N more" link opens a bottom sheet with the full sorted country list.
+ * This keeps the row compact while still making the full list accessible.
+ *
+ * Production implementation should use CountryRepository for code → name mapping.
+ * POC uses a hardcoded subset of common country names.
+ */
+@Composable
+internal fun CountryAvailabilitySubtitle(
+    availability: SimulatedCountryAvailability,
+    onShowFullList: () -> Unit,
+) {
+    when (availability) {
+        is SimulatedCountryAvailability.Worldwide -> {
+            BisqText.SmallLight(
+                "Available worldwide",
+                color = BisqTheme.colors.mid_grey30,
+            )
+        }
+
+        is SimulatedCountryAvailability.Countries -> {
+            val codes = availability.codes
+            when {
+                codes.size == 1 -> {
+                    BisqText.SmallLight(
+                        countryName(codes.first()),
+                        color = BisqTheme.colors.mid_grey30,
+                    )
+                }
+
+                codes.size <= 5 -> {
+                    BisqText.SmallLight(
+                        codes.sorted().joinToString(", "),
+                        color = BisqTheme.colors.mid_grey30,
+                    )
+                }
+
+                else -> {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        BisqText.SmallLight(
+                            codes.sorted().take(3).joinToString(", ") + " ",
+                            color = BisqTheme.colors.mid_grey30,
+                        )
+                        Text(
+                            "+${codes.size - 3} more",
+                            style =
+                                BisqTheme.typography.smallRegular.copy(
+                                    color = BisqTheme.colors.primary,
+                                    textDecoration = TextDecoration.Underline,
+                                ),
+                            modifier = Modifier.clickable { onShowFullList() },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Bottom sheet showing the full list of supported countries for a payment method.
+ *
+ * Displays the method name as a header, followed by a scrollable list of country
+ * entries (flag placeholder + code + name). Uses LazyColumn for efficient rendering
+ * of long lists (e.g., SEPA's 37 countries, Revolut's 38 countries).
+ *
+ * Production implementation should:
+ *   - Source country names from CountryRepository.getNameByCode()
+ *   - Optionally show flag icons via DynamicImage with country flag assets
+ */
+@Composable
+internal fun CountryListBottomSheet(
+    methodName: String,
+    countryCodes: List<String>,
+    onDismiss: () -> Unit,
+) {
+    BisqBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding),
+        ) {
+            BisqText.H5Regular("$methodName — Supported Countries")
+            BisqGap.VHalf()
+            BisqText.SmallLight(
+                "${countryCodes.size} countries",
+                color = BisqTheme.colors.mid_grey20,
+            )
+            BisqGap.V1()
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+            ) {
+                items(countryCodes.sorted()) { code ->
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = BisqUIConstants.ScreenPaddingQuarter),
+                        horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // Country code badge
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = BisqTheme.colors.dark_grey40,
+                        ) {
+                            BisqText.SmallRegular(
+                                code,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            )
+                        }
+                        // Country name
+                        BisqText.BaseLight(
+                            countryName(code),
+                            color = BisqTheme.colors.white,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Simulated country code → name lookup for POC previews.
+ * Production implementation uses CountryRepository.getNameByCode().
+ */
+internal fun countryName(code: String): String = COUNTRY_NAMES[code] ?: code
+
+internal val COUNTRY_NAMES =
+    mapOf(
+        "AD" to "Andorra",
+        "AR" to "Argentina",
+        "AT" to "Austria",
+        "AU" to "Australia",
+        "BE" to "Belgium",
+        "BG" to "Bulgaria",
+        "BR" to "Brazil",
+        "CA" to "Canada",
+        "CH" to "Switzerland",
+        "CN" to "China",
+        "CY" to "Cyprus",
+        "CZ" to "Czech Republic",
+        "DE" to "Germany",
+        "DK" to "Denmark",
+        "EE" to "Estonia",
+        "ES" to "Spain",
+        "FI" to "Finland",
+        "FR" to "France",
+        "GB" to "United Kingdom",
+        "GI" to "Gibraltar",
+        "GR" to "Greece",
+        "HR" to "Croatia",
+        "HU" to "Hungary",
+        "IE" to "Ireland",
+        "IN" to "India",
+        "IS" to "Iceland",
+        "IT" to "Italy",
+        "JE" to "Jersey",
+        "JP" to "Japan",
+        "LI" to "Liechtenstein",
+        "LT" to "Lithuania",
+        "LU" to "Luxembourg",
+        "LV" to "Latvia",
+        "MC" to "Monaco",
+        "MT" to "Malta",
+        "NL" to "Netherlands",
+        "NO" to "Norway",
+        "NZ" to "New Zealand",
+        "PL" to "Poland",
+        "PT" to "Portugal",
+        "RO" to "Romania",
+        "RU" to "Russia",
+        "SE" to "Sweden",
+        "SG" to "Singapore",
+        "SI" to "Slovenia",
+        "SK" to "Slovakia",
+        "SM" to "San Marino",
+        "TH" to "Thailand",
+        "US" to "United States",
+        "VA" to "Vatican City",
+    )
 
 /**
  * A filter chip for risk-level filtering in Step 1.
@@ -578,6 +914,22 @@ fun CreateFiatAccount_Step3_Review(
             }
 
             BisqGap.V1()
+
+            // Country availability in review
+            ReviewFieldRow(
+                label = "Available in",
+                value =
+                    when (val avail = selectedMethod.countryAvailability) {
+                        is SimulatedCountryAvailability.Worldwide -> "All countries"
+                        is SimulatedCountryAvailability.Countries ->
+                            when {
+                                avail.codes.size == 1 -> countryName(avail.codes.first())
+                                avail.codes.size <= 5 -> avail.codes.sorted().joinToString(", ") { countryName(it) }
+                                else -> "${avail.codes.size} countries"
+                            }
+                    },
+            )
+            BisqGap.VHalf()
 
             // Field summary rows
             formFields.forEach { field ->
@@ -767,6 +1119,7 @@ private fun CreateFiatAccountWizard_Step3Preview() {
                     displayName = "SEPA",
                     currencies = listOf("EUR"),
                     chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
+                    countryAvailability = SimulatedCountryAvailability.Countries(sepaCountries),
                 ),
             formFields = sepaFormFields,
             fieldValues =

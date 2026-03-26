@@ -10,15 +10,35 @@
  * ======================================================================================
  * Reusable card component for displaying a single saved payment account in the
  * PaymentAccountsRedesignScreen list. Cards are **expandable**: collapsed shows just
- * enough to identify the account (icon + name + method + risk); expanded reveals
- * currencies, address, and edit/delete actions. This lets users skim a list of 5–10
- * accounts quickly and only drill into the one they care about.
+ * enough to identify the account (icon + name + method + country summary + risk);
+ * expanded reveals full country availability, currencies, and edit/delete actions.
+ * This lets users skim a list of 5-10 accounts quickly and only drill into the one
+ * they care about.
  *
  * Two visual variants:
- *   - Fiat account: method icon, account name, method label, chargeback risk badge.
- *     Expanded: currency badges with flag icons, edit/delete actions.
+ *   - Fiat account: method icon, account name, method label + brief country summary,
+ *     chargeback risk badge. Expanded: full country availability subtitle with "+N more"
+ *     tappable link, currency badges with flag icons, edit/delete actions.
  *   - Crypto account: method icon, account name, crypto type.
  *     Expanded: truncated address, edit/delete actions.
+ *
+ * ======================================================================================
+ * COUNTRY AVAILABILITY (Hybrid approach)
+ * ======================================================================================
+ * Each fiat account carries a [SimulatedCountryAvailability] describing where the
+ * payment method can be used (single country, regional list, or worldwide).
+ *
+ * **Collapsed header** shows a brief one-liner next to the method name:
+ *   - "SEPA · 37 countries"
+ *   - "Zelle · United States"
+ *   - "Wise · Worldwide"
+ *
+ * **Expanded section** shows the full [CountryAvailabilitySubtitle] (reused from
+ * CreateFiatAccountWizard) with the "+N more" tappable link that opens a
+ * [CountryListBottomSheet] with the complete sorted country list.
+ *
+ * This hybrid approach lets users distinguish accounts at a glance (e.g., "is this
+ * my US-only or my worldwide account?") while keeping the collapsed card compact.
  *
  * ======================================================================================
  * DESKTOP ADAPTATION
@@ -43,6 +63,9 @@
  *     mobile.paymentAccounts.risk.veryLow / .low / .moderate
  * - "Edit" / "Delete" use existing action.edit / paymentAccounts.deleteAccount keys.
  * - Currency codes are ISO 4217 — no localization needed.
+ * - Country summary strings (e.g., "N countries", "Worldwide") need i18n keys:
+ *     mobile.paymentAccounts.countries.count (parameterized: "{0} countries")
+ *     mobile.paymentAccounts.countries.worldwide
  */
 package network.bisq.mobile.presentation.design.payment_accounts
 
@@ -99,6 +122,7 @@ data class SimulatedFiatAccount(
     val methodDisplayName: String,
     val currencies: List<String>,
     val chargebackRisk: SimulatedChargebackRisk,
+    val countryAvailability: SimulatedCountryAvailability = SimulatedCountryAvailability.Worldwide,
 )
 
 data class SimulatedCryptoAccount(
@@ -124,6 +148,22 @@ internal fun chargebackRiskLabel(risk: SimulatedChargebackRisk): String =
         SimulatedChargebackRisk.VERY_LOW -> "Chargeback risk: Very Low"
         SimulatedChargebackRisk.LOW -> "Chargeback risk: Low"
         SimulatedChargebackRisk.MODERATE -> "Chargeback risk: Moderate"
+    }
+
+/**
+ * Brief one-liner summary of country availability for the collapsed card header.
+ * Shows: "37 countries", "United States", or "Worldwide".
+ */
+private fun countrySummary(availability: SimulatedCountryAvailability): String =
+    when (availability) {
+        is SimulatedCountryAvailability.Worldwide -> "Worldwide"
+        is SimulatedCountryAvailability.Countries -> {
+            val codes = availability.codes
+            when {
+                codes.size == 1 -> countryName(codes.first())
+                else -> "${codes.size} countries"
+            }
+        }
     }
 
 private fun truncateAddress(address: String): String =
@@ -233,14 +273,17 @@ internal fun ChargebackRiskBadge(risk: SimulatedChargebackRisk) {
 /**
  * Expandable fiat payment account card.
  *
- * **Collapsed** (default): icon + account name + method label + chargeback risk badge
- * + expand chevron. Enough to identify the account and see its risk level at a glance.
+ * **Collapsed** (default): icon + account name + method label with brief country summary
+ * (e.g., "SEPA · 37 countries") + chargeback risk badge + expand chevron.
+ * Enough to identify the account, its geographic scope, and risk level at a glance.
  *
- * **Expanded**: adds currency badges with flag icons + edit/delete action buttons.
+ * **Expanded**: adds full country availability subtitle with tappable "+N more" link,
+ * currency badges with flag icons, and edit/delete action buttons.
+ * Tapping "+N more" opens a [CountryListBottomSheet] with the complete country list.
  *
  * Tap anywhere on the card header to toggle expansion.
  *
- * @param account Fiat account data
+ * @param account Fiat account data (includes country availability)
  * @param initiallyExpanded Whether the card starts expanded (useful for single-account view)
  * @param onEditClick Called when user taps Edit
  * @param onDeleteClick Called when user taps Delete
@@ -253,6 +296,8 @@ fun FiatPaymentAccountCard(
     initiallyExpanded: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(initiallyExpanded) }
+    // Track which method's country list bottom sheet is open (null = closed)
+    var showCountrySheet by remember { mutableStateOf(false) }
 
     BisqCard(
         modifier = Modifier.fillMaxWidth(),
@@ -276,8 +321,9 @@ fun FiatPaymentAccountCard(
             Column(modifier = Modifier.weight(1f)) {
                 BisqText.H4Regular(account.accountName)
                 BisqGap.VQuarter()
+                // Method name + brief country summary (e.g., "SEPA · 37 countries")
                 BisqText.SmallLight(
-                    account.methodDisplayName,
+                    "${account.methodDisplayName} · ${countrySummary(account.countryAvailability)}",
                     color = BisqTheme.colors.mid_grey20,
                 )
             }
@@ -292,7 +338,7 @@ fun FiatPaymentAccountCard(
         // Chargeback risk — always visible (key info for scanning)
         ChargebackRiskBadge(risk = account.chargebackRisk)
 
-        // Expanded content: currencies + actions
+        // Expanded content: country detail + currencies + actions
         AnimatedVisibility(
             visible = expanded,
             enter = expandVertically(),
@@ -301,6 +347,12 @@ fun FiatPaymentAccountCard(
             Column(
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
             ) {
+                // Full country availability with "+N more" tappable link
+                CountryAvailabilitySubtitle(
+                    availability = account.countryAvailability,
+                    onShowFullList = { showCountrySheet = true },
+                )
+
                 // Currency badges with flag icons
                 if (account.currencies.isNotEmpty()) {
                     Row(
@@ -319,6 +371,18 @@ fun FiatPaymentAccountCard(
                     onDeleteClick = onDeleteClick,
                 )
             }
+        }
+    }
+
+    // Country list bottom sheet
+    if (showCountrySheet) {
+        val availability = account.countryAvailability
+        if (availability is SimulatedCountryAvailability.Countries) {
+            CountryListBottomSheet(
+                methodName = account.methodDisplayName,
+                countryCodes = availability.codes,
+                onDismiss = { showCountrySheet = false },
+            )
         }
     }
 }
@@ -405,7 +469,8 @@ fun CryptoPaymentAccountCard(
 private val previewOnClick: () -> Unit = {}
 
 /**
- * Preview: SEPA account collapsed — shows risk badge visible even when collapsed.
+ * Preview: SEPA account collapsed — shows country summary ("37 countries") and risk badge
+ * visible even when collapsed.
  */
 @ExcludeFromCoverage
 @Preview
@@ -424,6 +489,7 @@ private fun FiatCard_Sepa_CollapsedPreview() {
                         methodDisplayName = "SEPA",
                         currencies = listOf("EUR"),
                         chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
+                        countryAvailability = SimulatedCountryAvailability.Countries(sepaCountries),
                     ),
                 onEditClick = previewOnClick,
                 onDeleteClick = previewOnClick,
@@ -433,7 +499,8 @@ private fun FiatCard_Sepa_CollapsedPreview() {
 }
 
 /**
- * Preview: SEPA account expanded — shows currency badges with flag icons and actions.
+ * Preview: SEPA account expanded — shows full country availability subtitle with "+N more",
+ * currency badges with flag icons, and actions.
  */
 @ExcludeFromCoverage
 @Preview
@@ -452,6 +519,7 @@ private fun FiatCard_Sepa_ExpandedPreview() {
                         methodDisplayName = "SEPA",
                         currencies = listOf("EUR"),
                         chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
+                        countryAvailability = SimulatedCountryAvailability.Countries(sepaCountries),
                     ),
                 onEditClick = previewOnClick,
                 onDeleteClick = previewOnClick,
@@ -462,7 +530,7 @@ private fun FiatCard_Sepa_ExpandedPreview() {
 }
 
 /**
- * Preview: Zelle with moderate risk — red risk badge should stand out.
+ * Preview: Zelle with moderate risk — single country (US), red risk badge.
  */
 @ExcludeFromCoverage
 @Preview
@@ -481,6 +549,7 @@ private fun FiatCard_Zelle_ExpandedPreview() {
                         methodDisplayName = "Zelle",
                         currencies = listOf("USD"),
                         chargebackRisk = SimulatedChargebackRisk.MODERATE,
+                        countryAvailability = SimulatedCountryAvailability.Countries(listOf("US")),
                     ),
                 onEditClick = previewOnClick,
                 onDeleteClick = previewOnClick,
@@ -491,12 +560,12 @@ private fun FiatCard_Zelle_ExpandedPreview() {
 }
 
 /**
- * Preview: Custom multi-currency account expanded — multiple flag badges visible.
+ * Preview: Wise worldwide account expanded — "Worldwide" in collapsed, full detail expanded.
  */
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun FiatCard_Custom_ExpandedPreview() {
+private fun FiatCard_Wise_ExpandedPreview() {
     BisqTheme.Preview {
         Column(
             modifier = Modifier.padding(BisqUIConstants.ScreenPadding),
@@ -510,6 +579,7 @@ private fun FiatCard_Custom_ExpandedPreview() {
                         methodDisplayName = "Wise",
                         currencies = listOf("USD", "EUR", "GBP", "CHF"),
                         chargebackRisk = SimulatedChargebackRisk.LOW,
+                        countryAvailability = SimulatedCountryAvailability.Worldwide,
                     ),
                 onEditClick = previewOnClick,
                 onDeleteClick = previewOnClick,
@@ -520,8 +590,9 @@ private fun FiatCard_Custom_ExpandedPreview() {
 }
 
 /**
- * Preview: multiple cards in a list — shows the scanning experience.
- * First card expanded, rest collapsed — typical user flow.
+ * Preview: multiple cards in a list — shows the scanning experience with country summaries.
+ * First card expanded (SEPA, 37 countries), rest collapsed showing brief country info.
+ * Demonstrates: regional (SEPA), single-country (Zelle/US), multi-country (Revolut).
  */
 @ExcludeFromCoverage
 @Preview
@@ -540,6 +611,7 @@ private fun FiatCards_ListPreview() {
                         methodDisplayName = "SEPA",
                         currencies = listOf("EUR"),
                         chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
+                        countryAvailability = SimulatedCountryAvailability.Countries(sepaCountries),
                     ),
                 onEditClick = previewOnClick,
                 onDeleteClick = previewOnClick,
@@ -553,6 +625,7 @@ private fun FiatCards_ListPreview() {
                         methodDisplayName = "Zelle",
                         currencies = listOf("USD"),
                         chargebackRisk = SimulatedChargebackRisk.MODERATE,
+                        countryAvailability = SimulatedCountryAvailability.Countries(listOf("US")),
                     ),
                 onEditClick = previewOnClick,
                 onDeleteClick = previewOnClick,
@@ -565,6 +638,7 @@ private fun FiatCards_ListPreview() {
                         methodDisplayName = "Revolut",
                         currencies = listOf("EUR", "USD", "GBP"),
                         chargebackRisk = SimulatedChargebackRisk.LOW,
+                        countryAvailability = SimulatedCountryAvailability.Countries(revolutCountries),
                     ),
                 onEditClick = previewOnClick,
                 onDeleteClick = previewOnClick,

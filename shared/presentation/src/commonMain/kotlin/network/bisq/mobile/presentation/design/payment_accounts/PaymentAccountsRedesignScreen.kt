@@ -351,6 +351,7 @@ private val previewFiatAccounts =
             methodDisplayName = "SEPA",
             currencies = listOf("EUR"),
             chargebackRisk = SimulatedChargebackRisk.VERY_LOW,
+            countryAvailability = SimulatedCountryAvailability.Countries(sepaCountries),
         ),
         SimulatedFiatAccount(
             accountName = "Revolut USD",
@@ -358,6 +359,7 @@ private val previewFiatAccounts =
             methodDisplayName = "Revolut",
             currencies = listOf("USD", "EUR"),
             chargebackRisk = SimulatedChargebackRisk.LOW,
+            countryAvailability = SimulatedCountryAvailability.Countries(revolutCountries),
         ),
         SimulatedFiatAccount(
             accountName = "Zelle — Chase",
@@ -365,6 +367,7 @@ private val previewFiatAccounts =
             methodDisplayName = "Zelle",
             currencies = listOf("USD"),
             chargebackRisk = SimulatedChargebackRisk.MODERATE,
+            countryAvailability = SimulatedCountryAvailability.Countries(listOf("US")),
         ),
     )
 
