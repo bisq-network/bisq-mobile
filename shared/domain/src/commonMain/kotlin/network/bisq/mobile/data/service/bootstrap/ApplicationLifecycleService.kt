@@ -69,6 +69,7 @@ abstract class ApplicationLifecycleService(
         try {
             activateServiceFacades()
         } catch (e: Exception) {
+            log.e { "Service activate error: $e" }
             onUnrecoverableError(e)
         }
     }

@@ -66,4 +66,31 @@ class SettingsApiGateway(
             basePath,
             SettingsChangeRequest(useAnimations = value),
         )
+
+    suspend fun setWebLinkDontShowAgain(): Result<Unit> =
+        webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(webLinkDontShowAgain = true),
+        )
+
+    suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
+        webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(resetAllDontShowAgainFlags = true),
+        )
+
+    suspend fun getCookie(key: Int): Result<Boolean> = webSocketApiClient.get("$basePath/cookie/$key")
+
+    suspend fun setCookie(key: Int): Result<Unit> =
+        webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(setCookie = key),
+        )
+
+    suspend fun unsetCookie(key: Int): Result<Unit> =
+        webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(unsetCookie = key),
+        )
+
 }

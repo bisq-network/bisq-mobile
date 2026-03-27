@@ -14,4 +14,8 @@ data class SettingsChangeRequest(
     val maxTradePriceDeviation: Double? = null,
     val numDaysAfterRedactingTradeData: Int? = null,
     val useAnimations: Boolean? = null,
+    val webLinkDontShowAgain: Boolean? = null,
+    val resetAllDontShowAgainFlags: Boolean? = null,
+    val setCookie: Int? = null,
+    val unsetCookie: Int? = null,
 )

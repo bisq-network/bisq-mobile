@@ -52,9 +52,9 @@ fun WebLinkConfirmationDialog(
     var dismissLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(link) {
-        val shouldShow = settingsServiceFacade?.shouldShowWebLinkConfirmation() ?: true
+        val shouldShow = settingsServiceFacade?.showWebLinkConfirmation?.value ?: true
         if (!shouldShow) {
-            val shouldOpen = settingsServiceFacade.shouldPermitOpeningBrowser.value
+            val shouldOpen = settingsServiceFacade.permitOpeningBrowser.value
             if (shouldOpen) {
                 uriHandler.openUri(link)
                 onConfirm.invoke()
@@ -84,16 +84,12 @@ fun WebLinkConfirmationDialog(
         onConfirm = {
             scope.launch {
                 confirmLoading = true
-                settingsServiceFacade?.setPermitOpeningBrowser(true)?.onFailure {
-                    showPersistFailureSnackbar(mainPresenter)
-                    confirmLoading = false
-                }
-                if (dontShowAgain) {
-                    settingsServiceFacade?.setWebLinkDontShowAgain()?.onFailure {
-                        showPersistFailureSnackbar(mainPresenter)
-                        confirmLoading = false
-                    }
-                }
+                persistWebLinkDialogChoice(
+                    settingsServiceFacade,
+                    permitOpeningBrowser = true,
+                    dontShowAgain = dontShowAgain,
+                    mainPresenter = mainPresenter,
+                )
                 uriHandler.openUri(link)
                 onConfirm.invoke()
                 confirmLoading = false
@@ -103,16 +99,12 @@ fun WebLinkConfirmationDialog(
             if (toCopy) {
                 scope.launch {
                     dismissLoading = true
-                    settingsServiceFacade?.setPermitOpeningBrowser(false)?.onFailure {
-                        showPersistFailureSnackbar(mainPresenter)
-                        dismissLoading = false
-                    }
-                    if (dontShowAgain) {
-                        settingsServiceFacade?.setWebLinkDontShowAgain()?.onFailure {
-                            showPersistFailureSnackbar(mainPresenter)
-                            dismissLoading = false
-                        }
-                    }
+                    persistWebLinkDialogChoice(
+                        settingsServiceFacade,
+                        permitOpeningBrowser = false,
+                        dontShowAgain = dontShowAgain,
+                        mainPresenter = mainPresenter,
+                    )
                     copyLinkWithUserFeedback(clipboard, link, mainPresenter)
                     onDismiss()
                     dismissLoading = false
@@ -137,6 +129,22 @@ fun WebLinkConfirmationDialog(
 
 private fun showPersistFailureSnackbar(mainPresenter: MainPresenter?) {
     mainPresenter?.showSnackbar("mobile.error.generic".i18n())
+}
+
+private suspend fun persistWebLinkDialogChoice(
+    settingsServiceFacade: SettingsServiceFacade?,
+    permitOpeningBrowser: Boolean,
+    dontShowAgain: Boolean,
+    mainPresenter: MainPresenter?,
+): Boolean {
+    val facade = settingsServiceFacade ?: return true
+    val permitResult = facade.setPermitOpeningBrowser(permitOpeningBrowser)
+    permitResult.onFailure { showPersistFailureSnackbar(mainPresenter) }
+    if (permitResult.isFailure) return false
+    if (!dontShowAgain) return true
+    val dontShowResult = facade.setWebLinkDontShowAgain()
+    dontShowResult.onFailure { showPersistFailureSnackbar(mainPresenter) }
+    return dontShowResult.isSuccess
 }
 
 private suspend fun copyLinkWithUserFeedback(

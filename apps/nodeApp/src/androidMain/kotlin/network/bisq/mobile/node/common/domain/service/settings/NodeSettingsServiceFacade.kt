@@ -124,31 +124,30 @@ class NodeSettingsServiceFacade(
 
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean): Result<Unit> = runCatching { settingsService.setIgnoreDiffAdjustmentFromSecManager(value) }
 
-    override suspend fun shouldShowWebLinkConfirmation(): Boolean =
-        dontShowAgainService.showAgain(
-            DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER,
-        )
+    private val _showWebLinkConfirmation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val showWebLinkConfirmation: StateFlow<Boolean> get() = _showWebLinkConfirmation.asStateFlow()
 
     override suspend fun setWebLinkDontShowAgain(): Result<Unit> =
         runCatching {
             log.i { "Attempting to set 'Web link' Don't Show again" }
             dontShowAgainService.dontShowAgain(DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER)
             check(persistWithRetry()) { "Failed to persist 'Web link' Don't Show again after retries" }
+            _showWebLinkConfirmation.value = false
             log.i { "Successfully set 'Web link' Don't Show again (persisted)" }
-        }
-
-    private val _shouldPermitOpeningBrowser: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val shouldPermitOpeningBrowser: StateFlow<Boolean> get() = _shouldPermitOpeningBrowser.asStateFlow()
-
-    override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> =
-        runCatching {
-            settingsService.setCookie(CookieKey.PERMIT_OPENING_BROWSER, value)
         }
 
     override suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
         runCatching {
             dontShowAgainService.resetDontShowAgain()
             check(persistWithRetry()) { "Failed to persist reset of all 'Don't Show again' flags after retries" }
+        }
+
+    private val _permitOpeningBrowser: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val permitOpeningBrowser: StateFlow<Boolean> get() = _permitOpeningBrowser.asStateFlow()
+
+    override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> =
+        runCatching {
+            settingsService.setCookie(CookieKey.PERMIT_OPENING_BROWSER, value)
         }
 
     // Misc
@@ -173,13 +172,17 @@ class NodeSettingsServiceFacade(
         settingsService.ignoreDiffAdjustmentFromSecManager.addObserver { value ->
             _ignoreDiffAdjustmentFromSecManager.value = value
         }
-        _shouldPermitOpeningBrowser.value =
+
+        _showWebLinkConfirmation.value = dontShowAgainService.showAgain(
+            DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER,
+        )
+        _permitOpeningBrowser.value =
             settingsService.cookie
                 .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
                 .orElse(false)
         cookieChangedPin =
             settingsService.cookieChanged.addObserver { value ->
-            _shouldPermitOpeningBrowser.value =
+            _permitOpeningBrowser.value =
                 settingsService.cookie
                     .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
                     .orElse(false)
