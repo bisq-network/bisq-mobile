@@ -39,5 +39,16 @@ interface SettingsServiceFacade : LifeCycleAware {
 
     suspend fun setNumDaysAfterRedactingTradeData(days: Int): Result<Unit>
 
+    // settingsService.dontShowAgainMap is not an Observable, to observe to
+    suspend fun shouldShowWebLinkConfirmation(): Boolean = true
+
+    suspend fun setWebLinkDontShowAgain(): Result<Unit> = Result.success(Unit)
+
+    val shouldPermitOpeningBrowser: StateFlow<Boolean>
+
+    suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> = Result.success(Unit)
+
+    suspend fun resetAllDontShowAgainFlags(): Result<Unit> = Result.success(Unit)
+
     suspend fun getTrustedNodeVersion() = ""
 }

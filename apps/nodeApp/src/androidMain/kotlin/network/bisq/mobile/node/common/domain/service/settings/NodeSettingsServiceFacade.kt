@@ -2,7 +2,11 @@ package network.bisq.mobile.node.common.domain.service.settings
 
 import bisq.common.locale.LocaleRepository
 import bisq.common.observable.Pin
+import bisq.settings.CookieKey
+import bisq.settings.DontShowAgainKey
+import bisq.settings.DontShowAgainService
 import bisq.settings.SettingsService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,6 +75,8 @@ class NodeSettingsServiceFacade(
     // Dependencies
     private val settingsService: SettingsService by lazy { applicationService.settingsService.get() }
 
+    private val dontShowAgainService: DontShowAgainService by lazy { applicationService.dontShowAgainService.get() }
+
     // Properties
 
     override suspend fun confirmTacAccepted(value: Boolean): Result<Unit> = runCatching { settingsService.setIsTacAccepted(value) }
@@ -118,8 +124,36 @@ class NodeSettingsServiceFacade(
 
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean): Result<Unit> = runCatching { settingsService.setIgnoreDiffAdjustmentFromSecManager(value) }
 
+    override suspend fun shouldShowWebLinkConfirmation(): Boolean =
+        dontShowAgainService.showAgain(
+            DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER,
+        )
+
+    override suspend fun setWebLinkDontShowAgain(): Result<Unit> =
+        runCatching {
+            log.i { "Attempting to set 'Web link' Don't Show again" }
+            dontShowAgainService.dontShowAgain(DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER)
+            check(persistWithRetry()) { "Failed to persist 'Web link' Don't Show again after retries" }
+            log.i { "Successfully set 'Web link' Don't Show again (persisted)" }
+        }
+
+    private val _shouldPermitOpeningBrowser: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val shouldPermitOpeningBrowser: StateFlow<Boolean> get() = _shouldPermitOpeningBrowser.asStateFlow()
+
+    override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> =
+        runCatching {
+            settingsService.setCookie(CookieKey.PERMIT_OPENING_BROWSER, value)
+        }
+
+    override suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
+        runCatching {
+            dontShowAgainService.resetDontShowAgain()
+            check(persistWithRetry()) { "Failed to persist reset of all 'Don't Show again' flags after retries" }
+        }
+
     // Misc
     private var tradeRulesConfirmedPin: Pin? = null
+    private var cookieChangedPin: Pin? = null
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
@@ -139,10 +173,22 @@ class NodeSettingsServiceFacade(
         settingsService.ignoreDiffAdjustmentFromSecManager.addObserver { value ->
             _ignoreDiffAdjustmentFromSecManager.value = value
         }
+        _shouldPermitOpeningBrowser.value =
+            settingsService.cookie
+                .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
+                .orElse(false)
+        cookieChangedPin =
+            settingsService.cookieChanged.addObserver { value ->
+            _shouldPermitOpeningBrowser.value =
+                settingsService.cookie
+                    .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
+                    .orElse(false)
+            }
     }
 
     override suspend fun deactivate() {
         tradeRulesConfirmedPin?.unbind()
+        cookieChangedPin?.unbind()
 
         super<ServiceFacade>.deactivate()
     }
@@ -157,6 +203,21 @@ class NodeSettingsServiceFacade(
             I18nSupport.setLanguage(normalizedCode)
             _languageCode.value = normalizedCode
         }
+    }
+
+    // Issue: settingsService.persist().join() isn't persisting dontShowAgainMap immediately.
+    // In Bisq2, SettingsService inherits RateLimitedPersistenceClient
+    // and there is a rate-limiting logic there.
+    // Worst case, it persists all in-memory changes at graceful app shutdown.
+    // In mobile, user can kill app.
+    // So making multiple attempts here till it persists!
+    private suspend fun persistWithRetry(): Boolean {
+        repeat(5) { attempt ->
+            val persisted = settingsService.persist().join()
+            if (persisted) return true
+            delay((attempt + 1) * 250L)
+        }
+        return false
     }
 
     // API

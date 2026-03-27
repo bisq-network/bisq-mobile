@@ -11,8 +11,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CloseIc
 fun CloseIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.size(20.dp),
+    disabled: Boolean = false,
 ) {
-    IconButton(onClick = onClick, modifier = modifier) {
+    IconButton(onClick = onClick, enabled = !disabled, modifier = modifier) {
         CloseIcon()
     }
 }

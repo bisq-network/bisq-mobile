@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.components.LoadingState
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqChipType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqMultiSelect
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSelect
@@ -197,6 +199,14 @@ fun SettingsContent(
                         label = "settings.display.useAnimations".i18n(),
                         checked = uiState.useAnimations,
                         onSwitch = { onAction(SettingsUiAction.OnUseAnimationsChange(it)) },
+                    )
+
+                    BisqGap.V1()
+                    BisqButton(
+                        text = "settings.display.resetDontShowAgain".i18n(),
+                        onClick = { onAction(SettingsUiAction.OnResetAllDontShowAgainClick) },
+                        type = BisqButtonType.GreyOutline,
+                        fullWidth = true,
                     )
 
                     if (uiState.shouldShowPoWAdjustmentFactor) {

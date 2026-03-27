@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.Dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CloseIconButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.InfoGreenIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap.BisqGapHFill
@@ -34,11 +36,14 @@ fun ConfirmationDialog(
     message: String = "",
     confirmButtonText: String = "confirmation.yes".i18n(),
     dismissButtonText: String = "confirmation.no".i18n(),
+    confirmButtonLoading: Boolean = false,
+    dismissButtonLoading: Boolean = false,
     closeButton: Boolean = false,
     marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
     dismissOnClickOutside: Boolean = true,
+    extraContent: (@Composable () -> Unit)? = null,
     onDismiss: (Boolean) -> Unit = {}, // true on dismiss button click; false on bg click dismiss
 ) {
     BisqDialog(
@@ -57,7 +62,10 @@ fun ConfirmationDialog(
                     BisqText.H6Regular(headline, color = headlineColor)
                     BisqGapHFill()
                     if (closeButton) {
-                        CloseIconButton(onClick = { onDismiss(false) })
+                        CloseIconButton(
+                            disabled = confirmButtonLoading || dismissButtonLoading,
+                            onClick = { onDismiss(false) },
+                        )
                     }
                 }
             }
@@ -67,6 +75,10 @@ fun ConfirmationDialog(
             BisqText.BaseLight(message)
             BisqGap.V2()
         }
+        extraContent?.invoke()
+        if (extraContent != null) {
+            BisqGap.V2()
+        }
         if (verticalButtonPlacement) {
             Column {
                 if (confirmButtonText.isNotBlank()) {
@@ -74,6 +86,8 @@ fun ConfirmationDialog(
                         text = confirmButtonText,
                         onClick = onConfirm,
                         fullWidth = true,
+                        isLoading = confirmButtonLoading,
+                        disabled = dismissButtonLoading,
                         modifier = Modifier.semantics { contentDescription = "dialog_confirm_yes" },
                     )
                 }
@@ -86,6 +100,8 @@ fun ConfirmationDialog(
                         type = BisqButtonType.Grey,
                         onClick = { onDismiss(true) },
                         fullWidth = true,
+                        isLoading = dismissButtonLoading,
+                        disabled = confirmButtonLoading,
                         modifier = Modifier.semantics { contentDescription = "dialog_confirm_no" },
                     )
                 }
@@ -103,6 +119,8 @@ fun ConfirmationDialog(
                                 .fillMaxHeight()
                                 .semantics { contentDescription = "dialog_confirm_yes" },
                         text = confirmButtonText,
+                        isLoading = confirmButtonLoading,
+                        disabled = dismissButtonLoading,
                         onClick = onConfirm,
                     )
                 }
@@ -115,6 +133,8 @@ fun ConfirmationDialog(
                                 .semantics { contentDescription = "dialog_confirm_no" },
                         text = dismissButtonText,
                         type = BisqButtonType.Grey,
+                        isLoading = dismissButtonLoading,
+                        disabled = confirmButtonLoading,
                         onClick = { onDismiss(true) },
                     )
                 }
@@ -183,6 +203,34 @@ private fun ConfirmationDialog_VerticalButtonsPreview() {
             verticalButtonPlacement = true, // Key change
             onConfirm = {},
             onDismiss = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ConfirmationDialog_ExtraContent_WebLinkPreview() {
+    val link = "https://bisq.network/"
+    BisqTheme.Preview {
+        ConfirmationDialog(
+            headline = "hyperlinks.openInBrowser.attention.headline".i18n(),
+            headlineColor = BisqTheme.colors.primary,
+            headlineLeftIcon = { InfoGreenIcon() },
+            message = "hyperlinks.openInBrowser.attention".i18n(link),
+            confirmButtonText = "confirmation.yes".i18n(),
+            dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
+            onConfirm = {},
+            onDismiss = {},
+            closeButton = true,
+            horizontalAlignment = Alignment.Start,
+            verticalButtonPlacement = true,
+            extraContent = {
+                BisqCheckbox(
+                    checked = true,
+                    label = "action.dontShowAgain".i18n(),
+                    onCheckedChange = {},
+                )
+            },
         )
     }
 }

@@ -73,6 +73,7 @@ open class SettingsPresenter(
             SettingsUiAction.OnPowFactorSave -> onPowFactorSave()
             SettingsUiAction.OnPowFactorCancel -> onPowFactorCancel()
             is SettingsUiAction.OnIgnorePowChange -> setIgnorePow(action.value)
+            SettingsUiAction.OnResetAllDontShowAgainClick -> onResetAllDontShowAgainClick()
             SettingsUiAction.OnRetryLoadSettingsClick -> fetchSettings()
         }
     }
@@ -303,6 +304,21 @@ open class SettingsPresenter(
                 .setIgnoreDiffAdjustmentFromSecManager(value)
                 .onFailure { exception ->
                     _uiState.update { it.copy(ignorePow = !value) }
+                    handleError(exception)
+                }
+            hideLoading()
+        }
+    }
+
+    private fun onResetAllDontShowAgainClick() {
+        presenterScope.launch {
+            showLoading()
+            settingsServiceFacade
+                .resetAllDontShowAgainFlags()
+                .onSuccess {
+                    // TODO: i18n
+                    showSnackbar("Reset flags successfully".i18n())
+                }.onFailure { exception ->
                     handleError(exception)
                 }
             hideLoading()

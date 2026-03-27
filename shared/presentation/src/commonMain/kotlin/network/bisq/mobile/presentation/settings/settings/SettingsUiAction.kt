@@ -58,5 +58,7 @@ sealed interface SettingsUiAction {
         val value: Boolean,
     ) : SettingsUiAction
 
+    data object OnResetAllDontShowAgainClick : SettingsUiAction
+
     data object OnRetryLoadSettingsClick : SettingsUiAction
 }
