@@ -38,9 +38,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
  *   method selections for each market across sessions."
  */
 
-/**
- * Simulated settings state for the Offerbook section preview.
- */
 private data class SimulatedOfferbookSettings(
     val persistFilterPreferences: Boolean = true,
 )
