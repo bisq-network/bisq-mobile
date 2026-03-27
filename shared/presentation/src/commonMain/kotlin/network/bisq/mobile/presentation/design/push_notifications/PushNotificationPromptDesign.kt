@@ -15,23 +15,18 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
- * Design POC: Push notification opt-in prompts.
+ * Design POC: Push notification relay opt-in prompts (both platforms).
  *
- * Two prompt scenarios:
+ * Contextual prompt: shown once when user has an active trade and backgrounds the app.
+ * Uses ConfirmationDialog with vertical buttons. Lead with benefit, then privacy
+ * reassurance (platform-specific: Google for Android, Apple for iOS), then reversibility.
  *
- * 1. Contextual prompt: shown once when user has an active trade and backgrounds the app.
- *    Uses ConfirmationDialog with vertical buttons. Lead with benefit, then privacy
- *    reassurance, then reversibility.
- *
- * 2. Enhanced initial permission prompt: when the app first asks for OS notification
- *    permission, it can additionally offer the FCM relay opt-in. This replaces the
- *    existing NotificationPermissionDialog for Android only.
- *
- * Both prompts are shown at most once. The primary control surface is Settings.
+ * Shown at most once. The primary control surface is Settings.
  */
 
 @Composable
 private fun SimulatedRelayOptInPrompt(
+    relayProvider: String,
     onEnable: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -40,7 +35,7 @@ private fun SimulatedRelayOptInPrompt(
         headlineColor = BisqTheme.colors.white,
         message =
             "Get notified about trade updates even when Bisq is not running.\n\n" +
-                "Your notification content is encrypted \u2014 Google only sees " +
+                "Your notification content is encrypted \u2014 $relayProvider only sees " +
                 "an opaque payload, not your trade details.\n\n" +
                 "You can change this at any time in Settings.",
         confirmButtonText = "Enable notifications",
@@ -52,30 +47,9 @@ private fun SimulatedRelayOptInPrompt(
 }
 
 @Composable
-private fun SimulatedInitialPermissionWithRelay(
-    onGrantPermission: () -> Unit,
-    onEnableRelay: () -> Unit,
-    onSkip: () -> Unit,
-) {
-    ConfirmationDialog(
-        headline = "Enable trade notifications",
-        headlineColor = BisqTheme.colors.white,
-        message =
-            "Bisq needs notification permission to alert you about trade updates.\n\n" +
-                "You can also enable relayed notifications to receive alerts even " +
-                "when the app is fully closed. Your notification content is " +
-                "end-to-end encrypted.",
-        confirmButtonText = "Grant permission",
-        dismissButtonText = "Don\u2019t ask again",
-        verticalButtonPlacement = true,
-        onConfirm = onGrantPermission,
-        onDismiss = { onSkip() },
-    )
-}
-
-@Composable
 private fun SimulatedTradeContextScreen(
     tradeId: String,
+    relayProvider: String,
     showPrompt: Boolean,
     onEnableRelay: () -> Unit,
     onDismissPrompt: () -> Unit,
@@ -104,6 +78,7 @@ private fun SimulatedTradeContextScreen(
 
     if (showPrompt) {
         SimulatedRelayOptInPrompt(
+            relayProvider = relayProvider,
             onEnable = onEnableRelay,
             onDismiss = onDismissPrompt,
         )
@@ -113,7 +88,7 @@ private fun SimulatedTradeContextScreen(
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun RelayOptInPrompt_Preview() {
+private fun RelayOptInPrompt_Android_Preview() {
     BisqTheme.Preview {
         Column(
             modifier =
@@ -123,11 +98,12 @@ private fun RelayOptInPrompt_Preview() {
                     .padding(BisqUIConstants.ScreenPadding),
         ) {
             BisqText.SmallLight(
-                "Contextual prompt (shown once at first active trade):",
+                "Android prompt (mentions Google):",
                 color = BisqTheme.colors.light_grey10,
             )
         }
         SimulatedRelayOptInPrompt(
+            relayProvider = "Google",
             onEnable = {},
             onDismiss = {},
         )
@@ -137,7 +113,7 @@ private fun RelayOptInPrompt_Preview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun InitialPermissionWithRelay_Preview() {
+private fun RelayOptInPrompt_iOS_Preview() {
     BisqTheme.Preview {
         Column(
             modifier =
@@ -147,14 +123,14 @@ private fun InitialPermissionWithRelay_Preview() {
                     .padding(BisqUIConstants.ScreenPadding),
         ) {
             BisqText.SmallLight(
-                "Enhanced initial permission prompt (Android):",
+                "iOS prompt (mentions Apple):",
                 color = BisqTheme.colors.light_grey10,
             )
         }
-        SimulatedInitialPermissionWithRelay(
-            onGrantPermission = {},
-            onEnableRelay = {},
-            onSkip = {},
+        SimulatedRelayOptInPrompt(
+            relayProvider = "Apple",
+            onEnable = {},
+            onDismiss = {},
         )
     }
 }
@@ -162,10 +138,26 @@ private fun InitialPermissionWithRelay_Preview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun TradeContext_WithPrompt_Preview() {
+private fun TradeContext_Android_Preview() {
     BisqTheme.Preview {
         SimulatedTradeContextScreen(
             tradeId = "abc-123-def",
+            relayProvider = "Google",
+            showPrompt = true,
+            onEnableRelay = {},
+            onDismissPrompt = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun TradeContext_iOS_Preview() {
+    BisqTheme.Preview {
+        SimulatedTradeContextScreen(
+            tradeId = "abc-123-def",
+            relayProvider = "Apple",
             showPrompt = true,
             onEnableRelay = {},
             onDismissPrompt = {},

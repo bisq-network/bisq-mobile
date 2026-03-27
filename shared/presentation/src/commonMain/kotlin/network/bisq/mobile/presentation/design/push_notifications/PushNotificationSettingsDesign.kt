@@ -26,20 +26,33 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
- * Design POC: Notifications section in Settings screen with FCM relay opt-in toggle.
+ * Design POC: Notifications section in Settings screen with relay opt-in toggle.
  *
- * Adds a "Notifications" section to Settings containing a toggle for relayed push
- * notifications (FCM on Android). Default is OFF (privacy-first). A tappable "Learn more"
- * link opens a bottom sheet explaining the privacy trade-off.
+ * Shown on both platforms with platform-appropriate copy:
+ * - Android: FCM relay through Google
+ * - iOS: APNs relay through Apple
  *
- * Key constraint: existing push notification flow continues to work as-is. FCM
- * registration is only triggered when the user explicitly opts in via this toggle.
+ * Default is OFF on both platforms (privacy-first). A tappable "Learn more" link
+ * opens a bottom sheet explaining the privacy trade-off.
  *
- * Android-only: this section is not shown on iOS (APNs handled at pairing time).
+ * On iOS, an additional note clarifies that relayed notifications are the only way
+ * to receive alerts when the app is closed (no P2P fallback exists on iOS).
+ *
+ * Key constraint: existing notification flows continue as-is. Relay registration
+ * is only triggered when the user explicitly opts in via this toggle.
  */
+
+private enum class SimulatedPlatform(
+    val relayProvider: String,
+    val hasLocalFallback: Boolean,
+) {
+    ANDROID("Google", true),
+    IOS("Apple", false),
+}
 
 @Composable
 private fun NotificationsSettingsSection(
+    platform: SimulatedPlatform,
     relayEnabled: Boolean,
     onRelayToggle: (Boolean) -> Unit,
     onLearnMoreClick: () -> Unit,
@@ -66,6 +79,16 @@ private fun NotificationsSettingsSection(
             color = BisqTheme.colors.mid_grey20,
         )
 
+        if (!platform.hasLocalFallback) {
+            BisqGap.VQuarter()
+            BisqText.SmallLight(
+                text =
+                    "On iOS, this is the only way to receive notifications " +
+                        "when the app is not running.",
+                color = BisqTheme.colors.mid_grey20,
+            )
+        }
+
         BisqGap.VHalf()
 
         BisqText.SmallLight(
@@ -85,7 +108,9 @@ private fun NotificationsSettingsSection(
 }
 
 @Composable
-private fun LearnMoreBottomSheetContent() {
+private fun LearnMoreBottomSheetContent(platform: SimulatedPlatform) {
+    val provider = platform.relayProvider
+
     Column(
         modifier =
             Modifier
@@ -97,7 +122,7 @@ private fun LearnMoreBottomSheetContent() {
         BisqGap.V1()
 
         BisqText.SmallLight(
-            text = "What is shared with Google",
+            text = "What is shared with $provider",
             color = BisqTheme.colors.light_grey10,
         )
         BisqGap.VQuarter()
@@ -108,7 +133,7 @@ private fun LearnMoreBottomSheetContent() {
         BisqGap.V1()
 
         BisqText.SmallLight(
-            text = "What Google cannot see",
+            text = "What $provider cannot see",
             color = BisqTheme.colors.light_grey10,
         )
         BisqGap.VQuarter()
@@ -124,8 +149,8 @@ private fun LearnMoreBottomSheetContent() {
             BisqText.SmallLight(
                 text =
                     "Notification content is end-to-end encrypted between your " +
-                        "Bisq node and this device. This is the same security model " +
-                        "used for all Bisq communications.",
+                        "Bisq node and this device. $provider only delivers an " +
+                        "opaque encrypted payload.",
                 color = BisqTheme.colors.mid_grey20,
             )
         }
@@ -142,11 +167,11 @@ private fun BulletItem(text: String) {
 
 @Composable
 private fun SettingsScreenWithNotifications(
+    platform: SimulatedPlatform,
     relayEnabled: Boolean,
     onRelayToggle: (Boolean) -> Unit,
     showLearnMore: Boolean,
     onLearnMoreClick: () -> Unit,
-    onDismissLearnMore: () -> Unit,
 ) {
     Column(
         modifier =
@@ -166,6 +191,7 @@ private fun SettingsScreenWithNotifications(
         BisqGap.V1()
 
         NotificationsSettingsSection(
+            platform = platform,
             relayEnabled = relayEnabled,
             onRelayToggle = onRelayToggle,
             onLearnMoreClick = onLearnMoreClick,
@@ -180,7 +206,7 @@ private fun SettingsScreenWithNotifications(
                 color = BisqTheme.colors.mid_grey20,
             )
             BisqGap.VHalf()
-            LearnMoreBottomSheetContent()
+            LearnMoreBottomSheetContent(platform = platform)
         }
     }
 }
@@ -188,14 +214,14 @@ private fun SettingsScreenWithNotifications(
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun NotificationSettings_Disabled_Preview() {
+private fun Android_Disabled_Preview() {
     BisqTheme.Preview {
         SettingsScreenWithNotifications(
+            platform = SimulatedPlatform.ANDROID,
             relayEnabled = false,
             onRelayToggle = {},
             showLearnMore = false,
             onLearnMoreClick = {},
-            onDismissLearnMore = {},
         )
     }
 }
@@ -203,14 +229,14 @@ private fun NotificationSettings_Disabled_Preview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun NotificationSettings_Enabled_Preview() {
+private fun Android_Enabled_Preview() {
     BisqTheme.Preview {
         SettingsScreenWithNotifications(
+            platform = SimulatedPlatform.ANDROID,
             relayEnabled = true,
             onRelayToggle = {},
             showLearnMore = false,
             onLearnMoreClick = {},
-            onDismissLearnMore = {},
         )
     }
 }
@@ -218,14 +244,14 @@ private fun NotificationSettings_Enabled_Preview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun NotificationSettings_LearnMore_Preview() {
+private fun Android_LearnMore_Preview() {
     BisqTheme.Preview {
         SettingsScreenWithNotifications(
+            platform = SimulatedPlatform.ANDROID,
             relayEnabled = false,
             onRelayToggle = {},
             showLearnMore = true,
             onLearnMoreClick = {},
-            onDismissLearnMore = {},
         )
     }
 }
@@ -233,16 +259,61 @@ private fun NotificationSettings_LearnMore_Preview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun NotificationSettings_Interactive_Preview() {
+private fun IosDisabled_Preview() {
+    BisqTheme.Preview {
+        SettingsScreenWithNotifications(
+            platform = SimulatedPlatform.IOS,
+            relayEnabled = false,
+            onRelayToggle = {},
+            showLearnMore = false,
+            onLearnMoreClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun IosEnabled_Preview() {
+    BisqTheme.Preview {
+        SettingsScreenWithNotifications(
+            platform = SimulatedPlatform.IOS,
+            relayEnabled = true,
+            onRelayToggle = {},
+            showLearnMore = false,
+            onLearnMoreClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun IosLearnMore_Preview() {
+    BisqTheme.Preview {
+        SettingsScreenWithNotifications(
+            platform = SimulatedPlatform.IOS,
+            relayEnabled = false,
+            onRelayToggle = {},
+            showLearnMore = true,
+            onLearnMoreClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun Interactive_Preview() {
     var relayEnabled by remember { mutableStateOf(false) }
     var showLearnMore by remember { mutableStateOf(false) }
     BisqTheme.Preview {
         SettingsScreenWithNotifications(
+            platform = SimulatedPlatform.ANDROID,
             relayEnabled = relayEnabled,
             onRelayToggle = { relayEnabled = it },
             showLearnMore = showLearnMore,
             onLearnMoreClick = { showLearnMore = !showLearnMore },
-            onDismissLearnMore = { showLearnMore = false },
         )
     }
 }
@@ -250,7 +321,7 @@ private fun NotificationSettings_Interactive_Preview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun LearnMoreSheet_Preview() {
+private fun LearnMoreSheet_Android_Preview() {
     BisqTheme.Preview {
         Column(
             modifier =
@@ -258,7 +329,23 @@ private fun LearnMoreSheet_Preview() {
                     .fillMaxWidth()
                     .background(BisqTheme.colors.dark_grey50),
         ) {
-            LearnMoreBottomSheetContent()
+            LearnMoreBottomSheetContent(platform = SimulatedPlatform.ANDROID)
+        }
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun LearnMoreSheet_iOS_Preview() {
+    BisqTheme.Preview {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(BisqTheme.colors.dark_grey50),
+        ) {
+            LearnMoreBottomSheetContent(platform = SimulatedPlatform.IOS)
         }
     }
 }
