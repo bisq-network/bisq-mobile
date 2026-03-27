@@ -39,9 +39,24 @@ abstract class MainActivity :
         }
     }
 
+    private fun sanitizeDeepLinkIntent(intent: Intent): Intent {
+        if (intent.action != Intent.ACTION_VIEW || intent.data == null) {
+            return intent
+        }
+
+        // strip the deeplink off the activity intent after caching it, to stop premature navigation
+        return Intent(intent).apply {
+            action = null
+            data = null
+            clipData = null
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
         handleDeepLinkIntent(intent)
+        val sanitizedIntent = sanitizeDeepLinkIntent(intent)
+        setIntent(sanitizedIntent)
+        super.onNewIntent(sanitizedIntent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +70,9 @@ abstract class MainActivity :
         // Set up coroutine exception handler after DI is initialized
         GenericErrorHandler.setupCoroutineExceptionHandler(exceptionHandlerSetup)
 
+        handleDeepLinkIntent(intent)
+        intent?.let { intent = sanitizeDeepLinkIntent(it) }
+
         presenter.attachView(this)
 
         val bgColor = Color(BACKGROUND_COLOR_CODE).adjustGamma().toArgb()
@@ -67,7 +85,6 @@ abstract class MainActivity :
     override fun onStart() {
         super.onStart()
         presenter.onStart()
-        handleDeepLinkIntent(intent)
     }
 
     override fun onResume() {
