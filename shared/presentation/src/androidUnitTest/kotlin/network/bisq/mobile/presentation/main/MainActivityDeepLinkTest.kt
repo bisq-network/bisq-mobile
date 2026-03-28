@@ -116,7 +116,7 @@ class MainActivityDeepLinkTest {
     }
 }
 
-class TestMainActivity : MainActivity() {
+internal class TestMainActivity : MainActivity() {
     fun dispatchNewIntent(intent: Intent) {
         onNewIntent(intent)
     }
