@@ -188,6 +188,10 @@ class CreateOfferReviewPresenterTest {
         override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) = Result.success(Unit)
 
         override suspend fun setNumDaysAfterRedactingTradeData(days: Int) = Result.success(Unit)
+
+        override val showWebLinkConfirmation: StateFlow<Boolean> = MutableStateFlow(false)
+
+        override val permitOpeningBrowser: StateFlow<Boolean> = MutableStateFlow(false)
     }
 
     private class FakeTradesServiceFacade : TradesServiceFacade {

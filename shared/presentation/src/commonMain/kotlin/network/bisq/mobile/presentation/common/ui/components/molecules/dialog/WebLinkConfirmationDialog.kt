@@ -19,6 +19,7 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.InfoGreenIcon
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
@@ -128,7 +129,7 @@ fun WebLinkConfirmationDialog(
 }
 
 private fun showPersistFailureSnackbar(mainPresenter: MainPresenter?) {
-    mainPresenter?.showSnackbar("mobile.error.generic".i18n())
+    mainPresenter?.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
 }
 
 private suspend fun persistWebLinkDialogChoice(

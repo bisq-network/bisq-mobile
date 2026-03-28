@@ -633,6 +633,10 @@ class SettingsContentUiTest {
             .onNodeWithText("settings.display.useAnimations".i18n())
             .performScrollTo()
             .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("settings.display.resetDontShowAgain".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
@@ -668,6 +672,41 @@ class SettingsContentUiTest {
 
         // Then
         verify { mockOnAction(SettingsUiAction.OnUseAnimationsChange(true)) }
+    }
+
+    @Test
+    fun `when reset all 'dont show again' clicked then triggers OnResetAllDontShowAgainClick action`() {
+        // Given
+        val uiState =
+            SettingsUiState(
+                i18nPairs = i18nPairs,
+                languageCode = "en",
+                supportedLanguageCodes = setOf("en"),
+                closeOfferWhenTradeTaken = true,
+                tradePriceTolerance = DataEntry(value = "5"),
+                numDaysAfterRedactingTradeData = DataEntry(value = "90"),
+                powFactor = DataEntry(value = "1"),
+                useAnimations = true,
+                isFetchingSettings = false,
+            )
+
+        setTestContent {
+            SettingsContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // When
+        composeTestRule
+            .onNodeWithText("settings.display.resetDontShowAgain".i18n())
+            .performScrollTo()
+            .performClick()
+
+        // Then
+        verify { mockOnAction(SettingsUiAction.OnResetAllDontShowAgainClick) }
     }
 
     // ========== PoW Adjustment Factor Tests ==========

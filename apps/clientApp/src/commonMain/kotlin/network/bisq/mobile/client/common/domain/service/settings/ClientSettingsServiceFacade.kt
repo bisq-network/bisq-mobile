@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.data.replicated.settings.CookieKey
 import network.bisq.mobile.data.replicated.settings.DontShowAgainKey
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.ServiceFacade
@@ -130,18 +131,20 @@ class ClientSettingsServiceFacade(
     }
 
     private var cookieJob: Job? = null
+
     fun fetchOpeningPermission() {
         cookieJob?.cancel()
-        cookieJob = jobsManager.getScope().launch {
-            val result = getCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal)
+        cookieJob =
+            jobsManager.getScope().launch {
+                val result = getCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal)
 
-            result.exceptionOrNull()?.let { error ->
-                if (error is CancellationException) throw error
-                return@launch
+                result.exceptionOrNull()?.let { error ->
+                    if (error is CancellationException) throw error
+                    return@launch
+                }
+                val value = result.getOrNull() ?: false
+                _permitOpeningBrowser.value = value
             }
-            val value = result.getOrNull() ?: false
-            _permitOpeningBrowser.value = value
-        }
     }
 
     private fun updateLanguage(code: String) {
@@ -177,7 +180,10 @@ class ClientSettingsServiceFacade(
         return result
     }
 
-    suspend fun setCookie(key: Int, value: Boolean): Result<Unit> {
+    suspend fun setCookie(
+        key: Int,
+        value: Boolean,
+    ): Result<Unit> {
         var result: Result<Unit>
         if (value) {
             result = apiGateway.setCookie(key)

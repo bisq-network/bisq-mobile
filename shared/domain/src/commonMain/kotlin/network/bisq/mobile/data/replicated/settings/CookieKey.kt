@@ -1,5 +1,7 @@
+package network.bisq.mobile.data.replicated.settings
+
 enum class CookieKey(
-    val useSubKey: Boolean = false
+    val useSubKey: Boolean = false,
 ) {
     STAGE_X,
     STAGE_Y,
@@ -33,5 +35,5 @@ enum class CookieKey(
     MU_SIG_OFFERS_FILTER,
     MU_SIG_OFFER_PAYMENT_FILTERS(true),
     SHOW_CONTACTS_LIST_LEARN_MORE_POPUP,
-    WALLET_TXS_FILTER
+    WALLET_TXS_FILTER,
 }

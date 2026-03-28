@@ -50,5 +50,5 @@ val settingsVODemoObj =
         useAnimations = true,
         selectedMarket = MarketVO("AUD", "AUD"),
         numDaysAfterRedactingTradeData = 1,
-        dontShowAgainMap = emptyMap()
+        dontShowAgainMap = emptyMap(),
     )

@@ -139,6 +139,7 @@ class NodeSettingsServiceFacade(
     override suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
         runCatching {
             dontShowAgainService.resetDontShowAgain()
+            _showWebLinkConfirmation.value = true
             check(persistWithRetry()) { "Failed to persist reset of all 'Don't Show again' flags after retries" }
         }
 
@@ -173,19 +174,20 @@ class NodeSettingsServiceFacade(
             _ignoreDiffAdjustmentFromSecManager.value = value
         }
 
-        _showWebLinkConfirmation.value = dontShowAgainService.showAgain(
-            DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER,
-        )
+        _showWebLinkConfirmation.value =
+            dontShowAgainService.showAgain(
+                DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER,
+            )
         _permitOpeningBrowser.value =
             settingsService.cookie
                 .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
                 .orElse(false)
         cookieChangedPin =
             settingsService.cookieChanged.addObserver { value ->
-            _permitOpeningBrowser.value =
-                settingsService.cookie
-                    .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
-                    .orElse(false)
+                _permitOpeningBrowser.value =
+                    settingsService.cookie
+                        .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
+                        .orElse(false)
             }
     }
 

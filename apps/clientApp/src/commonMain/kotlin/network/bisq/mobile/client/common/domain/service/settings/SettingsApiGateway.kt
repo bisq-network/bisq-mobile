@@ -4,7 +4,23 @@ import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApi
 import network.bisq.mobile.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
+/**
+ * API Gateway for mobile app settings synchronized with the trusted node.
+ * Settings are read and updated over the WebSocket API so the client stays aligned
+ * with server-side defaults, UI preferences, and feature flags.
+ *
+ * - GET /settings - Fetch current settings ([SettingsVO])
+ * - GET /settings/version - Fetch API version settings ([ApiVersionSettingsVO])
+ * - PATCH /settings - Partial updates via [SettingsChangeRequest]
+ * - GET /settings/cookie/{key} - Read a boolean cookie flag
+ *
+ * Coverage exclusion rationale - [WebSocketApiClient] uses inline reified functions
+ * (get<T>, patch<T, R>) which cannot be mocked in unit tests. Integration tests with
+ * a real or fake HTTP server would be needed for proper coverage.
+ */
+@ExcludeFromCoverage
 class SettingsApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
 ) : Logging {
@@ -92,5 +108,4 @@ class SettingsApiGateway(
             basePath,
             SettingsChangeRequest(unsetCookie = key),
         )
-
 }

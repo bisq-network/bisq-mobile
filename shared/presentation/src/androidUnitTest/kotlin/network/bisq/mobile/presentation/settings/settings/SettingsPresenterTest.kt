@@ -749,6 +749,55 @@ class SettingsPresenterTest {
             assertTrue(state.useAnimations) // Reverted to original
         }
 
+    // ========== Reset "Don't show again" flags ==========
+
+    @Test
+    fun `when reset all dont show again clicked and succeeds then calls service and shows success snackbar`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.resetAllDontShowAgainFlags() } returns Result.success(Unit)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(SettingsUiAction.OnResetAllDontShowAgainClick)
+            advanceUntilIdle()
+
+            // Then
+            coVerify { settingsServiceFacade.resetAllDontShowAgainFlags() }
+            coVerify {
+                globalUiManager.showSnackbar(
+                    "mobile.settings.resetFlagsSuccess".i18n(),
+                    type = SnackbarType.SUCCESS,
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `when reset all dont show again clicked and fails then shows error snackbar`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.resetAllDontShowAgainFlags() } returns
+                Result.failure(Exception("Reset failed"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(SettingsUiAction.OnResetAllDontShowAgainClick)
+            advanceUntilIdle()
+
+            // Then
+            coVerify { settingsServiceFacade.resetAllDontShowAgainFlags() }
+            coVerify { globalUiManager.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR, any()) }
+        }
+
     // ========== PoW Ignore Tests ==========
 
     @Test

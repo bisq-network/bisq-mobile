@@ -316,8 +316,8 @@ open class SettingsPresenter(
             settingsServiceFacade
                 .resetAllDontShowAgainFlags()
                 .onSuccess {
-                    // TODO: i18n
-                    showSnackbar("Reset flags successfully".i18n())
+                    // TODO:i18n Reset flags successfully
+                    showSnackbar("mobile.settings.resetFlagsSuccess".i18n())
                 }.onFailure { exception ->
                     handleError(exception)
                 }
