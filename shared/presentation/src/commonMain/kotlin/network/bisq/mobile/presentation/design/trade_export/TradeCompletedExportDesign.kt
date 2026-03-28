@@ -8,11 +8,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_completed
@@ -97,6 +102,7 @@ private fun TradeCompletedScreen(
             Modifier
                 .fillMaxWidth()
                 .background(BisqTheme.colors.backgroundColor)
+                .verticalScroll(rememberScrollState())
                 .padding(BisqUIConstants.ScreenPadding),
     ) {
         CompletionHeader(trade)
@@ -129,12 +135,7 @@ private fun CompletionHeader(trade: SimulatedCompletedTrade) {
             BisqText.H5Light("Trade completed")
             BisqGap.VQuarter()
             BisqText.SmallLight(
-                text =
-                    if (trade.isBuyer) {
-                        "Traded with ${trade.peerName}"
-                    } else {
-                        "Traded with ${trade.peerName}"
-                    },
+                text = "Traded with ${trade.peerName}",
                 color = BisqTheme.colors.mid_grey20,
             )
         }
@@ -190,12 +191,21 @@ private fun TradeSummaryCard(
         )
 
         if (!trade.txId.isNullOrBlank()) {
+            val isOnChainTx = trade.txId.matches(Regex("^[0-9a-fA-F]{64}$"))
             CopyableInfoRow(
-                label = "Transaction ID",
+                label = if (isOnChainTx) "Transaction ID" else "Payment proof",
                 value = trade.txId.take(12) + "\u2026",
                 fullValue = trade.txId,
                 onCopy = onCopyValue,
             )
+
+            if (isOnChainTx) {
+                BisqText.SmallLight(
+                    text = "View in block explorer \u2192",
+                    color = BisqTheme.colors.primary,
+                    modifier = Modifier.clickable { onOpenExplorer(trade.txId) },
+                )
+            }
         }
 
         if (!trade.bitcoinAddress.isNullOrBlank()) {
@@ -204,14 +214,6 @@ private fun TradeSummaryCard(
                 value = trade.bitcoinAddress.take(16) + "\u2026",
                 fullValue = trade.bitcoinAddress,
                 onCopy = onCopyValue,
-            )
-        }
-
-        if (!trade.txId.isNullOrBlank()) {
-            BisqText.SmallLight(
-                text = "View in block explorer \u2192",
-                color = BisqTheme.colors.primary,
-                modifier = Modifier.clickable { onOpenExplorer(trade.txId) },
             )
         }
     }
@@ -231,9 +233,12 @@ private fun CopyableInfoRow(
         Column(modifier = Modifier.weight(1f)) {
             InfoBox(label = label, value = value)
         }
-        androidx.compose.material3.IconButton(
+        IconButton(
             onClick = { onCopy(fullValue) },
-            modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
+            modifier =
+                Modifier
+                    .size(BisqUIConstants.ScreenPadding2X)
+                    .semantics { contentDescription = "Copy" },
         ) {
             CopyIcon()
         }
@@ -297,7 +302,7 @@ private val sampleSellerTrade =
         tradeDuration = "45m",
         tradeId = "t-xyz789abc123def456",
         shortTradeId = "t-xyz789a",
-        txId = null,
+        txId = "lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqf",
         bitcoinAddress = null,
     )
 
