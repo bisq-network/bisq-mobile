@@ -1,17 +1,17 @@
 package network.bisq.mobile.client.common.domain.service.settings
 
 import io.mockk.coEvery
-import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
-import network.bisq.mobile.data.replicated.settings.ApiVersionSettingsVO
-import network.bisq.mobile.data.replicated.settings.CookieKey
-import network.bisq.mobile.data.replicated.settings.DontShowAgainKey
+import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO
-import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -20,10 +20,12 @@ import kotlin.test.assertTrue
 class ClientSettingsServiceFacadeTest : KoinIntegrationTestBase() {
     private lateinit var facade: ClientSettingsServiceFacade
     private lateinit var apiGateway: SettingsApiGateway
+    private lateinit var settingsRepository: SettingsRepositoryMock
 
     override fun onSetup() {
         apiGateway = mockk(relaxed = true)
-        facade = ClientSettingsServiceFacade(apiGateway)
+        settingsRepository = SettingsRepositoryMock()
+        facade = ClientSettingsServiceFacade(apiGateway, settingsRepository)
     }
 
     // ========== getSettings ==========
@@ -44,6 +46,10 @@ class ClientSettingsServiceFacadeTest : KoinIntegrationTestBase() {
             assertTrue(facade.tradeRulesConfirmed.value)
             assertEquals("es", facade.languageCode.value)
             assertFalse(facade.useAnimations.value)
+
+            // Check if getSettings() doesn't touch this
+            assertTrue(facade.showWebLinkConfirmation.value)
+            assertFalse(facade.permitOpeningBrowser.value)
         }
 
     @Test
@@ -57,43 +63,45 @@ class ClientSettingsServiceFacadeTest : KoinIntegrationTestBase() {
             assertTrue(facade.useAnimations.value)
         }
 
+    // ========== setWebLinkDontShowAgain / showWebLinkConfirmation ==========
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `getSettings sets showWebLinkConfirmation true when dontShowAgain flag is absent`() =
+    fun `showWebLinkConfirmation follows local settings`() =
         runTest {
-            val settings = SettingsVO(dontShowAgainMap = emptyMap())
-            coEvery { apiGateway.getSettings() } returns Result.success(settings)
-            facade.getSettings()
+            settingsRepository.setDontShowAgainHyperlinksOpenInBrowser(true)
+            facade.activate()
+            advanceUntilIdle()
+            assertFalse(facade.showWebLinkConfirmation.value)
+
+            settingsRepository.setDontShowAgainHyperlinksOpenInBrowser(false)
+            advanceUntilIdle()
             assertTrue(facade.showWebLinkConfirmation.value)
         }
 
     @Test
-    fun `getSettings sets showWebLinkConfirmation false when dontShowAgain flag is true`() =
+    fun `setWebLinkDontShowAgain() sets showWebLinkConfirmation false on success`() =
         runTest {
-            val key = DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER.getKey()
-            val settings = SettingsVO(dontShowAgainMap = mapOf(key to true))
-            coEvery { apiGateway.getSettings() } returns Result.success(settings)
-            facade.getSettings()
-            assertFalse(facade.showWebLinkConfirmation.value)
-        }
-
-    // ========== setWebLinkDontShowAgain ==========
-
-    @Test
-    fun `setWebLinkDontShowAgain sets showWebLinkConfirmation false on success`() =
-        runTest {
-            coEvery { apiGateway.setWebLinkDontShowAgain() } returns Result.success(Unit)
             val result = facade.setWebLinkDontShowAgain()
             assertTrue(result.isSuccess)
             assertFalse(facade.showWebLinkConfirmation.value)
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `setWebLinkDontShowAgain keeps showWebLinkConfirmation true on failure`() =
         runTest {
-            coEvery { apiGateway.setWebLinkDontShowAgain() } returns Result.failure(Exception("fail"))
-            val result = facade.setWebLinkDontShowAgain()
+            val repo = mockk<SettingsRepository>()
+            every { repo.data } returns flowOf(Settings())
+            coEvery { repo.setDontShowAgainHyperlinksOpenInBrowser(true) } throws RuntimeException("fail")
+            val localFacade = ClientSettingsServiceFacade(apiGateway, repo)
+            localFacade.activate()
+            advanceUntilIdle()
+            assertTrue(localFacade.showWebLinkConfirmation.value)
+
+            val result = localFacade.setWebLinkDontShowAgain()
             assertTrue(result.isFailure)
-            assertTrue(facade.showWebLinkConfirmation.value)
+            assertTrue(localFacade.showWebLinkConfirmation.value)
         }
 
     // ========== resetAllDontShowAgainFlags ==========
@@ -101,77 +109,71 @@ class ClientSettingsServiceFacadeTest : KoinIntegrationTestBase() {
     @Test
     fun `resetAllDontShowAgainFlags sets showWebLinkConfirmation true on success`() =
         runTest {
-            coEvery { apiGateway.resetAllDontShowAgainFlags() } returns Result.success(Unit)
+            facade.setWebLinkDontShowAgain()
+            assertFalse(facade.showWebLinkConfirmation.value)
             val result = facade.resetAllDontShowAgainFlags()
             assertTrue(result.isSuccess)
             assertTrue(facade.showWebLinkConfirmation.value)
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `resetAllDontShowAgainFlags keeps showWebLinkConfirmation false on failure`() =
         runTest {
-            coEvery { apiGateway.resetAllDontShowAgainFlags() } returns Result.failure(Exception("fail"))
-            val result = facade.resetAllDontShowAgainFlags()
+            val repo = mockk<SettingsRepository>()
+            every { repo.data } returns flowOf(Settings(dontShowAgainHyperlinksOpenInBrowser = true))
+            coEvery { repo.setDontShowAgainHyperlinksOpenInBrowser(false) } throws RuntimeException("fail")
+            val localFacade = ClientSettingsServiceFacade(apiGateway, repo)
+            localFacade.activate()
+            advanceUntilIdle()
+            assertFalse(localFacade.showWebLinkConfirmation.value)
+
+            val result = localFacade.resetAllDontShowAgainFlags()
             assertTrue(result.isFailure)
-            assertFalse(facade.showWebLinkConfirmation.value)
+            assertFalse(localFacade.showWebLinkConfirmation.value)
         }
 
     // ========== setPermitOpeningBrowser ==========
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `setPermitOpeningBrowser true calls setCookie and updates flow on success`() =
+    fun `setPermitOpeningBrowser follows local settings`() =
         runTest {
-            coEvery { apiGateway.setCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal) } returns Result.success(Unit)
-            val result = facade.setPermitOpeningBrowser(true)
-            assertTrue(result.isSuccess)
-            assertTrue(facade.permitOpeningBrowser.value)
-            coVerify { apiGateway.setCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal) }
-        }
-
-    @Test
-    fun `setPermitOpeningBrowser false calls unsetCookie and updates flow on success`() =
-        runTest {
-            coEvery { apiGateway.setCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal) } returns Result.success(Unit)
-            facade.setPermitOpeningBrowser(true)
-            assertTrue(facade.permitOpeningBrowser.value)
-
-            coEvery { apiGateway.unsetCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal) } returns Result.success(Unit)
-            val result = facade.setPermitOpeningBrowser(false)
-            assertTrue(result.isSuccess)
+            settingsRepository.setPermitOpeningBrowser(false)
+            facade.activate()
+            advanceUntilIdle()
             assertFalse(facade.permitOpeningBrowser.value)
-            coVerify { apiGateway.unsetCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal) }
+
+            settingsRepository.setPermitOpeningBrowser(true)
+            advanceUntilIdle()
+            assertTrue(facade.permitOpeningBrowser.value)
         }
 
+    @Test
+    fun `setPermitOpeningBrowser() sets permitOpeningBrowser on success`() =
+        runTest {
+            val resultTrue = facade.setPermitOpeningBrowser(true)
+            assertTrue(resultTrue.isSuccess)
+            assertTrue(facade.permitOpeningBrowser.value)
+
+            val resultFalse = facade.setPermitOpeningBrowser(false)
+            assertTrue(resultFalse.isSuccess)
+            assertFalse(facade.permitOpeningBrowser.value)
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `setPermitOpeningBrowser does not update flow on failure`() =
         runTest {
-            coEvery { apiGateway.setCookie(any()) } returns Result.failure(Exception("fail"))
-            val result = facade.setPermitOpeningBrowser(true)
+            val repo = mockk<SettingsRepository>()
+            every { repo.data } returns flowOf(Settings(cookiePermitOpeningBrowser = true))
+            coEvery { repo.setPermitOpeningBrowser(any()) } throws RuntimeException("fail")
+            val localFacade = ClientSettingsServiceFacade(apiGateway, repo)
+            localFacade.activate()
+            advanceUntilIdle()
+            assertTrue(localFacade.permitOpeningBrowser.value)
+            val result = localFacade.setPermitOpeningBrowser(false)
             assertTrue(result.isFailure)
-            assertFalse(facade.permitOpeningBrowser.value)
-        }
-
-    // ========== activate / fetchOpeningPermission ==========
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun `activate fetches cookie and updates permitOpeningBrowser`() =
-        runTest {
-            coEvery { apiGateway.getCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal) } returns Result.success(true)
-            facade.activate()
-            advanceUntilIdle()
-            assertTrue(facade.permitOpeningBrowser.value)
-            facade.deactivate()
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun `activate with cookie fetch failure keeps permitOpeningBrowser false`() =
-        runTest {
-            coEvery { apiGateway.getCookie(any()) } returns Result.failure(Exception("fail"))
-            facade.activate()
-            advanceUntilIdle()
-            assertFalse(facade.permitOpeningBrowser.value)
-            facade.deactivate()
+            assertTrue(localFacade.permitOpeningBrowser.value)
         }
 }

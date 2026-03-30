@@ -1,22 +1,20 @@
 package network.bisq.mobile.client.common.domain.service.settings
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.replicated.settings.CookieKey
-import network.bisq.mobile.data.replicated.settings.DontShowAgainKey
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
-import kotlin.coroutines.cancellation.CancellationException
 
 class ClientSettingsServiceFacade(
     private val apiGateway: SettingsApiGateway,
+    private val settingsRepository: SettingsRepository,
 ) : ServiceFacade(),
     SettingsServiceFacade,
     Logging {
@@ -90,61 +88,45 @@ class ClientSettingsServiceFacade(
         )
     }
 
-    private val _showWebLinkConfirmation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _showWebLinkConfirmation: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val showWebLinkConfirmation: StateFlow<Boolean> get() = _showWebLinkConfirmation.asStateFlow()
 
-    override suspend fun setWebLinkDontShowAgain(): Result<Unit> {
-        val result = apiGateway.setWebLinkDontShowAgain()
-        _showWebLinkConfirmation.value = !result.isSuccess
-        return result
-    }
+    override suspend fun setWebLinkDontShowAgain(): Result<Unit> =
+        runCatching {
+            settingsRepository.setDontShowAgainHyperlinksOpenInBrowser(true)
+        }.onSuccess {
+            _showWebLinkConfirmation.value = false
+        }
 
-    override suspend fun resetAllDontShowAgainFlags(): Result<Unit> {
-        val result = apiGateway.resetAllDontShowAgainFlags()
-        _showWebLinkConfirmation.value = result.isSuccess
-        return result
-    }
+    override suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
+        runCatching {
+            settingsRepository.setDontShowAgainHyperlinksOpenInBrowser(false)
+        }.onSuccess {
+            _showWebLinkConfirmation.value = true
+        }
 
     private val _permitOpeningBrowser: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val permitOpeningBrowser: StateFlow<Boolean> get() = _permitOpeningBrowser.asStateFlow()
 
-    override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> {
-        var result: Result<Unit>
-        if (value) {
-            result = apiGateway.setCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal)
-        } else {
-            result = apiGateway.unsetCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal)
-        }
-        if (result.isSuccess) {
+    override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> =
+        runCatching {
+            settingsRepository.setPermitOpeningBrowser(value)
+        }.onSuccess {
             _permitOpeningBrowser.value = value
         }
-        return result
-    }
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
-        fetchOpeningPermission()
+        jobsManager.getScope().launch {
+            settingsRepository.data.collect { settings ->
+                _showWebLinkConfirmation.value = !settings.dontShowAgainHyperlinksOpenInBrowser
+                _permitOpeningBrowser.value = settings.cookiePermitOpeningBrowser
+            }
+        }
     }
 
     override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
-    }
-
-    private var cookieJob: Job? = null
-
-    fun fetchOpeningPermission() {
-        cookieJob?.cancel()
-        cookieJob =
-            jobsManager.getScope().launch {
-                val result = getCookie(CookieKey.PERMIT_OPENING_BROWSER.ordinal)
-
-                result.exceptionOrNull()?.let { error ->
-                    if (error is CancellationException) throw error
-                    return@launch
-                }
-                val value = result.getOrNull() ?: false
-                _permitOpeningBrowser.value = value
-            }
     }
 
     private fun updateLanguage(code: String) {
@@ -162,37 +144,7 @@ class ClientSettingsServiceFacade(
                 _tradeRulesConfirmed.value = settings.tradeRulesConfirmed
                 updateLanguage(settings.languageCode)
                 _useAnimations.value = settings.useAnimations
-                _showWebLinkConfirmation.value =
-                    (settings.dontShowAgainMap[DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER.getKey()] ?: false) == false
                 return Result.success(settings)
-            }
-        }
-        return result
-    }
-
-    suspend fun getCookie(key: Int): Result<Boolean> {
-        val result = apiGateway.getCookie(key)
-        if (result.isSuccess) {
-            result.getOrThrow().let { value ->
-                return Result.success(value)
-            }
-        }
-        return result
-    }
-
-    suspend fun setCookie(
-        key: Int,
-        value: Boolean,
-    ): Result<Unit> {
-        var result: Result<Unit>
-        if (value) {
-            result = apiGateway.setCookie(key)
-        } else {
-            result = apiGateway.unsetCookie(key)
-        }
-        if (result.isSuccess) {
-            result.getOrThrow().let { newValue ->
-                return Result.success(Unit)
             }
         }
         return result

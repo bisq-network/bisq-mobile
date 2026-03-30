@@ -14,7 +14,6 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
  * - GET /settings - Fetch current settings ([SettingsVO])
  * - GET /settings/version - Fetch API version settings ([ApiVersionSettingsVO])
  * - PATCH /settings - Partial updates via [SettingsChangeRequest]
- * - GET /settings/cookie/{key} - Read a boolean cookie flag
  *
  * Coverage exclusion rationale - [WebSocketApiClient] uses inline reified functions
  * (get<T>, patch<T, R>) which cannot be mocked in unit tests. Integration tests with
@@ -81,31 +80,5 @@ class SettingsApiGateway(
         webSocketApiClient.patch(
             basePath,
             SettingsChangeRequest(useAnimations = value),
-        )
-
-    suspend fun setWebLinkDontShowAgain(): Result<Unit> =
-        webSocketApiClient.patch(
-            basePath,
-            SettingsChangeRequest(webLinkDontShowAgain = true),
-        )
-
-    suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
-        webSocketApiClient.patch(
-            basePath,
-            SettingsChangeRequest(resetAllDontShowAgainFlags = true),
-        )
-
-    suspend fun getCookie(key: Int): Result<Boolean> = webSocketApiClient.get("$basePath/cookie/$key")
-
-    suspend fun setCookie(key: Int): Result<Unit> =
-        webSocketApiClient.patch(
-            basePath,
-            SettingsChangeRequest(setCookie = key),
-        )
-
-    suspend fun unsetCookie(key: Int): Result<Unit> =
-        webSocketApiClient.patch(
-            basePath,
-            SettingsChangeRequest(unsetCookie = key),
         )
 }

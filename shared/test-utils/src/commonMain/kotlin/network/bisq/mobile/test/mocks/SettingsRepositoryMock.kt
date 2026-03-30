@@ -69,4 +69,16 @@ class SettingsRepositoryMock :
             it.copy(marketFilter = value)
         }
     }
+
+    override suspend fun setDontShowAgainHyperlinksOpenInBrowser(value: Boolean) {
+        _data.update {
+            it.copy(dontShowAgainHyperlinksOpenInBrowser = value)
+        }
+    }
+
+    override suspend fun setPermitOpeningBrowser(value: Boolean) {
+        _data.update {
+            it.copy(cookiePermitOpeningBrowser = value)
+        }
+    }
 }

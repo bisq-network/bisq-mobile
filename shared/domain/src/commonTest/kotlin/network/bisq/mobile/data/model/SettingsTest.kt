@@ -19,6 +19,8 @@ class SettingsTest {
         assertEquals(PermissionState.NOT_GRANTED, settings.notificationPermissionState)
         assertEquals(BatteryOptimizationState.NOT_IGNORED, settings.batteryOptimizationState)
         assertFalse(settings.pushNotificationsEnabled)
+        assertFalse(settings.dontShowAgainHyperlinksOpenInBrowser)
+        assertFalse(settings.cookiePermitOpeningBrowser)
     }
 
     @Test
@@ -31,6 +33,8 @@ class SettingsTest {
                 notificationPermissionState = PermissionState.GRANTED,
                 batteryOptimizationState = BatteryOptimizationState.IGNORED,
                 pushNotificationsEnabled = true,
+                dontShowAgainHyperlinksOpenInBrowser = true,
+                cookiePermitOpeningBrowser = true,
             )
 
         assertFalse(settings.firstLaunch)
@@ -39,6 +43,8 @@ class SettingsTest {
         assertEquals(PermissionState.GRANTED, settings.notificationPermissionState)
         assertEquals(BatteryOptimizationState.IGNORED, settings.batteryOptimizationState)
         assertTrue(settings.pushNotificationsEnabled)
+        assertTrue(settings.dontShowAgainHyperlinksOpenInBrowser)
+        assertTrue(settings.cookiePermitOpeningBrowser)
     }
 
     @Test
@@ -70,7 +76,9 @@ class SettingsTest {
                 "selectedMarketCode": "BTC/GBP",
                 "notificationPermissionState": "GRANTED",
                 "batteryOptimizationState": "IGNORED",
-                "pushNotificationsEnabled": true
+                "pushNotificationsEnabled": true,
+                "dontShowAgainHyperlinksOpenInBrowser": true,
+                "cookiePermitOpeningBrowser": true
             }
             """.trimIndent()
 
@@ -82,6 +90,8 @@ class SettingsTest {
         assertEquals(PermissionState.GRANTED, settings.notificationPermissionState)
         assertEquals(BatteryOptimizationState.IGNORED, settings.batteryOptimizationState)
         assertTrue(settings.pushNotificationsEnabled)
+        assertTrue(settings.dontShowAgainHyperlinksOpenInBrowser)
+        assertTrue(settings.cookiePermitOpeningBrowser)
     }
 
     @Test
@@ -111,6 +121,8 @@ class SettingsTest {
                 notificationPermissionState = PermissionState.DENIED,
                 batteryOptimizationState = BatteryOptimizationState.DONT_ASK_AGAIN,
                 pushNotificationsEnabled = true,
+                dontShowAgainHyperlinksOpenInBrowser = true,
+                cookiePermitOpeningBrowser = true,
             )
 
         val serialized = json.encodeToString(original)

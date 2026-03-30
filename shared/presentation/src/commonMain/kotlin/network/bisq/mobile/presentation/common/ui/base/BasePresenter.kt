@@ -463,6 +463,14 @@ abstract class BasePresenter(
         this.dependants!!.remove(child)
     }
 
+    /**
+     * Allows custom onViewUnattaching implementations to keep parent unregistration
+     * while opting out of other base teardown behavior.
+     */
+    protected fun unregisterFromParent() {
+        rootPresenter?.unregisterChild(this)
+    }
+
     protected open fun isDevMode(): Boolean = rootPresenter?.isDevMode() ?: false
 
     /**

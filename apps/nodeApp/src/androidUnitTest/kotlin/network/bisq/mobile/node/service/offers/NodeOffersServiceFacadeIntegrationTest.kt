@@ -57,6 +57,10 @@ class NodeOffersServiceFacadeIntegrationTest {
         override suspend fun setMarketSortBy(value: MarketSortBy) {}
 
         override suspend fun setMarketFilter(value: MarketFilter) {}
+
+        override suspend fun setDontShowAgainHyperlinksOpenInBrowser(value: Boolean) {}
+
+        override suspend fun setPermitOpeningBrowser(value: Boolean) {}
     }
 
     private fun buildDto(

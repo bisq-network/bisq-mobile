@@ -78,4 +78,16 @@ open class SettingsRepositoryImpl(
             it.copy(marketFilter = value)
         }
     }
+
+    override suspend fun setDontShowAgainHyperlinksOpenInBrowser(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(dontShowAgainHyperlinksOpenInBrowser = value)
+        }
+    }
+
+    override suspend fun setPermitOpeningBrowser(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(cookiePermitOpeningBrowser = value)
+        }
+    }
 }

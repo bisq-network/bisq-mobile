@@ -124,7 +124,7 @@ class NodeSettingsServiceFacade(
 
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean): Result<Unit> = runCatching { settingsService.setIgnoreDiffAdjustmentFromSecManager(value) }
 
-    private val _showWebLinkConfirmation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _showWebLinkConfirmation: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val showWebLinkConfirmation: StateFlow<Boolean> get() = _showWebLinkConfirmation.asStateFlow()
 
     override suspend fun setWebLinkDontShowAgain(): Result<Unit> =
@@ -139,8 +139,8 @@ class NodeSettingsServiceFacade(
     override suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
         runCatching {
             dontShowAgainService.resetDontShowAgain()
-            _showWebLinkConfirmation.value = true
             check(persistWithRetry()) { "Failed to persist reset of all 'Don't Show again' flags after retries" }
+            _showWebLinkConfirmation.value = true
         }
 
     private val _permitOpeningBrowser: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -220,8 +220,10 @@ class NodeSettingsServiceFacade(
         repeat(5) { attempt ->
             val persisted = settingsService.persist().join()
             if (persisted) return true
+            log.w { "Persist attempt ${attempt + 1}/5 failed, retrying..." }
             delay((attempt + 1) * 250L)
         }
+        log.e { "All 5 persist attempts failed" }
         return false
     }
 

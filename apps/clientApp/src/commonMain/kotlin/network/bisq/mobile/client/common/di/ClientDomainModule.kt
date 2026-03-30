@@ -299,7 +299,7 @@ val clientDomainModule =
         single<MediationServiceFacade> { ClientMediationServiceFacade(get()) }
 
         single { SettingsApiGateway(get()) }
-        single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
+        single<SettingsServiceFacade> { ClientSettingsServiceFacade(get(), get()) }
 
         single { FiatPaymentAccountsApiGateway(get()) }
         single<FiatAccountsServiceFacade> { ClientFiatAccountsServiceFacade(get()) }

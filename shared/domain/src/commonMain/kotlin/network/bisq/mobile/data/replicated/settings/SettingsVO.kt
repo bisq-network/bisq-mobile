@@ -36,7 +36,6 @@ data class SettingsVO(
     val useAnimations: Boolean = true,
     val selectedMarket: MarketVO? = null,
     val numDaysAfterRedactingTradeData: Int = DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA,
-    val dontShowAgainMap: Map<String, Boolean> = emptyMap<String, Boolean>(),
 )
 
 val settingsVODemoObj =
@@ -50,5 +49,4 @@ val settingsVODemoObj =
         useAnimations = true,
         selectedMarket = MarketVO("AUD", "AUD"),
         numDaysAfterRedactingTradeData = 1,
-        dontShowAgainMap = emptyMap(),
     )

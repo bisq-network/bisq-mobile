@@ -30,4 +30,8 @@ interface SettingsRepository {
     suspend fun setMarketSortBy(value: MarketSortBy)
 
     suspend fun setMarketFilter(value: MarketFilter)
+
+    suspend fun setDontShowAgainHyperlinksOpenInBrowser(value: Boolean)
+
+    suspend fun setPermitOpeningBrowser(value: Boolean)
 }

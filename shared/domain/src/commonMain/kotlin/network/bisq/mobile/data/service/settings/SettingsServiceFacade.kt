@@ -41,13 +41,13 @@ interface SettingsServiceFacade : LifeCycleAware {
 
     val showWebLinkConfirmation: StateFlow<Boolean>
 
-    suspend fun setWebLinkDontShowAgain(): Result<Unit> = Result.success(Unit)
+    suspend fun setWebLinkDontShowAgain(): Result<Unit>
 
-    suspend fun resetAllDontShowAgainFlags(): Result<Unit> = Result.success(Unit)
+    suspend fun resetAllDontShowAgainFlags(): Result<Unit>
 
     val permitOpeningBrowser: StateFlow<Boolean>
 
-    suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> = Result.success(Unit)
+    suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit>
 
     suspend fun getTrustedNodeVersion() = ""
 }

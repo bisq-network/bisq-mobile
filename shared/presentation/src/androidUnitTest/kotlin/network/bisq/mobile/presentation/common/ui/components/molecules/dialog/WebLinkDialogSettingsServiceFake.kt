@@ -38,10 +38,6 @@ internal class WebLinkDialogSettingsServiceFake(
     override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> =
         _ignoreDiffAdjustmentFromSecManager.asStateFlow()
 
-    fun snapshotShowWebLinkConfirmation(): Boolean = _showWebLinkConfirmation.value
-
-    fun snapshotPermitOpeningBrowser(): Boolean = _permitOpeningBrowser.value
-
     override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> {
         _permitOpeningBrowser.value = value
         return Result.success(Unit)
@@ -86,7 +82,10 @@ internal class WebLinkDialogSettingsServiceFake(
 
     override suspend fun setNumDaysAfterRedactingTradeData(days: Int): Result<Unit> = Result.success(Unit)
 
-    override suspend fun resetAllDontShowAgainFlags(): Result<Unit> = Result.success(Unit)
+    override suspend fun resetAllDontShowAgainFlags(): Result<Unit> {
+        _showWebLinkConfirmation.value = true
+        return Result.success(Unit)
+    }
 
     override suspend fun getTrustedNodeVersion(): String = ""
 }

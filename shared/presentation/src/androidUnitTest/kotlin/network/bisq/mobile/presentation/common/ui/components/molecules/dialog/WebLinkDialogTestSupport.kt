@@ -16,6 +16,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.presentation.common.di.presentationTestModule
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -94,6 +95,10 @@ internal fun startKoinWithWebLinkDeps(
                 single<SettingsServiceFacade> { facade }
                 single<MainPresenter> { presenter }
             },
+            // BasePresenter dependencies (GlobalUiManager, NavigationManager, CoroutineJobsManager...)
+            presentationTestModule,
+            // Presenter under test
+            module { factory { WebLinkConfirmationDialogPresenter(get(), get()) } },
         )
     }
     return facade to presenter
@@ -110,6 +115,8 @@ internal fun startKoinWithWebLinkDialogFake(
                 single<SettingsServiceFacade> { fake }
                 single<MainPresenter> { presenter }
             },
+            presentationTestModule,
+            module { factory { WebLinkConfirmationDialogPresenter(get(), get()) } },
         )
     }
     return fake to presenter

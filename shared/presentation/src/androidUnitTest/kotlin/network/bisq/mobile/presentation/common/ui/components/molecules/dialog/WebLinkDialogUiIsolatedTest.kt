@@ -11,10 +11,12 @@ import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 
 /**
  * UI tests for [WebLinkConfirmationDialog] using Robolectric.
@@ -31,6 +33,12 @@ class WebLinkDialogUiIsolatedTest {
     @Before
     fun setup() {
         I18nSupport.setLanguage()
+        startKoinWithWebLinkDeps()
+    }
+
+    @After
+    fun tearDown() {
+        runCatching { stopKoin() }
     }
 
     private fun setTestContent(content: @Composable () -> Unit) {

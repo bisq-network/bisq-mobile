@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.common.di
 
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationBannerPresenter
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManagerImpl
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerPresenter
@@ -208,4 +209,6 @@ val presentationModule =
         single<NavigationManager> { NavigationManagerImpl(get()) }
 
         factory { ReportUserPresenter(get(), get()) }
+
+        factory { WebLinkConfirmationDialogPresenter(get(), get()) }
     }

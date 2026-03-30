@@ -14,6 +14,8 @@ data class Settings(
     val pushNotificationsEnabled: Boolean = false,
     val marketSortBy: MarketSortBy = MarketSortBy.MostOffers,
     val marketFilter: MarketFilter = MarketFilter.All,
+    val dontShowAgainHyperlinksOpenInBrowser: Boolean = false,
+    val cookiePermitOpeningBrowser: Boolean = false,
 )
 
 @Serializable

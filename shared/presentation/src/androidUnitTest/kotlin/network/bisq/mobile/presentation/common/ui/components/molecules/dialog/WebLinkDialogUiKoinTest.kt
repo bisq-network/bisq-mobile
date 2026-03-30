@@ -123,7 +123,7 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
         verify(exactly = 1) { onDismiss() }
         assertEquals(link, clipboardPrimaryText())
-        verify(atLeast = 1) {
+        verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.components.copyIconButton.copied".i18n(),
                 SnackbarType.SUCCESS,
@@ -134,10 +134,6 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.assertNoNodeWithText("Should not appear")
     }
 
-    /**
-     * showWebLinkConfirmation = false,
-     * permitOpeningBrowser = false,
-     */
     @Test
     fun `when dismiss clicked then persists browser permit=false, copies link and invokes onDismiss`() {
         // Given
@@ -235,7 +231,52 @@ class WebLinkDialogUiKoinTest {
 
         // Then
         coVerify(exactly = 1) { facade.setPermitOpeningBrowser(false) } // but this errors
-        verify(atLeast = 1) {
+        verify(exactly = 1) {
+            presenter.showSnackbar(
+                "mobile.error.generic".i18n(),
+                SnackbarType.ERROR,
+                SnackbarPosition.BOTTOM,
+                SnackbarDuration.Short,
+            )
+        }
+        verify(exactly = 1) { onDismiss() }
+        assertEquals(link, clipboardPrimaryText())
+    }
+
+    @Test
+    fun `when set dont show again fails on dismiss with dont show checked then shows error snackbar, link copied and invokes onDismiss`() {
+        // Given
+        val link = "https://example.com/fail-dismiss-dsa"
+        val onDismiss = mockk<() -> Unit>(relaxed = true)
+        val (facade, presenter) =
+            startKoinWithWebLinkDeps(
+                setDontShowAgainResult = Result.failure(RuntimeException("network")),
+            )
+
+        // When
+        setTestContent(WebLinkDialogTestFixtures.noopUriHandler) {
+            WebLinkConfirmationDialog(
+                link = link,
+                onConfirm = {},
+                onDismiss = onDismiss,
+                headline = "Headline",
+                headlineLeftIcon = null,
+                message = "Message",
+                confirmButtonText = "Yes",
+                dismissButtonText = "No",
+            )
+        }
+
+        // Action
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("action.dontShowAgain".i18n()).performClick()
+        composeTestRule.onNodeWithContentDescription("dialog_confirm_no").performClick()
+        composeTestRule.waitForIdle()
+
+        // Then
+        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(false) }
+        coVerify(exactly = 1) { facade.setWebLinkDontShowAgain() } // but this errors
+        verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.error.generic".i18n(),
                 SnackbarType.ERROR,
@@ -348,7 +389,53 @@ class WebLinkDialogUiKoinTest {
 
         // Then
         coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) } // but this errors
-        verify(atLeast = 1) {
+        verify(exactly = 1) {
+            presenter.showSnackbar(
+                "mobile.error.generic".i18n(),
+                SnackbarType.ERROR,
+                SnackbarPosition.BOTTOM,
+                SnackbarDuration.Short,
+            )
+        }
+        assertEquals(listOf(link), uriHandler.openedUris)
+        verify(exactly = 1) { onConfirm() }
+    }
+
+    @Test
+    fun `when set dont show again fails on confirm with dont show checked then shows error snackbar, opens uri and invokes onConfirm`() {
+        // Given
+        val link = "https://example.com/fail-confirm-dsa"
+        val uriHandler = WebLinkDialogCapturingUriHandler()
+        val onConfirm = mockk<() -> Unit>(relaxed = true)
+        val (facade, presenter) =
+            startKoinWithWebLinkDeps(
+                setDontShowAgainResult = Result.failure(RuntimeException("network")),
+            )
+
+        // When
+        setTestContent(uriHandler) {
+            WebLinkConfirmationDialog(
+                link = link,
+                onConfirm = onConfirm,
+                onDismiss = {},
+                headline = "Headline",
+                headlineLeftIcon = null,
+                message = "Message",
+                confirmButtonText = "Yes",
+                dismissButtonText = "No",
+            )
+        }
+
+        // Action
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("action.dontShowAgain".i18n()).performClick()
+        composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
+        composeTestRule.waitForIdle()
+
+        // Then
+        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
+        coVerify(exactly = 1) { facade.setWebLinkDontShowAgain() } // but this errors
+        verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.error.generic".i18n(),
                 SnackbarType.ERROR,
@@ -407,8 +494,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then — persisted state matches production semantics
-        assertEquals(false, fake.snapshotShowWebLinkConfirmation())
-        assertEquals(true, fake.snapshotPermitOpeningBrowser())
+        assertEquals(false, fake.showWebLinkConfirmation.value)
+        assertEquals(true, fake.permitOpeningBrowser.value)
         assertEquals(listOf(link1), uriHandler.openedUris)
         verify(exactly = 1) { onConfirm() }
 
@@ -467,11 +554,11 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        assertEquals(false, fake.snapshotShowWebLinkConfirmation())
-        assertEquals(false, fake.snapshotPermitOpeningBrowser())
+        assertEquals(false, fake.showWebLinkConfirmation.value)
+        assertEquals(false, fake.permitOpeningBrowser.value)
         assertEquals(link1, clipboardPrimaryText())
         verify(exactly = 1) { onDismiss() }
-        verify(atLeast = 1) {
+        verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.components.copyIconButton.copied".i18n(),
                 SnackbarType.SUCCESS,
@@ -487,7 +574,7 @@ class WebLinkDialogUiKoinTest {
         // Then
         assertEquals(link2, clipboardPrimaryText())
         verify(exactly = 2) { onDismiss() }
-        verify(atLeast = 2) {
+        verify(exactly = 2) {
             presenter.showSnackbar(
                 "mobile.components.copyIconButton.copied".i18n(),
                 SnackbarType.SUCCESS,
