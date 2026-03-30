@@ -1,8 +1,10 @@
 package network.bisq.mobile.domain.model.account.fiat
 
+import network.bisq.mobile.domain.model.account.PaymentAccountPayload
+
 data class UserDefinedFiatAccountPayload(
     val accountData: String,
-) : FiatAccountPayload {
+) : PaymentAccountPayload {
     companion object {
         const val MAX_DATA_LENGTH = 1000
     }

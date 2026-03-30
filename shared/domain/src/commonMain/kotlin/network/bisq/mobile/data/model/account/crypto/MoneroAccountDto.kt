@@ -1,12 +1,12 @@
-package network.bisq.mobile.data.model.account.fiat
+package network.bisq.mobile.data.model.account.crypto
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.data.model.account.PaymentAccountDto
 
 @Serializable
-data class ZelleAccountDto(
+data class MoneroAccountDto(
     override val accountName: String,
-    override val accountPayload: ZelleAccountPayloadDto,
-    override val paymentRail: FiatPaymentRailDto = FiatPaymentRailDto.ZELLE,
+    override val accountPayload: MoneroAccountPayloadDto,
+    override val paymentRail: CryptoPaymentRailDto = CryptoPaymentRailDto.MONERO,
     override val creationDate: Long? = null,
 ) : PaymentAccountDto

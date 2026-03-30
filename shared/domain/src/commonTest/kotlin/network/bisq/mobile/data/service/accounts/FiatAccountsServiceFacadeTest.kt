@@ -9,7 +9,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.di.testModule
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
-import network.bisq.mobile.domain.model.account.fiat.FiatAccount
+import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import org.koin.core.context.startKoin
@@ -578,7 +578,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
             testFacade.setSelectedAccountIndex(0) // Select first
             advanceUntilIdle()
 
-            var capturedAccount: FiatAccount? = null
+            var capturedAccount: PaymentAccount? = null
             testFacade.mockExecuteSetSelectedAccount = { account ->
                 capturedAccount = account
                 Result.success(Unit)
@@ -787,41 +787,41 @@ class FiatAccountsServiceFacadeTest : KoinTest {
      * of abstract methods for testing purposes.
      */
     private class TestFiatAccountsServiceFacade : FiatAccountsServiceFacade() {
-        var mockExecuteGetAccounts: (Set<FiatPaymentRail>?) -> Result<List<FiatAccount>> =
+        var mockExecuteGetAccounts: (Set<FiatPaymentRail>?) -> Result<List<PaymentAccount>> =
             { Result.success(emptyList()) }
 
-        var mockExecuteGetSelectedAccount: () -> Result<FiatAccount?> =
+        var mockExecuteGetSelectedAccount: () -> Result<PaymentAccount?> =
             { Result.success(null) }
 
-        var mockExecuteAddAccount: (FiatAccount) -> Result<Unit> =
+        var mockExecuteAddAccount: (PaymentAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        var mockExecuteSaveAccount: (String, FiatAccount) -> Result<Unit> =
+        var mockExecuteSaveAccount: (String, PaymentAccount) -> Result<Unit> =
             { _, _ -> Result.success(Unit) }
 
-        var mockExecuteDeleteAccount: (FiatAccount) -> Result<Unit> =
+        var mockExecuteDeleteAccount: (PaymentAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        var mockExecuteSetSelectedAccount: (FiatAccount) -> Result<Unit> =
+        var mockExecuteSetSelectedAccount: (PaymentAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>?): Result<List<FiatAccount>> = mockExecuteGetAccounts(paymentRails)
+        override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>?): Result<List<PaymentAccount>> = mockExecuteGetAccounts(paymentRails)
 
-        override suspend fun executeGetSelectedAccount(): Result<FiatAccount?> = mockExecuteGetSelectedAccount()
+        override suspend fun executeGetSelectedAccount(): Result<PaymentAccount?> = mockExecuteGetSelectedAccount()
 
-        override suspend fun executeAddAccount(account: FiatAccount): Result<Unit> = mockExecuteAddAccount(account)
+        override suspend fun executeAddAccount(account: PaymentAccount): Result<Unit> = mockExecuteAddAccount(account)
 
         override suspend fun executeSaveAccount(
             accountName: String,
-            account: FiatAccount,
+            account: PaymentAccount,
         ): Result<Unit> = mockExecuteSaveAccount(accountName, account)
 
-        override suspend fun executeDeleteAccount(account: FiatAccount): Result<Unit> = mockExecuteDeleteAccount(account)
+        override suspend fun executeDeleteAccount(account: PaymentAccount): Result<Unit> = mockExecuteDeleteAccount(account)
 
-        override suspend fun executeSetSelectedAccount(account: FiatAccount): Result<Unit> = mockExecuteSetSelectedAccount(account)
+        override suspend fun executeSetSelectedAccount(account: PaymentAccount): Result<Unit> = mockExecuteSetSelectedAccount(account)
 
         // Expose protected methods for testing
-        fun testGetSortedAccounts(accounts: List<FiatAccount>) = getSortedAccounts(accounts)
+        fun testGetSortedAccounts(accounts: List<PaymentAccount>) = getSortedAccounts(accounts)
 
         fun testGetCurrentSelectedAccount() = getCurrentSelectedAccount()
 

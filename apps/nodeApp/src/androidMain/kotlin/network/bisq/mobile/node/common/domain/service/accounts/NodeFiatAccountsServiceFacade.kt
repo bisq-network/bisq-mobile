@@ -4,7 +4,7 @@ import bisq.account.AccountService
 import bisq.account.accounts.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
-import network.bisq.mobile.domain.model.account.fiat.FiatAccount
+import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.node.common.domain.mapping.toBisq2
 import network.bisq.mobile.node.common.domain.mapping.toDomain
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -15,7 +15,7 @@ class NodeFiatAccountsServiceFacade(
 ) : FiatAccountsServiceFacade() {
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
 
-    override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>?): Result<List<FiatAccount>> {
+    override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>?): Result<List<PaymentAccount>> {
         // Note: paymentRails filtering not yet implemented in node
         // Currently returns only UserDefinedFiatAccount (CUSTOM rail)
         return runCatching {
@@ -27,7 +27,7 @@ class NodeFiatAccountsServiceFacade(
         }
     }
 
-    override suspend fun executeGetSelectedAccount(): Result<FiatAccount?> =
+    override suspend fun executeGetSelectedAccount(): Result<PaymentAccount?> =
         runCatching {
             val optionalAccount = accountService.findSelectedAccount()
             if (optionalAccount.isPresent) {
@@ -41,7 +41,7 @@ class NodeFiatAccountsServiceFacade(
             }
         }
 
-    override suspend fun executeAddAccount(account: FiatAccount): Result<Unit> =
+    override suspend fun executeAddAccount(account: PaymentAccount): Result<Unit> =
         runCatching {
             val userDefinedAccount =
                 account as? DomainUserDefinedFiatAccount
@@ -52,7 +52,7 @@ class NodeFiatAccountsServiceFacade(
 
     override suspend fun executeSaveAccount(
         accountName: String,
-        account: FiatAccount,
+        account: PaymentAccount,
     ): Result<Unit> =
         runCatching {
             val userDefinedAccount =
@@ -68,7 +68,7 @@ class NodeFiatAccountsServiceFacade(
             )
         }
 
-    override suspend fun executeDeleteAccount(account: FiatAccount): Result<Unit> =
+    override suspend fun executeDeleteAccount(account: PaymentAccount): Result<Unit> =
         runCatching {
             val userDefinedAccount =
                 account as? DomainUserDefinedFiatAccount
@@ -81,7 +81,7 @@ class NodeFiatAccountsServiceFacade(
             accountService.removePaymentAccount(existingAccount)
         }
 
-    override suspend fun executeSetSelectedAccount(account: FiatAccount): Result<Unit> =
+    override suspend fun executeSetSelectedAccount(account: PaymentAccount): Result<Unit> =
         runCatching {
             val userDefinedAccount =
                 account as? DomainUserDefinedFiatAccount

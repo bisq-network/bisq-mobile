@@ -1,6 +1,8 @@
 package network.bisq.mobile.data.model.account.fiat
 
-enum class FiatPaymentRailDto {
+import network.bisq.mobile.data.model.account.PaymentRailDto
+
+enum class FiatPaymentRailDto : PaymentRailDto {
     ACH_TRANSFER,
     ADVANCED_CASH,
     ALI_PAY,

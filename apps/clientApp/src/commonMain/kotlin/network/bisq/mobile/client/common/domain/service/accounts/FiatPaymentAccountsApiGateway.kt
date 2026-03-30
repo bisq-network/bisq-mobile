@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.accounts
 
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.data.model.account.fiat.FiatAccountDto
+import network.bisq.mobile.data.model.account.PaymentAccountDto
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.utils.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
@@ -11,17 +11,17 @@ class FiatPaymentAccountsApiGateway(
 ) : Logging {
     private val basePath = "payment-accounts/fiat"
 
-    suspend fun getPaymentAccounts(paymentRails: Set<FiatPaymentRail>? = null): Result<List<FiatAccountDto>> {
+    suspend fun getPaymentAccounts(paymentRails: Set<FiatPaymentRail>? = null): Result<List<PaymentAccountDto>> {
         val queryParam =
             if (paymentRails != null && paymentRails.isNotEmpty()) {
                 "?paymentRails=${paymentRails.joinToString(",") { it.name }}"
             } else {
                 ""
             }
-        return webSocketApiClient.get<List<FiatAccountDto>>("$basePath$queryParam")
+        return webSocketApiClient.get<List<PaymentAccountDto>>("$basePath$queryParam")
     }
 
-    suspend fun addAccount(account: FiatAccountDto): Result<FiatAccountDto> {
+    suspend fun addAccount(account: PaymentAccountDto): Result<PaymentAccountDto> {
         val addFiatAccountRequest = AddFiatAccountRequest(account = account)
         return webSocketApiClient.post(basePath, addFiatAccountRequest)
     }
@@ -31,13 +31,13 @@ class FiatPaymentAccountsApiGateway(
         return webSocketApiClient.delete("$basePath?accountName=$parsedAccountName")
     }
 
-    suspend fun setSelectedAccount(account: FiatAccountDto): Result<Unit> = webSocketApiClient.patch("$basePath/selected", SetSelectedFiatAccountRequest(account))
+    suspend fun setSelectedAccount(account: PaymentAccountDto): Result<Unit> = webSocketApiClient.patch("$basePath/selected", SetSelectedFiatAccountRequest(account))
 
-    suspend fun getSelectedAccount(): Result<FiatAccountDto?> = webSocketApiClient.getNullable("$basePath/selected")
+    suspend fun getSelectedAccount(): Result<PaymentAccountDto?> = webSocketApiClient.getNullable("$basePath/selected")
 
     suspend fun saveAccount(
         accountName: String,
-        account: FiatAccountDto,
+        account: PaymentAccountDto,
     ): Result<Unit> {
         val parsedAccountName = encodeURIParam(accountName)
         return webSocketApiClient.put(

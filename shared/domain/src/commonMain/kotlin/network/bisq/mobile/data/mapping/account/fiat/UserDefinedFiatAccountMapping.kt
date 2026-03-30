@@ -9,12 +9,14 @@ fun UserDefinedFiatAccountDto.toDomain(): UserDefinedFiatAccount =
     UserDefinedFiatAccount(
         accountName = accountName,
         accountPayload = accountPayload.toDomain(),
+        creationDate = creationDate,
     )
 
 fun UserDefinedFiatAccount.toDto(): UserDefinedFiatAccountDto =
     UserDefinedFiatAccountDto(
         accountName = accountName,
         accountPayload = accountPayload.toDto(),
+        creationDate = creationDate,
     )
 
 fun UserDefinedFiatAccountPayloadDto.toDomain(): UserDefinedFiatAccountPayload =
