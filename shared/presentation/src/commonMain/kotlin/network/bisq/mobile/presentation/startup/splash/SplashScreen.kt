@@ -29,13 +29,7 @@ fun SplashScreen() {
     val presenter: SplashPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val progress by presenter.progress.collectAsState()
-    val state by presenter.state.collectAsState()
-    val isTimeoutDialogVisible by presenter.isTimeoutDialogVisible.collectAsState()
-    val isBootstrapFailed by presenter.isBootstrapFailed.collectAsState()
-    val torBootstrapFailed by presenter.torBootstrapFailed.collectAsState()
-    val currentBootstrapStage by presenter.currentBootstrapStage.collectAsState()
-    val appNameAndVersion by presenter.appNameAndVersion.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         BisqStaticScaffold(
@@ -55,87 +49,84 @@ fun SplashScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 BisqText.BaseLight(
-                    text = appNameAndVersion,
+                    text = uiState.appNameAndVersion,
                     color = BisqTheme.colors.mid_grey20,
                     modifier = Modifier.padding(bottom = 20.dp),
                 )
 
-                BisqProgressBar(progress)
+                BisqProgressBar(uiState.progress)
 
                 BisqText.BaseRegularGrey(
-                    text = state,
+                    text = uiState.status,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
 
-        // Timeout dialog
-        if (isTimeoutDialogVisible && !torBootstrapFailed && !isBootstrapFailed) {
-            if (presenter.isIos) {
+        when (uiState.activeDialog) {
+            SplashActiveDialog.TimeoutIos -> {
                 WarningConfirmationDialog(
                     headline = "mobile.bootstrap.timeout.title".i18n(),
-                    message = "mobile.bootstrap.timeout.message.ios".i18n(currentBootstrapStage),
+                    message = "mobile.bootstrap.timeout.message.ios".i18n(uiState.currentBootstrapStage),
                     confirmButtonText = "mobile.bootstrap.timeout.continue".i18n(),
                     dismissButtonText = "",
-                    onConfirm = { presenter.onTimeoutDialogContinue() },
+                    onConfirm = { presenter.onAction(SplashUiAction.OnTimeoutDialogContinue) },
                     onDismiss = { },
                     dismissOnClickOutside = false,
                 )
-            } else {
+            }
+
+            SplashActiveDialog.TimeoutAndroid -> {
                 WarningConfirmationDialog(
                     headline = "mobile.bootstrap.timeout.title".i18n(),
-                    message = "mobile.bootstrap.timeout.message".i18n(currentBootstrapStage),
+                    message = "mobile.bootstrap.timeout.message".i18n(uiState.currentBootstrapStage),
                     confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
                     dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
-                    onConfirm = { presenter.onRestartApp() },
-                    onDismiss = { presenter.onTimeoutDialogContinue() },
+                    onConfirm = { presenter.onAction(SplashUiAction.OnRestartApp) },
+                    onDismiss = { presenter.onAction(SplashUiAction.OnTimeoutDialogContinue) },
                     dismissOnClickOutside = false,
                 )
             }
-        }
 
-        // Restart tor dialog
-        if (torBootstrapFailed && !isBootstrapFailed) {
-            WarningConfirmationDialog(
-                headline = "mobile.bootstrap.tor.failed.title".i18n(),
-                message = "mobile.bootstrap.tor.failed.message".i18n(),
-                confirmButtonText = "mobile.bootstrap.tor.failed.purgeRestart".i18n(),
-                dismissButtonText = "mobile.bootstrap.tor.failed.restart".i18n(),
-                onConfirm = presenter::onPurgeRestartTor,
-                onDismiss = presenter::onRestartTor,
-                verticalButtonPlacement = true,
-                dismissOnClickOutside = false,
-            )
-        }
+            SplashActiveDialog.TorBootstrapFailed -> {
+                WarningConfirmationDialog(
+                    headline = "mobile.bootstrap.tor.failed.title".i18n(),
+                    message = "mobile.bootstrap.tor.failed.message".i18n(),
+                    confirmButtonText = "mobile.bootstrap.tor.failed.purgeRestart".i18n(),
+                    dismissButtonText = "mobile.bootstrap.tor.failed.restart".i18n(),
+                    onConfirm = { presenter.onAction(SplashUiAction.OnPurgeRestartTor) },
+                    onDismiss = { presenter.onAction(SplashUiAction.OnRestartTor) },
+                    verticalButtonPlacement = true,
+                    dismissOnClickOutside = false,
+                )
+            }
 
-        // Bootstrap failure dialog
-        if (isBootstrapFailed) {
-            if (presenter.isIos) {
-                // on iOS we cannot restart the app
-                // and It's discouraged to force close the app, as it looks like the app has crashed
-                // so we just have to let user know that we cannot recover from this error
-                // and give a hint that they must restart the app
+            SplashActiveDialog.BootstrapFailedIos -> {
                 WarningConfirmationDialog(
                     headline = "mobile.bootstrap.failed.title".i18n(),
-                    message = "mobile.bootstrap.failed.message".i18n(currentBootstrapStage),
+                    message = "mobile.bootstrap.failed.message".i18n(uiState.currentBootstrapStage),
                     confirmButtonText = "",
                     dismissButtonText = "",
                     onConfirm = { },
                     onDismiss = { },
                     dismissOnClickOutside = false,
                 )
-            } else {
+            }
+
+            SplashActiveDialog.BootstrapFailedAndroid -> {
                 WarningConfirmationDialog(
                     headline = "mobile.bootstrap.failed.title".i18n(),
-                    message = "mobile.bootstrap.failed.message".i18n(currentBootstrapStage),
+                    message = "mobile.bootstrap.failed.message".i18n(uiState.currentBootstrapStage),
                     confirmButtonText = "mobile.bootstrap.failed.restart".i18n(),
                     dismissButtonText = "mobile.bootstrap.failed.shutdown".i18n(),
-                    onConfirm = { presenter.onRestartApp() },
-                    onDismiss = { presenter.onTerminateApp() },
+                    onConfirm = { presenter.onAction(SplashUiAction.OnRestartApp) },
+                    onDismiss = { presenter.onAction(SplashUiAction.OnTerminateApp) },
                     dismissOnClickOutside = false,
                 )
             }
+
+            null -> Unit
         }
     }
 }

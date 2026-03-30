@@ -110,7 +110,7 @@ abstract class BasePresenter(
     companion object {
         const val EXIT_WARNING_TIMEOUT = 3000L
         const val SMALLEST_PERCEPTIVE_DELAY = 250L
-        var isDemo = false
+        var isDemo = false // todo: needs to be reactive to be reliable
     }
 
     protected val navigationManager: NavigationManager by inject()

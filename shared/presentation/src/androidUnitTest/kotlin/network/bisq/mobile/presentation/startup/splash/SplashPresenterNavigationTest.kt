@@ -31,6 +31,8 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 /**
  * Tests the navigation and fallback logic in [SplashPresenter.navigateToNextScreen].
@@ -47,6 +49,14 @@ class SplashPresenterNavigationTest {
     private lateinit var mainPresenter: MainPresenter
     private lateinit var versionProvider: VersionProvider
 
+    private val stateFlow = MutableStateFlow("")
+    private val progressFlow = MutableStateFlow(0f)
+    private val timeoutDialogVisibleFlow = MutableStateFlow(false)
+    private val bootstrapFailedFlow = MutableStateFlow(false)
+    private val torBootstrapFailedFlow = MutableStateFlow(false)
+    private val bootstrapStageFlow = MutableStateFlow("")
+    private val progressToastFlow = MutableStateFlow(false)
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -59,13 +69,21 @@ class SplashPresenterNavigationTest {
         versionProvider = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
 
-        every { applicationBootstrapFacade.state } returns MutableStateFlow("")
-        every { applicationBootstrapFacade.progress } returns MutableStateFlow(0f)
-        every { applicationBootstrapFacade.isTimeoutDialogVisible } returns MutableStateFlow(false)
-        every { applicationBootstrapFacade.isBootstrapFailed } returns MutableStateFlow(false)
-        every { applicationBootstrapFacade.torBootstrapFailed } returns MutableStateFlow(false)
-        every { applicationBootstrapFacade.currentBootstrapStage } returns MutableStateFlow("")
-        every { applicationBootstrapFacade.shouldShowProgressToast } returns MutableStateFlow(false)
+        stateFlow.value = ""
+        progressFlow.value = 0f
+        timeoutDialogVisibleFlow.value = false
+        bootstrapFailedFlow.value = false
+        torBootstrapFailedFlow.value = false
+        bootstrapStageFlow.value = ""
+        progressToastFlow.value = false
+
+        every { applicationBootstrapFacade.state } returns stateFlow
+        every { applicationBootstrapFacade.progress } returns progressFlow
+        every { applicationBootstrapFacade.isTimeoutDialogVisible } returns timeoutDialogVisibleFlow
+        every { applicationBootstrapFacade.isBootstrapFailed } returns bootstrapFailedFlow
+        every { applicationBootstrapFacade.torBootstrapFailed } returns torBootstrapFailedFlow
+        every { applicationBootstrapFacade.currentBootstrapStage } returns bootstrapStageFlow
+        every { applicationBootstrapFacade.shouldShowProgressToast } returns progressToastFlow
         every { versionProvider.getAppNameAndVersion(any(), any()) } returns "Test 1.0"
 
         startKoin {
@@ -89,7 +107,7 @@ class SplashPresenterNavigationTest {
         Dispatchers.resetMain()
     }
 
-    private fun createPresenter(): TestSplashPresenter =
+    private fun createPresenter(isIos: Boolean = false): TestSplashPresenter =
         TestSplashPresenter(
             mainPresenter = mainPresenter,
             applicationBootstrapFacade = applicationBootstrapFacade,
@@ -97,6 +115,7 @@ class SplashPresenterNavigationTest {
             settingsRepository = settingsRepository,
             settingsServiceFacade = settingsServiceFacade,
             versionProvider = versionProvider,
+            isIos = isIos,
         )
 
     @Test
@@ -178,6 +197,68 @@ class SplashPresenterNavigationTest {
 
             verify { navigationManager.navigate(NavRoute.Onboarding, any(), any()) }
         }
+
+    @Test
+    fun `ui state prioritizes bootstrap failure dialog over tor and timeout dialogs`() =
+        runTest {
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+
+            stateFlow.value = "Bootstrapping"
+            bootstrapStageFlow.value = "network"
+            timeoutDialogVisibleFlow.value = true
+            torBootstrapFailedFlow.value = true
+            bootstrapFailedFlow.value = true
+
+            val activeDialog = presenter.uiState.value.activeDialog
+
+            assertNotNull(activeDialog)
+            assertEquals(SplashActiveDialog.BootstrapFailedAndroid, activeDialog)
+        }
+
+    @Test
+    fun `ui state prioritizes tor dialog over timeout dialog`() =
+        runTest {
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+
+            bootstrapStageFlow.value = "tor"
+            timeoutDialogVisibleFlow.value = true
+            torBootstrapFailedFlow.value = true
+
+            val activeDialog = presenter.uiState.value.activeDialog
+
+            assertNotNull(activeDialog)
+            assertEquals(SplashActiveDialog.TorBootstrapFailed, activeDialog)
+        }
+
+    @Test
+    fun `ui state uses iOS bootstrap failed dialog when presenter is iOS`() =
+        runTest {
+            val presenter = createPresenter(isIos = true)
+            presenter.onViewAttached()
+
+            bootstrapFailedFlow.value = true
+
+            val activeDialog = presenter.uiState.value.activeDialog
+
+            assertNotNull(activeDialog)
+            assertEquals(SplashActiveDialog.BootstrapFailedIos, activeDialog)
+        }
+
+    @Test
+    fun `ui state uses iOS timeout dialog when presenter is iOS`() =
+        runTest {
+            val presenter = createPresenter(isIos = true)
+            presenter.onViewAttached()
+
+            timeoutDialogVisibleFlow.value = true
+
+            val activeDialog = presenter.uiState.value.activeDialog
+
+            assertNotNull(activeDialog)
+            assertEquals(SplashActiveDialog.TimeoutIos, activeDialog)
+        }
 }
 
 /**
@@ -190,6 +271,7 @@ private class TestSplashPresenter(
     settingsRepository: SettingsRepository,
     settingsServiceFacade: SettingsServiceFacade,
     versionProvider: VersionProvider,
+    isIos: Boolean,
 ) : SplashPresenter(
         mainPresenter,
         applicationBootstrapFacade,
@@ -197,6 +279,7 @@ private class TestSplashPresenter(
         settingsRepository,
         settingsServiceFacade,
         versionProvider,
+        isIos,
     ) {
     override val state: StateFlow<String> = MutableStateFlow("")
 

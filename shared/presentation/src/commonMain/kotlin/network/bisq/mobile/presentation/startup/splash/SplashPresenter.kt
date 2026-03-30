@@ -16,6 +16,7 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.VersionProvider
+import network.bisq.mobile.domain.utils.combine
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -27,22 +28,21 @@ abstract class SplashPresenter(
     private val userProfileService: UserProfileServiceFacade,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val versionProvider: VersionProvider,
+    versionProvider: VersionProvider,
+    private val isIos: Boolean = getPlatformInfo().type == PlatformType.IOS,
 ) : BasePresenter(mainPresenter) {
     abstract val state: StateFlow<String>
 
-    val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
-    val isTimeoutDialogVisible: StateFlow<Boolean> get() = applicationBootstrapFacade.isTimeoutDialogVisible
-    val isBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.isBootstrapFailed
+    private val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
+    private val isTimeoutDialogVisible: StateFlow<Boolean> get() = applicationBootstrapFacade.isTimeoutDialogVisible
+    private val isBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.isBootstrapFailed
+    private val torBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.torBootstrapFailed
+    private val currentBootstrapStage: StateFlow<String> get() = applicationBootstrapFacade.currentBootstrapStage
+    private val shouldShowProgressToast: StateFlow<Boolean> get() = applicationBootstrapFacade.shouldShowProgressToast
 
-    val torBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.torBootstrapFailed
-    val currentBootstrapStage: StateFlow<String> get() = applicationBootstrapFacade.currentBootstrapStage
-    val shouldShowProgressToast: StateFlow<Boolean> get() = applicationBootstrapFacade.shouldShowProgressToast
-
-    private val _appNameAndVersion: MutableStateFlow<String> = MutableStateFlow("")
-    val appNameAndVersion: StateFlow<String> get() = _appNameAndVersion.asStateFlow()
-
-    val isIos = getPlatformInfo().type == PlatformType.IOS
+    private val _uiState =
+        MutableStateFlow(SplashUiState(appNameAndVersion = versionProvider.getAppNameAndVersion(isDemo, isIos)))
+    val uiState: StateFlow<SplashUiState> = _uiState.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -50,6 +50,31 @@ abstract class SplashPresenter(
         presenterScope.launch {
             state.collect { value ->
                 log.d { "Splash State: $value" }
+            }
+        }
+
+        presenterScope.launch {
+            combine(
+                state,
+                progress,
+                isTimeoutDialogVisible,
+                isBootstrapFailed,
+                torBootstrapFailed,
+                currentBootstrapStage,
+            ) { status, progressValue, timeoutVisible, bootstrapFailed, torFailed, bootstrapStage ->
+                _uiState.value.copy(
+                    progress = progressValue,
+                    status = status,
+                    currentBootstrapStage = bootstrapStage,
+                    activeDialog =
+                        resolveActiveDialog(
+                            isTimeoutDialogVisible = timeoutVisible,
+                            isBootstrapFailed = bootstrapFailed,
+                            torBootstrapFailed = torFailed,
+                        ),
+                )
+            }.collect { uiState ->
+                _uiState.value = uiState
             }
         }
 
@@ -69,7 +94,16 @@ abstract class SplashPresenter(
                 }
             }
         }
-        _appNameAndVersion.value = versionProvider.getAppNameAndVersion(isDemo, isIOS())
+    }
+
+    fun onAction(action: SplashUiAction) {
+        when (action) {
+            SplashUiAction.OnTimeoutDialogContinue -> onTimeoutDialogContinue()
+            SplashUiAction.OnRestartApp -> onRestartApp()
+            SplashUiAction.OnRestartTor -> onRestartTor()
+            SplashUiAction.OnPurgeRestartTor -> onPurgeRestartTor()
+            SplashUiAction.OnTerminateApp -> onTerminateApp()
+        }
     }
 
     protected open suspend fun navigateToNextScreen() {
@@ -137,23 +171,37 @@ abstract class SplashPresenter(
         }
     }
 
-    fun onTimeoutDialogContinue() {
+    private fun resolveActiveDialog(
+        isTimeoutDialogVisible: Boolean,
+        isBootstrapFailed: Boolean,
+        torBootstrapFailed: Boolean,
+    ): SplashActiveDialog? =
+        when {
+            isBootstrapFailed && isIos -> SplashActiveDialog.BootstrapFailedIos
+            isBootstrapFailed -> SplashActiveDialog.BootstrapFailedAndroid
+            torBootstrapFailed -> SplashActiveDialog.TorBootstrapFailed
+            isTimeoutDialogVisible && isIos -> SplashActiveDialog.TimeoutIos
+            isTimeoutDialogVisible -> SplashActiveDialog.TimeoutAndroid
+            else -> null
+        }
+
+    private fun onTimeoutDialogContinue() {
         applicationBootstrapFacade.extendTimeout()
     }
 
-    fun onRestartApp() {
+    private fun onRestartApp() {
         restartApp()
     }
 
-    fun onRestartTor() {
+    private fun onRestartTor() {
         applicationBootstrapFacade.startTor(false)
     }
 
-    fun onPurgeRestartTor() {
+    private fun onPurgeRestartTor() {
         applicationBootstrapFacade.startTor(true)
     }
 
-    fun onTerminateApp() {
+    private fun onTerminateApp() {
         terminateApp()
     }
 }
