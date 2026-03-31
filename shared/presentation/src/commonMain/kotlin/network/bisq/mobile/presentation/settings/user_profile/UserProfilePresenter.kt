@@ -149,6 +149,8 @@ class UserProfilePresenter(
     }
 
     private fun onUserProfileSelect(profileId: String) {
+        if (_uiState.value.selectedUserProfile?.id == profileId) return
+
         disableInteractive()
         _uiState.update { it.copy(isBusyWithAction = true) }
         presenterScope.launch {

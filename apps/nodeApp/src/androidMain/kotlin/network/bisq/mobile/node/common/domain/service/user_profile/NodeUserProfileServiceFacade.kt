@@ -331,29 +331,33 @@ class NodeUserProfileServiceFacade(
         )
 
     override suspend fun selectUserProfile(id: String): Result<UserProfileVO> =
-        runCatching {
-            val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
-            if (identity != null) {
-                userService.userIdentityService.selectChatUserIdentity(identity)
-                val userProfile = getSelectedUserProfile()
-                _selectedUserProfile.value = userProfile
-                userProfile ?: throw IllegalStateException("expected selected user identity to have a profile, but did not")
-            } else {
-                throw IllegalArgumentException("profile id not found")
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
+                if (identity != null) {
+                    userService.userIdentityService.selectChatUserIdentity(identity)
+                    val userProfile = getSelectedUserProfile()
+                    _selectedUserProfile.value = userProfile
+                    userProfile ?: throw IllegalStateException("expected selected user identity to have a profile, but did not")
+                } else {
+                    throw IllegalArgumentException("profile id not found")
+                }
             }
         }
 
     override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> =
-        runCatching {
-            val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
-            if (identity != null) {
-                userService.userIdentityService.deleteUserIdentity(identity).await()
-                _userProfiles.update { list -> list.filterNot { it.id == id } }
-                val userProfile = getSelectedUserProfile()
-                _selectedUserProfile.value = userProfile
-                userProfile ?: throw IllegalStateException("expected selected user identity to have a profile after delete, but did not")
-            } else {
-                throw IllegalArgumentException("profile id not found")
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
+                if (identity != null) {
+                    userService.userIdentityService.deleteUserIdentity(identity).await()
+                    _userProfiles.update { list -> list.filterNot { it.id == id } }
+                    val userProfile = getSelectedUserProfile()
+                    _selectedUserProfile.value = userProfile
+                    userProfile ?: throw IllegalStateException("expected selected user identity to have a profile after delete, but did not")
+                } else {
+                    throw IllegalArgumentException("profile id not found")
+                }
             }
         }
 }
