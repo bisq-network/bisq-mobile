@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -124,7 +126,7 @@ private fun AlertNotificationBannerContent(
 ) {
     val accentColor = alertAccentColor(alert.type)
     val bannerBackground = alertBannerBackground(alert.type)
-    val isDismissible = !(alert.type == AlertType.EMERGENCY && alert.haltTrading)
+    val isDismissible = alert.type != AlertType.EMERGENCY
 
     Row(
         modifier =
@@ -205,7 +207,20 @@ private fun AlertNotificationBannerContent(
                 )
             }
         } else {
-            Box(modifier = Modifier.size(width = BisqUIConstants.ScreenPadding4X, height = BisqUIConstants.Zero))
+            Box(
+                modifier =
+                    Modifier
+                        .minimumInteractiveComponentSize()
+                        .size(40.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.TouchApp,
+                    contentDescription = null,
+                    tint = BisqTheme.colors.mid_grey20,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }

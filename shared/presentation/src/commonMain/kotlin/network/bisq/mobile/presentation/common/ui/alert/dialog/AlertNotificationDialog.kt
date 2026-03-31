@@ -85,7 +85,7 @@ private fun AlertNotificationDialogContent(
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
                 ) {
                     Icon(
                         imageVector = alertIcon(alert.type),
@@ -110,52 +110,51 @@ private fun AlertNotificationDialogContent(
 
                     BisqGap.V1()
 
-                    when {
-                        alert.haltTrading -> {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-                                        .background(accentColor.copy(alpha = 0.15f))
-                                        .border(
-                                            width = 1.dp,
-                                            color = accentColor.copy(alpha = 0.5f),
-                                            shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
-                                        ).padding(
-                                            horizontal = BisqUIConstants.ScreenPadding,
-                                            vertical = BisqUIConstants.ScreenPaddingHalf,
-                                        ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                BisqText.SmallMedium(
-                                    text = "mobile.alert.trade.halt".i18n(),
-                                    color = accentColor,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
-                            BisqButton(
-                                text = "mobile.alert.actions.dismiss.label".i18n(),
-                                onClick = { onAction(AlertNotificationUiAction.OnDismissAlertNotification(alert.id)) },
-                                type = BisqButtonType.Outline,
-                                fullWidth = true,
-                            )
-                        }
-
-                        alert.requiresUpdate -> {
-                            if (alert.minVersion.isNotBlank()) {
-                                BisqText.SmallLight(
-                                    text = "mobile.alert.update.minimum".i18n(alert.minVersion),
-                                    color = BisqTheme.colors.light_grey10,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
-                            BisqButton(
-                                text = "mobile.alert.update.button".i18n(),
-                                onClick = { onAction(AlertNotificationUiAction.OnUpdateNow) },
-                                fullWidth = true,
+                    if (alert.haltTrading) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                                    .background(accentColor.copy(alpha = 0.15f))
+                                    .border(
+                                        width = 1.dp,
+                                        color = accentColor.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
+                                    ).padding(
+                                        horizontal = BisqUIConstants.ScreenPadding,
+                                        vertical = BisqUIConstants.ScreenPaddingHalf,
+                                    ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            BisqText.SmallMedium(
+                                text = "mobile.alert.trade.halt".i18n(),
+                                color = accentColor,
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
+
+                    if (alert.requiresUpdate) {
+                        if (alert.minVersion.isNotBlank()) {
+                            BisqText.SmallLight(
+                                text = "mobile.alert.update.minimum".i18n(alert.minVersion),
+                                color = BisqTheme.colors.light_grey10,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                        BisqButton(
+                            text = "mobile.alert.update.button".i18n(),
+                            onClick = { onAction(AlertNotificationUiAction.OnUpdateNow) },
+                            fullWidth = true,
+                        )
+                    }
+
+                    BisqButton(
+                        text = "mobile.alert.actions.dismiss.label".i18n(),
+                        onClick = { onAction(AlertNotificationUiAction.OnDismissAlertNotification(alert.id)) },
+                        type = BisqButtonType.Outline,
+                        fullWidth = true,
+                    )
                 }
             }
 
