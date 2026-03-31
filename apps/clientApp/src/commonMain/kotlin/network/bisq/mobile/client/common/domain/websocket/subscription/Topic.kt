@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
 import network.bisq.mobile.client.common.domain.service.trades.TradePropertiesDto
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -24,4 +25,5 @@ enum class Topic(
     TRADE_CHAT_MESSAGES(typeOf<List<BisqEasyOpenTradeMessageDto>>()),
     CHAT_REACTIONS(typeOf<List<BisqEasyOpenTradeMessageReactionVO>>()),
     REPUTATION(typeOf<Map<String, ReputationScoreVO>>()),
+    ALERT_NOTIFICATIONS(typeOf<List<AuthorizedAlertDataDto>>()),
 }

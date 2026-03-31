@@ -37,6 +37,9 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.data.utils.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationBannerPresenter
+import network.bisq.mobile.presentation.common.ui.alert.banner.AlertNotificationBanner
+import network.bisq.mobile.presentation.common.ui.alert.dialog.AlertNotificationDialog
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.base.SnackbarAction
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
@@ -136,6 +139,8 @@ fun App(
 ) {
     val presenter: AppPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
+    val alertNotificationPresenter: AlertNotificationBannerPresenter = koinInject()
+    RememberPresenterLifecycle(alertNotificationPresenter)
     val navigationManager: NavigationManager = koinInject()
     val globalUiManager: GlobalUiManager = koinInject()
 
@@ -189,6 +194,7 @@ fun App(
                 CompositionLocalProvider(LocalAnimationsEnabled provides showAnimation) {
                     Column {
                         NetworkStatusBanner()
+                        AlertNotificationBanner(alertNotificationPresenter)
                         navGraphContent()
                     }
                 }
@@ -213,6 +219,8 @@ fun App(
                 isBlocking = isLoadingBlocking,
                 showDialog = showLoadingDialog,
             )
+
+            AlertNotificationDialog(alertNotificationPresenter)
 
             // Global snackbar - displays app-wide snackbar notifications
             BisqSnackbar(snackbarHostState = snackbarHostState)

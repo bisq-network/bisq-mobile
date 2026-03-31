@@ -6,6 +6,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
@@ -41,6 +42,7 @@ class NodeApplicationLifecycleService(
     private val mediationServiceFacade: MediationServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
+    private val alertNotificationsServiceFacade: AlertNotificationsServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -134,6 +136,7 @@ class NodeApplicationLifecycleService(
         explorerServiceFacade.activate()
         mediationServiceFacade.activate()
         reputationServiceFacade.activate()
+        alertNotificationsServiceFacade.activate()
         userProfileServiceFacade.activate()
         messageDeliveryServiceFacade.activate()
     }
@@ -150,6 +153,7 @@ class NodeApplicationLifecycleService(
         // deactivate in opposite direction of activation
         messageDeliveryServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()
+        alertNotificationsServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         explorerServiceFacade.deactivate()
