@@ -4,7 +4,7 @@ import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 
 fun AuthorizedAlertDataDto.toDomainOrNull(): AuthorizedAlertData? {
-    val mappedType = alertType.toAlertType()
+    val mappedType = alertType?.toAlertTypeOrNull() ?: return null
     if (!mappedType.isMessageAlert()) {
         return null
     }

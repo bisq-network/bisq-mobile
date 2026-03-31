@@ -176,7 +176,7 @@ private fun AlertNotificationDialogContent(
 
 @Preview
 @Composable
-private fun Dialog_Preview() {
+private fun DialogPreview() {
     BisqTheme.Preview {
         Column(
             modifier =

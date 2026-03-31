@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AuthorizedAlertDataDto(
     val id: String,
-    val alertType: AlertTypeDto,
+    val alertType: AlertTypeDto? = null,
     val headline: String? = null,
     val message: String? = null,
     val haltTrading: Boolean = false,

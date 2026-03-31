@@ -5,7 +5,7 @@ import kotlin.jvm.optionals.getOrNull
 import bisq.bonded_roles.security_manager.alert.AuthorizedAlertData as AuthorizedAlertDataBisq2
 
 fun AuthorizedAlertDataBisq2.toDomainOrNull(): AuthorizedAlertData? {
-    val mappedType = alertType.toAlertType()
+    val mappedType = alertType.toAlertTypeOrNull() ?: return null
     if (!mappedType.isMessageAlert()) {
         return null
     }
