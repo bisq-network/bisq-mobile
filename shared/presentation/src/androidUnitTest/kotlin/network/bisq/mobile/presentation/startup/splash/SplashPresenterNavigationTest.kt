@@ -49,13 +49,13 @@ class SplashPresenterNavigationTest {
     private lateinit var mainPresenter: MainPresenter
     private lateinit var versionProvider: VersionProvider
 
-    private val stateFlow = MutableStateFlow("")
-    private val progressFlow = MutableStateFlow(0f)
-    private val timeoutDialogVisibleFlow = MutableStateFlow(false)
-    private val bootstrapFailedFlow = MutableStateFlow(false)
-    private val torBootstrapFailedFlow = MutableStateFlow(false)
-    private val bootstrapStageFlow = MutableStateFlow("")
-    private val progressToastFlow = MutableStateFlow(false)
+    private lateinit var stateFlow: MutableStateFlow<String>
+    private lateinit var progressFlow: MutableStateFlow<Float>
+    private lateinit var timeoutDialogVisibleFlow: MutableStateFlow<Boolean>
+    private lateinit var bootstrapFailedFlow: MutableStateFlow<Boolean>
+    private lateinit var torBootstrapFailedFlow: MutableStateFlow<Boolean>
+    private lateinit var bootstrapStageFlow: MutableStateFlow<String>
+    private lateinit var progressToastFlow: MutableStateFlow<Boolean>
 
     @BeforeTest
     fun setUp() {
@@ -69,13 +69,13 @@ class SplashPresenterNavigationTest {
         versionProvider = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
 
-        stateFlow.value = ""
-        progressFlow.value = 0f
-        timeoutDialogVisibleFlow.value = false
-        bootstrapFailedFlow.value = false
-        torBootstrapFailedFlow.value = false
-        bootstrapStageFlow.value = ""
-        progressToastFlow.value = false
+        stateFlow = MutableStateFlow("")
+        progressFlow = MutableStateFlow(0f)
+        timeoutDialogVisibleFlow = MutableStateFlow(false)
+        bootstrapFailedFlow = MutableStateFlow(false)
+        torBootstrapFailedFlow = MutableStateFlow(false)
+        bootstrapStageFlow = MutableStateFlow("")
+        progressToastFlow = MutableStateFlow(false)
 
         every { applicationBootstrapFacade.state } returns stateFlow
         every { applicationBootstrapFacade.progress } returns progressFlow

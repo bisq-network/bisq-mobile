@@ -2,6 +2,10 @@ package network.bisq.mobile.domain.utils
 
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Workaround for the currently limited [kotlinx.coroutines] combine, which only accepts 5 flows.
+ * Routes the transform through an untyped `Array<*>`.
+ */
 inline fun <T1, T2, T3, T4, T5, T6, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
