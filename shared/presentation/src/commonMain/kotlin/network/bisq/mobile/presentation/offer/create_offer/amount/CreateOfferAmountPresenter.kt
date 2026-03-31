@@ -667,6 +667,7 @@ class CreateOfferAmountPresenter(
     private fun commitToModel() {
         if (amountType.value == AmountType.RANGE_AMOUNT && quoteSideMinRangeAmount.asDouble() == quoteSideMaxRangeAmount.asDouble()) {
             quoteSideFixedAmount = quoteSideMinRangeAmount
+            baseSideFixedAmount = baseSideMinRangeAmount
             _amountType.value = AmountType.FIXED_AMOUNT
         }
         createOfferCoordinator.commitAmount(

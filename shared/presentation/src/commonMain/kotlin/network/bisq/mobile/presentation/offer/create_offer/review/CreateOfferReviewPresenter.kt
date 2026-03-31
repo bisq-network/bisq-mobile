@@ -252,23 +252,29 @@ class CreateOfferReviewPresenter(
         _isCreateOfferBtnEnabled.value = false
         showLoading()
         presenterScope.launch {
-            createOfferCoordinator
-                .createOffer()
-                .onSuccess {
-                    navigateToOfferbookTab()
-                }.onFailure { exception ->
-                    handleError(exception, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n()) { exception ->
-                        val bannedError = exception.message?.contains("banned", ignoreCase = true) == true
-                        if (bannedError) {
-                            showSnackbar("mobile.bisqEasy.createOffer.userBanned".i18n(), type = SnackbarType.ERROR)
-                            return@handleError true
-                        } else {
-                            return@handleError false
+            try {
+                createOfferCoordinator
+                    .createOffer()
+                    .onSuccess {
+                        navigateToOfferbookTab()
+                    }.onFailure { exception ->
+                        handleError(exception, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n()) { exception ->
+                            val bannedError = exception.message?.contains("banned", ignoreCase = true) == true
+                            if (bannedError) {
+                                showSnackbar("mobile.bisqEasy.createOffer.userBanned".i18n(), type = SnackbarType.ERROR)
+                                return@handleError true
+                            } else {
+                                return@handleError false
+                            }
                         }
+                        _isCreateOfferBtnEnabled.value = true
                     }
-                    _isCreateOfferBtnEnabled.value = true
-                }
-            hideLoading()
+            } catch (e: Exception) {
+                handleError(e, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n())
+                _isCreateOfferBtnEnabled.value = true
+            } finally {
+                hideLoading()
+            }
         }
     }
 }

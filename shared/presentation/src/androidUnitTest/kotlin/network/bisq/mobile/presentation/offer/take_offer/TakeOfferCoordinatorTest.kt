@@ -184,177 +184,6 @@ class TakeOfferCoordinatorTest {
         override fun resetSelectedTradeToNull() {}
     }
 
-    private class FakeSettingsServiceFacade : SettingsServiceFacade {
-        override suspend fun getSettings() = Result.success(settingsVODemoObj)
-
-        override suspend fun confirmTacAccepted(value: Boolean) = Result.success(Unit)
-
-        override val tradeRulesConfirmed: StateFlow<Boolean> = MutableStateFlow(true)
-
-        override suspend fun confirmTradeRules(value: Boolean) = Result.success(Unit)
-
-        override val languageCode: StateFlow<String> = MutableStateFlow("en")
-
-        override suspend fun setLanguageCode(value: String) = Result.success(Unit)
-
-        override suspend fun setSupportedLanguageCodes(value: Set<String>) = Result.success(Unit)
-
-        override suspend fun setCloseMyOfferWhenTaken(value: Boolean) = Result.success(Unit)
-
-        override suspend fun setMaxTradePriceDeviation(value: Double) = Result.success(Unit)
-
-        override val useAnimations: StateFlow<Boolean> = MutableStateFlow(false)
-
-        override suspend fun setUseAnimations(value: Boolean) = Result.success(Unit)
-
-        override val difficultyAdjustmentFactor: StateFlow<Double> = MutableStateFlow(1.0)
-
-        override suspend fun setDifficultyAdjustmentFactor(value: Double) = Result.success(Unit)
-
-        override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> = MutableStateFlow(false)
-
-        override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) = Result.success(Unit)
-
-        override suspend fun setNumDaysAfterRedactingTradeData(days: Int) = Result.success(Unit)
-    }
-
-    private class FakeUserProfileServiceFacade : UserProfileServiceFacade {
-        override val userProfiles: StateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
-        override val selectedUserProfile: StateFlow<UserProfileVO?> = MutableStateFlow(null)
-        override val ignoredProfileIds: StateFlow<Set<String>> = MutableStateFlow(emptySet())
-        override val numUserProfiles: StateFlow<Int> = MutableStateFlow(1)
-
-        override suspend fun hasUserProfile(): Boolean = true
-
-        override suspend fun generateKeyPair(
-            imageSize: Int,
-            result: (String, String, PlatformImage?) -> Unit,
-        ) {
-        }
-
-        override suspend fun createAndPublishNewUserProfile(nickName: String) {}
-
-        override suspend fun updateAndPublishUserProfile(
-            profileId: String,
-            statement: String?,
-            terms: String?,
-        ) = Result.success(createMockUserProfile("me"))
-
-        override suspend fun getUserIdentityIds(): List<String> = emptyList()
-
-        override suspend fun findUserProfile(profileId: String) = createMockUserProfile(profileId)
-
-        override suspend fun findUserProfiles(ids: List<String>) = ids.map { createMockUserProfile(it) }
-
-        override suspend fun getUserProfileIcon(
-            userProfile: UserProfileVO,
-            size: Number,
-        ) = createEmptyImage()
-
-        override suspend fun getUserProfileIcon(userProfile: UserProfileVO) = createEmptyImage()
-
-        override suspend fun getUserPublishDate(): Long = 0L
-
-        override suspend fun userActivityDetected() {}
-
-        override suspend fun ignoreUserProfile(profileId: String) {}
-
-        override suspend fun undoIgnoreUserProfile(profileId: String) {}
-
-        override suspend fun isUserIgnored(profileId: String): Boolean = false
-
-        override suspend fun getIgnoredUserProfileIds(): Set<String> = emptySet()
-
-        override suspend fun reportUserProfile(
-            accusedUserProfile: UserProfileVO,
-            message: String,
-        ): Result<Unit> = Result.failure(Exception("unused in test"))
-
-        override suspend fun getOwnedUserProfiles(): Result<List<UserProfileVO>> = Result.failure(Exception("unused in test"))
-
-        override suspend fun selectUserProfile(id: String): Result<UserProfileVO> = Result.failure(Exception("unused in test"))
-
-        override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> = Result.failure(Exception("unused in test"))
-    }
-
-    private class FakeNotificationController : NotificationController {
-        override suspend fun hasPermission(): Boolean = true
-
-        override fun notify(config: NotificationConfig) {}
-
-        override fun cancel(id: String) {}
-
-        override fun isAppInForeground(): Boolean = true
-    }
-
-    private class FakeForegroundServiceController : ForegroundServiceController {
-        override fun startService() {}
-
-        override fun stopService() {}
-
-        override fun <T> registerObserver(
-            flow: Flow<T>,
-            onStateChange: suspend (T) -> Unit,
-        ) {}
-
-        override fun unregisterObserver(flow: Flow<*>) {}
-
-        override fun unregisterObservers() {}
-
-        override fun isServiceRunning(): Boolean = false
-
-        override fun dispose() {}
-    }
-
-    private class FakeForegroundDetector : ForegroundDetector {
-        private val _isForeground = MutableStateFlow(true)
-        override val isForeground: StateFlow<Boolean> = _isForeground
-    }
-
-    private class FakeUrlLauncher : UrlLauncher {
-        override fun openUrl(url: String) {}
-    }
-
-    private class FakeTradeReadStateRepository : TradeReadStateRepository {
-        override val data: Flow<TradeReadStateMap> = flowOf(TradeReadStateMap())
-
-        override suspend fun setCount(
-            tradeId: String,
-            count: Int,
-        ) {
-        }
-
-        override suspend fun clearId(tradeId: String) {}
-    }
-
-    private fun makeMainPresenter(): MainPresenter {
-        val tradesServiceFacade = FakeTradesServiceFacade()
-        val userProfileServiceFacade = FakeUserProfileServiceFacade()
-        val notificationController = FakeNotificationController()
-        val foregroundServiceController = FakeForegroundServiceController()
-        val foregroundDetector = FakeForegroundDetector()
-        val openTradesNotificationService =
-            OpenTradesNotificationService(
-                notificationController,
-                foregroundServiceController,
-                tradesServiceFacade,
-                userProfileServiceFacade,
-                foregroundDetector,
-            )
-        val settingsService = FakeSettingsServiceFacade()
-        val tradeReadStateRepository = FakeTradeReadStateRepository()
-        val urlLauncher = FakeUrlLauncher()
-        return MainPresenter(
-            tradesServiceFacade,
-            userProfileServiceFacade,
-            openTradesNotificationService,
-            settingsService,
-            tradeReadStateRepository,
-            urlLauncher,
-            TestApplicationLifecycleService(),
-        )
-    }
-
     private fun makeOfferDto(
         amountSpec: AmountSpecVO = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L),
         paymentMethods: List<String> = listOf("SEPA"),
@@ -414,7 +243,6 @@ class TakeOfferCoordinatorTest {
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
         val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
@@ -449,7 +277,6 @@ class TakeOfferCoordinatorTest {
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
         val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
@@ -484,7 +311,6 @@ class TakeOfferCoordinatorTest {
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
         val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
@@ -515,7 +341,6 @@ class TakeOfferCoordinatorTest {
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
         val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
@@ -548,7 +373,6 @@ class TakeOfferCoordinatorTest {
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
         val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
@@ -584,7 +408,6 @@ class TakeOfferCoordinatorTest {
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
         val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 

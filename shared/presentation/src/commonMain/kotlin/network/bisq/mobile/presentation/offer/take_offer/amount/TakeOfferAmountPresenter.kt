@@ -221,6 +221,7 @@ class TakeOfferAmountPresenter(
     }
 
     private fun commitToModel() {
+        if (initializationFailed) return
         takeOfferCoordinator.commitAmount(priceQuote, quoteAmount, baseAmount)
     }
 }

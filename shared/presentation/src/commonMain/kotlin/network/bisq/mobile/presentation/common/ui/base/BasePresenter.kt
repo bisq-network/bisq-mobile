@@ -162,7 +162,10 @@ abstract class BasePresenter(
         hideLoading()
         // Dismiss any active snackbar when view detaches (e.g., navigation)
         globalUiManager.dismissSnackbar()
-        // Presenter level support for auto disposal
+        // Dispose presenterScope via a separate unmanaged scope. We intentionally do NOT use
+        // presenterScope here because we are cancelling it — launching on a scope being cancelled
+        // would be a no-op. The fire-and-forget CoroutineScope(Main) avoids iOS CA Fence hangs
+        // that runBlocking caused during view teardown.
         CoroutineScope(Dispatchers.Main).launch { jobsManager.dispose() }
         // Unregister from parent to prevent memory leak with factory presenters
         rootPresenter?.unregisterChild(this)

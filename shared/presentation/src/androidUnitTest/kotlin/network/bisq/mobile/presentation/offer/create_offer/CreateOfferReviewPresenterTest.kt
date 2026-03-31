@@ -34,6 +34,7 @@ import network.bisq.mobile.data.replicated.settings.settingsVODemoObj
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.ForegroundDetector
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -63,7 +64,6 @@ import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferRev
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

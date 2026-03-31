@@ -275,12 +275,14 @@ class CreateOfferCoordinator(
 
     fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
         if (isDemo) {
-            val marketVO = marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
+            val marketVO =
+                marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == it.quoteCurrencyCode }
+                    ?: throw IllegalStateException("Demo market not found for $market")
             return PriceQuoteVO(
                 100,
                 4,
                 2,
-                marketVO!!,
+                marketVO,
                 CoinVO("BTC", 1, "BTC", 8, 4),
                 FiatVO("USD", 80000, "USD", 4, 2),
             )
