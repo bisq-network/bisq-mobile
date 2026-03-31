@@ -41,14 +41,14 @@ import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 
 open class OfferbookPresenter(
     private val mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter,
-    private val createOfferPresenter: CreateOfferPresenter,
+    private val takeOfferCoordinator: TakeOfferCoordinator,
+    private val createOfferCoordinator: CreateOfferCoordinator,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
@@ -444,12 +444,12 @@ open class OfferbookPresenter(
                 presenterScope.launch {
                     try {
                         if (canTakeOffer(item, selectedProfile)) {
-                            takeOfferPresenter.selectOfferToTake(item)
-                            if (takeOfferPresenter.showAmountScreen()) {
+                            takeOfferCoordinator.selectOfferToTake(item)
+                            if (takeOfferCoordinator.showAmountScreen()) {
                                 navigateTo(NavRoute.TakeOfferTradeAmount)
-                            } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
+                            } else if (takeOfferCoordinator.showPaymentMethodsScreen()) {
                                 navigateTo(NavRoute.TakeOfferPaymentMethod)
-                            } else if (takeOfferPresenter.showSettlementMethodsScreen()) {
+                            } else if (takeOfferCoordinator.showSettlementMethodsScreen()) {
                                 navigateTo(NavRoute.TakeOfferSettlementMethod)
                             } else {
                                 navigateTo(NavRoute.TakeOfferReviewTrade)
@@ -637,7 +637,7 @@ open class OfferbookPresenter(
         disableInteractive()
         try {
             val selectedMarket = offersServiceFacade.selectedOfferbookMarket.value.market
-            createOfferPresenter.onStartCreateOffer()
+            createOfferCoordinator.onStartCreateOffer()
 
             // Check if a market is already selected (not EMPTY)
 
@@ -645,11 +645,11 @@ open class OfferbookPresenter(
 
             if (hasValidMarket) {
                 // Use the already selected market
-                createOfferPresenter.commitMarket(selectedMarket)
-                createOfferPresenter.skipCurrency = true
+                createOfferCoordinator.commitMarket(selectedMarket)
+                createOfferCoordinator.skipCurrency = true
             } else {
                 // No market selected, go to market selection
-                createOfferPresenter.skipCurrency = false
+                createOfferCoordinator.skipCurrency = false
             }
 
             enableInteractive()

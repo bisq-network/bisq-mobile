@@ -39,14 +39,14 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter.AmountType
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.AmountType
 
 // TODO Create/Take offer amount preseenters are very similar a base class could be extracted
 class CreateOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter,
+    private val createOfferCoordinator: CreateOfferCoordinator,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
@@ -102,7 +102,7 @@ class CreateOfferAmountPresenter(
     private val _shouldShowWarningIcon = MutableStateFlow(false)
     val shouldShowWarningIcon: StateFlow<Boolean> get() = _shouldShowWarningIcon.asStateFlow()
 
-    private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
+    private lateinit var createOfferModel: CreateOfferCoordinator.CreateOfferModel
     private var minAmount: Long = DEFAULT_MIN_USD_TRADE_AMOUNT.value
     private var maxAmount: Long = MAX_USD_TRADE_AMOUNT.value
     private lateinit var priceQuote: PriceQuoteVO
@@ -147,7 +147,7 @@ class CreateOfferAmountPresenter(
 
     // Life cycle
     init {
-        createOfferModel = createOfferPresenter.createOfferModel
+        createOfferModel = createOfferCoordinator.createOfferModel
         quoteCurrencyCode = createOfferModel.market?.quoteCurrencyCode
             ?: throw IllegalStateException("Market must be initialized before creating amount presenter")
 
@@ -228,7 +228,7 @@ class CreateOfferAmountPresenter(
             quoteSideFixedAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
             _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount).replace(separator, "")
 
-            priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+            priceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
             baseSideFixedAmount = priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as CoinVO
             _formattedBaseSideFixedAmount.value = AmountFormatter.formatAmount(baseSideFixedAmount, false)
 
@@ -258,7 +258,7 @@ class CreateOfferAmountPresenter(
             quoteSideMinRangeAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
             _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
 
-            priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+            priceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
             baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
             _formattedBaseSideMinRangeAmount.value = AmountFormatter.formatAmount(baseSideMinRangeAmount, false)
 
@@ -288,7 +288,7 @@ class CreateOfferAmountPresenter(
             quoteSideMaxRangeAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
             _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
 
-            priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+            priceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
             baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
             _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
 
@@ -595,7 +595,7 @@ class CreateOfferAmountPresenter(
         this.rangeSliderPosition = rangeSliderPosition
 
         val range = maxAmount - minAmount
-        priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+        priceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
 
         val min = rangeSliderPosition.start
         val roundedMinQuoteValue: Long = MonetarySlider.fractionToAmountLong(min, minAmount, maxAmount, 10000L)
@@ -630,7 +630,7 @@ class CreateOfferAmountPresenter(
             FiatVOFactory.from(sliderValueToAmount(minRangeSliderValue.value), quoteCurrencyCode)
         _formattedQuoteSideMinRangeAmount.value =
             AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
-        priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+        priceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
         _formattedBaseSideMinRangeAmount.value = AmountFormatter.formatAmount(baseSideMinRangeAmount, false)
     }
@@ -643,7 +643,7 @@ class CreateOfferAmountPresenter(
             FiatVOFactory.from(sliderValueToAmount(maxRangeSliderValue.value), quoteCurrencyCode)
         _formattedQuoteSideMaxRangeAmount.value =
             AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
-        priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+        priceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
         _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
     }
@@ -655,7 +655,7 @@ class CreateOfferAmountPresenter(
         quoteSideFixedAmount =
             FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition.value), quoteCurrencyCode)
         _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount).replace(separator, "")
-        priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+        priceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideFixedAmount = priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as CoinVO
         _formattedBaseSideFixedAmount.value = AmountFormatter.formatAmount(baseSideFixedAmount, false)
     }
@@ -669,7 +669,7 @@ class CreateOfferAmountPresenter(
             quoteSideFixedAmount = quoteSideMinRangeAmount
             _amountType.value = AmountType.FIXED_AMOUNT
         }
-        createOfferPresenter.commitAmount(
+        createOfferCoordinator.commitAmount(
             amountType.value,
             quoteSideFixedAmount,
             baseSideFixedAmount,

@@ -21,12 +21,12 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import kotlin.math.abs
 
 class CreateOfferReviewPresenter(
     mainPresenter: MainPresenter,
-    private val createOfferPresenter: CreateOfferPresenter,
+    private val createOfferCoordinator: CreateOfferCoordinator,
 ) : BasePresenter(mainPresenter) {
     lateinit var headLine: String
     lateinit var quoteSidePaymentMethodDisplayString: String
@@ -48,11 +48,11 @@ class CreateOfferReviewPresenter(
     private val _isCreateOfferBtnEnabled = MutableStateFlow(true)
     val isCreateOfferBtnEnabled = _isCreateOfferBtnEnabled.asStateFlow()
 
-    private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
+    private lateinit var createOfferModel: CreateOfferCoordinator.CreateOfferModel
 
     override fun onViewAttached() {
         super.onViewAttached()
-        createOfferModel = createOfferPresenter.createOfferModel
+        createOfferModel = createOfferCoordinator.createOfferModel
         direction = createOfferModel.direction
 
         quoteSidePaymentMethodDisplayString =
@@ -78,14 +78,14 @@ class CreateOfferReviewPresenter(
 
         marketCodes = createOfferModel.market!!.marketCodes
         formattedPrice = PriceQuoteFormatter.format(effectivePrice, true, false)
-        isRangeOffer = createOfferModel.amountType == CreateOfferPresenter.AmountType.RANGE_AMOUNT
+        isRangeOffer = createOfferModel.amountType == CreateOfferCoordinator.AmountType.RANGE_AMOUNT
 
         applyPriceDetails(currentMarketPrice)
     }
 
     private fun getCurrentMarketPrice(): PriceQuoteVO? =
         try {
-            createOfferModel.market?.let { createOfferPresenter.getMostRecentPriceQuote(it) }
+            createOfferModel.market?.let { createOfferCoordinator.getMostRecentPriceQuote(it) }
         } catch (e: Exception) {
             log.w(e) { "Could not fetch current market price, using stored values" }
             null
@@ -97,7 +97,7 @@ class CreateOfferReviewPresenter(
      */
     private fun calculateEffectivePrice(currentMarketPrice: PriceQuoteVO?): PriceQuoteVO {
         if (currentMarketPrice == null ||
-            createOfferModel.priceType != CreateOfferPresenter.PriceType.PERCENTAGE
+            createOfferModel.priceType != CreateOfferCoordinator.PriceType.PERCENTAGE
         ) {
             return createOfferModel.priceQuote
         }
@@ -118,7 +118,7 @@ class CreateOfferReviewPresenter(
     private fun formatAmounts(effectivePrice: PriceQuoteVO) {
         val formattedQuoteAmount: String
         val formattedBaseAmount: String
-        if (createOfferModel.amountType == CreateOfferPresenter.AmountType.FIXED_AMOUNT) {
+        if (createOfferModel.amountType == CreateOfferCoordinator.AmountType.FIXED_AMOUNT) {
             formattedQuoteAmount =
                 AmountFormatter.formatAmount(createOfferModel.quoteSideFixedAmount!!, true, true)
             // Recalculate BTC amount from the effective price for consistency
@@ -176,7 +176,7 @@ class CreateOfferReviewPresenter(
         val marketPriceForDisplay =
             currentMarketPrice ?: createOfferModel.originalPriceQuote
 
-        if (createOfferModel.priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
+        if (createOfferModel.priceType == CreateOfferCoordinator.PriceType.PERCENTAGE) {
             val percentage = createOfferModel.percentagePriceValue
             if (percentage == 0.0) {
                 priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
@@ -245,10 +245,14 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
+        if (createOfferCoordinator.isDemo) {
+            showSnackbar("mobile.bisqEasy.offerbook.createOfferDisabledInDemonstrationMode".i18n(), type = SnackbarType.ERROR)
+            return
+        }
         _isCreateOfferBtnEnabled.value = false
         showLoading()
         presenterScope.launch {
-            createOfferPresenter
+            createOfferCoordinator
                 .createOffer()
                 .onSuccess {
                     navigateToOfferbookTab()

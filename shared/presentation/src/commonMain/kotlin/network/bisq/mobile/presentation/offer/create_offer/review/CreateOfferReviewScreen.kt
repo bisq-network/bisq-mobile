@@ -23,21 +23,21 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferReviewOfferScreen() {
     val presenter: CreateOfferReviewPresenter = koinInject()
-    val createPresenter: CreateOfferPresenter = koinInject()
+    val createCoordinator: CreateOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isCreateOfferBtnEnabled by presenter.isCreateOfferBtnEnabled.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
-        stepIndex = if (createPresenter.skipCurrency) 6 else 7,
-        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
+        stepIndex = if (createCoordinator.skipCurrency) 6 else 7,
+        stepsLength = if (createCoordinator.skipCurrency) 6 else 7,
         prevOnClick = { presenter.onBack() },
         nextDisabled = !isCreateOfferBtnEnabled,
         nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),

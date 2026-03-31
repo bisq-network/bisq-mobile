@@ -6,23 +6,23 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
 
 class ClientOfferbookPresenter(
     mainPresenter: MainPresenter,
     offersServiceFacade: OffersServiceFacade,
-    takeOfferPresenter: TakeOfferPresenter,
-    createOfferPresenter: CreateOfferPresenter,
+    takeOfferCoordinator: TakeOfferCoordinator,
+    createOfferCoordinator: CreateOfferCoordinator,
     marketPriceServiceFacade: MarketPriceServiceFacade,
     reputationServiceFacade: ReputationServiceFacade,
     private val userProfileServiceFacade: ClientUserProfileServiceFacade,
 ) : OfferbookPresenter(
         mainPresenter,
         offersServiceFacade,
-        takeOfferPresenter,
-        createOfferPresenter,
+        takeOfferCoordinator,
+        createOfferCoordinator,
         marketPriceServiceFacade,
         userProfileServiceFacade,
         reputationServiceFacade,

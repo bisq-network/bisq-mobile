@@ -21,13 +21,13 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter.PriceType
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.PriceType
 
 class CreateOfferPricePresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter,
+    private val createOfferCoordinator: CreateOfferCoordinator,
 ) : BasePresenter(mainPresenter) {
     var priceTypeTitle: String
     var fixPriceDescription: String
@@ -51,7 +51,7 @@ class CreateOfferPricePresenter(
     private val _hintText = MutableStateFlow("")
     val hintText: StateFlow<String> get() = _hintText.asStateFlow()
 
-    private var createOfferModel: CreateOfferPresenter.CreateOfferModel
+    private var createOfferModel: CreateOfferCoordinator.CreateOfferModel
 
     private val _showWhyPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showWhyPopup: StateFlow<Boolean> get() = _showWhyPopup.asStateFlow()
@@ -61,7 +61,7 @@ class CreateOfferPricePresenter(
     }
 
     init {
-        createOfferModel = createOfferPresenter.createOfferModel
+        createOfferModel = createOfferCoordinator.createOfferModel
 
         _priceType.value = createOfferModel.priceType
         priceQuote = createOfferModel.priceQuote
@@ -153,7 +153,7 @@ class CreateOfferPricePresenter(
         try {
             percentagePriceValue = PercentageParser.parse(value)
             _formattedPercentagePrice.value = PercentageFormatter.format(this.percentagePriceValue, false)
-            val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+            val marketPriceQuote = createOfferCoordinator.getMostRecentPriceQuote(createOfferModel.market!!)
             priceQuote = PriceUtil.fromMarketPriceMarkup(marketPriceQuote, this.percentagePriceValue)
             _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
         } catch (e: Exception) {
@@ -212,7 +212,7 @@ class CreateOfferPricePresenter(
             priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, market)
             _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
 
-            val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(market)
+            val marketPriceQuote = createOfferCoordinator.getMostRecentPriceQuote(market)
             if (marketPriceQuote.value <= 0) {
                 log.e { "Invalid market price: ${marketPriceQuote.value}" }
                 _formattedPercentagePriceValid.value = false
@@ -272,7 +272,7 @@ class CreateOfferPricePresenter(
             }
 
             priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, market)
-            val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(market)
+            val marketPriceQuote = createOfferCoordinator.getMostRecentPriceQuote(market)
             if (marketPriceQuote.value <= 0) {
                 log.e { "Invalid market price: ${marketPriceQuote.value}" }
                 return 0.0
@@ -330,7 +330,7 @@ class CreateOfferPricePresenter(
     }
 
     private fun commitToModel() {
-        createOfferPresenter.commitPrice(
+        createOfferCoordinator.commitPrice(
             priceType.value,
             percentagePriceValue,
             priceQuote,

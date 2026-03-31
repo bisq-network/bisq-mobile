@@ -21,13 +21,13 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.offer.Sel
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferDirectionScreen() {
     val presenter: CreateOfferDirectionPresenter = koinInject()
-    val createPresenter: CreateOfferPresenter = koinInject()
+    val createCoordinator: CreateOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val showSellerReputationWarning by presenter.showSellerReputationWarning.collectAsState()
@@ -37,7 +37,7 @@ fun CreateOfferDirectionScreen() {
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.progress.directionAndMarket".i18n(),
         stepIndex = 1,
-        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
+        stepsLength = if (createCoordinator.skipCurrency) 6 else 7,
         horizontalAlignment = Alignment.Start,
         showNextPrevButtons = false,
         shouldBlurBg = showSellerReputationWarning,

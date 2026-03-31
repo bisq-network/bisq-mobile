@@ -7,11 +7,11 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 
 class TakeOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
-    private val takeOfferPresenter: TakeOfferPresenter,
+    private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : BasePresenter(mainPresenter) {
     var hasMultipleQuoteSidePaymentMethods: Boolean = false
     var hasMultipleBaseSidePaymentMethods: Boolean = false
@@ -24,10 +24,10 @@ class TakeOfferPaymentMethodPresenter(
 
     lateinit var quoteCurrencyCode: String
 
-    private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
+    private lateinit var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
 
     init {
-        takeOfferModel = takeOfferPresenter.takeOfferModel
+        takeOfferModel = takeOfferCoordinator.takeOfferModel
         hasMultipleQuoteSidePaymentMethods = takeOfferModel.hasMultipleQuoteSidePaymentMethods
         hasMultipleBaseSidePaymentMethods = takeOfferModel.hasMultipleBaseSidePaymentMethods
 
@@ -76,7 +76,7 @@ class TakeOfferPaymentMethodPresenter(
         if (isQuoteSideValid()) {
             commitToPaymentMethod()
 
-            if (takeOfferPresenter.showSettlementMethodsScreen()) {
+            if (takeOfferCoordinator.showSettlementMethodsScreen()) {
                 navigateTo(NavRoute.TakeOfferSettlementMethod)
             } else {
                 navigateTo(NavRoute.TakeOfferReviewTrade)
@@ -102,13 +102,13 @@ class TakeOfferPaymentMethodPresenter(
 
     private fun commitToPaymentMethod() {
         if (isQuoteSideValid()) {
-            takeOfferPresenter.commitPaymentMethod(quoteSidePaymentMethod.value!!)
+            takeOfferCoordinator.commitPaymentMethod(quoteSidePaymentMethod.value!!)
         }
     }
 
     private fun commitToSettlementMethod() {
         if (isBaseSideValid()) {
-            takeOfferPresenter.commitSettlementMethod(baseSidePaymentMethod.value!!)
+            takeOfferCoordinator.commitSettlementMethod(baseSidePaymentMethod.value!!)
         }
     }
 

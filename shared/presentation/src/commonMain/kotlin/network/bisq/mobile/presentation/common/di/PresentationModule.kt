@@ -14,14 +14,14 @@ import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideDownloadPr
 import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideIntroPresenter
 import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideNewPresenter
 import network.bisq.mobile.presentation.guide.wallet_guide.WalletGuideReceivingPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.create_offer.amount.CreateOfferAmountPresenter
 import network.bisq.mobile.presentation.offer.create_offer.direction.CreateOfferDirectionPresenter
 import network.bisq.mobile.presentation.offer.create_offer.market.CreateOfferMarketPresenter
 import network.bisq.mobile.presentation.offer.create_offer.payment_method.CreateOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.offer.create_offer.price.CreateOfferPricePresenter
 import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewPresenter
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
 import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
@@ -132,13 +132,13 @@ val presentationModule =
         single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get(), get(), get()) }
 
         // Take offer
-        single { TakeOfferPresenter(get(), get(), get()) }
+        single { TakeOfferCoordinator(get(), get()) }
         factory { TakeOfferAmountPresenter(get(), get(), get()) }
         factory { TakeOfferPaymentMethodPresenter(get(), get()) }
         factory { TakeOfferReviewPresenter(get(), get(), get()) }
 
         // Create offer
-        single { CreateOfferPresenter(get(), get(), get(), get()) }
+        single { CreateOfferCoordinator(get(), get(), get()) }
         factory { CreateOfferDirectionPresenter(get(), get(), get(), get()) }
         factory { CreateOfferMarketPresenter(get(), get(), get(), get()) }
         factory { CreateOfferPricePresenter(get(), get(), get()) }

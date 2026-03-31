@@ -35,7 +35,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter.AmountType
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.AmountType
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

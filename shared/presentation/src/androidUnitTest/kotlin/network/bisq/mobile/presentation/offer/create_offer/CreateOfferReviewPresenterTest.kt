@@ -361,13 +361,11 @@ class CreateOfferReviewPresenterTest {
         )
     }
 
-    private fun makeCreateOfferPresenter(
-        mainPresenter: MainPresenter,
+    private fun makeCreateOfferCoordinator(
         marketPriceServiceFacade: MarketPriceServiceFacade,
-    ): CreateOfferPresenter {
+    ): CreateOfferCoordinator {
         val offersServiceFacade = mockk<OffersServiceFacade>(relaxed = true)
-        return CreateOfferPresenter(
-            mainPresenter,
+        return CreateOfferCoordinator(
             marketPriceServiceFacade,
             offersServiceFacade,
             FakeSettingsServiceFacade(),
@@ -386,15 +384,15 @@ class CreateOfferReviewPresenterTest {
         market: MarketVO,
         staleMarketPrice: PriceQuoteVO,
         percentage: Double,
-    ): CreateOfferPresenter.CreateOfferModel {
+    ): CreateOfferCoordinator.CreateOfferModel {
         val staleOfferPrice = PriceUtil.fromMarketPriceMarkup(staleMarketPrice, percentage)
-        return CreateOfferPresenter.CreateOfferModel().also { m ->
+        return CreateOfferCoordinator.CreateOfferModel().also { m ->
             m.market = market
             m.direction = DirectionEnum.BUY
-            m.amountType = CreateOfferPresenter.AmountType.FIXED_AMOUNT
+            m.amountType = CreateOfferCoordinator.AmountType.FIXED_AMOUNT
             m.quoteSideFixedAmount = with(FiatVOFactory) { fromFaceValue(5000.0, "USD") }
             m.baseSideFixedAmount = with(CoinVOFactory) { fromFaceValue(0.05, "BTC") }
-            m.priceType = CreateOfferPresenter.PriceType.PERCENTAGE
+            m.priceType = CreateOfferCoordinator.PriceType.PERCENTAGE
             m.percentagePriceValue = percentage
             m.originalPriceQuote = staleMarketPrice
             m.priceQuote = staleOfferPrice
@@ -409,14 +407,14 @@ class CreateOfferReviewPresenterTest {
         staleMarketPrice: PriceQuoteVO,
         fixedPrice: PriceQuoteVO,
         percentage: Double,
-    ): CreateOfferPresenter.CreateOfferModel =
-        CreateOfferPresenter.CreateOfferModel().also { m ->
+    ): CreateOfferCoordinator.CreateOfferModel =
+        CreateOfferCoordinator.CreateOfferModel().also { m ->
             m.market = market
             m.direction = DirectionEnum.BUY
-            m.amountType = CreateOfferPresenter.AmountType.FIXED_AMOUNT
+            m.amountType = CreateOfferCoordinator.AmountType.FIXED_AMOUNT
             m.quoteSideFixedAmount = with(FiatVOFactory) { fromFaceValue(5000.0, "USD") }
             m.baseSideFixedAmount = with(CoinVOFactory) { fromFaceValue(0.05, "BTC") }
-            m.priceType = CreateOfferPresenter.PriceType.FIXED
+            m.priceType = CreateOfferCoordinator.PriceType.FIXED
             m.percentagePriceValue = percentage
             m.originalPriceQuote = staleMarketPrice
             m.priceQuote = fixedPrice
@@ -429,17 +427,17 @@ class CreateOfferReviewPresenterTest {
         market: MarketVO,
         staleMarketPrice: PriceQuoteVO,
         percentage: Double,
-    ): CreateOfferPresenter.CreateOfferModel {
+    ): CreateOfferCoordinator.CreateOfferModel {
         val staleOfferPrice = PriceUtil.fromMarketPriceMarkup(staleMarketPrice, percentage)
-        return CreateOfferPresenter.CreateOfferModel().also { m ->
+        return CreateOfferCoordinator.CreateOfferModel().also { m ->
             m.market = market
             m.direction = DirectionEnum.BUY
-            m.amountType = CreateOfferPresenter.AmountType.RANGE_AMOUNT
+            m.amountType = CreateOfferCoordinator.AmountType.RANGE_AMOUNT
             m.quoteSideMinRangeAmount = with(FiatVOFactory) { fromFaceValue(1000.0, "USD") }
             m.quoteSideMaxRangeAmount = with(FiatVOFactory) { fromFaceValue(5000.0, "USD") }
             m.baseSideMinRangeAmount = with(CoinVOFactory) { fromFaceValue(0.01, "BTC") }
             m.baseSideMaxRangeAmount = with(CoinVOFactory) { fromFaceValue(0.05, "BTC") }
-            m.priceType = CreateOfferPresenter.PriceType.PERCENTAGE
+            m.priceType = CreateOfferCoordinator.PriceType.PERCENTAGE
             m.percentagePriceValue = percentage
             m.originalPriceQuote = staleMarketPrice
             m.priceQuote = staleOfferPrice
@@ -473,14 +471,14 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
         // Model has stale data: price was calculated with $100,000 + 10% = $110,000
         val percentage = 0.10
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithPercentagePricing(marketUSD, staleMarketPrice, percentage)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         // Expected: price recalculated from CURRENT market ($105,000) + 10% = $115,500
@@ -520,13 +518,13 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
         // Fixed price at $110,000 (was 10% above $100,000 when entered)
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithFixedPricing(marketUSD, staleMarketPrice, fixedPrice, 0.10)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         // Fixed price should always show the user's chosen price
@@ -553,13 +551,13 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
         // 0% pricing: offer price = market price
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithPercentagePricing(marketUSD, staleMarketPrice, 0.0)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         // Should show current market price ($105,000), not stale ($100,000)
@@ -591,12 +589,12 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithPercentagePricing(marketUSD, staleMarketPrice, 0.10)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         // The priceDetails should contain the current market price, not the stale one
@@ -633,13 +631,13 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
         // Negative percentage = below market price
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithPercentagePricing(marketUSD, staleMarketPrice, -0.05)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         // priceDetails should mention "below"
@@ -667,12 +665,12 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithRangeAmountPercentagePricing(marketUSD, staleMarketPrice, 0.10)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         assert(reviewPresenter.isRangeOffer) { "isRangeOffer should be true for RANGE_AMOUNT" }
@@ -705,13 +703,13 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
         // Fixed price equals current market → percentage delta is 0
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithFixedPricing(marketUSD, staleMarketPrice, fixedPrice, 0.0)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         // Should use the "atMarket" i18n key path (line 215-216)
@@ -744,12 +742,12 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithFixedPricing(marketUSD, staleMarketPrice, fixedPrice, -0.05)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         assert(reviewPresenter.priceDetails.contains("below", ignoreCase = true)) {
@@ -776,18 +774,18 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
         val percentage = 0.10
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithPercentagePricing(marketUSD, staleMarketPrice, percentage)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         // Should not throw even with no market price available
         reviewPresenter.onViewAttached()
 
         // Falls back to stored priceQuote
-        val expectedFallbackPrice = createOfferPresenter.createOfferModel.priceQuote
+        val expectedFallbackPrice = createOfferCoordinator.createOfferModel.priceQuote
         val expectedFormatted = PriceQuoteFormatter.format(expectedFallbackPrice, true, false)
         assertEquals(expectedFormatted, reviewPresenter.formattedPrice)
     }
@@ -811,12 +809,12 @@ class CreateOfferReviewPresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
 
-        createOfferPresenter.createOfferModel =
+        createOfferCoordinator.createOfferModel =
             buildModelWithFixedPricing(marketUSD, staleMarketPrice, fixedPrice, 0.10)
 
-        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferPresenter)
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
         reviewPresenter.onViewAttached()
 
         // Should use stale originalPriceQuote for display since currentMarketPrice is null

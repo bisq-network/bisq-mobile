@@ -11,14 +11,14 @@ import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenW
 import network.bisq.mobile.presentation.common.ui.components.organisms.PaymentMethodCard
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.convertToSet
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodPresenter
 import org.koin.compose.koinInject
 
 @Composable
 fun TakeOfferSettlementMethodScreen() {
     val presenter: TakeOfferPaymentMethodPresenter = koinInject()
-    val takeOfferPresenter: TakeOfferPresenter = koinInject()
+    val takeOfferCoordinator: TakeOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val baseSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
@@ -29,7 +29,7 @@ fun TakeOfferSettlementMethodScreen() {
         }
     }
 
-    val takeOffer = takeOfferPresenter.takeOfferModel
+    val takeOffer = takeOfferCoordinator.takeOfferModel
     var stepIndex = 1
     if (takeOffer.hasAmountRange) {
         stepIndex++
@@ -41,7 +41,7 @@ fun TakeOfferSettlementMethodScreen() {
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.takeOffer.progress.baseSidePaymentMethod".i18n(),
         stepIndex = stepIndex,
-        stepsLength = takeOfferPresenter.totalSteps,
+        stepsLength = takeOfferCoordinator.totalSteps,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onBaseSideNext() },
         showUserAvatar = false,

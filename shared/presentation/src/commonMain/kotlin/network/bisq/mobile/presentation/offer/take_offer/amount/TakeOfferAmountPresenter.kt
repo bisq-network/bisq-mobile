@@ -24,13 +24,13 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 
 // TODO Create/Take offer amount preseenters are very similar a base class could be extracted
 class TakeOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter,
+    private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : BasePresenter(mainPresenter) {
     private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
     val sliderPosition: StateFlow<Float> get() = _sliderPosition.asStateFlow()
@@ -47,7 +47,7 @@ class TakeOfferAmountPresenter(
     // Guard to prevent interactions when initialization fails
     private var initializationFailed: Boolean = false
 
-    private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
+    private lateinit var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
     private var minAmount: Long = 0L
     private var maxAmount: Long = 0L
 
@@ -67,7 +67,7 @@ class TakeOfferAmountPresenter(
 
     init {
         runCatching {
-            takeOfferModel = takeOfferPresenter.takeOfferModel
+            takeOfferModel = takeOfferCoordinator.takeOfferModel
             val offerListItem = takeOfferModel.offerItemPresentationVO
             quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
 
@@ -155,7 +155,7 @@ class TakeOfferAmountPresenter(
                 _amountValid.value = isInRange
                 quoteAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
                 _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount).replace(separator, "")
-                priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
+                priceQuote = takeOfferCoordinator.getMostRecentPriceQuote()
                 baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
                 _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
                 val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
@@ -190,9 +190,9 @@ class TakeOfferAmountPresenter(
     fun onNext() {
         commitToModel()
 
-        if (takeOfferPresenter.showPaymentMethodsScreen()) {
+        if (takeOfferCoordinator.showPaymentMethodsScreen()) {
             navigateTo(NavRoute.TakeOfferPaymentMethod)
-        } else if (takeOfferPresenter.showSettlementMethodsScreen()) {
+        } else if (takeOfferCoordinator.showSettlementMethodsScreen()) {
             navigateTo(NavRoute.TakeOfferSettlementMethod)
         } else {
             navigateTo(NavRoute.TakeOfferReviewTrade)
@@ -212,7 +212,7 @@ class TakeOfferAmountPresenter(
             quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
             _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount).replace(separator, "")
 
-            priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
+            priceQuote = takeOfferCoordinator.getMostRecentPriceQuote()
             baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
             _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
         } catch (e: Exception) {
@@ -221,6 +221,6 @@ class TakeOfferAmountPresenter(
     }
 
     private fun commitToModel() {
-        takeOfferPresenter.commitAmount(priceQuote, quoteAmount, baseAmount)
+        takeOfferCoordinator.commitAmount(priceQuote, quoteAmount, baseAmount)
     }
 }

@@ -21,14 +21,33 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.domain.utils.Logging
 
-class TakeOfferPresenter(
-    mainPresenter: MainPresenter,
+/**
+ * Coordinates the multi-step "Take Offer" wizard flow.
+ *
+ * This is NOT a presenter — it does not extend [BasePresenter], has no lifecycle methods, and
+ * does not interact with UI directly. It is a singleton data coordinator that:
+ *
+ * 1. Holds the [TakeOfferModel] shared across all wizard step screens
+ * 2. Computes how many steps the wizard needs (based on the offer's payment methods and amount range)
+ * 3. Provides [commit] methods for each step presenter to save user selections
+ * 4. Delegates trade execution to [TradesServiceFacade]
+ *
+ * Usage:
+ * - Injected as a Koin `single` into step presenters and screens
+ * - [selectOfferToTake] must be called before navigating to the first wizard step
+ *   (typically from [OfferbookPresenter])
+ * - Each step presenter calls the appropriate `commit*()` method when the user advances
+ * - The final step presenter calls [takeOffer] to submit
+ *
+ * The calling presenter is responsible for any presentation concerns (error snackbars,
+ * navigation, loading states) — this coordinator only manages data and service calls.
+ */
+class TakeOfferCoordinator(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : Logging {
     class TakeOfferModel {
         lateinit var offerItemPresentationVO: OfferItemPresentationModel
         var hasMultipleQuoteSidePaymentMethods: Boolean = false
@@ -175,7 +194,6 @@ class TakeOfferPresenter(
         if (result.isSuccess) {
             tradesServiceFacade.selectOpenTrade(result.getOrThrow())
         } else {
-            // todo
             log.w { "Take offer failed ${result.exceptionOrNull()}" }
         }
         return TakeOfferFlowResult(takeOfferStatus, takeOfferErrorMessage)

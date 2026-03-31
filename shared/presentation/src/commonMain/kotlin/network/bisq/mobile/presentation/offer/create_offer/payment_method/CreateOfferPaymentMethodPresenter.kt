@@ -8,11 +8,11 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 
 class CreateOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
-    private val createOfferPresenter: CreateOfferPresenter,
+    private val createOfferCoordinator: CreateOfferCoordinator,
 ) : BasePresenter(mainPresenter) {
     val quoteSideHeadline: String
     val baseSideHeadline: String
@@ -21,7 +21,7 @@ class CreateOfferPaymentMethodPresenter(
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
     val selectedBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
 
-    private val createOfferModel: CreateOfferPresenter.CreateOfferModel = createOfferPresenter.createOfferModel
+    private val createOfferModel: CreateOfferCoordinator.CreateOfferModel = createOfferCoordinator.createOfferModel
 
     init {
 
@@ -138,7 +138,7 @@ class CreateOfferPaymentMethodPresenter(
 
     private fun commitPaymentToModel() {
         if (isQuoteSideValid()) {
-            createOfferPresenter.commitPaymentMethod(
+            createOfferCoordinator.commitPaymentMethod(
                 selectedQuoteSidePaymentMethods.value,
             )
         }
@@ -146,7 +146,7 @@ class CreateOfferPaymentMethodPresenter(
 
     private fun commitSettlementToModel() {
         if (isBaseSideValid()) {
-            createOfferPresenter.commitSettlementMethod(
+            createOfferCoordinator.commitSettlementMethod(
                 selectedBaseSidePaymentMethods.value,
             )
         }

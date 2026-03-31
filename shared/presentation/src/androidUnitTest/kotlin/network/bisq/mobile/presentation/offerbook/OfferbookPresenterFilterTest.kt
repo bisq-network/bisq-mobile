@@ -45,8 +45,8 @@ import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecyc
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -178,14 +178,14 @@ class OfferbookPresenterFilterTest {
                 override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
             }
         val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
-        val takeOfferPresenter = mockk<TakeOfferPresenter>(relaxed = true)
-        val createOfferPresenter = mockk<CreateOfferPresenter>(relaxed = true)
+        val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
+        val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
         val presenter =
             OfferbookPresenter(
                 mainPresenter,
                 offersService,
-                takeOfferPresenter,
-                createOfferPresenter,
+                takeOfferCoordinator,
+                createOfferCoordinator,
                 marketPriceServiceFacade,
                 offerUserProfileService,
                 reputationService,
@@ -517,15 +517,15 @@ class OfferbookPresenterFilterTest {
                     override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
                 }
             val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
-            val takeOfferPresenter = mockk<TakeOfferPresenter>(relaxed = true)
-            val createOfferPresenter = mockk<CreateOfferPresenter>(relaxed = true)
+            val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
+            val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
 
             val presenter =
                 OfferbookPresenter(
                     mainPresenter,
                     offersService,
-                    takeOfferPresenter,
-                    createOfferPresenter,
+                    takeOfferCoordinator,
+                    createOfferCoordinator,
                     marketPriceServiceFacade,
                     offerUserProfileService,
                     reputationService,

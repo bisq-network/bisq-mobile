@@ -13,13 +13,13 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.amountSelector.BisqAmountSelector
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import org.koin.compose.koinInject
 
 @Composable
 fun TakeOfferTradeAmountScreen() {
     val presenter: TakeOfferAmountPresenter = koinInject()
-    val takeOfferPresenter: TakeOfferPresenter = koinInject()
+    val takeOfferCoordinator: TakeOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val formattedQuoteAmount by presenter.formattedQuoteAmount.collectAsState()
@@ -30,7 +30,7 @@ fun TakeOfferTradeAmountScreen() {
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.amount".i18n(),
         stepIndex = 1,
-        stepsLength = takeOfferPresenter.totalSteps,
+        stepsLength = takeOfferCoordinator.totalSteps,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
         nextDisabled = !amountValid,

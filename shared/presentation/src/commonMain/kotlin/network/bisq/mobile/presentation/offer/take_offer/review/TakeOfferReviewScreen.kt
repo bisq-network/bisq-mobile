@@ -27,7 +27,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -35,14 +35,14 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferReviewTradeScreen() {
     val presenter: TakeOfferReviewPresenter = koinInject()
-    val takeOfferPresenter: TakeOfferPresenter = koinInject()
+    val takeOfferCoordinator: TakeOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val showProgressDialog by presenter.showTakeOfferProgressDialog.collectAsState()
     val showSuccessDialog by presenter.showTakeOfferSuccessDialog.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
 
-    val takeOffer = takeOfferPresenter.takeOfferModel
+    val takeOffer = takeOfferCoordinator.takeOfferModel
     var stepIndex = 1
     if (takeOffer.hasAmountRange) {
         stepIndex++
@@ -68,7 +68,7 @@ fun TakeOfferReviewTradeScreen() {
         feeDetails = presenter.feeDetails,
         isSmallScreen = presenter::isSmallScreen,
         stepIndex = stepIndex,
-        stepsLength = takeOfferPresenter.totalSteps,
+        stepsLength = takeOfferCoordinator.totalSteps,
         showProgressDialog = showProgressDialog,
         showSuccessDialog = showSuccessDialog,
         isInteractive = isInteractive,

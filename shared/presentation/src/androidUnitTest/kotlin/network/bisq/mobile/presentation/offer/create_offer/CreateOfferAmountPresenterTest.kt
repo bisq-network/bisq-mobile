@@ -95,16 +95,15 @@ class CreateOfferAmountPresenterTest {
                 MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
 
             val offersServiceFacade = mockk<OffersServiceFacade>(relaxed = true)
-            val createOfferPresenter =
-                CreateOfferPresenter(
-                    mainPresenter,
+            val createOfferCoordinator =
+                CreateOfferCoordinator(
                     marketPriceServiceFacade,
                     offersServiceFacade,
                     mockk<SettingsServiceFacade>(relaxed = true),
                 )
             // Prepare model with market set
-            createOfferPresenter.createOfferModel =
-                CreateOfferPresenter.CreateOfferModel().also { m ->
+            createOfferCoordinator.createOfferModel =
+                CreateOfferCoordinator.CreateOfferModel().also { m ->
                     m.market = marketUSD
                 }
 
@@ -112,7 +111,7 @@ class CreateOfferAmountPresenterTest {
                 CreateOfferAmountPresenter(
                     mainPresenter,
                     marketPriceServiceFacade,
-                    createOfferPresenter,
+                    createOfferCoordinator,
                     mockk<UserProfileServiceFacade>(relaxed = true),
                     mockk<ReputationServiceFacade>(relaxed = true),
                 )
@@ -176,16 +175,15 @@ class CreateOfferAmountPresenterTest {
                 MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
 
             val offersServiceFacade = mockk<OffersServiceFacade>(relaxed = true)
-            val createOfferPresenter =
-                CreateOfferPresenter(
-                    mainPresenter,
+            val createOfferCoordinator =
+                CreateOfferCoordinator(
                     marketPriceServiceFacade,
                     offersServiceFacade,
                     mockk<SettingsServiceFacade>(relaxed = true),
                 )
             // Prepare model with market set
-            createOfferPresenter.createOfferModel =
-                CreateOfferPresenter.CreateOfferModel().also { m ->
+            createOfferCoordinator.createOfferModel =
+                CreateOfferCoordinator.CreateOfferModel().also { m ->
                     m.market = marketUSD
                 }
 
@@ -193,7 +191,7 @@ class CreateOfferAmountPresenterTest {
                 CreateOfferAmountPresenter(
                     mainPresenter,
                     marketPriceServiceFacade,
-                    createOfferPresenter,
+                    createOfferCoordinator,
                     mockk<UserProfileServiceFacade>(relaxed = true),
                     mockk<ReputationServiceFacade>(relaxed = true),
                 )

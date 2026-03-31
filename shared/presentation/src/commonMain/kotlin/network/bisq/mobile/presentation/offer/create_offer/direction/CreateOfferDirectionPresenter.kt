@@ -19,21 +19,21 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 
 class CreateOfferDirectionPresenter(
     mainPresenter: MainPresenter,
-    private val createOfferPresenter: CreateOfferPresenter,
+    private val createOfferCoordinator: CreateOfferCoordinator,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
-    var direction: DirectionEnum = createOfferPresenter.createOfferModel.direction
+    var direction: DirectionEnum = createOfferCoordinator.createOfferModel.direction
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val marketName: StateFlow<String?> =
         mainPresenter.languageCode
             .mapLatest { _ ->
-                createOfferPresenter.createOfferModel.market?.let { market ->
+                createOfferCoordinator.createOfferModel.market?.let { market ->
                     CurrencyUtils.getLocaleFiatCurrencyName(
                         market.quoteCurrencyCode,
                         market.quoteCurrencyName,
@@ -132,7 +132,7 @@ class CreateOfferDirectionPresenter(
 
     private fun navigateNext() {
         commitToModel()
-        if (createOfferPresenter.skipCurrency) {
+        if (createOfferCoordinator.skipCurrency) {
             navigateTo(NavRoute.CreateOfferAmount)
         } else {
             navigateTo(NavRoute.CreateOfferMarket)
@@ -140,6 +140,6 @@ class CreateOfferDirectionPresenter(
     }
 
     private fun commitToModel() {
-        createOfferPresenter.commitDirection(direction)
+        createOfferCoordinator.commitDirection(direction)
     }
 }

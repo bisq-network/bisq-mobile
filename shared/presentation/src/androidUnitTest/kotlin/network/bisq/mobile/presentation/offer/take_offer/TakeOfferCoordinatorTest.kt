@@ -74,7 +74,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TakeOfferPresenterTest {
+class TakeOfferCoordinatorTest {
     // --- Fakes (Android/JVM-friendly) ---
     private val testDispatcher = StandardTestDispatcher()
 
@@ -416,7 +416,7 @@ class TakeOfferPresenterTest {
 
         val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
         // Act: Select offer with fixed amount
         val fixedAmountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L)
@@ -451,7 +451,7 @@ class TakeOfferPresenterTest {
 
         val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
         // Act: Select offer with wide range (100_000 to 5_000_000)
         // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
@@ -486,7 +486,7 @@ class TakeOfferPresenterTest {
 
         val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
         // Act: Select offer where range collapses after clamping
         // Offer range: 1_070_000 to 1_075_000 (difference = 5_000, which is < 10_000 slider step)
@@ -517,7 +517,7 @@ class TakeOfferPresenterTest {
 
         val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
         // Act: Select offer with range spec
         val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
@@ -550,7 +550,7 @@ class TakeOfferPresenterTest {
 
         val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
         // Act: Select offer where min > max trade limit
         // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
@@ -586,7 +586,7 @@ class TakeOfferPresenterTest {
 
         val mainPresenter = makeMainPresenter()
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
         // Act: Select offer with wide range and 2 quote payment methods
         val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)

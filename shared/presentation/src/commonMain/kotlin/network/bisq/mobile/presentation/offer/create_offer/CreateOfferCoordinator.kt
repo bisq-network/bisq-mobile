@@ -21,21 +21,38 @@ import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
-import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.domain.utils.Logging
 import kotlin.time.Duration.Companion.seconds
 
-class CreateOfferPresenter(
-    mainPresenter: MainPresenter,
+/**
+ * Coordinates the multi-step "Create Offer" wizard flow.
+ *
+ * This is NOT a presenter — it does not extend [BasePresenter], has no lifecycle methods, and
+ * does not interact with UI directly. It is a singleton data coordinator that:
+ *
+ * 1. Holds the [CreateOfferModel] shared across all wizard step screens
+ * 2. Provides [commit] methods for each step presenter to save user selections
+ * 3. Delegates offer creation to [OffersServiceFacade]
+ *
+ * Usage:
+ * - Injected as a Koin `single` into step presenters and screens
+ * - [onStartCreateOffer] must be called before navigating to the first wizard step
+ *   (typically from [TabContainerPresenter] or [OfferbookPresenter])
+ * - Each step presenter calls the appropriate `commit*()` method when the user advances
+ * - The final step presenter calls [createOffer] to submit
+ *
+ * The calling presenter is responsible for any presentation concerns (demo mode checks,
+ * error snackbars, navigation) — this coordinator only manages data and service calls.
+ */
+class CreateOfferCoordinator(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : Logging {
     enum class PriceType {
         PERCENTAGE,
         FIXED,
@@ -81,6 +98,8 @@ class CreateOfferPresenter(
     lateinit var createOfferModel: CreateOfferModel
 
     var skipCurrency: Boolean = false
+
+    val isDemo: Boolean get() = ApplicationBootstrapFacade.isDemo
 
     fun onStartCreateOffer() {
         createOfferModel = CreateOfferModel()
@@ -192,11 +211,6 @@ class CreateOfferPresenter(
     )
 
     private suspend fun prepareOfferParameters(): OfferParameters {
-        if (isDemo()) {
-            showSnackbar("mobile.bisqEasy.offerbook.createOfferDisabledInDemonstrationMode".i18n(), type = SnackbarType.ERROR)
-            throw IllegalStateException("Demo mode")
-        }
-
         val direction: DirectionEnum = createOfferModel.direction
         val market: MarketVO = createOfferModel.market!!
         val bitcoinPaymentMethods: Set<String> = createOfferModel.selectedBaseSidePaymentMethods
@@ -260,7 +274,7 @@ class CreateOfferPresenter(
         }
 
     fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
-        if (isDemo()) {
+        if (isDemo) {
             val marketVO = marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
             return PriceQuoteVO(
                 100,

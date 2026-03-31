@@ -26,15 +26,15 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.create_of
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.ReputationBasedSellerLimitsPopup
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter.AmountType
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.AmountType
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferAmountScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
-    val createPresenter: CreateOfferPresenter = koinInject()
+    val createCoordinator: CreateOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isBuy by presenter.isBuy.collectAsState()
@@ -84,8 +84,8 @@ fun CreateOfferAmountScreen() {
         formattedMinAmountWithCode = presenter.formattedMinAmountWithCode,
         formattedMaxAmountWithCode = if (!isBuy) reputationBasedMaxSellAmount else presenter.formattedMaxAmountWithCode,
         amountLimitInfoOverlayInfo = presenter.amountLimitInfoOverlayInfo,
-        stepIndex = if (createPresenter.skipCurrency) 2 else 3,
-        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
+        stepIndex = if (createCoordinator.skipCurrency) 2 else 3,
+        stepsLength = if (createCoordinator.skipCurrency) 6 else 7,
         onSelectAmountType = presenter::onSelectAmountType,
         onFixedAmountSliderValueChange = presenter::onFixedAmountSliderValueChange,
         onMinRangeSliderValueChange = presenter::onMinRangeSliderValueChange,

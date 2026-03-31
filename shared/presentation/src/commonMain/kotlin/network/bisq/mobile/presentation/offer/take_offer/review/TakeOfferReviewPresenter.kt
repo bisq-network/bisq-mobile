@@ -25,13 +25,13 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarT
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import kotlin.math.abs
 
 class TakeOfferReviewPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter,
+    private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : BasePresenter(mainPresenter) {
     var headLine: String
     var quoteSidePaymentMethodDisplayString: String
@@ -47,7 +47,7 @@ class TakeOfferReviewPresenter(
 
     override val blockInteractivityOnAttached: Boolean = true
 
-    private var takeOfferModel: TakeOfferPresenter.TakeOfferModel
+    private var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
 
     // We pass that to the domain, which updates the state while take offer is in progress, so that we can show the status
     // or error to the user
@@ -85,7 +85,7 @@ class TakeOfferReviewPresenter(
             }
         }
 
-        takeOfferModel = takeOfferPresenter.takeOfferModel
+        takeOfferModel = takeOfferCoordinator.takeOfferModel
         val offerListItem = takeOfferModel.offerItemPresentationVO
         takersDirection = offerListItem.bisqEasyOffer.direction.mirror
 
@@ -135,7 +135,7 @@ class TakeOfferReviewPresenter(
                 if (isDemo()) {
                     showSnackbar("Take offer is disabled in demo mode", type = SnackbarType.ERROR)
                 } else {
-                    val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
+                    val (statusFlow, errorFlow) = takeOfferCoordinator.takeOffer()
 
                     // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
                     presenterScope.launch {

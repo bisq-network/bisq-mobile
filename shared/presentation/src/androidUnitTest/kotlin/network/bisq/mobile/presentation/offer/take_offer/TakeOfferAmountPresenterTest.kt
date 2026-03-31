@@ -378,17 +378,17 @@ class TakeOfferAmountPresenterTest {
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+            val takeOfferCoordinator =
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
             // Select offer
             val dto = makeOfferDto()
             val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+            takeOfferCoordinator.selectOfferToTake(model)
 
             // Create Amount presenter (runs init)
             val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator)
 
             val beforeQuote = presenter.formattedQuoteAmount.value
             val beforeBase = presenter.formattedBaseAmount.value
@@ -447,17 +447,17 @@ class TakeOfferAmountPresenterTest {
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+            val takeOfferCoordinator =
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
             // Select offer
             val dto = makeOfferDto()
             val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+            takeOfferCoordinator.selectOfferToTake(model)
 
             // Create Amount presenter (runs init)
             val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator)
 
             // Act: type "50" (which is $50 = 500_000L in minor units)
             presenter.onTextValueChanged("50")
@@ -492,17 +492,17 @@ class TakeOfferAmountPresenterTest {
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+            val takeOfferCoordinator =
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
             // Select offer
             val dto = makeOfferDto()
             val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+            takeOfferCoordinator.selectOfferToTake(model)
 
             // Create Amount presenter (runs init)
             val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator)
 
             // Act: type "1" (which is $1 = 10_000L, below min of ~$6-10)
             presenter.onTextValueChanged("1")
@@ -534,17 +534,17 @@ class TakeOfferAmountPresenterTest {
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+            val takeOfferCoordinator =
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
             // Select offer
             val dto = makeOfferDto()
             val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+            takeOfferCoordinator.selectOfferToTake(model)
 
             // Create Amount presenter (runs init)
             val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator)
 
             // Act: type ""
             presenter.onTextValueChanged("")
@@ -571,8 +571,8 @@ class TakeOfferAmountPresenterTest {
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+            val takeOfferCoordinator =
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
             // Create an offer with MXN market (which has no price data)
             val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
@@ -611,11 +611,11 @@ class TakeOfferAmountPresenterTest {
                 )
 
             val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+            takeOfferCoordinator.selectOfferToTake(model)
 
             // Create Amount presenter (runs init, should fail)
             val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator)
 
             // Act: type "50"
             presenter.onTextValueChanged("50")
@@ -647,17 +647,17 @@ class TakeOfferAmountPresenterTest {
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
-            val takeOfferPresenter =
-                TakeOfferPresenter(mainPresenter, marketPriceServiceFacade, tradesServiceFacade)
+            val takeOfferCoordinator =
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
 
             // Select offer
             val dto = makeOfferDto()
             val model = OfferItemPresentationModel(dto)
-            takeOfferPresenter.selectOfferToTake(model)
+            takeOfferCoordinator.selectOfferToTake(model)
 
             // Create Amount presenter (runs init)
             val presenter =
-                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferPresenter)
+                TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator)
 
             // Act: set slider to 0.5, then quickly call onSliderValueChanged(0.6f) then onSliderValueChanged(0.7f)
             // without advancing time (so 0.7 is pending), then call onSliderDragFinished()

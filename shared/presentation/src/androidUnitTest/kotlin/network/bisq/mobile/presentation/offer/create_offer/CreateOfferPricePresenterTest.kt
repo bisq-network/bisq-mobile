@@ -347,13 +347,11 @@ class CreateOfferPricePresenterTest {
         )
     }
 
-    private fun makeCreateOfferPresenter(
-        mainPresenter: MainPresenter,
+    private fun makeCreateOfferCoordinator(
         marketPriceServiceFacade: MarketPriceServiceFacade,
-    ): CreateOfferPresenter {
+    ): CreateOfferCoordinator {
         val offersServiceFacade = mockk<OffersServiceFacade>(relaxed = true)
-        return CreateOfferPresenter(
-            mainPresenter,
+        return CreateOfferCoordinator(
             marketPriceServiceFacade,
             offersServiceFacade,
             FakeSettingsServiceFacade(),
@@ -363,12 +361,12 @@ class CreateOfferPricePresenterTest {
     private fun makePricePresenter(
         mainPresenter: MainPresenter,
         marketPriceServiceFacade: MarketPriceServiceFacade,
-        createOfferPresenter: CreateOfferPresenter,
+        createOfferCoordinator: CreateOfferCoordinator,
     ): CreateOfferPricePresenter =
         CreateOfferPricePresenter(
             mainPresenter,
             marketPriceServiceFacade,
-            createOfferPresenter,
+            createOfferCoordinator,
         )
 
     /**
@@ -389,9 +387,9 @@ class CreateOfferPricePresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
-        createOfferPresenter.createOfferModel =
-            CreateOfferPresenter.CreateOfferModel().also { m ->
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
+        createOfferCoordinator.createOfferModel =
+            CreateOfferCoordinator.CreateOfferModel().also { m ->
                 m.market = marketUSD
                 m.direction = DirectionEnum.BUY
                 val mp = MarketPriceSpecVO().getPriceQuoteVO(marketUSDItem)
@@ -399,7 +397,7 @@ class CreateOfferPricePresenterTest {
                 m.originalPriceQuote = mp
             }
 
-        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferPresenter)
+        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferCoordinator)
 
         // Verify initial state is valid
         assertTrue(pricePresenter.formattedPercentagePriceValid.value)
@@ -428,9 +426,9 @@ class CreateOfferPricePresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
-        createOfferPresenter.createOfferModel =
-            CreateOfferPresenter.CreateOfferModel().also { m ->
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
+        createOfferCoordinator.createOfferModel =
+            CreateOfferCoordinator.CreateOfferModel().also { m ->
                 m.market = marketUSD
                 m.direction = DirectionEnum.BUY
                 val mp = MarketPriceSpecVO().getPriceQuoteVO(marketUSDItem)
@@ -438,7 +436,7 @@ class CreateOfferPricePresenterTest {
                 m.originalPriceQuote = mp
             }
 
-        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferPresenter)
+        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferCoordinator)
 
         // 10% above market: $110,000
         pricePresenter.onFixPriceChanged("110000", true)
@@ -463,9 +461,9 @@ class CreateOfferPricePresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
-        createOfferPresenter.createOfferModel =
-            CreateOfferPresenter.CreateOfferModel().also { m ->
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
+        createOfferCoordinator.createOfferModel =
+            CreateOfferCoordinator.CreateOfferModel().also { m ->
                 m.market = marketUSD
                 m.direction = DirectionEnum.BUY
                 val mp = MarketPriceSpecVO().getPriceQuoteVO(marketUSDItem)
@@ -473,7 +471,7 @@ class CreateOfferPricePresenterTest {
                 m.originalPriceQuote = mp
             }
 
-        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferPresenter)
+        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferCoordinator)
 
         // 20% below market: $80,000 → percentage = -0.2 → -20% < -10% limit
         pricePresenter.onFixPriceChanged("80000", true)
@@ -498,9 +496,9 @@ class CreateOfferPricePresenterTest {
         every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
-        val createOfferPresenter = makeCreateOfferPresenter(mainPresenter, marketPriceServiceFacade)
-        createOfferPresenter.createOfferModel =
-            CreateOfferPresenter.CreateOfferModel().also { m ->
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
+        createOfferCoordinator.createOfferModel =
+            CreateOfferCoordinator.CreateOfferModel().also { m ->
                 m.market = marketUSD
                 m.direction = DirectionEnum.BUY
                 val mp = MarketPriceSpecVO().getPriceQuoteVO(marketUSDItem)
@@ -508,7 +506,7 @@ class CreateOfferPricePresenterTest {
                 m.originalPriceQuote = mp
             }
 
-        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferPresenter)
+        val pricePresenter = makePricePresenter(mainPresenter, marketPriceServiceFacade, createOfferCoordinator)
 
         pricePresenter.onFixPriceChanged("", true)
 

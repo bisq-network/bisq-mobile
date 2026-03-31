@@ -27,7 +27,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import org.koin.compose.koinInject
 
 private const val MIN_ALLOWED_PERCENTAGE_FRACTION = -10f
@@ -37,7 +37,7 @@ private const val MAX_ALLOWED_PERCENTAGE_FRACTION = 50f
 @Composable
 fun CreateOfferPriceScreen() {
     val presenter: CreateOfferPricePresenter = koinInject()
-    val createPresenter: CreateOfferPresenter = koinInject()
+    val createCoordinator: CreateOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val formattedPercentagePrice by presenter.formattedPercentagePrice.collectAsState()
@@ -61,8 +61,8 @@ fun CreateOfferPriceScreen() {
 
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.review.price.price".i18n(),
-        stepIndex = if (createPresenter.skipCurrency) 3 else 4,
-        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
+        stepIndex = if (createCoordinator.skipCurrency) 3 else 4,
+        stepsLength = if (createCoordinator.skipCurrency) 6 else 7,
         prevOnClick = { presenter.onBack() },
         nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onNext() },
@@ -91,7 +91,7 @@ fun CreateOfferPriceScreen() {
             Column(
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
-                if (priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
+                if (priceType == CreateOfferCoordinator.PriceType.PERCENTAGE) {
                     BisqTextField(
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,

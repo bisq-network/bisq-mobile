@@ -17,13 +17,13 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.tabs.offers.MarketFilterUtil
 
 class CreateOfferMarketPresenter(
     mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter,
+    private val createOfferCoordinator: CreateOfferCoordinator,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
 ) : BasePresenter(mainPresenter) {
     var headline: String
@@ -89,7 +89,7 @@ class CreateOfferMarketPresenter(
             )
 
     init {
-        val createOfferModel = createOfferPresenter.createOfferModel
+        val createOfferModel = createOfferCoordinator.createOfferModel
         _selectedMarketItem.value =
             createOfferModel.market?.let { modelMarket ->
                 // Prefer the canonical instance from the current list if available
@@ -141,7 +141,7 @@ class CreateOfferMarketPresenter(
         if (isValid()) {
             val marketItem = _selectedMarketItem.value!!
             runCatching {
-                createOfferPresenter.commitMarket(marketItem.market)
+                createOfferCoordinator.commitMarket(marketItem.market)
                 offersServiceFacade.selectOfferbookMarket(marketItem)
             }.onFailure {
                 log.e(it) { "Failed to commit to model ${it.message}" }

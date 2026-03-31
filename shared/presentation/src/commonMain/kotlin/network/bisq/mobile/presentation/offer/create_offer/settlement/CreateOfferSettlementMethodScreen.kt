@@ -10,14 +10,14 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.components.organisms.PaymentMethodCard
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.create_offer.payment_method.CreateOfferPaymentMethodPresenter
 import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferSettlementMethodScreen() {
     val presenter: CreateOfferPaymentMethodPresenter = koinInject()
-    val createPresenter: CreateOfferPresenter = koinInject()
+    val createCoordinator: CreateOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val selectedBaseSidePaymentMethods = remember { presenter.selectedBaseSidePaymentMethods }
@@ -25,8 +25,8 @@ fun CreateOfferSettlementMethodScreen() {
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.createOffer.progress.baseSidePaymentMethod".i18n(),
-        stepIndex = if (createPresenter.skipCurrency) 5 else 6,
-        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
+        stepIndex = if (createCoordinator.skipCurrency) 5 else 6,
+        stepsLength = if (createCoordinator.skipCurrency) 6 else 7,
         prevOnClick = { presenter.onBack() },
         nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onBaseSideNext() },
