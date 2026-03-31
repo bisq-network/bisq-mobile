@@ -365,6 +365,35 @@ class ClientConnectivityServiceTest {
             )
         }
 
+    @Test
+    fun `connection stays RECONNECTING when isConnected true but health check keeps failing`() =
+        runBlocking {
+            // Simulates desktop node shutdown: TCP connection stays alive (isConnected=true)
+            // but server never responds to health checks
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } returns false
+            coEvery { webSocketClientService.forceReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+
+            // First cycle: health check fails, marks untrusted, sets RECONNECTING
+            delay(200)
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+
+            // Subsequent cycles: isConnected() still true but connectionUntrusted flag
+            // prevents re-entering the "connected" path — stays RECONNECTING
+            delay(500)
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.RECONNECTING,
+                clientConnectivityService.status.value,
+                "Should remain RECONNECTING when health checks keep failing on half-open connection",
+            )
+
+            // Verify forceReconnect was called multiple times (not just once)
+            coVerify(atLeast = 3) { webSocketClientService.forceReconnect() }
+        }
+
     // ///////////////////////////////////////////////////////////////////////////
     // iOS-specific reconnection recovery tests
     // ///////////////////////////////////////////////////////////////////////////

@@ -69,6 +69,12 @@ class ClientConnectivityService(
     private val mutex = Mutex()
     private var consecutiveReconnectingCycles = 0
 
+    // Once a health check fails, the connection is "untrusted" until a health check
+    // succeeds again. This prevents the monitoring loop from oscillating between
+    // CONNECTED and RECONNECTING when isConnected() returns true on a stale/half-open
+    // TCP connection (e.g., desktop node shutdown without sending TCP FIN).
+    private var connectionUntrusted = false
+
     override suspend fun activate() {
         super.activate()
         startMonitoring()
@@ -117,25 +123,46 @@ class ClientConnectivityService(
         try {
             val previousStatus = _status.value
             val connected = isConnected()
-            log.d { "Health cycle: isConnected=$connected, previousStatus=$previousStatus" }
+            log.d { "Health cycle: isConnected=$connected, connectionUntrusted=$connectionUntrusted, previousStatus=$previousStatus" }
             val newStatus =
                 when {
-                    !connected -> {
-                        consecutiveReconnectingCycles++
-                        log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
-                        if (shouldForceClientRecreation()) {
-                            // iOS: Darwin engine's NSURLSession may not create functional
-                            // WebSocket connections after repeated failures on the same
-                            // session. Force full client recreation with a fresh NSURLSession.
-                            log.i { "iOS: forcing client recreation after $consecutiveReconnectingCycles failed cycles" }
-                            webSocketClientService.forceClientRecreation()
-                            consecutiveReconnectingCycles = 0
+                    !connected || connectionUntrusted -> {
+                        // When connectionUntrusted is true, we don't trust isConnected()
+                        // alone — a previous health check failed, meaning the server may
+                        // be down even though the TCP socket looks alive (half-open connection).
+                        // We must verify with a real round-trip before trusting the connection.
+                        if (!connected) {
+                            consecutiveReconnectingCycles++
+                            log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
+                            if (shouldForceClientRecreation()) {
+                                log.i { "iOS: forcing client recreation after $consecutiveReconnectingCycles failed cycles" }
+                                webSocketClientService.forceClientRecreation()
+                                consecutiveReconnectingCycles = 0
+                            } else {
+                                webSocketClientService.triggerReconnect()
+                            }
+                            ConnectivityStatus.RECONNECTING
                         } else {
-                            // Trigger reconnection attempt to recover from max-retry
-                            // exhaustion or transient network outages
-                            webSocketClientService.triggerReconnect()
+                            // isConnected() is true but connection is untrusted.
+                            // Verify with a health check before restoring trust.
+                            val alive = isConnectionAlive()
+                            log.d { "Untrusted connection health check: alive=$alive" }
+                            if (alive) {
+                                log.i { "Connection trust restored after successful health check" }
+                                connectionUntrusted = false
+                                consecutiveReconnectingCycles = 0
+                                if (isSlow()) {
+                                    ConnectivityStatus.REQUESTING_INVENTORY
+                                } else {
+                                    ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+                                }
+                            } else {
+                                consecutiveReconnectingCycles++
+                                log.d { "Untrusted connection health check failed, forcing reconnection" }
+                                webSocketClientService.forceReconnect()
+                                ConnectivityStatus.RECONNECTING
+                            }
                         }
-                        ConnectivityStatus.RECONNECTING
                     }
                     else -> {
                         consecutiveReconnectingCycles = 0
@@ -146,7 +173,8 @@ class ClientConnectivityService(
                         val alive = isConnectionAlive()
                         log.d { "Health check result: alive=$alive" }
                         if (!alive) {
-                            log.d { "Health check failed, forcing reconnection" }
+                            log.d { "Health check failed, marking connection as untrusted" }
+                            connectionUntrusted = true
                             webSocketClientService.forceReconnect()
                             ConnectivityStatus.RECONNECTING
                         } else if (isSlow()) {
