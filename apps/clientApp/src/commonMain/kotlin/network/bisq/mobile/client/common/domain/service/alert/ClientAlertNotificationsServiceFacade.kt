@@ -24,7 +24,7 @@ class ClientAlertNotificationsServiceFacade(
 
         serviceScope.launch {
             runCatching {
-                subscribeAuthorizedAlerts()
+                subscribeAlerts()
             }.onFailure {
                 log.w { "Failed to subscribe to authorized alerts" }
             }
@@ -50,7 +50,7 @@ class ClientAlertNotificationsServiceFacade(
         }
     }
 
-    private suspend fun subscribeAuthorizedAlerts() {
+    private suspend fun subscribeAlerts() {
         apiGateway
             .subscribeAlerts()
             .onSuccess { observer ->

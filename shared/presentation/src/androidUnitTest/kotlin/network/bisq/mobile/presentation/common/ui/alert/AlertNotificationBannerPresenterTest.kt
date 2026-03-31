@@ -10,7 +10,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -23,8 +22,10 @@ import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
+import network.bisq.mobile.presentation.common.test_utils.probeStateFlow
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
@@ -87,13 +88,16 @@ class AlertNotificationBannerPresenterTest {
             mainPresenter.setIsMainContentVisible(true)
 
             val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()
-            val uiState = presenter.uiState.first { it.currentAlert != null }
+            val uiState = uiStateProbe.latest()
 
             assertEquals("emergency-new", uiState.currentAlert?.id)
             assertEquals(3, uiState.pendingAlertCount)
             assertTrue(uiState.isBannerVisible)
+
+            uiStateProbe.cancel()
         }
 
     @Test
@@ -117,14 +121,22 @@ class AlertNotificationBannerPresenterTest {
             val mainPresenter = MainPresenterTestFactory.create()
 
             val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val uiStateProbe = probeStateFlow(presenter.uiState)
 
+            advanceUntilIdle()
+            val dialogMark = uiStateProbe.mark()
             presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("warn"))
+            advanceUntilIdle()
 
-            val dialogState = presenter.uiState.first { it.currentAlertDialog?.id == "warn" }.currentAlertDialog
+            assertEquals(1, uiStateProbe.valuesSince(dialogMark).size)
+
+            val dialogState = uiStateProbe.latest().currentAlertDialog
             assertEquals("warn", dialogState?.id)
             assertEquals(AlertType.WARN, dialogState?.type)
             assertEquals("Headline", dialogState?.headline)
             assertEquals("message", dialogState?.message)
+
+            uiStateProbe.cancel()
         }
 
     @Test
@@ -135,22 +147,29 @@ class AlertNotificationBannerPresenterTest {
             val mainPresenter = MainPresenterTestFactory.create()
 
             val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val uiStateProbe = probeStateFlow(presenter.uiState)
 
+            advanceUntilIdle()
+            val openDialogMark = uiStateProbe.mark()
             presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("warn"))
+            advanceUntilIdle()
+            assertEquals(1, uiStateProbe.valuesSince(openDialogMark).size)
             assertEquals(
                 "warn",
-                presenter.uiState
-                    .first { it.currentAlertDialog?.id == "warn" }
-                    .currentAlertDialog
-                    ?.id,
+                uiStateProbe.latest().currentAlertDialog?.id,
             )
 
+            val closeDialogMark = uiStateProbe.mark()
             presenter.onAction(AlertNotificationUiAction.OnCloseDialog)
+            advanceUntilIdle()
 
+            assertEquals(1, uiStateProbe.valuesSince(closeDialogMark).size)
             assertEquals(
                 null,
-                presenter.uiState.first { it.currentAlert?.id == "warn" && it.currentAlertDialog == null }.currentAlertDialog,
+                uiStateProbe.latest().currentAlertDialog,
             )
+
+            uiStateProbe.cancel()
         }
 
     @Test
@@ -178,14 +197,122 @@ class AlertNotificationBannerPresenterTest {
             mainPresenter.setIsMainContentVisible(false)
 
             val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()
-            assertFalse(presenter.uiState.first().isBannerVisible)
+            assertFalse(uiStateProbe.latest().isBannerVisible)
 
+            val visibilityChangeMark = uiStateProbe.mark()
             mainPresenter.setIsMainContentVisible(true)
             advanceUntilIdle()
 
-            assertTrue(presenter.uiState.first { it.isBannerVisible }.isBannerVisible)
+            assertEquals(1, uiStateProbe.valuesSince(visibilityChangeMark).size)
+            assertTrue(uiStateProbe.latest().isBannerVisible)
+
+            uiStateProbe.cancel()
+        }
+
+    @Test
+    fun `default headlines are applied for visible alert types and highest severity ranks first`() =
+        runTest(testDispatcher) {
+            val alertsFlow =
+                MutableStateFlow(
+                    listOf(
+                        alert(id = "info", type = AlertType.INFO, date = 1L, headline = null),
+                        alert(id = "warn", type = AlertType.WARN, date = 2L, headline = null),
+                        alert(id = "emergency", type = AlertType.EMERGENCY, date = 3L, headline = null),
+                    ),
+                )
+            val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
+            val mainPresenter = MainPresenterTestFactory.create()
+            mainPresenter.setIsMainContentVisible(true)
+
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val uiStateProbe = probeStateFlow(presenter.uiState)
+
+            advanceUntilIdle()
+            assertEquals("emergency", uiStateProbe.latest().currentAlert?.id)
+
+            val infoDialogMark = uiStateProbe.mark()
+            presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("info"))
+            advanceUntilIdle()
+            assertEquals(1, uiStateProbe.valuesSince(infoDialogMark).size)
+            assertEquals(
+                "authorizedRole.securityManager.alertType.INFO".i18n(),
+                uiStateProbe.latest().currentAlertDialog?.headline,
+            )
+
+            val warnDialogMark = uiStateProbe.mark()
+            presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("warn"))
+            advanceUntilIdle()
+            assertEquals(1, uiStateProbe.valuesSince(warnDialogMark).size)
+            assertEquals(
+                "authorizedRole.securityManager.alertType.WARN".i18n(),
+                uiStateProbe.latest().currentAlertDialog?.headline,
+            )
+
+            val emergencyDialogMark = uiStateProbe.mark()
+            presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("emergency"))
+            advanceUntilIdle()
+            assertEquals(1, uiStateProbe.valuesSince(emergencyDialogMark).size)
+            assertEquals(
+                "authorizedRole.securityManager.alertType.EMERGENCY".i18n(),
+                uiStateProbe.latest().currentAlertDialog?.headline,
+            )
+
+            uiStateProbe.cancel()
+        }
+
+    @Test
+    fun `non message alert types are never exposed in banner or dialog ui state`() =
+        runTest(testDispatcher) {
+            val alertsFlow =
+                MutableStateFlow(
+                    listOf(
+                        alert(id = "ban", type = AlertType.BAN, date = 100L),
+                        alert(id = "banned-account", type = AlertType.BANNED_ACCOUNT_DATA, date = 200L),
+                        alert(id = "warn", type = AlertType.WARN, date = 50L),
+                    ),
+                )
+            val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
+            val mainPresenter = MainPresenterTestFactory.create()
+            mainPresenter.setIsMainContentVisible(true)
+
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val uiStateProbe = probeStateFlow(presenter.uiState)
+
+            advanceUntilIdle()
+
+            val uiState = uiStateProbe.latest()
+            assertEquals("warn", uiState.currentAlert?.id)
+            assertEquals(0, uiState.pendingAlertCount)
+            assertTrue(uiState.isBannerVisible)
+
+            val hiddenDialogMark = uiStateProbe.mark()
+            presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("ban"))
+            advanceUntilIdle()
+            assertTrue(uiStateProbe.valuesSince(hiddenDialogMark).isEmpty())
+            assertEquals(null, uiStateProbe.latest().currentAlertDialog)
+
+            val hiddenAccountDialogMark = uiStateProbe.mark()
+            presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("banned-account"))
+            advanceUntilIdle()
+            assertTrue(uiStateProbe.valuesSince(hiddenAccountDialogMark).isEmpty())
+            assertEquals(null, uiStateProbe.latest().currentAlertDialog)
+
+            val hiddenOnlyMark = uiStateProbe.mark()
+            alertsFlow.value = listOf(alert(id = "ban-only", type = AlertType.BAN, date = 300L))
+            advanceUntilIdle()
+
+            assertEquals(1, uiStateProbe.valuesSince(hiddenOnlyMark).size)
+
+            val hiddenOnlyUiState = uiStateProbe.latest()
+            assertEquals(null, hiddenOnlyUiState.currentAlert)
+            assertEquals(0, hiddenOnlyUiState.pendingAlertCount)
+            assertFalse(hiddenOnlyUiState.isBannerVisible)
+            assertEquals(null, hiddenOnlyUiState.currentAlertDialog)
+
+            uiStateProbe.cancel()
         }
 
     private fun alert(

@@ -121,4 +121,113 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
             coVerify(exactly = 1) { apiGateway.dismissAlert("warn-1") }
             assertEquals(emptyList(), facade.alerts.value)
         }
+
+    @Test
+    fun `deactivate clears cached alerts`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+
+            facade.activate()
+            observer.setEvent(validAlertEvent())
+            advanceUntilIdle()
+
+            facade.deactivate()
+
+            assertEquals(emptyList(), facade.alerts.value)
+        }
+
+    @Test
+    fun `activate ignores malformed payload and keeps previous alerts`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+
+            facade.activate()
+            observer.setEvent(validAlertEvent(sequenceNumber = 1))
+            advanceUntilIdle()
+
+            observer.setEvent(
+                WebSocketEvent(
+                    topic = Topic.ALERT_NOTIFICATIONS,
+                    subscriberId = "authorized-alerts-test",
+                    deferredPayload = "not-json",
+                    modificationType = ModificationType.REPLACE,
+                    sequenceNumber = 2,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals(listOf("warn-1"), facade.alerts.value.map(AuthorizedAlertData::id))
+        }
+
+    @Test
+    fun `activate ignores events without payload`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+
+            facade.activate()
+            observer.setEvent(
+                WebSocketEvent(
+                    topic = Topic.ALERT_NOTIFICATIONS,
+                    subscriberId = "authorized-alerts-test",
+                    deferredPayload = null,
+                    modificationType = ModificationType.REPLACE,
+                    sequenceNumber = 1,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), facade.alerts.value)
+        }
+
+    @Test
+    fun `activate handles subscription failure without crashing`() =
+        runTest {
+            coEvery { apiGateway.subscribeAlerts() } returns Result.failure(IllegalStateException("boom"))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), facade.alerts.value)
+        }
+
+    @Test
+    fun `dismissAlert keeps local alert when backend fails`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+            coEvery { apiGateway.dismissAlert("warn-1") } returns Result.failure(IllegalStateException("boom"))
+
+            facade.activate()
+            observer.setEvent(validAlertEvent())
+            advanceUntilIdle()
+
+            facade.dismissAlert("warn-1")
+            advanceUntilIdle()
+
+            assertEquals(listOf("warn-1"), facade.alerts.value.map(AuthorizedAlertData::id))
+        }
+
+    private fun validAlertEvent(sequenceNumber: Int = 1): WebSocketEvent =
+        WebSocketEvent(
+            topic = Topic.ALERT_NOTIFICATIONS,
+            subscriberId = "authorized-alerts-test",
+            deferredPayload =
+                """
+                [
+                  {
+                  "id": "warn-1",
+                  "date": 10,
+                  "alertType": "WARN",
+                  "message": "Please update soon.",
+                  "haltTrading": false,
+                  "requireVersionForTrading": false
+                  }
+                ]
+                """.trimIndent(),
+            modificationType = ModificationType.REPLACE,
+            sequenceNumber = sequenceNumber,
+        )
 }

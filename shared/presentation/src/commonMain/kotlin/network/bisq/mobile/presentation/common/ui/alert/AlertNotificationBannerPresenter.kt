@@ -28,14 +28,15 @@ class AlertNotificationBannerPresenter(
             currentAlertDialogId,
             mainPresenter.isMainContentVisible,
         ) { alerts, dialogAlertId, isMainContentVisible ->
-            val currentAlert = alerts.maxWithOrNull(compareBy({ it.type.priority }, { it.date }))?.toUiState()
+            val visibleAlerts = alerts.filter { it.type.isMessageAlert() }
+            val currentAlert = visibleAlerts.maxWithOrNull(compareBy({ it.type.priority }, { it.date }))?.toUiState()
             val currentAlertDialog =
                 dialogAlertId
-                    ?.let { id -> alerts.firstOrNull { it.id == id } }
+                    ?.let { id -> visibleAlerts.firstOrNull { it.id == id } }
                     ?.toUiState()
             AlertNotificationBannerUiState(
                 currentAlert = currentAlert,
-                pendingAlertCount = if (currentAlert == null) 0 else (alerts.size - 1).coerceAtLeast(0),
+                pendingAlertCount = if (currentAlert == null) 0 else (visibleAlerts.size - 1).coerceAtLeast(0),
                 isBannerVisible = isMainContentVisible && currentAlert != null,
                 currentAlertDialog = currentAlertDialog,
             )
