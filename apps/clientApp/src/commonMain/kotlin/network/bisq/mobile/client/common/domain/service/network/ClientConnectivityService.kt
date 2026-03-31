@@ -158,8 +158,14 @@ class ClientConnectivityService(
                                 }
                             } else {
                                 consecutiveReconnectingCycles++
-                                log.d { "Untrusted connection health check failed, forcing reconnection" }
-                                webSocketClientService.forceReconnect()
+                                log.d { "Untrusted connection health check failed, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
+                                if (shouldForceClientRecreation()) {
+                                    log.i { "iOS: forcing client recreation after $consecutiveReconnectingCycles failed untrusted cycles" }
+                                    webSocketClientService.forceClientRecreation()
+                                    consecutiveReconnectingCycles = 0
+                                } else {
+                                    webSocketClientService.forceReconnect()
+                                }
                                 ConnectivityStatus.RECONNECTING
                             }
                         }
