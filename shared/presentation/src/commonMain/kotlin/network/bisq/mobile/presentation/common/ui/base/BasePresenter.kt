@@ -135,172 +135,11 @@ abstract class BasePresenter(
     // Global UI manager for app-wide UI state (loading dialogs, snackbars, etc.)
     protected val globalUiManager: GlobalUiManager by inject()
 
-    override fun showSnackbar(
-        message: String,
-        type: SnackbarType,
-        position: SnackbarPosition,
-        duration: SnackbarDuration,
-    ) {
-        globalUiManager.showSnackbar(message, type, duration, position)
-    }
-
-    override fun isSmallScreen(): Boolean = rootPresenter?.isSmallScreen?.value ?: false
-
-    init {
-        rootPresenter?.registerChild(child = this)
-    }
-
-    /**
-     * Enable interactive state with a small delay to avoid flicker.
-     * Link your UI to this state to disable user interactions.
-     */
-    protected fun enableInteractive() {
-        presenterScope.launch {
-            delay(SMALLEST_PERCEPTIVE_DELAY)
-            _isInteractive.value = true
-        }
-    }
-
-    /**
-     * Disable interactive state immediately.
-     * Link your UI to this state to disable user interactions.
-     */
-    protected fun disableInteractive() {
-        _isInteractive.value = false
-    }
-
-    /**
-     * Schedule showing a loading dialog after a grace delay.
-     * If the operation completes before the delay expires, the dialog never appears (avoiding flicker).
-     * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
-     * Delegates to GlobalUiManager for app-level loading dialog management.
-     */
-    protected fun showLoading() {
-        globalUiManager.scheduleShowLoading()
-    }
-
-    /**
-     * Hide the loading dialog and cancel any scheduled show.
-     * Delegates to GlobalUiManager for app-level loading dialog management.
-     */
-    protected fun hideLoading() {
-        globalUiManager.hideLoading()
-    }
-
-    override fun isIOS(): Boolean {
-        val isIOS = getPlatformInfo().type == PlatformType.IOS
-        log.d { "isIOS = $isIOS" }
-        return isIOS
-    }
-
-    override fun isAtHomeTab(): Boolean = navigationManager.isAtHomeTab()
-
-    protected fun isAtMainScreen(): Boolean = navigationManager.isAtMainScreen()
-
-    /**
-     * Navigate to given destination
-     */
-    protected fun navigateTo(
-        destination: NavRoute,
-        customSetup: (NavOptionsBuilder) -> Unit = {},
-    ) {
-        disableInteractive()
-        navigationManager.navigate(
-            destination,
-            customSetup,
-        ) {
-            enableInteractive()
-        }
-    }
-
-    protected fun navigateBack() {
-        log.d { "Navigating back" }
-        disableInteractive()
-        navigationManager.navigateBack {
-            enableInteractive()
-        }
-    }
-
-    /**
-     * Back navigation popping back stack
-     */
-    protected fun navigateBackTo(
-        destination: NavRoute,
-        shouldInclusive: Boolean = false,
-        shouldSaveState: Boolean = false,
-    ) {
-        navigationManager.navigateBackTo(
-            destination,
-            shouldInclusive,
-            shouldSaveState,
-        )
-    }
-
-    /**
-     * Navigates to the given tab route inside the main presentation, with default parameters.
-     */
-    override fun navigateToTab(
-        destination: TabNavRoute,
-        saveStateOnPopUp: Boolean,
-        shouldLaunchSingleTop: Boolean,
-        shouldRestoreState: Boolean,
-    ) {
-        navigationManager.navigateToTab(
-            destination,
-            saveStateOnPopUp,
-            shouldLaunchSingleTop,
-            shouldRestoreState,
-        )
-    }
-
-    /**
-     * Navigates to Offerbook tab.
-     * Called from Create offer, Take offer flow to close the work flow.
-     */
-    protected fun navigateToOfferbookTab() {
-        navigateBackTo(NavRoute.TabContainer)
-        navigateToTab(NavRoute.TabOfferbookMarket)
-    }
-
     // Add a flag to track if we've shown the exit warning
     private var exitWarningShown = false
 
-    override fun onMainBackNavigation() {
-        when {
-            isAtHomeTab() -> {
-                if (exitWarningShown) {
-                    moveAppToBackground()
-                    exitWarningShown = false // Reset after action
-                } else {
-                    // Show warning first time
-                    showSnackbar("mobile.base.swipeBackToExit".i18n())
-                    exitWarningShown = true
-
-                    // Set a timer to reset the warning state after a few seconds
-                    presenterScope.launch {
-                        delay(EXIT_WARNING_TIMEOUT) // 3 seconds timeout for exit warning
-                        exitWarningShown = false
-                    }
-                }
-            }
-
-            navigationManager.isAtMainScreen() -> {
-                // Reset the exit warning when navigating to home
-                exitWarningShown = false
-                navigateToTab(
-                    destination = NavRoute.TabHome,
-                    saveStateOnPopUp = true,
-                    shouldLaunchSingleTop = true,
-                    shouldRestoreState = false,
-                )
-            }
-
-            else -> {
-                // Reset the exit warning for normal back navigation
-                exitWarningShown = false
-                navigateBack()
-            }
-        }
+    init {
+        rootPresenter?.registerChild(child = this)
     }
 
     @CallSuper
@@ -314,11 +153,7 @@ abstract class BasePresenter(
         // In bisq2, UserActivityDetected is triggered on mouse move and key press events
         // In bisq-mobile, userActivityDetected is triggered on every screen navigation,
         // which helps to reset user.publishDate.
-        presenterScope.launch {
-            if (I18nSupport.isReady) { // Makes sure bundles are loaded. This fails for Splash
-                rootPresenter?.userProfileServiceFacade?.userActivityDetected()
-            }
-        }
+        launchUserActivityDetection()
     }
 
     @CallSuper
@@ -329,6 +164,8 @@ abstract class BasePresenter(
         globalUiManager.dismissSnackbar()
         // Presenter level support for auto disposal
         CoroutineScope(Dispatchers.Main).launch { jobsManager.dispose() }
+        // Unregister from parent to prevent memory leak with factory presenters
+        rootPresenter?.unregisterChild(this)
     }
 
     @CallSuper
@@ -370,68 +207,44 @@ abstract class BasePresenter(
             onDestroying()
         } catch (e: Exception) {
             log.e("Custom cleanup failed", e)
-        } finally {
-//          we can't get read of the link here since link is done at construction only
-//            and we are using singletons
-//            rootPresenter?.unregisterChild(this)
         }
     }
 
-    protected fun registerChild(child: BasePresenter) {
-        if (!isRoot()) {
-            throw IllegalStateException("You can't register to a non root presenter")
-        }
-        this.dependants!!.add(child)
+    override fun showSnackbar(
+        message: String,
+        type: SnackbarType,
+        position: SnackbarPosition,
+        duration: SnackbarDuration,
+    ) {
+        globalUiManager.showSnackbar(message, type, duration, position)
     }
 
-    protected fun unregisterChild(child: BasePresenter) {
-        if (!isRoot()) {
-            throw IllegalStateException("You can't unregister from a non root presenter")
-        }
-        this.dependants!!.remove(child)
+    override fun isSmallScreen(): Boolean = rootPresenter?.isSmallScreen?.value ?: false
+
+    override fun isIOS(): Boolean {
+        val isIOS = getPlatformInfo().type == PlatformType.IOS
+        log.d { "isIOS = $isIOS" }
+        return isIOS
     }
 
     /**
-     * Pass through function that allows you to link the requested type the view is asking for in its view presenter interface
-     * with the field in the domain model of the repository.
-     *
-     * @param M base model from where to extract the requested type T
-     * @param T the requested view type T
-     * @param repositoryFlow
-     * @param transform the transformation function from the
-     * @param initialValue
-     * @param scope defaults to Coroutine.Main (view thread)
-     * @param started defaults to Lazy loading
+     * Navigates to the given tab route inside the main presentation, with default parameters.
      */
-    protected fun <M : BaseModel, T> stateFlowFromRepository(
-        repositoryFlow: StateFlow<M?>,
-        transform: (M?) -> T,
-        initialValue: T,
-        scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
-        started: SharingStarted = SharingStarted.Lazily,
-    ): StateFlow<T> =
-        repositoryFlow
-            .map { transform(it) }
-            .stateIn(
-                scope = scope,
-                started = started,
-                initialValue = initialValue,
-            )
-
-    private fun cleanup() {
-        try {
-            // Cancel scope synchronously. scope.cancel() is non-blocking so this
-            // doesn't cause the iOS CA Fence hangs that runBlocking did.
-            // No scope recreation needed — presenter is being destroyed.
-            runCatching { presenterScope.cancel() }
-            // copy to avoid concurrency exception - no problem with multiple on destroy calls
-            dependants?.toList()?.forEach { it.onDestroy() }
-        } catch (e: Exception) {
-            log.e("Failed cleanup", e)
-        }
+    override fun navigateToTab(
+        destination: TabNavRoute,
+        saveStateOnPopUp: Boolean,
+        shouldLaunchSingleTop: Boolean,
+        shouldRestoreState: Boolean,
+    ) {
+        navigationManager.navigateToTab(
+            destination,
+            saveStateOnPopUp,
+            shouldLaunchSingleTop,
+            shouldRestoreState,
+        )
     }
 
-    private fun isRoot() = rootPresenter == null
+    override fun isAtHomeTab(): Boolean = navigationManager.isAtHomeTab()
 
     fun moveAppToBackground() {
         if (rootPresenter == null && this is MainPresenter) {
@@ -479,14 +292,148 @@ abstract class BasePresenter(
         navigateToUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES)
     }
 
-    protected open fun isDevMode(): Boolean = rootPresenter?.isDevMode() ?: false
+    protected fun isAtMainScreen(): Boolean = navigationManager.isAtMainScreen()
+
+    /**
+     * Navigate to given destination
+     */
+    protected fun navigateTo(
+        destination: NavRoute,
+        customSetup: (NavOptionsBuilder) -> Unit = {},
+    ) {
+        disableInteractive()
+        navigationManager.navigate(
+            destination,
+            customSetup,
+        ) {
+            enableInteractive()
+        }
+    }
+
+    protected fun navigateBack() {
+        log.d { "Navigating back" }
+        disableInteractive()
+        navigationManager.navigateBack {
+            enableInteractive()
+        }
+    }
+
+    /**
+     * Back navigation popping back stack
+     */
+    protected fun navigateBackTo(
+        destination: NavRoute,
+        shouldInclusive: Boolean = false,
+        shouldSaveState: Boolean = false,
+    ) {
+        navigationManager.navigateBackTo(
+            destination,
+            shouldInclusive,
+            shouldSaveState,
+        )
+    }
+
+    /**
+     * Navigates to Offerbook tab.
+     * Called from Create offer, Take offer flow to close the work flow.
+     */
+    protected fun navigateToOfferbookTab() {
+        navigateBackTo(NavRoute.TabContainer)
+        navigateToTab(NavRoute.TabOfferbookMarket)
+    }
+
+    override fun onMainBackNavigation() {
+        when {
+            isAtHomeTab() -> {
+                if (exitWarningShown) {
+                    moveAppToBackground()
+                    exitWarningShown = false // Reset after action
+                } else {
+                    // Show warning first time
+                    showSnackbar("mobile.base.swipeBackToExit".i18n())
+                    exitWarningShown = true
+
+                    // Set a timer to reset the warning state after a few seconds
+                    presenterScope.launch {
+                        delay(EXIT_WARNING_TIMEOUT) // 3 seconds timeout for exit warning
+                        exitWarningShown = false
+                    }
+                }
+            }
+
+            navigationManager.isAtMainScreen() -> {
+                // Reset the exit warning when navigating to home
+                exitWarningShown = false
+                navigateToTab(
+                    destination = NavRoute.TabHome,
+                    saveStateOnPopUp = true,
+                    shouldLaunchSingleTop = true,
+                    shouldRestoreState = false,
+                )
+            }
+
+            else -> {
+                // Reset the exit warning for normal back navigation
+                exitWarningShown = false
+                navigateBack()
+            }
+        }
+    }
 
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
 
-    private fun blockInteractivityForBriefMoment() {
-        disableInteractive()
-        enableInteractive()
+    /**
+     * Enable interactive state with a small delay to avoid flicker.
+     * Link your UI to this state to disable user interactions.
+     */
+    protected fun enableInteractive() {
+        presenterScope.launch {
+            delay(SMALLEST_PERCEPTIVE_DELAY)
+            _isInteractive.value = true
+        }
     }
+
+    /**
+     * Disable interactive state immediately.
+     * Link your UI to this state to disable user interactions.
+     */
+    protected fun disableInteractive() {
+        _isInteractive.value = false
+    }
+
+    /**
+     * Schedule showing a loading dialog after a grace delay.
+     * If the operation completes before the delay expires, the dialog never appears (avoiding flicker).
+     * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
+     * Delegates to GlobalUiManager for app-level loading dialog management.
+     */
+    protected fun showLoading() {
+        globalUiManager.scheduleShowLoading()
+    }
+
+    /**
+     * Hide the loading dialog and cancel any scheduled show.
+     * Delegates to GlobalUiManager for app-level loading dialog management.
+     */
+    protected fun hideLoading() {
+        globalUiManager.hideLoading()
+    }
+
+    protected fun registerChild(child: BasePresenter) {
+        if (!isRoot()) {
+            throw IllegalStateException("You can't register to a non root presenter")
+        }
+        this.dependants!!.add(child)
+    }
+
+    protected fun unregisterChild(child: BasePresenter) {
+        if (!isRoot()) {
+            throw IllegalStateException("You can't unregister from a non root presenter")
+        }
+        this.dependants!!.remove(child)
+    }
+
+    protected open fun isDevMode(): Boolean = rootPresenter?.isDevMode() ?: false
 
     /**
      * Handles common errors by showing timeout or generic snackbars.
@@ -508,5 +455,33 @@ abstract class BasePresenter(
                 defaultMessage
             }
         showSnackbar(errorMessage, SnackbarType.ERROR, position)
+    }
+
+    private fun cleanup() {
+        try {
+            // Cancel scope synchronously. scope.cancel() is non-blocking so this
+            // doesn't cause the iOS CA Fence hangs that runBlocking did.
+            // No scope recreation needed — presenter is being destroyed.
+            runCatching { presenterScope.cancel() }
+            // copy to avoid concurrency exception - no problem with multiple on destroy calls
+            dependants?.toList()?.forEach { it.onDestroy() }
+        } catch (e: Exception) {
+            log.e("Failed cleanup", e)
+        }
+    }
+
+    private fun isRoot() = rootPresenter == null
+
+    private fun blockInteractivityForBriefMoment() {
+        disableInteractive()
+        enableInteractive()
+    }
+
+    private fun launchUserActivityDetection() {
+        presenterScope.launch {
+            if (I18nSupport.isReady) { // Makes sure bundles are loaded. This fails for Splash
+                rootPresenter?.userProfileServiceFacade?.userActivityDetected()
+            }
+        }
     }
 }
