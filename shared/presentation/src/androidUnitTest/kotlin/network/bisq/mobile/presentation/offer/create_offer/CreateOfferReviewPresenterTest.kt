@@ -55,17 +55,21 @@ import network.bisq.mobile.presentation.common.notification.NotificationControll
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreateOfferReviewPresenterTest {
@@ -83,6 +87,8 @@ class CreateOfferReviewPresenterTest {
                             get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
                         }
                     }
+                    single<NavigationManager> { mockk(relaxed = true) }
+                    single { GlobalUiManager() }
                 },
             )
         }
@@ -822,6 +828,43 @@ class CreateOfferReviewPresenterTest {
         assert(reviewPresenter.priceDetails.contains(staleMarketFormatted)) {
             "priceDetails should fall back to stored market price '$staleMarketFormatted' " +
                 "but was: '${reviewPresenter.priceDetails}'"
+        }
+    }
+
+    @Test
+    fun `when demo mode then onCreateOffer returns early without calling createOffer`() {
+        val marketUSD = MarketVOFactory.USD
+        val staleMarketPrice = with(PriceQuoteVOFactory) { fromPrice(100000.0, marketUSD) }
+        val currentMarketItem = makeMarketPriceItem(marketUSD, 105000.0)
+        val prices = mutableMapOf(marketUSD to currentMarketItem)
+        val settingsRepo = FakeSettingsRepository()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+
+        mockkStatic(
+            "network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt",
+        )
+        every { getScreenWidthDp() } returns 480
+
+        val mainPresenter = makeMainPresenter()
+        val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
+
+        createOfferCoordinator.createOfferModel =
+            buildModelWithPercentagePricing(marketUSD, staleMarketPrice, 0.10)
+
+        val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
+        reviewPresenter.onViewAttached()
+
+        // Enable demo mode
+        val previousDemoState = ApplicationBootstrapFacade.isDemo
+        try {
+            ApplicationBootstrapFacade.isDemo = true
+
+            reviewPresenter.onCreateOffer()
+
+            // Button should still be enabled (early return, not disabled)
+            assertTrue(reviewPresenter.isCreateOfferBtnEnabled.value)
+        } finally {
+            ApplicationBootstrapFacade.isDemo = previousDemoState
         }
     }
 }
