@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.node.common.domain.mapping.alert.toDomainOrNull
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import bisq.bonded_roles.security_manager.alert.AuthorizedAlertData as BisqAuthorizedAlertData
 

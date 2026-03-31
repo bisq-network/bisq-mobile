@@ -1,4 +1,4 @@
-package network.bisq.mobile.node.common.domain.service.alert
+package network.bisq.mobile.node.common.domain.mapping.alert
 
 import network.bisq.mobile.domain.model.alert.AlertType
 import bisq.bonded_roles.security_manager.alert.AlertType as AlertTypeBisq2

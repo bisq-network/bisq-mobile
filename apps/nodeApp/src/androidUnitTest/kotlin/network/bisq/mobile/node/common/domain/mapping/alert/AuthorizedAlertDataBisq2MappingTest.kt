@@ -1,4 +1,4 @@
-package network.bisq.mobile.node.common.domain.service.alert
+package network.bisq.mobile.node.common.domain.mapping.alert
 
 import io.mockk.every
 import io.mockk.mockk
