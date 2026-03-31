@@ -221,11 +221,7 @@ abstract class BasePresenter(
 
     override fun isSmallScreen(): Boolean = rootPresenter?.isSmallScreen?.value ?: false
 
-    override fun isIOS(): Boolean {
-        val isIOS = getPlatformInfo().type == PlatformType.IOS
-        log.d { "isIOS = $isIOS" }
-        return isIOS
-    }
+    override fun isIOS(): Boolean = getPlatformInfo().type == PlatformType.IOS
 
     /**
      * Navigates to the given tab route inside the main presentation, with default parameters.
@@ -333,10 +329,8 @@ abstract class BasePresenter(
         )
     }
 
-    /**
-     * Navigates to Offerbook tab.
-     * Called from Create offer, Take offer flow to close the work flow.
-     */
+    // TODO: Move to an OfferFlowPresenter base class — this is domain-specific to offer flows,
+    //  not a base presenter concern. Kept here temporarily to avoid touching 10 callers.
     protected fun navigateToOfferbookTab() {
         navigateBackTo(NavRoute.TabContainer)
         navigateToTab(NavRoute.TabOfferbookMarket)
