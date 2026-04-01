@@ -129,10 +129,19 @@ abstract class BasePresenter(
     protected open val blockInteractivityOnAttached = false
 
     /**
-     * override in your presenter if you don't want to dismiss snackbar on detach
-     * (avoid quick dismissal when its necessary to stay)
+     * Controls whether the global snackbar is dismissed when this presenter's view detaches.
+     *
+     * Default is false: snackbars are app-level (managed by [GlobalUiManager]) and have their
+     * own auto-dismiss duration via [SnackbarDuration], so they don't need manual cleanup on
+     * navigation. Dismissing on every screen transition caused snackbars to disappear before
+     * the user could read them — e.g., a "copied" snackbar shown by a dialog presenter would
+     * be immediately killed when the dialog's [onViewUnattaching] fired.
+     *
+     * Override to true in presenters that show screen-contextual snackbars that should not
+     * survive navigation to a different screen.
+     * TODO probably want to remove it altogether (global dismissal on every presenter interaction..?)
      */
-    protected open val dismissSnackbarOnDetach = true
+    protected open val dismissSnackbarOnDetach = false
 
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)

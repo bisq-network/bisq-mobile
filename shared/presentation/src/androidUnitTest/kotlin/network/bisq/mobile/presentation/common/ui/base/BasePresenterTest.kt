@@ -54,9 +54,10 @@ class BasePresenterTest {
             )
         }
 
-        mainPresenter = MainPresenterTestFactory.create(
-            applicationLifecycleService = TestApplicationLifecycleService(),
-        )
+        mainPresenter =
+            MainPresenterTestFactory.create(
+                applicationLifecycleService = TestApplicationLifecycleService(),
+            )
     }
 
     @AfterTest
@@ -67,37 +68,39 @@ class BasePresenterTest {
     }
 
     @Test
-    fun `onViewUnattaching dismisses snackbar by default`() {
+    fun `onViewUnattaching does not dismiss snackbar by default`() {
         val presenter = TestPresenter(mainPresenter)
 
         presenter.onViewAttached()
         presenter.showTestSnackbar("test message")
         presenter.onViewUnattaching()
 
-        // GlobalUiManager.dismissSnackbar emits Dismiss action — verify it was called
-        // by checking the presenter didn't opt out
-        assert(presenter.dismissSnackbarOnDetachValue) {
-            "Default presenter should have dismissSnackbarOnDetach = true"
+        // Default is false: snackbars are app-level with auto-dismiss duration,
+        // so they should survive screen transitions
+        assert(!presenter.dismissSnackbarOnDetachValue) {
+            "Default presenter should have dismissSnackbarOnDetach = false"
         }
     }
 
     @Test
-    fun `onViewUnattaching does not dismiss snackbar when dismissSnackbarOnDetach is false`() {
-        val presenter = DialogTestPresenter(mainPresenter)
+    fun `onViewUnattaching dismisses snackbar when dismissSnackbarOnDetach is true`() {
+        val presenter = ContextualSnackbarPresenter(mainPresenter)
 
         presenter.onViewAttached()
-        presenter.showTestSnackbar("copied successfully")
+        presenter.showTestSnackbar("screen-specific message")
         presenter.onViewUnattaching()
 
-        assert(!presenter.dismissSnackbarOnDetachValue) {
-            "Dialog presenter should have dismissSnackbarOnDetach = false"
+        // Presenter opted in to dismiss — screen-contextual snackbars
+        // should not survive navigation to a different screen
+        assert(presenter.dismissSnackbarOnDetachValue) {
+            "Contextual snackbar presenter should have dismissSnackbarOnDetach = true"
         }
     }
 
     @Test
     fun `presenter unregisters from parent on detach regardless of dismissSnackbarOnDetach flag`() {
         val defaultPresenter = TestPresenter(mainPresenter)
-        val dialogPresenter = DialogTestPresenter(mainPresenter)
+        val dialogPresenter = ContextualSnackbarPresenter(mainPresenter)
 
         defaultPresenter.onViewAttached()
         dialogPresenter.onViewAttached()
@@ -111,7 +114,8 @@ class BasePresenterTest {
     }
 
     /**
-     * Standard presenter with default behavior (dismissSnackbarOnDetach = true)
+     * Standard presenter with default behavior (dismissSnackbarOnDetach = false).
+     * Snackbars survive navigation — they auto-dismiss via SnackbarDuration.
      */
     private class TestPresenter(
         mainPresenter: MainPresenter,
@@ -124,12 +128,13 @@ class BasePresenterTest {
     }
 
     /**
-     * Dialog-style presenter that opts out of snackbar dismissal (dismissSnackbarOnDetach = false)
+     * Presenter that opts in to snackbar dismissal on detach.
+     * For screens with contextual snackbars that should not survive navigation.
      */
-    private class DialogTestPresenter(
+    private class ContextualSnackbarPresenter(
         mainPresenter: MainPresenter,
     ) : BasePresenter(mainPresenter) {
-        override val dismissSnackbarOnDetach = false
+        override val dismissSnackbarOnDetach = true
 
         val dismissSnackbarOnDetachValue get() = dismissSnackbarOnDetach
 
