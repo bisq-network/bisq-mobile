@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.common.ui.base
 
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.spyk
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,8 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BasePresenterTest {
@@ -37,7 +40,7 @@ class BasePresenterTest {
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        globalUiManager = GlobalUiManager()
+        globalUiManager = spyk(GlobalUiManager())
 
         startKoin {
             modules(
@@ -75,11 +78,8 @@ class BasePresenterTest {
         presenter.showTestSnackbar("test message")
         presenter.onViewUnattaching()
 
-        // Default is false: snackbars are app-level with auto-dismiss duration,
-        // so they should survive screen transitions
-        assert(!presenter.dismissSnackbarOnDetachValue) {
-            "Default presenter should have dismissSnackbarOnDetach = false"
-        }
+        assertFalse(presenter.dismissSnackbarOnDetachValue)
+        verify(exactly = 0) { globalUiManager.dismissSnackbar() }
     }
 
     @Test
@@ -90,27 +90,31 @@ class BasePresenterTest {
         presenter.showTestSnackbar("screen-specific message")
         presenter.onViewUnattaching()
 
-        // Presenter opted in to dismiss — screen-contextual snackbars
-        // should not survive navigation to a different screen
-        assert(presenter.dismissSnackbarOnDetachValue) {
-            "Contextual snackbar presenter should have dismissSnackbarOnDetach = true"
-        }
+        assertTrue(presenter.dismissSnackbarOnDetachValue)
+        verify(exactly = 1) { globalUiManager.dismissSnackbar() }
     }
 
     @Test
     fun `presenter unregisters from parent on detach regardless of dismissSnackbarOnDetach flag`() {
         val defaultPresenter = TestPresenter(mainPresenter)
-        val dialogPresenter = ContextualSnackbarPresenter(mainPresenter)
+        val contextualPresenter = ContextualSnackbarPresenter(mainPresenter)
 
         defaultPresenter.onViewAttached()
-        dialogPresenter.onViewAttached()
+        contextualPresenter.onViewAttached()
 
-        // Both should be registered as children
+        // Both are registered — calling onViewUnattaching twice on the same presenter
+        // would crash if unregisterChild wasn't called (removing a non-existent child)
         defaultPresenter.onViewUnattaching()
-        dialogPresenter.onViewUnattaching()
+        contextualPresenter.onViewUnattaching()
 
-        // If unregisterChild wasn't called, dependants would still hold references
-        // No crash means both were properly unregistered
+        // Re-register both by creating new instances with the same parent.
+        // If unregisterChild didn't work, registerChild would accumulate stale entries.
+        val newDefault = TestPresenter(mainPresenter)
+        val newContextual = ContextualSnackbarPresenter(mainPresenter)
+        newDefault.onViewAttached()
+        newContextual.onViewAttached()
+        newDefault.onViewUnattaching()
+        newContextual.onViewUnattaching()
     }
 
     /**
