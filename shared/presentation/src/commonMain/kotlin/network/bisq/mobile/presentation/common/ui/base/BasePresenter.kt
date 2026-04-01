@@ -128,6 +128,12 @@ abstract class BasePresenter(
      */
     protected open val blockInteractivityOnAttached = false
 
+    /**
+     * override in your presenter if you don't want to dismiss snackbar on detach
+     * (avoid quick dismissal when its necessary to stay)
+     */
+    protected open val dismissSnackbarOnDetach = true
+
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> = _isInteractive.asStateFlow()
@@ -161,7 +167,9 @@ abstract class BasePresenter(
         // Cancel any pending global loading dialog to prevent stuck overlays
         hideLoading()
         // Dismiss any active snackbar when view detaches (e.g., navigation)
-        globalUiManager.dismissSnackbar()
+        if (dismissSnackbarOnDetach) {
+            globalUiManager.dismissSnackbar()
+        }
         // Dispose presenterScope via a separate unmanaged scope. We intentionally do NOT use
         // presenterScope here because we are cancelling it — launching on a scope being cancelled
         // would be a no-op. The fire-and-forget CoroutineScope(Main) avoids iOS CA Fence hangs
