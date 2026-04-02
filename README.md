@@ -69,6 +69,7 @@
    - [Services allow us to have different networking sources](#services-allow-us-to-have-different-networking-sources)
    - [What about Lifecycle and main view components](#what-about-lifecycle-and-main-view-components)
    - [When it’s acceptable to reuse a presenter for my view](#when-its-acceptable-to-reuse-a-presenter-for-my-view)
+   - [Presenter Lifecycle](#presenter-lifecycle)
 
 4. [Push Notifications](#push-notifications)
    - [Android: Decentralized P2P monitoring](#android-decentralized-p2p-monitoring)
@@ -277,6 +278,57 @@ It's ok to reuse an existing presenter for your view if:
 To reuse an existing presenter you would have to make it extend your view defined presenter interface and do the right `Koin bind` on its Koin repository definition.
 
 Then you can inject it in the `@Composable` function using `koinInject()`.
+
+### Presenter Lifecycle
+
+Presenters are wired to Compose via lifecycle helpers. There are **two lifecycle modes** — choose based on whether the presenter should survive back-stack navigation.
+
+#### `RememberPresenterLifecycle` (default — scope disposed on every navigation)
+
+```
+Enter screen → onViewAttached() → coroutines start
+Leave screen → onViewUnattaching() → scope disposed, coroutines cancelled
+Re-enter     → new presenter instance (factory) → onViewAttached() → fresh start
+```
+
+**Use for:** splash, onboarding, settings, dialog presenters, screens that should always start fresh.
+
+#### `RememberPresenterLifecycleBackStackAware` (opt-in — scope survives back stack)
+
+```
+Enter screen (first)         → onViewAttached() → coroutines start
+Leave screen (to back stack) → onViewHidden() → scope ALIVE, coroutines continue
+Re-enter (from back stack)   → onViewRevealed() → scope still alive, no re-subscription
+Leave screen (popped)        → onViewUnattaching() → scope disposed (via ViewModel.onCleared)
+```
+
+**Use for:** wizard steps (create/take offer), tab screens with expensive data loading, any screen where going back should preserve state, screens that should survive configuration changes (rotation, dark mode).
+
+**How it works:** the presenter is stored inside a `ViewModel` scoped to the `NavBackStackEntry`. The ViewModel is an internal container — the presenter pattern, DI, and testing remain unchanged.
+
+**Bonus — Android config changes survival:** because the presenter lives inside a ViewModel, it automatically survives Activity recreation triggered by configuration changes (rotation, dark mode toggle, language switch). During a config change the lifecycle is `onViewHidden()` → Activity recreated → `onViewRevealed()` — `onViewUnattaching()` is NOT called, so the scope and all in-flight coroutines persist. Screens using `RememberPresenterLifecycle` do NOT get this benefit — they restart from scratch on config changes.
+
+#### Usage in screens
+
+```kotlin
+// Default: scope disposed on navigation
+@Composable
+fun SettingsScreen() {
+    val presenter: SettingsPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+}
+
+// Back-stack aware (recommended for most cases): scope survives while on back stack
+@Composable
+fun DashboardScreen() {
+    val presenter: DashboardPresenter = koinInject()
+    RememberPresenterLifecycleBackStackAware(presenter)
+}
+```
+
+#### Offer flow presenters
+
+Offer flow step presenters (create offer, take offer) extend `OfferFlowPresenter` instead of `BasePresenter` directly. This provides `navigateToOfferbookTab()` for closing the wizard flow. The shared data coordinators (`CreateOfferCoordinator`, `TakeOfferCoordinator`) are **not presenters** — they are Koin singletons that hold mutable wizard state across steps.
 
 ## Push Notifications
 

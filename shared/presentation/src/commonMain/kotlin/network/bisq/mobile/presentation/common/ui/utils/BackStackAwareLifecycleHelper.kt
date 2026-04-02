@@ -47,12 +47,25 @@ import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
  * }
  * ```
  *
+ * ## Android configuration changes
+ *
+ * This helper also provides **configuration change survival** (rotation, dark mode, language
+ * change) for free. When Android destroys and recreates the Activity, the ViewModel container
+ * survives — so the presenter, its scope, and all in-flight coroutines persist across the
+ * config change. The lifecycle is: `onViewHidden()` → Activity recreated → `onViewRevealed()`.
+ * `onViewUnattaching()` is NOT called during config changes.
+ *
+ * Screens using [RememberPresenterLifecycle] do NOT survive config changes — they restart
+ * from scratch (new presenter, new scope, `onViewAttached()` called again).
+ *
  * ## When to use
  *
- * Use this for screens where you want the presenter to survive back navigation:
+ * Use this for screens where you want the presenter to survive back navigation and/or
+ * configuration changes:
  * - Wizard step screens (create offer, take offer) where going back should preserve state
  * - Tab screens that should keep their data when switching tabs
  * - Any screen with expensive initialization that shouldn't re-run on back navigation
+ * - Screens that should preserve state across rotation/dark mode changes
  *
  * ## When NOT to use
  *
@@ -64,8 +77,9 @@ import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
  * ## Presenter requirements
  *
  * Your presenter's [ViewPresenter.onViewAttached] will only be called once (on first
- * composition). Coroutines launched there survive across back-stack navigation. Override
- * [ViewPresenter.onViewRevealed] if you need to refresh data when the screen returns.
+ * composition). Coroutines launched there survive across back-stack navigation and config
+ * changes. Override [ViewPresenter.onViewRevealed] if you need to refresh data when the
+ * screen returns.
  */
 @Composable
 fun RememberPresenterLifecycleBackStackAware(presenter: ViewPresenter) {
@@ -74,6 +88,10 @@ fun RememberPresenterLifecycleBackStackAware(presenter: ViewPresenter) {
     // Store the presenter in a ViewModel scoped to the NavBackStackEntry.
     // The ViewModel survives recomposition, back-stack, and config changes.
     // When the NavBackStackEntry is popped, onCleared() fires → onViewUnattaching().
+    // TODO: On config changes, koinInject() in the caller creates a new presenter instance that
+    //  is ignored (the PresenterHolder keeps the original). This is harmless but wasteful.
+    //  Could be optimized by moving koinInject() inside the viewModel factory lambda.
+    //  For now its ok but might become hi-prio when we decide to support Tablets
     val holder =
         viewModel {
             PresenterHolder(presenter).also {
