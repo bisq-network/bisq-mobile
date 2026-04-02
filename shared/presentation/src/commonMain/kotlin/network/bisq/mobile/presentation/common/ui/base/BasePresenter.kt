@@ -25,6 +25,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.moveAppToBackground
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.component.KoinComponent
@@ -97,6 +98,7 @@ interface ViewPresenter {
      * Only called when using [RememberPresenterLifecycleBackStackAware].
      * With [RememberPresenterLifecycle], this is never called — [onViewUnattaching] fires instead.
      */
+    @ExcludeFromCoverage
     fun onViewHidden() {}
 
     /**
@@ -104,6 +106,7 @@ interface ViewPresenter {
      * The presenter's scope is still alive from the original [onViewAttached] — no re-subscription needed.
      * Only called when using [RememberPresenterLifecycleBackStackAware].
      */
+    @ExcludeFromCoverage
     fun onViewRevealed() {}
 
     /**

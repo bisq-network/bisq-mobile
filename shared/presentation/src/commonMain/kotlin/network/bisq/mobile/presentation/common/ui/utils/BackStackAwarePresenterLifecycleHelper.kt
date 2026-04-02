@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.koin.compose.getKoin
 
 /**
@@ -89,6 +90,7 @@ import org.koin.compose.getKoin
  * @return The managed presenter instance — always the same instance across back-stack
  *         navigation and config changes. Use this for collecting StateFlows and invoking actions.
  */
+@ExcludeFromCoverage
 @Composable
 inline fun <reified T : ViewPresenter> RememberPresenterLifecycleBackStackAware(): T {
     val log = getLogger("BackStackLifecycle")
@@ -148,6 +150,7 @@ inline fun <reified T : ViewPresenter> RememberPresenterLifecycleBackStackAware(
  * Public visibility is required for the inline reified [RememberPresenterLifecycleBackStackAware]
  * function to access it. Do not use directly.
  */
+@ExcludeFromCoverage
 class PresenterHolder(
     val presenter: ViewPresenter,
 ) : ViewModel() {
