@@ -14,9 +14,9 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.tabs.offers.MarketFilterUtil
 
@@ -25,7 +25,7 @@ class CreateOfferMarketPresenter(
     private val offersServiceFacade: OffersServiceFacade,
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     var headline: String
     private val _selectedMarketItem = MutableStateFlow<MarketListItem?>(null)
     val selectedMarketItem: StateFlow<MarketListItem?> get() = _selectedMarketItem.asStateFlow()

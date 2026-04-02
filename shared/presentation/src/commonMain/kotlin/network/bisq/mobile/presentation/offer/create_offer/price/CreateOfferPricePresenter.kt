@@ -17,10 +17,10 @@ import network.bisq.mobile.domain.parser.PercentageParser
 import network.bisq.mobile.domain.parser.PriceParser
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.PriceType
 
@@ -28,7 +28,7 @@ class CreateOfferPricePresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferCoordinator: CreateOfferCoordinator,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     var priceTypeTitle: String
     var fixPriceDescription: String
     var priceTypes: List<PriceType> = PriceType.entries.toList()

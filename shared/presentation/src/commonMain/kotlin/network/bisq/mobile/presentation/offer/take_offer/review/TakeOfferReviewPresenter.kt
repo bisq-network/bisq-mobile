@@ -20,11 +20,11 @@ import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import kotlin.math.abs
 
@@ -32,7 +32,7 @@ class TakeOfferReviewPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferCoordinator: TakeOfferCoordinator,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     var headLine: String
     var quoteSidePaymentMethodDisplayString: String
     var baseSidePaymentMethodDisplayString: String

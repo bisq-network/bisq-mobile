@@ -24,8 +24,6 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BasePresenterTest {
@@ -71,77 +69,43 @@ class BasePresenterTest {
     }
 
     @Test
-    fun `onViewUnattaching does not dismiss snackbar by default`() {
+    fun `onViewUnattaching does not dismiss snackbar`() {
         val presenter = TestPresenter(mainPresenter)
 
         presenter.onViewAttached()
         presenter.showTestSnackbar("test message")
         presenter.onViewUnattaching()
 
-        assertFalse(presenter.dismissSnackbarOnDetachValue)
+        // Snackbars are app-level with auto-dismiss duration — BasePresenter
+        // should never dismiss them on detach. If a specific presenter needs
+        // dismissal, it should call globalUiManager.dismissSnackbar() explicitly.
         verify(exactly = 0) { globalUiManager.dismissSnackbar() }
     }
 
     @Test
-    fun `onViewUnattaching dismisses snackbar when dismissSnackbarOnDetach is true`() {
-        val presenter = ContextualSnackbarPresenter(mainPresenter)
+    fun `presenter unregisters from parent on detach`() {
+        val first = TestPresenter(mainPresenter)
+        val second = TestPresenter(mainPresenter)
 
-        presenter.onViewAttached()
-        presenter.showTestSnackbar("screen-specific message")
-        presenter.onViewUnattaching()
+        first.onViewAttached()
+        second.onViewAttached()
 
-        assertTrue(presenter.dismissSnackbarOnDetachValue)
-        verify(exactly = 1) { globalUiManager.dismissSnackbar() }
+        first.onViewUnattaching()
+        second.onViewUnattaching()
+
+        // Re-register by creating new instances with the same parent.
+        // If unregisterChild didn't work, dependants would accumulate stale entries.
+        val newFirst = TestPresenter(mainPresenter)
+        val newSecond = TestPresenter(mainPresenter)
+        newFirst.onViewAttached()
+        newSecond.onViewAttached()
+        newFirst.onViewUnattaching()
+        newSecond.onViewUnattaching()
     }
 
-    @Test
-    fun `presenter unregisters from parent on detach regardless of dismissSnackbarOnDetach flag`() {
-        val defaultPresenter = TestPresenter(mainPresenter)
-        val contextualPresenter = ContextualSnackbarPresenter(mainPresenter)
-
-        defaultPresenter.onViewAttached()
-        contextualPresenter.onViewAttached()
-
-        // Both are registered — calling onViewUnattaching twice on the same presenter
-        // would crash if unregisterChild wasn't called (removing a non-existent child)
-        defaultPresenter.onViewUnattaching()
-        contextualPresenter.onViewUnattaching()
-
-        // Re-register both by creating new instances with the same parent.
-        // If unregisterChild didn't work, registerChild would accumulate stale entries.
-        val newDefault = TestPresenter(mainPresenter)
-        val newContextual = ContextualSnackbarPresenter(mainPresenter)
-        newDefault.onViewAttached()
-        newContextual.onViewAttached()
-        newDefault.onViewUnattaching()
-        newContextual.onViewUnattaching()
-    }
-
-    /**
-     * Standard presenter with default behavior (dismissSnackbarOnDetach = false).
-     * Snackbars survive navigation — they auto-dismiss via SnackbarDuration.
-     */
     private class TestPresenter(
         mainPresenter: MainPresenter,
     ) : BasePresenter(mainPresenter) {
-        val dismissSnackbarOnDetachValue get() = dismissSnackbarOnDetach
-
-        fun showTestSnackbar(message: String) {
-            showSnackbar(message)
-        }
-    }
-
-    /**
-     * Presenter that opts in to snackbar dismissal on detach.
-     * For screens with contextual snackbars that should not survive navigation.
-     */
-    private class ContextualSnackbarPresenter(
-        mainPresenter: MainPresenter,
-    ) : BasePresenter(mainPresenter) {
-        override val dismissSnackbarOnDetach = true
-
-        val dismissSnackbarOnDetachValue get() = dismissSnackbarOnDetach
-
         fun showTestSnackbar(message: String) {
             showSnackbar(message)
         }

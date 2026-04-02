@@ -3,16 +3,16 @@ package network.bisq.mobile.presentation.offer.take_offer.payment_method
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 
 class TakeOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val takeOfferCoordinator: TakeOfferCoordinator,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     var hasMultipleQuoteSidePaymentMethods: Boolean = false
     var hasMultipleBaseSidePaymentMethods: Boolean = false
     lateinit var quoteSidePaymentMethods: List<String>

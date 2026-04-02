@@ -17,17 +17,17 @@ import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import kotlin.math.abs
 
 class CreateOfferReviewPresenter(
     mainPresenter: MainPresenter,
     private val createOfferCoordinator: CreateOfferCoordinator,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     lateinit var headLine: String
     lateinit var quoteSidePaymentMethodDisplayString: String
     lateinit var baseSidePaymentMethodDisplayString: String

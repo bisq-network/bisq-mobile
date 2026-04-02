@@ -4,16 +4,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 
 class CreateOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val createOfferCoordinator: CreateOfferCoordinator,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     val quoteSideHeadline: String
     val baseSideHeadline: String
     val availableQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))

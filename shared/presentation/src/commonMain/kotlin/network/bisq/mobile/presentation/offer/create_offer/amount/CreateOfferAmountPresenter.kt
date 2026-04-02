@@ -33,12 +33,12 @@ import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.withTolerance
 import network.bisq.mobile.domain.utils.MonetarySlider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.AmountType
 
@@ -49,7 +49,7 @@ class CreateOfferAmountPresenter(
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     lateinit var headline: String
     lateinit var quoteCurrencyCode: String
     lateinit var formattedMinAmount: String

@@ -20,10 +20,10 @@ import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.MonetarySlider
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 
 // TODO Create/Take offer amount preseenters are very similar a base class could be extracted
@@ -31,7 +31,7 @@ class TakeOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferCoordinator: TakeOfferCoordinator,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
     val sliderPosition: StateFlow<Float> get() = _sliderPosition.asStateFlow()
 

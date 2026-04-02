@@ -16,9 +16,9 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 
 class CreateOfferDirectionPresenter(
@@ -26,7 +26,7 @@ class CreateOfferDirectionPresenter(
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : OfferFlowPresenter(mainPresenter) {
     var direction: DirectionEnum = createOfferCoordinator.createOfferModel.direction
 
     @OptIn(ExperimentalCoroutinesApi::class)
