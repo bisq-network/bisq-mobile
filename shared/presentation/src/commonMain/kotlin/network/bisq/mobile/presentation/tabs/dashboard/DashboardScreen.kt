@@ -55,11 +55,10 @@ import network.bisq.mobile.presentation.common.ui.utils.rememberNotificationPerm
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.koinInject
 
 @Composable
 fun DashboardScreen() {
-    val presenter = RememberPresenterLifecycleBackStackAware(koinInject<DashboardPresenter>())
+    val presenter = RememberPresenterLifecycleBackStackAware<DashboardPresenter>()
 
     val offersOnline: Number by presenter.offersOnline.collectAsState()
     val publishedProfiles: Number by presenter.publishedProfiles.collectAsState()

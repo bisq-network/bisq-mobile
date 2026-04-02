@@ -12,7 +12,7 @@ import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
  *  * - Screens that should always start fresh (login, settings that read from service)
  *  * - Dialog presenters
  *
- *  Otherwise, please use [RememberViewLifecycle] for example:
+ *  Otherwise, please use [RememberPresenterLifecycleBackStackAware] for example:
  *  * - Screens with back-stack (main, trade)
  *  * - Screens that should not start fresh (trade that reads from service)
  *

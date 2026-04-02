@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
+import org.koin.compose.getKoin
 
 /**
  * Back-stack-aware presenter lifecycle helper.
@@ -31,8 +32,9 @@ import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
  *
  * ## How it works
  *
- * The presenter is stored inside a [ViewModel] scoped to the current NavBackStackEntry.
- * This means:
+ * The presenter is created via Koin inside the [ViewModel] factory — runs only once per
+ * NavBackStackEntry. This means:
+ * - Only one presenter instance is ever created per screen (no wasted instances on recomposition)
  * - The presenter instance survives recomposition and back-stack navigation
  * - The presenter instance survives configuration changes (rotation, dark mode)
  * - The presenter is cleaned up when the NavBackStackEntry is popped (back navigation past this screen)
@@ -40,17 +42,12 @@ import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
  * The [ViewModel] is an internal implementation detail — it's just a container. The presenter
  * pattern, DI, and testing approach remain unchanged.
  *
- * **Important:** This function returns the managed presenter instance. The screen MUST use the
- * returned value — not the original `koinInject()` result — to ensure it observes the correct
- * StateFlows. On back-stack return, `koinInject()` creates a new (unattached) instance, but the
- * PresenterHolder returns the original (attached, scope-alive) instance.
- *
  * ## Usage
  *
  * ```kotlin
  * @Composable
  * fun MyScreen() {
- *     val presenter = RememberPresenterLifecycleBackStackAware(koinInject<MyPresenter>())
+ *     val presenter = RememberPresenterLifecycleBackStackAware<MyPresenter>()
  *     // ... use presenter to collect state and handle actions
  * }
  * ```
@@ -89,28 +86,23 @@ import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
  * changes. Override [ViewPresenter.onViewRevealed] if you need to refresh data when the
  * screen returns.
  *
- * @param presenter The presenter instance from Koin (used only on first creation; ignored on
- *                  subsequent recompositions since the PresenterHolder retains the original).
  * @return The managed presenter instance — always the same instance across back-stack
  *         navigation and config changes. Use this for collecting StateFlows and invoking actions.
  */
 @Composable
-fun <T : ViewPresenter> RememberPresenterLifecycleBackStackAware(presenter: T): T {
+inline fun <reified T : ViewPresenter> RememberPresenterLifecycleBackStackAware(): T {
     val log = getLogger("BackStackLifecycle")
+    // getKoin() is @Composable — captured here in composable scope.
+    // koin.get<T>() inside the viewModel factory is non-composable — safe to call there.
+    val koin = getKoin()
 
-    // Store the presenter in a ViewModel scoped to the NavBackStackEntry.
-    // The ViewModel survives recomposition, back-stack, and config changes.
-    // When the NavBackStackEntry is popped, onCleared() fires → onViewUnattaching().
-    // On back-stack return or config change, koinInject() in the caller creates a new presenter
-    // that is ignored — the PresenterHolder keeps the original attached instance.
     val holder =
         viewModel {
-            PresenterHolder(presenter).also {
-                log.d { "PresenterHolder created for ${presenter::class.simpleName}" }
+            PresenterHolder(koin.get<T>()).also {
+                log.d { "PresenterHolder created for ${T::class.simpleName}" }
             }
         }
 
-    // The managed presenter — always the original instance from first creation.
     @Suppress("UNCHECKED_CAST")
     val managedPresenter = holder.presenter as T
 
@@ -133,10 +125,6 @@ fun <T : ViewPresenter> RememberPresenterLifecycleBackStackAware(presenter: T): 
 
         onDispose {
             try {
-                // The Composable is leaving composition. Since the presenter lives in the
-                // ViewModel, it survives. We just notify it that the view is hidden.
-                // Full cleanup (onViewUnattaching) happens in PresenterHolder.onCleared()
-                // when the NavBackStackEntry is popped.
                 managedPresenter.onViewHidden()
                 log.d { "onViewHidden — ${managedPresenter::class.simpleName}" }
             } catch (e: Exception) {
@@ -152,12 +140,15 @@ fun <T : ViewPresenter> RememberPresenterLifecycleBackStackAware(presenter: T): 
 }
 
 /**
- * Internal ViewModel that holds a presenter instance and ensures cleanup when the
+ * ViewModel that holds a presenter instance and ensures cleanup when the
  * NavBackStackEntry is popped. This is an implementation detail — not part of the public API.
  * This allows us to reuse Compose's ViewModel infrastructure to detect when a composable
  * is removed from the navigation stack.
+ *
+ * Public visibility is required for the inline reified [RememberPresenterLifecycleBackStackAware]
+ * function to access it. Do not use directly.
  */
-internal class PresenterHolder(
+class PresenterHolder(
     val presenter: ViewPresenter,
 ) : ViewModel() {
     private val log = getLogger("PresenterHolder")
