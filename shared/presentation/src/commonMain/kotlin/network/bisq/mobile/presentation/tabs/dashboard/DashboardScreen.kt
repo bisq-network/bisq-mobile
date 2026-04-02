@@ -59,8 +59,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun DashboardScreen() {
-    val presenter: DashboardPresenter = koinInject()
-    RememberPresenterLifecycleBackStackAware(presenter)
+    val presenter = RememberPresenterLifecycleBackStackAware(koinInject<DashboardPresenter>())
 
     val offersOnline: Number by presenter.offersOnline.collectAsState()
     val publishedProfiles: Number by presenter.publishedProfiles.collectAsState()

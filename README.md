@@ -319,10 +319,10 @@ fun SettingsScreen() {
 }
 
 // Back-stack aware (recommended for most cases): scope survives while on back stack
+// IMPORTANT: use the returned presenter — it's the managed instance from the ViewModel holder
 @Composable
 fun DashboardScreen() {
-    val presenter: DashboardPresenter = koinInject()
-    RememberPresenterLifecycleBackStackAware(presenter)
+    val presenter = RememberPresenterLifecycleBackStackAware(koinInject<DashboardPresenter>())
 }
 ```
 
