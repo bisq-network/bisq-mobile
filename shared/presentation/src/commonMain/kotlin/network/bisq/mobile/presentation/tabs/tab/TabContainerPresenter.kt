@@ -19,10 +19,6 @@ class TabContainerPresenter(
     override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = mainPresenter.tradesWithUnreadMessages
 
-    override fun onViewAttached() {
-        super.onViewAttached()
-    }
-
     override fun createOffer() {
         if (!isInteractive.value) return // This isInteractive UI blocker doesn't apply to FAB buttons
         disableInteractive()

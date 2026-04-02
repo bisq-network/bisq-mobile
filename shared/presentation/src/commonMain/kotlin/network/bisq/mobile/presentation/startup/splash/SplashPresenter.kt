@@ -41,7 +41,7 @@ abstract class SplashPresenter(
     private val shouldShowProgressToast: StateFlow<Boolean> get() = applicationBootstrapFacade.shouldShowProgressToast
 
     private val _uiState =
-        MutableStateFlow(SplashUiState(appNameAndVersion = versionProvider.getAppNameAndVersion(isDemo, isIos)))
+        MutableStateFlow(SplashUiState(appNameAndVersion = versionProvider.getAppNameAndVersion(ApplicationBootstrapFacade.isDemo, isIos)))
     val uiState: StateFlow<SplashUiState> = _uiState.asStateFlow()
 
     override fun onViewAttached() {

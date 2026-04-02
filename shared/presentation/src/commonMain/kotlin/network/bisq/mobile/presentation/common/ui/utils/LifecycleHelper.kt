@@ -1,17 +1,15 @@
-// TODO: remove and fix the issue
-@file:Suppress("ktlint:compose:lambda-param-in-effect")
-
 package network.bisq.mobile.presentation.common.ui.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 
 /**
  * @param presenter
  * @param onExecute <optional> callback after view attached
- * @param onDispose <optional> callback before on view unnattaching
+ * @param onDispose <optional> callback before on view unattaching
  */
 @Composable
 fun RememberPresenterLifecycle(
@@ -19,14 +17,14 @@ fun RememberPresenterLifecycle(
     onExecute: (() -> Unit)? = null,
     onDispose: (() -> Unit)? = null,
 ) {
+    val currentOnExecute = rememberUpdatedState(onExecute)
+    val currentOnDispose = rememberUpdatedState(onDispose)
+
     DisposableEffect(presenter) {
         try {
-            presenter.onViewAttached() // Called when the view is attached
-            onExecute?.let {
-                onExecute()
-            }
+            presenter.onViewAttached()
+            currentOnExecute.value?.invoke()
         } catch (e: Exception) {
-            // Handle the error gracefully without breaking Compose
             GenericErrorHandler.handleGenericError(
                 "Error during view initialization: ${presenter::class.simpleName}",
                 e,
@@ -35,12 +33,9 @@ fun RememberPresenterLifecycle(
 
         onDispose {
             try {
-                presenter.onViewUnattaching() // Called when the view is detached
-                onDispose?.let {
-                    onDispose()
-                }
+                presenter.onViewUnattaching()
+                currentOnDispose.value?.invoke()
             } catch (e: Exception) {
-                // Handle disposal errors gracefully
                 GenericErrorHandler.handleGenericError(
                     "Error during view cleanup: ${presenter::class.simpleName}",
                     e,

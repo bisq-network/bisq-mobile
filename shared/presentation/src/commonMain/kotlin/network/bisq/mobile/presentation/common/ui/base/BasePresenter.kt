@@ -9,13 +9,9 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.model.BaseModel
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -110,9 +106,6 @@ abstract class BasePresenter(
     companion object {
         const val EXIT_WARNING_TIMEOUT = 3000L
         const val SMALLEST_PERCEPTIVE_DELAY = 250L
-
-        // for what is used this is fine as is but to be fully reliable needs to be a StateFlow
-        var isDemo = false
     }
 
     protected val navigationManager: NavigationManager by inject()
@@ -278,9 +271,10 @@ abstract class BasePresenter(
     }
 
     open fun navigateToUrl(url: String) {
+        if (!_isInteractive.value) return
         disableInteractive()
         rootPresenter?.navigateToUrl(url)
-        enableInteractive()
+        enableInteractive() // re-enables after 250ms delay — prevents rapid double-taps
     }
 
     override fun onCloseGenericErrorPanel() {

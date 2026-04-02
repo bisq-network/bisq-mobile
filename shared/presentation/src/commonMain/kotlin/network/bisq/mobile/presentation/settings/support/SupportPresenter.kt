@@ -22,7 +22,7 @@ class SupportPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        val versionInfo = versionProvider.getVersionInfo(isDemo, isIOS())
+        val versionInfo = versionProvider.getVersionInfo(isDemo(), isIOS())
         val deviceInfo = deviceInfoProvider.getDeviceInfo()
 
         val body = "mobile.support.troubleShooting.github.body".i18n(versionInfo, deviceInfo)

@@ -15,7 +15,7 @@ open class ResourcesPresenter(
     private val _uiState: MutableStateFlow<ResourcesUiState> =
         MutableStateFlow(
             ResourcesUiState(
-                versionInfo = versionProvider.getVersionInfo(isDemo, isIOS()),
+                versionInfo = versionProvider.getVersionInfo(isDemo(), isIOS()),
                 deviceInfo = deviceInfoProvider.getDeviceInfo(),
             ),
         )
