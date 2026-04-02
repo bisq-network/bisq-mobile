@@ -7,7 +7,16 @@ import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 
 /**
- * @param presenter
+ *  * Keep using this composable [RememberPresenterLifecycle] for:
+ *  * - Screens with no back-stack (splash, onboarding)
+ *  * - Screens that should always start fresh (login, settings that read from service)
+ *  * - Dialog presenters
+ *
+ *  Otherwise, please use [RememberViewLifecycle] for example:
+ *  * - Screens with back-stack (main, trade)
+ *  * - Screens that should not start fresh (trade that reads from service)
+ *
+ * @param presenter to remember lifecycle
  * @param onExecute <optional> callback after view attached
  * @param onDispose <optional> callback before on view unattaching
  */
