@@ -52,7 +52,7 @@ kotlin {
 
             // AndroidX
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
 
             // KotlinX
             implementation(libs.kotlinx.coroutines.core)
