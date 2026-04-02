@@ -25,7 +25,6 @@ import network.bisq.mobile.presentation.common.platform_settings.PlatformSetting
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 
 open class DashboardPresenter(
@@ -116,10 +115,6 @@ open class DashboardPresenter(
 
     private fun navigateToTradingTab() {
         navigateToTab(NavRoute.TabOfferbookMarket)
-    }
-
-    fun navigateLearnMore() {
-        navigateToUrl(BisqLinks.BISQ_EASY_WIKI_URL)
     }
 
     fun saveNotificationPermissionState(state: PermissionState) {
