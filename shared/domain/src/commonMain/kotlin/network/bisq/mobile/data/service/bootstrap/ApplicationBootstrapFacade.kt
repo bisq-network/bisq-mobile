@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.network.KmpTorService
-import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.data.service.network.KmpTorService.TorState
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.i18n
 import kotlin.concurrent.Volatile
 

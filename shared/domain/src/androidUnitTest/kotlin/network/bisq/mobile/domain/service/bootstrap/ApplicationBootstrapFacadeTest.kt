@@ -198,6 +198,7 @@ class ApplicationBootstrapFacadeTest : KoinTest {
             advanceUntilIdle()
             assertEquals(afterStarted, facade.state.value)
         }
+
     @Test
     fun `tor failure within grace period does not show failure dialog`() =
         runTest(testDispatcher) {
