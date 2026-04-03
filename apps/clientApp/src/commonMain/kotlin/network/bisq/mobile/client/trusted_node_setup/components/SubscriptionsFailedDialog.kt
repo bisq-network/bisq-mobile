@@ -281,7 +281,7 @@ private fun AllCriticalFailuresWorstCasePreview() {
                     .padding(BisqUIConstants.ScreenPadding),
         ) {
             BisqText.XSmallLight(
-                text = "Preview: all 6 critical topics down (worst case)",
+                text = "Preview: all critical topics down (worst case)",
                 color = BisqTheme.colors.mid_grey20,
             )
         }
