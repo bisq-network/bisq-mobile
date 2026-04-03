@@ -268,7 +268,7 @@ class ClientConnectivityService(
     private suspend fun awaitSubscriptionsReady() {
         log.d { "Waiting for subscription status to become ready" }
         val mark = TimeSource.Monotonic.markNow()
-        webSocketClientService.isSubscriptionsPending.first { !it }
+        webSocketClientService.awaitSubscriptionsReady()
         log.d { "Subscription status ready after ${mark.elapsedNow().inWholeMilliseconds}ms" }
     }
 

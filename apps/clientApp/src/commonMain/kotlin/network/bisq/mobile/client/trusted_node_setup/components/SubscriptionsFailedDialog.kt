@@ -95,7 +95,8 @@ internal fun SubscriptionsFailedDialog(
 }
 
 /**
- * The scrollable body of the dialog listing all failed topics, grouped by severity.
+ * The body of the dialog listing all failed topics, grouped by severity.
+ * The dialog wrapper is responsible for proper scrolling.
  */
 @Composable
 private fun FailedTopicList(topics: List<Topic>) {
