@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
@@ -228,6 +229,46 @@ class ClientConnectivityServiceTest {
             delay(300)
 
             assertEquals(ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY, clientConnectivityService.status.value)
+        }
+
+    @Test
+    fun `checkConnectivity returns CONNECTED_WITH_LIMITATIONS when healthy connection has failed subscriptions`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+            every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(setOf(Topic.MARKET_PRICE))
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.CONNECTED_WITH_LIMITATIONS,
+                clientConnectivityService.status.value,
+            )
+        }
+
+    @Test
+    fun `checkConnectivity returns CONNECTED_WITH_LIMITATIONS after untrusted connection recovers with failed subscriptions`() =
+        runBlocking {
+            var healthCheckPasses = false
+            every { webSocketClientService.isConnected() } returns true
+            every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(setOf(Topic.NUM_OFFERS))
+            coEvery { webSocketClientService.sendHealthCheck() } answers { healthCheckPasses }
+            coEvery { webSocketClientService.forceReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+
+            healthCheckPasses = true
+            delay(300)
+
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.CONNECTED_WITH_LIMITATIONS,
+                clientConnectivityService.status.value,
+            )
         }
 
     @Test

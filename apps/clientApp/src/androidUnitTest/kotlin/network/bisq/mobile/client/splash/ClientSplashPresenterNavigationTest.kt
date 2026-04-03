@@ -397,4 +397,48 @@ class ClientSplashPresenterNavigationTest {
             // Then: should navigate to TabContainer (home)
             verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
         }
+
+    @Test
+    fun `navigates to trusted node setup when connected with limitations and override is disabled`() =
+        runTest(testDispatcher) {
+            connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
+
+            val presenter = createPresenter()
+            presenter.applyRoute(NavRoute.Splash())
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            progressFlow.value = 1.0f
+            advanceUntilIdle()
+
+            verify {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup && navRoute.showSubscriptionsFailed
+                    },
+                    any(),
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `navigates to home when connected with limitations and route override is enabled`() =
+        runTest(testDispatcher) {
+            connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
+            coEvery { settingsServiceFacade.getSettings() } returns
+                Result.success(SettingsVO(isTacAccepted = true))
+            coEvery { settingsRepository.fetch() } returns Settings(firstLaunch = false)
+            coEvery { userProfileService.hasUserProfile() } returns true
+
+            val presenter = createPresenter()
+            presenter.applyRoute(NavRoute.Splash(continueWithLimitations = true))
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            progressFlow.value = 1.0f
+            advanceUntilIdle()
+
+            verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
+        }
 }

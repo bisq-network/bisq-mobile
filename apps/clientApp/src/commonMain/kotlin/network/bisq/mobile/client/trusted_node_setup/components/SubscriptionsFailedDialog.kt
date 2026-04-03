@@ -194,6 +194,7 @@ private fun SectionLabel(
 // preview data helpers
 // ─────────────────────────────────────────────
 
+@ExcludeFromCoverage
 private fun singleCriticalFailure() =
     SubscriptionsFailedDialogUiState(
         listOf(
@@ -201,6 +202,7 @@ private fun singleCriticalFailure() =
         ),
     )
 
+@ExcludeFromCoverage
 private fun mixedFailures() =
     SubscriptionsFailedDialogUiState(
         listOf(
@@ -210,6 +212,7 @@ private fun mixedFailures() =
         ),
     )
 
+@ExcludeFromCoverage
 private fun allCriticalFailures() =
     SubscriptionsFailedDialogUiState(
         Topic.entries.filter
