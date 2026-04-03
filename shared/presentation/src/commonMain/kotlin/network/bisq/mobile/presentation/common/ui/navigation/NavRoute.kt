@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.common.ui.navigation
 import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
+import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
 
 const val NAV_BASE_PATH = "bisq://"
 
@@ -125,6 +126,14 @@ interface NavRoute {
 
     @Serializable
     data object PaymentAccounts : NavRoute
+
+    @Serializable
+    data object PaymentAccountsMusig : NavRoute
+
+    @Serializable
+    data class CreatePaymentAccount(
+        val accountType: PaymentAccountType,
+    ) : NavRoute
 
     @Serializable
     data object IgnoredUsers : NavRoute

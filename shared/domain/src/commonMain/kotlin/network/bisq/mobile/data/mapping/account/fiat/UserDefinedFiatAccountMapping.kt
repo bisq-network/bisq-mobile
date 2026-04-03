@@ -10,6 +10,8 @@ fun UserDefinedFiatAccountDto.toDomain(): UserDefinedFiatAccount =
         accountName = accountName,
         accountPayload = accountPayload.toDomain(),
         creationDate = creationDate,
+        tradeLimitInfo = tradeLimitInfo,
+        tradeDuration = tradeDuration,
     )
 
 fun UserDefinedFiatAccount.toDto(): UserDefinedFiatAccountDto =
@@ -17,11 +19,17 @@ fun UserDefinedFiatAccount.toDto(): UserDefinedFiatAccountDto =
         accountName = accountName,
         accountPayload = accountPayload.toDto(),
         creationDate = creationDate,
+        tradeLimitInfo = tradeLimitInfo,
+        tradeDuration = tradeDuration,
     )
 
 fun UserDefinedFiatAccountPayloadDto.toDomain(): UserDefinedFiatAccountPayload =
     UserDefinedFiatAccountPayload(
         accountData = accountData,
+        chargebackRisk = chargebackRisk?.toDomain(),
+        paymentMethodName = paymentMethodName,
+        currency = currency,
+        country = country,
     )
 
 fun UserDefinedFiatAccountPayload.toDto(): UserDefinedFiatAccountPayloadDto =

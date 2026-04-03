@@ -18,7 +18,9 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryImpl
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
 import network.bisq.mobile.client.common.domain.service.accounts.ClientFiatAccountsServiceFacade
+import network.bisq.mobile.client.common.domain.service.accounts.ClientPaymentAccountsServiceFacade
 import network.bisq.mobile.client.common.domain.service.accounts.FiatPaymentAccountsApiGateway
+import network.bisq.mobile.client.common.domain.service.accounts.PaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.alert.AlertNotificationsApiGateway
 import network.bisq.mobile.client.common.domain.service.alert.ClientAlertNotificationsServiceFacade
 import network.bisq.mobile.client.common.domain.service.alert.ClientTradeRestrictingAlertServiceFacade
@@ -76,6 +78,7 @@ import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -306,6 +309,9 @@ val clientDomainModule =
 
         single { FiatPaymentAccountsApiGateway(get()) }
         single<FiatAccountsServiceFacade> { ClientFiatAccountsServiceFacade(get()) }
+
+        single { PaymentAccountsApiGateway(get()) }
+        single<PaymentAccountsServiceFacade> { ClientPaymentAccountsServiceFacade(get()) }
 
         single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
 

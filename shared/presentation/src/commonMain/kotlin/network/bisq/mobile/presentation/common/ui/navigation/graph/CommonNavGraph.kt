@@ -9,11 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
+import network.bisq.mobile.presentation.common.ui.navigation.paymentAccountTypeNavType
+import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
+import network.bisq.mobile.presentation.create_payment_account.CreatePaymentAccountScreen
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideOverview
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideProcess
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideSecurity
@@ -36,6 +40,7 @@ import network.bisq.mobile.presentation.offer.take_offer.settlement.TakeOfferSet
 import network.bisq.mobile.presentation.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersScreen
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsScreen
+import network.bisq.mobile.presentation.settings.payment_accounts_musig.PaymentAccountsMusigScreen
 import network.bisq.mobile.presentation.settings.reputation.ReputationScreen
 import network.bisq.mobile.presentation.settings.resources.ResourcesScreen
 import network.bisq.mobile.presentation.settings.settings.SettingsScreen
@@ -50,6 +55,8 @@ import network.bisq.mobile.presentation.tabs.tab.TabContainerScreen
 import network.bisq.mobile.presentation.trade.trade_chat.ChatRulesScreen
 import network.bisq.mobile.presentation.trade.trade_chat.TradeChatScreen
 import network.bisq.mobile.presentation.trade.trade_detail.OpenTradeScreen
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 const val NAV_ANIM_MS = 300
 
@@ -108,6 +115,13 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     addScreen<NavRoute.Reputation> { ReputationScreen() }
     addScreen<NavRoute.UserProfile> { UserProfileScreen() }
     addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
+    addScreen<NavRoute.PaymentAccountsMusig> { PaymentAccountsMusigScreen() }
+    addScreen<NavRoute.CreatePaymentAccount>(
+        typeMap = mapOf(typeOf<PaymentAccountType>() to paymentAccountTypeNavType),
+    ) { backStackEntry ->
+        val route: NavRoute.CreatePaymentAccount = backStackEntry.toRoute()
+        CreatePaymentAccountScreen(accountType = route.accountType)
+    }
     addScreen<NavRoute.IgnoredUsers> { IgnoredUsersScreen() }
     addScreen<NavRoute.Resources> { ResourcesScreen() }
     addScreen<NavRoute.UserAgreementDisplay> { UserAgreementDisplayScreen() }
@@ -147,12 +161,14 @@ enum class NavAnimation {
 }
 
 inline fun <reified T : NavRoute> NavGraphBuilder.addScreen(
+    typeMap: Map<KType, NavType<*>> = emptyMap(),
     deepLinks: List<NavDeepLink> = emptyList(),
     wizardTransition: Boolean = false,
     navAnimation: NavAnimation = if (wizardTransition) NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
     noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
 ) {
     composable<T>(
+        typeMap = typeMap,
         deepLinks = deepLinks,
         // 'enter' animation for the 'destination' screen
         enterTransition = {

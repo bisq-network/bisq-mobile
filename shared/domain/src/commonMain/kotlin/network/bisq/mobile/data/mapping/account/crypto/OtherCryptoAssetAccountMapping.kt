@@ -10,13 +10,17 @@ fun OtherCryptoAssetAccountDto.toDomain(): OtherCryptoAssetAccount =
         accountName = accountName,
         accountPayload = accountPayload.toDomain(),
         creationDate = creationDate,
+        tradeLimitInfo = tradeLimitInfo,
+        tradeDuration = tradeDuration,
     )
 
 fun OtherCryptoAssetAccount.toDto(): OtherCryptoAssetAccountDto =
     OtherCryptoAssetAccountDto(
         accountName = accountName,
         accountPayload = accountPayload.toDto(),
+        tradeLimitInfo = tradeLimitInfo,
         creationDate = creationDate,
+        tradeDuration = tradeDuration,
     )
 
 fun OtherCryptoAssetAccountPayloadDto.toDomain(): OtherCryptoAssetAccountPayload =
@@ -28,15 +32,17 @@ fun OtherCryptoAssetAccountPayloadDto.toDomain(): OtherCryptoAssetAccountPayload
         autoConfNumConfirmations = autoConfNumConfirmations,
         autoConfMaxTradeAmount = autoConfMaxTradeAmount,
         autoConfExplorerUrls = autoConfExplorerUrls,
+        currencyName = currencyName,
     )
 
 fun OtherCryptoAssetAccountPayload.toDto(): OtherCryptoAssetAccountPayloadDto =
     OtherCryptoAssetAccountPayloadDto(
-        currencyCode = currencyCode,
+        currencyName = currencyName,
         address = address,
         isInstant = isInstant,
         isAutoConf = isAutoConf,
         autoConfNumConfirmations = autoConfNumConfirmations,
         autoConfMaxTradeAmount = autoConfMaxTradeAmount,
         autoConfExplorerUrls = autoConfExplorerUrls,
+        currencyCode = currencyCode,
     )

@@ -47,6 +47,19 @@ buildConfig {
         buildConfigField("WS_PORT", project.findProperty("client.x.trustednode.port").toString())
         buildConfigField("WS_ANDROID_HOST", project.findProperty("client.android.trustednode.ip").toString())
         buildConfigField("WS_IOS_HOST", project.findProperty("client.ios.trustednode.ip").toString())
+        val muSigEnabled =
+            project
+                .findProperty("feature.muSigEnabled")
+                ?.toString()
+                ?.let { value ->
+                    value.toBooleanStrictOrNull()
+                        ?: error("feature.muSigEnabled must be 'true' or 'false', got '$value'")
+                }
+                ?: false
+        buildConfigField(
+            "MU_SIG_ENABLED",
+            muSigEnabled,
+        )
         buildConfigField(
             "IS_DEBUG",
             (
@@ -64,6 +77,8 @@ buildConfig {
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
+        // Node app always uses MU_SIG_ENABLED false
+        buildConfigField("MU_SIG_ENABLED", false)
         // Note: Update when updating kmp-tor lib
         buildConfigField("TOR_VERSION", "0.4.8.17") // is TOR DAEMON version
         buildConfigField(

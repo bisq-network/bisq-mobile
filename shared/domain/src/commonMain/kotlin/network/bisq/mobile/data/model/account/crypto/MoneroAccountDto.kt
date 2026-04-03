@@ -8,5 +8,7 @@ data class MoneroAccountDto(
     override val accountName: String,
     override val accountPayload: MoneroAccountPayloadDto,
     override val paymentRail: CryptoPaymentRailDto = CryptoPaymentRailDto.MONERO,
-    override val creationDate: Long? = null,
+    override val creationDate: String? = null,
+    override val tradeLimitInfo: String? = null,
+    override val tradeDuration: String? = null,
 ) : PaymentAccountDto

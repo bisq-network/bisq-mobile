@@ -1,9 +1,9 @@
 package network.bisq.mobile.domain.model.account.fiat
 
-import network.bisq.mobile.domain.model.account.PaymentAccount
-
 data class ZelleAccount(
     override val accountName: String,
     override val accountPayload: ZelleAccountPayload,
-    override val creationDate: Long?,
-) : PaymentAccount
+    override val creationDate: String?,
+    override val tradeLimitInfo: String?,
+    override val tradeDuration: String?,
+) : FiatPaymentAccount

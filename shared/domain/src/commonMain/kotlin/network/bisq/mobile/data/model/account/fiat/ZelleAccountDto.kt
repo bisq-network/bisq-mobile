@@ -8,5 +8,7 @@ data class ZelleAccountDto(
     override val accountName: String,
     override val accountPayload: ZelleAccountPayloadDto,
     override val paymentRail: FiatPaymentRailDto = FiatPaymentRailDto.ZELLE,
-    override val creationDate: Long? = null,
+    override val creationDate: String? = null,
+    override val tradeLimitInfo: String? = null,
+    override val tradeDuration: String? = null,
 ) : PaymentAccountDto

@@ -4,12 +4,15 @@ import network.bisq.mobile.data.replicated.common.validation.EmailValidation
 import network.bisq.mobile.data.replicated.common.validation.NetworkDataValidation
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.data.replicated.common.validation.PhoneNumberValidation
-import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 
 data class ZelleAccountPayload(
     val holderName: String,
     val emailOrMobileNr: String,
-) : PaymentAccountPayload {
+    override val chargebackRisk: FiatPaymentMethodChargebackRisk? = null,
+    override val paymentMethodName: String? = null,
+    override val currency: String? = null,
+    override val country: String? = null,
+) : FiatPaymentAccountPayload {
     init {
         verify()
     }

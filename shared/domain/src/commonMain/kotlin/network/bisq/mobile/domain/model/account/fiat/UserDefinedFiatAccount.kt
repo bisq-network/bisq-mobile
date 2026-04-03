@@ -1,9 +1,9 @@
 package network.bisq.mobile.domain.model.account.fiat
 
-import network.bisq.mobile.domain.model.account.PaymentAccount
-
 data class UserDefinedFiatAccount(
     override val accountName: String,
     override val accountPayload: UserDefinedFiatAccountPayload,
-    override val creationDate: Long? = null,
-) : PaymentAccount
+    override val creationDate: String? = null,
+    override val tradeLimitInfo: String? = null,
+    override val tradeDuration: String? = null,
+) : FiatPaymentAccount

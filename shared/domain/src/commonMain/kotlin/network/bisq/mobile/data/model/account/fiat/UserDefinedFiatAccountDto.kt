@@ -8,5 +8,7 @@ data class UserDefinedFiatAccountDto(
     override val accountName: String,
     override val accountPayload: UserDefinedFiatAccountPayloadDto,
     override val paymentRail: FiatPaymentRailDto = FiatPaymentRailDto.CUSTOM,
-    override val creationDate: Long? = null,
+    override val tradeLimitInfo: String? = null,
+    override val tradeDuration: String? = null,
+    override val creationDate: String? = null,
 ) : PaymentAccountDto

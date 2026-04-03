@@ -10,6 +10,8 @@ fun MoneroAccountDto.toDomain(): MoneroAccount =
         accountName = accountName,
         accountPayload = accountPayload.toDomain(),
         creationDate = creationDate,
+        tradeLimitInfo = tradeLimitInfo,
+        tradeDuration = tradeDuration,
     )
 
 fun MoneroAccount.toDto(): MoneroAccountDto =
@@ -17,11 +19,13 @@ fun MoneroAccount.toDto(): MoneroAccountDto =
         accountName = accountName,
         accountPayload = accountPayload.toDto(),
         creationDate = creationDate,
+        tradeLimitInfo = tradeLimitInfo,
+        tradeDuration = tradeDuration,
     )
 
 fun MoneroAccountPayloadDto.toDomain(): MoneroAccountPayload =
     MoneroAccountPayload(
-        currencyCode = currencyCode,
+        currencyName = currencyName,
         address = address,
         isInstant = isInstant,
         isAutoConf = isAutoConf,
@@ -38,7 +42,7 @@ fun MoneroAccountPayloadDto.toDomain(): MoneroAccountPayload =
 
 fun MoneroAccountPayload.toDto(): MoneroAccountPayloadDto =
     MoneroAccountPayloadDto(
-        currencyCode = currencyCode,
+        currencyName = currencyName,
         address = address,
         isInstant = isInstant,
         isAutoConf = isAutoConf,

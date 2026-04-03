@@ -10,6 +10,8 @@ fun ZelleAccountDto.toDomain(): ZelleAccount =
         accountName = accountName,
         accountPayload = accountPayload.toDomain(),
         creationDate = creationDate,
+        tradeLimitInfo = tradeLimitInfo,
+        tradeDuration = tradeDuration,
     )
 
 fun ZelleAccount.toDto(): ZelleAccountDto =
@@ -17,12 +19,18 @@ fun ZelleAccount.toDto(): ZelleAccountDto =
         accountName = accountName,
         accountPayload = accountPayload.toDto(),
         creationDate = creationDate,
+        tradeLimitInfo = tradeLimitInfo,
+        tradeDuration = tradeDuration,
     )
 
 fun ZelleAccountPayloadDto.toDomain(): ZelleAccountPayload =
     ZelleAccountPayload(
         holderName = holderName,
         emailOrMobileNr = emailOrMobileNr,
+        chargebackRisk = chargebackRisk?.toDomain(),
+        paymentMethodName = paymentMethodName,
+        currency = currency,
+        country = country,
     )
 
 fun ZelleAccountPayload.toDto(): ZelleAccountPayloadDto =

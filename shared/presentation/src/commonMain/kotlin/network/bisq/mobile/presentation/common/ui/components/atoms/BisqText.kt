@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -93,6 +94,7 @@ object BisqText {
         lineHeight: TextUnit = getDefaultLineHeight(style.fontSize),
         maxLines: Int = Int.MAX_VALUE,
         overflow: TextOverflow = defaultTextOverflow,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
     ) {
         Text(
             text = text,
@@ -103,6 +105,7 @@ object BisqText {
             maxLines = maxLines,
             overflow = overflow,
             modifier = modifier,
+            onTextLayout = onTextLayout,
         )
     }
 

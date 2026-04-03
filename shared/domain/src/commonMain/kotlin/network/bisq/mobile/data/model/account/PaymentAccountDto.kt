@@ -1,7 +1,6 @@
 package network.bisq.mobile.data.model.account
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.data.model.account.fiat.FiatPaymentRailDto
 
 /**
  * Base interface for all payment account DTOs.
@@ -12,7 +11,9 @@ import network.bisq.mobile.data.model.account.fiat.FiatPaymentRailDto
 @Serializable(with = PaymentAccountDtoSerializer::class)
 interface PaymentAccountDto {
     val accountName: String
-    val accountPayload: PaymentAccountPayloadDto
     val paymentRail: PaymentRailDto
-    val creationDate: Long?
+    val accountPayload: PaymentAccountPayloadDto
+    val creationDate: String?
+    val tradeLimitInfo: String?
+    val tradeDuration: String?
 }
