@@ -95,9 +95,7 @@ internal fun SubscriptionsFailedDialog(
 }
 
 /**
- * The scrollable body of the dialog listing all failed topics, grouped by severity when mixed.
- *
- * When only one severity level is present the section header is suppressed to reduce clutter.
+ * The scrollable body of the dialog listing all failed topics, grouped by severity.
  */
 @Composable
 private fun FailedTopicList(topics: List<Topic>) {
@@ -179,9 +177,6 @@ private fun FailedTopicRow(topic: Topic) {
     }
 }
 
-/**
- * Section header used to separate critical and cosmetic failures when both are present.
- */
 @Composable
 private fun SectionLabel(
     text: String,
@@ -195,7 +190,7 @@ private fun SectionLabel(
 }
 
 // ─────────────────────────────────────────────
-// predview data helpers
+// preview data helpers
 // ─────────────────────────────────────────────
 
 private fun singleCriticalFailure() =

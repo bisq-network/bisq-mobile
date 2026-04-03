@@ -35,7 +35,7 @@ enum class Topic(
     NUM_USER_PROFILES(
         typeOf<Int>(),
         TopicImportance.COSMETIC,
-        "mobile.client.topic.num_user_profiles",
+        "mobile.client.topic.num_user_profiles.title",
         "mobile.client.topic.num_user_profiles.desc",
     ),
     OFFERS(

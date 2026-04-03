@@ -189,19 +189,21 @@ class ClientConnectivityService(
                         // server is down. A real round-trip request detects this.
                         val alive = isConnectionAlive()
                         log.d { "Health check result: alive=$alive" }
-                        awaitSubscriptionsReady()
-                        val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
                         if (!alive) {
                             log.d { "Health check failed, marking connection as untrusted" }
                             connectionUntrusted = true
                             webSocketClientService.forceReconnect()
                             ConnectivityStatus.RECONNECTING
-                        } else if (failedSubs.isNotEmpty()) {
-                            ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
-                        } else if (isSlow()) {
-                            ConnectivityStatus.REQUESTING_INVENTORY
                         } else {
-                            ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+                            awaitSubscriptionsReady()
+                            val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
+                            if (failedSubs.isNotEmpty()) {
+                                ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
+                            } else if (isSlow()) {
+                                ConnectivityStatus.REQUESTING_INVENTORY
+                            } else {
+                                ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+                            }
                         }
                     }
                 }

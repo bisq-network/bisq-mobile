@@ -155,6 +155,10 @@ class WebSocketClientService(
         _failedSubscriptions.value = emptySet()
     }
 
+    private fun clearSubscriptionFailure(subscriptionType: SubscriptionType) {
+        _failedSubscriptions.update { it - subscriptionType }
+    }
+
     private fun markSubscriptionFailed(subscriptionType: SubscriptionType) {
         _failedSubscriptions.update { it + subscriptionType }
     }
@@ -371,9 +375,12 @@ class WebSocketClientService(
             socketObserver.resetSequence()
             try {
                 client.subscribe(topic, parameter, socketObserver)
+                clearSubscriptionFailure(type)
             } catch (e: Exception) {
-                log.e(e) { "Failed to subscribe to topic $topic; skipping" }
-                markSubscriptionFailed(type)
+                if (e !is CancellationException) {
+                    log.e(e) { "Failed to subscribe to topic $topic; skipping" }
+                    markSubscriptionFailed(type)
+                }
                 currentCoroutineContext().ensureActive()
             }
         }
@@ -396,9 +403,12 @@ class WebSocketClientService(
                         entry.key.parameter,
                         entry.value,
                     )
+                    clearSubscriptionFailure(entry.key)
                 } catch (e: Exception) {
-                    log.e(e) { "Failed to subscribe to topic ${entry.key.topic}; skipping" }
-                    markSubscriptionFailed(entry.key)
+                    if (e !is CancellationException) {
+                        log.e(e) { "Failed to subscribe to topic ${entry.key.topic}; skipping" }
+                        markSubscriptionFailed(entry.key)
+                    }
                     currentCoroutineContext().ensureActive()
                 }
             }
