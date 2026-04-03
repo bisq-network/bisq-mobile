@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,9 +30,7 @@ fun SplashScreen(route: NavRoute.Splash = NavRoute.Splash()) {
     val presenter: SplashPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    LaunchedEffect(route) {
-        presenter.initialize(route)
-    }
+    presenter.applyRoute(route)
 
     val uiState by presenter.uiState.collectAsState()
 

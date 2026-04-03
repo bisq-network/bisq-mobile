@@ -48,7 +48,7 @@ class ClientSplashPresenter(
 
     override val state: StateFlow<String> get() = applicationBootstrapFacade.state
 
-    override fun initialize(route: NavRoute.Splash) {
+    override fun applyRoute(route: NavRoute.Splash) {
         continueWithLimitations = route.continueWithLimitations
     }
 

@@ -33,7 +33,7 @@ abstract class SplashPresenter(
 ) : BasePresenter(mainPresenter) {
     abstract val state: StateFlow<String>
 
-    open fun initialize(route: NavRoute.Splash) = Unit
+    open fun applyRoute(route: NavRoute.Splash) = Unit
 
     private val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
     private val isTimeoutDialogVisible: StateFlow<Boolean> get() = applicationBootstrapFacade.isTimeoutDialogVisible
