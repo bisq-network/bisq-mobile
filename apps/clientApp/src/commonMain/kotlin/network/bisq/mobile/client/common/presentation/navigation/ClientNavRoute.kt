@@ -7,6 +7,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 data class TrustedNodeSetup(
     val showConnectionFailed: Boolean = false,
     val showKeystoreError: Boolean = false,
+    val showSubscriptionsFailed: Boolean = false,
 ) : NavRoute
 
 @Serializable

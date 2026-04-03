@@ -43,6 +43,8 @@ class ClientConnectivityServiceTest {
         webSocketClientService = mockk(relaxed = true)
         // Default: health check passes when connected
         coEvery { webSocketClientService.sendHealthCheck() } returns true
+        every { webSocketClientService.isSubscriptionsPending } returns MutableStateFlow(false)
+        every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(emptySet())
         clientConnectivityService = ClientConnectivityService(webSocketClientService, androidPlatformInfo)
         // Reset static averageTripTime via public API: the averaging formula
         // (current + new) / 2 converges quickly to 0, ensuring isSlow() returns false.

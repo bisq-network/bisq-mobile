@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialog
+import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiState
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
@@ -56,12 +58,13 @@ fun TrustedNodeSetupScreen(
     isWorkflow: Boolean = true,
     showConnectionFailed: Boolean = false,
     showKeystoreError: Boolean = false,
+    showSubscriptionsFailed: Boolean = false,
 ) {
     val presenter: TrustedNodeSetupPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    LaunchedEffect(isWorkflow, showConnectionFailed, showKeystoreError) {
-        presenter.initialize(isWorkflow, showConnectionFailed, showKeystoreError)
+    LaunchedEffect(isWorkflow, showConnectionFailed, showKeystoreError, showSubscriptionsFailed) {
+        presenter.initialize(isWorkflow, showConnectionFailed, showKeystoreError, showSubscriptionsFailed)
     }
 
     val uiState by presenter.uiState.collectAsState()
@@ -157,6 +160,14 @@ fun TrustedNodeSetupContent(
             dismissOnClickOutside = false,
             verticalButtonPlacement = true,
         )
+    }
+
+    if (uiState.showSubscriptionsFailedWarning) {
+        SubscriptionsFailedDialog(
+            SubscriptionsFailedDialogUiState(uiState.failedTopics),
+        ) { dialogAction ->
+            onAction(TrustedNodeSetupUiAction.OnSubscriptionsFailedDialogUiAction(dialogAction))
+        }
     }
 }
 

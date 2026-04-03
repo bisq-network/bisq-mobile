@@ -33,6 +33,8 @@ abstract class SplashPresenter(
 ) : BasePresenter(mainPresenter) {
     abstract val state: StateFlow<String>
 
+    open fun initialize(route: NavRoute.Splash) = Unit
+
     private val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
     private val isTimeoutDialogVisible: StateFlow<Boolean> get() = applicationBootstrapFacade.isTimeoutDialogVisible
     private val isBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.isBootstrapFailed
@@ -148,26 +150,26 @@ abstract class SplashPresenter(
 
     private fun navigateToOnboarding() {
         navigateTo(NavRoute.Onboarding) {
-            it.popUpTo(NavRoute.Splash) { inclusive = true }
+            it.popUpTo<NavRoute.Splash> { inclusive = true }
         }
     }
 
     protected fun navigateToCreateProfile() {
         navigateTo(NavRoute.CreateProfile(true)) {
-            it.popUpTo(NavRoute.Splash) { inclusive = true }
+            it.popUpTo<NavRoute.Splash> { inclusive = true }
         }
     }
 
     protected fun navigateToHome() {
         navigateTo(NavRoute.TabContainer) {
-            it.popUpTo(NavRoute.Splash) { inclusive = true }
+            it.popUpTo<NavRoute.Splash> { inclusive = true }
         }
     }
 
     private fun navigateToAgreement() {
         log.d { "Navigating to agreement" }
         navigateTo(NavRoute.UserAgreement) {
-            it.popUpTo(NavRoute.Splash) { inclusive = true }
+            it.popUpTo<NavRoute.Splash> { inclusive = true }
         }
     }
 

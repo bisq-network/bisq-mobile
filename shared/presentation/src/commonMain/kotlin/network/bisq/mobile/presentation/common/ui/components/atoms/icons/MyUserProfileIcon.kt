@@ -13,8 +13,6 @@ import bisqapps.shared.presentation.generated.resources.no_connections
 import bisqapps.shared.presentation.generated.resources.requesting_inventory
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
-import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
@@ -29,7 +27,7 @@ fun MyUserProfileIcon(
     showAnimations: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val useAnimation = showAnimations && connectivityStatus == CONNECTED_AND_DATA_RECEIVED
+    val useAnimation = showAnimations && connectivityStatus == ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
     Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
         if (useAnimation) {
             ShineOverlay {
@@ -44,20 +42,20 @@ fun MyUserProfileIcon(
 
 @Composable
 fun ConnectivityIndicator(connectivityStatus: ConnectivityStatus) {
-    val (iconRes, description) =
+    val iconRes =
         when (connectivityStatus) {
-            CONNECTED_AND_DATA_RECEIVED ->
-                Res.drawable.connected_and_data_received to "Connected and data received"
+            ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED -> Res.drawable.connected_and_data_received
 
-            REQUESTING_INVENTORY ->
-                Res.drawable.requesting_inventory to "Requesting inventory data"
+            ConnectivityStatus.REQUESTING_INVENTORY,
+            ConnectivityStatus.CONNECTED_WITH_LIMITATIONS,
+            -> Res.drawable.requesting_inventory
 
             else ->
-                Res.drawable.no_connections to "No connections"
+                Res.drawable.no_connections
         }
 
     Image(
         painter = painterResource(iconRes),
-        contentDescription = description,
+        contentDescription = connectivityStatus.i18n(),
     )
 }

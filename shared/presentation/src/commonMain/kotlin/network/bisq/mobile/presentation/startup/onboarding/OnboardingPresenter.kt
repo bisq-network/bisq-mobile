@@ -118,7 +118,7 @@ abstract class OnboardingPresenter(
 
     protected fun navigateToHome() {
         navigateTo(NavRoute.TabContainer) {
-            it.popUpTo(NavRoute.Splash) { inclusive = true }
+            it.popUpTo<NavRoute.Splash> { inclusive = true }
         }
     }
 }

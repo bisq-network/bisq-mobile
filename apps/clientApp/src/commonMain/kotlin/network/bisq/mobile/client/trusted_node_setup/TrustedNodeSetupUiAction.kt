@@ -1,5 +1,7 @@
 package network.bisq.mobile.client.trusted_node_setup
 
+import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiAction
+
 sealed interface TrustedNodeSetupUiAction {
     data class OnPairingCodeChange(
         val value: String,
@@ -32,4 +34,8 @@ sealed interface TrustedNodeSetupUiAction {
     data object OnConnectionFailedPairWithNewNodePress : TrustedNodeSetupUiAction
 
     data object OnKeystoreErrorDismiss : TrustedNodeSetupUiAction
+
+    data class OnSubscriptionsFailedDialogUiAction(
+        val action: SubscriptionsFailedDialogUiAction,
+    ) : TrustedNodeSetupUiAction
 }

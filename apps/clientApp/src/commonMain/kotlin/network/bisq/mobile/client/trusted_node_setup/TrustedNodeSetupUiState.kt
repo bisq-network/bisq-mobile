@@ -1,10 +1,13 @@
 package network.bisq.mobile.client.trusted_node_setup
 
+import androidx.compose.runtime.Immutable
+import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 
+@Immutable
 data class TrustedNodeSetupUiState(
     val apiUrl: String = EMPTY_STRING,
     val pairingCodeEntry: DataEntry = DataEntry(),
@@ -16,6 +19,8 @@ data class TrustedNodeSetupUiState(
     val showQrCodeError: Boolean = false,
     val showChangeNodeWarning: Boolean = false,
     val showConnectionFailedWarning: Boolean = false,
+    val showSubscriptionsFailedWarning: Boolean = false,
+    val failedTopics: List<Topic> = emptyList(),
     val showKeystoreError: Boolean = false,
     val serverVersion: String = EMPTY_STRING,
 ) {

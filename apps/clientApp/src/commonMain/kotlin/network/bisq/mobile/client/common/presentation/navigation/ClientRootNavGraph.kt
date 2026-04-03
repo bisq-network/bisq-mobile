@@ -31,7 +31,7 @@ fun ClientRootNavGraph(
     NavHost(
         modifier = modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
-        startDestination = NavRoute.Splash,
+        startDestination = NavRoute.Splash(),
     ) {
         addCommonAppRoutes()
         addClientAppRoutes()
@@ -58,6 +58,7 @@ fun NavGraphBuilder.addClientAppRoutes() {
         TrustedNodeSetupScreen(
             showConnectionFailed = route.showConnectionFailed,
             showKeystoreError = route.showKeystoreError,
+            showSubscriptionsFailed = route.showSubscriptionsFailed,
         )
     }
 }

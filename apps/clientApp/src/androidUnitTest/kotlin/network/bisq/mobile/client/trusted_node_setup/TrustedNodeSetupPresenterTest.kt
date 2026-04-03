@@ -22,7 +22,9 @@ import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
+import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiAction
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCaseState
@@ -62,6 +64,7 @@ class TrustedNodeSetupPresenterTest {
     private lateinit var apiAccessService: ApiAccessService
     private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
     private lateinit var applicationLifecycleService: ApplicationLifecycleService
+    private lateinit var webSocketClientService: WebSocketClientService
     private lateinit var navigationManager: NavigationManager
     private lateinit var presenter: TrustedNodeSetupPresenter
 
@@ -98,6 +101,7 @@ class TrustedNodeSetupPresenterTest {
         apiAccessService = mockk(relaxed = true)
         sensitiveSettingsRepository = mockk(relaxed = true)
         applicationLifecycleService = mockk(relaxed = true)
+        webSocketClientService = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
 
         startKoin {
@@ -115,6 +119,7 @@ class TrustedNodeSetupPresenterTest {
         every { trustedNodeSetupUseCase.state } returns MutableStateFlow(TrustedNodeSetupUseCaseState())
         every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
         every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
+        every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(emptySet())
     }
 
     @After
@@ -134,6 +139,7 @@ class TrustedNodeSetupPresenterTest {
             apiAccessService,
             sensitiveSettingsRepository,
             applicationLifecycleService,
+            webSocketClientService,
         )
 
     private fun TestScope.setupPresenter() {
@@ -424,7 +430,7 @@ class TrustedNodeSetupPresenterTest {
             // Verify use case was executed successfully
             coVerify { trustedNodeSetupUseCase(validPairingQrCode) }
             // Verify navigation to splash screen occurred
-            verify { navigationManager.navigate(NavRoute.Splash, any(), any()) }
+            verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
         }
 
     @Test
@@ -817,7 +823,33 @@ class TrustedNodeSetupPresenterTest {
             assertFalse(presenter.uiState.value.showConnectionFailedWarning)
             coVerify { applicationLifecycleService.deactivate() }
             coVerify { applicationLifecycleService.activate() }
-            verify { navigationManager.navigate(NavRoute.Splash, any(), any()) }
+            verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
+        }
+
+    @Test
+    fun `continue from failed subscriptions dialog navigates to splash with override`() =
+        runTest(testDispatcher) {
+            // Given
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(
+                TrustedNodeSetupUiAction.OnSubscriptionsFailedDialogUiAction(
+                    SubscriptionsFailedDialogUiAction.OnContinuePress,
+                ),
+            )
+            advanceUntilIdle()
+
+            // Then
+            verify {
+                navigationManager.navigate(
+                    NavRoute.Splash(continueWithLimitations = true),
+                    any(),
+                    any(),
+                )
+            }
         }
 
     @Test

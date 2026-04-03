@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -23,6 +24,7 @@ import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -521,6 +523,41 @@ class WebSocketClientServiceTest {
 
             // Then - a new client should be created (factory called again)
             verify(atLeast = 2) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `subscriptionsPending ignores failed subscriptions`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            coEvery {
+                mockWsClient.subscribe(Topic.MARKET_PRICE, null, any())
+            } throws IllegalStateException("subscribe failed")
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(setOf(Topic.MARKET_PRICE), webSocketClientService.failedSubscriptionTopics.first())
+            assertFalse(webSocketClientService.isSubscriptionsPending.first())
         }
 
     @Test

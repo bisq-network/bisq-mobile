@@ -128,7 +128,7 @@ class NavigationManagerImplTest {
             var completed = false
 
             // When
-            navigationManager.navigate(NavRoute.Splash) {
+            navigationManager.navigate(NavRoute.Splash()) {
                 completed = true
             }
             advanceUntilIdle()
@@ -247,7 +247,7 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // When
-            navigationManager.navigateBackTo(NavRoute.Splash, shouldInclusive = false, shouldSaveState = false)
+            navigationManager.navigateBackTo(NavRoute.Splash(), shouldInclusive = false, shouldSaveState = false)
             advanceUntilIdle()
 
             // Then - verify error was logged
@@ -301,11 +301,11 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // When
-            navigationManager.navigate(NavRoute.Splash)
+            navigationManager.navigate(NavRoute.Splash())
             advanceUntilIdle()
 
             // Then
-            verify(exactly = 1) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
+            verify(exactly = 1) { mockController.navigate<NavRoute>(NavRoute.Splash(), any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     @Test
@@ -524,11 +524,11 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // When
-            navigationManager.navigateBackTo(NavRoute.Splash, shouldInclusive = false, shouldSaveState = false)
+            navigationManager.navigateBackTo(NavRoute.Splash(), shouldInclusive = false, shouldSaveState = false)
             advanceUntilIdle()
 
             // Then
-            verify(exactly = 1) { mockController.popBackStack(NavRoute.Splash, inclusive = false, saveState = false) }
+            verify(exactly = 1) { mockController.popBackStack(NavRoute.Splash(), inclusive = false, saveState = false) }
         }
 
     @Test
@@ -544,12 +544,12 @@ class NavigationManagerImplTest {
 
             // When - simulate rapid clicking (10 calls)
             repeat(10) {
-                navigationManager.navigate(NavRoute.Splash)
+                navigationManager.navigate(NavRoute.Splash())
             }
             advanceUntilIdle()
 
             // Then - verify mutex serialized all calls without dropping any
-            verify(exactly = 10) { mockController.navigate<NavRoute>(NavRoute.Splash, any<NavOptionsBuilder.() -> Unit>()) }
+            verify(exactly = 10) { mockController.navigate<NavRoute>(NavRoute.Splash(), any<NavOptionsBuilder.() -> Unit>()) }
         }
 
     // ========== NavigateToTab Tests ==========

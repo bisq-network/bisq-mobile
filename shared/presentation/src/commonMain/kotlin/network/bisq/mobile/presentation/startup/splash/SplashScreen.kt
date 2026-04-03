@@ -20,14 +20,16 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.BisqLogoGrey
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
-fun SplashScreen() {
+fun SplashScreen(route: NavRoute.Splash = NavRoute.Splash()) {
     val presenter: SplashPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
+    presenter.initialize(route)
 
     val uiState by presenter.uiState.collectAsState()
 

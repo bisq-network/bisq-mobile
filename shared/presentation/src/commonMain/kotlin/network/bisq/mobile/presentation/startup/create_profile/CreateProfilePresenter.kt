@@ -111,7 +111,7 @@ class CreateProfilePresenter(
                         // Navigate to TabContainer and completely clear the back stack
                         // This ensures the user can never navigate back to onboarding screens
                         navigateTo(NavRoute.TabContainer) {
-                            it.popUpTo(NavRoute.Splash) { inclusive = true }
+                            it.popUpTo<NavRoute.Splash> { inclusive = true }
                         }
                     } else {
                         navigateBack()

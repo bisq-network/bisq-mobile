@@ -350,6 +350,9 @@ class WebSocketClientImpl(
         log.i {
             "Received SubscriptionResponse for topic $topic and subscriberId $subscriberId."
         }
+        require(response.errorMessage == null) {
+            "Subscribe for topic $topic and subscriberId $subscriberId failed with error: ${response.errorMessage}"
+        }
         webSocketEventObservers[subscriberId] = webSocketEventObserver
         val webSocketEvent =
             WebSocketEvent(

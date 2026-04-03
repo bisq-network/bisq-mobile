@@ -10,7 +10,6 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.ConnectivityService
-import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
@@ -18,6 +17,7 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
+import kotlin.concurrent.Volatile
 
 class ClientSplashPresenter(
     mainPresenter: MainPresenter,
@@ -43,7 +43,14 @@ class ClientSplashPresenter(
 
     private var hasNavigated = false
 
+    @Volatile
+    private var continueWithLimitations = false
+
     override val state: StateFlow<String> get() = applicationBootstrapFacade.state
+
+    override fun initialize(route: NavRoute.Splash) {
+        continueWithLimitations = route.continueWithLimitations
+    }
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -109,16 +116,23 @@ class ClientSplashPresenter(
             // during credential handoff.
             val connected =
                 withTimeoutOrNull(CONNECTIVITY_WAIT_TIMEOUT_MS) {
-                    connectivityService.status.first {
-                        it == ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED ||
-                            it == ConnectivityStatus.REQUESTING_INVENTORY
-                    }
+                    connectivityService.status.first { it.isConnected() }
                     true
                 } ?: false
 
             if (!connected) {
                 log.d { "No connectivity detected, navigating to trusted node setup" }
                 navigateToTrustedNodeSetup(showConnectionFailed = true)
+                return
+            }
+            if (connectivityService.status.value == ConnectivityService.ConnectivityStatus.CONNECTED_WITH_LIMITATIONS) {
+                if (continueWithLimitations) {
+                    log.d { "Limited connectivity detected, continuing startup because route override is enabled" }
+                    super.navigateToNextScreen()
+                    return
+                }
+                log.d { "Limited connectivity detected, navigating to trusted node setup" }
+                navigateToTrustedNodeSetup(showSubscriptionsFailed = true)
                 return
             }
         }
@@ -128,14 +142,16 @@ class ClientSplashPresenter(
     private fun navigateToTrustedNodeSetup(
         showConnectionFailed: Boolean = false,
         showKeystoreError: Boolean = false,
+        showSubscriptionsFailed: Boolean = false,
     ) {
         navigateTo(
             TrustedNodeSetup(
                 showConnectionFailed = showConnectionFailed,
                 showKeystoreError = showKeystoreError,
+                showSubscriptionsFailed = showSubscriptionsFailed,
             ),
         ) {
-            it.popUpTo(NavRoute.Splash) { inclusive = true }
+            it.popUpTo<NavRoute.Splash> { inclusive = true }
         }
     }
 }

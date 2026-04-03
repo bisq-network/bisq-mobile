@@ -25,7 +25,7 @@ fun NodeNavGraph(
     NavHost(
         modifier = modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
-        startDestination = NavRoute.Splash,
+        startDestination = NavRoute.Splash(),
     ) {
         addCommonAppRoutes()
         addNodeAppRoutes()

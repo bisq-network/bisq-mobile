@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.navigation
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
 
@@ -10,7 +11,10 @@ interface NavRoute {
     data object HomeScreenGraphKey : NavRoute
 
     @Serializable
-    data object Splash : NavRoute
+    @Immutable
+    data class Splash(
+        val continueWithLimitations: Boolean = false,
+    ) : NavRoute
 
     @Serializable
     data object UserAgreement : NavRoute
@@ -22,6 +26,7 @@ interface NavRoute {
     data object Onboarding : NavRoute
 
     @Serializable
+    @Immutable
     data class CreateProfile(
         val isOnboarding: Boolean = false,
     ) : NavRoute
@@ -85,6 +90,7 @@ interface NavRoute {
     data object Offerbook : NavRoute
 
     @Serializable
+    @Immutable
     data class OpenTrade(
         val tradeId: String,
     ) : NavRoute,
@@ -93,6 +99,7 @@ interface NavRoute {
     }
 
     @Serializable
+    @Immutable
     data class TradeChat(
         val tradeId: String,
     ) : NavRoute,

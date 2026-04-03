@@ -7,7 +7,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -105,6 +108,26 @@ class WebSocketClientService(
             LinkedHashMap(),
         )
     private var subscriptionsAreApplied = false
+    private val _failedSubscriptions = MutableStateFlow<Set<SubscriptionType>>(emptySet())
+    val failedSubscriptionTopics: Flow<Set<Topic>> =
+        _failedSubscriptions.map { failedSubscriptions ->
+            failedSubscriptions.mapTo(LinkedHashSet()) { it.topic }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val isSubscriptionsPending =
+        combine(requestedSubscriptions, _failedSubscriptions) { subsMap, failedSubscriptions ->
+            subsMap.filterKeys { subscriptionType -> subscriptionType !in failedSubscriptions }
+        }.flatMapLatest { pendingSubscriptions ->
+            if (pendingSubscriptions.isEmpty()) {
+                flowOf(false)
+            } else {
+                val hasReceivedDataFlows = pendingSubscriptions.values.map { it.hasReceivedData }
+                combine(hasReceivedDataFlows) { hasReceivedDataArray ->
+                    hasReceivedDataArray.any { hasReceivedData -> !hasReceivedData }
+                }
+            }
+        }
 
     private val stopFlow =
         MutableSharedFlow<Unit>(
@@ -115,7 +138,6 @@ class WebSocketClientService(
     @OptIn(ExperimentalCoroutinesApi::class)
     val initialSubscriptionsReceivedData: Flow<Boolean> =
         requestedSubscriptions.flatMapLatest { subsMap ->
-            // Only the first seven subscriptions contribute to the initial data banner
             val trackedObservers =
                 initialSubscriptionTypes.mapNotNull { subsMap[it] }
             if (trackedObservers.size < initialSubscriptionTypes.size) {
@@ -128,6 +150,14 @@ class WebSocketClientService(
                 }
             }
         }
+
+    private fun clearFailedSubscriptions() {
+        _failedSubscriptions.value = emptySet()
+    }
+
+    private fun markSubscriptionFailed(subscriptionType: SubscriptionType) {
+        _failedSubscriptions.update { it + subscriptionType }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun activate() {
@@ -157,6 +187,7 @@ class WebSocketClientService(
             subscriptionsAreApplied = false
             requestedSubscriptions.value.forEach { it.value.resetSequence() }
             requestedSubscriptions.value = LinkedHashMap()
+            clearFailedSubscriptions()
         }
         _connectionState.value = ConnectionState.Disconnected()
 
@@ -176,6 +207,7 @@ class WebSocketClientService(
             requestedSubscriptions.value.forEach { entry ->
                 entry.value.resetSequence()
             }
+            clearFailedSubscriptions()
         }
     }
 
@@ -247,6 +279,7 @@ class WebSocketClientService(
                                 requestedSubscriptions.value.forEach { entry ->
                                     entry.value.resetSequence()
                                 }
+                                clearFailedSubscriptions()
                             }
                             if (state.error != null) {
                                 if (state.error is UnauthorizedApiAccessException) {
@@ -320,9 +353,9 @@ class WebSocketClientService(
         // we collect subscriptions here and subscribe to them on a best effort basis
         // if client is not connected yet, it will be accumulated and then subscribed at
         // Connected status, otherwise it will be immediately subscribed
+        val type = SubscriptionType(topic, parameter)
         val (socketObserver, applyNow) =
             subscriptionMutex.withLock {
-                val type = SubscriptionType(topic, parameter)
                 var observer = requestedSubscriptions.value[type]
                 if (observer == null) {
                     observer = WebSocketEventObserver()
@@ -336,7 +369,13 @@ class WebSocketClientService(
             val client = getWsClient()
             log.d { "subscriptions already applied; subscribing to $topic individually" }
             socketObserver.resetSequence()
-            client.subscribe(topic, parameter, socketObserver)
+            try {
+                client.subscribe(topic, parameter, socketObserver)
+            } catch (e: Exception) {
+                log.e(e) { "Failed to subscribe to topic $topic; skipping" }
+                markSubscriptionFailed(type)
+                currentCoroutineContext().ensureActive()
+            }
         }
         return socketObserver
     }
@@ -359,6 +398,8 @@ class WebSocketClientService(
                     )
                 } catch (e: Exception) {
                     log.e(e) { "Failed to subscribe to topic ${entry.key.topic}; skipping" }
+                    markSubscriptionFailed(entry.key)
+                    currentCoroutineContext().ensureActive()
                 }
             }
             subscriptionsAreApplied = true
@@ -416,6 +457,7 @@ class WebSocketClientService(
             subscriptionMutex.withLock {
                 subscriptionsAreApplied = false
                 requestedSubscriptions.value.forEach { it.value.resetSequence() }
+                clearFailedSubscriptions()
             }
             _connectionState.value = ConnectionState.Disconnected()
             currentClientSettings = null

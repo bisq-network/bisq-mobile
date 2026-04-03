@@ -8,6 +8,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -21,6 +22,7 @@ import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
+import kotlin.time.TimeSource
 
 class ClientConnectivityService(
     private val webSocketClientService: WebSocketClientService,
@@ -156,7 +158,11 @@ class ClientConnectivityService(
                                 log.i { "Connection trust restored after successful health check" }
                                 connectionUntrusted = false
                                 consecutiveReconnectingCycles = 0
-                                if (isSlow()) {
+                                awaitSubscriptionsReady()
+                                val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
+                                if (failedSubs.isNotEmpty()) {
+                                    ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
+                                } else if (isSlow()) {
                                     ConnectivityStatus.REQUESTING_INVENTORY
                                 } else {
                                     ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
@@ -183,11 +189,15 @@ class ClientConnectivityService(
                         // server is down. A real round-trip request detects this.
                         val alive = isConnectionAlive()
                         log.d { "Health check result: alive=$alive" }
+                        awaitSubscriptionsReady()
+                        val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
                         if (!alive) {
                             log.d { "Health check failed, marking connection as untrusted" }
                             connectionUntrusted = true
                             webSocketClientService.forceReconnect()
                             ConnectivityStatus.RECONNECTING
+                        } else if (failedSubs.isNotEmpty()) {
+                            ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
                         } else if (isSlow()) {
                             ConnectivityStatus.REQUESTING_INVENTORY
                         } else {
@@ -252,6 +262,13 @@ class ClientConnectivityService(
             log.d { "Health check failed: ${e.message}" }
             false
         }
+
+    private suspend fun awaitSubscriptionsReady() {
+        log.d { "Waiting for subscription status to become ready" }
+        val mark = TimeSource.Monotonic.markNow()
+        webSocketClientService.isSubscriptionsPending.first { !it }
+        log.d { "Subscription status ready after ${mark.elapsedNow().inWholeMilliseconds}ms" }
+    }
 
     private fun runPendingBlocks() {
         serviceScope.launch(Dispatchers.Default) {

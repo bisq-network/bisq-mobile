@@ -54,7 +54,10 @@ import network.bisq.mobile.presentation.trade.trade_detail.OpenTradeScreen
 const val NAV_ANIM_MS = 300
 
 fun NavGraphBuilder.addCommonAppRoutes() {
-    composable<NavRoute.Splash> { SplashScreen() }
+    composable<NavRoute.Splash> { backStackEntry ->
+        val route: NavRoute.Splash = backStackEntry.toRoute()
+        SplashScreen(route)
+    }
 
     addScreen<NavRoute.UserAgreement> { UserAgreementScreen() }
     addScreen<NavRoute.Onboarding> { OnboardingScreen() }
