@@ -500,9 +500,14 @@ class WebSocketClientImpl(
         if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
             throw UnauthorizedApiAccessException()
         }
+        if (!response.isSuccess()) {
+            throw IllegalStateException("API version check failed with status ${response.httpStatusCode}")
+        }
         val body = response.body
-        val decodeFromString = json.decodeFromString<ApiVersionSettingsVO>(body)
-        return decodeFromString
+        if (body.isBlank()) {
+            throw IllegalStateException("API version response body is empty")
+        }
+        return json.decodeFromString<ApiVersionSettingsVO>(body)
     }
 
     private fun isApiCompatible(apiVersion: ApiVersionSettingsVO): Boolean {

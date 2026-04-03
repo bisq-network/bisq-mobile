@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.websocket
 
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
 import kotlinx.coroutines.CancellationException
@@ -29,6 +30,7 @@ import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsR
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketResponse
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
+import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.data.service.ServiceFacade
@@ -428,15 +430,25 @@ class WebSocketClientService(
             )
         return try {
             val response = client.sendRequestAndAwaitResponse(request, awaitConnection = false)
+            // Detect expired session: the server responds with 401 inside the WebSocket
+            // response when the sessionId is no longer valid. Without this check, the
+            // health check reports "alive" even though all API calls will fail with 401.
+            if (response is WebSocketRestApiResponse &&
+                response.httpStatusCode == HttpStatusCode.Unauthorized
+            ) {
+                throw UnauthorizedApiAccessException()
+            }
             response != null
         } catch (e: CancellationException) {
             throw e
+        } catch (e: UnauthorizedApiAccessException) {
+            throw e // Propagate so the connection state handler triggers session renewal
         } catch (e: Exception) {
             false
         }
     }
 
-    private suspend fun attemptSessionRenewal() {
+    internal suspend fun attemptSessionRenewal() {
         val sessionSvc = sessionService ?: return
         val settingsRepo = sensitiveSettingsRepository ?: return
 

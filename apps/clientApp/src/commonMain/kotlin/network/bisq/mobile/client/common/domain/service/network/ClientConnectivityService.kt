@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService.Companion.TIMEOUT
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.data.service.network.ConnectivityService
@@ -197,6 +198,16 @@ class ClientConnectivityService(
                     runPendingBlocks()
                 }
             }
+        } catch (e: UnauthorizedApiAccessException) {
+            // Session expired — the WebSocket is alive but the server rejects our session.
+            // Renew the session first (gets new sessionId), which triggers httpClientChangedFlow
+            // → updateWebSocketClient() → fresh WebSocket with valid credentials.
+            // We must NOT call forceReconnect() here because that reconnects with the stale
+            // sessionId, which the server immediately rejects.
+            log.i { "Session expired (401 from health check), attempting session renewal" }
+            connectionUntrusted = true
+            webSocketClientService.attemptSessionRenewal()
+            _status.value = ConnectivityStatus.RECONNECTING
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -212,12 +223,16 @@ class ClientConnectivityService(
     /**
      * Sends a lightweight health check request to verify the server is responsive.
      * Returns true if a response is received within [TIMEOUT], false otherwise.
+     * @throws UnauthorizedApiAccessException if the session has expired (401 response)
      */
     private suspend fun isConnectionAlive(): Boolean =
         try {
             withTimeout(TIMEOUT) {
                 webSocketClientService.sendHealthCheck()
             }
+        } catch (e: UnauthorizedApiAccessException) {
+            // Session expired — propagate so checkConnectivity can trigger session renewal
+            throw e
         } catch (e: TimeoutCancellationException) {
             log.d { "Health check timed out" }
             false
