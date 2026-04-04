@@ -60,6 +60,7 @@ class ClientMainPresenterTest {
 
         connectivityService = mockk(relaxed = true)
         networkServiceFacade = mockk(relaxed = true)
+        every { connectivityService.clientRevoked } returns MutableStateFlow(false)
         settingsServiceFacade = mockk(relaxed = true)
         tradesServiceFacade = mockk(relaxed = true)
         userProfileServiceFacade = mockk(relaxed = true)

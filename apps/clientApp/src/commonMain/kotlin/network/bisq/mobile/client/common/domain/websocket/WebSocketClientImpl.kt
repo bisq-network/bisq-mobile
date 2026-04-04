@@ -497,7 +497,11 @@ class WebSocketClientImpl(
         val response =
             sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
-        if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
+        if (response.httpStatusCode == HttpStatusCode.Unauthorized ||
+            response.httpStatusCode == HttpStatusCode.Forbidden
+        ) {
+            // 401: session expired. 403: client revoked (profile deleted, permissions gone).
+            // Both mean credentials are no longer valid — stop retrying and trigger session renewal.
             throw UnauthorizedApiAccessException()
         }
         if (!response.isSuccess()) {

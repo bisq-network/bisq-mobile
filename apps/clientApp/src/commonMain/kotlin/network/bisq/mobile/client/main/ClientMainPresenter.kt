@@ -1,7 +1,9 @@
 package network.bisq.mobile.client.main
 
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetupSettings
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -12,7 +14,10 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
 /**
@@ -39,13 +44,30 @@ open class ClientMainPresenter(
     ) {
     override fun onViewAttached() {
         super.onViewAttached()
-//        activateServices()
-//        validateVersion()
         listenForConnectivity()
+        observeClientRevocation()
     }
 
     private fun listenForConnectivity() {
         connectivityService.startMonitoring()
+    }
+
+    private fun observeClientRevocation() {
+        presenterScope.launch {
+            connectivityService.clientRevoked.collect { revoked ->
+                if (revoked) {
+                    log.i { "Client credentials revoked — navigating to pairing screen" }
+                    showSnackbar(
+                        "mobile.connect.clientRevoked".i18n(),
+                        type = SnackbarType.ERROR,
+                    )
+                    connectivityService.acknowledgeRevocation()
+                    navigateTo(TrustedNodeSetup()) { builder ->
+                        builder.popUpTo(NavRoute.TabContainer) { inclusive = true }
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {

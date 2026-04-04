@@ -6,6 +6,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -294,6 +295,14 @@ class ClientConnectivityService(
             }
         }
         log.d { "Connectivity stopped being monitored" }
+    }
+
+    /** Emits true when the server has permanently revoked our client credentials. */
+    val clientRevoked: StateFlow<Boolean> get() = webSocketClientService.clientRevoked
+
+    /** Resets the revocation flag after handling (e.g., after navigating to pairing screen). */
+    fun acknowledgeRevocation() {
+        webSocketClientService.acknowledgeRevocation()
     }
 
     private fun isConnected(): Boolean = webSocketClientService.isConnected()

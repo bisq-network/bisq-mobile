@@ -9,6 +9,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -478,5 +479,21 @@ class ClientConnectivityServiceTest {
             coVerify(atLeast = 1) { webSocketClientService.triggerReconnect() }
             coVerify(exactly = 0) { webSocketClientService.forceClientRecreation() }
             iosService.stopMonitoring()
+        }
+
+    @Test
+    fun `clientRevoked delegates to webSocketClientService and acknowledgeRevocation resets it`() =
+        runBlocking {
+            val revokedFlow = MutableStateFlow(false)
+            every { webSocketClientService.clientRevoked } returns revokedFlow
+
+            assertEquals(false, clientConnectivityService.clientRevoked.value)
+
+            revokedFlow.value = true
+            assertEquals(true, clientConnectivityService.clientRevoked.value)
+
+            every { webSocketClientService.acknowledgeRevocation() } answers { revokedFlow.value = false }
+            clientConnectivityService.acknowledgeRevocation()
+            assertEquals(false, clientConnectivityService.clientRevoked.value)
         }
 }
