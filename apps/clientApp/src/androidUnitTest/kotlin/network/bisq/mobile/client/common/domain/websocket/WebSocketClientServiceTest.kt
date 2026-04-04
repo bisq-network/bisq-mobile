@@ -720,6 +720,53 @@ class WebSocketClientServiceTest {
         }
 
     @Test
+    fun `applySubscriptions tracks queued subscription failure on connect and clears it after retry`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            coEvery {
+                mockWsClient.subscribe(Topic.MARKET_PRICE, null, any())
+            } throws IllegalStateException("subscribe failed") andThenAnswer { thirdArg() }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 0) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+
+            connectedStateFlow.value = ConnectionState.Connected
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(setOf(Topic.MARKET_PRICE), webSocketClientService.failedSubscriptionTopics.first())
+            assertFalse(webSocketClientService.isSubscriptionsPending.first())
+            coVerify(exactly = 1) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 2) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+            assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
+    @Test
     fun `successful resubscribe clears failed subscription topic`() =
         runTest(testDispatcher) {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
