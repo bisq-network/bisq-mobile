@@ -66,6 +66,7 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SemanticVersion
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import network.bisq.mobile.domain.utils.createUuid
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import kotlin.concurrent.Volatile
 
 class WebSocketClientImpl(
@@ -485,6 +486,7 @@ class WebSocketClientImpl(
         }
     }
 
+    @ExcludeFromCoverage
     private suspend fun getApiVersion(): ApiVersionSettingsVO {
         val requestId = createUuid()
         val webSocketRestApiRequest =

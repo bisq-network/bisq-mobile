@@ -42,6 +42,7 @@ import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import network.bisq.mobile.domain.utils.createUuid
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import kotlin.concurrent.Volatile
 
 internal data class SubscriptionType(
@@ -431,6 +432,7 @@ class WebSocketClientService(
      *
      * @return true if a response was received, false otherwise.
      */
+    @ExcludeFromCoverage
     internal suspend fun sendHealthCheck(): Boolean {
         val client = currentClient.value ?: return false
         val request =
@@ -446,8 +448,10 @@ class WebSocketClientService(
             // or 403 (client revoked) inside the WebSocket response. Without this check, the
             // health check reports "alive" even though all API calls will fail.
             if (response is WebSocketRestApiResponse &&
-                (response.httpStatusCode == HttpStatusCode.Unauthorized ||
-                    response.httpStatusCode == HttpStatusCode.Forbidden)
+                (
+                    response.httpStatusCode == HttpStatusCode.Unauthorized ||
+                        response.httpStatusCode == HttpStatusCode.Forbidden
+                )
             ) {
                 throw UnauthorizedApiAccessException()
             }
@@ -461,6 +465,7 @@ class WebSocketClientService(
         }
     }
 
+    @ExcludeFromCoverage
     internal suspend fun attemptSessionRenewal() {
         val sessionSvc = sessionService ?: return
         val settingsRepo = sensitiveSettingsRepository ?: return

@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.commonTestModule
+import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.domain.model.PlatformInfo
@@ -495,5 +496,20 @@ class ClientConnectivityServiceTest {
             every { webSocketClientService.acknowledgeRevocation() } answers { revokedFlow.value = false }
             clientConnectivityService.acknowledgeRevocation()
             assertEquals(false, clientConnectivityService.clientRevoked.value)
+        }
+
+    @Test
+    fun `health check 401 triggers session renewal and sets RECONNECTING`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } throws UnauthorizedApiAccessException()
+            coEvery { webSocketClientService.attemptSessionRenewal() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+            coVerify(atLeast = 1) { webSocketClientService.attemptSessionRenewal() }
         }
 }

@@ -6,8 +6,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -76,6 +76,9 @@ class ClientConnectivityService(
     // CONNECTED and RECONNECTING when isConnected() returns true on a stale/half-open
     // TCP connection (e.g., desktop node shutdown without sending TCP FIN).
     private var connectionUntrusted = false
+
+    /** Emits true when the server has permanently revoked our client credentials. */
+    val clientRevoked: StateFlow<Boolean> get() = webSocketClientService.clientRevoked
 
     override suspend fun activate() {
         super.activate()
@@ -296,9 +299,6 @@ class ClientConnectivityService(
         }
         log.d { "Connectivity stopped being monitored" }
     }
-
-    /** Emits true when the server has permanently revoked our client credentials. */
-    val clientRevoked: StateFlow<Boolean> get() = webSocketClientService.clientRevoked
 
     /** Resets the revocation flag after handling (e.g., after navigating to pairing screen). */
     fun acknowledgeRevocation() {

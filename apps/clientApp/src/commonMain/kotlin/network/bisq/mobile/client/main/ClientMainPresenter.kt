@@ -18,6 +18,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.main.MainPresenter
 
 /**
@@ -52,6 +53,7 @@ open class ClientMainPresenter(
         connectivityService.startMonitoring()
     }
 
+    @ExcludeFromCoverage
     private fun observeClientRevocation() {
         presenterScope.launch {
             connectivityService.clientRevoked.collect { revoked ->
