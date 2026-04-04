@@ -22,7 +22,9 @@ import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiAction
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
@@ -67,6 +69,8 @@ class TrustedNodeSetupPresenterTest {
     private lateinit var webSocketClientService: WebSocketClientService
     private lateinit var navigationManager: NavigationManager
     private lateinit var presenter: TrustedNodeSetupPresenter
+    private lateinit var failedSubscriptionTopicsFlow: MutableStateFlow<Set<Topic>>
+    private lateinit var connectionStateFlow: MutableStateFlow<ConnectionState>
 
     // Test data
     private val validPairingCode = "12345-ABCDE"
@@ -103,6 +107,8 @@ class TrustedNodeSetupPresenterTest {
         applicationLifecycleService = mockk(relaxed = true)
         webSocketClientService = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
+        failedSubscriptionTopicsFlow = MutableStateFlow(emptySet())
+        connectionStateFlow = MutableStateFlow(ConnectionState.Connected)
 
         startKoin {
             modules(
@@ -119,7 +125,8 @@ class TrustedNodeSetupPresenterTest {
         every { trustedNodeSetupUseCase.state } returns MutableStateFlow(TrustedNodeSetupUseCaseState())
         every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
         every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
-        every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(emptySet())
+        every { webSocketClientService.failedSubscriptionTopics } returns failedSubscriptionTopicsFlow
+        every { webSocketClientService.connectionState } returns connectionStateFlow
     }
 
     @After
@@ -850,6 +857,63 @@ class TrustedNodeSetupPresenterTest {
                     any(),
                 )
             }
+        }
+
+    @Test
+    fun `failed topics update even after subscriptions warning opens`() =
+        runTest(testDispatcher) {
+            // Given
+            failedSubscriptionTopicsFlow.value = setOf(Topic.TRADES, Topic.OFFERS)
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
+            advanceUntilIdle()
+            failedSubscriptionTopicsFlow.value = setOf(Topic.MARKET_PRICE)
+            advanceUntilIdle()
+
+            // Then
+            val state = presenter.uiState.value
+            assertTrue(state.showSubscriptionsFailedWarning)
+            assertEquals(listOf(Topic.MARKET_PRICE), state.failedTopics)
+        }
+
+    @Test
+    fun `shows connection failed warning instead when websocket is already disconnected`() =
+        runTest(testDispatcher) {
+            // Given
+            failedSubscriptionTopicsFlow.value = setOf(Topic.TRADES)
+            connectionStateFlow.value = ConnectionState.Disconnected()
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
+            advanceUntilIdle()
+
+            // Then
+            val state = presenter.uiState.value
+            assertTrue(state.showConnectionFailedWarning)
+            assertFalse(state.showSubscriptionsFailedWarning)
+        }
+
+    @Test
+    fun `switches subscriptions warning to connection failed warning when websocket disconnects`() =
+        runTest(testDispatcher) {
+            // Given
+            failedSubscriptionTopicsFlow.value = setOf(Topic.TRADES)
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
+            advanceUntilIdle()
+
+            // When
+            connectionStateFlow.value = ConnectionState.Disconnected()
+            advanceUntilIdle()
+
+            // Then
+            val state = presenter.uiState.value
+            assertTrue(state.showConnectionFailedWarning)
+            assertFalse(state.showSubscriptionsFailedWarning)
+            assertEquals(listOf(Topic.TRADES), state.failedTopics)
         }
 
     @Test

@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
 import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiAction
@@ -75,9 +76,15 @@ class TrustedNodeSetupPresenter(
             }
         } else if (showSubscriptionsFailed) {
             _uiState.update {
-                it.copy(
-                    showSubscriptionsFailedWarning = true,
-                )
+                if (webSocketClientService.connectionState.value is ConnectionState.Connected) {
+                    it.copy(
+                        showSubscriptionsFailedWarning = true,
+                    )
+                } else {
+                    it.copy(
+                        showConnectionFailedWarning = true,
+                    )
+                }
             }
         }
     }
@@ -117,7 +124,26 @@ class TrustedNodeSetupPresenter(
 
         presenterScope.launch {
             webSocketClientService.failedSubscriptionTopics.collect { topics ->
-                _uiState.update { it.copy(failedTopics = topics.toList()) }
+                _uiState.update {
+                    it.copy(failedTopics = topics.toList())
+                }
+            }
+        }
+
+        presenterScope.launch {
+            webSocketClientService.connectionState.collect { connectionState ->
+                if (connectionState is ConnectionState.Disconnected) {
+                    _uiState.update { currentState ->
+                        if (currentState.showSubscriptionsFailedWarning) {
+                            currentState.copy(
+                                showSubscriptionsFailedWarning = false,
+                                showConnectionFailedWarning = true,
+                            )
+                        } else {
+                            currentState
+                        }
+                    }
+                }
             }
         }
     }
