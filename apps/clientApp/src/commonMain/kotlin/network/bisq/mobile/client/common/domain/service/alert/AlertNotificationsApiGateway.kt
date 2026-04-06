@@ -10,12 +10,16 @@ class AlertNotificationsApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
     private val webSocketClientService: WebSocketClientService,
 ) : Logging {
+    companion object {
+        const val APP_TYPE = "MOBILE_CLIENT"
+    }
+
     private val basePath = "alert-notifications"
 
     suspend fun subscribeAlerts(): Result<WebSocketEventObserver> =
         runCatching {
-            webSocketClientService.subscribe(Topic.ALERT_NOTIFICATIONS, "MOBILE_CLIENT")
+            webSocketClientService.subscribe(Topic.ALERT_NOTIFICATIONS, APP_TYPE)
         }
 
-    suspend fun dismissAlert(alertId: String): Result<Unit> = webSocketApiClient.delete("$basePath/$alertId")
+    suspend fun dismissAlert(alertId: String): Result<Unit> = webSocketApiClient.delete("$basePath/$alertId?appType=$APP_TYPE")
 }

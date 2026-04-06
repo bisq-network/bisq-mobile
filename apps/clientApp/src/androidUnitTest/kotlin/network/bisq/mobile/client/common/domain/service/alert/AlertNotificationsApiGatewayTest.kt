@@ -51,7 +51,28 @@ class AlertNotificationsApiGatewayTest {
 
             assertTrue(result.isSuccess)
             assertEquals("DELETE", requestSlot.captured.method)
-            assertEquals("/api/v1/alert-notifications/alert-1", requestSlot.captured.path)
+            assertEquals("/api/v1/alert-notifications/alert-1?appType=MOBILE_CLIENT", requestSlot.captured.path)
             coVerify(exactly = 1) { webSocketClientService.sendRequestAndAwaitResponse(any()) }
+        }
+
+    @Test
+    fun `dismissAlert always sends appType query parameter`() =
+        runTest {
+            val requestSlot = slot<WebSocketRestApiRequest>()
+            coEvery {
+                webSocketClientService.sendRequestAndAwaitResponse(capture(requestSlot))
+            } returns
+                WebSocketRestApiResponse(
+                    requestId = "request-1",
+                    statusCode = HttpStatusCode.NoContent.value,
+                    body = "",
+                )
+
+            gateway.dismissAlert("any-alert-id")
+
+            assertTrue(
+                requestSlot.captured.path.contains("appType="),
+                "Expected path to contain `appType=` in query parameters but was: ${requestSlot.captured.path}",
+            )
         }
 }
