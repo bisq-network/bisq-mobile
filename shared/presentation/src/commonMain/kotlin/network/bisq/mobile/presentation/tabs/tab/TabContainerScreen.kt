@@ -11,6 +11,9 @@ import bisqapps.shared.presentation.generated.resources.nav_offers
 import bisqapps.shared.presentation.generated.resources.nav_trades
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
+import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
+import network.bisq.mobile.presentation.common.ui.alert.dialog.TradeRestrictedDialog
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqFABAddButton
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticScaffold
@@ -25,8 +28,11 @@ import org.koin.compose.koinInject
 interface ITabContainerPresenter : ViewPresenter {
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
     val showAnimation: StateFlow<Boolean>
+    val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?>
 
     fun createOffer()
+
+    fun onTradeRestrictingAlertAction(action: AlertNotificationUiAction)
 }
 
 @Composable
@@ -42,6 +48,7 @@ fun TabContainerScreen() {
 
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
+    val showTradeRestrictedDialog by presenter.showTradeRestrictedDialog.collectAsState()
 
     val navigationItems =
         listOf(
@@ -109,5 +116,10 @@ fun TabContainerScreen() {
         },
         isInteractive = isInteractive,
         content = { TabNavGraph(tabNavController) },
+    )
+
+    TradeRestrictedDialog(
+        alert = showTradeRestrictedDialog,
+        onAction = presenter::onTradeRestrictingAlertAction,
     )
 }

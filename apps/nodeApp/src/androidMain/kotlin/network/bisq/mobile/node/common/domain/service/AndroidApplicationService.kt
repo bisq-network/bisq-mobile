@@ -26,6 +26,7 @@ import bisq.bonded_roles.BondedRolesService
 import bisq.bonded_roles.bonded_role.AuthorizedBondedRolesService
 import bisq.bonded_roles.release.AppType
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
+import bisq.bonded_roles.security_manager.alert.AlertService
 import bisq.burningman.BurningmanService
 import bisq.chat.ChatService
 import bisq.common.locale.LanguageRepository
@@ -107,6 +108,8 @@ class AndroidApplicationService(
             Supplier { applicationService.notificationService }
         var tradeService: Supplier<TradeService> =
             Supplier { applicationService.tradeService }
+        var alertService: Supplier<AlertService> =
+            Supplier { applicationService.alertService }
         var alertNotificationsService: Supplier<AlertNotificationsService> =
             Supplier { applicationService.alertNotificationsService }
         var favouriteMarketsService: Supplier<FavouriteMarketsService> =
@@ -192,6 +195,7 @@ class AndroidApplicationService(
     val notificationService: NotificationService
     val tradeService: TradeService
     val bisqEasyService: BisqEasyService
+    val alertService: AlertService
     val alertNotificationsService: AlertNotificationsService
     val favouriteMarketsService: FavouriteMarketsService
     val dontShowAgainService: DontShowAgainService
@@ -259,6 +263,8 @@ class AndroidApplicationService(
                 notificationService,
                 tradeService,
             )
+
+        alertService = AlertService(authorizedBondedRolesService)
 
         alertNotificationsService =
             AlertNotificationsService(settingsService, bondedRolesService.alertService, AppType.MOBILE_NODE)

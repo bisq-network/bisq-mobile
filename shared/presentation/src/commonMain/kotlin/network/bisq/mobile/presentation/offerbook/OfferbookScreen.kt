@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.alert.dialog.TradeRestrictedDialog
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqFABAddButton
@@ -52,6 +53,7 @@ fun OfferbookScreen() {
     val selectedDirection by presenter.selectedDirection.collectAsState()
     val showDeleteConfirmation by presenter.showDeleteConfirmation.collectAsState()
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
+    val showTradeRestrictedDialog by presenter.showTradeRestrictedDialog.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
 
@@ -75,7 +77,7 @@ fun OfferbookScreen() {
             )
         },
         isInteractive = isInteractive,
-        shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog,
+        shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog || showTradeRestrictedDialog != null,
     ) {
         DirectionToggle(
             selectedDirection,
@@ -224,6 +226,11 @@ fun OfferbookScreen() {
             )
         }
     }
+
+    TradeRestrictedDialog(
+        alert = showTradeRestrictedDialog,
+        onAction = presenter::onTradeRestrictingAlertAction,
+    )
 }
 
 @Composable

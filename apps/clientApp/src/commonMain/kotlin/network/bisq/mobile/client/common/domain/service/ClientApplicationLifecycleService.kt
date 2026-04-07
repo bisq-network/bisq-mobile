@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.domain.service
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
@@ -37,6 +38,7 @@ class ClientApplicationLifecycleService(
     private val offersServiceFacade: OffersServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val alertNotificationsServiceFacade: AlertNotificationsServiceFacade,
+    private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -70,6 +72,7 @@ class ClientApplicationLifecycleService(
         mediationServiceFacade.activate()
         reputationServiceFacade.activate()
         alertNotificationsServiceFacade.activate()
+        tradeRestrictingAlertServiceFacade.activate()
         userProfileServiceFacade.activate()
         messageDeliveryServiceFacade.activate()
 
@@ -91,6 +94,7 @@ class ClientApplicationLifecycleService(
         pushNotificationServiceFacade.deactivate()
         messageDeliveryServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()
+        tradeRestrictingAlertServiceFacade.deactivate()
         alertNotificationsServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
         mediationServiceFacade.deactivate()

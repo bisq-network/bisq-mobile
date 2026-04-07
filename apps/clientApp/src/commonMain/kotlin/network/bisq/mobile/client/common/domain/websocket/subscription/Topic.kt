@@ -80,6 +80,12 @@ enum class Topic(
         "mobile.client.topic.alert_notifications.title",
         "mobile.client.topic.alert_notifications.desc",
     ),
+    TRADE_RESTRICTING_ALERT(
+        typeOf<AuthorizedAlertDataDto?>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.trade_restricting_alert.title",
+        "mobile.client.topic.trade_restricting_alert.desc",
+    ),
     ;
 
     fun i18n(): String = titleKey.i18n()

@@ -34,6 +34,7 @@ import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
@@ -180,6 +181,7 @@ class OfferbookPresenterFilterTest {
         val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
         val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
         val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
+        val tradeRestrictingAlertServiceFacade = mockk<TradeRestrictingAlertServiceFacade>(relaxed = true)
         val presenter =
             OfferbookPresenter(
                 mainPresenter,
@@ -189,6 +191,7 @@ class OfferbookPresenterFilterTest {
                 marketPriceServiceFacade,
                 offerUserProfileService,
                 reputationService,
+                tradeRestrictingAlertServiceFacade,
             )
         offersFlow.value = allOffers
         presenter.onViewAttached()
@@ -519,6 +522,7 @@ class OfferbookPresenterFilterTest {
             val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
             val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
             val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
+            val tradeRestrictingAlertServiceFacade = mockk<TradeRestrictingAlertServiceFacade>(relaxed = true)
 
             val presenter =
                 OfferbookPresenter(
@@ -529,6 +533,7 @@ class OfferbookPresenterFilterTest {
                     marketPriceServiceFacade,
                     offerUserProfileService,
                     reputationService,
+                    tradeRestrictingAlertServiceFacade,
                 )
             presenter.onViewAttached()
             runCurrent()

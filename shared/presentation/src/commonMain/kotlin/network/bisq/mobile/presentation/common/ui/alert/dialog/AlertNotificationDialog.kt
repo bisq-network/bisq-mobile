@@ -57,10 +57,11 @@ internal fun AlertNotificationDialog(
 }
 
 @Composable
-private fun AlertNotificationDialogContent(
+internal fun AlertNotificationDialogContent(
     alert: AlertNotificationUiState,
     onAction: (AlertNotificationUiAction) -> Unit,
     modifier: Modifier = Modifier,
+    showDismissButton: Boolean = true,
 ) {
     val accentColor = alertAccentColor(alert.type)
     Dialog(
@@ -149,12 +150,14 @@ private fun AlertNotificationDialogContent(
                         )
                     }
 
-                    BisqButton(
-                        text = "mobile.alert.actions.dismiss.label".i18n(),
-                        onClick = { onAction(AlertNotificationUiAction.OnDismissAlertNotification(alert.id)) },
-                        type = BisqButtonType.Outline,
-                        fullWidth = true,
-                    )
+                    if (showDismissButton) {
+                        BisqButton(
+                            text = "mobile.alert.actions.dismiss.label".i18n(),
+                            onClick = { onAction(AlertNotificationUiAction.OnDismissAlertNotification(alert.id)) },
+                            type = BisqButtonType.Outline,
+                            fullWidth = true,
+                        )
+                    }
                 }
             }
 

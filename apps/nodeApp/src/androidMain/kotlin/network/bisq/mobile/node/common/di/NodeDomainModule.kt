@@ -7,6 +7,7 @@ import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
@@ -34,6 +35,7 @@ import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.NodeApplicationLifecycleService
 import network.bisq.mobile.node.common.domain.service.accounts.NodeFiatAccountsServiceFacade
 import network.bisq.mobile.node.common.domain.service.alert.NodeAlertNotificationsServiceFacade
+import network.bisq.mobile.node.common.domain.service.alert.NodeTradeRestrictingAlertServiceFacade
 import network.bisq.mobile.node.common.domain.service.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import network.bisq.mobile.node.common.domain.service.chat.trade.NodeTradeChatMessagesServiceFacade
@@ -125,6 +127,8 @@ val androidNodeDomainModule =
 
         single<AlertNotificationsServiceFacade> { NodeAlertNotificationsServiceFacade(get()) }
 
+        single<TradeRestrictingAlertServiceFacade> { NodeTradeRestrictingAlertServiceFacade(get()) }
+
         single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
 
         single<FiatAccountsServiceFacade> { NodeFiatAccountsServiceFacade(get()) }
@@ -141,6 +145,7 @@ val androidNodeDomainModule =
 
         single<NodeApplicationLifecycleService> {
             NodeApplicationLifecycleService(
+                get(),
                 get(),
                 get(),
                 get(),

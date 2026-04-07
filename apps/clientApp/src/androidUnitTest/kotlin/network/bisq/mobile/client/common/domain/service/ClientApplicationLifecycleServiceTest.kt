@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
@@ -42,6 +43,7 @@ class ClientApplicationLifecycleServiceTest {
     private val offersServiceFacade: OffersServiceFacade = mockk(relaxed = true)
     private val reputationServiceFacade: ReputationServiceFacade = mockk(relaxed = true)
     private val alertNotificationsServiceFacade: AlertNotificationsServiceFacade = mockk(relaxed = true)
+    private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade = mockk(relaxed = true)
     private val settingsServiceFacade: SettingsServiceFacade = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
     private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
@@ -71,6 +73,7 @@ class ClientApplicationLifecycleServiceTest {
                 offersServiceFacade = offersServiceFacade,
                 reputationServiceFacade = reputationServiceFacade,
                 alertNotificationsServiceFacade = alertNotificationsServiceFacade,
+                tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
                 settingsServiceFacade = settingsServiceFacade,
                 tradesServiceFacade = tradesServiceFacade,
                 userProfileServiceFacade = userProfileServiceFacade,
@@ -105,6 +108,7 @@ class ClientApplicationLifecycleServiceTest {
                     "mediation.activate",
                     "reputation.activate",
                     "alert.activate",
+                    "tradeRestrictingAlert.activate",
                     "userProfile.activate",
                     "messageDelivery.activate",
                     "push.activate",
@@ -124,6 +128,7 @@ class ClientApplicationLifecycleServiceTest {
                     "push.deactivate",
                     "messageDelivery.deactivate",
                     "userProfile.deactivate",
+                    "tradeRestrictingAlert.deactivate",
                     "alert.deactivate",
                     "reputation.deactivate",
                     "mediation.deactivate",
@@ -163,6 +168,7 @@ class ClientApplicationLifecycleServiceTest {
                     "push.deactivate",
                     "messageDelivery.deactivate",
                     "userProfile.deactivate",
+                    "tradeRestrictingAlert.deactivate",
                     "alert.deactivate",
                     "reputation.deactivate",
                     "mediation.deactivate",
@@ -200,6 +206,7 @@ class ClientApplicationLifecycleServiceTest {
         coEvery { mediationServiceFacade.activate() } answers { order += "mediation.activate" }
         coEvery { reputationServiceFacade.activate() } answers { order += "reputation.activate" }
         coEvery { alertNotificationsServiceFacade.activate() } answers { order += "alert.activate" }
+        coEvery { tradeRestrictingAlertServiceFacade.activate() } answers { order += "tradeRestrictingAlert.activate" }
         coEvery { userProfileServiceFacade.activate() } answers { order += "userProfile.activate" }
         coEvery { messageDeliveryServiceFacade.activate() } answers { order += "messageDelivery.activate" }
         coEvery { pushNotificationServiceFacade.activate() } answers { order += "push.activate" }
@@ -210,6 +217,7 @@ class ClientApplicationLifecycleServiceTest {
         coEvery { pushNotificationServiceFacade.deactivate() } answers { order += "push.deactivate" }
         coEvery { messageDeliveryServiceFacade.deactivate() } answers { order += "messageDelivery.deactivate" }
         coEvery { userProfileServiceFacade.deactivate() } answers { order += "userProfile.deactivate" }
+        coEvery { tradeRestrictingAlertServiceFacade.deactivate() } answers { order += "tradeRestrictingAlert.deactivate" }
         coEvery { alertNotificationsServiceFacade.deactivate() } answers { order += "alert.deactivate" }
         coEvery { reputationServiceFacade.deactivate() } answers { order += "reputation.deactivate" }
         coEvery { mediationServiceFacade.deactivate() } answers { order += "mediation.deactivate" }

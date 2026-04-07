@@ -21,6 +21,8 @@ import network.bisq.mobile.client.common.domain.service.accounts.ClientFiatAccou
 import network.bisq.mobile.client.common.domain.service.accounts.FiatPaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.alert.AlertNotificationsApiGateway
 import network.bisq.mobile.client.common.domain.service.alert.ClientAlertNotificationsServiceFacade
+import network.bisq.mobile.client.common.domain.service.alert.ClientTradeRestrictingAlertServiceFacade
+import network.bisq.mobile.client.common.domain.service.alert.TradeRestrictingAlertApiGateway
 import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
@@ -75,6 +77,7 @@ import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
@@ -319,6 +322,14 @@ val clientDomainModule =
         single { AlertNotificationsApiGateway(get(), get()) }
         single<AlertNotificationsServiceFacade> {
             ClientAlertNotificationsServiceFacade(
+                get(),
+                get(),
+            )
+        }
+
+        single { TradeRestrictingAlertApiGateway(get()) }
+        single<TradeRestrictingAlertServiceFacade> {
+            ClientTradeRestrictingAlertServiceFacade(
                 get(),
                 get(),
             )

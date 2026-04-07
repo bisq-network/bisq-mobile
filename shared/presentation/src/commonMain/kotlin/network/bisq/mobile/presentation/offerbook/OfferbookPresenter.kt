@@ -25,6 +25,7 @@ import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPrese
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
@@ -34,6 +35,9 @@ import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
+import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
+import network.bisq.mobile.presentation.common.ui.alert.toAlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -52,7 +56,10 @@ open class OfferbookPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
+    private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
 ) : BasePresenter(mainPresenter) {
+    private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
+    val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?> = _showTradeRestrictedDialog.asStateFlow()
     private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
     val selectedDirection: StateFlow<DirectionEnum> get() = _selectedDirection.asStateFlow()
 
@@ -436,6 +443,11 @@ open class OfferbookPresenter(
     }
 
     private fun takeOffer() {
+        val activeAlert = tradeRestrictingAlertServiceFacade.alert.value
+        if (activeAlert != null) {
+            _showTradeRestrictedDialog.value = activeAlert.toAlertNotificationUiState()
+            return
+        }
         runCatching {
             selectedOffer?.let { item ->
                 require(!item.isMyOffer)
@@ -634,6 +646,11 @@ open class OfferbookPresenter(
     }
 
     fun createOffer() {
+        val activeAlert = tradeRestrictingAlertServiceFacade.alert.value
+        if (activeAlert != null) {
+            _showTradeRestrictedDialog.value = activeAlert.toAlertNotificationUiState()
+            return
+        }
         disableInteractive()
         try {
             val selectedMarket = offersServiceFacade.selectedOfferbookMarket.value.market
@@ -710,6 +727,17 @@ open class OfferbookPresenter(
         } catch (e: Exception) {
             log.w("isUserIgnored failed for $makerUserProfileId", e)
             false
+        }
+    }
+
+    fun onTradeRestrictingAlertAction(action: AlertNotificationUiAction) {
+        when (action) {
+            AlertNotificationUiAction.OnUpdateNow -> {
+                _showTradeRestrictedDialog.value = null
+                navigateToUrl(BisqLinks.BISQ_MOBILE_RELEASES)
+            }
+            AlertNotificationUiAction.OnCloseDialog -> _showTradeRestrictedDialog.value = null
+            else -> Unit
         }
     }
 

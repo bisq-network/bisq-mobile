@@ -7,9 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
-import network.bisq.mobile.domain.model.alert.AlertType
-import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.alert.banner.AlertNotificationBannerUiState
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
@@ -29,11 +26,11 @@ class AlertNotificationBannerPresenter(
             mainPresenter.isMainContentVisible,
         ) { alerts, dialogAlertId, isMainContentVisible ->
             val visibleAlerts = alerts.filter { it.type.isMessageAlert() }
-            val currentAlert = visibleAlerts.maxWithOrNull(compareBy({ it.type.priority }, { it.date }))?.toUiState()
+            val currentAlert = visibleAlerts.maxWithOrNull(compareBy({ it.type.ordinal }, { it.date }))?.toAlertNotificationUiState()
             val currentAlertDialog =
                 dialogAlertId
                     ?.let { id -> visibleAlerts.firstOrNull { it.id == id } }
-                    ?.toUiState()
+                    ?.toAlertNotificationUiState()
             AlertNotificationBannerUiState(
                 currentAlert = currentAlert,
                 pendingAlertCount = if (currentAlert == null) 0 else (visibleAlerts.size - 1).coerceAtLeast(0),
@@ -63,32 +60,4 @@ class AlertNotificationBannerPresenter(
     private fun expandAlert(alertId: String) {
         currentAlertDialogId.value = alertId
     }
-
-    private fun AuthorizedAlertData.toUiState(): AlertNotificationUiState =
-        AlertNotificationUiState(
-            id = id,
-            type = type,
-            headline = headline ?: defaultHeadline(type),
-            message = message ?: "",
-            haltTrading = haltTrading,
-            requiresUpdate = requireVersionForTrading,
-            minVersion = minVersion.orEmpty(),
-        )
-
-    private fun defaultHeadline(type: AlertType): String =
-        when (type) {
-            AlertType.INFO -> "authorizedRole.securityManager.alertType.INFO".i18n()
-            AlertType.WARN -> "authorizedRole.securityManager.alertType.WARN".i18n()
-            AlertType.EMERGENCY -> "authorizedRole.securityManager.alertType.EMERGENCY".i18n()
-            else -> ""
-        }
-
-    private val AlertType.priority: Int
-        get() =
-            when (this) {
-                AlertType.INFO -> 0
-                AlertType.WARN -> 1
-                AlertType.EMERGENCY -> 2
-                else -> -1
-            }
 }
