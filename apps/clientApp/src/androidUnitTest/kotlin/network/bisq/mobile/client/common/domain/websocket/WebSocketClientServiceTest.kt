@@ -9,7 +9,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -28,7 +27,6 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
-import network.bisq.mobile.domain.utils.OperationCancelledException
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -524,56 +522,6 @@ class WebSocketClientServiceTest {
         }
 
     @Test
-    fun `awaitSubscriptionsReady returns when pending subscription receives data`() =
-        runTest(testDispatcher) {
-            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
-            val connectedClient = mockk<WebSocketClient>(relaxed = true)
-            every { connectedClient.webSocketClientStatus } returns connectedStateFlow
-            every { connectedClient.apiUrl } returns
-                mockk {
-                    every { host } returns "localhost"
-                }
-            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns connectedClient
-
-            webSocketClientService.activate()
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            httpClientChangedFlow.emit(
-                HttpClientSettings(
-                    bisqApiUrl = "http://localhost:8080",
-                    tlsFingerprint = null,
-                    clientId = "client-id",
-                    sessionId = "session-id",
-                ),
-            )
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            val observer = webSocketClientService.subscribe(Topic.MARKET_PRICE)
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            val waitForReady =
-                async {
-                    webSocketClientService.awaitSubscriptionsReady()
-                    true
-                }
-            testDispatcher.scheduler.runCurrent()
-
-            assertFalse(waitForReady.isCompleted)
-
-            observer.setEvent(
-                WebSocketEvent(
-                    topic = Topic.MARKET_PRICE,
-                    subscriberId = "subscriber",
-                    modificationType = ModificationType.REPLACE,
-                    sequenceNumber = 1,
-                ),
-            )
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            assertTrue(waitForReady.await())
-        }
-
-    @Test
     fun `initialSubscriptionsReceivedData stays false until all tracked subscriptions receive data`() =
         runTest(testDispatcher) {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
@@ -882,47 +830,6 @@ class WebSocketClientServiceTest {
             coVerify { httpClientService.recreateClient() }
             assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
             assertTrue(webSocketClientService.connectionState.value is ConnectionState.Disconnected)
-        }
-
-    @Test
-    fun `awaitSubscriptionsReady cancels when websocket disconnects before data arrives`() =
-        runTest(testDispatcher) {
-            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
-            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
-            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
-            every { mockWsClient.apiUrl } returns
-                mockk {
-                    every { host } returns "localhost"
-                }
-            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
-
-            webSocketClientService.activate()
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            httpClientChangedFlow.emit(
-                HttpClientSettings(
-                    bisqApiUrl = "http://localhost:8080",
-                    tlsFingerprint = null,
-                    clientId = "client-id",
-                    sessionId = "session-id",
-                ),
-            )
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            webSocketClientService.subscribe(Topic.MARKET_PRICE)
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            val waitForReady =
-                async {
-                    runCatching {
-                        webSocketClientService.awaitSubscriptionsReady()
-                    }.exceptionOrNull()
-                }
-            testDispatcher.scheduler.runCurrent()
-
-            connectedStateFlow.value = ConnectionState.Disconnected()
-
-            assertTrue(waitForReady.await() is OperationCancelledException)
         }
 
     @Test

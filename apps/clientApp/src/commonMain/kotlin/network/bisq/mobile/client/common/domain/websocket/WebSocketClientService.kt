@@ -16,13 +16,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -164,16 +161,6 @@ class WebSocketClientService(
 
     private fun markSubscriptionFailed(subscriptionType: SubscriptionType) {
         _failedSubscriptions.update { it + subscriptionType }
-    }
-
-    suspend fun awaitSubscriptionsReady() {
-        awaitOrCancel(
-            isSubscriptionsPending.filter { !it },
-            merge(
-                stopFlow,
-                connectionState.drop(1).filter { it is ConnectionState.Disconnected },
-            ),
-        )
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

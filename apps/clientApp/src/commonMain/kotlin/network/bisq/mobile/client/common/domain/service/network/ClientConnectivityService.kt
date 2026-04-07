@@ -22,7 +22,6 @@ import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
-import kotlin.time.TimeSource
 
 class ClientConnectivityService(
     private val webSocketClientService: WebSocketClientService,
@@ -158,7 +157,6 @@ class ClientConnectivityService(
                                 log.i { "Connection trust restored after successful health check" }
                                 connectionUntrusted = false
                                 consecutiveReconnectingCycles = 0
-                                awaitSubscriptionsReady()
                                 val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
                                 if (failedSubs.isNotEmpty()) {
                                     ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
@@ -195,7 +193,6 @@ class ClientConnectivityService(
                             webSocketClientService.forceReconnect()
                             ConnectivityStatus.RECONNECTING
                         } else {
-                            awaitSubscriptionsReady()
                             val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
                             if (failedSubs.isNotEmpty()) {
                                 ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
@@ -264,13 +261,6 @@ class ClientConnectivityService(
             log.d { "Health check failed: ${e.message}" }
             false
         }
-
-    private suspend fun awaitSubscriptionsReady() {
-        log.d { "Waiting for subscription status to become ready" }
-        val mark = TimeSource.Monotonic.markNow()
-        webSocketClientService.awaitSubscriptionsReady()
-        log.d { "Subscription status ready after ${mark.elapsedNow().inWholeMilliseconds}ms" }
-    }
 
     private fun runPendingBlocks() {
         serviceScope.launch(Dispatchers.Default) {
