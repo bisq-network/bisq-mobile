@@ -103,7 +103,12 @@ class TrustedNodeSetupPresenter(
                     }
 
                     else -> {
-                        _uiState.update { it.copy(status = state.connectionStatus) }
+                        _uiState.update {
+                            it.copy(
+                                status = state.connectionStatus,
+                                serverVersion = state.serverVersion,
+                            )
+                        }
                     }
                 }
             }

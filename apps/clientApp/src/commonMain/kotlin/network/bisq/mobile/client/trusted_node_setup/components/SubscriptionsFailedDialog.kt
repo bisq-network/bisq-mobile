@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.TopicImportance
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -70,6 +71,21 @@ internal fun SubscriptionsFailedDialog(
 
         // ── Failed topic list ──
         FailedTopicList(topics = state.failedTopics)
+
+        // ── Version mismatch hint (shown only when node API differs from the client's expected version) ──
+        if (state.connectedApiVersion != null &&
+            state.connectedApiVersion != BuildConfig.BISQ_API_VERSION
+        ) {
+            BisqGap.V1()
+            BisqText.XSmallLight(
+                text =
+                    "mobile.client.dialog.failed_subs.version.mismatch".i18n(
+                        state.connectedApiVersion,
+                        BuildConfig.BISQ_API_VERSION,
+                    ),
+                color = BisqTheme.colors.mid_grey20,
+            )
+        }
         BisqGap.V2()
 
         // ── Actions ──
@@ -219,6 +235,13 @@ private fun allCriticalFailures() =
             { it.importance == TopicImportance.CRITICAL },
     )
 
+@ExcludeFromCoverage
+private fun singleCriticalFailureWithVersionMismatch() =
+    SubscriptionsFailedDialogUiState(
+        failedTopics = listOf(Topic.MARKET_PRICE),
+        connectedApiVersion = "2.1.0",
+    )
+
 // ─────────────────────────────────────────────
 // Previews
 // ─────────────────────────────────────────────
@@ -267,6 +290,30 @@ private fun MixedFailuresTwoCriticalOnCosmeticPreview() {
         }
         SubscriptionsFailedDialog(
             state = mixedFailures(),
+            onAction = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun VersionMismatchHintPreview() {
+    BisqTheme.Preview {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(BisqTheme.colors.backgroundColor)
+                    .padding(BisqUIConstants.ScreenPadding),
+        ) {
+            BisqText.XSmallLight(
+                text = "Preview: version mismatch hint (node 2.1.0, expected ${BuildConfig.BISQ_API_VERSION})",
+                color = BisqTheme.colors.mid_grey20,
+            )
+        }
+        SubscriptionsFailedDialog(
+            state = singleCriticalFailureWithVersionMismatch(),
             onAction = {},
         )
     }

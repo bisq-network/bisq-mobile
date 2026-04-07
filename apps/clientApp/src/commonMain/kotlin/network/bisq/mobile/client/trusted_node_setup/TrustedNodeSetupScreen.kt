@@ -164,7 +164,10 @@ fun TrustedNodeSetupContent(
 
     if (uiState.showSubscriptionsFailedWarning) {
         SubscriptionsFailedDialog(
-            SubscriptionsFailedDialogUiState(uiState.failedTopics),
+            SubscriptionsFailedDialogUiState(
+                failedTopics = uiState.failedTopics,
+                connectedApiVersion = uiState.serverVersion.ifBlank { null },
+            ),
         ) { dialogAction ->
             onAction(TrustedNodeSetupUiAction.OnSubscriptionsFailedDialogUiAction(dialogAction))
         }
