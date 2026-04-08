@@ -8,8 +8,8 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import org.junit.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
-import kotlin.test.assertTrue
 
 class TradeRestrictingAlertApiGatewayTest {
     private val webSocketClientService: WebSocketClientService = mockk()
@@ -25,21 +25,21 @@ class TradeRestrictingAlertApiGatewayTest {
 
             val result = gateway.subscribeAlert()
 
-            assertSame(observer, result.getOrThrow())
+            assertSame(observer, result)
             coVerify(exactly = 1) {
                 webSocketClientService.subscribe(Topic.TRADE_RESTRICTING_ALERT, "MOBILE_CLIENT")
             }
         }
 
     @Test
-    fun `subscribeAlert returns failure when websocket subscription throws`() =
+    fun `subscribeAlert propagates exception when websocket subscription throws`() =
         runTest {
             coEvery {
                 webSocketClientService.subscribe(Topic.TRADE_RESTRICTING_ALERT, "MOBILE_CLIENT")
             } throws IllegalStateException("connection closed")
 
-            val result = gateway.subscribeAlert()
-
-            assertTrue(result.isFailure)
+            assertFailsWith<IllegalStateException> {
+                gateway.subscribeAlert()
+            }
         }
 }

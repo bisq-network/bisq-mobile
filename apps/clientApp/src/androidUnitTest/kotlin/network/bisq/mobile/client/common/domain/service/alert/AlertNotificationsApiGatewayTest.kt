@@ -33,7 +33,7 @@ class AlertNotificationsApiGatewayTest {
 
             val result = gateway.subscribeAlerts()
 
-            assertSame(observer, result.getOrThrow())
+            assertSame(observer, result)
             coVerify(exactly = 1) {
                 webSocketClientService.subscribe(Topic.ALERT_NOTIFICATIONS, "MOBILE_CLIENT")
             }

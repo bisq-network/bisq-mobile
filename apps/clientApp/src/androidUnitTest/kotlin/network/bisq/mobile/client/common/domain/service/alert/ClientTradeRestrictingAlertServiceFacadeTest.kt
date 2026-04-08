@@ -31,7 +31,7 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate maps supported trade restricting alert`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlert() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlert() } returns observer
 
             facade.activate()
             observer.setEvent(
@@ -69,7 +69,7 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate clears alert on null payload event`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlert() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlert() } returns observer
 
             facade.activate()
             observer.setEvent(
@@ -111,7 +111,7 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate clears alert when payload is JSON null`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlert() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlert() } returns observer
 
             facade.activate()
             observer.setEvent(
@@ -153,7 +153,7 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate returns null for unsupported alert type`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlert() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlert() } returns observer
 
             facade.activate()
             observer.setEvent(
@@ -182,7 +182,7 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
     fun `deactivate clears cached alert`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlert() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlert() } returns observer
 
             facade.activate()
             observer.setEvent(validAlertEvent())
@@ -197,7 +197,7 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate ignores malformed payload and keeps previous alert`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlert() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlert() } returns observer
 
             facade.activate()
             observer.setEvent(validAlertEvent(sequenceNumber = 1))
@@ -220,7 +220,7 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
     @Test
     fun `activate handles subscription failure without crashing`() =
         runTest {
-            coEvery { apiGateway.subscribeAlert() } returns Result.failure(IllegalStateException("boom"))
+            coEvery { apiGateway.subscribeAlert() } throws IllegalStateException("boom")
 
             facade.activate()
             advanceUntilIdle()

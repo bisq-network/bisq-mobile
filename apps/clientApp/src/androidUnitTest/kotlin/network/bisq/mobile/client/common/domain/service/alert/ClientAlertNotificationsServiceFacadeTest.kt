@@ -31,7 +31,7 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate maps supported security alerts and ignores unsupported or blank message alerts`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlerts() } returns observer
 
             facade.activate()
             observer.setEvent(
@@ -88,7 +88,7 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
     fun `dismissAlert removes local alert after backend success`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlerts() } returns observer
             coEvery { apiGateway.dismissAlert("warn-1") } returns Result.success(Unit)
 
             facade.activate()
@@ -126,7 +126,7 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
     fun `deactivate clears cached alerts`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlerts() } returns observer
 
             facade.activate()
             observer.setEvent(validAlertEvent())
@@ -141,7 +141,7 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate ignores malformed payload and keeps previous alerts`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlerts() } returns observer
 
             facade.activate()
             observer.setEvent(validAlertEvent(sequenceNumber = 1))
@@ -165,7 +165,7 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
     fun `activate ignores events without payload`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlerts() } returns observer
 
             facade.activate()
             observer.setEvent(
@@ -185,7 +185,7 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
     @Test
     fun `activate handles subscription failure without crashing`() =
         runTest {
-            coEvery { apiGateway.subscribeAlerts() } returns Result.failure(IllegalStateException("boom"))
+            coEvery { apiGateway.subscribeAlerts() } throws IllegalStateException("boom")
 
             facade.activate()
             advanceUntilIdle()
@@ -197,7 +197,7 @@ class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
     fun `dismissAlert keeps local alert when backend fails`() =
         runTest {
             val observer = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeAlerts() } returns Result.success(observer)
+            coEvery { apiGateway.subscribeAlerts() } returns observer
             coEvery { apiGateway.dismissAlert("warn-1") } returns Result.failure(IllegalStateException("boom"))
 
             facade.activate()
