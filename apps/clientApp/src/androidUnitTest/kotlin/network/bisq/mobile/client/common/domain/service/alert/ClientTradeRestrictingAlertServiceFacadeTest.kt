@@ -63,6 +63,8 @@ class ClientTradeRestrictingAlertServiceFacadeTest : KoinIntegrationTestBase() {
             assertEquals("Trading halted", alert?.headline)
             assertEquals("Critical issue detected.", alert?.message)
             assertEquals(true, alert?.haltTrading)
+            assertEquals(false, alert?.requireVersionForTrading)
+            assertNull(alert?.minVersion)
         }
 
     @Test

@@ -53,6 +53,7 @@ import org.junit.runner.RunWith
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import kotlin.test.assertTrue
 
 /**
  * Compose UI tests verifying that [OfferbookScreen] correctly wires the trade-restriction dialog
@@ -208,7 +209,7 @@ class OfferbookScreenTradeRestrictionTest {
                     androidx.compose.ui.test
                         .hasText("Trading restricted — update required"),
                 ).fetchSemanticsNodes()
-                .let { nodes -> assert(nodes.isEmpty()) }
+                .let { nodes -> assertTrue(nodes.isEmpty()) }
         }
 
     // -------------------------------------------------------------------------
@@ -263,6 +264,6 @@ class OfferbookScreenTradeRestrictionTest {
                     androidx.compose.ui.test
                         .hasText("Alert to dismiss"),
                 ).fetchSemanticsNodes()
-                .let { nodes -> assert(nodes.isEmpty()) { "Dialog must be gone after OnCloseDialog" } }
+                .let { nodes -> assertTrue(nodes.isEmpty(), "Dialog must be gone after OnCloseDialog") }
         }
 }

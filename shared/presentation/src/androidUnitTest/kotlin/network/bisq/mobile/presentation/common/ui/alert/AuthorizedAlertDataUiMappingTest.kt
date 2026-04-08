@@ -13,18 +13,10 @@ import kotlin.test.assertTrue
  */
 class AuthorizedAlertDataUiMappingTest {
     @Test
-    fun `defaultAlertHeadline returns non-empty string for INFO`() {
-        assertTrue(AlertType.INFO.defaultAlertHeadline().isNotEmpty())
-    }
-
-    @Test
-    fun `defaultAlertHeadline returns non-empty string for WARN`() {
-        assertTrue(AlertType.WARN.defaultAlertHeadline().isNotEmpty())
-    }
-
-    @Test
-    fun `defaultAlertHeadline returns non-empty string for EMERGENCY`() {
-        assertTrue(AlertType.EMERGENCY.defaultAlertHeadline().isNotEmpty())
+    fun `defaultAlertHeadline returns non-empty string for message alert types`() {
+        listOf(AlertType.INFO, AlertType.WARN, AlertType.EMERGENCY).forEach { type ->
+            assertTrue(type.defaultAlertHeadline().isNotEmpty(), "Expected non-empty headline for $type")
+        }
     }
 
     @Test
