@@ -31,33 +31,28 @@ class ClientTradeRestrictingAlertServiceFacade(
     }
 
     override suspend fun deactivate() {
-        _alert.value = null
         super.deactivate()
+        _alert.value = null
     }
 
     private suspend fun subscribeAlert() {
-        apiGateway
-            .subscribeAlert()
-            .onSuccess { observer ->
-                observer.webSocketEvent.collect { webSocketEvent ->
-                    if (webSocketEvent?.deferredPayload == null) {
-                        _alert.value = null
-                        return@collect
-                    }
-
-                    runCatching {
-                        WebSocketEventPayload
-                            .from<AuthorizedAlertDataDto?>(json, webSocketEvent)
-                            .payload
-                            ?.toDomainOrNull()
-                    }.onSuccess { payload ->
-                        _alert.value = payload
-                    }.onFailure { error ->
-                        log.e(error) { "Failed to deserialize trade restricting alert payload; event ignored." }
-                    }
-                }
-            }.onFailure {
-                log.e(it) { "Failed to subscribe to trade restricting alert events" }
+        val observer = apiGateway.subscribeAlert()
+        observer.webSocketEvent.collect { webSocketEvent ->
+            if (webSocketEvent?.deferredPayload == null) {
+                _alert.value = null
+                return@collect
             }
+
+            runCatching {
+                WebSocketEventPayload
+                    .from<AuthorizedAlertDataDto?>(json, webSocketEvent)
+                    .payload
+                    ?.toDomainOrNull()
+            }.onSuccess { payload ->
+                _alert.value = payload
+            }.onFailure { error ->
+                log.e(error) { "Failed to deserialize trade restricting alert payload; event ignored." }
+            }
+        }
     }
 }

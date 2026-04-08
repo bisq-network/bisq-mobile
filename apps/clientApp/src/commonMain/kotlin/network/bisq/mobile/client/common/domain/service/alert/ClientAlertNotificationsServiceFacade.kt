@@ -51,27 +51,22 @@ class ClientAlertNotificationsServiceFacade(
     }
 
     private suspend fun subscribeAlerts() {
-        apiGateway
-            .subscribeAlerts()
-            .onSuccess { observer ->
-                observer.webSocketEvent.collect { webSocketEvent ->
-                    if (webSocketEvent?.deferredPayload == null) {
-                        return@collect
-                    }
-
-                    runCatching {
-                        WebSocketEventPayload
-                            .from<List<AuthorizedAlertDataDto>>(json, webSocketEvent)
-                            .payload
-                            .mapNotNull(AuthorizedAlertDataDto::toDomainOrNull)
-                    }.onSuccess { payload ->
-                        _alerts.value = payload
-                    }.onFailure { error ->
-                        log.e(error) { "Failed to deserialize authorized alert payload; event ignored." }
-                    }
-                }
-            }.onFailure {
-                log.e(it) { "Failed to subscribe to authorized alert events" }
+        val observer = apiGateway.subscribeAlerts()
+        observer.webSocketEvent.collect { webSocketEvent ->
+            if (webSocketEvent?.deferredPayload == null) {
+                return@collect
             }
+
+            runCatching {
+                WebSocketEventPayload
+                    .from<List<AuthorizedAlertDataDto>>(json, webSocketEvent)
+                    .payload
+                    .mapNotNull(AuthorizedAlertDataDto::toDomainOrNull)
+            }.onSuccess { payload ->
+                _alerts.value = payload
+            }.onFailure { error ->
+                log.e(error) { "Failed to deserialize authorized alert payload; event ignored." }
+            }
+        }
     }
 }

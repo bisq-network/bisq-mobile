@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.alert
 
+import network.bisq.mobile.client.common.domain.APP_TYPE
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
@@ -10,16 +11,9 @@ class AlertNotificationsApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
     private val webSocketClientService: WebSocketClientService,
 ) : Logging {
-    companion object {
-        const val APP_TYPE = "MOBILE_CLIENT"
-    }
-
     private val basePath = "alert-notifications"
 
-    suspend fun subscribeAlerts(): Result<WebSocketEventObserver> =
-        runCatching {
-            webSocketClientService.subscribe(Topic.ALERT_NOTIFICATIONS, APP_TYPE)
-        }
+    suspend fun subscribeAlerts(): WebSocketEventObserver = webSocketClientService.subscribe(Topic.ALERT_NOTIFICATIONS, APP_TYPE)
 
     suspend fun dismissAlert(alertId: String): Result<Unit> = webSocketApiClient.delete("$basePath/$alertId?appType=$APP_TYPE")
 }

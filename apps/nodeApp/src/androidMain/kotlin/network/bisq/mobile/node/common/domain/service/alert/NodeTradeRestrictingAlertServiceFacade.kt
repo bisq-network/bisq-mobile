@@ -48,8 +48,8 @@ class NodeTradeRestrictingAlertServiceFacade(
     override suspend fun deactivate() {
         unconsumedAlertsPin?.unbind()
         unconsumedAlertsPin = null
-        _alert.value = null
         super.deactivate()
+        _alert.value = null
     }
 
     private fun refreshAlert() {
