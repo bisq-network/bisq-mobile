@@ -127,7 +127,7 @@ val androidNodeDomainModule =
 
         single<AlertNotificationsServiceFacade> { NodeAlertNotificationsServiceFacade(get()) }
 
-        single<TradeRestrictingAlertServiceFacade> { NodeTradeRestrictingAlertServiceFacade(get()) }
+        single<TradeRestrictingAlertServiceFacade> { NodeTradeRestrictingAlertServiceFacade() }
 
         single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
 
