@@ -44,20 +44,16 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_4.BuyerState4Presenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_3.state_a.SellerState3aPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_4.SellerState4Presenter
 import org.koin.compose.koinInject
 
 @Composable
 fun OpenTradeScreen(tradeId: String) {
     val presenter: OpenTradePresenter = koinInject()
     val headerPresenter: TradeDetailsHeaderPresenter = koinInject()
-    val buyerState1aPresenter: BuyerState1aPresenter = koinInject()
-    val sellerState3aPresenter: SellerState3aPresenter = koinInject()
-    val buyerState4Presenter: BuyerState4Presenter = koinInject()
-    val sellerState4Presenter: SellerState4Presenter = koinInject()
+    val buyerState1aPresenter = presenter.tradeFlowPresenter.tradeStatesProvider.buyerState1aPresenter
+    val sellerState3aPresenter = presenter.tradeFlowPresenter.tradeStatesProvider.sellerState3aPresenter
+    val buyerState4Presenter = presenter.tradeFlowPresenter.buyerState4Presenter
+    val sellerState4Presenter = presenter.tradeFlowPresenter.sellerState4Presenter
 
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
