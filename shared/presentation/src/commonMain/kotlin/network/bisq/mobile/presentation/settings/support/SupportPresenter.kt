@@ -13,7 +13,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 
 class SupportPresenter(
     mainPresenter: MainPresenter,
-    private var versionProvider: VersionProvider,
+    private val versionProvider: VersionProvider,
     private val deviceInfoProvider: DeviceInfoProvider,
 ) : BasePresenter(mainPresenter) {
     protected val _reportUrl: MutableStateFlow<String> = MutableStateFlow("")

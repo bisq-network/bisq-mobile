@@ -64,13 +64,13 @@ class TradeDetailsHeaderPresenter(
     val showMediationConfirmationDialog: StateFlow<Boolean> = _showMediationConfirmationDialog.asStateFlow()
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isInMediation: StateFlow<Boolean> get() = this._isInMediation.asStateFlow()
+    val isInMediation: StateFlow<Boolean> = _isInMediation.asStateFlow()
 
     private val _mediationError = MutableStateFlow("")
     val mediationError: StateFlow<String> = _mediationError.asStateFlow()
 
     private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isShowDetails: StateFlow<Boolean> get() = this._isShowDetails.asStateFlow()
+    val isShowDetails: StateFlow<Boolean> = _isShowDetails.asStateFlow()
 
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 

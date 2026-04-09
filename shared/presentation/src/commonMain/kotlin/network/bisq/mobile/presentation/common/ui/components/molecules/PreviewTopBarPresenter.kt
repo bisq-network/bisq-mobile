@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
  */
 class PreviewTopBarPresenter : ITopBarPresenter {
     private val _isInteractive = MutableStateFlow(true)
-    override val isInteractive: StateFlow<Boolean> get() = _isInteractive
+    override val isInteractive: StateFlow<Boolean> = _isInteractive.asStateFlow()
 
     override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
 
