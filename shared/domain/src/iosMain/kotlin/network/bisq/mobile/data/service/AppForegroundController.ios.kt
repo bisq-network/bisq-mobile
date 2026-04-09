@@ -13,7 +13,7 @@ actual class AppForegroundController :
     ForegroundDetector,
     Logging {
     private val _isForeground = MutableStateFlow(true)
-    override val isForeground: StateFlow<Boolean> get() = _isForeground.asStateFlow()
+    override val isForeground: StateFlow<Boolean> = _isForeground.asStateFlow()
 
     init {
         val notificationCenter = NSNotificationCenter.defaultCenter

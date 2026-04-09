@@ -53,16 +53,16 @@ open class MainPresenter(
     AppPresenter {
     // Observable state
     private val _isMainContentVisible = MutableStateFlow(false)
-    override val isMainContentVisible: StateFlow<Boolean> get() = _isMainContentVisible.asStateFlow()
+    override val isMainContentVisible: StateFlow<Boolean> = _isMainContentVisible.asStateFlow()
 
     private val _isSmallScreen = MutableStateFlow(false)
-    override val isSmallScreen: StateFlow<Boolean> get() = _isSmallScreen.asStateFlow()
+    override val isSmallScreen: StateFlow<Boolean> = _isSmallScreen.asStateFlow()
 
     protected val _showAllConnectionsLostDialogue = MutableStateFlow(false)
-    override val showAllConnectionsLostDialogue: StateFlow<Boolean> get() = _showAllConnectionsLostDialogue.asStateFlow()
+    override val showAllConnectionsLostDialogue: StateFlow<Boolean> = _showAllConnectionsLostDialogue.asStateFlow()
 
     protected val _showReconnectOverlay = MutableStateFlow(false)
-    override val showReconnectOverlay: StateFlow<Boolean> get() = _showReconnectOverlay.asStateFlow()
+    override val showReconnectOverlay: StateFlow<Boolean> = _showReconnectOverlay.asStateFlow()
 
     final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 

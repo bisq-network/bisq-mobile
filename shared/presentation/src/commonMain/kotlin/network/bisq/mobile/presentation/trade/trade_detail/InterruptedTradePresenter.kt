@@ -29,26 +29,26 @@ class InterruptedTradePresenter(
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _interruptedTradeInfo: MutableStateFlow<String> = MutableStateFlow("")
-    val interruptedTradeInfo: StateFlow<String> get() = _interruptedTradeInfo.asStateFlow()
+    val interruptedTradeInfo: StateFlow<String> = _interruptedTradeInfo.asStateFlow()
 
     private val _interruptionInfoVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val interruptionInfoVisible: StateFlow<Boolean> get() = _interruptionInfoVisible.asStateFlow()
+    val interruptionInfoVisible: StateFlow<Boolean> = _interruptionInfoVisible.asStateFlow()
 
     var errorMessage: String = ""
     private val _errorMessageVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val errorMessageVisible: StateFlow<Boolean> get() = _errorMessageVisible.asStateFlow()
+    val errorMessageVisible: StateFlow<Boolean> = _errorMessageVisible.asStateFlow()
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
+    val isInMediation: StateFlow<Boolean> = _isInMediation.asStateFlow()
 
     private val _reportToMediatorButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val reportToMediatorButtonVisible: StateFlow<Boolean> get() = _reportToMediatorButtonVisible.asStateFlow()
+    val reportToMediatorButtonVisible: StateFlow<Boolean> = _reportToMediatorButtonVisible.asStateFlow()
 
     private val _showNoMediatorAvailableWarningDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showNoMediatorAvailableWarningDialog: StateFlow<Boolean> get() = _showNoMediatorAvailableWarningDialog.asStateFlow()
+    val showNoMediatorAvailableWarningDialog: StateFlow<Boolean> = _showNoMediatorAvailableWarningDialog.asStateFlow()
 
     private val _showMediationRequestedDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showMediationRequestedDialog: StateFlow<Boolean> get() = _showMediationRequestedDialog.asStateFlow()
+    val showMediationRequestedDialog: StateFlow<Boolean> = _showMediationRequestedDialog.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

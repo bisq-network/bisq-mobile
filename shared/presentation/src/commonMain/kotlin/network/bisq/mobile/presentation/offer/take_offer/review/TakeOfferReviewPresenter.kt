@@ -55,14 +55,14 @@ class TakeOfferReviewPresenter(
     private val takeOfferErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
 
     private val _showTakeOfferProgressDialog = MutableStateFlow(false)
-    val showTakeOfferProgressDialog: StateFlow<Boolean> get() = _showTakeOfferProgressDialog.asStateFlow()
+    val showTakeOfferProgressDialog: StateFlow<Boolean> = _showTakeOfferProgressDialog.asStateFlow()
 
     private fun setShowTakeOfferProgressDialog(value: Boolean) {
         _showTakeOfferProgressDialog.value = value
     }
 
     private val _showTakeOfferSuccessDialog = MutableStateFlow(false)
-    val showTakeOfferSuccessDialog: StateFlow<Boolean> get() = _showTakeOfferSuccessDialog.asStateFlow()
+    val showTakeOfferSuccessDialog: StateFlow<Boolean> = _showTakeOfferSuccessDialog.asStateFlow()
 
     private fun setShowTakeOfferSuccessDialog(value: Boolean) {
         _showTakeOfferSuccessDialog.value = value

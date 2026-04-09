@@ -32,7 +32,7 @@ fun Counter(count: Int, onInc: () -> Unit) {
 ```kotlin
 // inside ViewModel/Presenter
 private val _uiState = MutableStateFlow(UiState())
-val uiState: StateFlow<UiState> get() = _uiState.asStateFlow()
+val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 ```
 
 ### Performance

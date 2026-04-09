@@ -17,22 +17,22 @@ class BuyerState1aPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private var _headline = MutableStateFlow("")
-    val headline: StateFlow<String> get() = _headline.asStateFlow()
+    val headline: StateFlow<String> = _headline.asStateFlow()
 
     private var _description = MutableStateFlow("")
-    val description: StateFlow<String> get() = _description.asStateFlow()
+    val description: StateFlow<String> = _description.asStateFlow()
 
     private var _bitcoinPaymentData = MutableStateFlow("")
-    val bitcoinPaymentData: StateFlow<String> get() = _bitcoinPaymentData.asStateFlow()
+    val bitcoinPaymentData: StateFlow<String> = _bitcoinPaymentData.asStateFlow()
 
     private var _bitcoinPaymentDataValid = MutableStateFlow(false)
-    val bitcoinPaymentDataValid: StateFlow<Boolean> get() = _bitcoinPaymentDataValid.asStateFlow()
+    val bitcoinPaymentDataValid: StateFlow<Boolean> = _bitcoinPaymentDataValid.asStateFlow()
 
     private var _bitcoinAddressFieldType = MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
-    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType.asStateFlow()
+    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> = _bitcoinAddressFieldType.asStateFlow()
 
     private val _showInvalidAddressDialog = MutableStateFlow(false)
-    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog.asStateFlow()
+    val showInvalidAddressDialog: StateFlow<Boolean> = _showInvalidAddressDialog.asStateFlow()
 
     private val _showBarcodeView = MutableStateFlow(false)
     val showBarcodeView: StateFlow<Boolean> = _showBarcodeView.asStateFlow()

@@ -15,7 +15,7 @@ actual class AppForegroundController(
 ) : ForegroundDetector,
     Logging {
     private val _isForeground = MutableStateFlow(false)
-    override val isForeground: StateFlow<Boolean> get() = _isForeground.asStateFlow()
+    override val isForeground: StateFlow<Boolean> = _isForeground.asStateFlow()
 
     private var startedCount: Int = 0
 

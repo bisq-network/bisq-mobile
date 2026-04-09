@@ -20,11 +20,11 @@ abstract class MarketPriceServiceFacade(
     val selectedMarketPriceItem: StateFlow<MarketPriceItem?> get() = _selectedMarketPriceItem
 
     protected val _selectedFormattedMarketPrice = MutableStateFlow("N/A")
-    val selectedFormattedMarketPrice: StateFlow<String> get() = _selectedFormattedMarketPrice.asStateFlow()
+    val selectedFormattedMarketPrice: StateFlow<String> = _selectedFormattedMarketPrice.asStateFlow()
 
     // Global price update trigger - emits when any market price changes
     private val _globalPriceUpdate = MutableStateFlow(0L)
-    val globalPriceUpdate: StateFlow<Long> get() = _globalPriceUpdate.asStateFlow()
+    val globalPriceUpdate: StateFlow<Long> = _globalPriceUpdate.asStateFlow()
 
     // Abstract methods that must be implemented by concrete classes
     abstract fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem?

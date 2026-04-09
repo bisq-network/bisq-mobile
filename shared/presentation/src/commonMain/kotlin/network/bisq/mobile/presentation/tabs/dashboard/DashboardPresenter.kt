@@ -41,15 +41,15 @@ open class DashboardPresenter(
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private val _offersOnline = MutableStateFlow(0)
-    val offersOnline: StateFlow<Int> get() = _offersOnline.asStateFlow()
+    val offersOnline: StateFlow<Int> = _offersOnline.asStateFlow()
 
     private val _publishedProfiles = MutableStateFlow(0)
-    val publishedProfiles: StateFlow<Int> get() = _publishedProfiles.asStateFlow()
+    val publishedProfiles: StateFlow<Int> = _publishedProfiles.asStateFlow()
     val tradeRulesConfirmed: StateFlow<Boolean> get() = settingsServiceFacade.tradeRulesConfirmed
     val marketPrice: StateFlow<String> get() = marketPriceServiceFacade.selectedFormattedMarketPrice
 
     private val _numConnections = MutableStateFlow(0)
-    val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
+    val numConnections: StateFlow<Int> = _numConnections.asStateFlow()
 
     open val showNumConnections: Boolean = false
 

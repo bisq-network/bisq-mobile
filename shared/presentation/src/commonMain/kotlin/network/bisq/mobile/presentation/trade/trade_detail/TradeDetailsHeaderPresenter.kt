@@ -39,35 +39,35 @@ class TradeDetailsHeaderPresenter(
     var directionEnum: DirectionEnum = DirectionEnum.BUY
     var leftAmountDescription: String = ""
     private val _leftAmount: MutableStateFlow<String> = MutableStateFlow("")
-    val leftAmount: StateFlow<String> get() = _leftAmount.asStateFlow()
+    val leftAmount: StateFlow<String> = _leftAmount.asStateFlow()
     private val _leftCode: MutableStateFlow<String> = MutableStateFlow("")
-    val leftCode: StateFlow<String> get() = _leftCode.asStateFlow()
+    val leftCode: StateFlow<String> = _leftCode.asStateFlow()
     var rightAmountDescription: String = ""
     private val _rightAmount: MutableStateFlow<String> = MutableStateFlow("")
-    val rightAmount: StateFlow<String> get() = _rightAmount.asStateFlow()
+    val rightAmount: StateFlow<String> = _rightAmount.asStateFlow()
     private val _rightCode: MutableStateFlow<String> = MutableStateFlow("")
-    val rightCode: StateFlow<String> get() = _rightCode.asStateFlow()
+    val rightCode: StateFlow<String> = _rightCode.asStateFlow()
 
     private val _tradeCloseType: MutableStateFlow<TradeCloseType?> = MutableStateFlow(null)
-    val tradeCloseType: StateFlow<TradeCloseType?> get() = _tradeCloseType.asStateFlow()
+    val tradeCloseType: StateFlow<TradeCloseType?> = _tradeCloseType.asStateFlow()
 
     private val _interruptTradeButtonText: MutableStateFlow<String> = MutableStateFlow("")
-    val interruptTradeButtonText: StateFlow<String> get() = _interruptTradeButtonText.asStateFlow()
+    val interruptTradeButtonText: StateFlow<String> = _interruptTradeButtonText.asStateFlow()
 
     private val _openMediationButtonText: MutableStateFlow<String> = MutableStateFlow("")
-    val openMediationButtonText: StateFlow<String> get() = _openMediationButtonText.asStateFlow()
+    val openMediationButtonText: StateFlow<String> = _openMediationButtonText.asStateFlow()
 
     private val _showInterruptionConfirmationDialog = MutableStateFlow(false)
-    val showInterruptionConfirmationDialog: StateFlow<Boolean> get() = _showInterruptionConfirmationDialog.asStateFlow()
+    val showInterruptionConfirmationDialog: StateFlow<Boolean> = _showInterruptionConfirmationDialog.asStateFlow()
 
     private val _showMediationConfirmationDialog = MutableStateFlow(false)
-    val showMediationConfirmationDialog: StateFlow<Boolean> get() = _showMediationConfirmationDialog.asStateFlow()
+    val showMediationConfirmationDialog: StateFlow<Boolean> = _showMediationConfirmationDialog.asStateFlow()
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> get() = this._isInMediation.asStateFlow()
 
     private val _mediationError = MutableStateFlow("")
-    val mediationError: StateFlow<String> get() = _mediationError.asStateFlow()
+    val mediationError: StateFlow<String> = _mediationError.asStateFlow()
 
     private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isShowDetails: StateFlow<Boolean> get() = this._isShowDetails.asStateFlow()

@@ -62,14 +62,14 @@ class ClientUserProfileServiceFacade(
 
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> =
         MutableStateFlow(null)
-    override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
+    override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile.asStateFlow()
 
     private val _numUserProfiles = MutableStateFlow(0)
-    override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
+    override val numUserProfiles: StateFlow<Int> = _numUserProfiles.asStateFlow()
 
     private val _ignoredProfileIds: MutableStateFlow<Set<String>> =
         MutableStateFlow(emptySet())
-    override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredProfileIds.asStateFlow()
+    override val ignoredProfileIds: StateFlow<Set<String>> = _ignoredProfileIds.asStateFlow()
     private val ignoredUserIdsMutex = Mutex()
 
     // Track initialization state to prevent race conditions

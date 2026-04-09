@@ -61,23 +61,23 @@ open class OfferbookPresenter(
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
     val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?> = _showTradeRestrictedDialog.asStateFlow()
     private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
-    val selectedDirection: StateFlow<DirectionEnum> get() = _selectedDirection.asStateFlow()
+    val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection.asStateFlow()
 
     private val _selectedPaymentMethodIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaymentMethodIds: StateFlow<Set<String>> = _selectedPaymentMethodIds.asStateFlow()
     private val _selectedSettlementMethodIds = MutableStateFlow<Set<String>>(emptySet())
-    val selectedSettlementMethodIds: StateFlow<Set<String>> get() = _selectedSettlementMethodIds.asStateFlow()
+    val selectedSettlementMethodIds: StateFlow<Set<String>> = _selectedSettlementMethodIds.asStateFlow()
     private val _onlyMyOffers = MutableStateFlow(false)
-    val onlyMyOffers: StateFlow<Boolean> get() = _onlyMyOffers.asStateFlow()
+    val onlyMyOffers: StateFlow<Boolean> = _onlyMyOffers.asStateFlow()
 
     private val _sortedFilteredOffers = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
-    val sortedFilteredOffers: StateFlow<List<OfferItemPresentationModel>> get() = _sortedFilteredOffers.asStateFlow()
+    val sortedFilteredOffers: StateFlow<List<OfferItemPresentationModel>> = _sortedFilteredOffers.asStateFlow()
 
     // Baseline available method sets (direction+ignored-user filtered, independent of method selections)
     private val _availablePaymentMethodIds = MutableStateFlow<Set<String>>(emptySet())
-    val availablePaymentMethodIds: StateFlow<Set<String>> get() = _availablePaymentMethodIds.asStateFlow()
+    val availablePaymentMethodIds: StateFlow<Set<String>> = _availablePaymentMethodIds.asStateFlow()
     private val _availableSettlementMethodIds = MutableStateFlow<Set<String>>(emptySet())
-    val availableSettlementMethodIds: StateFlow<Set<String>> get() = _availableSettlementMethodIds.asStateFlow()
+    val availableSettlementMethodIds: StateFlow<Set<String>> = _availableSettlementMethodIds.asStateFlow()
 
     // Presenter-provided UI state for the filter controller
     private val _filterUiState =
@@ -98,10 +98,10 @@ open class OfferbookPresenter(
     private var hasManualSettlementFilter: Boolean = false
 
     private val _showDeleteConfirmation = MutableStateFlow(false)
-    val showDeleteConfirmation: StateFlow<Boolean> get() = _showDeleteConfirmation.asStateFlow()
+    val showDeleteConfirmation: StateFlow<Boolean> = _showDeleteConfirmation.asStateFlow()
 
     private val _showNotEnoughReputationDialog = MutableStateFlow(false)
-    val showNotEnoughReputationDialog: StateFlow<Boolean> get() = _showNotEnoughReputationDialog.asStateFlow()
+    val showNotEnoughReputationDialog: StateFlow<Boolean> = _showNotEnoughReputationDialog.asStateFlow()
 
     val selectedMarket get() = marketPriceServiceFacade.selectedMarketPriceItem
 

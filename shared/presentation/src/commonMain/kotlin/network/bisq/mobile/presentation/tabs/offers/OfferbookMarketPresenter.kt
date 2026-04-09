@@ -58,14 +58,14 @@ class OfferbookMarketPresenter(
     }
 
     private val _searchText = MutableStateFlow("")
-    val searchText: StateFlow<String> get() = _searchText.asStateFlow()
+    val searchText: StateFlow<String> = _searchText.asStateFlow()
 
     fun setSearchText(newValue: String) {
         _searchText.value = newValue
     }
 
     private val _marketListItemWithNumOffers = MutableStateFlow<List<MarketListItem>>(emptyList())
-    val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> get() = _marketListItemWithNumOffers.asStateFlow()
+    val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = _marketListItemWithNumOffers.asStateFlow()
 
     fun onSelectMarket(marketListItem: MarketListItem) {
         offersServiceFacade

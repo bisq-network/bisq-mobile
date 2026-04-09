@@ -27,7 +27,7 @@ class SellerState1Presenter(
     val paymentAccountDataEntry: StateFlow<DataEntry> = _paymentAccountDataEntry.asStateFlow()
 
     private var _paymentAccountName = MutableStateFlow("")
-    val paymentAccountName: StateFlow<String> get() = _paymentAccountName.asStateFlow()
+    val paymentAccountName: StateFlow<String> = _paymentAccountName.asStateFlow()
 
     private val minPaymentAccountDataLength = 3
     private val maxPaymentAccountDataLength = 1024

@@ -37,7 +37,7 @@ class GlobalPriceUpdateTest {
     private inner class TestMarketPriceServiceFacade {
         // Global price update trigger - emits when any market price changes
         private val _globalPriceUpdate = MutableStateFlow(0L)
-        val globalPriceUpdate: StateFlow<Long> get() = _globalPriceUpdate.asStateFlow()
+        val globalPriceUpdate: StateFlow<Long> = _globalPriceUpdate.asStateFlow()
 
         // Expose method for testing
         fun testTriggerGlobalPriceUpdate() {

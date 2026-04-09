@@ -23,7 +23,7 @@ class PreviewTopBarPresenter : ITopBarPresenter {
     override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
 
     private val _userProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
-    override val userProfile: StateFlow<UserProfileVO?> get() = _userProfile.asStateFlow()
+    override val userProfile: StateFlow<UserProfileVO?> = _userProfile.asStateFlow()
     override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = this::getUserProfileIcon
 
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =

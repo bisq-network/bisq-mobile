@@ -17,7 +17,7 @@ class SupportPresenter(
     private val deviceInfoProvider: DeviceInfoProvider,
 ) : BasePresenter(mainPresenter) {
     protected val _reportUrl: MutableStateFlow<String> = MutableStateFlow("")
-    val reportUrl: StateFlow<String> get() = _reportUrl.asStateFlow()
+    val reportUrl: StateFlow<String> = _reportUrl.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

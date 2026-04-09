@@ -22,10 +22,10 @@ class NodeNetworkServiceFacade(
     Node.Listener {
     // While tor starts up we use -1 to flag as network not available yet
     private val _numConnections = MutableStateFlow(-1)
-    override val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
+    override val numConnections: StateFlow<Int> = _numConnections.asStateFlow()
 
     private val _allDataReceived = MutableStateFlow(false)
-    override val allDataReceived: StateFlow<Boolean> get() = _allDataReceived.asStateFlow()
+    override val allDataReceived: StateFlow<Boolean> = _allDataReceived.asStateFlow()
 
     private var defaultNode: Node? = null
     private var serviceNodeStatePin: Pin? = null

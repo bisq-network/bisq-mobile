@@ -83,7 +83,7 @@ class CreateOfferDirectionPresenter(
     private var reputationCollectorJob: Job? = null
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
-    val showSellerReputationWarning: StateFlow<Boolean> get() = _showSellerReputationWarning.asStateFlow()
+    val showSellerReputationWarning: StateFlow<Boolean> = _showSellerReputationWarning.asStateFlow()
 
     fun setShowSellerReputationWarning(value: Boolean) {
         _showSellerReputationWarning.value = value

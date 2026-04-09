@@ -39,7 +39,7 @@ abstract class ConnectivityService :
     }
 
     protected open val _status = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)
-    val status: StateFlow<ConnectivityStatus> get() = _status.asStateFlow()
+    val status: StateFlow<ConnectivityStatus> = _status.asStateFlow()
 
     override suspend fun activate() {
         _status.value = ConnectivityStatus.BOOTSTRAPPING

@@ -22,7 +22,7 @@ abstract class State4Presenter(
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _showCloseTradeDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showCloseTradeDialog: StateFlow<Boolean> get() = _showCloseTradeDialog.asStateFlow()
+    val showCloseTradeDialog: StateFlow<Boolean> = _showCloseTradeDialog.asStateFlow()
 
     override fun onViewUnattaching() {
         _showCloseTradeDialog.value = false

@@ -44,7 +44,7 @@ abstract class MiscItemsPresenter(
     }
 
     private val _menuItems = MutableStateFlow<MenuItem?>(null)
-    val menuItems: StateFlow<MenuItem?> get() = _menuItems.asStateFlow()
+    val menuItems: StateFlow<MenuItem?> = _menuItems.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

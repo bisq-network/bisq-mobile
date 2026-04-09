@@ -82,12 +82,12 @@ class NodeSettingsServiceFacade(
     override suspend fun confirmTacAccepted(value: Boolean): Result<Unit> = runCatching { settingsService.setIsTacAccepted(value) }
 
     private val _tradeRulesConfirmed = MutableStateFlow(false)
-    override val tradeRulesConfirmed: StateFlow<Boolean> get() = _tradeRulesConfirmed.asStateFlow()
+    override val tradeRulesConfirmed: StateFlow<Boolean> = _tradeRulesConfirmed.asStateFlow()
 
     override suspend fun confirmTradeRules(value: Boolean): Result<Unit> = runCatching { settingsService.setBisqEasyTradeRulesConfirmed(value) }
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
-    override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
+    override val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
     override suspend fun setLanguageCode(value: String): Result<Unit> =
         runCatching {
@@ -104,7 +104,7 @@ class NodeSettingsServiceFacade(
     override suspend fun setMaxTradePriceDeviation(value: Double): Result<Unit> = runCatching { settingsService.setMaxTradePriceDeviation(value) }
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val useAnimations: StateFlow<Boolean> get() = _useAnimations.asStateFlow()
+    override val useAnimations: StateFlow<Boolean> = _useAnimations.asStateFlow()
 
     override suspend fun setUseAnimations(value: Boolean): Result<Unit> =
         runCatching {
@@ -113,19 +113,19 @@ class NodeSettingsServiceFacade(
         }
 
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR)
-    override val difficultyAdjustmentFactor: StateFlow<Double> get() = _difficultyAdjustmentFactor.asStateFlow()
+    override val difficultyAdjustmentFactor: StateFlow<Double> = _difficultyAdjustmentFactor.asStateFlow()
 
     override suspend fun setDifficultyAdjustmentFactor(value: Double): Result<Unit> = runCatching { settingsService.setDifficultyAdjustmentFactor(value) }
 
     override suspend fun setNumDaysAfterRedactingTradeData(days: Int): Result<Unit> = runCatching { settingsService.setNumDaysAfterRedactingTradeData(days) }
 
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager.asStateFlow()
+    override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> = _ignoreDiffAdjustmentFromSecManager.asStateFlow()
 
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean): Result<Unit> = runCatching { settingsService.setIgnoreDiffAdjustmentFromSecManager(value) }
 
     private val _showWebLinkConfirmation: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val showWebLinkConfirmation: StateFlow<Boolean> get() = _showWebLinkConfirmation.asStateFlow()
+    override val showWebLinkConfirmation: StateFlow<Boolean> = _showWebLinkConfirmation.asStateFlow()
 
     override suspend fun setWebLinkDontShowAgain(): Result<Unit> =
         runCatching {
@@ -144,7 +144,7 @@ class NodeSettingsServiceFacade(
         }
 
     private val _permitOpeningBrowser: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val permitOpeningBrowser: StateFlow<Boolean> get() = _permitOpeningBrowser.asStateFlow()
+    override val permitOpeningBrowser: StateFlow<Boolean> = _permitOpeningBrowser.asStateFlow()
 
     override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> =
         runCatching {

@@ -111,7 +111,7 @@ class WebSocketClientImpl(
 
     private val _webSocketClientStatus =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
-    override val webSocketClientStatus: StateFlow<ConnectionState> get() = _webSocketClientStatus.asStateFlow()
+    override val webSocketClientStatus: StateFlow<ConnectionState> = _webSocketClientStatus.asStateFlow()
 
     private var listenerJob: Job? = null
 

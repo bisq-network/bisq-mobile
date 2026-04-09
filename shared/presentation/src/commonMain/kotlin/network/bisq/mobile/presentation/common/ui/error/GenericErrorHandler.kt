@@ -14,10 +14,10 @@ import kotlin.jvm.JvmStatic
 class GenericErrorHandler : Logging {
     companion object {
         private val _isUncaughtException: MutableStateFlow<Boolean> = MutableStateFlow(false)
-        val isUncaughtException: StateFlow<Boolean> get() = _isUncaughtException.asStateFlow()
+        val isUncaughtException: StateFlow<Boolean> = _isUncaughtException.asStateFlow()
 
         private val _genericErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
-        val genericErrorMessage: StateFlow<String?> get() = _genericErrorMessage.asStateFlow()
+        val genericErrorMessage: StateFlow<String?> = _genericErrorMessage.asStateFlow()
 
         fun clearGenericError() {
             _isUncaughtException.value = false

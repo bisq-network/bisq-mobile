@@ -55,52 +55,52 @@ class CreateOfferAmountPresenter(
     lateinit var formattedMinAmount: String
 
     private val _amountType: MutableStateFlow<AmountType> = MutableStateFlow(AmountType.FIXED_AMOUNT)
-    val amountType: StateFlow<AmountType> get() = _amountType.asStateFlow()
+    val amountType: StateFlow<AmountType> = _amountType.asStateFlow()
     val amountTypes = AmountType.entries.toList()
 
     // FIXED_AMOUNT
     private val _fixedAmountSliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
-    val fixedAmountSliderPosition: StateFlow<Float> get() = _fixedAmountSliderPosition.asStateFlow()
+    val fixedAmountSliderPosition: StateFlow<Float> = _fixedAmountSliderPosition.asStateFlow()
 
     private val _reputationBasedMaxSliderValue: MutableStateFlow<Float?> = MutableStateFlow(null)
-    val reputationBasedMaxSliderValue: StateFlow<Float?> get() = _reputationBasedMaxSliderValue.asStateFlow()
+    val reputationBasedMaxSliderValue: StateFlow<Float?> = _reputationBasedMaxSliderValue.asStateFlow()
 
     private val _rightMarkerValue: MutableStateFlow<Float?> = MutableStateFlow(null)
-    val rightMarkerSliderValue: StateFlow<Float?> get() = _rightMarkerValue.asStateFlow()
+    val rightMarkerSliderValue: StateFlow<Float?> = _rightMarkerValue.asStateFlow()
 
     var formattedMinAmountWithCode: String = ""
     var formattedMaxAmountWithCode: String = ""
     private val _formattedQuoteSideFixedAmount = MutableStateFlow("")
-    val formattedQuoteSideFixedAmount: StateFlow<String> get() = _formattedQuoteSideFixedAmount.asStateFlow()
+    val formattedQuoteSideFixedAmount: StateFlow<String> = _formattedQuoteSideFixedAmount.asStateFlow()
     private val _formattedBaseSideFixedAmount = MutableStateFlow("")
-    val formattedBaseSideFixedAmount: StateFlow<String> get() = _formattedBaseSideFixedAmount.asStateFlow()
+    val formattedBaseSideFixedAmount: StateFlow<String> = _formattedBaseSideFixedAmount.asStateFlow()
 
     // RANGE_AMOUNT
     private val _minRangeSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.1f)
-    val minRangeSliderValue: StateFlow<Float> get() = _minRangeSliderValue.asStateFlow()
+    val minRangeSliderValue: StateFlow<Float> = _minRangeSliderValue.asStateFlow()
     private val _maxRangeSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.9f)
-    val maxRangeSliderValue: StateFlow<Float> get() = _maxRangeSliderValue.asStateFlow()
+    val maxRangeSliderValue: StateFlow<Float> = _maxRangeSliderValue.asStateFlow()
     private var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.0f..1.0f
     private val _formattedQuoteSideMinRangeAmount = MutableStateFlow("")
-    val formattedQuoteSideMinRangeAmount: StateFlow<String> get() = _formattedQuoteSideMinRangeAmount.asStateFlow()
+    val formattedQuoteSideMinRangeAmount: StateFlow<String> = _formattedQuoteSideMinRangeAmount.asStateFlow()
     private val _formattedBaseSideMinRangeAmount = MutableStateFlow("")
-    val formattedBaseSideMinRangeAmount: StateFlow<String> get() = _formattedBaseSideMinRangeAmount.asStateFlow()
+    val formattedBaseSideMinRangeAmount: StateFlow<String> = _formattedBaseSideMinRangeAmount.asStateFlow()
 
     private val _formattedQuoteSideMaxRangeAmount = MutableStateFlow("")
-    val formattedQuoteSideMaxRangeAmount: StateFlow<String> get() = _formattedQuoteSideMaxRangeAmount.asStateFlow()
+    val formattedQuoteSideMaxRangeAmount: StateFlow<String> = _formattedQuoteSideMaxRangeAmount.asStateFlow()
     private val _formattedBaseSideMaxRangeAmount = MutableStateFlow("")
-    val formattedBaseSideMaxRangeAmount: StateFlow<String> get() = _formattedBaseSideMaxRangeAmount.asStateFlow()
+    val formattedBaseSideMaxRangeAmount: StateFlow<String> = _formattedBaseSideMaxRangeAmount.asStateFlow()
     private val _requiredReputation = MutableStateFlow<Long>(0L)
-    val requiredReputation: StateFlow<Long> get() = _requiredReputation.asStateFlow()
+    val requiredReputation: StateFlow<Long> = _requiredReputation.asStateFlow()
 
     private val _amountLimitInfo = MutableStateFlow("")
-    val amountLimitInfo: StateFlow<String> get() = _amountLimitInfo.asStateFlow()
+    val amountLimitInfo: StateFlow<String> = _amountLimitInfo.asStateFlow()
 
     private val _amountLimitInfoOverlayInfo = MutableStateFlow("")
-    val amountLimitInfoOverlayInfo: StateFlow<String> get() = _amountLimitInfoOverlayInfo.asStateFlow()
+    val amountLimitInfoOverlayInfo: StateFlow<String> = _amountLimitInfoOverlayInfo.asStateFlow()
 
     private val _shouldShowWarningIcon = MutableStateFlow(false)
-    val shouldShowWarningIcon: StateFlow<Boolean> get() = _shouldShowWarningIcon.asStateFlow()
+    val shouldShowWarningIcon: StateFlow<Boolean> = _shouldShowWarningIcon.asStateFlow()
 
     private lateinit var createOfferModel: CreateOfferCoordinator.CreateOfferModel
     private var minAmount: Long = DEFAULT_MIN_USD_TRADE_AMOUNT.value
@@ -113,7 +113,7 @@ class CreateOfferAmountPresenter(
     private lateinit var quoteSideMaxRangeAmount: FiatVO
     private lateinit var baseSideMaxRangeAmount: CoinVO
     private val _isBuy: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val isBuy: StateFlow<Boolean> get() = _isBuy.asStateFlow()
+    val isBuy: StateFlow<Boolean> = _isBuy.asStateFlow()
 
     // Sample heavy-ish updates during drags to reduce allocation churn on main thread.
     // 32ms ~ 30 FPS. We do a leading-edge immediate update, then coalesce subsequent updates
@@ -127,23 +127,23 @@ class CreateOfferAmountPresenter(
     private var latestRangeMaxPending: Float? = null
 
     private val _formattedReputationBasedMaxAmount: MutableStateFlow<String> = MutableStateFlow("")
-    val formattedReputationBasedMaxAmount: StateFlow<String> get() = _formattedReputationBasedMaxAmount.asStateFlow()
+    val formattedReputationBasedMaxAmount: StateFlow<String> = _formattedReputationBasedMaxAmount.asStateFlow()
 
     private val _showLimitPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showLimitPopup: StateFlow<Boolean> get() = _showLimitPopup.asStateFlow()
+    val showLimitPopup: StateFlow<Boolean> = _showLimitPopup.asStateFlow()
 
     fun setShowLimitPopup(newValue: Boolean) {
         _showLimitPopup.value = newValue
     }
 
     private val _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val amountValid: StateFlow<Boolean> get() = _amountValid.asStateFlow()
+    val amountValid: StateFlow<Boolean> = _amountValid.asStateFlow()
 
     private val _isMinRangeAmountError: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isMinRangeAmountError: StateFlow<Boolean> get() = _isMinRangeAmountError.asStateFlow()
+    val isMinRangeAmountError: StateFlow<Boolean> = _isMinRangeAmountError.asStateFlow()
 
     private val _isMaxRangeAmountError: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isMaxRangeAmountError: StateFlow<Boolean> get() = _isMaxRangeAmountError.asStateFlow()
+    val isMaxRangeAmountError: StateFlow<Boolean> = _isMaxRangeAmountError.asStateFlow()
 
     // Life cycle
     init {

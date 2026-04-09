@@ -33,16 +33,16 @@ class TakeOfferAmountPresenter(
     private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
     private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
-    val sliderPosition: StateFlow<Float> get() = _sliderPosition.asStateFlow()
+    val sliderPosition: StateFlow<Float> = _sliderPosition.asStateFlow()
 
     var quoteCurrencyCode: String = ""
     var formattedMinAmount: String = ""
     var formattedMinAmountWithCode: String = ""
     var formattedMaxAmountWithCode: String = ""
     private val _formattedQuoteAmount = MutableStateFlow("")
-    val formattedQuoteAmount: StateFlow<String> get() = _formattedQuoteAmount.asStateFlow()
+    val formattedQuoteAmount: StateFlow<String> = _formattedQuoteAmount.asStateFlow()
     private val _formattedBaseAmount = MutableStateFlow("")
-    val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount.asStateFlow()
+    val formattedBaseAmount: StateFlow<String> = _formattedBaseAmount.asStateFlow()
 
     // Guard to prevent interactions when initialization fails
     private var initializationFailed: Boolean = false
@@ -56,7 +56,7 @@ class TakeOfferAmountPresenter(
     private lateinit var baseAmount: CoinVO
 
     private val _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val amountValid: StateFlow<Boolean> get() = _amountValid.asStateFlow()
+    val amountValid: StateFlow<Boolean> = _amountValid.asStateFlow()
 
     private var dragUpdateJob: Job? = null
     private var latestPending: Float? = null

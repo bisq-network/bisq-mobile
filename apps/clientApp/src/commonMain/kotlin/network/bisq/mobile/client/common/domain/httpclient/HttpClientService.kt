@@ -77,7 +77,7 @@ class HttpClientService(
         MutableStateFlow(null)
     private val _httpClientChangedFlow =
         MutableSharedFlow<HttpClientSettings>(1)
-    val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
+    val httpClientChangedFlow = _httpClientChangedFlow.asSharedFlow()
     private val stopFlow =
         MutableSharedFlow<Unit>(
             replay = 1,

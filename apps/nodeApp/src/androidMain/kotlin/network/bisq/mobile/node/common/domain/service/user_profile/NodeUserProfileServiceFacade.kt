@@ -58,17 +58,17 @@ class NodeUserProfileServiceFacade(
         MutableStateFlow(
             emptySet(),
         )
-    override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredProfileIds.asStateFlow()
+    override val ignoredProfileIds: StateFlow<Set<String>> = _ignoredProfileIds.asStateFlow()
 
     // Properties
     private val _userProfiles: MutableStateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
     override val userProfiles = _userProfiles.asStateFlow()
 
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
-    override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
+    override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile.asStateFlow()
 
     private val _numUserProfiles = MutableStateFlow(0)
-    override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
+    override val numUserProfiles: StateFlow<Int> = _numUserProfiles.asStateFlow()
 
     // Misc
     private var pubKeyHash: ByteArray? = null

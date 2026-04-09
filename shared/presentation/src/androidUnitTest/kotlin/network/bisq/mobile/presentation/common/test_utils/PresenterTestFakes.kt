@@ -32,7 +32,7 @@ class TestCoroutineJobsManager(
 
 class NoopNavigationManager : NavigationManager {
     private val _currentTab = MutableStateFlow<TabNavRoute?>(null)
-    override val currentTab: StateFlow<TabNavRoute?> get() = _currentTab.asStateFlow()
+    override val currentTab: StateFlow<TabNavRoute?> = _currentTab.asStateFlow()
 
     override fun setRootNavController(navController: NavHostController?) {
     }

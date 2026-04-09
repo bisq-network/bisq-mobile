@@ -15,7 +15,7 @@ data class OfferbookMarket(
     val market: MarketVO,
 ) {
     private val _formattedPrice = MutableStateFlow("")
-    val formattedPrice: StateFlow<String> get() = _formattedPrice.asStateFlow()
+    val formattedPrice: StateFlow<String> = _formattedPrice.asStateFlow()
 
     fun setFormattedPrice(value: String) {
         _formattedPrice.value = value

@@ -42,19 +42,19 @@ class OpenTradePresenter(
     val tradeFlowPresenter: TradeFlowPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
 
     private val _tradeAbortedBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val tradeAbortedBoxVisible: StateFlow<Boolean> get() = _tradeAbortedBoxVisible.asStateFlow()
+    val tradeAbortedBoxVisible: StateFlow<Boolean> = _tradeAbortedBoxVisible.asStateFlow()
 
     private val _tradeProcessBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val tradeProcessBoxVisible: StateFlow<Boolean> get() = _tradeProcessBoxVisible.asStateFlow()
+    val tradeProcessBoxVisible: StateFlow<Boolean> = _tradeProcessBoxVisible.asStateFlow()
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
+    val isInMediation: StateFlow<Boolean> = _isInMediation.asStateFlow()
 
     private val _showTradeNotFoundDialog = MutableStateFlow(false)
-    val showTradeNotFoundDialog: StateFlow<Boolean> get() = _showTradeNotFoundDialog.asStateFlow()
+    val showTradeNotFoundDialog: StateFlow<Boolean> = _showTradeNotFoundDialog.asStateFlow()
 
     private val readCount: Flow<Int> =
         _selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
@@ -78,7 +78,7 @@ class OpenTradePresenter(
 
     private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> =
         MutableStateFlow(null)
-    val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _lastChatMsg.asStateFlow()
+    val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> = _lastChatMsg.asStateFlow()
 
     private val _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
 
@@ -93,7 +93,7 @@ class OpenTradePresenter(
             )
 
     private val _showUndoIgnoreDialog = MutableStateFlow(false)
-    val showUndoIgnoreDialog: StateFlow<Boolean> get() = _showUndoIgnoreDialog.asStateFlow()
+    val showUndoIgnoreDialog: StateFlow<Boolean> = _showUndoIgnoreDialog.asStateFlow()
 
     private var _coroutineScope: CoroutineScope? = null
 

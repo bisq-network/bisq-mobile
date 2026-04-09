@@ -47,15 +47,15 @@ class TradeChatPresenter(
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
 
     private val _sortedChatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> =
         MutableStateFlow(listOf())
-    val sortedChatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> get() = _sortedChatMessages.asStateFlow()
+    val sortedChatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> = _sortedChatMessages.asStateFlow()
 
     private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> =
         MutableStateFlow(null)
-    val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _quotedMessage.asStateFlow()
+    val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> = _quotedMessage.asStateFlow()
     val showChatRulesWarnBox: StateFlow<Boolean> =
         settingsRepository.data.map { it.showChatRulesWarnBox }.stateIn(
             presenterScope,
@@ -65,29 +65,29 @@ class TradeChatPresenter(
 
     private val _userProfileIconByProfileId: MutableStateFlow<Map<String, PlatformImage?>> =
         MutableStateFlow(emptyMap())
-    val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>> get() = _userProfileIconByProfileId.asStateFlow()
+    val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>> = _userProfileIconByProfileId.asStateFlow()
 
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
-    val ignoreUserId: StateFlow<String> get() = _ignoreUserId.asStateFlow()
+    val ignoreUserId: StateFlow<String> = _ignoreUserId.asStateFlow()
 
     private val _undoIgnoreUserId: MutableStateFlow<String> = MutableStateFlow("")
-    val undoIgnoreUserId: StateFlow<String> get() = _undoIgnoreUserId.asStateFlow()
+    val undoIgnoreUserId: StateFlow<String> = _undoIgnoreUserId.asStateFlow()
 
     val ignoredProfileIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredProfileIds
 
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     private val _showTradeNotFoundDialog = MutableStateFlow(false)
-    val showTradeNotFoundDialog: StateFlow<Boolean> get() = _showTradeNotFoundDialog.asStateFlow()
+    val showTradeNotFoundDialog: StateFlow<Boolean> = _showTradeNotFoundDialog.asStateFlow()
 
     private val _showReportUserDialog = MutableStateFlow(false)
-    val showReportUserDialog: StateFlow<Boolean> get() = _showReportUserDialog.asStateFlow()
+    val showReportUserDialog: StateFlow<Boolean> = _showReportUserDialog.asStateFlow()
 
     private val _reportUserTradeMessage = MutableStateFlow<BisqEasyOpenTradeMessageModel?>(null)
-    val reportUserTradeMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _reportUserTradeMessage.asStateFlow()
+    val reportUserTradeMessage: StateFlow<BisqEasyOpenTradeMessageModel?> = _reportUserTradeMessage.asStateFlow()
 
     private val _reportUserMessage = MutableStateFlow<String?>(null)
-    val reportUserMessage: StateFlow<String?> get() = _reportUserMessage.asStateFlow()
+    val reportUserMessage: StateFlow<String?> = _reportUserMessage.asStateFlow()
 
     val readCount =
         selectedTrade

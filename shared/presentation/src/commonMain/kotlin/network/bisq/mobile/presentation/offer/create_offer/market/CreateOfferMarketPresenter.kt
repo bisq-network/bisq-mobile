@@ -28,10 +28,10 @@ class CreateOfferMarketPresenter(
 ) : OfferFlowPresenter(mainPresenter) {
     var headline: String
     private val _selectedMarketItem = MutableStateFlow<MarketListItem?>(null)
-    val selectedMarketItem: StateFlow<MarketListItem?> get() = _selectedMarketItem.asStateFlow()
+    val selectedMarketItem: StateFlow<MarketListItem?> = _selectedMarketItem.asStateFlow()
 
     private var _searchText = MutableStateFlow("")
-    val searchText: StateFlow<String> get() = _searchText.asStateFlow()
+    val searchText: StateFlow<String> = _searchText.asStateFlow()
 
     fun setSearchText(newValue: String) {
         _searchText.value = newValue

@@ -25,27 +25,27 @@ abstract class BaseTradeStateMainChain3bPresenter(
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _buttonText: MutableStateFlow<String> = MutableStateFlow(EMPTY_STRING)
-    val buttonText: StateFlow<String> get() = _buttonText.asStateFlow()
+    val buttonText: StateFlow<String> = _buttonText.asStateFlow()
 
     private val _txConfirmationState: MutableStateFlow<TxConfirmationState> =
         MutableStateFlow(TxConfirmationState.IDLE)
-    val txConfirmationState: StateFlow<TxConfirmationState> get() = _txConfirmationState.asStateFlow()
+    val txConfirmationState: StateFlow<TxConfirmationState> = _txConfirmationState.asStateFlow()
 
     private val _blockExplorer: MutableStateFlow<String> = MutableStateFlow(EMPTY_STRING)
-    val blockExplorer: StateFlow<String> get() = _blockExplorer.asStateFlow()
+    val blockExplorer: StateFlow<String> = _blockExplorer.asStateFlow()
 
     private val _balanceFromTx: MutableStateFlow<String> = MutableStateFlow(EMPTY_STRING)
-    val balanceFromTx: StateFlow<String> get() = _balanceFromTx.asStateFlow()
+    val balanceFromTx: StateFlow<String> = _balanceFromTx.asStateFlow()
 
     private val _errorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
-    val errorMessage: StateFlow<String?> get() = _errorMessage.asStateFlow()
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private val _skip: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val skip: StateFlow<Boolean> get() = _skip.asStateFlow()
+    val skip: StateFlow<Boolean> = _skip.asStateFlow()
 
     private val _amountNotMatchingDialogText: MutableStateFlow<String?> =
         MutableStateFlow(null)
-    val amountNotMatchingDialogText: StateFlow<String?> get() = _amountNotMatchingDialogText.asStateFlow()
+    val amountNotMatchingDialogText: StateFlow<String?> = _amountNotMatchingDialogText.asStateFlow()
 
     private var txAmount: Long? = null
     private var txAmountFormatted: String? = null

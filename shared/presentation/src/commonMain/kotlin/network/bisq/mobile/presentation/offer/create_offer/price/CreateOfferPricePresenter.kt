@@ -35,26 +35,26 @@ class CreateOfferPricePresenter(
     var priceQuote: PriceQuoteVO
     var percentagePriceValue: Double = 0.0
     private val _formattedPercentagePrice = MutableStateFlow("")
-    val formattedPercentagePrice: StateFlow<String> get() = _formattedPercentagePrice.asStateFlow()
+    val formattedPercentagePrice: StateFlow<String> = _formattedPercentagePrice.asStateFlow()
     private val _formattedPercentagePriceValid = MutableStateFlow(true)
-    val formattedPercentagePriceValid: StateFlow<Boolean> get() = _formattedPercentagePriceValid.asStateFlow()
+    val formattedPercentagePriceValid: StateFlow<Boolean> = _formattedPercentagePriceValid.asStateFlow()
 
     private val _formattedPrice = MutableStateFlow("")
-    val formattedPrice: StateFlow<String> get() = _formattedPrice.asStateFlow()
+    val formattedPrice: StateFlow<String> = _formattedPrice.asStateFlow()
     private val _formattedPriceValid = MutableStateFlow(true)
 
     private val _priceType = MutableStateFlow(PriceType.PERCENTAGE)
-    val priceType: StateFlow<PriceType> get() = _priceType.asStateFlow()
+    val priceType: StateFlow<PriceType> = _priceType.asStateFlow()
 
     private val _isBuy: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val isBuy: StateFlow<Boolean> get() = _isBuy.asStateFlow()
+    val isBuy: StateFlow<Boolean> = _isBuy.asStateFlow()
     private val _hintText = MutableStateFlow("")
-    val hintText: StateFlow<String> get() = _hintText.asStateFlow()
+    val hintText: StateFlow<String> = _hintText.asStateFlow()
 
     private var createOfferModel: CreateOfferCoordinator.CreateOfferModel
 
     private val _showWhyPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showWhyPopup: StateFlow<Boolean> get() = _showWhyPopup.asStateFlow()
+    val showWhyPopup: StateFlow<Boolean> = _showWhyPopup.asStateFlow()
 
     fun setShowWhyPopup(newValue: Boolean) {
         _showWhyPopup.value = newValue

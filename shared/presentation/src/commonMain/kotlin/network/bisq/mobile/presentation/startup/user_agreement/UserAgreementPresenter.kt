@@ -16,7 +16,7 @@ open class UserAgreementPresenter(
 ) : BasePresenter(mainPresenter),
     IAgreementPresenter {
     private val _accepted = MutableStateFlow(false)
-    override val isAccepted: StateFlow<Boolean> get() = _accepted.asStateFlow()
+    override val isAccepted: StateFlow<Boolean> = _accepted.asStateFlow()
 
     override fun onAccepted(accepted: Boolean) {
         _accepted.value = accepted

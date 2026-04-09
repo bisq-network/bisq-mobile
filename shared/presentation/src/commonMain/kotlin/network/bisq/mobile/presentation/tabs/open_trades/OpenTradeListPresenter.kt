@@ -26,12 +26,12 @@ class OpenTradeListPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private val _sortedOpenTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
-    val sortedOpenTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = _sortedOpenTradeItems.asStateFlow()
+    val sortedOpenTradeItems: StateFlow<List<TradeItemPresentationModel>> = _sortedOpenTradeItems.asStateFlow()
 
     val tradeRulesConfirmed: StateFlow<Boolean> get() = settingsServiceFacade.tradeRulesConfirmed
 
     private val _tradeGuideVisible = MutableStateFlow(false)
-    val tradeGuideVisible: StateFlow<Boolean> get() = _tradeGuideVisible.asStateFlow()
+    val tradeGuideVisible: StateFlow<Boolean> = _tradeGuideVisible.asStateFlow()
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = mainPresenter.tradesWithUnreadMessages
 
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon

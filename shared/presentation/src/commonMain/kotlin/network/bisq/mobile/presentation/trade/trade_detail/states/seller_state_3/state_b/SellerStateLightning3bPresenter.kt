@@ -16,7 +16,7 @@ class SellerStateLightning3bPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private val _buyerHasConfirmedBitcoinReceipt: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val buyerHasConfirmedBitcoinReceipt: StateFlow<Boolean> get() = _buyerHasConfirmedBitcoinReceipt.asStateFlow()
+    val buyerHasConfirmedBitcoinReceipt: StateFlow<Boolean> = _buyerHasConfirmedBitcoinReceipt.asStateFlow()
 
     fun setBuyerHasConfirmedBitcoinReceipt(value: Boolean) {
         _buyerHasConfirmedBitcoinReceipt.value = value

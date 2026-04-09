@@ -31,28 +31,28 @@ class CreateProfilePresenter(
 
     // Properties
     private val _id = MutableStateFlow("")
-    val id: StateFlow<String> get() = _id.asStateFlow()
+    val id: StateFlow<String> = _id.asStateFlow()
 
     private fun setId(value: String) {
         _id.value = value
     }
 
     private val _nym = MutableStateFlow("")
-    val nym: StateFlow<String> get() = _nym.asStateFlow()
+    val nym: StateFlow<String> = _nym.asStateFlow()
 
     private fun setNym(value: String) {
         _nym.value = value
     }
 
     private val _profileIcon = MutableStateFlow<PlatformImage?>(null)
-    val profileIcon: StateFlow<PlatformImage?> get() = _profileIcon.asStateFlow()
+    val profileIcon: StateFlow<PlatformImage?> = _profileIcon.asStateFlow()
 
     private fun setProfileIcon(value: PlatformImage?) {
         _profileIcon.value = value
     }
 
     private val _nickName = MutableStateFlow("")
-    val nickName: StateFlow<String> get() = _nickName.asStateFlow()
+    val nickName: StateFlow<String> = _nickName.asStateFlow()
 
     fun setNickname(value: String) {
         // Trim leading/trailing whitespace to avoid accidental spaces causing validation or submission errors
@@ -60,13 +60,13 @@ class CreateProfilePresenter(
     }
 
     private val _nickNameValid = MutableStateFlow(false)
-    val nickNameValid: StateFlow<Boolean> get() = _nickNameValid.asStateFlow()
+    val nickNameValid: StateFlow<Boolean> = _nickNameValid.asStateFlow()
 
     private val _generateKeyPairInProgress = MutableStateFlow(false)
-    val generateKeyPairInProgress: StateFlow<Boolean> get() = _generateKeyPairInProgress.asStateFlow()
+    val generateKeyPairInProgress: StateFlow<Boolean> = _generateKeyPairInProgress.asStateFlow()
 
     private val _createAndPublishInProgress = MutableStateFlow(false)
-    val createAndPublishInProgress: StateFlow<Boolean> get() = _createAndPublishInProgress.asStateFlow()
+    val createAndPublishInProgress: StateFlow<Boolean> = _createAndPublishInProgress.asStateFlow()
 
     // Lifecycle
     override fun onViewAttached() {

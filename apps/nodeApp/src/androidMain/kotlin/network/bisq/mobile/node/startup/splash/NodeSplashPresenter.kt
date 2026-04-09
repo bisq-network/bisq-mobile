@@ -32,7 +32,7 @@ class NodeSplashPresenter(
         versionProvider,
     ) {
     private val _state = MutableStateFlow("")
-    override val state: StateFlow<String> get() = _state.asStateFlow()
+    override val state: StateFlow<String> = _state.asStateFlow()
     val numConnections: StateFlow<Int> = networkServiceFacade.numConnections
 
     override fun onViewAttached() {

@@ -84,7 +84,7 @@ class TradeFlowPresenter(
         )
 
     private val _tradePhaseState: MutableStateFlow<TradePhaseState> = MutableStateFlow(TradePhaseState.INIT)
-    val tradePhaseState: StateFlow<TradePhaseState> get() = _tradePhaseState.asStateFlow()
+    val tradePhaseState: StateFlow<TradePhaseState> = _tradePhaseState.asStateFlow()
 
     private var isSeller: Boolean = false
     private var isMainChain: Boolean = false

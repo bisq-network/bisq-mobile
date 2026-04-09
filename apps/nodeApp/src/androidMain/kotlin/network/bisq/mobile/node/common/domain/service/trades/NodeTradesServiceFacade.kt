@@ -101,7 +101,7 @@ class NodeTradesServiceFacade(
     override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems.asStateFlow()
 
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
-    override val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
+    override val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
 
     // Misc
     private var tradesPin: Pin? = null

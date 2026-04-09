@@ -46,28 +46,28 @@ abstract class ApplicationBootstrapFacade(
     protected open fun currentTimeMillis(): Long = DateUtils.now()
 
     private val _state = MutableStateFlow("")
-    val state: StateFlow<String> get() = _state.asStateFlow()
+    val state: StateFlow<String> = _state.asStateFlow()
 
     fun setState(value: String) {
         _state.value = value
     }
 
     private val _progress = MutableStateFlow(0f)
-    val progress: StateFlow<Float> get() = _progress.asStateFlow()
+    val progress: StateFlow<Float> = _progress.asStateFlow()
 
     fun setProgress(value: Float) {
         _progress.value = value
     }
 
     private val _isTimeoutDialogVisible = MutableStateFlow(false)
-    val isTimeoutDialogVisible: StateFlow<Boolean> get() = _isTimeoutDialogVisible.asStateFlow()
+    val isTimeoutDialogVisible: StateFlow<Boolean> = _isTimeoutDialogVisible.asStateFlow()
 
     fun setTimeoutDialogVisible(visible: Boolean) {
         _isTimeoutDialogVisible.value = visible
     }
 
     private val _isBootstrapFailed = MutableStateFlow(false)
-    val isBootstrapFailed: StateFlow<Boolean> get() = _isBootstrapFailed.asStateFlow()
+    val isBootstrapFailed: StateFlow<Boolean> = _isBootstrapFailed.asStateFlow()
 
     fun setBootstrapFailed(failed: Boolean) {
         _isBootstrapFailed.value = failed
@@ -82,14 +82,14 @@ abstract class ApplicationBootstrapFacade(
     }
 
     private val _currentBootstrapStage = MutableStateFlow("")
-    val currentBootstrapStage: StateFlow<String> get() = _currentBootstrapStage.asStateFlow()
+    val currentBootstrapStage: StateFlow<String> = _currentBootstrapStage.asStateFlow()
 
     fun setCurrentBootstrapStage(stage: String) {
         _currentBootstrapStage.value = stage
     }
 
     private val _shouldShowProgressToast = MutableStateFlow(false)
-    val shouldShowProgressToast: StateFlow<Boolean> get() = _shouldShowProgressToast.asStateFlow()
+    val shouldShowProgressToast: StateFlow<Boolean> = _shouldShowProgressToast.asStateFlow()
 
     fun setShouldShowProgressToast(show: Boolean) {
         _shouldShowProgressToast.value = show

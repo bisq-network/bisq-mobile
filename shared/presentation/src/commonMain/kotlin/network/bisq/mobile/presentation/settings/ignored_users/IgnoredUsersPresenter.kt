@@ -16,10 +16,10 @@ class IgnoredUsersPresenter(
 ) : BasePresenter(mainPresenter),
     IIgnoredUsersPresenter {
     private val _ignoredUsers = MutableStateFlow<List<UserProfileVO>>(emptyList())
-    override val ignoredUsers: StateFlow<List<UserProfileVO>> get() = _ignoredUsers.asStateFlow()
+    override val ignoredUsers: StateFlow<List<UserProfileVO>> = _ignoredUsers.asStateFlow()
 
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
-    override val ignoreUserId: StateFlow<String> get() = _ignoreUserId.asStateFlow()
+    override val ignoreUserId: StateFlow<String> = _ignoreUserId.asStateFlow()
 
     override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 

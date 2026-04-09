@@ -17,26 +17,26 @@ class SellerState3aPresenter(
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _paymentProof: MutableStateFlow<String?> = MutableStateFlow(null)
-    val paymentProof: StateFlow<String?> get() = _paymentProof.asStateFlow()
+    val paymentProof: StateFlow<String?> = _paymentProof.asStateFlow()
 
     private val _paymentProofValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val paymentProofValid: StateFlow<Boolean> get() = _paymentProofValid.asStateFlow()
+    val paymentProofValid: StateFlow<Boolean> = _paymentProofValid.asStateFlow()
 
     private val _showInvalidAddressDialog = MutableStateFlow(false)
-    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog.asStateFlow()
+    val showInvalidAddressDialog: StateFlow<Boolean> = _showInvalidAddressDialog.asStateFlow()
 
     fun setShowInvalidAddressDialog(value: Boolean) {
         _showInvalidAddressDialog.value = value
     }
 
     private val _buttonEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val buttonEnabled: StateFlow<Boolean> get() = _buttonEnabled.asStateFlow()
+    val buttonEnabled: StateFlow<Boolean> = _buttonEnabled.asStateFlow()
 
     private var _bitcoinAddressFieldType = MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
-    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType.asStateFlow()
+    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> = _bitcoinAddressFieldType.asStateFlow()
 
     private val _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isLightning: StateFlow<Boolean> get() = _isLightning.asStateFlow()
+    val isLightning: StateFlow<Boolean> = _isLightning.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

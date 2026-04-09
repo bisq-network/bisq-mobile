@@ -16,7 +16,7 @@ class SettingsRepositoryMock :
     SettingsRepository,
     Logging {
     private val _data = MutableStateFlow(Settings())
-    override val data: StateFlow<Settings> get() = _data.asStateFlow()
+    override val data: StateFlow<Settings> = _data.asStateFlow()
 
     override suspend fun setFirstLaunch(value: Boolean) {
         _data.update {
