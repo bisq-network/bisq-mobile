@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.molecules.AmountWithCurrency
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class InfoBoxValueType {
     BoldValue,

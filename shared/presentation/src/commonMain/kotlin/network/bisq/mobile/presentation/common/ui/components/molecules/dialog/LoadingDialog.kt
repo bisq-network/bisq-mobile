@@ -2,9 +2,9 @@ package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun LoadingDialog() {

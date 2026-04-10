@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CheckCircleIcon
@@ -39,7 +40,6 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CopyIco
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SearchIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun BisqTextFieldV0(

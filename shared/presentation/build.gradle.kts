@@ -67,6 +67,7 @@ kotlin {
             implementation(libs.atomicfu)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
+            implementation(libs.compose.ui.tooling.preview)
             implementation(libs.logging.kermit)
             implementation(libs.navigation.compose)
         }

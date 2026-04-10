@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.i18n.i18n
@@ -45,7 +46,6 @@ import network.bisq.mobile.presentation.common.ui.alert.simulatedAlertNotificati
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val ALERT_ANIMATION_DURATION_MS = 350
 

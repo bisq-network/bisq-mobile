@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -18,7 +19,6 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentTy
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.CustomPaymentField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun PaymentMethodCard(

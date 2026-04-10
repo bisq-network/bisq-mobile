@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
@@ -36,7 +37,6 @@ import network.bisq.mobile.presentation.settings.payment_accounts_musig.model.Cr
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.model.FiatAccountVO
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.CryptoPaymentAccountCard
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.FiatPaymentAccountCard
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class PaymentAccountTab(
     val titleKey: String,

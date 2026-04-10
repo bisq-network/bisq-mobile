@@ -5,6 +5,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
@@ -20,7 +21,6 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.EyeIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.FlagIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ReplyIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ChatMessageContextMenu(

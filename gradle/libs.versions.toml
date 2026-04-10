@@ -44,6 +44,7 @@ androidx-camera = "1.5.3"
 
 # -------------------- UI / Compose --------------------
 compose-material-icons = "1.10.2"
+ui-tooling-preview = "1.10.3"
 coil-compose = "3.4.0"
 
 # -------------------- Multiplatform Libraries --------------------
@@ -134,6 +135,7 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 
 # -------------------- UI / Compose --------------------
 compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "compose-material-icons" }
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "ui-tooling-preview" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil-compose" }
 
 # -------------------- Testing --------------------

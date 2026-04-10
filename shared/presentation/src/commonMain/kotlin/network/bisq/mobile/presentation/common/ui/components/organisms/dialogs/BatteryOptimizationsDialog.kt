@@ -1,10 +1,10 @@
 package network.bisq.mobile.presentation.common.ui.components.organisms.dialogs
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun BatteryOptimizationsDialog(

@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
@@ -26,7 +27,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BitcoinAddressValidation
 import network.bisq.mobile.presentation.common.ui.utils.LightningInvoiceValidation
 import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class BitcoinLnAddressFieldType {
     Bitcoin,

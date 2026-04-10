@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.utils.getDecimalSeparator
 import network.bisq.mobile.i18n.i18n
@@ -21,7 +22,6 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.atoms.slider.BisqRangeSlider
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqFiatInputField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * A composable that allows users to select a range of amounts (min and max) using two text input
