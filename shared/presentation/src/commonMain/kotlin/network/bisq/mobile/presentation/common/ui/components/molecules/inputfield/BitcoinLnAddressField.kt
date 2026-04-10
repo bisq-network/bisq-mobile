@@ -91,8 +91,9 @@ fun BitcoinLnAddressField(
             label = label,
             value = value,
             onValueChange = { newValue ->
-                errorMessage = validationLogic(newValue)
-                onValueChange(newValue, errorMessage == null)
+                val newErrorMessage = if (newValue.isBlank()) null else validationLogic(newValue)
+                errorMessage = newErrorMessage
+                onValueChange(newValue, newErrorMessage == null)
             },
             enabled = !disabled,
             readOnly = disabled,

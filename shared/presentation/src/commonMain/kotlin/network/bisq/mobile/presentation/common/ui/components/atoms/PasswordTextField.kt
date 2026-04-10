@@ -53,7 +53,12 @@ fun BisqPasswordTextField(
         textStyle = textStyle,
         label = label,
         placeholder = placeholder,
-        trailingIcon = { PasswordIconButton(onObscurePassword = { obscurePassword = it }) },
+        trailingIcon =
+            if (enabled) {
+                { PasswordIconButton(onObscurePassword = { obscurePassword = it }) }
+            } else {
+                null
+            },
         prefix = prefix,
         suffix = suffix,
         isError = isError,
