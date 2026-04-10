@@ -5,6 +5,7 @@ package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -22,8 +23,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeTex
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.CircularLoadingImage
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
@@ -76,12 +78,12 @@ fun SellerStateMainChain3b(
             )
 
             BisqGap.V1()
-            BisqTextField(
+            BisqTextFieldV0(
                 // Transaction ID
                 label = "bisqEasy.tradeState.info.phase3b.txId".i18n(),
                 value = txId,
-                disabled = true,
-                showCopy = true,
+                enabled = false,
+                trailingIcon = { CopyIconButton(value = txId) },
             )
 
             BisqGap.VQuarter()
@@ -90,50 +92,45 @@ fun SellerStateMainChain3b(
                 IDLE,
                 REQUEST_STARTED,
                 -> {
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         placeholder = waitingText,
-                        helperText = "bisqEasy.tradeState.info.phase3b.balance.help.explorerLookup".i18n(blockExplorer), // Looking up transaction at block explorer ''{0}''
-                        disabled = true,
+                        bottomMessage = "bisqEasy.tradeState.info.phase3b.balance.help.explorerLookup".i18n(blockExplorer), // Looking up transaction at block explorer ''{0}''
+                        enabled = false,
                         modifier = Modifier.alpha(0.5f),
                     )
                 }
 
                 IN_MEMPOOL -> {
                     // todo
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         value = btcBalance,
-                        helperText = "bisqEasy.tradeState.info.phase3b.balance.help.notConfirmed".i18n(), // Transaction seen in mempool but not confirmed yet
+                        bottomMessage = "bisqEasy.tradeState.info.phase3b.balance.help.notConfirmed".i18n(), // Transaction seen in mempool but not confirmed yet
                         color = BisqTheme.colors.warning,
-                        disabled = true,
+                        enabled = false,
                     )
                 }
 
                 CONFIRMED -> {
                     // todo
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         value = btcBalance,
-                        keyboardType = KeyboardType.Decimal,
-                        helperText = "bisqEasy.tradeState.info.phase3b.balance.help.confirmed".i18n(), // Transaction is confirmed
-                        // color = BisqTheme.colors.primary,
-                        disabled = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        bottomMessage = "bisqEasy.tradeState.info.phase3b.balance.help.confirmed".i18n(), // Transaction is confirmed
+                        enabled = false,
                     )
                 }
 
                 FAILED -> {
                     // todo
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         placeholder = waitingText,
-                        disabled = true,
-                        validation = {
-                            if (explorerRequestError?.isNotEmpty() == true) {
-                                return@BisqTextField explorerRequestError
-                            }
-                            return@BisqTextField null
-                        },
+                        enabled = false,
+                        isError = explorerRequestError?.isNotEmpty() == true,
+                        bottomMessage = explorerRequestError,
                     )
                 }
             }

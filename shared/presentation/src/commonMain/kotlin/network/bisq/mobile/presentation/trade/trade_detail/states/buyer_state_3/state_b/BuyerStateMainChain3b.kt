@@ -21,7 +21,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeTex
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -95,67 +95,47 @@ fun BuyerStateMainChain3b(
                 IDLE,
                 REQUEST_STARTED,
                 -> {
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         placeholder = waitingText,
-                        helperText = "bisqEasy.tradeState.info.phase3b.balance.help.explorerLookup".i18n(blockExplorer), // Looking up transaction at block explorer ''{0}''
-                        disabled = true,
+                        bottomMessage = explorerRequestError ?: "bisqEasy.tradeState.info.phase3b.balance.help.explorerLookup".i18n(blockExplorer), // Looking up transaction at block explorer ''{0}''
+                        enabled = false,
                         modifier = Modifier.alpha(0.5f),
-                        validation = {
-                            if (explorerRequestError?.isNotEmpty() == true) {
-                                return@BisqTextField explorerRequestError
-                            }
-                            return@BisqTextField null
-                        },
+                        isError = explorerRequestError?.isNotEmpty() == true,
                     )
                 }
 
                 IN_MEMPOOL -> {
                     // todo
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         value = btcBalance,
-                        helperText = "bisqEasy.tradeState.info.phase3b.balance.help.notConfirmed".i18n(), // Transaction seen in mempool but not confirmed yet
+                        bottomMessage = explorerRequestError ?: "bisqEasy.tradeState.info.phase3b.balance.help.notConfirmed".i18n(), // Transaction seen in mempool but not confirmed yet
                         color = BisqTheme.colors.warning,
-                        disabled = true,
-                        validation = {
-                            if (explorerRequestError?.isNotEmpty() == true) {
-                                return@BisqTextField explorerRequestError
-                            }
-                            return@BisqTextField null
-                        },
+                        enabled = false,
+                        isError = explorerRequestError?.isNotEmpty() == true,
                     )
                 }
 
                 CONFIRMED -> {
                     // todo
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         value = btcBalance,
-                        helperText = "bisqEasy.tradeState.info.phase3b.balance.help.confirmed".i18n(), // Transaction is confirmed
-                        // color = BisqTheme.colors.primary,
-                        disabled = true,
-                        validation = {
-                            if (explorerRequestError?.isNotEmpty() == true) {
-                                return@BisqTextField explorerRequestError
-                            }
-                            return@BisqTextField null
-                        },
+                        bottomMessage = explorerRequestError ?: "bisqEasy.tradeState.info.phase3b.balance.help.confirmed".i18n(), // Transaction is confirmed
+                        enabled = false,
+                        isError = explorerRequestError?.isNotEmpty() == true,
                     )
                 }
 
                 FAILED -> {
                     // todo
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = balanceLabel,
                         value = waitingText,
-                        disabled = true,
-                        validation = {
-                            if (explorerRequestError?.isNotEmpty() == true) {
-                                return@BisqTextField explorerRequestError
-                            }
-                            return@BisqTextField null
-                        },
+                        enabled = false,
+                        isError = explorerRequestError?.isNotEmpty() == true,
+                        bottomMessage = explorerRequestError,
                     )
                 }
             }

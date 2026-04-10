@@ -54,7 +54,7 @@ fun CreateOfferMarketScreen() {
 
         BisqSearchField(
             value = searchText,
-            onValueChange = { it, isValid -> presenter.setSearchText(it) },
+            onValueChange = presenter::setSearchText,
         )
 
         BisqGap.V1()

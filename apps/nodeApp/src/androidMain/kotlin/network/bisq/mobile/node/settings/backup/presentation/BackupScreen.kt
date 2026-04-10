@@ -27,8 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqPasswordTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ExclamationRedIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
@@ -160,24 +160,20 @@ private fun BackupPasswordDialog(
         BisqGap.V2()
         BisqText.BaseLight("mobile.resources.backup.password.info".i18n())
         BisqGap.V2()
-        BisqTextField(
+        BisqPasswordTextField(
             value = password,
             label = "mobile.resources.backup.password".i18n(),
-            onValueChange = { newValue, isValid ->
-                password = newValue
-            },
-            isPasswordField = true,
-            validation = { validationError },
+            onValueChange = { newValue -> password = newValue },
+            isError = validationError != null,
+            bottomMessage = validationError,
         )
         BisqGap.V1()
-        BisqTextField(
+        BisqPasswordTextField(
             value = confirmedPassword,
             label = "mobile.resources.backup.password.confirm".i18n(),
-            onValueChange = { newValue, isValid ->
-                confirmedPassword = newValue
-            },
-            isPasswordField = true,
-            validation = { validationError },
+            onValueChange = { newValue -> confirmedPassword = newValue },
+            isError = validationError != null,
+            bottomMessage = validationError,
         )
         BisqGap.V2()
         Column {
@@ -237,13 +233,10 @@ private fun RestorePasswordDialog(
         BisqGap.V2()
         BisqText.BaseLight("mobile.resources.restore.password.info".i18n())
         BisqGap.V2()
-        BisqTextField(
+        BisqPasswordTextField(
             value = password,
             label = "mobile.resources.restore.password".i18n(),
-            onValueChange = { newValue, isValid ->
-                password = newValue
-            },
-            isPasswordField = true,
+            onValueChange = { newValue -> password = newValue },
         )
         BisqGap.V2()
         Column {

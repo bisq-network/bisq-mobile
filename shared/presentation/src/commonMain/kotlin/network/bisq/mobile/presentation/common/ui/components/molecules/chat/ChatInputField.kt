@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,17 +19,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CloseIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SendIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
+
+const val MAX_CHARS = 10_000
 
 @Composable
 fun ChatInputField(
@@ -42,23 +42,19 @@ fun ChatInputField(
 ) {
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
-    var isTextValid by remember { mutableStateOf(true) }
+    val validationMessage = if (text.length > MAX_CHARS) "mobile.tradeChat.chatInput.maxLength".i18n(MAX_CHARS) else null
+    val isTextValid = validationMessage == null
 
     Column {
         if (quotedMessage != null) {
             QuotedMessage(quotedMessage, onCloseReply)
         }
-        BisqTextField(
+        BisqTextFieldV0(
             value = text,
-            onValueChange = { it, isValid ->
-                text = it
-                isTextValid = isValid
-            },
-            indicatorColor = Color.Unspecified,
-            isTextArea = true,
+            onValueChange = { text = it },
             modifier = Modifier.focusRequester(focusRequester),
             placeholder = placeholder,
-            rightSuffix = {
+            trailingIcon = {
                 BisqIconButton(
                     onClick = {
                         if (text.isNotBlank() && isTextValid) {
@@ -72,16 +68,10 @@ fun ChatInputField(
                     SendIcon()
                 }
             },
-            rightSuffixModifier = Modifier.width(BisqUIConstants.ScreenPadding2X),
-            validation = {
-                val maxChars = 10_000
-                if (it.length > maxChars) {
-                    return@BisqTextField "mobile.tradeChat.chatInput.maxLength".i18n(maxChars)
-                }
-                return@BisqTextField null
-            },
             minLines = 1,
-            textFieldAlignment = Alignment.CenterStart,
+            maxLines = Int.MAX_VALUE,
+            isError = !isTextValid,
+            bottomMessage = validationMessage,
         )
     }
 }

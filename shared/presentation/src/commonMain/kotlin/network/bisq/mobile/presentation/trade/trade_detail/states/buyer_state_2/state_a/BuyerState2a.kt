@@ -10,7 +10,8 @@ import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 
@@ -34,27 +35,27 @@ fun BuyerState2a(
         BisqText.H5Light("bisqEasy.tradeState.info.buyer.phase2a.headline".i18n(quoteAmount))
 
         BisqGap.VHalf()
-        BisqTextField(
+        BisqTextFieldV0(
             // Amount to transfer
             label = "bisqEasy.tradeState.info.buyer.phase2a.quoteAmount".i18n(),
             value = quoteAmount,
-            disabled = true,
-            showCopy = true,
+            enabled = false,
+            trailingIcon = { CopyIconButton(value = quoteAmount) },
         )
 
         BisqGap.VHalf()
-        BisqTextField(
+        BisqTextFieldV0(
             // Payment account of seller
             label = "bisqEasy.tradeState.info.buyer.phase2a.sellersAccount".i18n(),
             // In Bisq Easy we show the Reason for payment with the trade ID as extra field, but on mobile we don't want to
             // use up too much space for that and show it as helper text instead.
             // Use the trade ID {0} for the 'Reason for payment' field
-            helperText = "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(tradeId),
+            bottomMessage = "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(tradeId),
             value = paymentAccountData ?: "data.na".i18n(),
-            disabled = true,
-            showCopy = true,
-            isTextArea = true,
+            enabled = false,
+            trailingIcon = { CopyIconButton(value = paymentAccountData ?: "data.na".i18n()) },
             maxLines = Int.MAX_VALUE,
+            minLines = 2,
         )
 
         BisqGap.V1()

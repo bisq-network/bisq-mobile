@@ -33,7 +33,8 @@ import androidx.compose.ui.unit.sp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldColors
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.OrderedTextList
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -173,12 +174,17 @@ fun ReputationScreen() {
                 },
             )
             BisqGap.V2()
-            BisqTextField(
+            BisqTextFieldV0(
                 label = "reputation.pubKeyHash".i18n(),
                 value = profileId,
-                disabled = true,
-                rightSuffix = { CopyIconButton(value = profileId) },
-                backgroundColor = BisqTheme.colors.dark_grey30,
+                enabled = false,
+                trailingIcon = { CopyIconButton(value = profileId) },
+                colors =
+                    BisqTextFieldColors.default(
+                        backgroundColor = BisqTheme.colors.dark_grey30,
+                        focusedBackgroundColor = BisqTheme.colors.dark_grey30,
+                        disabledBackgroundColor = BisqTheme.colors.dark_grey30,
+                    ),
             )
             BisqGap.V1()
         }
@@ -210,12 +216,17 @@ fun ReputationScreen() {
                 },
             )
             BisqGap.V2()
-            BisqTextField(
+            BisqTextFieldV0(
                 label = "reputation.pubKeyHash".i18n(),
                 value = profileId,
-                disabled = true,
-                rightSuffix = { CopyIconButton(value = profileId) },
-                backgroundColor = BisqTheme.colors.dark_grey30,
+                enabled = false,
+                trailingIcon = { CopyIconButton(value = profileId) },
+                colors =
+                    BisqTextFieldColors.default(
+                        backgroundColor = BisqTheme.colors.dark_grey30,
+                        focusedBackgroundColor = BisqTheme.colors.dark_grey30,
+                        disabledBackgroundColor = BisqTheme.colors.dark_grey30,
+                    ),
             )
             // Give a bit extra space at bottom
             BisqGap.V1()

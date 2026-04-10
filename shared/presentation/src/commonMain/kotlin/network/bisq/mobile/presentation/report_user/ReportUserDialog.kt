@@ -15,7 +15,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -72,16 +72,14 @@ private fun ReportUserDialogContent(
             text = "chat.reportToModerator.info".i18n(),
         )
         BisqGap.V2()
-        BisqTextField(
+        BisqTextFieldV0(
             value = state.message,
-            onValueChange = { text, _ -> onMessageChange(text) },
+            onValueChange = { text -> onMessageChange(text.take(REPORT_USER_MAX_MESSAGE_LENGTH)) },
             label = "chat.reportToModerator.message".i18n(),
             placeholder = "chat.reportToModerator.message.prompt".i18n(),
-            isTextArea = true,
             minLines = 4,
             maxLines = Int.MAX_VALUE,
-            showCharacterCounter = true,
-            maxLength = REPORT_USER_MAX_MESSAGE_LENGTH,
+            bottomMessage = "${state.message.length}/${REPORT_USER_MAX_MESSAGE_LENGTH}",
         )
         BisqGap.V2()
         if (state.isLoading) {

@@ -371,7 +371,7 @@ fun CreateFiatAccount_Step1_SelectMethod(
         // Search field
         BisqSearchField(
             value = searchQuery,
-            onValueChange = { value, _ -> onSearchChange(value) },
+            onValueChange = onSearchChange,
             placeholder = "Search payment methods",
         )
 

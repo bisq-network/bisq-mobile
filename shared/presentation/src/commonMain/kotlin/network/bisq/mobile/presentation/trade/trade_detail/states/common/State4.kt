@@ -17,7 +17,7 @@ import bisqapps.shared.presentation.generated.resources.trade_completed
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsStyle
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.common.ui.components.atoms.CircularLoadingImage
@@ -57,10 +57,10 @@ fun State4(
             )
             BisqGap.VHalf()
 
-            BisqTextField(
+            BisqTextFieldV0(
                 label = presenter.getMyOutcomeString(),
                 value = trade.quoteAmountWithCode,
-                disabled = true,
+                enabled = false,
             )
 
             BisqGap.V2()

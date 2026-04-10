@@ -1,11 +1,16 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.inputfield
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.common.ui.utils.BitcoinTransactionValidation
 import network.bisq.mobile.presentation.common.ui.utils.LightningPreImageValidation
 
@@ -19,7 +24,7 @@ fun PaymentProofField(
     value: String,
     modifier: Modifier = Modifier,
     label: String = "",
-    onValueChange: ((String, Boolean) -> Unit)? = null,
+    onValueChange: (String, Boolean) -> Unit = { _, _ -> },
     disabled: Boolean = false,
     type: PaymentProofType = PaymentProofType.BitcoinTx,
     direction: DirectionEnum = DirectionEnum.BUY,
@@ -47,14 +52,39 @@ fun PaymentProofField(
             }
         }
 
-    BisqTextField(
+    var errorMessage by remember(type, value) {
+        mutableStateOf(if (value.isNotBlank()) validation(value) else null)
+    }
+
+    BisqTextFieldV0(
         label = label,
         value = value,
-        onValueChange = onValueChange,
-        disabled = disabled,
-        showCopy = direction == DirectionEnum.BUY,
-        showPaste = direction == DirectionEnum.SELL,
+        onValueChange = { newValue ->
+            val newErrorMessage = validation(newValue)
+            errorMessage = newErrorMessage
+            onValueChange(newValue, newErrorMessage == null)
+        },
+        enabled = !disabled,
         modifier = modifier,
-        validation = validation,
+        readOnly = disabled,
+        trailingIcon =
+            when (direction) {
+                DirectionEnum.BUY -> ({ CopyIconButton(value = value) })
+                DirectionEnum.SELL -> (
+                    if (disabled) {
+                        null
+                    } else {
+                        {
+                            PasteIconButton(onPaste = { pastedValue ->
+                                val pastedErrorMessage = validation(pastedValue)
+                                errorMessage = pastedErrorMessage
+                                onValueChange(pastedValue, pastedErrorMessage == null)
+                            })
+                        }
+                    }
+                )
+            },
+        isError = errorMessage != null,
+        bottomMessage = errorMessage,
     )
 }

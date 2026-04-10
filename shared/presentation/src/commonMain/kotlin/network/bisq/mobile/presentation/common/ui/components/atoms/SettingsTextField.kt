@@ -8,20 +8,17 @@ fun SettingsTextField(
     value: String,
     editable: Boolean = true,
     isTextArea: Boolean = false,
-    onValueChange: ((String, Boolean) -> Unit)? = null,
+    onValueChange: (String) -> Unit = {},
     trailingIcon: (@Composable () -> Unit)? = null,
 ) {
-    BisqTextField(
+    BisqTextFieldV0(
         label = label,
         value = value,
-        disabled = !editable,
-        isTextArea = isTextArea,
+        enabled = editable,
+        singleLine = !isTextArea,
         minLines = if (isTextArea) 2 else 1,
-        onValueChange = { newValue, isValid ->
-            if (onValueChange != null) {
-                onValueChange(newValue, isValid)
-            }
-        },
-        rightSuffix = trailingIcon,
+        maxLines = if (isTextArea) Int.MAX_VALUE else 1,
+        onValueChange = onValueChange,
+        trailingIcon = trailingIcon,
     )
 }

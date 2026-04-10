@@ -1,50 +1,59 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.inputfield
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SearchIcon
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap.BisqGapHFill
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun BisqSearchField(
     value: String,
-    onValueChange: (String, Boolean) -> Unit,
+    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     label: String = "",
     placeholder: String = "action.search".i18n(),
     rightSuffix: (@Composable () -> Unit)? = null,
     disabled: Boolean = false,
 ) {
-    BisqTextField(
+    BisqTextFieldV0(
         label = label,
         value = value,
         onValueChange = onValueChange,
         placeholder = placeholder,
-        leftSuffix = { SearchIcon() },
-        rightSuffixModifier =
-            if (rightSuffix == null) {
-                Modifier.width(50.dp)
-            } else {
-                Modifier.width(80.dp)
-            },
-        rightSuffix = {
-            Row(horizontalArrangement = Arrangement.End) {
+        leadingIcon = { SearchIcon() },
+        trailingIcon = {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.width(if (rightSuffix == null) 50.dp else 80.dp),
+            ) {
                 if (value.isNotEmpty()) {
                     BisqButton(
                         iconOnly = {
                             CloseIcon(color = BisqTheme.colors.mid_grey20)
                         },
-                        onClick = { onValueChange("", true) },
+                        onClick = {
+                            if (!disabled) {
+                                onValueChange("")
+                            }
+                        },
                         type = BisqButtonType.Clear,
                         modifier = Modifier.weight(1f),
                     )
@@ -62,8 +71,58 @@ fun BisqSearchField(
                 }
             }
         },
-        isSearch = true,
-        disabled = disabled,
+        enabled = !disabled,
+        singleLine = true,
         modifier = modifier,
     )
+}
+
+@Preview
+@Composable
+private fun BisqSearchField_EmptyPreview() {
+    BisqTheme.Preview {
+        Box(modifier = Modifier.padding(12.dp)) {
+            var textState by remember { mutableStateOf("") }
+            BisqSearchField(
+                value = textState,
+                onValueChange = { textState = it },
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun BisqSearchField_WithValuePreview() {
+    BisqTheme.Preview {
+        Box(modifier = Modifier.padding(12.dp)) {
+            var textState by remember { mutableStateOf("bitcoin") }
+            BisqSearchField(
+                value = textState,
+                onValueChange = { textState = it },
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun BisqSearchField_WithFilterButtonPreview() {
+    BisqTheme.Preview {
+        Box(modifier = Modifier.padding(12.dp)) {
+            var textState by remember { mutableStateOf("") }
+            BisqSearchField(
+                value = textState,
+                onValueChange = { textState = it },
+                rightSuffix = {
+                    BisqButton(
+                        iconOnly = { SortIcon() },
+                        onClick = {},
+                        type = BisqButtonType.Clear,
+                        modifier = Modifier.width(50.dp),
+                    )
+                },
+            )
+        }
+    }
 }

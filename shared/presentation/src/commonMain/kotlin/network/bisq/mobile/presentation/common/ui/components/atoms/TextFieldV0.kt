@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,14 +42,45 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SearchI
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
+@Immutable
+data class BisqTextFieldColors(
+    val backgroundColor: Color,
+    val focusedBackgroundColor: Color,
+    val disabledBackgroundColor: Color,
+    val unfocusedIndicatorColor: Color,
+    val focusedIndicatorColor: Color,
+    val errorColor: Color,
+) {
+    companion object {
+        @Composable
+        fun default(
+            backgroundColor: Color = BisqTheme.colors.secondary,
+            focusedBackgroundColor: Color = BisqTheme.colors.secondaryHover,
+            disabledBackgroundColor: Color = BisqTheme.colors.secondaryDisabled,
+            unfocusedIndicatorColor: Color = BisqTheme.colors.mid_grey20,
+            focusedIndicatorColor: Color = BisqTheme.colors.primary,
+            errorColor: Color = BisqTheme.colors.danger,
+        ): BisqTextFieldColors =
+            BisqTextFieldColors(
+                backgroundColor = backgroundColor,
+                focusedBackgroundColor = focusedBackgroundColor,
+                disabledBackgroundColor = disabledBackgroundColor,
+                unfocusedIndicatorColor = unfocusedIndicatorColor,
+                focusedIndicatorColor = focusedIndicatorColor,
+                errorColor = errorColor,
+            )
+    }
+}
+
 @Composable
 fun BisqTextFieldV0(
-    value: String,
-    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    value: String = "",
+    onValueChange: (String) -> Unit = {},
     enabled: Boolean = true,
     readOnly: Boolean = false,
     color: Color = BisqTheme.colors.light_grey20,
+    colors: BisqTextFieldColors = BisqTextFieldColors.default(),
     textStyle: TextStyle =
         TextStyle(
             color = color,
@@ -71,38 +103,31 @@ fun BisqTextFieldV0(
     minLines: Int = 1,
     interactionSource: MutableInteractionSource? = null,
 ) {
-    val secondaryColor = BisqTheme.colors.secondary
-    val secondaryHoverColor = BisqTheme.colors.secondaryHover
-    val secondaryDisabledColor = BisqTheme.colors.secondaryDisabled
-    val dangerColor = BisqTheme.colors.danger
-    val greyColor = BisqTheme.colors.mid_grey20
-    val primaryColor = BisqTheme.colors.primary
-
     var isFocused by remember { mutableStateOf(false) }
 
-    val backgroundColor =
+    val resolvedBackgroundColor =
         when {
-            !enabled -> secondaryDisabledColor
-            isFocused -> secondaryHoverColor
-            else -> secondaryColor
+            !enabled -> colors.disabledBackgroundColor
+            isFocused -> colors.focusedBackgroundColor
+            else -> colors.backgroundColor
         }
 
     val indicatorColor =
         when {
-            isError -> dangerColor
-            isFocused -> primaryColor
-            else -> greyColor
+            isError -> colors.errorColor
+            isFocused -> colors.focusedIndicatorColor
+            else -> colors.unfocusedIndicatorColor
         }
 
     val bottomMessageColor =
         when {
-            isError -> dangerColor
-            else -> greyColor
+            isError -> colors.errorColor
+            else -> colors.unfocusedIndicatorColor
         }
 
     val labelColor =
         when {
-            isError -> dangerColor
+            isError -> colors.errorColor
             else -> BisqTheme.colors.white
         }
 
@@ -144,7 +169,7 @@ fun BisqTextFieldV0(
                                 topStart = BisqUIConstants.BorderRadius,
                                 topEnd = BisqUIConstants.BorderRadius,
                             ),
-                        ).background(backgroundColor)
+                        ).background(resolvedBackgroundColor)
                         .drawBehind {
                             val strokeWidth = 4.dp.toPx()
                             val y = size.height

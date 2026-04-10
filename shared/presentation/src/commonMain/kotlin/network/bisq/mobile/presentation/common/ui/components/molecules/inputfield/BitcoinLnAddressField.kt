@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ScanQrIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -37,7 +38,7 @@ enum class BitcoinLnAddressFieldType {
 fun BitcoinLnAddressField(
     value: String,
     label: String = "",
-    onValueChange: ((String, Boolean) -> Unit)? = null,
+    onValueChange: (String, Boolean) -> Unit = { _, _ -> },
     disabled: Boolean = false,
     type: BitcoinLnAddressFieldType = BitcoinLnAddressFieldType.Bitcoin,
     onBarcodeClick: (() -> Unit)? = null,
@@ -64,32 +65,53 @@ fun BitcoinLnAddressField(
             }
         }
 
-    // Store validation function in mutableStateOf so we can replace it with new function instances.
-    // BisqTextField's LaunchedEffect(validation) only triggers when the validation function reference changes.
-    // By wrapping the validationLogic in a new lambda { input -> validationLogic(input) }, we create
-    // a new function instance each time, which triggers BisqTextField's validation LaunchedEffect.
-    var validationError by remember(type) {
-        mutableStateOf({ input: String -> validationLogic(input) })
+    var errorMessage by remember(type, value) {
+        mutableStateOf(
+            if (value.isNotBlank()) {
+                validationLogic(value)
+            } else {
+                null
+            },
+        )
     }
 
     val helperText = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.walletHelp".i18n()
 
     LaunchedEffect(triggerValidation) {
-        validationError = { input: String -> validationLogic(input) }
+        if (triggerValidation != null && value.isNotBlank()) {
+            val newErrorMessage = validationLogic(value)
+            errorMessage = newErrorMessage
+        }
     }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
     ) {
-        BisqTextField(
+        BisqTextFieldV0(
             label = label,
             value = value,
-            onValueChange = onValueChange,
-            disabled = disabled,
-            showPaste = true,
+            onValueChange = { newValue ->
+                errorMessage = validationLogic(newValue)
+                onValueChange(newValue, errorMessage == null)
+            },
+            enabled = !disabled,
+            readOnly = disabled,
             modifier = Modifier.weight(1f),
-            helperText = helperText,
-            validation = validationError,
+            trailingIcon =
+                if (!disabled) {
+                    {
+                        PasteIconButton(
+                            onPaste = { pastedValue ->
+                                errorMessage = validationLogic(pastedValue)
+                                onValueChange(pastedValue, errorMessage == null)
+                            },
+                        )
+                    }
+                } else {
+                    null
+                },
+            isError = errorMessage != null,
+            bottomMessage = errorMessage ?: helperText,
         )
         if (!disabled) {
             Column {

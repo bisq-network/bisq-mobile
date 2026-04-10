@@ -22,7 +22,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
@@ -44,10 +44,18 @@ fun CreateProfileScreen(isOnboarding: Boolean) {
     val generateKeyPairInProgress by presenter.generateKeyPairInProgress.collectAsState()
     val createAndPublishInProgress by presenter.createAndPublishInProgress.collectAsState()
     val nickName by presenter.nickName.collectAsState()
-    val nickNameValid by presenter.nickNameValid.collectAsState()
     val profileIcon by presenter.profileIcon.collectAsState()
     val nym by presenter.nym.collectAsState()
     val iconSize = 140.dp
+    val nickNameError =
+        remember(nickName) {
+            val trimmed = nickName.trim()
+            when {
+                trimmed.isEmpty() -> "mobile.createProfile.nickname.minLength".i18n()
+                trimmed.length > 100 -> "mobile.createProfile.nickname.maxLength".i18n()
+                else -> null
+            }
+        }
 
     BisqScrollScaffold(
         topBar = {
@@ -67,14 +75,13 @@ fun CreateProfileScreen(isOnboarding: Boolean) {
             textAlign = TextAlign.Center,
         )
         BisqGap.V3()
-        BisqTextField(
+        BisqTextFieldV0(
             label = "onboarding.createProfile.nickName".i18n(),
             value = nickName,
-            onValueChange = { name, _ -> presenter.setNickname(name) },
+            onValueChange = { name -> presenter.setNickname(name) },
             placeholder = "onboarding.createProfile.nickName.prompt".i18n(),
-            validation = {
-                return@BisqTextField presenter.validateNickname(it)
-            },
+            isError = nickNameError != null,
+            bottomMessage = nickNameError,
         )
         BisqGap.V3()
 
@@ -144,7 +151,7 @@ fun CreateProfileScreen(isOnboarding: Boolean) {
                     "mobile.onboarding.createProfile".i18n()
                 },
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
-            disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || !nickNameValid,
+            disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || nickNameError != null,
             isLoading = createAndPublishInProgress,
             modifier = Modifier.semantics { contentDescription = "create_profile_next_button" },
         )

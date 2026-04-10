@@ -5,9 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -16,7 +20,8 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldColors
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.slider.BisqSlider
@@ -50,6 +55,8 @@ fun CreateOfferPriceScreen() {
 
     val min = MIN_ALLOWED_PERCENTAGE_FRACTION
     val max = MAX_ALLOWED_PERCENTAGE_FRACTION
+    var percentageError by remember(priceType) { mutableStateOf<String?>(null) }
+    var fixedPriceError by remember(priceType) { mutableStateOf<String?>(null) }
 
     val percentagePrice = formattedPercentagePrice.toDoubleOrNullLocaleAware()?.toFloat() ?: 0f
     val sliderPosition = ((percentagePrice - min) / (max - min)).coerceIn(0f, 1f)
@@ -92,60 +99,68 @@ fun CreateOfferPriceScreen() {
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
                 if (priceType == CreateOfferCoordinator.PriceType.PERCENTAGE) {
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
-                        keyboardType = KeyboardType.Decimal,
-                        onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it, isValid) },
-                        numberWithTwoDecimals = true,
-                        valueSuffix = "%",
-                        validation = {
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        onValueChange = {
                             val parsedValue = it.toDoubleOrNullLocaleAware()
-                            if (parsedValue == null) {
-                                return@BisqTextField "mobile.validation.valueCannotBeEmpty".i18n()
-                            } else if (parsedValue < -10) {
-                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeGreaterThanMarketPrice".i18n()
-                            } else if (parsedValue > 50) {
-                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeLessThanMarketPrice".i18n()
-                            }
-                            return@BisqTextField null
+                            percentageError =
+                                when {
+                                    parsedValue == null -> "mobile.validation.valueCannotBeEmpty".i18n()
+                                    parsedValue < -10 -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeGreaterThanMarketPrice".i18n()
+                                    parsedValue > 50 -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeLessThanMarketPrice".i18n()
+                                    else -> null
+                                }
+                            presenter.onPercentagePriceChanged(it, percentageError == null)
                         },
+                        suffix = { BisqText.BaseLightGrey("%") },
+                        isError = percentageError != null,
+                        bottomMessage = percentageError,
                     )
 
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
-                        disabled = true,
-                        onValueChange = { it, isValid -> }, // Deactivated
-                        indicatorColor = BisqTheme.colors.mid_grey10,
+                        enabled = false,
+                        colors =
+                            BisqTextFieldColors.default(
+                                unfocusedIndicatorColor = BisqTheme.colors.mid_grey10,
+                                focusedIndicatorColor = BisqTheme.colors.mid_grey10,
+                            ),
                     )
                 } else {
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
-                        keyboardType = KeyboardType.Decimal,
-                        onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
-                        validation = {
-                            it.toDoubleOrNullLocaleAware()
-                                ?: return@BisqTextField "mobile.validation.valueCannotBeEmpty".i18n()
-                            // calculatePercentageForFixedValue returns a fraction (e.g. 0.1 for 10%),
-                            // convert to display percentage to match the constants used by the slider/percentage tab.
-                            val parsedPercent = presenter.calculatePercentageForFixedValue(it) * 100
-                            if (parsedPercent < MIN_ALLOWED_PERCENTAGE_FRACTION) {
-                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeGreaterThanMarketPrice".i18n()
-                            } else if (parsedPercent > MAX_ALLOWED_PERCENTAGE_FRACTION) {
-                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeLessThanMarketPrice".i18n()
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        onValueChange = {
+                            fixedPriceError =
+                                if (it.toDoubleOrNullLocaleAware() == null) "mobile.validation.valueCannotBeEmpty".i18n() else null
+                            if (fixedPriceError == null) {
+                                val parsedPercent = presenter.calculatePercentageForFixedValue(it) * 100
+                                fixedPriceError =
+                                    when {
+                                        parsedPercent < MIN_ALLOWED_PERCENTAGE_FRACTION -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeGreaterThanMarketPrice".i18n()
+                                        parsedPercent > MAX_ALLOWED_PERCENTAGE_FRACTION -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeLessThanMarketPrice".i18n()
+                                        else -> null
+                                    }
                             }
-                            return@BisqTextField null
+                            presenter.onFixPriceChanged(it, fixedPriceError == null)
                         },
+                        isError = fixedPriceError != null,
+                        bottomMessage = fixedPriceError,
                     )
-                    BisqTextField(
+                    BisqTextFieldV0(
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
-                        onValueChange = { it, isValid -> }, // Deactivated
-                        disabled = true,
-                        indicatorColor = BisqTheme.colors.mid_grey10,
-                        valueSuffix = "%",
+                        enabled = false,
+                        colors =
+                            BisqTextFieldColors.default(
+                                unfocusedIndicatorColor = BisqTheme.colors.mid_grey10,
+                                focusedIndicatorColor = BisqTheme.colors.mid_grey10,
+                            ),
+                        suffix = { BisqText.BaseLightGrey("%") },
                     )
                 }
 

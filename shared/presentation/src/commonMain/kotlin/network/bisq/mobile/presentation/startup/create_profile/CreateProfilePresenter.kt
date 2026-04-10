@@ -59,9 +59,6 @@ class CreateProfilePresenter(
         _nickName.value = value.trim()
     }
 
-    private val _nickNameValid = MutableStateFlow(false)
-    val nickNameValid: StateFlow<Boolean> = _nickNameValid.asStateFlow()
-
     private val _generateKeyPairInProgress = MutableStateFlow(false)
     val generateKeyPairInProgress: StateFlow<Boolean> = _generateKeyPairInProgress.asStateFlow()
 
@@ -80,17 +77,6 @@ class CreateProfilePresenter(
 
     fun setIsOnboarding(value: Boolean) {
         _isOnboarding.value = value
-    }
-
-    fun validateNickname(nickname: String): String? {
-        val trimmed = nickname.trim()
-        return when {
-            trimmed.isEmpty() -> "mobile.createProfile.nickname.minLength".i18n()
-            trimmed.length > 100 -> "mobile.createProfile.nickname.maxLength".i18n()
-            else -> null
-        }.also {
-            _nickNameValid.value = it == null
-        }
     }
 
     // UI handlers

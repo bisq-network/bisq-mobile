@@ -18,8 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldType
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldColors
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.AddIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -47,14 +47,18 @@ fun CustomPaymentField(
             contentDescription = "mobile.components.paymentTypeCard.customPaymentMethod".i18n(value),
             modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
         )
-        BisqTextField(
+        BisqTextFieldV0(
             value = value,
-            onValueChange = { newValue, _ -> value = newValue },
+            onValueChange = { newValue -> value = newValue.take(50) },
             placeholder = "bisqEasy.tradeWizard.paymentMethods.customMethod.prompt".i18n(),
             modifier = Modifier.weight(1f),
-            backgroundColor = BisqTheme.colors.dark_grey50,
-            maxLength = 50,
-            type = BisqTextFieldType.Transparent,
+            colors =
+                BisqTextFieldColors.default(
+                    backgroundColor = BisqTheme.colors.dark_grey50,
+                    focusedBackgroundColor = BisqTheme.colors.dark_grey50,
+                    disabledBackgroundColor = BisqTheme.colors.dark_grey50,
+                ),
+            singleLine = true,
         )
         IconButton(
             onClick = {

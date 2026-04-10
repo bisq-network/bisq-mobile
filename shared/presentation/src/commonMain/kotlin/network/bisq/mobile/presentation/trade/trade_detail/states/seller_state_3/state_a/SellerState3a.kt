@@ -20,8 +20,9 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressField
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.PaymentProofField
@@ -84,12 +85,12 @@ fun SellerState3a(
         BisqText.H5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.toTheBuyer".i18n())
 
         BisqGap.VHalf()
-        BisqTextField(
+        BisqTextFieldV0(
             // Amount to send
             label = "bisqEasy.tradeState.info.seller.phase3a.baseAmount".i18n(),
             value = baseAmount,
-            disabled = true,
-            showCopy = true,
+            enabled = false,
+            trailingIcon = { CopyIconButton(value = baseAmount) },
         )
 
         BisqGap.VHalf()

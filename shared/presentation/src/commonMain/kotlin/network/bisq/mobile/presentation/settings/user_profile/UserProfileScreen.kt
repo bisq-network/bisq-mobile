@@ -196,7 +196,7 @@ fun UserProfileScreen() {
                 label = "user.userProfile.statement".i18n(),
                 value = uiState.statementDraft,
                 isTextArea = true,
-                onValueChange = { newValue, _ ->
+                onValueChange = { newValue ->
                     presenter.onAction(
                         UserProfileUiAction.OnStatementChange(
                             newValue,
@@ -212,7 +212,7 @@ fun UserProfileScreen() {
                 label = "user.userProfile.terms".i18n(),
                 value = uiState.termsDraft,
                 isTextArea = true,
-                onValueChange = { newValue, _ ->
+                onValueChange = { newValue ->
                     presenter.onAction(
                         UserProfileUiAction.OnTermsChange(
                             newValue,

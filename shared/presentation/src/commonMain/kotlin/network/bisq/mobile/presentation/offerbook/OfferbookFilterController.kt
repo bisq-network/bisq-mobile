@@ -167,7 +167,7 @@ fun OfferbookFilterController(
                     var search by rememberSaveable { mutableStateOf("") }
                     BisqSearchField(
                         value = search,
-                        onValueChange = { text, _ -> search = text },
+                        onValueChange = { search = it },
                         placeholder = "action.search".i18n(),
                     )
 

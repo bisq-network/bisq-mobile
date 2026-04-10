@@ -87,7 +87,7 @@ private fun OfferbookMarketScreenContent(
     ) {
         BisqSearchField(
             value = searchText,
-            onValueChange = { text, _ -> onSearchTextChange(text) },
+            onValueChange = onSearchTextChange,
             rightSuffix = {
                 // TODO: Height to be reduced with Icon only buttons
                 BisqButton(
