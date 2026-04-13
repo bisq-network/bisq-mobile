@@ -17,6 +17,7 @@ import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFai
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -35,6 +36,7 @@ class TrustedNodeSetupPresenter(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val applicationLifecycleService: ApplicationLifecycleService,
     private val webSocketClientService: WebSocketClientService,
+    private val connectivityService: ConnectivityService,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(TrustedNodeSetupUiState())
     val uiState: StateFlow<TrustedNodeSetupUiState> = _uiState.asStateFlow()
@@ -63,7 +65,7 @@ class TrustedNodeSetupPresenter(
             _uiState.update {
                 it.copy(
                     apiUrl = settings.bisqApiUrl,
-                    status = TrustedNodeConnectionStatus.Connected,
+                    status = settingsLabelForConnectivity(connectivityService.status.value),
                 )
             }
         } else if (showKeystoreError) {
@@ -91,24 +93,25 @@ class TrustedNodeSetupPresenter(
 
     private fun observeFlows() {
         presenterScope.launch {
+            // This is for collecting state when in setup phase.
             trustedNodeSetupUseCase.state.collect { state ->
-                when (state.connectionStatus) {
-                    is TrustedNodeConnectionStatus.IncompatibleHttpApiVersion -> {
-                        _uiState.update {
-                            it.copy(
-                                status = state.connectionStatus,
-                                serverVersion = state.serverVersion,
-                            )
-                        }
+                if (isWorkflow) {
+                    _uiState.update {
+                        it.copy(
+                            status = state.connectionStatus,
+                            serverVersion = state.serverVersion,
+                        )
                     }
+                }
+            }
+        }
 
-                    else -> {
-                        _uiState.update {
-                            it.copy(
-                                status = state.connectionStatus,
-                                serverVersion = state.serverVersion,
-                            )
-                        }
+        // Live subscription to connection health
+        presenterScope.launch {
+            connectivityService.status.collect { connectivity ->
+                if (!isWorkflow) {
+                    _uiState.update {
+                        it.copy(status = settingsLabelForConnectivity(connectivity))
                     }
                 }
             }
@@ -360,4 +363,11 @@ class TrustedNodeSetupPresenter(
     private fun onFailedSubsDialogContinuePress() {
         navigateToSplashScreen(continueWithLimitations = true)
     }
+
+    private fun settingsLabelForConnectivity(connectivity: ConnectivityService.ConnectivityStatus): TrustedNodeConnectionStatus =
+        if (connectivity.isConnected()) {
+            TrustedNodeConnectionStatus.Connected
+        } else {
+            TrustedNodeConnectionStatus.Failed("mobile.trustedNodeSetup.status.notConnected")
+        }
 }

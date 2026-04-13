@@ -31,6 +31,7 @@ import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnect
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCaseState
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -67,6 +68,7 @@ class TrustedNodeSetupPresenterTest {
     private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
     private lateinit var applicationLifecycleService: ApplicationLifecycleService
     private lateinit var webSocketClientService: WebSocketClientService
+    private lateinit var connectivityService: ConnectivityService
     private lateinit var navigationManager: NavigationManager
     private lateinit var presenter: TrustedNodeSetupPresenter
     private lateinit var failedSubscriptionTopicsFlow: MutableStateFlow<Set<Topic>>
@@ -106,6 +108,7 @@ class TrustedNodeSetupPresenterTest {
         sensitiveSettingsRepository = mockk(relaxed = true)
         applicationLifecycleService = mockk(relaxed = true)
         webSocketClientService = mockk(relaxed = true)
+        connectivityService = mockk(relaxed = true)
         navigationManager = mockk(relaxed = true)
         failedSubscriptionTopicsFlow = MutableStateFlow(emptySet())
         connectionStateFlow = MutableStateFlow(ConnectionState.Connected)
@@ -127,6 +130,7 @@ class TrustedNodeSetupPresenterTest {
         every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
         every { webSocketClientService.failedSubscriptionTopics } returns failedSubscriptionTopicsFlow
         every { webSocketClientService.connectionState } returns connectionStateFlow
+        every { connectivityService.status } returns MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
     }
 
     @After
@@ -147,6 +151,7 @@ class TrustedNodeSetupPresenterTest {
             sensitiveSettingsRepository,
             applicationLifecycleService,
             webSocketClientService,
+            connectivityService,
         )
 
     private fun TestScope.setupPresenter() {
@@ -175,10 +180,12 @@ class TrustedNodeSetupPresenterTest {
         }
 
     @Test
-    fun `when initialize with workflow false then sets connected status`() =
+    fun `when initialize with workflow false and connectivity connected then shows connected status`() =
         runTest(testDispatcher) {
             // Given
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
+            every { connectivityService.status } returns
+                MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
             setupPresenter()
 
             // When
@@ -189,6 +196,44 @@ class TrustedNodeSetupPresenterTest {
             val state = presenter.uiState.value
             assertEquals(validRestApiUrl, state.apiUrl)
             assertEquals(TrustedNodeConnectionStatus.Connected, state.status)
+        }
+
+    @Test
+    fun `when initialize with workflow false and connectivity not connected then shows unable to connect`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
+            every { connectivityService.status } returns MutableStateFlow(ConnectivityService.ConnectivityStatus.DISCONNECTED)
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = false)
+            advanceUntilIdle()
+
+            // Then
+            val state = presenter.uiState.value
+            assertEquals(validRestApiUrl, state.apiUrl)
+            assertTrue(state.status is TrustedNodeConnectionStatus.Failed)
+        }
+
+    @Test
+    fun `when connectivity changes in setup phase then status updates live`() =
+        runTest(testDispatcher) {
+            // Given
+            val connectivityFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.DISCONNECTED)
+            coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
+            every { connectivityService.status } returns connectivityFlow
+            setupPresenter()
+            presenter.initialize(isWorkflow = false)
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.status is TrustedNodeConnectionStatus.Failed)
+
+            // When
+            connectivityFlow.value = ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+            advanceUntilIdle()
+
+            // Then
+            assertEquals(TrustedNodeConnectionStatus.Connected, presenter.uiState.value.status)
         }
 
     @Test
