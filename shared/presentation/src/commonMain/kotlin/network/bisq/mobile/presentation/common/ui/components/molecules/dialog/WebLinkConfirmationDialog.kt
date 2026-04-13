@@ -20,6 +20,7 @@ fun WebLinkConfirmationDialog(
     link: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    onError: () -> Unit = {},
     headline: String? = null,
     headlineColor: Color? = null,
     headlineLeftIcon: (@Composable () -> Unit)? = null,
@@ -38,6 +39,7 @@ fun WebLinkConfirmationDialog(
             clipboard = clipboard,
             onConfirm = onConfirm,
             onDismiss = onDismiss,
+            onError = onError,
         )
     })
 

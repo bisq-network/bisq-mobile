@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.AnnotatedString
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,7 @@ class WebLinkConfirmationDialogPresenter(
 
     private var userOnConfirm: () -> Unit = {}
     private var userOnDismiss: () -> Unit = {}
+    private var userOnError: () -> Unit = {}
     private var currentUriHandler: UriHandler? = null
     private var currentClipboard: Clipboard? = null
     private var activeLink: String = ""
@@ -34,10 +36,12 @@ class WebLinkConfirmationDialogPresenter(
         clipboard: Clipboard,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
+        onError: () -> Unit,
     ) {
         activeLink = link
         userOnConfirm = onConfirm
         userOnDismiss = onDismiss
+        userOnError = onError
         currentUriHandler = uriHandler
         currentClipboard = clipboard
 
@@ -78,16 +82,25 @@ class WebLinkConfirmationDialogPresenter(
         persist: Boolean,
     ) {
         presenterScope.launch {
-            showLoading()
-            if (persist) {
-                persistWebLinkDialogChoice(
-                    permitOpeningBrowser = true,
-                    dontShowAgain = _uiState.value.dontShowAgain,
-                )
+            if (persist) showLoading()
+            try {
+                if (persist) {
+                    persistWebLinkDialogChoice(
+                        permitOpeningBrowser = true,
+                        dontShowAgain = _uiState.value.dontShowAgain,
+                    )
+                }
+                currentUriHandler?.openUri(uri)
+                userOnConfirm.invoke()
+            } catch (cancellationException: CancellationException) {
+                throw cancellationException
+            } catch (throwable: Throwable) {
+                log.e(throwable) { "Failed to open URI from web link confirmation dialog" }
+                userOnError.invoke()
+                showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+            } finally {
+                if (persist) hideLoading()
             }
-            currentUriHandler?.openUri(uri)
-            userOnConfirm.invoke()
-            hideLoading()
         }
     }
 
@@ -96,17 +109,26 @@ class WebLinkConfirmationDialogPresenter(
         persist: Boolean,
     ) {
         presenterScope.launch {
-            showLoading()
-            currentClipboard?.setClipEntry(AnnotatedString(uri).toClipEntry())
-            mainPresenter.showSnackbar("mobile.components.copyIconButton.copied".i18n())
-            if (persist) {
-                persistWebLinkDialogChoice(
-                    permitOpeningBrowser = false,
-                    dontShowAgain = _uiState.value.dontShowAgain,
-                )
+            if (persist) showLoading()
+            try {
+                currentClipboard?.setClipEntry(AnnotatedString(uri).toClipEntry())
+                mainPresenter.showSnackbar("mobile.components.copyIconButton.copied".i18n())
+                if (persist) {
+                    persistWebLinkDialogChoice(
+                        permitOpeningBrowser = false,
+                        dontShowAgain = _uiState.value.dontShowAgain,
+                    )
+                }
+                userOnDismiss.invoke()
+            } catch (cancellationException: CancellationException) {
+                throw cancellationException
+            } catch (throwable: Throwable) {
+                log.e(throwable) { "Failed to copy URI from web link confirmation dialog" }
+                userOnError.invoke()
+                mainPresenter.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+            } finally {
+                if (persist) hideLoading()
             }
-            userOnDismiss.invoke()
-            hideLoading()
         }
     }
 

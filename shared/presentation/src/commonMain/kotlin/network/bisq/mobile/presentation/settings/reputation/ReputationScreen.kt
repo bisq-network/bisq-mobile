@@ -16,6 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +40,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
@@ -50,6 +54,7 @@ fun ReputationScreen() {
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val profileId by presenter.profileId.collectAsState()
+    var selectedWebLink by remember { mutableStateOf<String?>(null) }
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.reputation".i18n(), showUserAvatar = false) },
@@ -76,7 +81,6 @@ fun ReputationScreen() {
 
         val part1 = "mobile.reputation.learnMore.part1".i18n()
         val part2 = "mobile.reputation.learnMore.part2".i18n()
-        val fullText = "$part1 $part2"
         val annotatedString =
             buildAnnotatedString {
                 withStyle(
@@ -118,10 +122,26 @@ fun ReputationScreen() {
                         end = offset,
                     ).firstOrNull()
                     ?.let { annotation ->
-                        presenter.onOpenWebUrl(annotation.item)
+                        selectedWebLink = annotation.item
                     }
             },
         )
+
+        selectedWebLink?.let { webLink ->
+            WebLinkConfirmationDialog(
+                link = webLink,
+                onConfirm = {
+                    // The dialog presenter already opens the link.
+                    selectedWebLink = null
+                },
+                onDismiss = {
+                    selectedWebLink = null
+                },
+                onError = {
+                    selectedWebLink = null
+                },
+            )
+        }
 
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding3X))
 

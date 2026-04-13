@@ -205,7 +205,7 @@ fun SettingsContent(
                     BisqButton(
                         text = "settings.display.resetDontShowAgain".i18n(),
                         onClick = { onAction(SettingsUiAction.OnResetAllDontShowAgainClick) },
-                        type = BisqButtonType.GreyOutline,
+                        type = BisqButtonType.Outline,
                         fullWidth = true,
                     )
 

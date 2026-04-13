@@ -8,13 +8,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
+import kotlinx.coroutines.CancellationException
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
-// TODO: Don't show again checkbox
 @Composable
 fun LinkButton(
     text: String,
@@ -24,12 +25,14 @@ fun LinkButton(
     color: Color = BisqTheme.colors.primary,
     padding: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPaddingHalf),
     onClick: (() -> Unit)? = null,
+    onError: ((Throwable) -> Unit)? = null,
     fullWidth: Boolean = false,
     openConfirmation: Boolean = true,
     leftIcon: (@Composable () -> Unit)? = null,
     rightIcon: (@Composable () -> Unit)? = null,
 ) {
     var showConfirmDialog by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
 
     BisqButton(
         text = text,
@@ -41,7 +44,17 @@ fun LinkButton(
             if (openConfirmation) {
                 showConfirmDialog = true
             } else {
-                onClick?.invoke()
+                if (link.isBlank()) {
+                    onClick?.invoke()
+                    return@BisqButton
+                }
+                try {
+                    uriHandler.openUri(link)
+                    onClick?.invoke()
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
+                    onError?.invoke(t)
+                }
             }
         },
         modifier = modifier,
@@ -58,6 +71,10 @@ fun LinkButton(
             },
             onDismiss = {
                 showConfirmDialog = false
+            },
+            onError = {
+                showConfirmDialog = false
+                onError?.invoke(RuntimeException("Web link confirmation failed"))
             },
         )
     }

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.i18n.I18nSupport
@@ -286,6 +287,56 @@ class WebLinkDialogUiKoinTest {
         }
         verify(exactly = 1) { onDismiss() }
         assertEquals(link, clipboardPrimaryText())
+    }
+
+    @Test
+    fun `when copy snackbar throws on dismiss then invokes onError and shows generic error snackbar`() {
+        // Given
+        val link = "https://example.com/copy-throws"
+        val onDismiss = mockk<() -> Unit>(relaxed = true)
+        val onError = mockk<() -> Unit>(relaxed = true)
+        val (_, presenter) = startKoinWithWebLinkDeps()
+        every {
+            presenter.showSnackbar(
+                "mobile.components.copyIconButton.copied".i18n(),
+                SnackbarType.SUCCESS,
+                SnackbarPosition.BOTTOM,
+                SnackbarDuration.Short,
+            )
+        } throws RuntimeException("forced copy snackbar failure")
+
+        // When
+        setTestContent(WebLinkDialogTestFixtures.noopUriHandler) {
+            WebLinkConfirmationDialog(
+                link = link,
+                onConfirm = {},
+                onDismiss = onDismiss,
+                onError = onError,
+                headline = "Headline",
+                headlineLeftIcon = null,
+                message = "Message",
+                confirmButtonText = "Yes",
+                dismissButtonText = "No",
+            )
+        }
+
+        // Action
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription("dialog_confirm_no").performClick()
+        composeTestRule.waitForIdle()
+
+        // Then
+        verify(exactly = 1) { onError() }
+        verify(exactly = 0) { onDismiss() }
+        assertEquals(link, clipboardPrimaryText())
+        verify(exactly = 1) {
+            presenter.showSnackbar(
+                "mobile.error.generic".i18n(),
+                SnackbarType.ERROR,
+                SnackbarPosition.BOTTOM,
+                SnackbarDuration.Short,
+            )
+        }
     }
 
     @Test

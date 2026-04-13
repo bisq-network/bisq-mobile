@@ -22,8 +22,4 @@ open class ReputationPresenter(
                 SharingStarted.Lazily,
                 "data.na".i18n(),
             )
-
-    fun onOpenWebUrl(url: String) {
-        navigateToUrl(url)
-    }
 }

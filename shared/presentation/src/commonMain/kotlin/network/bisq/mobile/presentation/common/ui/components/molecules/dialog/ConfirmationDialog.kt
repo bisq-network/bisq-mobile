@@ -73,11 +73,11 @@ fun ConfirmationDialog(
         }
         if (message.isNotEmpty()) {
             BisqText.BaseLight(message)
-            BisqGap.V2()
+            BisqGap.V1()
         }
         extraContent?.invoke()
         if (extraContent != null) {
-            BisqGap.V2()
+            BisqGap.V1()
         }
         if (verticalButtonPlacement) {
             Column {
