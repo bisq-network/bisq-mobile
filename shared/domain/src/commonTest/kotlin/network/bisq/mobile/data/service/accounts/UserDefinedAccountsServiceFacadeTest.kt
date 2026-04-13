@@ -20,7 +20,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -30,9 +29,9 @@ import kotlin.test.assertTrue
  * including account management, state updates, sorting, and error handling.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class FiatAccountsServiceFacadeTest : KoinTest {
+class UserDefinedAccountsServiceFacadeTest : KoinTest {
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var testFacade: TestFiatAccountsServiceFacade
+    private lateinit var testFacade: TestUserDefinedAccountsServiceFacade
 
     // Test data
     private val accountA =
@@ -77,7 +76,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
         startKoin {
             modules(testModule)
         }
-        testFacade = TestFiatAccountsServiceFacade()
+        testFacade = TestUserDefinedAccountsServiceFacade()
     }
 
     @AfterTest
@@ -214,7 +213,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
         }
 
     @Test
-    fun `when getSelectedAccount with account not in list then sets index to -1`() =
+    fun `when getSelectedAccount with account not in list then sets index to 0`() =
         runTest(testDispatcher) {
             // Given - setup state with accounts
             testFacade.mockExecuteGetAccounts = { Result.success(listOf(accountA, accountB)) }
@@ -231,7 +230,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
             // Then
             assertTrue(result.isSuccess)
             val state = testFacade.accountState.value
-            assertEquals(-1, state.selectedAccountIndex)
+            assertEquals(0, state.selectedAccountIndex)
         }
 
     @Test
@@ -705,18 +704,21 @@ class FiatAccountsServiceFacadeTest : KoinTest {
         }
 
     @Test
-    fun `when getCurrentSelectedAccount with invalid index then returns null`() =
+    fun `when getCurrentSelectedAccount with invalid index then returns first account`() =
         runTest(testDispatcher) {
-            // Given - setup with accounts but invalid index
+            // Given - setup with accounts and force invalid selected index
             testFacade.mockExecuteGetAccounts = { Result.success(listOf(accountA)) }
             testFacade.getAccounts()
             advanceUntilIdle()
+            testFacade.setSelectedAccountIndex(99)
+            advanceUntilIdle()
 
-            // When - state has index -1 by default
+            // When
             val currentAccount = testFacade.testGetCurrentSelectedAccount()
 
             // Then
-            assertNull(currentAccount)
+            assertNotNull(currentAccount)
+            assertEquals("Account A", currentAccount.accountName)
         }
 
     @Test
@@ -784,42 +786,42 @@ class FiatAccountsServiceFacadeTest : KoinTest {
      * Concrete test implementation of FiatAccountsServiceFacade that allows mocking
      * of abstract methods for testing purposes.
      */
-    private class TestFiatAccountsServiceFacade : FiatAccountsServiceFacade() {
-        var mockExecuteGetAccounts: () -> Result<List<PaymentAccount>> =
+    private class TestUserDefinedAccountsServiceFacade : UserDefinedAccountsServiceFacade() {
+        var mockExecuteGetAccounts: () -> Result<List<UserDefinedFiatAccount>> =
             { Result.success(emptyList()) }
 
-        var mockExecuteGetSelectedAccount: () -> Result<PaymentAccount?> =
+        var mockExecuteGetSelectedAccount: () -> Result<UserDefinedFiatAccount?> =
             { Result.success(null) }
 
-        var mockExecuteAddAccount: (PaymentAccount) -> Result<Unit> =
+        var mockExecuteAddAccount: (UserDefinedFiatAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        var mockExecuteSaveAccount: (String, PaymentAccount) -> Result<Unit> =
+        var mockExecuteSaveAccount: (String, UserDefinedFiatAccount) -> Result<Unit> =
             { _, _ -> Result.success(Unit) }
 
-        var mockExecuteDeleteAccount: (PaymentAccount) -> Result<Unit> =
+        var mockExecuteDeleteAccount: (UserDefinedFiatAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        var mockExecuteSetSelectedAccount: (PaymentAccount) -> Result<Unit> =
+        var mockExecuteSetSelectedAccount: (UserDefinedFiatAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        override suspend fun executeGetAccounts(): Result<List<PaymentAccount>> = mockExecuteGetAccounts()
+        override suspend fun executeGetAccounts(): Result<List<UserDefinedFiatAccount>> = mockExecuteGetAccounts()
 
-        override suspend fun executeGetSelectedAccount(): Result<PaymentAccount?> = mockExecuteGetSelectedAccount()
+        override suspend fun executeGetSelectedAccount(): Result<UserDefinedFiatAccount?> = mockExecuteGetSelectedAccount()
 
-        override suspend fun executeAddAccount(account: PaymentAccount): Result<Unit> = mockExecuteAddAccount(account)
+        override suspend fun executeAddAccount(account: UserDefinedFiatAccount): Result<Unit> = mockExecuteAddAccount(account)
 
         override suspend fun executeSaveAccount(
             accountName: String,
-            account: PaymentAccount,
+            account: UserDefinedFiatAccount,
         ): Result<Unit> = mockExecuteSaveAccount(accountName, account)
 
-        override suspend fun executeDeleteAccount(account: PaymentAccount): Result<Unit> = mockExecuteDeleteAccount(account)
+        override suspend fun executeDeleteAccount(account: UserDefinedFiatAccount): Result<Unit> = mockExecuteDeleteAccount(account)
 
-        override suspend fun executeSetSelectedAccount(account: PaymentAccount): Result<Unit> = mockExecuteSetSelectedAccount(account)
+        override suspend fun executeSetSelectedAccount(account: UserDefinedFiatAccount): Result<Unit> = mockExecuteSetSelectedAccount(account)
 
         // Expose protected methods for testing
-        fun testGetSortedAccounts(accounts: List<PaymentAccount>) = getSortedAccounts(accounts)
+        fun testGetSortedAccounts(accounts: List<UserDefinedFiatAccount>) = getSortedAccounts(accounts)
 
         fun testGetCurrentSelectedAccount() = getCurrentSelectedAccount()
 

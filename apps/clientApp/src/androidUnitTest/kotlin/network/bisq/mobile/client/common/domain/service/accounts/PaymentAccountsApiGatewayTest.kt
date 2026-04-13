@@ -10,6 +10,7 @@ import io.mockk.slot
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.service.accounts.all.PaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
@@ -108,7 +109,7 @@ class PaymentAccountsApiGatewayTest {
         }
 
     @Test
-    fun `when saveAccount then delegates PUT request with wrapped account payload`() =
+    fun `when saveAccount then delegates PUT request with account payload`() =
         runTest {
             // Given
             mockkStatic(::encodeURIParam)
@@ -126,7 +127,6 @@ class PaymentAccountsApiGatewayTest {
             assertTrue(result.isSuccess)
             assertEquals("PUT", requestSlot.captured.method)
             assertEquals("/api/v1/payment-accounts?accountName=Saved%20Account", requestSlot.captured.path)
-            assertTrue(requestSlot.captured.body.contains("\"account\":"))
             assertTrue(requestSlot.captured.body.contains("\"accountName\":\"Saved Account\""))
             assertTrue(requestSlot.captured.body.contains("\"accountData\":\"save@example.com\""))
         }

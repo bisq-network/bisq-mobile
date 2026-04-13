@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.common.domain.service.accounts
+package network.bisq.mobile.client.common.domain.service.accounts.all
 
 import network.bisq.mobile.data.mapping.account.crypto.toDomain
 import network.bisq.mobile.data.mapping.account.fiat.toDomain

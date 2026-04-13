@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.i18n.i18n
@@ -15,7 +15,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 class SellerState1Presenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
+    private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade,
 ) : BasePresenter(mainPresenter) {
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccount>>(emptyList())
     val accounts = _accounts.asStateFlow()
@@ -36,7 +36,7 @@ class SellerState1Presenter(
         super.onViewAttached()
 
         presenterScope.launch {
-            fiatAccountsServiceFacade
+            userDefinedAccountsServiceFacade
                 .getAccounts()
                 .onSuccess { accounts ->
                     val userDefinedAccounts = accounts.filterIsInstance<UserDefinedFiatAccount>()

@@ -10,6 +10,7 @@ import io.mockk.slot
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.service.accounts.user_defined.UserDefinedPaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
@@ -22,10 +23,10 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class FiatPaymentAccountsApiGatewayTest {
+class UserDefinedPaymentAccountsApiGatewayTest {
     private val webSocketClientService: WebSocketClientService = mockk()
     private val webSocketApiClient = WebSocketApiClient(webSocketClientService, Json)
-    private val gateway = FiatPaymentAccountsApiGateway(webSocketApiClient)
+    private val gateway = UserDefinedPaymentAccountsApiGateway(webSocketApiClient)
 
     @After
     fun tearDown() {

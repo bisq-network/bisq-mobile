@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.common.domain.service.accounts
+package network.bisq.mobile.client.common.domain.service.accounts.all
 
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -39,7 +39,7 @@ class PaymentAccountsApiGateway(
         val parsedAccountName = encodeURIParam(accountName)
         return webSocketApiClient.put(
             "$basePath?accountName=$parsedAccountName",
-            SaveFiatAccountRequest(account = account),
+            account,
         )
     }
 

@@ -12,9 +12,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.service.accounts.AccountsState
-import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -46,7 +45,7 @@ import kotlin.test.assertTrue
 class PaymentAccountsPresenterTest {
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var fiatAccountsServiceFacade: FiatAccountsServiceFacade
+    private lateinit var userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade
     private lateinit var mainPresenter: MainPresenter
     private lateinit var globalUiManager: GlobalUiManager
     private lateinit var presenter: PaymentAccountsPresenter
@@ -75,7 +74,7 @@ class PaymentAccountsPresenterTest {
         Dispatchers.setMain(testDispatcher)
 
         // Setup mocks
-        fiatAccountsServiceFacade = mockk(relaxed = true)
+        userDefinedAccountsServiceFacade = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
 
@@ -90,7 +89,7 @@ class PaymentAccountsPresenterTest {
         }
 
         // Default mock behaviors
-        every { fiatAccountsServiceFacade.accountState } returns MutableStateFlow(AccountsState())
+        every { userDefinedAccountsServiceFacade.accountState } returns MutableStateFlow(AccountsState())
     }
 
     @AfterTest
@@ -104,7 +103,7 @@ class PaymentAccountsPresenterTest {
 
     private fun createPresenter(): PaymentAccountsPresenter =
         PaymentAccountsPresenter(
-            fiatAccountsServiceFacade,
+            userDefinedAccountsServiceFacade,
             mainPresenter,
         )
 
@@ -112,7 +111,7 @@ class PaymentAccountsPresenterTest {
     fun `when initial state then has correct default values`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
 
             // When
             presenter = createPresenter()
@@ -122,7 +121,7 @@ class PaymentAccountsPresenterTest {
             // Then
             val state = presenter.uiState.value
             assertTrue(state.accounts.isEmpty())
-            assertEquals(-1, state.selectedAccountIndex)
+            assertEquals(0, state.selectedAccountIndex)
             assertFalse(state.isLoadingAccounts)
             assertFalse(state.isLoadingAccountsError)
             assertFalse(state.showAddAccountState)
@@ -133,7 +132,7 @@ class PaymentAccountsPresenterTest {
     fun `when add account clicked then shows add account state`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -155,8 +154,8 @@ class PaymentAccountsPresenterTest {
         runTest(testDispatcher) {
             // Given
             val accounts = listOf(sampleAccount1, sampleAccount2)
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(accounts)
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(accounts)
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
 
             // When
             presenter = createPresenter()
@@ -164,8 +163,8 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify { fiatAccountsServiceFacade.getAccounts() }
-            coVerify { fiatAccountsServiceFacade.getSelectedAccount() }
+            coVerify { userDefinedAccountsServiceFacade.getAccounts() }
+            coVerify { userDefinedAccountsServiceFacade.getSelectedAccount() }
             val state = presenter.uiState.value
             assertFalse(state.isLoadingAccounts)
             assertFalse(state.isLoadingAccountsError)
@@ -175,7 +174,7 @@ class PaymentAccountsPresenterTest {
     fun `when loading accounts with empty list then does not fetch selected account`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
 
             // When
             presenter = createPresenter()
@@ -183,8 +182,8 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify { fiatAccountsServiceFacade.getAccounts() }
-            coVerify(exactly = 0) { fiatAccountsServiceFacade.getSelectedAccount() }
+            coVerify { userDefinedAccountsServiceFacade.getAccounts() }
+            coVerify(exactly = 0) { userDefinedAccountsServiceFacade.getSelectedAccount() }
             val state = presenter.uiState.value
             assertFalse(state.isLoadingAccounts)
             assertFalse(state.isLoadingAccountsError)
@@ -194,7 +193,7 @@ class PaymentAccountsPresenterTest {
     fun `when loading accounts fails then sets error state`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.failure(Exception("Network error"))
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.failure(Exception("Network error"))
 
             // When
             presenter = createPresenter()
@@ -212,8 +211,8 @@ class PaymentAccountsPresenterTest {
         runTest(testDispatcher) {
             // Given
             val accounts = listOf(sampleAccount1)
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(accounts)
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.failure(Exception("Error"))
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(accounts)
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.failure(Exception("Error"))
 
             // When
             presenter = createPresenter()
@@ -230,20 +229,20 @@ class PaymentAccountsPresenterTest {
     fun `when retry load accounts clicked then reloads accounts`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.failure(Exception("Error"))
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.failure(Exception("Error"))
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
 
             // Setup successful response for retry
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
 
             // When
             presenter.onAction(PaymentAccountsUiAction.OnRetryLoadAccountsClick)
             advanceUntilIdle()
 
             // Then
-            coVerify(exactly = 2) { fiatAccountsServiceFacade.getAccounts() }
+            coVerify(exactly = 2) { userDefinedAccountsServiceFacade.getAccounts() }
             val state = presenter.uiState.value
             assertFalse(state.isLoadingAccounts)
         }
@@ -255,8 +254,8 @@ class PaymentAccountsPresenterTest {
         runTest(testDispatcher) {
             // Given
             val accountStateFlow = MutableStateFlow(AccountsState())
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -291,15 +290,15 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns
                 Result.success(
                     listOf(
                         sampleAccount1,
                         sampleAccount2,
                     ),
                 )
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -325,7 +324,7 @@ class PaymentAccountsPresenterTest {
     fun `when account name is too short then validation fails`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -349,7 +348,7 @@ class PaymentAccountsPresenterTest {
     fun `when account name is too long then validation fails`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -373,7 +372,7 @@ class PaymentAccountsPresenterTest {
     fun `when account description is too short then validation fails`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -396,7 +395,7 @@ class PaymentAccountsPresenterTest {
     fun `when account description is too long then validation fails`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -424,8 +423,8 @@ class PaymentAccountsPresenterTest {
                 MutableStateFlow(
                     AccountsState(accounts = listOf(sampleAccount1)),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -456,9 +455,9 @@ class PaymentAccountsPresenterTest {
         runTest(testDispatcher) {
             // Given
             val accountStateFlow = MutableStateFlow(AccountsState())
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
-            coEvery { fiatAccountsServiceFacade.addAccount(any()) } coAnswers {
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } coAnswers {
                 accountStateFlow.value =
                     AccountsState(
                         accounts = listOf(firstArg()),
@@ -497,8 +496,8 @@ class PaymentAccountsPresenterTest {
     fun `when adding account fails then shows error`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
-            coEvery { fiatAccountsServiceFacade.addAccount(any()) } returns Result.failure(Exception("Error"))
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } returns Result.failure(Exception("Error"))
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -515,7 +514,7 @@ class PaymentAccountsPresenterTest {
 
             // Then
             // Verify add account was called but failed
-            coVerify(atLeast = 1) { fiatAccountsServiceFacade.addAccount(any()) }
+            coVerify(atLeast = 1) { userDefinedAccountsServiceFacade.addAccount(any()) }
             // Should still be in add mode since it failed
             assertTrue(presenter.uiState.value.showAddAccountState)
 
@@ -536,10 +535,10 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.saveAccount(any()) } returns Result.success(Unit)
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.saveAccount(any()) } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -556,7 +555,7 @@ class PaymentAccountsPresenterTest {
 
             // Then
             // Verify the mock was called and state can be checked
-            coVerify(atLeast = 1) { fiatAccountsServiceFacade.saveAccount(any()) }
+            coVerify(atLeast = 1) { userDefinedAccountsServiceFacade.saveAccount(any()) }
 
             // Verify success snackbar was shown
             coVerify { globalUiManager.showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(), type = SnackbarType.SUCCESS, any()) }
@@ -573,10 +572,10 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.saveAccount(any()) } returns Result.success(Unit)
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.saveAccount(any()) } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -591,7 +590,7 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then - should succeed (same name is allowed when editing the current account)
-            coVerify(atLeast = 1) { fiatAccountsServiceFacade.saveAccount(any()) }
+            coVerify(atLeast = 1) { userDefinedAccountsServiceFacade.saveAccount(any()) }
         }
 
     @Test
@@ -605,15 +604,15 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns
                 Result.success(
                     listOf(
                         sampleAccount1,
                         sampleAccount2,
                     ),
                 )
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -628,7 +627,7 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify(exactly = 0) { fiatAccountsServiceFacade.saveAccount(any()) }
+            coVerify(exactly = 0) { userDefinedAccountsServiceFacade.saveAccount(any()) }
         }
 
     @Test
@@ -642,9 +641,9 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -659,7 +658,7 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify(exactly = 0) { fiatAccountsServiceFacade.saveAccount(any()) }
+            coVerify(exactly = 0) { userDefinedAccountsServiceFacade.saveAccount(any()) }
             val state = presenter.uiState.value
             assertNotNull(state.accountNameEntry.errorMessage)
         }
@@ -675,10 +674,10 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.saveAccount(any()) } returns Result.failure(Exception("Error"))
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.saveAccount(any()) } returns Result.failure(Exception("Error"))
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -694,7 +693,7 @@ class PaymentAccountsPresenterTest {
 
             // Then
             // Verify save was called but failed
-            coVerify(atLeast = 1) { fiatAccountsServiceFacade.saveAccount(any()) }
+            coVerify(atLeast = 1) { userDefinedAccountsServiceFacade.saveAccount(any()) }
 
             // Verify error snackbar was shown
             coVerify { globalUiManager.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR, any()) }
@@ -713,10 +712,10 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.deleteAccount(any()) } returns Result.success(Unit)
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.deleteAccount(any()) } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -748,10 +747,10 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.deleteAccount(any()) } returns Result.failure(Exception("Delete error"))
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.deleteAccount(any()) } returns Result.failure(Exception("Delete error"))
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -782,9 +781,9 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -804,7 +803,7 @@ class PaymentAccountsPresenterTest {
     fun `when account name changed then updates state`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -822,7 +821,7 @@ class PaymentAccountsPresenterTest {
     fun `when account description changed then updates state`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -847,16 +846,16 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns
                 Result.success(
                     listOf(
                         sampleAccount1,
                         sampleAccount2,
                     ),
                 )
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.setSelectedAccountIndex(any()) } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.setSelectedAccountIndex(any()) } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -867,7 +866,7 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify { fiatAccountsServiceFacade.setSelectedAccountIndex(1) }
+            coVerify { userDefinedAccountsServiceFacade.setSelectedAccountIndex(1) }
         }
 
     @Test
@@ -881,10 +880,10 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
-            coEvery { fiatAccountsServiceFacade.setSelectedAccountIndex(any()) } returns Result.success(Unit)
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.setSelectedAccountIndex(any()) } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -895,7 +894,7 @@ class PaymentAccountsPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify(exactly = 0) { fiatAccountsServiceFacade.setSelectedAccountIndex(any()) }
+            coVerify(exactly = 0) { userDefinedAccountsServiceFacade.setSelectedAccountIndex(any()) }
         }
 
     @Test
@@ -909,9 +908,9 @@ class PaymentAccountsPresenterTest {
                         selectedAccountIndex = 0,
                     ),
                 )
-            every { fiatAccountsServiceFacade.accountState } returns accountStateFlow
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
-            coEvery { fiatAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
 
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -943,7 +942,7 @@ class PaymentAccountsPresenterTest {
     fun `when delete account clicked then shows confirmation dialog`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -961,7 +960,7 @@ class PaymentAccountsPresenterTest {
     fun `when cancel delete clicked then hides confirmation dialog`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -982,7 +981,7 @@ class PaymentAccountsPresenterTest {
     fun `when cancel add account clicked with no selected account then clears fields`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { fiatAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()

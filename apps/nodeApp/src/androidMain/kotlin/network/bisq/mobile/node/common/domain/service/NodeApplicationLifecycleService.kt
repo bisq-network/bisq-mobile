@@ -5,7 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -34,7 +34,7 @@ import java.io.File
  */
 class NodeApplicationLifecycleService(
     private val openTradesNotificationService: OpenTradesNotificationService,
-    private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
+    private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
@@ -134,7 +134,7 @@ class NodeApplicationLifecycleService(
         tradeChatMessagesServiceFacade.activate()
         languageServiceFacade.activate()
 
-        fiatAccountsServiceFacade.activate()
+        userDefinedAccountsServiceFacade.activate()
         explorerServiceFacade.activate()
         mediationServiceFacade.activate()
         reputationServiceFacade.activate()
@@ -161,7 +161,7 @@ class NodeApplicationLifecycleService(
         reputationServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         explorerServiceFacade.deactivate()
-        fiatAccountsServiceFacade.deactivate()
+        userDefinedAccountsServiceFacade.deactivate()
 
         languageServiceFacade.deactivate()
         tradeChatMessagesServiceFacade.deactivate()

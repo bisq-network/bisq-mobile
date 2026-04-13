@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.i18n.i18n
@@ -21,7 +21,7 @@ private const val MIN_ACCOUNT_DESC_FIELD_LENGTH = 3
 private const val MAX_ACCOUNT_DESC_FIELD_LENGTH = 1000
 
 open class PaymentAccountsPresenter(
-    private val fiatAccountsServiceFacade: FiatAccountsServiceFacade,
+    private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _uiState =
@@ -70,7 +70,7 @@ open class PaymentAccountsPresenter(
             }
 
             val accounts =
-                fiatAccountsServiceFacade
+                userDefinedAccountsServiceFacade
                     .getAccounts()
                     .onFailure { error ->
                         log.e(error) { "Failed to load accounts" }
@@ -85,7 +85,7 @@ open class PaymentAccountsPresenter(
 
             // Only fetch selected account if there are accounts available
             if (accounts.isNotEmpty()) {
-                fiatAccountsServiceFacade
+                userDefinedAccountsServiceFacade
                     .getSelectedAccount()
                     .onFailure { error ->
                         log.e(error) { "Failed to load selected account" }
@@ -105,7 +105,7 @@ open class PaymentAccountsPresenter(
 
     private fun observeAccounts() {
         presenterScope.launch {
-            fiatAccountsServiceFacade.accountState.collect { state ->
+            userDefinedAccountsServiceFacade.accountState.collect { state ->
                 val accounts = state.accounts.filterIsInstance<UserDefinedFiatAccount>()
                 val selectedAccount = accounts.getOrNull(state.selectedAccountIndex)
                 _uiState.update {
@@ -185,7 +185,7 @@ open class PaymentAccountsPresenter(
         presenterScope.launch {
             showLoading()
             val newAccount = createAccount(newName, newDescription)
-            fiatAccountsServiceFacade
+            userDefinedAccountsServiceFacade
                 .addAccount(newAccount)
                 .onSuccess {
                     showSnackbar(
@@ -214,7 +214,7 @@ open class PaymentAccountsPresenter(
         presenterScope.launch {
             showLoading()
             val newAccount = createAccount(newName, newDescription)
-            fiatAccountsServiceFacade
+            userDefinedAccountsServiceFacade
                 .saveAccount(newAccount)
                 .onSuccess {
                     showSnackbar(
@@ -233,7 +233,7 @@ open class PaymentAccountsPresenter(
         if (selectedAccount == null) return
         presenterScope.launch {
             showLoading()
-            fiatAccountsServiceFacade
+            userDefinedAccountsServiceFacade
                 .deleteAccount(selectedAccount)
                 .onSuccess {
                     showSnackbar(
@@ -304,7 +304,7 @@ open class PaymentAccountsPresenter(
     private fun onAccountSelect(index: Int) {
         if (_uiState.value.selectedAccountIndex == index) return
         presenterScope.launch {
-            fiatAccountsServiceFacade.setSelectedAccountIndex(index)
+            userDefinedAccountsServiceFacade.setSelectedAccountIndex(index)
         }
     }
 

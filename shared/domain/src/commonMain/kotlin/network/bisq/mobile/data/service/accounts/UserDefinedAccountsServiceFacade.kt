@@ -4,40 +4,37 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.service.ServiceFacade
-import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 
-abstract class FiatAccountsServiceFacade : ServiceFacade() {
+abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
     private val _accountState = MutableStateFlow(AccountsState())
     val accountState: StateFlow<AccountsState> = _accountState.asStateFlow()
     protected val currentState: AccountsState
         get() = _accountState.value
 
     // Abstract methods for backend-specific operations
-    protected abstract suspend fun executeGetAccounts(): Result<List<PaymentAccount>>
+    protected abstract suspend fun executeGetAccounts(): Result<List<UserDefinedFiatAccount>>
 
-    protected abstract suspend fun executeGetSelectedAccount(): Result<PaymentAccount?>
+    protected abstract suspend fun executeGetSelectedAccount(): Result<UserDefinedFiatAccount?>
 
-    protected abstract suspend fun executeAddAccount(account: PaymentAccount): Result<Unit>
+    protected abstract suspend fun executeAddAccount(account: UserDefinedFiatAccount): Result<Unit>
 
     protected abstract suspend fun executeSaveAccount(
         accountName: String,
-        account: PaymentAccount,
+        account: UserDefinedFiatAccount,
     ): Result<Unit>
 
-    protected abstract suspend fun executeDeleteAccount(account: PaymentAccount): Result<Unit>
+    protected abstract suspend fun executeDeleteAccount(account: UserDefinedFiatAccount): Result<Unit>
 
-    protected abstract suspend fun executeSetSelectedAccount(account: PaymentAccount): Result<Unit>
+    protected abstract suspend fun executeSetSelectedAccount(account: UserDefinedFiatAccount): Result<Unit>
 
     // Concrete implementations with shared business logic
-    suspend fun getAccounts(): Result<List<PaymentAccount>> =
+    suspend fun getAccounts(): Result<List<UserDefinedFiatAccount>> =
         runCatching {
             val accounts =
                 executeGetAccounts()
                     .getOrThrow()
-                    .filterIsInstance<UserDefinedFiatAccount>()
             val sortedAccounts = getSortedAccounts(accounts)
             _accountState.update {
                 it.copy(accounts = sortedAccounts)
@@ -51,16 +48,15 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
             _accountState.update { state ->
                 state.copy(
                     selectedAccountIndex =
-                        if (account != null) {
-                            state.accounts.indexOf(account)
-                        } else {
-                            0
-                        },
+                        account
+                            ?.let(state.accounts::indexOf)
+                            ?.takeIf { it >= 0 }
+                            ?: 0,
                 )
             }
         }
 
-    suspend fun addAccount(account: PaymentAccount): Result<Unit> =
+    suspend fun addAccount(account: UserDefinedFiatAccount): Result<Unit> =
         runCatching {
             executeAddAccount(account).getOrThrow()
             val accounts = _accountState.value.accounts
@@ -75,7 +71,7 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
             setSelectedAccountIndex(selectedIndex)
         }
 
-    suspend fun saveAccount(account: PaymentAccount): Result<Unit> =
+    suspend fun saveAccount(account: UserDefinedFiatAccount): Result<Unit> =
         runCatching {
             val accountName = getCurrentSelectedAccount()?.accountName
             if (accountName == null) throw IllegalStateException("No account selected")
@@ -91,7 +87,7 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
             }
         }
 
-    suspend fun deleteAccount(account: PaymentAccount): Result<Unit> =
+    suspend fun deleteAccount(account: UserDefinedFiatAccount): Result<Unit> =
         runCatching {
             val selectedAccount = getCurrentSelectedAccount()
             executeDeleteAccount(account).getOrThrow()
@@ -117,15 +113,18 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
             if (currentSelectedIndex != accountIndex) {
                 _accountState.update { it.copy(selectedAccountIndex = accountIndex) }
             }
-            getCurrentSelectedAccount()?.let { selectedAccount ->
-                executeSetSelectedAccount(selectedAccount).getOrThrow()
+            val selectedAccount = _accountState.value.accounts.getOrNull(accountIndex)
+            selectedAccount?.let {
+                executeSetSelectedAccount(it).getOrThrow()
             }
         }
 
     // Protected helper methods
-    protected fun getSortedAccounts(accounts: List<PaymentAccount>) = accounts.sortedBy { it.accountName }
+    protected fun getSortedAccounts(accounts: List<UserDefinedFiatAccount>) = accounts.sortedBy { it.accountName }
 
-    protected fun getCurrentSelectedAccount() = currentState.accounts.getOrNull(currentState.selectedAccountIndex)
+    protected fun getCurrentSelectedAccount() =
+        currentState.accounts.getOrNull(currentState.selectedAccountIndex)
+            ?: currentState.accounts.firstOrNull()
 
-    protected fun getAccountsExcluding(accountName: String): List<PaymentAccount> = currentState.accounts.filter { it.accountName != accountName }
+    protected fun getAccountsExcluding(accountName: String): List<UserDefinedFiatAccount> = currentState.accounts.filter { it.accountName != accountName }
 }

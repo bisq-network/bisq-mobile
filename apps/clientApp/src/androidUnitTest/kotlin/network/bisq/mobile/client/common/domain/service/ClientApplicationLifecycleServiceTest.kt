@@ -4,7 +4,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
-import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -33,7 +33,7 @@ class ClientApplicationLifecycleServiceTest {
 
     private val openTradesNotificationService: OpenTradesNotificationService = mockk(relaxed = true)
     private val kmpTorService: KmpTorService = mockk(relaxed = true)
-    private val fiatAccountsServiceFacade: FiatAccountsServiceFacade = mockk(relaxed = true)
+    private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade = mockk(relaxed = true)
     private val applicationBootstrapFacade: ApplicationBootstrapFacade = mockk(relaxed = true)
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade = mockk(relaxed = true)
     private val languageServiceFacade: LanguageServiceFacade = mockk(relaxed = true)
@@ -63,7 +63,7 @@ class ClientApplicationLifecycleServiceTest {
             ClientApplicationLifecycleService(
                 openTradesNotificationService = openTradesNotificationService,
                 kmpTorService = kmpTorService,
-                fiatAccountsServiceFacade = fiatAccountsServiceFacade,
+                userDefinedAccountsServiceFacade = userDefinedAccountsServiceFacade,
                 applicationBootstrapFacade = applicationBootstrapFacade,
                 tradeChatMessagesServiceFacade = tradeChatMessagesServiceFacade,
                 languageServiceFacade = languageServiceFacade,
@@ -201,7 +201,7 @@ class ClientApplicationLifecycleServiceTest {
         coEvery { tradesServiceFacade.activate() } answers { order += "trades.activate" }
         coEvery { tradeChatMessagesServiceFacade.activate() } answers { order += "tradeChat.activate" }
         coEvery { languageServiceFacade.activate() } answers { order += "language.activate" }
-        coEvery { fiatAccountsServiceFacade.activate() } answers { order += "fiat.activate" }
+        coEvery { userDefinedAccountsServiceFacade.activate() } answers { order += "fiat.activate" }
         coEvery { explorerServiceFacade.activate() } answers { order += "explorer.activate" }
         coEvery { mediationServiceFacade.activate() } answers { order += "mediation.activate" }
         coEvery { reputationServiceFacade.activate() } answers { order += "reputation.activate" }
@@ -222,7 +222,7 @@ class ClientApplicationLifecycleServiceTest {
         coEvery { reputationServiceFacade.deactivate() } answers { order += "reputation.deactivate" }
         coEvery { mediationServiceFacade.deactivate() } answers { order += "mediation.deactivate" }
         coEvery { explorerServiceFacade.deactivate() } answers { order += "explorer.deactivate" }
-        coEvery { fiatAccountsServiceFacade.deactivate() } answers { order += "fiat.deactivate" }
+        coEvery { userDefinedAccountsServiceFacade.deactivate() } answers { order += "fiat.deactivate" }
         coEvery { languageServiceFacade.deactivate() } answers { order += "language.deactivate" }
         coEvery { tradeChatMessagesServiceFacade.deactivate() } answers { order += "tradeChat.deactivate" }
         coEvery { tradesServiceFacade.deactivate() } answers { order += "trades.deactivate" }

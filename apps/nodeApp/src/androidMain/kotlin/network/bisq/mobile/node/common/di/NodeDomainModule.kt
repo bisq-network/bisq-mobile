@@ -5,7 +5,7 @@ import android.content.Context
 import android.os.Debug
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
-import network.bisq.mobile.data.service.accounts.FiatAccountsServiceFacade
+import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -33,7 +33,7 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.node.BuildConfig
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.NodeApplicationLifecycleService
-import network.bisq.mobile.node.common.domain.service.accounts.NodeFiatAccountsServiceFacade
+import network.bisq.mobile.node.common.domain.service.accounts.NodeUserDefinedAccountsServiceFacade
 import network.bisq.mobile.node.common.domain.service.alert.NodeAlertNotificationsServiceFacade
 import network.bisq.mobile.node.common.domain.service.alert.NodeTradeRestrictingAlertServiceFacade
 import network.bisq.mobile.node.common.domain.service.bootstrap.NodeApplicationBootstrapFacade
@@ -131,7 +131,7 @@ val androidNodeDomainModule =
 
         single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
 
-        single<FiatAccountsServiceFacade> { NodeFiatAccountsServiceFacade(get()) }
+        single<UserDefinedAccountsServiceFacade> { NodeUserDefinedAccountsServiceFacade(get()) }
 
         single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
 

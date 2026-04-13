@@ -5,6 +5,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import network.bisq.mobile.client.common.domain.service.accounts.all.ClientPaymentAccountsServiceFacade
+import network.bisq.mobile.client.common.domain.service.accounts.all.PaymentAccountsApiGateway
 import network.bisq.mobile.data.model.account.PaymentAccountDto
 import network.bisq.mobile.data.model.account.crypto.CryptoPaymentMethodDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodChargebackRiskDto
