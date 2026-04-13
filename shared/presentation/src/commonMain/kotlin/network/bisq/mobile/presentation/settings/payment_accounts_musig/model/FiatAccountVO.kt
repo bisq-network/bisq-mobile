@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 
 data class FiatAccountVO(
     val accountName: String,
-    val chargebackRisk: FiatPaymentMethodChargebackRiskVO,
+    val chargebackRisk: FiatPaymentMethodChargebackRiskVO?,
     val paymentMethod: PaymentMethodVO,
     val paymentMethodName: String,
     val country: String,

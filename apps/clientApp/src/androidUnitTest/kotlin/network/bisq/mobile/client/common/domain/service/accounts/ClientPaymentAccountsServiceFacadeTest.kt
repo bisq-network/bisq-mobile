@@ -149,7 +149,6 @@ class ClientPaymentAccountsServiceFacadeTest {
                     paymentRail = FiatPaymentRailDto.SEPA,
                     name = "SEPA",
                     supportedCurrencyCodes = "EUR",
-                    supportedNameAndCodes = "Euro (EUR)",
                     countryNames = "Germany",
                     chargebackRisk = FiatPaymentMethodChargebackRiskDto.LOW,
                 )

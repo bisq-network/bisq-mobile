@@ -42,6 +42,7 @@ import bisqapps.shared.presentation.generated.resources.payment_icon_uspmo
 import bisqapps.shared.presentation.generated.resources.payment_icon_wechat
 import bisqapps.shared.presentation.generated.resources.payment_icon_wise
 import bisqapps.shared.presentation.generated.resources.payment_icon_wise_us
+import bisqapps.shared.presentation.generated.resources.payment_icon_xmr
 import bisqapps.shared.presentation.generated.resources.payment_icon_zelle
 import org.jetbrains.compose.resources.DrawableResource
 
@@ -94,7 +95,7 @@ enum class PaymentMethodVO(
     ZELLE(Res.drawable.payment_icon_zelle),
 
     // Crypto
-    XMR,
+    XMR(Res.drawable.payment_icon_xmr),
     BSQ,
     LTC,
     ETH,
@@ -105,3 +106,18 @@ enum class PaymentMethodVO(
     ZEC,
     DOGE,
 }
+
+fun getPaymentMethodVOFromCryptoCurrencyCode(cryptoCurrencyCode: String): PaymentMethodVO? =
+    when (cryptoCurrencyCode.trim().uppercase()) {
+        "XMR" -> PaymentMethodVO.XMR
+        "LTC" -> PaymentMethodVO.LTC
+        "ETH" -> PaymentMethodVO.ETH
+        "BSQ" -> PaymentMethodVO.BSQ
+        "ETC" -> PaymentMethodVO.ETC
+        "L-BTC" -> PaymentMethodVO.LBTC
+        "LN-BTC" -> PaymentMethodVO.LNBTC
+        "GRIN" -> PaymentMethodVO.GRIN
+        "ZEC" -> PaymentMethodVO.ZEC
+        "DOGE" -> PaymentMethodVO.DOGE
+        else -> null
+    }

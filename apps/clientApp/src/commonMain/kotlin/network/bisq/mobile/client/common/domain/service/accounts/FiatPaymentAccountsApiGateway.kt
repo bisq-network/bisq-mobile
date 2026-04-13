@@ -2,7 +2,6 @@ package network.bisq.mobile.client.common.domain.service.accounts
 
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.data.model.account.PaymentAccountDto
-import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.utils.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
 
@@ -11,15 +10,7 @@ class FiatPaymentAccountsApiGateway(
 ) : Logging {
     private val basePath = "payment-accounts/fiat"
 
-    suspend fun getPaymentAccounts(paymentRails: Set<FiatPaymentRail>? = null): Result<List<PaymentAccountDto>> {
-        val queryParam =
-            if (paymentRails != null && paymentRails.isNotEmpty()) {
-                "?paymentRails=${paymentRails.joinToString(",") { it.name }}"
-            } else {
-                ""
-            }
-        return webSocketApiClient.get<List<PaymentAccountDto>>("$basePath$queryParam")
-    }
+    suspend fun getPaymentAccounts(): Result<List<PaymentAccountDto>> = webSocketApiClient.get(basePath)
 
     suspend fun addAccount(account: PaymentAccountDto): Result<PaymentAccountDto> {
         val addFiatAccountRequest = AddFiatAccountRequest(account = account)

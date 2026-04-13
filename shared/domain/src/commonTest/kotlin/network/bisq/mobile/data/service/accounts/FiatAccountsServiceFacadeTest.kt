@@ -8,7 +8,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.di.testModule
-import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
@@ -137,23 +136,22 @@ class FiatAccountsServiceFacadeTest : KoinTest {
         }
 
     @Test
-    fun `when getAccounts with payment rails filter then passes filter to backend`() =
+    fun `when getAccounts then executes backend get accounts`() =
         runTest(testDispatcher) {
             // Given
-            val paymentRails = setOf(FiatPaymentRail.ACH_TRANSFER, FiatPaymentRail.SEPA)
-            var capturedFilter: Set<FiatPaymentRail>? = null
-            testFacade.mockExecuteGetAccounts = { filter ->
-                capturedFilter = filter
+            var executeGetAccountsCalled = false
+            testFacade.mockExecuteGetAccounts = {
+                executeGetAccountsCalled = true
                 Result.success(listOf(accountA))
             }
 
             // When
-            val result = testFacade.getAccounts(paymentRails)
+            val result = testFacade.getAccounts()
             advanceUntilIdle()
 
             // Then
             assertTrue(result.isSuccess)
-            assertEquals(paymentRails, capturedFilter)
+            assertTrue(executeGetAccountsCalled)
         }
 
     @Test
@@ -196,7 +194,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
         }
 
     @Test
-    fun `when getSelectedAccount with null account then sets index to -1`() =
+    fun `when getSelectedAccount with null account then sets index to 0`() =
         runTest(testDispatcher) {
             // Given - setup state with accounts
             testFacade.mockExecuteGetAccounts = { Result.success(listOf(accountA, accountB)) }
@@ -212,7 +210,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
             // Then
             assertTrue(result.isSuccess)
             val state = testFacade.accountState.value
-            assertEquals(-1, state.selectedAccountIndex)
+            assertEquals(0, state.selectedAccountIndex)
         }
 
     @Test
@@ -328,7 +326,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteAddAccount = { Result.success(Unit) }
             var setSelectedAccountIndexCalled = false
             var capturedIndex = -1
-            testFacade.mockExecuteSetSelectedAccount = { account ->
+            testFacade.mockExecuteSetSelectedAccount = {
                 setSelectedAccountIndexCalled = true
                 capturedIndex = testFacade.accountState.value.selectedAccountIndex
                 Result.success(Unit)
@@ -545,7 +543,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
             testFacade.getAccounts()
             advanceUntilIdle()
 
-            var setSelectedAccountCalled = false
+            var setSelectedAccountCalled: Boolean
             testFacade.mockExecuteSetSelectedAccount = {
                 setSelectedAccountCalled = true
                 Result.success(Unit)
@@ -592,8 +590,8 @@ class FiatAccountsServiceFacadeTest : KoinTest {
             assertTrue(result.isSuccess)
             val state = testFacade.accountState.value
             assertEquals(1, state.selectedAccountIndex)
-            assertNotNull(capturedAccount)
-            assertEquals("Account B", capturedAccount!!.accountName)
+            val captured = requireNotNull(capturedAccount)
+            assertEquals("Account B", captured.accountName)
         }
 
     @Test
@@ -787,7 +785,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
      * of abstract methods for testing purposes.
      */
     private class TestFiatAccountsServiceFacade : FiatAccountsServiceFacade() {
-        var mockExecuteGetAccounts: (Set<FiatPaymentRail>?) -> Result<List<PaymentAccount>> =
+        var mockExecuteGetAccounts: () -> Result<List<PaymentAccount>> =
             { Result.success(emptyList()) }
 
         var mockExecuteGetSelectedAccount: () -> Result<PaymentAccount?> =
@@ -805,7 +803,7 @@ class FiatAccountsServiceFacadeTest : KoinTest {
         var mockExecuteSetSelectedAccount: (PaymentAccount) -> Result<Unit> =
             { Result.success(Unit) }
 
-        override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>?): Result<List<PaymentAccount>> = mockExecuteGetAccounts(paymentRails)
+        override suspend fun executeGetAccounts(): Result<List<PaymentAccount>> = mockExecuteGetAccounts()
 
         override suspend fun executeGetSelectedAccount(): Result<PaymentAccount?> = mockExecuteGetSelectedAccount()
 

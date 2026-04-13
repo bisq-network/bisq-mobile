@@ -6,7 +6,6 @@ data class FiatPaymentMethod(
     val paymentRail: FiatPaymentRail,
     val name: String,
     val supportedCurrencyCodes: String,
-    val supportedNameAndCodes: String,
     val countryNames: String,
     val chargebackRisk: FiatPaymentMethodChargebackRisk,
 )

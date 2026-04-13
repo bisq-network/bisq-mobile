@@ -16,7 +16,7 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
         get() = _accountState.value
 
     // Abstract methods for backend-specific operations
-    protected abstract suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>? = null): Result<List<PaymentAccount>>
+    protected abstract suspend fun executeGetAccounts(): Result<List<PaymentAccount>>
 
     protected abstract suspend fun executeGetSelectedAccount(): Result<PaymentAccount?>
 
@@ -32,10 +32,10 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
     protected abstract suspend fun executeSetSelectedAccount(account: PaymentAccount): Result<Unit>
 
     // Concrete implementations with shared business logic
-    suspend fun getAccounts(paymentRails: Set<FiatPaymentRail>? = null): Result<List<PaymentAccount>> =
+    suspend fun getAccounts(): Result<List<PaymentAccount>> =
         runCatching {
             val accounts =
-                executeGetAccounts(paymentRails)
+                executeGetAccounts()
                     .getOrThrow()
                     .filterIsInstance<UserDefinedFiatAccount>()
             val sortedAccounts = getSortedAccounts(accounts)
@@ -54,7 +54,7 @@ abstract class FiatAccountsServiceFacade : ServiceFacade() {
                         if (account != null) {
                             state.accounts.indexOf(account)
                         } else {
-                            -1
+                            0
                         },
                 )
             }

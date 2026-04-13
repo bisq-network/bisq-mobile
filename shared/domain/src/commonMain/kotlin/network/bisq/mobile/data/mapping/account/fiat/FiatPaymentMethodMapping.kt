@@ -11,7 +11,6 @@ fun FiatPaymentMethodDto.toDomain(): FiatPaymentMethod =
         paymentRail = FiatPaymentRail.valueOf(paymentRail.name),
         name = name,
         supportedCurrencyCodes = supportedCurrencyCodes,
-        supportedNameAndCodes = supportedNameAndCodes,
         countryNames = countryNames,
         chargebackRisk = chargebackRisk.toDomain(),
     )

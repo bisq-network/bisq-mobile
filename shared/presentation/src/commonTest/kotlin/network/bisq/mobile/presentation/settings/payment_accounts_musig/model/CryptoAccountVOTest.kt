@@ -49,22 +49,24 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "LTC", currencyName = "Litecoin")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.LTC, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.LTC, result.paymentMethod)
     }
 
     @Test
-    fun `when mapping OtherCryptoAssetAccount with ETH then getPaymentMethod maps to ETH payment method`() {
+    fun `when mapping OtherCryptoAssetAccount with ETH then maps to ETH payment method via toVO`() {
         // Given
         val account = sampleOtherCryptoAssetAccount(currencyCode = "ETH", currencyName = "Ethereum")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.ETH, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.ETH, result.paymentMethod)
     }
 
     @Test
@@ -73,10 +75,11 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "BSQ", currencyName = "Bisq DAO")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.BSQ, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.BSQ, result.paymentMethod)
     }
 
     @Test
@@ -85,10 +88,11 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "ETC", currencyName = "Ethereum Classic")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.ETC, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.ETC, result.paymentMethod)
     }
 
     @Test
@@ -97,10 +101,11 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "L-BTC", currencyName = "Liquid Bitcoin")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.LBTC, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.LBTC, result.paymentMethod)
     }
 
     @Test
@@ -109,10 +114,11 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "LN-BTC", currencyName = "Lightning Bitcoin")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.LNBTC, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.LNBTC, result.paymentMethod)
     }
 
     @Test
@@ -121,10 +127,11 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "GRIN", currencyName = "Grin")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.GRIN, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.GRIN, result.paymentMethod)
     }
 
     @Test
@@ -133,10 +140,11 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "ZEC", currencyName = "Zcash")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.ZEC, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.ZEC, result.paymentMethod)
     }
 
     @Test
@@ -145,10 +153,11 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "DOGE", currencyName = "Dogecoin")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
-        assertEquals(PaymentMethodVO.DOGE, result)
+        assertNotNull(result)
+        assertEquals(PaymentMethodVO.DOGE, result.paymentMethod)
     }
 
     @Test
@@ -157,7 +166,7 @@ class CryptoAccountVOTest {
         val account = sampleOtherCryptoAssetAccount(currencyCode = "ABC", currencyName = "Unknown")
 
         // When
-        val result = account.getPaymentMethod()
+        val result = account.toVO()
 
         // Then
         assertNull(result)

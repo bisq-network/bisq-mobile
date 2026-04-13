@@ -14,11 +14,11 @@ enum class FiatPaymentMethodChargebackRiskVO(
     MODERATE(BisqTheme.colors.danger, "paymentAccounts.createAccount.paymentMethod.risk.moderate"),
 }
 
-fun FiatPaymentMethodChargebackRisk?.toVO(): FiatPaymentMethodChargebackRiskVO =
+fun FiatPaymentMethodChargebackRisk?.toVO(): FiatPaymentMethodChargebackRiskVO? =
     when (this) {
         FiatPaymentMethodChargebackRisk.VERY_LOW -> FiatPaymentMethodChargebackRiskVO.VERY_LOW
         FiatPaymentMethodChargebackRisk.LOW -> FiatPaymentMethodChargebackRiskVO.LOW
         FiatPaymentMethodChargebackRisk.MEDIUM -> FiatPaymentMethodChargebackRiskVO.MEDIUM
         FiatPaymentMethodChargebackRisk.MODERATE -> FiatPaymentMethodChargebackRiskVO.MODERATE
-        else -> FiatPaymentMethodChargebackRiskVO.MODERATE
+        else -> null
     }

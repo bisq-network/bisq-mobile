@@ -9,9 +9,9 @@ import network.bisq.mobile.domain.model.account.PaymentAccount
 class ClientFiatAccountsServiceFacade(
     private val apiGateway: FiatPaymentAccountsApiGateway,
 ) : FiatAccountsServiceFacade() {
-    override suspend fun executeGetAccounts(paymentRails: Set<FiatPaymentRail>?): Result<List<PaymentAccount>> =
+    override suspend fun executeGetAccounts(): Result<List<PaymentAccount>> =
         runCatching {
-            apiGateway.getPaymentAccounts(paymentRails).getOrThrow().map { it.toDomain() }
+            apiGateway.getPaymentAccounts().getOrThrow().map { it.toDomain() }
         }
 
     override suspend fun executeGetSelectedAccount(): Result<PaymentAccount?> =

@@ -65,21 +65,9 @@ private fun getCreatePaymentAccountTopBarState(
             destination?.hasRoute<CreatePaymentAccountRoute.PaymentAccountReview>() == true
 
     val title =
-        when {
-            destination?.hasRoute<CreatePaymentAccountRoute.PaymentAccountForm>() == true ->
-                when (accountType) {
-                    PaymentAccountType.FIAT -> "paymentAccounts.progress.accountData".i18n()
-                    PaymentAccountType.CRYPTO -> "paymentAccounts.crypto.progress.addressAndOptions".i18n()
-                }
-
-            destination?.hasRoute<CreatePaymentAccountRoute.PaymentAccountReview>() == true ->
-                "paymentAccounts.createAccount.progress.summary".i18n()
-
-            else ->
-                when (accountType) {
-                    PaymentAccountType.FIAT -> "paymentAccounts.createAccount.paymentMethod.headline".i18n()
-                    PaymentAccountType.CRYPTO -> "paymentAccounts.crypto.paymentMethod.headline".i18n()
-                }
+        when (accountType) {
+            PaymentAccountType.FIAT -> "mobile.user.paymentAccounts.fiat.add".i18n()
+            PaymentAccountType.CRYPTO -> "mobile.user.paymentAccounts.crypto.add".i18n()
         }
 
     return CreatePaymentAccountTopBarState(
