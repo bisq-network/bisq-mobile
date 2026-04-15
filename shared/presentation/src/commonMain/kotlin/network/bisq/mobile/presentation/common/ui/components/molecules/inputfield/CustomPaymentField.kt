@@ -25,6 +25,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.AddIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
+private const val MAX_CUSTOM_PAYMENT_LENGTH = 50
+
 @Composable
 fun CustomPaymentField(
     onAddCustomPayment: ((String) -> Unit)? = null,
@@ -49,7 +51,7 @@ fun CustomPaymentField(
         )
         BisqTextFieldV0(
             value = value,
-            onValueChange = { newValue -> value = newValue.take(50) },
+            onValueChange = { newValue -> value = newValue.take(MAX_CUSTOM_PAYMENT_LENGTH) },
             placeholder = "bisqEasy.tradeWizard.paymentMethods.customMethod.prompt".i18n(),
             modifier = Modifier.weight(1f),
             colors =
