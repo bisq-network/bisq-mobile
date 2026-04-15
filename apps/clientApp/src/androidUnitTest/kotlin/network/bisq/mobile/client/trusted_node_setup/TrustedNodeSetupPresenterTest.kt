@@ -213,7 +213,10 @@ class TrustedNodeSetupPresenterTest {
             // Then
             val state = presenter.uiState.value
             assertEquals(validRestApiUrl, state.apiUrl)
-            assertTrue(state.status is TrustedNodeConnectionStatus.Failed)
+            assertEquals(
+                TrustedNodeConnectionStatus.Failed("mobile.trustedNodeSetup.status.notConnected").displayString,
+                state.status.displayString,
+            )
         }
 
     @Test
