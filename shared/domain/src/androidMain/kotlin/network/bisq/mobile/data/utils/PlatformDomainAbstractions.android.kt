@@ -2,6 +2,7 @@
 
 package network.bisq.mobile.data.utils
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -19,6 +20,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
+import network.bisq.mobile.domain.utils.getLogger
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.scope.Scope
 import java.io.ByteArrayOutputStream
@@ -65,10 +67,35 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
 class AndroidUrlLauncher(
     private val context: Context,
 ) : UrlLauncher {
-    override fun openUrl(url: String) {
+    private val log = getLogger("AndroidUrlLauncher")
+
+    override fun openUrl(url: String): Boolean {
+        val safeUrl = sanitizeUrlForLog(url)
         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(intent)
+        try {
+            context.startActivity(intent)
+            return true
+        } catch (_: ActivityNotFoundException) {
+            log.w { "No activity found to handle URL (install a browser or check link): $safeUrl" }
+            return false
+        } catch (e: Exception) {
+            log.e(e) { "Failed to open URL: $safeUrl" }
+            return false
+        }
+    }
+
+    private fun sanitizeUrlForLog(rawUrl: String): String {
+        val uri = runCatching { rawUrl.toUri() }.getOrNull()
+        return if (uri != null) {
+            buildString {
+                append(uri.scheme ?: "unknown")
+                uri.host?.let { append("://").append(it) }
+                uri.path?.let { append(it) }
+            }.take(256)
+        } else {
+            "invalid-url"
+        }
     }
 }
 

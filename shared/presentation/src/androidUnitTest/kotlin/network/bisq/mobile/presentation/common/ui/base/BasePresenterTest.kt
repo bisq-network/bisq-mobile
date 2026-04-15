@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.common.ui.base
 
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.unmockkStatic
@@ -8,15 +9,20 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -25,6 +31,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BasePresenterTest {
@@ -153,6 +160,67 @@ class BasePresenterTest {
         // Presenter should still be registered — creating a second and detaching
         // should work without issues (parent still tracks the first)
         presenter.onViewRevealed()
+    }
+
+    @Test
+    fun `navigateToReportError shows error snackbar when URL launch fails`() {
+        val urlLauncher = mockk<UrlLauncher>()
+        every { urlLauncher.openUrl(any()) } returns false
+        mainPresenter =
+            MainPresenterTestFactory.create(
+                urlLauncher = urlLauncher,
+                applicationLifecycleService = TestApplicationLifecycleService(),
+            )
+        val presenter = TestPresenter(mainPresenter)
+
+        presenter.navigateToReportError()
+
+        verify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES) }
+        verify(exactly = 1) {
+            globalUiManager.showSnackbar(
+                "mobile.error.cannotOpenUrl".i18n(),
+                SnackbarType.ERROR,
+                any(),
+                any(),
+            )
+        }
+    }
+
+    @Test
+    fun `navigateToReportError does not show error snackbar when URL launch succeeds`() {
+        val urlLauncher = mockk<UrlLauncher>()
+        every { urlLauncher.openUrl(any()) } returns true
+        mainPresenter =
+            MainPresenterTestFactory.create(
+                urlLauncher = urlLauncher,
+                applicationLifecycleService = TestApplicationLifecycleService(),
+            )
+        val presenter = TestPresenter(mainPresenter)
+
+        presenter.navigateToReportError()
+
+        verify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES) }
+        verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `navigateToUrl returns false and restores interactivity when URL launcher throws`() {
+        val urlLauncher = mockk<UrlLauncher>()
+        every { urlLauncher.openUrl(any()) } throws IllegalStateException("unexpected")
+        mainPresenter =
+            MainPresenterTestFactory.create(
+                urlLauncher = urlLauncher,
+                applicationLifecycleService = TestApplicationLifecycleService(),
+            )
+        val presenter = TestPresenter(mainPresenter)
+
+        val result = presenter.navigateToUrl("https://bisq.network")
+
+        assertFalse(result)
+        assertFalse(presenter.isInteractive.value)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(presenter.isInteractive.value)
+        verify(exactly = 1) { urlLauncher.openUrl("https://bisq.network") }
     }
 
     /**

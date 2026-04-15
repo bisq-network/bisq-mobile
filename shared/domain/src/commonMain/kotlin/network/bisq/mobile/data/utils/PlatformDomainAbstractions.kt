@@ -16,7 +16,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 interface UrlLauncher {
-    fun openUrl(url: String)
+    fun openUrl(url: String): Boolean
 }
 
 expect fun formatDateTime(dateTime: LocalDateTime): String

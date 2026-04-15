@@ -331,12 +331,14 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
 }
 
 class IOSUrlLauncher : UrlLauncher {
-    override fun openUrl(url: String) {
+    override fun openUrl(url: String): Boolean {
         val nsUrl = NSURL.URLWithString(url)
-        if (nsUrl != null) {
+        if (nsUrl != null && UIApplication.sharedApplication.canOpenURL(nsUrl)) {
             // fake secondary parameters are important so that iOS compiler knows which override to use
             UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?, String>(), completionHandler = null)
+            return true
         }
+        return false
     }
 }
 

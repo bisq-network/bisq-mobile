@@ -188,9 +188,7 @@ open class MainPresenter(
         _isMainContentVisible.value = value
     }
 
-    final override fun navigateToUrl(url: String) {
-        urlLauncher.openUrl(url)
-    }
+    final override fun navigateToUrl(url: String): Boolean = urlLauncher.openUrl(url)
 
     override fun onCloseConnectionLostDialogue() {
         _showAllConnectionsLostDialogue.value = false

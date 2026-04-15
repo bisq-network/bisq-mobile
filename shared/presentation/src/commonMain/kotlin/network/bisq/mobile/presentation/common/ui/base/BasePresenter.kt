@@ -316,11 +316,17 @@ abstract class BasePresenter(
         }
     }
 
-    open fun navigateToUrl(url: String) {
-        if (!_isInteractive.value) return
+    open fun navigateToUrl(url: String): Boolean {
+        if (!_isInteractive.value) return false
         disableInteractive()
-        rootPresenter?.navigateToUrl(url)
-        enableInteractive() // re-enables after 250ms delay — prevents rapid double-taps
+        return try {
+            rootPresenter?.navigateToUrl(url) ?: false
+        } catch (e: Exception) {
+            log.e(e) { "Failed to navigate to URL: $url" }
+            false
+        } finally {
+            enableInteractive() // re-enables after 250ms delay — prevents rapid double-taps
+        }
     }
 
     override fun onCloseGenericErrorPanel() {
@@ -328,7 +334,10 @@ abstract class BasePresenter(
     }
 
     override fun navigateToReportError() {
-        navigateToUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES)
+        val isOpened = navigateToUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES)
+        if (!isOpened) {
+            showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
+        }
     }
 
     protected fun isAtMainScreen(): Boolean = navigationManager.isAtMainScreen()

@@ -337,7 +337,7 @@ class CreateOfferReviewPresenterTest {
     }
 
     private class FakeUrlLauncher : UrlLauncher {
-        override fun openUrl(url: String) {}
+        override fun openUrl(url: String): Boolean = true
     }
 
     private class FakeTradeReadStateRepository : TradeReadStateRepository {
