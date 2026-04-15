@@ -30,7 +30,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 
-const val MAX_CHARS = 10_000
+private const val MAX_CHAT_INPUT_LENGTH = 10_000
 
 @Composable
 fun ChatInputField(
@@ -42,7 +42,8 @@ fun ChatInputField(
 ) {
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
-    val validationMessage = if (text.length > MAX_CHARS) "mobile.tradeChat.chatInput.maxLength".i18n(MAX_CHARS) else null
+    val validationMessage =
+        if (text.length > MAX_CHAT_INPUT_LENGTH) "mobile.tradeChat.chatInput.maxLength".i18n(MAX_CHAT_INPUT_LENGTH) else null
     val isTextValid = validationMessage == null
 
     Column {
