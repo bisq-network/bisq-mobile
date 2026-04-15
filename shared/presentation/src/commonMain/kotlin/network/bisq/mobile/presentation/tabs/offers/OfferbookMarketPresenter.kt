@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -105,22 +104,17 @@ class OfferbookMarketPresenter(
 
     private fun observeMarketListItems() {
         presenterScope.launch {
-            combine(
-                filter,
-                _searchText,
-                sortBy,
-                _marketPriceUpdated,
-                mainPresenter.languageCode,
-                offersServiceFacade.offerbookMarketItems,
-            ) { values: Array<Any?> ->
-                @Suppress("UNCHECKED_CAST")
-                val filter = values[0] as MarketFilter
-                val searchText = values[1] as String
-                val sortBy = values[2] as MarketSortBy
-                val languageCode = values[4] as String
-                val items = values[5] as List<MarketListItem>
-                computeOfferbookMarketListUseCase(filter, searchText, sortBy, languageCode, items)
-            }.flowOn(Dispatchers.Default)
+            network.bisq.mobile.domain.utils
+                .combine(
+                    filter,
+                    _searchText,
+                    sortBy,
+                    _marketPriceUpdated,
+                    mainPresenter.languageCode,
+                    offersServiceFacade.offerbookMarketItems,
+                ) { filter, searchText, sortBy, _, languageCode, items ->
+                    computeOfferbookMarketListUseCase(filter, searchText, sortBy, languageCode, items)
+                }.flowOn(Dispatchers.Default)
                 .collect { result ->
                     _marketListItemWithNumOffers.value = result
                 }

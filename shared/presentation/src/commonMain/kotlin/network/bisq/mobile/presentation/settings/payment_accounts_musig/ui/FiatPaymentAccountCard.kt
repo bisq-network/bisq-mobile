@@ -102,7 +102,7 @@ fun FiatPaymentAccountCard(
             )
         }
 
-        account.chargebackRisk?.let { chargebackRisk ->
+        account.chargebackRisk.let { chargebackRisk ->
             Spacer(modifier = Modifier.height(8.dp))
             ChargebackRiskBadge(chargebackRisk)
         }

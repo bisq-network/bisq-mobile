@@ -15,16 +15,16 @@ class TakeOfferPaymentMethodPresenter(
 ) : OfferFlowPresenter(mainPresenter) {
     var hasMultipleQuoteSidePaymentMethods: Boolean = false
     var hasMultipleBaseSidePaymentMethods: Boolean = false
-    lateinit var quoteSidePaymentMethods: List<String>
-    lateinit var baseSidePaymentMethods: List<String>
+    var quoteSidePaymentMethods: List<String>
+    var baseSidePaymentMethods: List<String>
     val quoteSidePaymentMethod: MutableStateFlow<String?> = MutableStateFlow(null)
     val baseSidePaymentMethod: MutableStateFlow<String?> = MutableStateFlow(null)
     val isTakerBtcBuyer: Boolean
         get() = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.direction == DirectionEnum.BUY
 
-    lateinit var quoteCurrencyCode: String
+    var quoteCurrencyCode: String
 
-    private lateinit var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
+    private var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
 
     init {
         takeOfferModel = takeOfferCoordinator.takeOfferModel

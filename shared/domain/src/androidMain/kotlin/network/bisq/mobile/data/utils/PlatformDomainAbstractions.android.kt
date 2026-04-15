@@ -150,6 +150,7 @@ actual val decimalFormatter: DecimalFormatter =
             }
     }
 
+@Suppress("DEPRECATION") // supresses Locale(language) constructor
 actual fun setDefaultLocale(language: String) {
     // Use Locale.forLanguageTag to support BCP‑47 (e.g., "en-US").
     val locale = runCatching { Locale.forLanguageTag(language) }.getOrElse { Locale(language) }

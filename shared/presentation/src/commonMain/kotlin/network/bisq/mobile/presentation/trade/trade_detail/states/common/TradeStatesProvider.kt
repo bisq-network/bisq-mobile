@@ -74,7 +74,6 @@ class TradeStatesProvider(
                 BUYER_STATE_MAIN_CHAIN3B -> buyerStateMainChain3bPresenter
                 BUYER_STATE_LIGHTNING3B -> buyerStateLightning3bPresenter
                 BUYER_STATE4 -> buyerState4Presenter
-                else -> throw IllegalArgumentException("No presenter for the given phase $phase")
             }
         )
 }

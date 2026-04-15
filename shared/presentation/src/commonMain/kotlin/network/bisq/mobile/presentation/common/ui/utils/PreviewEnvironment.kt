@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
 import org.koin.compose.KoinApplication
+import org.koin.dsl.koinConfiguration
 import org.koin.dsl.module
 
 /**
@@ -27,13 +28,17 @@ import org.koin.dsl.module
 @Composable
 fun PreviewEnvironment(content: @Composable () -> Unit) {
     // Add more modules as needed for different UI Previews
-    KoinApplication(application = {
-        modules(
-            module {
-                single<ITopBarPresenter> { PreviewTopBarPresenter() }
-            },
-        )
-    }) {
-        content()
-    }
+    KoinApplication(
+        configuration =
+            koinConfiguration(declaration = {
+                modules(
+                    module {
+                        single<ITopBarPresenter> { PreviewTopBarPresenter() }
+                    },
+                )
+            }),
+        content = {
+            content()
+        },
+    )
 }

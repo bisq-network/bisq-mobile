@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,11 +21,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,38 +97,29 @@ fun ReputationScreen() {
                     append(part1)
                     append(" ")
                 }
-                pushStringAnnotation(
-                    tag = "URL",
-                    annotation = BisqLinks.REPUTATION_WIKI_URL,
-                )
-                withStyle(
-                    style =
-                        SpanStyle(
-                            color = BisqTheme.colors.primary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Light,
-                            textDecoration = TextDecoration.Underline,
-                        ),
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = "URL",
+                        styles =
+                            TextLinkStyles(
+                                style =
+                                    SpanStyle(
+                                        color = BisqTheme.colors.primary,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Light,
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
+                            ),
+                        linkInteractionListener = {
+                            selectedWebLink = BisqLinks.REPUTATION_WIKI_URL
+                        },
+                    ),
                 ) {
                     append(part2)
                 }
-                pop()
             }
 
-        ClickableText(
-            text = annotatedString,
-            onClick = { offset ->
-                annotatedString
-                    .getStringAnnotations(
-                        tag = "URL",
-                        start = offset,
-                        end = offset,
-                    ).firstOrNull()
-                    ?.let { annotation ->
-                        selectedWebLink = annotation.item
-                    }
-            },
-        )
+        Text(text = annotatedString)
 
         selectedWebLink?.let { webLink ->
             WebLinkConfirmationDialog(
