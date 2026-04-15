@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,6 +66,7 @@ fun BisqSearchField(
                     Modifier
                         .width(if (rightSuffix == null) 50.dp else 90.dp)
                         .padding(end = BisqUIConstants.ScreenPaddingHalf, bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (value.isNotEmpty()) {
                     BisqButton(
