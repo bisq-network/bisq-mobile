@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
@@ -21,7 +22,6 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SearchI
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap.BisqGapHFill
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun BisqSearchField(
