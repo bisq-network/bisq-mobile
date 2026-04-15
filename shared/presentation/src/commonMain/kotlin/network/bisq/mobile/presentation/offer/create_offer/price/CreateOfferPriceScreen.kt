@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,47 @@ fun CreateOfferPriceScreen() {
         presenter.onPercentagePriceChanged(price.toString(), true)
     }
 
+    val validateFormattedPercentagePrice =
+        remember {
+            { it: Double? ->
+                when {
+                    it == null -> "mobile.validation.valueCannotBeEmpty".i18n()
+                    it < -10 -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeGreaterThanMarketPrice".i18n()
+                    it > 50 -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeLessThanMarketPrice".i18n()
+                    else -> null
+                }
+            }
+        }
+
+    val onFormattedPercentagePriceChange =
+        remember {
+            { it: String ->
+                val parsedValue = it.toDoubleOrNullLocaleAware()
+                percentageError = validateFormattedPercentagePrice(parsedValue)
+                presenter.onPercentagePriceChanged(it, percentageError == null)
+            }
+        }
+
+    val onFormattedPriceChange =
+        remember {
+            { it: String ->
+                fixedPriceError =
+                    if (it.toDoubleOrNullLocaleAware() == null) "mobile.validation.valueCannotBeEmpty".i18n() else null
+                if (fixedPriceError == null) {
+                    val parsedPercent = presenter.calculatePercentageForFixedValue(it) * 100
+                    fixedPriceError = validateFormattedPercentagePrice(parsedPercent)
+                }
+                presenter.onFixPriceChanged(it, fixedPriceError == null)
+            }
+        }
+
+    // todo: following LaunchedEffect needs to be removed. requires refactor of CreateOfferPriceScreen and it's presenter
+    LaunchedEffect(Unit) {
+        // the following is only fine because the value is initially set at init in presenter, before it's collected
+        onFormattedPercentagePriceChange(formattedPercentagePrice)
+        onFormattedPriceChange(formattedPrice)
+    }
+
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.review.price.price".i18n(),
         stepIndex = if (createCoordinator.skipCurrency) 3 else 4,
@@ -103,17 +145,7 @@ fun CreateOfferPriceScreen() {
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        onValueChange = {
-                            val parsedValue = it.toDoubleOrNullLocaleAware()
-                            percentageError =
-                                when {
-                                    parsedValue == null -> "mobile.validation.valueCannotBeEmpty".i18n()
-                                    parsedValue < -10 -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeGreaterThanMarketPrice".i18n()
-                                    parsedValue > 50 -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeLessThanMarketPrice".i18n()
-                                    else -> null
-                                }
-                            presenter.onPercentagePriceChanged(it, percentageError == null)
-                        },
+                        onValueChange = onFormattedPercentagePriceChange,
                         suffix = { BisqText.BaseLightGrey("%") },
                         isError = percentageError != null,
                         bottomMessage = percentageError,
@@ -134,20 +166,7 @@ fun CreateOfferPriceScreen() {
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        onValueChange = {
-                            fixedPriceError =
-                                if (it.toDoubleOrNullLocaleAware() == null) "mobile.validation.valueCannotBeEmpty".i18n() else null
-                            if (fixedPriceError == null) {
-                                val parsedPercent = presenter.calculatePercentageForFixedValue(it) * 100
-                                fixedPriceError =
-                                    when {
-                                        parsedPercent < MIN_ALLOWED_PERCENTAGE_FRACTION -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeGreaterThanMarketPrice".i18n()
-                                        parsedPercent > MAX_ALLOWED_PERCENTAGE_FRACTION -> "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeLessThanMarketPrice".i18n()
-                                        else -> null
-                                    }
-                            }
-                            presenter.onFixPriceChanged(it, fixedPriceError == null)
-                        },
+                        onValueChange = onFormattedPriceChange,
                         isError = fixedPriceError != null,
                         bottomMessage = fixedPriceError,
                     )
