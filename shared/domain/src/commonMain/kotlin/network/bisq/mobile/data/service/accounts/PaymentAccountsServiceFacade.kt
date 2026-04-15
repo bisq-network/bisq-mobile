@@ -68,6 +68,4 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
 
     // Protected helper methods
     protected fun getSortedAccounts(accounts: List<PaymentAccount>) = accounts.sortedBy { it.accountName }
-
-    protected fun getAccountsExcluding(accountName: String): List<PaymentAccount> = _accounts.value.filter { it.accountName != accountName }
 }

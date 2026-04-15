@@ -7,6 +7,8 @@ import androidx.savedstate.write
 import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
 import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
 
+private fun parsePaymentAccountType(value: String): PaymentAccountType? = runCatching { PaymentAccountType.valueOf(value) }.getOrNull()
+
 val paymentAccountTypeNavType: NavType<PaymentAccountType> =
     object : NavType<PaymentAccountType>(isNullableAllowed = false) {
         @Suppress("DEPRECATION")
@@ -15,10 +17,10 @@ val paymentAccountTypeNavType: NavType<PaymentAccountType> =
             key: String,
         ): PaymentAccountType? {
             val value = bundle.read { if (!contains(key) || isNull(key)) null else getString(key) }
-            return value?.let(PaymentAccountType::valueOf)
+            return value?.let(::parsePaymentAccountType)
         }
 
-        override fun parseValue(value: String): PaymentAccountType = PaymentAccountType.valueOf(value)
+        override fun parseValue(value: String): PaymentAccountType = parsePaymentAccountType(value) ?: throw IllegalArgumentException("Unknown PaymentAccountType: $value")
 
         override fun put(
             bundle: SavedState,

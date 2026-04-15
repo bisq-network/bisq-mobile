@@ -20,7 +20,7 @@ class PaymentAccountsApiGateway(
         webSocketApiClient.get<JsonArray>(basePath).mapCatching { jsonArray ->
             val decoded = jsonArray.mapNotNull { element -> decodePaymentAccountOrNull(element) }
             if (jsonArray.isNotEmpty() && decoded.isEmpty()) {
-                throw IllegalStateException("Unable to decode any fiat payment accounts from non-empty response")
+                throw IllegalStateException("Unable to decode any payment accounts from non-empty response")
             }
             decoded
         }
