@@ -34,7 +34,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CheckCircleIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CopyIcon
@@ -82,11 +81,7 @@ fun BisqTextFieldV0(
     color: Color = BisqTheme.colors.light_grey20,
     colors: BisqTextFieldColors = BisqTextFieldColors.default(),
     textStyle: TextStyle =
-        TextStyle(
-            color = color,
-            fontSize = 18.sp,
-            textDecoration = TextDecoration.None,
-        ),
+        BisqTheme.typography.largeRegular.copy(color = color, textDecoration = TextDecoration.None),
     label: String? = null,
     placeholder: String? = null,
     leadingIcon: @Composable (() -> Unit)? = null,

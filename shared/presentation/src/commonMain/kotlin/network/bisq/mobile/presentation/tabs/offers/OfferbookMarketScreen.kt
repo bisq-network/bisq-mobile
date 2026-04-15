@@ -89,7 +89,6 @@ private fun OfferbookMarketScreenContent(
             value = searchText,
             onValueChange = onSearchTextChange,
             rightSuffix = {
-                // TODO: Height to be reduced with Icon only buttons
                 BisqButton(
                     iconOnly = {
                         if (filter == MarketFilter.WithOffers) {
