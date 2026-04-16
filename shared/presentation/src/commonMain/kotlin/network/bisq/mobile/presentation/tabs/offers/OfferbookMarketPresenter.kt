@@ -15,6 +15,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.domain.utils.combine
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -104,17 +105,16 @@ class OfferbookMarketPresenter(
 
     private fun observeMarketListItems() {
         presenterScope.launch {
-            network.bisq.mobile.domain.utils
-                .combine(
-                    filter,
-                    _searchText,
-                    sortBy,
-                    _marketPriceUpdated,
-                    mainPresenter.languageCode,
-                    offersServiceFacade.offerbookMarketItems,
-                ) { filter, searchText, sortBy, _, languageCode, items ->
-                    computeOfferbookMarketListUseCase(filter, searchText, sortBy, languageCode, items)
-                }.flowOn(Dispatchers.Default)
+            combine(
+                filter,
+                _searchText,
+                sortBy,
+                _marketPriceUpdated,
+                mainPresenter.languageCode,
+                offersServiceFacade.offerbookMarketItems,
+            ) { filter, searchText, sortBy, _, languageCode, items ->
+                computeOfferbookMarketListUseCase(filter, searchText, sortBy, languageCode, items)
+            }.flowOn(Dispatchers.Default)
                 .collect { result ->
                     _marketListItemWithNumOffers.value = result
                 }
