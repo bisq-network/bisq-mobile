@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.common.domain.service.user_profile
 
-import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -166,7 +165,7 @@ class ClientUserProfileServiceFacade(
         val image: PlatformImage? =
             clientCatHashService.getImage(
                 pubKeyHash,
-                solutionEncoded.decodeBase64Bytes(),
+                Base64.decode(solutionEncoded),
                 0,
                 imageSize,
             )

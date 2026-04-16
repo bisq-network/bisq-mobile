@@ -10,5 +10,4 @@ fun AlertTypeDto.toAlertTypeOrNull(): AlertType? =
         AlertTypeDto.EMERGENCY -> AlertType.EMERGENCY
         AlertTypeDto.BAN -> AlertType.BAN
         AlertTypeDto.BANNED_ACCOUNT_DATA -> AlertType.BANNED_ACCOUNT_DATA
-        else -> null
     }
