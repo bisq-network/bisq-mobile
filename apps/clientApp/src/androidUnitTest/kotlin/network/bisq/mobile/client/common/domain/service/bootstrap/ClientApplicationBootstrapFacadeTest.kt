@@ -129,9 +129,6 @@ class ClientApplicationBootstrapFacadeTest {
                     selectedProxyOption = BisqProxyOption.NONE,
                 )
 
-            // Then: Facade should be created successfully
-            assertTrue(facade != null, "Facade should be created")
-
             // Verify settings are correctly stored
             val settings = sensitiveSettingsRepository.fetch()
             assertTrue(settings.bisqApiUrl == DEMO_API_URL, "Settings should have demo API URL")

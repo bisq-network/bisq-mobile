@@ -147,7 +147,7 @@ class WebSocketClientImplReconnectTest {
             // Then - final state should be Disconnected with MaximumRetryReachedException
             val state = client.webSocketClientStatus.value
             assertTrue(state is ConnectionState.Disconnected)
-            val error = (state as ConnectionState.Disconnected).error
+            val error = state.error
             // Enforce strict MaximumRetryReachedException - not just any RuntimeException
             assertTrue(
                 error is MaximumRetryReachedException,

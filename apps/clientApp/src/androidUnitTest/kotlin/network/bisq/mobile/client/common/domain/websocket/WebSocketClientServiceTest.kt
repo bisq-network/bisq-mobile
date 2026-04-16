@@ -249,7 +249,7 @@ class WebSocketClientServiceTest {
 
             // Then
             assertTrue(initialState is ConnectionState.Disconnected)
-            assertEquals(null, (initialState as ConnectionState.Disconnected).error)
+            assertEquals(null, initialState.error)
         }
 
     @Test
