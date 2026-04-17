@@ -27,7 +27,7 @@ val sharedKScanModule = ":shared:kscan"
 val sharedTestUtilsModule = ":shared:test-utils"
 
 dependencies {
-    debugImplementation(compose.uiTooling)
+    debugImplementation(libs.compose.ui.tooling)
     // IMPORTANT: This is needed for Robolectric tests to work in both variants
     // The fact that its needed to be included in the build might be a compose issue
     // We accept that for now as the lib size is minimal and won't impact the prod code.
@@ -111,11 +111,11 @@ kotlin {
             api(project(sharedPresentationModule))
 
             // Compose
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
+            implementation(libs.compose.components.resources)
+            implementation(libs.compose.ui.tooling.preview)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.ui)
 
             // AndroidX
             implementation(libs.androidx.datastore.okio)
@@ -155,9 +155,6 @@ kotlin {
         }
 
         androidMain.dependencies {
-            // Compose
-            implementation(compose.preview)
-
             // AndroidX
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.splashscreen)
@@ -329,11 +326,6 @@ android {
 
     // Needed for aab files renaming
     setProperty("archivesBaseName", getArtifactName(defaultConfig))
-}
-
-// -------------------- Dependencies --------------------
-dependencies {
-    debugImplementation(compose.uiTooling)
 }
 
 // -------------------- Build Tasks Configuration --------------------

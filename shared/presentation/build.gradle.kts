@@ -15,7 +15,7 @@ plugins {
 }
 
 dependencies {
-    debugImplementation(compose.uiTooling)
+    debugImplementation(libs.compose.ui.tooling)
 }
 
 version = project.findProperty("shared.version") as String
@@ -40,15 +40,12 @@ kotlin {
             implementation(project(":shared:domain"))
             implementation(project(":shared:kscan"))
 
-            api(compose.material3)
-            api(compose.components.resources)
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.ui)
-            implementation(compose.components.uiToolingPreview)
-            implementation(compose.material3)
-            implementation(compose.materialIconsExtended)
-            implementation(compose.ui)
+            api(libs.compose.material3)
+            api(libs.compose.components.resources)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.material.icons.extended)
 
             // AndroidX
             implementation(libs.androidx.lifecycle.runtime.compose)
@@ -109,8 +106,7 @@ kotlin {
                 implementation(libs.kotlin.test)
 
                 // Compose
-                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.uiTest)
+                implementation(libs.compose.ui.test)
 
                 // Test utilities
                 implementation(project(sharedTestUtilsModule))
