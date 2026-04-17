@@ -50,6 +50,8 @@ kotlin {
             // AndroidX
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
+            implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
 
             // KotlinX
             implementation(libs.kotlinx.coroutines.core)
