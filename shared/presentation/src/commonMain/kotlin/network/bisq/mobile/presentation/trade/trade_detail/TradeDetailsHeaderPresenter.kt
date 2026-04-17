@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.formatters.TradeDurationFormatter
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -60,9 +60,6 @@ class TradeDetailsHeaderPresenter(
 
     private val _mediationError = MutableStateFlow("")
     val mediationError: StateFlow<String> = _mediationError.asStateFlow()
-
-    private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isShowDetails: StateFlow<Boolean> = _isShowDetails.asStateFlow()
 
     private val _tradeUiState = MutableStateFlow<TradeDetailsHeaderTradeUiState?>(null)
     val tradeUiState: StateFlow<TradeDetailsHeaderTradeUiState?> = _tradeUiState.asStateFlow()
@@ -117,7 +114,6 @@ class TradeDetailsHeaderPresenter(
                 tradesServiceFacade.selectedTrade.flatMapLatest { trade ->
                     trade?.bisqEasyTradeModel?.bitcoinPaymentData ?: flowOf(null)
                 }
-            val uiFlagsFlow = combine(isShowDetails, isInteractive) { showDetails, isInteractive -> showDetails to isInteractive }
             val actionsFlow =
                 combine(interruptTradeButtonText, openMediationButtonText, isInMediation, tradeCloseType) { interruptTradeButtonText, openMediationButtonText, isInMediation, tradeCloseType ->
                     Actions(interruptTradeButtonText, openMediationButtonText, isInMediation, tradeCloseType)
@@ -145,24 +141,21 @@ class TradeDetailsHeaderPresenter(
                         }
                     }
                 }
-            combine(
-                uiFlagsFlow,
-                actionsFlow,
-                paymentDataFlow,
-                formattedTradeDurationFlow,
-            ) { uiFlags, actions, paymentData, formattedTradeDuration ->
-                TradeDetailsHeaderSessionUiState(
-                    showDetails = uiFlags.first,
-                    isInteractive = uiFlags.second,
-                    interruptTradeButtonText = actions.interruptTradeButtonText,
-                    openMediationButtonText = actions.openMediationButtonText,
-                    isInMediation = actions.isInMediation,
-                    isCompleted = actions.tradeCloseType == TradeCloseType.COMPLETED,
-                    paymentProof = paymentData.paymentProof,
-                    receiverAddress = paymentData.receiverAddress,
-                    formattedTradeDuration = formattedTradeDuration,
-                )
-            }.collect { _sessionUiState.value = it }
+            combine(actionsFlow, paymentDataFlow, formattedTradeDurationFlow, isInteractive) { actions, payment, formattedTradeDuration, interactive ->
+                _sessionUiState.update { prev ->
+                    prev.copy(
+                        showDetails = prev.showDetails,
+                        isInteractive = interactive,
+                        interruptTradeButtonText = actions.interruptTradeButtonText,
+                        openMediationButtonText = actions.openMediationButtonText,
+                        isInMediation = actions.isInMediation,
+                        isCompleted = actions.tradeCloseType == TradeCloseType.COMPLETED,
+                        paymentProof = payment.paymentProof,
+                        receiverAddress = payment.receiverAddress,
+                        formattedTradeDuration = formattedTradeDuration,
+                    )
+                }
+            }.collect { }
         }
     }
 
@@ -385,7 +378,7 @@ class TradeDetailsHeaderPresenter(
 
     fun onToggleHeader() {
         disableInteractive()
-        this._isShowDetails.value = !this._isShowDetails.value
+        _sessionUiState.update { it.copy(showDetails = !it.showDetails) }
         enableInteractive()
     }
 
@@ -396,6 +389,7 @@ class TradeDetailsHeaderPresenter(
         _openMediationButtonText.value = ""
         _showInterruptionConfirmationDialog.value = false
         _showMediationConfirmationDialog.value = false
+        _mediationError.value = ""
         _tradeUiState.value = null
         _sessionUiState.value = TradeDetailsHeaderSessionUiState()
         // Intentionally not resetting _selectedTrade to maintain trade context between view attach/detach cycles

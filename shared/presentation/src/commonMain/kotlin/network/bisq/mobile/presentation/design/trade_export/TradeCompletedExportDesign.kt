@@ -216,7 +216,7 @@ private fun TradeSummaryCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     BisqText.SmallLight(
-                        text = "View in block explorer \u2192",
+                        text = "mobile.bisqEasy.openTrades.tradeDetails.viewInBlockExplorer".i18n(),
                         color = BisqTheme.colors.primary,
                         modifier =
                             Modifier

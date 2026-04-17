@@ -57,9 +57,11 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
+@ExcludeFromCoverage
 @Composable
 fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
     RememberPresenterLifecycle(presenter)
@@ -171,7 +173,7 @@ fun TradeDetailsHeaderContent(
                             )
                             val explorerUrl = "https://mempool.space/tx/$paymentProof"
                             LinkButton(
-                                text = "View in block explorer \u2192",
+                                text = "mobile.bisqEasy.openTrades.tradeDetails.viewInBlockExplorer".i18n(),
                                 link = explorerUrl,
                                 padding = PaddingValues(0.dp),
                                 modifier = Modifier.defaultMinSize(minHeight = 0.dp),
@@ -423,6 +425,7 @@ private fun CompletedTradeDetailsSection(
 private fun String.truncateForDisplay(maxLength: Int): String =
     if (length <= maxLength) this else take(maxLength) + "\u2026"
 
+@ExcludeFromCoverage
 private fun previewFormattedTradeDuration(isCompleted: Boolean): String =
     if (isCompleted) {
         TradeDurationFormatter.formatAge(
@@ -433,6 +436,7 @@ private fun previewFormattedTradeDuration(isCompleted: Boolean): String =
         ""
     }
 
+@ExcludeFromCoverage
 private fun previewTradeDetailsHeaderStates(
     isSell: Boolean,
     showDetails: Boolean,
