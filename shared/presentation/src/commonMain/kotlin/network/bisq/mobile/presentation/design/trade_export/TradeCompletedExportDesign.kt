@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_completed
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -30,6 +31,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CopyIco
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBox
+import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxRow
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -43,7 +45,7 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
  * Desktop has a 5-column header grid + 2-column body grid. On mobile this becomes:
  * - Completion header (icon + title)
  * - Trade summary card with key-value rows using InfoBox/InfoRow
- * - Copyable fields (trade ID, tx ID) with inline copy icons
+ * - Copyable fields (trade ID, tx ID, block explorer URL) with inline copy icons
  * - Two action buttons: "Export trade data" (share sheet) + "Close trade"
  *
  * ## Export flow (no additional UI needed)
@@ -70,8 +72,7 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
  * - The existing `TradesServiceFacade.exportTradeDate()` stub should be replaced
  *   with local CSV generation + share (no backend call needed)
  */
-
-private data class SimulatedCompletedTrade(
+data class SimulatedCompletedTrade(
     val isBuyer: Boolean,
     val peerName: String,
     val baseAmount: String,
@@ -81,12 +82,14 @@ private data class SimulatedCompletedTrade(
     val priceCurrency: String,
     val fiatPaymentMethod: String,
     val bitcoinSettlementMethod: String,
+    val myRole: String,
+    val peerRole: String,
     val tradeDate: String,
-    val tradeDuration: String,
     val tradeId: String,
     val shortTradeId: String,
     val txId: String?,
     val bitcoinAddress: String?,
+    val peerNetworkAddress: String?,
 )
 
 @Composable
@@ -95,7 +98,7 @@ private fun TradeCompletedScreen(
     onExport: () -> Unit,
     onCloseTrade: () -> Unit,
     onCopyValue: (String) -> Unit,
-    onOpenExplorer: (String) -> Unit,
+    onOpenExplorerUrl: (String) -> Unit,
 ) {
     Column(
         modifier =
@@ -112,10 +115,10 @@ private fun TradeCompletedScreen(
         TradeSummaryCard(
             trade = trade,
             onCopyValue = onCopyValue,
-            onOpenExplorer = onOpenExplorer,
+            onOpenExplorerUrl = onOpenExplorerUrl,
         )
 
-        BisqGap.V2()
+        BisqGap.V1()
 
         ActionButtons(onExport = onExport, onCloseTrade = onCloseTrade)
     }
@@ -146,7 +149,7 @@ private fun CompletionHeader(trade: SimulatedCompletedTrade) {
 private fun TradeSummaryCard(
     trade: SimulatedCompletedTrade,
     onCopyValue: (String) -> Unit,
-    onOpenExplorer: (String) -> Unit,
+    onOpenExplorerUrl: (String) -> Unit,
 ) {
     Column(
         modifier =
@@ -174,73 +177,84 @@ private fun TradeSummaryCard(
             value2 = "${trade.fiatPaymentMethod} / ${trade.bitcoinSettlementMethod}",
         )
 
+        InfoRow(
+            label1 = "My role",
+            value1 = trade.myRole,
+            label2 = "Peer role",
+            value2 = trade.peerRole,
+        )
+
         BisqHDivider()
 
         InfoRow(
             label1 = "Take offer date",
             value1 = trade.tradeDate,
             label2 = "Trade duration",
-            value2 = trade.tradeDuration,
+            value2 = "trade.tradeDuration",
         )
 
-        CopyableInfoRow(
+        InfoBoxRow(
             label = "Trade ID",
             value = trade.shortTradeId,
-            fullValue = trade.tradeId,
-            onCopy = onCopyValue,
+            fullValueToCopy = trade.tradeId,
+            showCopy = true,
         )
 
         if (!trade.txId.isNullOrBlank()) {
             val isOnChainTx = trade.txId.matches(Regex("^[0-9a-fA-F]{64}$"))
-            CopyableInfoRow(
+            InfoBoxRow(
                 label = if (isOnChainTx) "Transaction ID" else "Payment proof",
                 value = trade.txId.take(12) + "\u2026",
-                fullValue = trade.txId,
-                onCopy = onCopyValue,
+                fullValueToCopy = trade.txId,
+                showCopy = true,
             )
 
             if (isOnChainTx) {
-                BisqText.SmallLight(
-                    text = "View in block explorer \u2192",
-                    color = BisqTheme.colors.primary,
-                    modifier = Modifier.clickable { onOpenExplorer(trade.txId) },
-                )
+                val explorerUrl = "https://mempool.space/tx/${trade.txId}"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    BisqText.SmallLight(
+                        text = "View in block explorer \u2192",
+                        color = BisqTheme.colors.primary,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .clickable { onOpenExplorerUrl(explorerUrl) },
+                    )
+                    BisqText.SmallLight(
+                        text = "Copy link",
+                        color = BisqTheme.colors.primary,
+                        modifier =
+                            Modifier
+                                .clickable { onCopyValue(explorerUrl) }
+                                .padding(BisqUIConstants.ScreenPaddingHalf)
+                                .semantics {
+                                    contentDescription =
+                                        "Copy link"
+                                },
+                    )
+                }
             }
         }
 
         if (!trade.bitcoinAddress.isNullOrBlank()) {
-            CopyableInfoRow(
+            InfoBoxRow(
                 label = "Receiver address",
                 value = trade.bitcoinAddress.take(16) + "\u2026",
-                fullValue = trade.bitcoinAddress,
-                onCopy = onCopyValue,
+                fullValueToCopy = trade.bitcoinAddress,
+                showCopy = true,
             )
         }
-    }
-}
 
-@Composable
-private fun CopyableInfoRow(
-    label: String,
-    value: String,
-    fullValue: String,
-    onCopy: (String) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            InfoBox(label = label, value = value)
-        }
-        IconButton(
-            onClick = { onCopy(fullValue) },
-            modifier =
-                Modifier
-                    .size(BisqUIConstants.ScreenPadding2X)
-                    .semantics { contentDescription = "Copy" },
-        ) {
-            CopyIcon()
+        if (!trade.peerNetworkAddress.isNullOrBlank()) {
+            InfoBoxRow(
+                label = "Peer network address",
+                value = trade.peerNetworkAddress.take(16) + "\u2026",
+                fullValueToCopy = trade.peerNetworkAddress,
+                showCopy = true,
+            )
         }
     }
 }
@@ -279,12 +293,14 @@ private val sampleBuyerTrade =
         priceCurrency = "USD/BTC",
         fiatPaymentMethod = "SEPA",
         bitcoinSettlementMethod = "On-chain",
+        myRole = "Maker",
+        peerRole = "Taker",
         tradeDate = "Mar 27, 2026 14:32",
-        tradeDuration = "2h 15m",
         tradeId = "t-abc123def456ghi789",
         shortTradeId = "t-abc123d",
         txId = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd",
         bitcoinAddress = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+        peerNetworkAddress = "runbtcx3wfygbq2wdde6qzjnpyrqn3gvbks7t5jdymmunxttdvvttpyd.onion",
     )
 
 private val sampleSellerTrade =
@@ -298,12 +314,14 @@ private val sampleSellerTrade =
         priceCurrency = "EUR/BTC",
         fiatPaymentMethod = "Revolut",
         bitcoinSettlementMethod = "Lightning",
+        myRole = "Taker",
+        peerRole = "Maker",
         tradeDate = "Mar 26, 2026 09:15",
-        tradeDuration = "45m",
         tradeId = "t-xyz789abc123def456",
         shortTradeId = "t-xyz789a",
         txId = "lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqf",
         bitcoinAddress = null,
+        peerNetworkAddress = "mempool4t6mypeemozyterviq3i5de4kpoua65r3qkn5i3kknu5l2cad.onion",
     )
 
 @ExcludeFromCoverage
@@ -316,7 +334,7 @@ private fun BuyerCompleted_Preview() {
             onExport = {},
             onCloseTrade = {},
             onCopyValue = {},
-            onOpenExplorer = {},
+            onOpenExplorerUrl = {},
         )
     }
 }
@@ -331,7 +349,7 @@ private fun SellerCompleted_Preview() {
             onExport = {},
             onCloseTrade = {},
             onCopyValue = {},
-            onOpenExplorer = {},
+            onOpenExplorerUrl = {},
         )
     }
 }
@@ -356,7 +374,7 @@ private fun SummaryCard_Buyer_Preview() {
             TradeSummaryCard(
                 trade = sampleBuyerTrade,
                 onCopyValue = {},
-                onOpenExplorer = {},
+                onOpenExplorerUrl = {},
             )
         }
     }
@@ -382,7 +400,7 @@ private fun SummaryCard_Seller_Lightning_Preview() {
             TradeSummaryCard(
                 trade = sampleSellerTrade,
                 onCopyValue = {},
-                onOpenExplorer = {},
+                onOpenExplorerUrl = {},
             )
         }
     }

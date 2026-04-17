@@ -102,13 +102,14 @@ class TradeDirectionPresentationTest {
 
             presenter.onViewAttached()
 
-            assertEquals("offer.sell".i18n().uppercase(), presenter.direction)
-            assertEquals("bisqEasy.tradeState.header.send".i18n(), presenter.leftAmountDescription)
-            assertEquals("bisqEasy.tradeState.header.receive".i18n(), presenter.rightAmountDescription)
-            assertEquals("0.00433161", presenter.leftAmount.value)
-            assertEquals("BTC", presenter.leftCode.value)
-            assertEquals("500.00", presenter.rightAmount.value)
-            assertEquals("USD", presenter.rightCode.value)
+            val tradeHeader = presenter.tradeUiState.value!!
+            assertEquals("bisqEasy.tradeState.header.send".i18n(), tradeHeader.leftAmountDescription)
+            assertEquals("bisqEasy.tradeState.header.receive".i18n(), tradeHeader.rightAmountDescription)
+            assertEquals("0.00433161", tradeHeader.leftAmount)
+            assertEquals("BTC", tradeHeader.leftCode)
+            assertEquals("500.00", tradeHeader.rightAmount)
+            assertEquals("USD", tradeHeader.rightCode)
+            assertEquals(true, tradeHeader.isSell)
         }
 
     @Test
@@ -148,12 +149,13 @@ class TradeDirectionPresentationTest {
 
             presenter.onViewAttached()
 
-            assertEquals("offer.buy".i18n().uppercase(), presenter.direction)
-            assertEquals("bisqEasy.tradeState.header.pay".i18n(), presenter.leftAmountDescription)
-            assertEquals("bisqEasy.tradeState.header.receive".i18n(), presenter.rightAmountDescription)
-            assertEquals("500.00", presenter.leftAmount.value)
-            assertEquals("USD", presenter.leftCode.value)
-            assertEquals("0.00433161", presenter.rightAmount.value)
-            assertEquals("BTC", presenter.rightCode.value)
+            val tradeHeader = presenter.tradeUiState.value!!
+            assertEquals("bisqEasy.tradeState.header.pay".i18n(), tradeHeader.leftAmountDescription)
+            assertEquals("bisqEasy.tradeState.header.receive".i18n(), tradeHeader.rightAmountDescription)
+            assertEquals("500.00", tradeHeader.leftAmount)
+            assertEquals("USD", tradeHeader.leftCode)
+            assertEquals("0.00433161", tradeHeader.rightAmount)
+            assertEquals("BTC", tradeHeader.rightCode)
+            assertEquals(false, tradeHeader.isSell)
         }
 }
