@@ -13,9 +13,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
-import network.bisq.mobile.presentation.common.ui.navigation.paymentAccountTypeNavType
 import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
 import network.bisq.mobile.presentation.create_payment_account.CreatePaymentAccountScreen
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideOverview
@@ -56,7 +57,6 @@ import network.bisq.mobile.presentation.trade.trade_chat.ChatRulesScreen
 import network.bisq.mobile.presentation.trade.trade_chat.TradeChatScreen
 import network.bisq.mobile.presentation.trade.trade_detail.OpenTradeScreen
 import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 const val NAV_ANIM_MS = 300
 
@@ -116,11 +116,15 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     addScreen<NavRoute.UserProfile> { UserProfileScreen() }
     addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
     addScreen<NavRoute.PaymentAccountsMusig> { PaymentAccountsMusigScreen() }
-    addScreen<NavRoute.CreatePaymentAccount>(
-        typeMap = mapOf(typeOf<PaymentAccountType>() to paymentAccountTypeNavType),
-    ) { backStackEntry ->
+    addScreen<NavRoute.CreatePaymentAccount> { backStackEntry ->
         val route: NavRoute.CreatePaymentAccount = backStackEntry.toRoute()
-        CreatePaymentAccountScreen(accountType = route.accountType)
+        val accountType = runCatching { PaymentAccountType.valueOf(route.accountTypeName) }.getOrNull()
+
+        if (accountType == null) {
+            ErrorState(message = "mobile.error.generic".i18n())
+        } else {
+            CreatePaymentAccountScreen(accountType = accountType)
+        }
     }
     addScreen<NavRoute.IgnoredUsers> { IgnoredUsersScreen() }
     addScreen<NavRoute.Resources> { ResourcesScreen() }

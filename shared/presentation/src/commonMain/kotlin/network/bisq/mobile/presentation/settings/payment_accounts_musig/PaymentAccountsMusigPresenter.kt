@@ -47,11 +47,11 @@ open class PaymentAccountsMusigPresenter(
     }
 
     private fun onAddCryptoAccountClick() {
-        navigateTo(NavRoute.CreatePaymentAccount(accountType = PaymentAccountType.CRYPTO))
+        navigateTo(NavRoute.CreatePaymentAccount(PaymentAccountType.CRYPTO))
     }
 
     private fun onAddFiatAccountClick() {
-        navigateTo(NavRoute.CreatePaymentAccount(accountType = PaymentAccountType.FIAT))
+        navigateTo(NavRoute.CreatePaymentAccount(PaymentAccountType.FIAT))
     }
 
     private fun onTabSelect(tab: PaymentAccountTab) {

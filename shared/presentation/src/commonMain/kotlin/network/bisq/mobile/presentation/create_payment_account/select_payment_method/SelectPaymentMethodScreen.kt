@@ -110,7 +110,7 @@ private fun PaymentMethodsLoadedState(
 
         BisqSearchField(
             value = uiState.searchQuery,
-            onValueChange = { value, _ -> onAction(SelectPaymentMethodUiAction.OnSearchQueryChange(value)) },
+            onValueChange = { value -> onAction(SelectPaymentMethodUiAction.OnSearchQueryChange(value)) },
         )
         BisqGap.VHalf()
 
