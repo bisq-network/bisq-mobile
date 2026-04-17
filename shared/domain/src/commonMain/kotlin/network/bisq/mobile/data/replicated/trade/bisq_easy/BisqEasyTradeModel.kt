@@ -73,4 +73,5 @@ class BisqEasyTradeModel(
     val errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.errorStackTrace)
     val peersErrorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorMessage)
     val peersErrorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorStackTrace)
+    val tradeCompletedDate: MutableStateFlow<Long?> = MutableStateFlow(bisqEasyTradeDto.tradeCompletedDate)
 }

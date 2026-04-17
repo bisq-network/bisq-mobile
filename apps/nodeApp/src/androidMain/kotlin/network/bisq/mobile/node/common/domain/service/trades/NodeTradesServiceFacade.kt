@@ -596,6 +596,7 @@ class NodeTradesServiceFacade(
         pins +=
             trade.tradeStateObservable().addObserver { tradeState ->
                 openTradeItem.bisqEasyTradeModel.tradeState.value = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(tradeState)
+                openTradeItem.bisqEasyTradeModel.tradeCompletedDate.value = trade.tradeCompletedDate.orElse(null)
             }
         pins +=
             trade.interruptTradeInitiator.addObserver { interruptTradeInitiator ->

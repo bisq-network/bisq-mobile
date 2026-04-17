@@ -15,4 +15,6 @@ data class TradePropertiesDto(
     var errorStackTrace: String? = null,
     var peersErrorMessage: String? = null,
     var peersErrorStackTrace: String? = null,
+    /** Epoch millis when the trade reached completed; mirrors BisqEasyTradeDto.tradeCompletedDate for incremental WS updates. */
+    var tradeCompletedDate: Long? = null,
 )

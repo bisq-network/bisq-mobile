@@ -40,6 +40,7 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.formatters.TradeDurationFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -376,7 +377,7 @@ private fun CompletedTradeDetailsSection(
 
         InfoBox(
             label = "bisqEasy.openTrades.tradeDetails.tradeDuration".i18n(),
-            value = "8 hours", //TODO
+            value = sessionUiState.formattedTradeDuration,
         )
 
         BisqGap.V1()
@@ -422,6 +423,16 @@ private fun CompletedTradeDetailsSection(
 private fun String.truncateForDisplay(maxLength: Int): String =
     if (length <= maxLength) this else take(maxLength) + "\u2026"
 
+private fun previewFormattedTradeDuration(isCompleted: Boolean): String =
+    if (isCompleted) {
+        TradeDurationFormatter.formatAge(
+            tradeCompletedDate = 1_720_000_000_000L,
+            takeOfferDate = 1_719_971_200_000L,
+        )
+    } else {
+        ""
+    }
+
 private fun previewTradeDetailsHeaderStates(
     isSell: Boolean,
     showDetails: Boolean,
@@ -464,6 +475,7 @@ private fun previewTradeDetailsHeaderStates(
                 paymentProof = paymentProof,
                 receiverAddress = receiverAddress,
                 isCompleted = isCompleted,
+                formattedTradeDuration = previewFormattedTradeDuration(isCompleted),
             )
     } else {
         TradeDetailsHeaderTradeUiState(
@@ -498,6 +510,7 @@ private fun previewTradeDetailsHeaderStates(
                 paymentProof = paymentProof,
                 receiverAddress = receiverAddress,
                 isCompleted = isCompleted,
+                formattedTradeDuration = previewFormattedTradeDuration(isCompleted),
             )
     }
 

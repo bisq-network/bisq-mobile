@@ -25,4 +25,5 @@ data class BisqEasyTradeDto(
     val errorStackTrace: String?,
     val peersErrorMessage: String?,
     val peersErrorStackTrace: String?,
+    val tradeCompletedDate: Long? = null,
 )

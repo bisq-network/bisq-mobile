@@ -40,6 +40,7 @@ data class TradeDetailsHeaderSessionUiState(
     val isCompleted: Boolean = false,
     val paymentProof: String? = null,
     val receiverAddress: String? = null,
+    val formattedTradeDuration: String = "",
 )
 
 fun TradeItemPresentationModel.toHeaderTradeUiState(

@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import network.bisq.mobile.domain.formatters.TradeDurationFormatter
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -124,7 +126,31 @@ class TradeDetailsHeaderPresenter(
                 combine(paymentProofFlow, receiverAddressFlow) { paymentProof, receiverAddress ->
                     PaymentData(paymentProof, receiverAddress)
                 }
-            combine(uiFlagsFlow, actionsFlow, paymentDataFlow) { uiFlags, actions, paymentData ->
+            val formattedTradeDurationFlow =
+                tradesServiceFacade.selectedTrade.flatMapLatest { trade ->
+                    if (trade == null) {
+                        flowOf("")
+                    } else {
+                        val takeOfferDate = trade.bisqEasyTradeModel.takeOfferDate
+                        // Combine with tradeState so we recompute when either updates (completion date is
+                        // pushed from the node observer; tradeState also moves to BTC_CONFIRMED).
+                        combine(
+                            trade.bisqEasyTradeModel.tradeState,
+                            trade.bisqEasyTradeModel.tradeCompletedDate,
+                        ) { _, completedDate: Long? ->
+                            TradeDurationFormatter.formatAge(
+                                tradeCompletedDate = completedDate,
+                                takeOfferDate = takeOfferDate,
+                            )
+                        }
+                    }
+                }
+            combine(
+                uiFlagsFlow,
+                actionsFlow,
+                paymentDataFlow,
+                formattedTradeDurationFlow,
+            ) { uiFlags, actions, paymentData, formattedTradeDuration ->
                 TradeDetailsHeaderSessionUiState(
                     showDetails = uiFlags.first,
                     isInteractive = uiFlags.second,
@@ -134,6 +160,7 @@ class TradeDetailsHeaderPresenter(
                     isCompleted = actions.tradeCloseType == TradeCloseType.COMPLETED,
                     paymentProof = paymentData.paymentProof,
                     receiverAddress = paymentData.receiverAddress,
+                    formattedTradeDuration = formattedTradeDuration,
                 )
             }.collect { _sessionUiState.value = it }
         }

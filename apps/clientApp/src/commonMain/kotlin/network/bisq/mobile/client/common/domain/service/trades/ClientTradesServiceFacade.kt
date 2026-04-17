@@ -262,6 +262,7 @@ class ClientTradesServiceFacade(
             log.i { "Updating trade $tradeId state from ${trade.bisqEasyTradeModel.tradeState.value} to $it" }
             trade.bisqEasyTradeModel.tradeState.value = it
         }
+        data.tradeCompletedDate?.let { trade.bisqEasyTradeModel.tradeCompletedDate.value = it }
         data.paymentAccountData?.let { trade.bisqEasyTradeModel.paymentAccountData.value = it }
         data.bitcoinPaymentData?.let { trade.bisqEasyTradeModel.bitcoinPaymentData.value = it }
         data.paymentProof?.let { trade.bisqEasyTradeModel.paymentProof.value = it }
