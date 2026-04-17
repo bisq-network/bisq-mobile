@@ -43,15 +43,13 @@ kotlin {
             // Compose
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
+            implementation(libs.compose.ui.tooling.preview)
 
             // Other libraries
             implementation(libs.navigation.compose)
         }
 
         androidMain.dependencies {
-            // Compose
-            implementation(libs.compose.ui.tooling.preview)
-
             // AndroidX
             implementation(libs.androidx.activity.compose)
         }

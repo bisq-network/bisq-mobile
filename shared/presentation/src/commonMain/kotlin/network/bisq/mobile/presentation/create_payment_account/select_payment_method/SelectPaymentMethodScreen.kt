@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
@@ -35,7 +36,6 @@ import network.bisq.mobile.presentation.create_payment_account.select_payment_me
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.ui.CryptoPaymentMethodCard
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.ui.FiatChargebackRiskFilterSection
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.ui.FiatPaymentMethodCard
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @ExcludeFromCoverage
 @Composable

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -19,7 +20,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountMethodIcon
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun CryptoPaymentMethodCard(
