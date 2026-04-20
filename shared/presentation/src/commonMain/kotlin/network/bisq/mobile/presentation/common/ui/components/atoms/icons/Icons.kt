@@ -54,9 +54,6 @@ import bisqapps.shared.presentation.generated.resources.icon_search_dimmed
 import bisqapps.shared.presentation.generated.resources.icon_send
 import bisqapps.shared.presentation.generated.resources.icon_sort
 import bisqapps.shared.presentation.generated.resources.icon_sort_green
-import bisqapps.shared.presentation.generated.resources.icon_star_green
-import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
-import bisqapps.shared.presentation.generated.resources.icon_star_half_green
 import bisqapps.shared.presentation.generated.resources.icon_warning
 import bisqapps.shared.presentation.generated.resources.icon_warning_filled
 import bisqapps.shared.presentation.generated.resources.icon_warning_grey
@@ -342,25 +339,6 @@ fun SortIcon(modifier: Modifier = Modifier) {
 @Composable
 fun GreenSortIcon(modifier: Modifier = Modifier) {
     BisqResourceIcon(Res.drawable.icon_sort_green, "Sort icon", modifier)
-}
-
-@ExcludeFromCoverage
-@Composable
-fun StarEmptyIcon(modifier: Modifier = Modifier.size(16.dp)) {
-    // TODO: Import right resource for this
-    BisqResourceIcon(Res.drawable.icon_star_grey_hollow, "Empty star icon", modifier)
-}
-
-@ExcludeFromCoverage
-@Composable
-fun StarHalfFilledIcon(modifier: Modifier = Modifier.size(16.dp)) {
-    BisqResourceIcon(Res.drawable.icon_star_half_green, "Half filled star icon", modifier)
-}
-
-@ExcludeFromCoverage
-@Composable
-fun StarFillIcon(modifier: Modifier = Modifier.size(16.dp)) {
-    BisqResourceIcon(Res.drawable.icon_star_green, "Filled star icon", modifier)
 }
 
 @ExcludeFromCoverage

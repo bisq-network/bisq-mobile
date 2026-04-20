@@ -23,6 +23,7 @@ import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
 import bisqapps.shared.presentation.generated.resources.icon_star_half_green
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.jetbrains.compose.resources.painterResource
 
 @Immutable
@@ -88,9 +89,13 @@ fun StarRating(
                         }
                     }
                 },
-    ) {}
+    ) {
+        // all rendering is done by drawWithCache modifier.
+        // Box exists only as sized LayoutNode to host draw modifier.
+    }
 }
 
+@ExcludeFromCoverage
 @Preview
 @Composable
 private fun StarRating_NewCanvasPreview() {
