@@ -17,7 +17,7 @@ echo "Test 1: Checking if server is running..."
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
     -X POST "$RELAY_URL/v1/apns/device/test" \
     -H "Content-Type: application/json" \
-    -d '{"encrypted":"test","isUrgent":false}')
+    -d '{"encrypted":"test","isUrgent":false,"isMutableContent":false}')
 if [ "$HTTP_CODE" -eq 400 ] || [ "$HTTP_CODE" -eq 200 ]; then
     echo "✅ Server is running (HTTP $HTTP_CODE)"
 else
@@ -29,14 +29,14 @@ echo ""
 # Test 2: Send a test APNs notification
 echo "Test 2: Sending test APNs notification..."
 echo "Endpoint: POST $RELAY_URL/v1/apns/device/$DEVICE_TOKEN"
-echo "Payload: {\"encrypted\":\"$ENCRYPTED_MESSAGE\",\"isUrgent\":true}"
+echo "Payload: {\"encrypted\":\"$ENCRYPTED_MESSAGE\",\"isUrgent\":true,\"isMutableContent\":true}"
 echo ""
 
 RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
     -X POST "$RELAY_URL/v1/apns/device/$DEVICE_TOKEN" \
     -H "Content-Type: application/json" \
     -H "User-Agent: bisq-mobile-test/1.0" \
-    -d "{\"encrypted\":\"$ENCRYPTED_MESSAGE\",\"isUrgent\":true}")
+    -d "{\"encrypted\":\"$ENCRYPTED_MESSAGE\",\"isUrgent\":true,\"isMutableContent\":true}")
 
 HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
 BODY=$(echo "$RESPONSE" | sed '/HTTP_CODE:/d')

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.data.crypto.getOrCreatePushNotificationKeyBase64
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -142,6 +143,11 @@ class ClientPushNotificationServiceFacade(
         val deviceDescriptor = platformInfo.name
         val platform = PlatformMapper.fromPlatformType(platformInfo.type)
 
+        // Generate symmetric key for push notification encryption (iOS only).
+        // This enables the Notification Service Extension to decrypt notifications
+        // using AES-GCM via CryptoKit, since Apple does not support secp256k1 ECIES.
+        val symmetricKeyBase64 = getOrCreatePushNotificationKeyBase64()
+
         log.i { "Registering device with deviceId: $deviceId, descriptor: $deviceDescriptor, platform: $platform" }
 
         val result =
@@ -151,6 +157,7 @@ class ClientPushNotificationServiceFacade(
                 publicKeyBase64 = publicKeyBase64,
                 deviceDescriptor = deviceDescriptor,
                 platform = platform,
+                symmetricKeyBase64 = symmetricKeyBase64,
             )
         if (result.isSuccess) {
             log.i { "Device registered successfully with trusted node" }

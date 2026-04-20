@@ -4,6 +4,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DeviceRegistrationRequestTest {
@@ -97,6 +98,70 @@ class DeviceRegistrationRequestTest {
         // When / Then
         assertEquals(Platform.IOS, json.decodeFromString(iosJson))
         assertEquals(Platform.ANDROID, json.decodeFromString(androidJson))
+    }
+
+    @Test
+    fun `DeviceRegistrationRequest with symmetricKeyBase64 serializes correctly`() {
+        // Given
+        val request =
+            DeviceRegistrationRequest(
+                deviceId = "test-device-id",
+                deviceToken = "test-token",
+                publicKeyBase64 = "cHVibGljS2V5",
+                deviceDescriptor = "iPhone 15 Pro, iOS 17.2",
+                platform = Platform.IOS,
+                symmetricKeyBase64 = "c3ltbWV0cmljS2V5QmFzZTY0VGVzdA==",
+            )
+
+        // When
+        val serialized = json.encodeToString(request)
+        val deserialized = json.decodeFromString<DeviceRegistrationRequest>(serialized)
+
+        // Then
+        assertEquals(request, deserialized)
+        assertEquals("c3ltbWV0cmljS2V5QmFzZTY0VGVzdA==", deserialized.symmetricKeyBase64)
+    }
+
+    @Test
+    fun `DeviceRegistrationRequest without symmetricKeyBase64 defaults to null`() {
+        // Given
+        val request =
+            DeviceRegistrationRequest(
+                deviceId = "test-device-id",
+                deviceToken = "test-token",
+                publicKeyBase64 = "cHVibGljS2V5",
+                deviceDescriptor = "Pixel 8, Android 14",
+                platform = Platform.ANDROID,
+            )
+
+        // Then
+        assertNull(request.symmetricKeyBase64)
+
+        // And serialization omits null field or handles it gracefully
+        val serialized = json.encodeToString(request)
+        val deserialized = json.decodeFromString<DeviceRegistrationRequest>(serialized)
+        assertEquals(request, deserialized)
+    }
+
+    @Test
+    fun `DeviceRegistrationRequest deserializes without symmetricKeyBase64 field`() {
+        // Given - JSON from an older backend that doesn't know about symmetricKeyBase64
+        val jsonString =
+            """
+            {
+                "deviceId": "device-123",
+                "deviceToken": "token-456",
+                "publicKeyBase64": "cHVibGljS2V5",
+                "deviceDescriptor": "Pixel 8, Android 14",
+                "platform": "ANDROID"
+            }
+            """.trimIndent()
+
+        // When
+        val request = json.decodeFromString<DeviceRegistrationRequest>(jsonString)
+
+        // Then
+        assertNull(request.symmetricKeyBase64)
     }
 
     @Test

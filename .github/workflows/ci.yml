@@ -173,6 +173,10 @@ jobs:
         run: |
           ./gradlew :shared:domain:iosSimulatorArm64Test --info
 
+      - name: Run NSE decryption tests (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        run: swift support/test_nse_decryption.swift
+
   pr-coverage:
     name: PR Coverage
     runs-on: ubuntu-latest

@@ -8,7 +8,10 @@ import kotlinx.serialization.Serializable
  *
  * - deviceId: Primary identifier (hash of publicKeyBase64 or persisted UUID)
  * - deviceToken: APNs/FCM device token
- * - publicKeyBase64: Base64-encoded public key for encrypting notifications
+ * - publicKeyBase64: Base64-encoded public key for encrypting notifications (ECIES)
+ * - symmetricKeyBase64: Optional Base64-encoded AES-256 key for push notification encryption.
+ *   When present, the backend uses AES-GCM instead of ECIES. Required for iOS NSE decryption
+ *   since Apple CryptoKit does not support secp256k1 (the curve used by Bisq2 identity keys).
  * - deviceDescriptor: Device information (e.g., "iPhone 15 Pro, iOS 17.2")
  * - platform: IOS or ANDROID
  */
@@ -19,6 +22,7 @@ data class DeviceRegistrationRequest(
     val publicKeyBase64: String,
     val deviceDescriptor: String,
     val platform: Platform,
+    val symmetricKeyBase64: String? = null,
 )
 
 @Serializable

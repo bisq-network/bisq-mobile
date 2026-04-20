@@ -37,8 +37,17 @@ class PushNotificationApiGateway(
         publicKeyBase64: String,
         deviceDescriptor: String,
         platform: Platform,
+        symmetricKeyBase64: String? = null,
     ): Result<Unit> {
-        val request = DeviceRegistrationRequest(deviceId, deviceToken, publicKeyBase64, deviceDescriptor, platform)
+        val request =
+            DeviceRegistrationRequest(
+                deviceId,
+                deviceToken,
+                publicKeyBase64,
+                deviceDescriptor,
+                platform,
+                symmetricKeyBase64,
+            )
         return webSocketApiClient.post(basePath, request)
     }
 
