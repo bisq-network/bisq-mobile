@@ -56,6 +56,7 @@ fun rememberStarPainters(): StarPainters {
 @Composable
 fun StarRating(
     rating: Double,
+    modifier: Modifier = Modifier,
     painters: StarPainters = rememberStarPainters(),
 ) {
     val fullStars = rating.toInt().coerceIn(0, 5)
@@ -68,7 +69,7 @@ fun StarRating(
 
     Box(
         modifier =
-            Modifier
+            modifier
                 .width(starSizeDp * 5 + spacingDp * 4)
                 .height(starSizeDp)
                 .drawWithCache {
