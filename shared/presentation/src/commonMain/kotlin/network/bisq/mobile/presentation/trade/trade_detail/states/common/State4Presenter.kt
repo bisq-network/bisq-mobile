@@ -95,25 +95,6 @@ abstract class State4Presenter(
         }
     }
 
-    /**
-     * Temporary: builds the same UTF-8 CSV as [onExportTrade] and delivers it for clipboard copy (quick testing).
-     */
-    fun onCopyTradeExportCsv(onCsvReady: (String) -> Unit) {
-        presenterScope.launch {
-            val trade =
-                selectedTrade.value ?: run {
-                    GenericErrorHandler.handleGenericError("No trade selected for export")
-                    return@launch
-                }
-            val headers = TradeExportCsvHeaders.resolveForTrade(trade)
-            val csv =
-                withContext(Dispatchers.Default) {
-                    TradeCompletedCsv.buildCsv(trade, headers)
-                }
-            onCsvReady(csv)
-        }
-    }
-
     abstract fun getMyDirectionString(): String
 
     abstract fun getMyOutcomeString(): String

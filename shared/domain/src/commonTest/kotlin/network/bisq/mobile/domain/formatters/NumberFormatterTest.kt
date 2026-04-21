@@ -62,12 +62,12 @@ class NumberFormatterTest {
     @Test
     fun `formatForCsvExport uses no grouping`() {
         val result = NumberFormatter.formatForCsvExport(19_000.0)
-        assertTrue(result.contains("19000") || result.contains("19.000"))
+        assertTrue(result.contains("19000"))
     }
 
     @Test
     fun `btcFormatForCsvExport uses no grouping`() {
-        val result = NumberFormatter.btcFormatForCsvExport(2_100_000_000_000_000L)
-        assertTrue(result.contains("21") && result.contains("00000000"))
+        val result = NumberFormatter.btcFormatForCsvExport(21_000_000L)
+        assertTrue(result.contains("0.21"))
     }
 }
