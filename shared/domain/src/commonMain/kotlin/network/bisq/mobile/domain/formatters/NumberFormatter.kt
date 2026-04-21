@@ -15,4 +15,15 @@ object NumberFormatter {
         val formatted = decimalFormatter.format(fraction, 8)
         return formatted
     }
+
+    /** Matches bisq2 desktop CSV: no grouping separators. */
+    fun formatForCsvExport(value: Double): String {
+        val canonical = value.roundTo(2)
+        return decimalFormatter.format(canonical, 2, useGrouping = false)
+    }
+
+    fun btcFormatForCsvExport(value: Long): String {
+        val fraction = value / 100_000_000.0
+        return decimalFormatter.format(fraction, 8, useGrouping = false)
+    }
 }

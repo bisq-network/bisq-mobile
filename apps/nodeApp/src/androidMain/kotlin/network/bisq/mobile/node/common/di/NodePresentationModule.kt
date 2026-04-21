@@ -19,12 +19,16 @@ import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
+import network.bisq.mobile.presentation.common.share.AndroidShareFileService
+import network.bisq.mobile.presentation.common.share.ShareFileService
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val androidNodePresentationModule =
     module {
+        single<ShareFileService> { AndroidShareFileService(androidContext()) }
+
         factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) }
 
         factory {

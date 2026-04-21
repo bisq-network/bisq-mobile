@@ -9,13 +9,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_completed
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsStyle
@@ -23,6 +28,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.common.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 
 @Composable
 fun State4(
@@ -32,6 +38,9 @@ fun State4(
 
     val tradeItemModel by presenter.selectedTrade.collectAsState()
     val trade = tradeItemModel ?: return
+
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
 
     Column {
         BisqGap.V1()
@@ -66,17 +75,33 @@ fun State4(
             BisqGap.V2()
             Row(
                 horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-//                BisqButton(
-//                    text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
-//                    type = BisqButtonType.Grey,
-//                    onClick = { presenter.onExportTradeDate() },
-//                )
-                BisqButton(
-                    text = "bisqEasy.tradeState.info.phase4.leaveChannel".i18n(), // Close trade
-                    onClick = { presenter.onCloseTrade() },
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BisqButton(
+                        text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
+                        type = BisqButtonType.Grey,
+                        onClick = { presenter.onExportTrade() },
+                    )
+                    // Temporary: copy raw CSV for quick testing (remove when export flow is enough)
+                    BisqButton(
+                        text = "Copy CSV",
+                        type = BisqButtonType.Grey,
+                        onClick = {
+                            presenter.onCopyTradeExportCsv { csv ->
+                                scope.launch {
+                                    clipboard.setClipEntry(AnnotatedString(csv).toClipEntry())
+                                    presenter.showSnackbar("mobile.components.copyIconButton.copied".i18n())
+                                }
+                            }
+                        },
+                    )
+                    BisqButton(
+                        text = "bisqEasy.tradeState.info.phase4.leaveChannel".i18n(), // Close trade
+                        onClick = { presenter.onCloseTrade() },
+                    )
+                }
             }
         }
     }

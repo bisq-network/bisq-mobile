@@ -161,7 +161,7 @@ val presentationModule =
         factory { SellerState3aPresenter(get(), get()) }
         factory { SellerStateMainChain3bPresenter(get(), get(), get()) }
         factory { SellerStateLightning3bPresenter(get(), get()) }
-        factory { SellerState4Presenter(get(), get(), get()) }
+        factory { SellerState4Presenter(get(), get(), get(), get()) }
 
         // Trade Buyer
         factory { BuyerState1aPresenter(get(), get()) }
@@ -171,7 +171,7 @@ val presentationModule =
         factory { BuyerState3aPresenter(get(), get()) }
         factory { BuyerStateMainChain3bPresenter(get(), get(), get()) }
         factory { BuyerStateLightning3bPresenter(get(), get()) }
-        factory { BuyerState4Presenter(get(), get(), get()) }
+        factory { BuyerState4Presenter(get(), get(), get(), get()) }
 
         // Trade General process
         factory {

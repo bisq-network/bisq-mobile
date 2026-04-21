@@ -29,8 +29,10 @@ data class TradeItemPresentationDto(
     val formattedQuoteAmount: String,
     val bitcoinSettlementMethod: String,
     val bitcoinSettlementMethodDisplayString: String,
+    val bitcoinSettlementMethodCsvDisplayString: String, // bisq2 PaymentMethodSpec.displayString
     val fiatPaymentMethod: String,
     val fiatPaymentMethodDisplayString: String,
+    val fiatPaymentMethodCsvDisplayString: String, // bisq2 PaymentMethodSpec.displayString
     val isFiatPaymentMethodCustom: Boolean,
     val formattedMyRole: String,
     val peersReputationScore: ReputationScoreVO, // We do not support updates of reputation score as that happens rather rarely

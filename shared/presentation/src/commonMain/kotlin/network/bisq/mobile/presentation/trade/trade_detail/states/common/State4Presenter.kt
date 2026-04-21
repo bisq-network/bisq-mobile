@@ -13,11 +13,15 @@ import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.common.share.ShareFileService
+import network.bisq.mobile.presentation.trade.trade_detail.export.TradeCompletedCsv
+import network.bisq.mobile.presentation.trade.trade_detail.export.TradeExportCsvHeaders
 
 abstract class State4Presenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
+    private val shareFileService: ShareFileService,
 ) : BasePresenter(mainPresenter) {
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
@@ -69,9 +73,44 @@ abstract class State4Presenter(
         }
     }
 
-    fun onExportTradeDate() {
+    fun onExportTrade() {
         presenterScope.launch {
-            tradesServiceFacade.exportTradeDate()
+            val trade =
+                selectedTrade.value ?: run {
+                    GenericErrorHandler.handleGenericError("No trade selected for export")
+                    return@launch
+                }
+            val headers = TradeExportCsvHeaders.resolveForTrade(trade)
+            val csv =
+                withContext(Dispatchers.Default) {
+                    TradeCompletedCsv.buildCsv(trade, headers)
+                }
+            val fileName = "BisqEasy-trade-${trade.shortTradeId}.csv"
+            val result = shareFileService.shareUtf8TextFile(csv, fileName)
+            if (result.isFailure) {
+                result.exceptionOrNull()?.let { e ->
+                    GenericErrorHandler.handleGenericError(e.message)
+                } ?: GenericErrorHandler.handleGenericError("Trade export failed")
+            }
+        }
+    }
+
+    /**
+     * Temporary: builds the same UTF-8 CSV as [onExportTrade] and delivers it for clipboard copy (quick testing).
+     */
+    fun onCopyTradeExportCsv(onCsvReady: (String) -> Unit) {
+        presenterScope.launch {
+            val trade =
+                selectedTrade.value ?: run {
+                    GenericErrorHandler.handleGenericError("No trade selected for export")
+                    return@launch
+                }
+            val headers = TradeExportCsvHeaders.resolveForTrade(trade)
+            val csv =
+                withContext(Dispatchers.Default) {
+                    TradeCompletedCsv.buildCsv(trade, headers)
+                }
+            onCsvReady(csv)
         }
     }
 

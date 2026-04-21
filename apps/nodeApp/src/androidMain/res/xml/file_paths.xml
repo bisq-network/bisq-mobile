@@ -4,4 +4,7 @@
     <cache-path
         name="backups"
         path="backups" />
+    <cache-path
+        name="shared_files"
+        path="shared_files" />
 </paths>

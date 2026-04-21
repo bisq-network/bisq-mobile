@@ -544,12 +544,14 @@ actual val decimalFormatter: DecimalFormatter =
         override fun format(
             value: Double,
             precision: Int,
+            useGrouping: Boolean,
         ): String {
             val formatter =
                 NSNumberFormatter().apply {
                     numberStyle = NSNumberFormatterDecimalStyle
                     maximumFractionDigits = precision.toULong()
                     minimumFractionDigits = precision.toULong()
+                    usesGroupingSeparator = useGrouping
                     locale = defaultLocale
                 }
             return formatter.stringFromNumber(NSNumber(value)) ?: value.toString()

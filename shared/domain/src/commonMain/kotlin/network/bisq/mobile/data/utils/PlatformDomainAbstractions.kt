@@ -65,6 +65,7 @@ interface DecimalFormatter {
     fun format(
         value: Double,
         precision: Int,
+        useGrouping: Boolean = true,
     ): String
 }
 

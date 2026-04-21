@@ -51,8 +51,10 @@ object TradeItemPresentationDtoFactory {
         val quoteAmountString: String = BisqEasyTradeFormatter.formatQuoteSideAmount(trade)
         val bitcoinSettlementMethod: String = contract.baseSidePaymentMethodSpec.paymentMethodName
         val bitcoinSettlementMethodDisplayString: String = contract.baseSidePaymentMethodSpec.shortDisplayString
+        val bitcoinSettlementMethodCsvDisplayString: String = contract.baseSidePaymentMethodSpec.displayString
         val fiatPaymentMethod: String = contract.quoteSidePaymentMethodSpec.paymentMethodName
         val fiatPaymentMethodDisplayString: String = contract.quoteSidePaymentMethodSpec.shortDisplayString
+        val fiatPaymentMethodCsvDisplayString: String = contract.quoteSidePaymentMethodSpec.displayString
         val isFiatPaymentMethodCustom: Boolean = contract.quoteSidePaymentMethodSpec.paymentMethod.isCustomPaymentMethod
         val myRole: String = BisqEasyTradeFormatter.getMakerTakerRole(trade)
 
@@ -92,8 +94,10 @@ object TradeItemPresentationDtoFactory {
             quoteAmountString,
             bitcoinSettlementMethod,
             bitcoinSettlementMethodDisplayString,
+            bitcoinSettlementMethodCsvDisplayString,
             fiatPaymentMethod,
             fiatPaymentMethodDisplayString,
+            fiatPaymentMethodCsvDisplayString,
             isFiatPaymentMethodCustom,
             myRole,
             peersRReputationScoreVO,

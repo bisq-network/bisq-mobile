@@ -72,6 +72,7 @@ kotlin {
         androidMain.dependencies {
             // AndroidX
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.core)
 
             // Koin
             implementation(libs.koin.android)
