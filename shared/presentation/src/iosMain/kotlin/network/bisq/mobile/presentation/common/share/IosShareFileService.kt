@@ -69,7 +69,9 @@ class IosShareFileService : ShareFileService {
                 } catch (_: Exception) {
                     null
                 }
-            } ?: UIApplication.sharedApplication.delegate?.window?.rootViewController
+            } ?: UIApplication.sharedApplication.delegate
+                ?.window
+                ?.rootViewController
         var top = root ?: return null
         while (true) {
             when {

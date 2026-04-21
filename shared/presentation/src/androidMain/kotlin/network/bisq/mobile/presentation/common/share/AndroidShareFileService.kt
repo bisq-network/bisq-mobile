@@ -15,8 +15,8 @@ class AndroidShareFileService(
     override fun shareUtf8TextFile(
         content: String,
         fileName: String,
-    ): Result<Unit> {
-        return try {
+    ): Result<Unit> =
+        try {
             val exportDir = File(context.cacheDir, "shared_files").apply { mkdirs() }
             val outFile = File(exportDir, fileName)
             outFile.writeText(content, Charsets.UTF_8)
@@ -46,5 +46,4 @@ class AndroidShareFileService(
             log.e(e) { "Failed to share file" }
             Result.failure(e)
         }
-    }
 }

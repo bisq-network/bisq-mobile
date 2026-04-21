@@ -37,6 +37,7 @@ class WebLinkConfirmationDialogPresenter(
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
         onError: () -> Unit,
+        forceConfirm: Boolean = false,
     ) {
         activeLink = link
         userOnConfirm = onConfirm
@@ -47,7 +48,8 @@ class WebLinkConfirmationDialogPresenter(
 
         _uiState.value = WebLinkConfirmationUiState()
 
-        val shouldShow = settingsServiceFacade.showWebLinkConfirmation.value
+        val shouldShow =
+            forceConfirm || settingsServiceFacade.showWebLinkConfirmation.value
         if (!shouldShow) {
             val shouldOpen = settingsServiceFacade.permitOpeningBrowser.value
             if (shouldOpen) {

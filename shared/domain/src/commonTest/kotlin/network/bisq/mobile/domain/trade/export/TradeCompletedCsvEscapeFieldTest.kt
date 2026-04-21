@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.trade.trade_detail.export
+package network.bisq.mobile.domain.trade.export
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

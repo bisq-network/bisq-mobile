@@ -21,6 +21,7 @@ fun WebLinkConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     onError: () -> Unit = {},
+    forceConfirm: Boolean = false,
     headline: String? = null,
     headlineColor: Color? = null,
     headlineLeftIcon: (@Composable () -> Unit)? = null,
@@ -40,6 +41,7 @@ fun WebLinkConfirmationDialog(
             onConfirm = onConfirm,
             onDismiss = onDismiss,
             onError = onError,
+            forceConfirm = forceConfirm,
         )
     })
 
@@ -51,6 +53,7 @@ fun WebLinkConfirmationDialog(
         link = link,
         uiState = uiState,
         onAction = presenter::onAction,
+        showDontShowAgainCheckbox = !forceConfirm,
         headline = headline,
         headlineColor = headlineColor,
         headlineLeftIcon = headlineLeftIcon,
@@ -65,6 +68,7 @@ private fun WebLinkConfirmationDialogContent(
     link: String,
     uiState: WebLinkConfirmationUiState,
     onAction: (WebLinkConfirmationUiAction) -> Unit,
+    showDontShowAgainCheckbox: Boolean = true,
     headline: String? = null,
     headlineColor: Color? = null,
     headlineLeftIcon: (@Composable () -> Unit)? = null,
@@ -84,13 +88,18 @@ private fun WebLinkConfirmationDialogContent(
         closeButton = true,
         horizontalAlignment = Alignment.Start,
         verticalButtonPlacement = true,
-        extraContent = {
-            BisqCheckbox(
-                checked = uiState.dontShowAgain,
-                label = "action.dontShowAgain".i18n(),
-                onCheckedChange = { onAction(WebLinkConfirmationUiAction.OnDontShowAgainChange(it)) },
-            )
-        },
+        extraContent =
+            if (showDontShowAgainCheckbox) {
+                {
+                    BisqCheckbox(
+                        checked = uiState.dontShowAgain,
+                        label = "action.dontShowAgain".i18n(),
+                        onCheckedChange = { onAction(WebLinkConfirmationUiAction.OnDontShowAgainChange(it)) },
+                    )
+                }
+            } else {
+                null
+            },
     )
 }
 

@@ -1160,7 +1160,7 @@ class Mappings {
                 value.errorStackTrace,
                 value.peersErrorMessage,
                 value.peersErrorStackTrace,
-                value.tradeCompletedDate.orElse(null)
+                value.tradeCompletedDate.orElse(null),
             )
     }
 

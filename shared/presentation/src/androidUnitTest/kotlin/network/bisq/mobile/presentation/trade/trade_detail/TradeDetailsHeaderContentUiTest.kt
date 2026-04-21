@@ -133,11 +133,9 @@ class TradeDetailsHeaderContentUiTest {
             formattedTradeDuration = formattedTradeDuration,
         )
 
-    private fun formattedTradeDateTime(trade: TradeDetailsHeaderTradeUiState): String =
-        "${trade.formattedDate} ${trade.formattedTime}"
+    private fun formattedTradeDateTime(trade: TradeDetailsHeaderTradeUiState): String = "${trade.formattedDate} ${trade.formattedTime}"
 
-    private fun formattedSettlementLine(trade: TradeDetailsHeaderTradeUiState): String =
-        "${trade.fiatPaymentMethodDisplayString} / ${trade.bitcoinSettlementMethodDisplayString}"
+    private fun formattedSettlementLine(trade: TradeDetailsHeaderTradeUiState): String = "${trade.fiatPaymentMethodDisplayString} / ${trade.bitcoinSettlementMethodDisplayString}"
 
     private fun renderHeader(
         trade: TradeDetailsHeaderTradeUiState,
@@ -479,4 +477,22 @@ class TradeDetailsHeaderContentUiTest {
         composeTestRule.onNodeWithText("EUR").assertIsDisplayed()
     }
 
+    @Test
+    fun `when active trade expanded small screen then shows price and trade date in stacked info boxes`() {
+        val trade = baseTradeUiState(isSmallScreen = true)
+        val session =
+            baseSessionUiState(
+                showDetails = true,
+                isCompleted = false,
+                interruptTradeButtonText = INTERRUPT_TRADE_BUTTON,
+                openMediationButtonText = OPEN_MEDIATION_BUTTON,
+            )
+        val tradeDateTime = formattedTradeDateTime(trade)
+
+        renderHeader(trade, session)
+        composeTestRule.onNodeWithText("bisqEasy.openTrades.table.price".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText(trade.priceDisplay).assertIsDisplayed()
+        composeTestRule.onNodeWithText("bisqEasy.openTrades.tradeDetails.tradeDate".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tradeDateTime).assertIsDisplayed()
+    }
 }

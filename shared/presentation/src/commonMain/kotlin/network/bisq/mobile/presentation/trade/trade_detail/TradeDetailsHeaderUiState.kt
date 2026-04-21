@@ -94,5 +94,8 @@ fun TradeItemPresentationModel.toHeaderTradeUiState(
 }
 
 private fun TradeItemPresentationModel.getPeerNetworkAddress(): String? =
-    bisqEasyTradeModel.peer.networkId.addressByTransportTypeMap.map[TransportTypeEnum.TOR]?.toString()
-        ?: bisqEasyTradeModel.peer.networkId.addressByTransportTypeMap.map.values.firstOrNull()?.toString()
+    bisqEasyTradeModel.peer.networkId.addressByTransportTypeMap.map[TransportTypeEnum.TOR]
+        ?.toString()
+        ?: bisqEasyTradeModel.peer.networkId.addressByTransportTypeMap.map.values
+            .firstOrNull()
+            ?.toString()

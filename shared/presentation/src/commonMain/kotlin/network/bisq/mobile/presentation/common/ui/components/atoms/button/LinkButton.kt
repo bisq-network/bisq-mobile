@@ -28,6 +28,7 @@ fun LinkButton(
     onError: ((Throwable) -> Unit)? = null,
     fullWidth: Boolean = false,
     openConfirmation: Boolean = true,
+    forceConfirm: Boolean = false,
     leftIcon: (@Composable () -> Unit)? = null,
     rightIcon: (@Composable () -> Unit)? = null,
 ) {
@@ -65,6 +66,7 @@ fun LinkButton(
     if (showConfirmDialog) {
         WebLinkConfirmationDialog(
             link = link,
+            forceConfirm = forceConfirm,
             onConfirm = {
                 onClick?.invoke()
                 showConfirmDialog = false

@@ -8,9 +8,9 @@ import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.IosDeviceInfoProvider
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
-import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import network.bisq.mobile.presentation.common.share.IosShareFileService
 import network.bisq.mobile.presentation.common.share.ShareFileService
+import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import org.koin.dsl.bind
 import org.koin.dsl.module
 

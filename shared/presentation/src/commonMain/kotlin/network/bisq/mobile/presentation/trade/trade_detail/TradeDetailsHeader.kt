@@ -14,9 +14,10 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.PaddingValues
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
@@ -45,9 +45,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.UpIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileRow
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxCurrency
@@ -130,66 +130,85 @@ fun TradeDetailsHeaderContent(
                 .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                BisqText.BaseRegular(
-                    text = tradeUiState.directionalTitle.uppercase(), // 'Buying from:' or 'Selling to:'
-                )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            BisqText.BaseRegular(
+                text = tradeUiState.directionalTitle.uppercase(), // 'Buying from:' or 'Selling to:'
+            )
 
-                BisqGap.H1()
+            BisqGap.H1()
 
-                UserProfileRow(
-                    userProfile = tradeUiState.peersUserProfile,
-                    reputation = tradeUiState.peersReputationScore,
-                    showUserName = true,
-                    userProfileIconProvider = userProfileIconProvider,
-                )
-            }
+            UserProfileRow(
+                userProfile = tradeUiState.peersUserProfile,
+                reputation = tradeUiState.peersReputationScore,
+                showUserName = true,
+                userProfileIconProvider = userProfileIconProvider,
+            )
+        }
 
-            BisqGap.VHalf()
+        BisqGap.VHalf()
 
-            if (sessionUiState.isCompleted) {
-                val paymentProof = sessionUiState.paymentProof
-                if (!paymentProof.isNullOrBlank()) {
-                    val paymentProofLabel =
-                        if (tradeUiState.isMainChainPayment) {
-                            "bisqEasy.tradeState.paymentProof.MAIN_CHAIN".i18n()
-                        } else {
-                            "bisqEasy.tradeState.paymentProof.LN".i18n()
-                        }
+        if (sessionUiState.isCompleted) {
+            val paymentProof = sessionUiState.paymentProof
+            if (!paymentProof.isNullOrBlank()) {
+                val paymentProofLabel =
                     if (tradeUiState.isMainChainPayment) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy((-4).dp),
-                        ) {
-                            InfoBoxRow(
-                                label = paymentProofLabel,
-                                value = paymentProof.truncateForDisplay(16),
-                                fullValueToCopy = paymentProof,
-                                showCopy = true,
-                            )
-                            val explorerUrl = "https://mempool.space/tx/$paymentProof"
-                            LinkButton(
-                                text = "mobile.bisqEasy.openTrades.tradeDetails.viewInBlockExplorer".i18n(),
-                                link = explorerUrl,
-                                padding = PaddingValues(0.dp),
-                                modifier = Modifier.defaultMinSize(minHeight = 0.dp),
-                            )
-                        }
+                        "bisqEasy.tradeState.paymentProof.MAIN_CHAIN".i18n()
                     } else {
+                        "bisqEasy.tradeState.paymentProof.LN".i18n()
+                    }
+                if (tradeUiState.isMainChainPayment) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy((-4).dp),
+                    ) {
                         InfoBoxRow(
                             label = paymentProofLabel,
                             value = paymentProof.truncateForDisplay(16),
                             fullValueToCopy = paymentProof,
                             showCopy = true,
                         )
+                        val explorerUrl = "https://mempool.space/tx/$paymentProof"
+                        LinkButton(
+                            text = "mobile.bisqEasy.openTrades.tradeDetails.viewInBlockExplorer".i18n(),
+                            link = explorerUrl,
+                            forceConfirm = true,
+                            padding = PaddingValues(0.dp),
+                            modifier = Modifier.defaultMinSize(minHeight = 0.dp),
+                        )
                     }
+                } else {
+                    InfoBoxRow(
+                        label = paymentProofLabel,
+                        value = paymentProof.truncateForDisplay(16),
+                        fullValueToCopy = paymentProof,
+                        showCopy = true,
+                    )
+                }
+            }
+        } else {
+            if (tradeUiState.isSmallScreen) {
+                if (tradeUiState.isSell) {
+                    InfoBoxSats(label = tradeUiState.leftAmountDescription, value = tradeUiState.leftAmount)
+                } else {
+                    InfoBoxCurrency(
+                        label = tradeUiState.leftAmountDescription,
+                        value = "${tradeUiState.leftAmount} ${tradeUiState.leftCode}",
+                    )
+                }
+                if (tradeUiState.isSell) {
+                    InfoBoxCurrency(
+                        label = tradeUiState.rightAmountDescription,
+                        value = "${tradeUiState.rightAmount} ${tradeUiState.rightCode}",
+                    )
+                } else {
+                    InfoBoxSats(label = tradeUiState.rightAmountDescription, value = tradeUiState.rightAmount)
                 }
             } else {
-                if (tradeUiState.isSmallScreen) {
+                InfoRowContainer {
                     if (tradeUiState.isSell) {
                         InfoBoxSats(label = tradeUiState.leftAmountDescription, value = tradeUiState.leftAmount)
                     } else {
@@ -202,75 +221,57 @@ fun TradeDetailsHeaderContent(
                         InfoBoxCurrency(
                             label = tradeUiState.rightAmountDescription,
                             value = "${tradeUiState.rightAmount} ${tradeUiState.rightCode}",
+                            rightAlign = true,
                         )
                     } else {
-                        InfoBoxSats(label = tradeUiState.rightAmountDescription, value = tradeUiState.rightAmount)
-                    }
-                } else {
-                    InfoRowContainer {
-                        if (tradeUiState.isSell) {
-                            InfoBoxSats(label = tradeUiState.leftAmountDescription, value = tradeUiState.leftAmount)
-                        } else {
-                            InfoBoxCurrency(
-                                label = tradeUiState.leftAmountDescription,
-                                value = "${tradeUiState.leftAmount} ${tradeUiState.leftCode}",
-                            )
-                        }
-                        if (tradeUiState.isSell) {
-                            InfoBoxCurrency(
-                                label = tradeUiState.rightAmountDescription,
-                                value = "${tradeUiState.rightAmount} ${tradeUiState.rightCode}",
-                                rightAlign = true,
-                            )
-                        } else {
-                            InfoBoxSats(
-                                label = tradeUiState.rightAmountDescription,
-                                value = tradeUiState.rightAmount,
-                                rightAlign = true,
-                            )
-                        }
+                        InfoBoxSats(
+                            label = tradeUiState.rightAmountDescription,
+                            value = tradeUiState.rightAmount,
+                            rightAlign = true,
+                        )
                     }
                 }
             }
+        }
 
-            AnimatedVisibility(
-                visible = sessionUiState.showDetails,
-                enter = enterTransition,
-                exit = exitTransition,
-            ) {
-                if (sessionUiState.isCompleted) {
-                    CompletedTradeDetailsSection(
-                        tradeUiState = tradeUiState,
-                        sessionUiState = sessionUiState,
-                    )
-                } else {
-                    ActiveTradeDetailsSection(
-                        tradeUiState = tradeUiState,
-                        sessionUiState = sessionUiState,
-                        onAction = onAction,
-                    )
-                }
+        AnimatedVisibility(
+            visible = sessionUiState.showDetails,
+            enter = enterTransition,
+            exit = exitTransition,
+        ) {
+            if (sessionUiState.isCompleted) {
+                CompletedTradeDetailsSection(
+                    tradeUiState = tradeUiState,
+                    sessionUiState = sessionUiState,
+                )
+            } else {
+                ActiveTradeDetailsSection(
+                    tradeUiState = tradeUiState,
+                    sessionUiState = sessionUiState,
+                    onAction = onAction,
+                )
             }
+        }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(
+                onClick = { onAction(TradeDetailsHeaderUiAction.ToggleHeader) },
+                enabled = sessionUiState.isInteractive,
             ) {
-                IconButton(
-                    onClick = { onAction(TradeDetailsHeaderUiAction.ToggleHeader) },
-                    enabled = sessionUiState.isInteractive,
-                ) {
-                    UpIcon(
-                        modifier =
-                            Modifier
-                                .size(32.dp)
-                                .clip(shape = RoundedCornerShape(16.dp))
-                                .rotate(arrowRotationDegree)
-                                .background(color = BisqTheme.colors.primary),
-                    )
-                }
+                UpIcon(
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .clip(shape = RoundedCornerShape(16.dp))
+                            .rotate(arrowRotationDegree)
+                            .background(color = BisqTheme.colors.primary),
+                )
             }
+        }
     }
 }
 
@@ -422,8 +423,7 @@ private fun CompletedTradeDetailsSection(
 
 // todo: Should do in the format bc1123...asf (first few chars ... and last 3/4 chars)
 // refer how other wallets handle this
-private fun String.truncateForDisplay(maxLength: Int): String =
-    if (length <= maxLength) this else take(maxLength) + "\u2026"
+private fun String.truncateForDisplay(maxLength: Int): String = if (length <= maxLength) this else take(maxLength) + "\u2026"
 
 @ExcludeFromCoverage
 private fun previewFormattedTradeDuration(isCompleted: Boolean): String =

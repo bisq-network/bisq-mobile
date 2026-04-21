@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.trade.trade_detail.export
+package network.bisq.mobile.domain.trade.export
 
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.formatters.NumberFormatter
@@ -13,8 +13,13 @@ object TradeCompletedCsv {
         headers: TradeExportCsvHeaders,
     ): String {
         val paymentProof =
-            trade.bisqEasyTradeModel.paymentProof.value.orEmpty().trim().ifEmpty { "N/A" }
-        val bitcoinPaymentData = trade.bisqEasyTradeModel.bitcoinPaymentData.value.orEmpty()
+            trade.bisqEasyTradeModel.paymentProof.value
+                .orEmpty()
+                .trim()
+                .ifEmpty { "N/A" }
+        val bitcoinPaymentData =
+            trade.bisqEasyTradeModel.bitcoinPaymentData.value
+                .orEmpty()
         val amountBtcCell = "${NumberFormatter.btcFormatForCsvExport(trade.baseAmount)} BTC"
         val quoteAmountFormatted =
             NumberFormatter.formatForCsvExport(trade.quoteAmount.toDouble() / 10000.0)

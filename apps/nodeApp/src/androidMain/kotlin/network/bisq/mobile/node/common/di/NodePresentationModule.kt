@@ -9,6 +9,8 @@ import network.bisq.mobile.node.tabs.dashboard.NodeDashboardPresenter
 import network.bisq.mobile.node.tabs.more.NodeMiscItemsPresenter
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
+import network.bisq.mobile.presentation.common.share.AndroidShareFileService
+import network.bisq.mobile.presentation.common.share.ShareFileService
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.main.AppPresenter
@@ -19,8 +21,6 @@ import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
-import network.bisq.mobile.presentation.common.share.AndroidShareFileService
-import network.bisq.mobile.presentation.common.share.ShareFileService
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module

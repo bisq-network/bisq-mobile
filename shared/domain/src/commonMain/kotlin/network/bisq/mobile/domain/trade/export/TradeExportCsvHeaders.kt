@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.trade.trade_detail.export
+package network.bisq.mobile.domain.trade.export
 
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.i18n.i18n

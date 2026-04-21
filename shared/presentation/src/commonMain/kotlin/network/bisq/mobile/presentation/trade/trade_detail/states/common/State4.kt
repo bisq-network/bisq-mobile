@@ -31,8 +31,20 @@ fun State4(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val tradeItemModel by presenter.selectedTrade.collectAsState()
-    val trade = tradeItemModel ?: return
+    val uiState by presenter.uiState.collectAsState()
+
+    State4Content(
+        uiState = uiState,
+        onAction = presenter::onAction,
+    )
+}
+
+@Composable
+fun State4Content(
+    uiState: State4UiState,
+    onAction: (State4UiAction) -> Unit,
+) {
+    val trade = uiState.trade ?: return
 
     Column {
         BisqGap.V1()
@@ -53,13 +65,13 @@ fun State4(
 
             BtcSatsText(
                 trade.formattedBaseAmount,
-                label = presenter.getMyDirectionString(),
+                label = uiState.myDirectionLabel,
                 style = BtcSatsStyle.TextField,
             )
             BisqGap.VHalf()
 
             BisqTextFieldV0(
-                label = presenter.getMyOutcomeString(),
+                label = uiState.myOutcomeLabel,
                 value = trade.quoteAmountWithCode,
                 enabled = false,
             )
@@ -73,12 +85,12 @@ fun State4(
                 BisqButton(
                     text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
                     type = BisqButtonType.Grey,
-                    onClick = { presenter.onExportTrade() },
+                    onClick = { onAction(State4UiAction.OnExportTradeClick) },
                 )
-                BisqGap.V1()
+                BisqGap.H1()
                 BisqButton(
                     text = "bisqEasy.tradeState.info.phase4.leaveChannel".i18n(), // Close trade
-                    onClick = { presenter.onCloseTrade() },
+                    onClick = { onAction(State4UiAction.OnCloseTradeClick) },
                 )
             }
         }

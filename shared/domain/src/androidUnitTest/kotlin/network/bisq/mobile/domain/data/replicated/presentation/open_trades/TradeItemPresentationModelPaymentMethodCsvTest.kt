@@ -58,10 +58,23 @@ class TradeItemPresentationModelPaymentMethodCsvTest {
         assertEquals("BTC_DISPLAY / FIAT_DISPLAY", model.paymentMethodCsvDisplayString)
     }
 
+    @Test
+    fun paymentMethodCsvDisplayString_fallsBackToDisplays_whenBothCsvNull() {
+        val model =
+            tradeItemPresentationModel(
+                bitcoinSettlementMethodCsvDisplayString = null,
+                bitcoinSettlementMethodDisplayString = "BTC_DISPLAY",
+                fiatPaymentMethodCsvDisplayString = null,
+                fiatPaymentMethodDisplayString = "FIAT_DISPLAY",
+            )
+
+        assertEquals("BTC_DISPLAY / FIAT_DISPLAY", model.paymentMethodCsvDisplayString)
+    }
+
     private fun tradeItemPresentationModel(
-        bitcoinSettlementMethodCsvDisplayString: String,
+        bitcoinSettlementMethodCsvDisplayString: String?,
         bitcoinSettlementMethodDisplayString: String,
-        fiatPaymentMethodCsvDisplayString: String,
+        fiatPaymentMethodCsvDisplayString: String?,
         fiatPaymentMethodDisplayString: String,
     ): TradeItemPresentationModel {
         val dto = mockk<TradeItemPresentationDto>(relaxed = true)

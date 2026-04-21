@@ -44,6 +44,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
+import network.bisq.mobile.presentation.trade.trade_detail.states.common.State4UiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -83,8 +84,8 @@ fun OpenTradeScreen(tradeId: String) {
     val buyerState1aShowInvalidAddressDialog by buyerState1aPresenter.showInvalidAddressDialog.collectAsState()
     val sellerState3aShowInvalidAddressDialog by sellerState3aPresenter.showInvalidAddressDialog.collectAsState()
     val sellerState3aIsLightning by sellerState3aPresenter.isLightning.collectAsState()
-    val buyerState4ShowCloseTradeDialog by buyerState4Presenter.showCloseTradeDialog.collectAsState()
-    val sellerState4ShowCloseTradeDialog by sellerState4Presenter.showCloseTradeDialog.collectAsState()
+    val buyerState4Ui by buyerState4Presenter.uiState.collectAsState()
+    val sellerState4Ui by sellerState4Presenter.uiState.collectAsState()
     val showBarcodeViewFromBuyerState1a by buyerState1aPresenter.showBarcodeView.collectAsState()
     val showBarcodeError by buyerState1aPresenter.showBarcodeError.collectAsState()
 
@@ -95,8 +96,8 @@ fun OpenTradeScreen(tradeId: String) {
                 mediationError.isNotBlank() ||
                 buyerState1aShowInvalidAddressDialog ||
                 sellerState3aShowInvalidAddressDialog ||
-                buyerState4ShowCloseTradeDialog ||
-                sellerState4ShowCloseTradeDialog ||
+                buyerState4Ui.showCloseTradeDialog ||
+                sellerState4Ui.showCloseTradeDialog ||
                 showUndoIgnoreDialog
         }
     }
@@ -258,17 +259,17 @@ fun OpenTradeScreen(tradeId: String) {
         )
     }
 
-    if (buyerState4ShowCloseTradeDialog) {
+    if (buyerState4Ui.showCloseTradeDialog) {
         CloseTradeDialog(
-            onDismiss = buyerState4Presenter::onDismissCloseTrade,
-            onConfirm = buyerState4Presenter::onConfirmCloseTrade,
+            onDismiss = { buyerState4Presenter.onAction(State4UiAction.OnDismissCloseTrade) },
+            onConfirm = { buyerState4Presenter.onAction(State4UiAction.OnConfirmCloseTrade) },
         )
     }
 
-    if (sellerState4ShowCloseTradeDialog) {
+    if (sellerState4Ui.showCloseTradeDialog) {
         CloseTradeDialog(
-            onDismiss = sellerState4Presenter::onDismissCloseTrade,
-            onConfirm = sellerState4Presenter::onConfirmCloseTrade,
+            onDismiss = { sellerState4Presenter.onAction(State4UiAction.OnDismissCloseTrade) },
+            onConfirm = { sellerState4Presenter.onAction(State4UiAction.OnConfirmCloseTrade) },
         )
     }
 
