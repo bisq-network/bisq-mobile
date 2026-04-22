@@ -74,6 +74,20 @@
  * it opens with current values pre-selected and closes on Apply or Reset.
  *
  * ======================================================================================
+ * SEGMENT BUTTON DEPENDENCY
+ * ======================================================================================
+ * This design uses the current BisqSegmentButton. Before implementing this screen,
+ * replace BisqSegmentButton internals with the redesigned version from:
+ *   presentation/design/components/SegmentButtonRedesign.kt
+ *
+ * The redesign uses AutoResizeText (maxLines=1) instead of Material3 SegmentedButton,
+ * which fixes text wrapping for long/i18n labels. Same API signature — drop-in replacement.
+ * See SegmentButtonRedesign.kt for full rationale and i18n stress-test previews.
+ *
+ * TODO: Replace BisqSegmentButton content with SimulatedBisqSegmentButtonV2 implementation
+ *       before implementing this filter sheet.
+ *
+ * ======================================================================================
  * APPLY vs RESET
  * ======================================================================================
  * - "Apply" (primary button): closes sheet, emits new sort+filter values to presenter.
