@@ -44,4 +44,28 @@ class TradeCompletedCsvEscapeFieldTest {
     fun escapeCsvField_emptyString() {
         assertEquals("", TradeCompletedCsv.escapeCsvField(""))
     }
+
+    @Test
+    fun escapeCsvField_prefixesApostrophe_whenLeadingSpreadsheetFormulaChar_andNoOtherQuoting() {
+        assertEquals("'=1+1", TradeCompletedCsv.escapeCsvField("=1+1"))
+        assertEquals("'+2", TradeCompletedCsv.escapeCsvField("+2"))
+        assertEquals("'-1", TradeCompletedCsv.escapeCsvField("-1"))
+        assertEquals("'@ref", TradeCompletedCsv.escapeCsvField("@ref"))
+    }
+
+    @Test
+    fun escapeCsvField_prefixesApostrophe_beforeQuotingWhenCommaOrQuotesPresent() {
+        assertEquals("\"'=a,b\"", TradeCompletedCsv.escapeCsvField("=a,b"))
+        assertEquals("\"'=\"\"a\"", TradeCompletedCsv.escapeCsvField("=\"a"))
+    }
+
+    @Test
+    fun escapeCsvField_prefixesApostrophe_whenFirstCharIsTab() {
+        assertEquals("'\tcell", TradeCompletedCsv.escapeCsvField("\tcell"))
+    }
+
+    @Test
+    fun escapeCsvField_prefixesApostrophe_whenValueStartsWithCarriageReturn() {
+        assertEquals("\"'\r\n\"", TradeCompletedCsv.escapeCsvField("\r\n"))
+    }
 }

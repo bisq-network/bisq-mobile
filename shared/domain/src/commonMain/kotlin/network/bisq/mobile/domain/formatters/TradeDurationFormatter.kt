@@ -20,13 +20,19 @@ object TradeDurationFormatter {
         val days = hours / 24L
         val hoursPart = hours % 24L
 
-        return if (days > 0L) {
-            val dayString = "temporal.day".i18nPlural(days.toInt())
-            "$dayString, $hoursPart hours, $minPart min, $secPart sec"
-        } else if (hours > 0L) {
-            "$hours hours, $minPart min, $secPart sec"
-        } else {
-            "$minPart min, $secPart sec"
+        val secStr = "temporal.second".i18nPlural(secPart.toInt())
+        val minStr = "temporal.minute".i18nPlural(minPart.toInt())
+        return when {
+            days > 0L -> {
+                val dayStr = "temporal.day".i18nPlural(days.toInt())
+                val hourStr = "temporal.hour".i18nPlural(hoursPart.toInt())
+                "$dayStr, $hourStr, $minStr, $secStr"
+            }
+            hours > 0L -> {
+                val hourStr = "temporal.hour".i18nPlural(hours.toInt())
+                "$hourStr, $minStr, $secStr"
+            }
+            else -> "$minStr, $secStr"
         }
     }
 }

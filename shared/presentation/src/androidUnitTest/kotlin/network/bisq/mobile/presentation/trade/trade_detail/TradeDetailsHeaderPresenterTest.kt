@@ -24,6 +24,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -81,6 +82,7 @@ class TradeDetailsHeaderPresenterTest {
 
         startKoin { modules(testKoinModule) }
         GenericErrorHandler.clearGenericError()
+        I18nSupport.initialize("en")
 
         every { mainPresenter.languageCode } returns MutableStateFlow("en")
         every { mainPresenter.isSmallScreen } returns MutableStateFlow(false)

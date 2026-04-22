@@ -97,7 +97,7 @@ class State4ContentUiTest {
     @Test
     fun when_export_clicked_then_dispatches_OnExportTradeClick() {
         val trade = mockk<TradeItemPresentationModel>(relaxed = true)
-        every { trade.formattedBaseAmount } returns "0.01 BTC"
+        every { trade.formattedBaseAmount } returns "0.01"
         every { trade.quoteAmountWithCode } returns "100 USD"
 
         setTestContent {
@@ -123,7 +123,7 @@ class State4ContentUiTest {
     @Test
     fun when_close_trade_clicked_then_dispatches_OnCloseTradeClick() {
         val trade = mockk<TradeItemPresentationModel>(relaxed = true)
-        every { trade.formattedBaseAmount } returns "0.01 BTC"
+        every { trade.formattedBaseAmount } returns "0.01"
         every { trade.quoteAmountWithCode } returns "100 USD"
 
         setTestContent {

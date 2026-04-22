@@ -49,11 +49,28 @@ object TradeCompletedCsv {
         return "$headerLine\n$dataLine"
     }
 
+    /**
+     * First characters that spreadsheet apps (e.g. Excel) may interpret as a formula; see
+     * [escapeCsvField] for use.
+     */
+    private val CsvSpreadsheetFormulaDangerFirstChars =
+        setOf('=', '+', '-', '@', '\t', '\r')
+
+    /**
+     * Escapes a single CSV field. If the first character is in [CsvSpreadsheetFormulaDangerFirstChars],
+     * prefixes a single apostrophe, then applies the same quote/double-quote-escape rules as before.
+     */
     internal fun escapeCsvField(value: String): String {
-        if (value.none { it == '"' || it == ',' || it == '\n' || it == '\r' }) {
-            return value
+        val neutralized =
+            if (value.isNotEmpty() && value[0] in CsvSpreadsheetFormulaDangerFirstChars) {
+                "'$value"
+            } else {
+                value
+            }
+        if (neutralized.none { it == '"' || it == ',' || it == '\n' || it == '\r' }) {
+            return neutralized
         }
-        val doubled = value.replace("\"", "\"\"")
+        val doubled = neutralized.replace("\"", "\"\"")
         return "\"$doubled\""
     }
 }

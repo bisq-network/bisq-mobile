@@ -22,6 +22,17 @@ object StringUtils {
             this
         }
 
+    /**
+     * Compacts a Bitcoin tx id, address, or similar identifier for on-screen display:
+     * first 8 + `...` + last 8. Strings of length 16 or less are unchanged (no middle to elide).
+     */
+    fun String.truncateBitcoinIdentifier(): String =
+        if (length <= 16) {
+            this
+        } else {
+            take(8) + "..." + takeLast(8)
+        }
+
     fun String.urlEncode(): String {
         val bytes = this.encodeToByteArray()
         val sb = StringBuilder(bytes.size * 3)

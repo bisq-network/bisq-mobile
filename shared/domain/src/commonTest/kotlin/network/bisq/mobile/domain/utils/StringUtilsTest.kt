@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.utils
 
 import network.bisq.mobile.domain.utils.StringUtils.randomAlphaNum
 import network.bisq.mobile.domain.utils.StringUtils.truncate
+import network.bisq.mobile.domain.utils.StringUtils.truncateBitcoinIdentifier
 import network.bisq.mobile.domain.utils.StringUtils.urlEncode
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,6 +28,22 @@ class StringUtilsTest {
     @Test
     fun `truncate uses custom ellipsis`() {
         assertEquals("hello..", "hello world".truncate(7, ".."))
+    }
+
+    /** truncateBitcoinIdentifier tests **/
+    @Test
+    fun `truncateBitcoinIdentifier returns short strings as-is`() {
+        assertEquals("", "".truncateBitcoinIdentifier())
+        assertEquals("abc", "abc".truncateBitcoinIdentifier())
+        assertEquals("abcdefghij", "abcdefghij".truncateBitcoinIdentifier())
+        assertEquals("1234567890123456", "1234567890123456".truncateBitcoinIdentifier())
+    }
+
+    @Test
+    fun `truncateBitcoinIdentifier takes first 8 and last 8 with three dots`() {
+        // 17 chars: first8 + "..." + last8
+        assertEquals("12345678...01234567", "12345678901234567".truncateBitcoinIdentifier())
+        assertEquals("12345678...ijklmnop", "12345678abcdefghijklmnop".truncateBitcoinIdentifier())
     }
 
     /** randomAlphaNum tests **/

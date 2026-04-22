@@ -73,15 +73,15 @@ class TradeDetailsHeaderPresenter(
         super.onViewAttached()
 
         presenterScope.launch {
-            mainPresenter.languageCode
-                .flatMapLatest { tradesServiceFacade.selectedTrade }
-                .collect { trade ->
-                    if (trade == null) {
-                        _tradeUiState.value = null
-                        return@collect
-                    }
-                    _tradeUiState.value = trade.toHeaderTradeUiState(isSmallScreen())
-                }
+            combine(
+                mainPresenter.languageCode,
+                mainPresenter.isSmallScreen,
+                tradesServiceFacade.selectedTrade,
+            ) { _, isSmall, trade ->
+                trade?.toHeaderTradeUiState(isSmall)
+            }.collect { state ->
+                _tradeUiState.value = state
+            }
         }
 
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -128,12 +128,11 @@ class TradeDetailsHeaderPresenter(
                         flowOf("")
                     } else {
                         val takeOfferDate = trade.bisqEasyTradeModel.takeOfferDate
-                        // Combine with tradeState so we recompute when either updates (completion date is
-                        // pushed from the node observer; tradeState also moves to BTC_CONFIRMED).
                         combine(
+                            mainPresenter.languageCode,
                             trade.bisqEasyTradeModel.tradeState,
                             trade.bisqEasyTradeModel.tradeCompletedDate,
-                        ) { _, completedDate: Long? ->
+                        ) { _: String, _: BisqEasyTradeStateEnum, completedDate: Long? ->
                             TradeDurationFormatter.formatAge(
                                 tradeCompletedDate = completedDate,
                                 takeOfferDate = takeOfferDate,

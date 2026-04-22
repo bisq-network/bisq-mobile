@@ -149,7 +149,7 @@ actual fun createEmptyImage(): PlatformImage {
 
 actual val decimalFormatter: DecimalFormatter =
     object : DecimalFormatter {
-        private val formatters: MutableMap<Pair<Pair<Int, Locale>, Boolean>, DecimalFormat> = mutableMapOf()
+        private val formatters: MutableMap<Triple<Int, Locale, Boolean>, DecimalFormat> = mutableMapOf()
 
         override fun format(
             value: Double,
@@ -157,7 +157,7 @@ actual val decimalFormatter: DecimalFormatter =
             useGrouping: Boolean,
         ): String {
             val locale = Locale.getDefault()
-            val key = (precision to locale) to useGrouping
+            val key = Triple(precision, locale, useGrouping)
             val formatter =
                 formatters.getOrPut(key) {
                     val format = DecimalFormat(generatePattern(precision), DecimalFormatSymbols(locale))

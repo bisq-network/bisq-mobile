@@ -3,9 +3,7 @@
 package network.bisq.mobile.presentation.trade.trade_detail
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -41,6 +39,7 @@ import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.formatters.TradeDurationFormatter
+import network.bisq.mobile.domain.utils.StringUtils.truncateBitcoinIdentifier
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -108,18 +107,11 @@ fun TradeDetailsHeaderContent(
                 )
         }
 
-    val transitionState =
-        remember {
-            MutableTransitionState(sessionUiState.showDetails).apply {
-                targetState = !sessionUiState.showDetails
-            }
-        }
-    val transition = rememberTransition(transitionState)
-    val arrowRotationDegree by transition.animateFloat({
-        tween(durationMillis = 300)
-    }) {
-        if (sessionUiState.showDetails) 0f else 180f
-    }
+    val arrowRotationDegree by animateFloatAsState(
+        targetValue = if (sessionUiState.showDetails) 0f else 180f,
+        animationSpec = tween(durationMillis = 300),
+        label = "tradeDetailsHeaderArrowRotation",
+    )
 
     Column(
         modifier =
@@ -167,7 +159,7 @@ fun TradeDetailsHeaderContent(
                     ) {
                         InfoBoxRow(
                             label = paymentProofLabel,
-                            value = paymentProof.truncateForDisplay(16),
+                            value = paymentProof.truncateBitcoinIdentifier(),
                             fullValueToCopy = paymentProof,
                             showCopy = true,
                         )
@@ -183,7 +175,7 @@ fun TradeDetailsHeaderContent(
                 } else {
                     InfoBoxRow(
                         label = paymentProofLabel,
-                        value = paymentProof.truncateForDisplay(16),
+                        value = paymentProof.truncateBitcoinIdentifier(),
                         fullValueToCopy = paymentProof,
                         showCopy = true,
                     )
@@ -403,7 +395,7 @@ private fun CompletedTradeDetailsSection(
             BisqGap.V1()
             InfoBoxRow(
                 label = "bisqEasy.openTrades.tradeDetails.peerNetworkAddress".i18n(),
-                value = tradeUiState.peerNetworkAddress.truncateForDisplay(16),
+                value = tradeUiState.peerNetworkAddress.truncateBitcoinIdentifier(),
                 fullValueToCopy = tradeUiState.peerNetworkAddress,
                 showCopy = true,
             )
@@ -413,17 +405,13 @@ private fun CompletedTradeDetailsSection(
             BisqGap.V1()
             InfoBoxRow(
                 label = "bisqEasy.openTrades.tradeDetails.btcPaymentAddress".i18n(),
-                value = sessionUiState.receiverAddress.truncateForDisplay(16),
+                value = sessionUiState.receiverAddress.truncateBitcoinIdentifier(),
                 fullValueToCopy = sessionUiState.receiverAddress,
                 showCopy = true,
             )
         }
     }
 }
-
-// todo: Should do in the format bc1123...asf (first few chars ... and last 3/4 chars)
-// refer how other wallets handle this
-private fun String.truncateForDisplay(maxLength: Int): String = if (length <= maxLength) this else take(maxLength) + "\u2026"
 
 @ExcludeFromCoverage
 private fun previewFormattedTradeDuration(isCompleted: Boolean): String =

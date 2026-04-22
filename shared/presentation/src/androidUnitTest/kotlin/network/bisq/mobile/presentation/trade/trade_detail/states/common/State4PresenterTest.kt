@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -191,11 +192,11 @@ class State4PresenterTest {
             val selected = MutableStateFlow<TradeItemPresentationModel?>(trade)
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
-            every { shareFileService.shareUtf8TextFile(any(), any()) } returns Result.success(Unit)
+            coEvery { shareFileService.shareUtf8TextFile(any(), any()) } returns Result.success(Unit)
 
             presenter.onAction(State4UiAction.OnExportTradeClick)
 
-            verify(timeout = 500) {
+            coVerify(timeout = 500) {
                 shareFileService.shareUtf8TextFile(any(), "BisqEasy-trade-short99.csv")
             }
         }
@@ -209,7 +210,7 @@ class State4PresenterTest {
 
             presenter.onAction(State4UiAction.OnExportTradeClick)
 
-            verify(timeout = 300, exactly = 0) { shareFileService.shareUtf8TextFile(any(), any()) }
+            coVerify(timeout = 300, exactly = 0) { shareFileService.shareUtf8TextFile(any(), any()) }
             waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value != null }
             assertEquals("No trade selected for export", GenericErrorHandler.genericErrorMessage.value)
         }
@@ -221,12 +222,12 @@ class State4PresenterTest {
             val selected = MutableStateFlow<TradeItemPresentationModel?>(trade)
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
-            every { shareFileService.shareUtf8TextFile(any(), any()) } returns
+            coEvery { shareFileService.shareUtf8TextFile(any(), any()) } returns
                 Result.failure(RuntimeException("share denied"))
 
             presenter.onAction(State4UiAction.OnExportTradeClick)
 
-            waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value != null }
+            coVerify(timeout = 5000) { shareFileService.shareUtf8TextFile(any(), any()) }
             assertEquals("share denied", GenericErrorHandler.genericErrorMessage.value)
         }
 
@@ -266,10 +267,10 @@ class State4PresenterTest {
         timeoutMs: Long,
         condition: () -> Boolean,
     ) {
-        val start = System.currentTimeMillis()
-        while (!condition()) {
-            if (System.currentTimeMillis() - start > timeoutMs) break
-            delay(10)
+        withTimeout(timeoutMs) {
+            while (!condition()) {
+                delay(10)
+            }
         }
     }
 

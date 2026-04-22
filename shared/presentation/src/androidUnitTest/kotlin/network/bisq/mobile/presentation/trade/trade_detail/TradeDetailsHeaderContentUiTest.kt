@@ -21,6 +21,7 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.utils.StringUtils.truncateBitcoinIdentifier
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -261,7 +262,7 @@ class TradeDetailsHeaderContentUiTest {
         composeTestRule
             .onNodeWithText("bisqEasy.tradeState.paymentProof.MAIN_CHAIN".i18n())
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(LONG_MAIN_CHAIN_PAYMENT_PROOF.take(16), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(LONG_MAIN_CHAIN_PAYMENT_PROOF.truncateBitcoinIdentifier()).assertIsDisplayed()
         composeTestRule.onNodeWithText(blockExplorerLinkText()).assertIsDisplayed()
 
         composeTestRule.onNodeWithText("bisqEasy.openTrades.table.price".i18n()).performScrollTo().assertIsDisplayed()
@@ -290,12 +291,12 @@ class TradeDetailsHeaderContentUiTest {
             .onNodeWithText("bisqEasy.openTrades.tradeDetails.peerNetworkAddress".i18n())
             .performScrollTo()
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(SAMPLE_TOR_PEER.take(16), substring = true).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText(SAMPLE_TOR_PEER.truncateBitcoinIdentifier()).performScrollTo().assertIsDisplayed()
         composeTestRule
             .onNodeWithText("bisqEasy.openTrades.tradeDetails.btcPaymentAddress".i18n())
             .performScrollTo()
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(SAMPLE_RECEIVER_BTC.take(16), substring = true).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText(SAMPLE_RECEIVER_BTC.truncateBitcoinIdentifier()).performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -311,7 +312,7 @@ class TradeDetailsHeaderContentUiTest {
         composeTestRule
             .onNodeWithText("bisqEasy.tradeState.paymentProof.MAIN_CHAIN".i18n())
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(LONG_MAIN_CHAIN_PAYMENT_PROOF.take(16), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(LONG_MAIN_CHAIN_PAYMENT_PROOF.truncateBitcoinIdentifier()).assertIsDisplayed()
         composeTestRule.onNodeWithText(blockExplorerLinkText()).assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Up icon").assertIsDisplayed()
 
@@ -447,7 +448,7 @@ class TradeDetailsHeaderContentUiTest {
             .onNodeWithText("bisqEasy.openTrades.tradeDetails.peerNetworkAddress".i18n())
             .assertIsDisplayed()
         composeTestRule
-            .onNodeWithText(addr.take(16), substring = true)
+            .onNodeWithText(addr.truncateBitcoinIdentifier())
             .assertIsDisplayed()
     }
 
