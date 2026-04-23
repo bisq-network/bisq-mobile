@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.domain.utils.toNSData
+import platform.Foundation.NSFileManager
 import platform.Foundation.NSString
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.setValue
@@ -54,10 +55,21 @@ class IosShareFileService : ShareFileService {
                         val fileUrl = platform.Foundation.NSURL.fileURLWithPath(pathStr)
                         val activityItems = listOf(fileUrl)
                         val controller = UIActivityViewController(activityItems = activityItems, applicationActivities = null)
+                        val pathToRemove = pathStr
+                        controller.completionWithItemsHandler = { _, _, _, _ ->
+                            try {
+                                if (!NSFileManager.defaultManager.removeItemAtPath(pathToRemove, null)) {
+                                    log.e { "Failed to remove temporary share file: $pathToRemove" }
+                                }
+                            } catch (e: Throwable) {
+                                log.e(e) { "Failed to remove temporary share file: $pathToRemove" }
+                            }
+                        }
 
                         val root = findTopViewController()
                         if (root == null) {
                             log.e { "No root view controller for share sheet" }
+                            NSFileManager.defaultManager.removeItemAtPath(pathToRemove, null)
                             return@withContext Result.failure(IllegalStateException("No root view controller"))
                         }
                         configureShareSheetPopoverAnchorIfPad(controller, root)
@@ -86,36 +98,48 @@ class IosShareFileService : ShareFileService {
         controller.setValue(UIPopoverArrowDirectionAny, forKeyPath = "popoverPresentationController.permittedArrowDirections")
     }
 
-    private fun findTopViewController(): UIViewController? {
-        val keyWindowRoot =
-            try {
-                @Suppress("DEPRECATION")
-                UIApplication.sharedApplication.keyWindow?.rootViewController
-            } catch (_: Exception) {
-                null
-            }
-        val fromConnectedScenes =
-            keyWindowRoot
-                ?: try {
-                    UIApplication.sharedApplication.connectedScenes
+    private fun rootViewControllerFromConnectedScenes(): UIViewController? =
+        try {
+            UIApplication.sharedApplication.connectedScenes
+                .toList()
+                .filterIsInstance<UIWindowScene>()
+                .firstNotNullOfOrNull { scene ->
+                    scene
+                        .windows
                         .toList()
-                        .filterIsInstance<UIWindowScene>()
-                        .firstNotNullOfOrNull { scene ->
-                            scene
-                                .windows
-                                .toList()
-                                .filterIsInstance<UIWindow>()
-                                .firstOrNull { it.keyWindow }
-                                ?.rootViewController
-                        }
-                } catch (_: Exception) {
-                    null
+                        .filterIsInstance<UIWindow>()
+                        .firstOrNull { it.keyWindow }
+                        ?.rootViewController
                 }
+        } catch (e: Exception) {
+            log.w(e) { "Failed to resolve root view controller from connected UIWindowScenes" }
+            null
+        }
+
+    @Suppress("DEPRECATION")
+    private fun rootViewControllerFromKeyWindow(): UIViewController? =
+        try {
+            UIApplication.sharedApplication.keyWindow?.rootViewController
+        } catch (e: Exception) {
+            log.w(e) { "Failed to resolve root view controller from UIApplication.keyWindow" }
+            null
+        }
+
+    private fun rootViewControllerFromDelegateWindow(): UIViewController? =
+        try {
+            UIApplication.sharedApplication.delegate
+                ?.window
+                ?.rootViewController
+        } catch (e: Exception) {
+            log.w(e) { "Failed to resolve root view controller from app delegate window" }
+            null
+        }
+
+    private fun findTopViewController(): UIViewController? {
         val root =
-            fromConnectedScenes
-                ?: UIApplication.sharedApplication.delegate
-                    ?.window
-                    ?.rootViewController
+            rootViewControllerFromConnectedScenes()
+                ?: rootViewControllerFromKeyWindow()
+                ?: rootViewControllerFromDelegateWindow()
         var top = root ?: return null
         while (true) {
             when {

@@ -87,4 +87,24 @@ class TradeDurationFormatterTest {
             TradeDurationFormatter.formatAge(tradeCompletedDate = takeOffer + durationMs, takeOfferDate = takeOffer),
         )
     }
+
+    @Test
+    fun `formatAge day branch zero hours still uses minute and second remainders`() {
+        // 1 day + 0 h + 3 min + 4 s
+        val durationMs = (24L * 3600L + 3L * 60L + 4L) * 1000L
+        assertEquals(
+            "1 day, 0 hours, 3 min, 4 sec",
+            TradeDurationFormatter.formatAge(tradeCompletedDate = takeOffer + durationMs, takeOfferDate = takeOffer),
+        )
+    }
+
+    @Test
+    fun `formatAge hours branch zero minutes still uses second remainder`() {
+        // 2 h + 0 min + 7 s
+        val durationMs = (2L * 3600L + 7L) * 1000L
+        assertEquals(
+            "2 hours, 0 min, 7 sec",
+            TradeDurationFormatter.formatAge(tradeCompletedDate = takeOffer + durationMs, takeOfferDate = takeOffer),
+        )
+    }
 }

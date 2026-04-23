@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -79,9 +80,10 @@ class TradeDetailsHeaderPresenter(
                 tradesServiceFacade.selectedTrade,
             ) { _, isSmall, trade ->
                 trade?.toHeaderTradeUiState(isSmall)
-            }.collect { state ->
-                _tradeUiState.value = state
-            }
+            }.distinctUntilChanged()
+                .collect { state ->
+                    _tradeUiState.value = state
+                }
         }
 
         require(tradesServiceFacade.selectedTrade.value != null)
