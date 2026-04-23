@@ -101,6 +101,7 @@ class OpenTradesNotificationService(
                 .onEach { isForeground ->
                     if (isForeground) {
                         log.d { "App entered foreground (debounced). Unregistering observers." }
+                        notificationController.clearPreRenderedNotifications()
                         unregisterObservers()
                     } else {
                         log.d { "App entered background (debounced). Registering observers." }

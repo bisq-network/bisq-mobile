@@ -103,15 +103,50 @@ class NotificationControllerImpl(
                 content,
                 null,
             )
-        UNUserNotificationCenter
-            .currentNotificationCenter()
-            .addNotificationRequest(request) { error ->
-                if (error != null) {
-                    logDebug("Error adding notification request: ${error.localizedDescription}")
-                } else {
-                    logDebug("Notification $requestId added successfully")
+
+        // Remove any NSE-delivered push notifications before posting the richer local
+        // notification. The NSE shows a privacy-safe generic message (e.g. "Trade update");
+        // once the app wakes up and has full context, we replace it with detailed content.
+        removeNseDeliveredNotifications {
+            UNUserNotificationCenter
+                .currentNotificationCenter()
+                .addNotificationRequest(request) { error ->
+                    if (error != null) {
+                        logDebug("Error adding notification request: ${error.localizedDescription}")
+                    } else {
+                        logDebug("Notification $requestId added successfully")
+                    }
                 }
+        }
+    }
+
+    /**
+     * Finds and removes delivered notifications that were posted by the Notification
+     * Service Extension (identified by `nse_decrypted: true` in userInfo), then
+     * invokes [onComplete]. This prevents duplicate notifications when the app posts
+     * a richer local notification to replace the NSE's privacy-safe placeholder.
+     */
+    private fun removeNseDeliveredNotifications(onComplete: () -> Unit) {
+        val center = UNUserNotificationCenter.currentNotificationCenter()
+        center.getDeliveredNotificationsWithCompletionHandler { delivered ->
+            val nseIds = delivered
+                ?.mapNotNull { it as? UNNotification }
+                ?.filter { it.request.content.userInfo["nse_decrypted"] != null }
+                ?.map { it.request.identifier }
+                ?: emptyList()
+
+            if (nseIds.isNotEmpty()) {
+                logDebug("Removing ${nseIds.size} NSE-delivered notification(s)")
+                center.removeDeliveredNotificationsWithIdentifiers(nseIds)
             }
+            onComplete()
+        }
+    }
+
+    override fun clearPreRenderedNotifications() {
+        removeNseDeliveredNotifications {
+            logDebug("Pre-rendered (NSE) notifications cleared on foreground entry")
+        }
     }
 
     override fun cancel(id: String) {
