@@ -2,6 +2,7 @@ import UserNotifications
 import CryptoKit
 import Foundation
 import Security
+import os.log
 
 /// Notification Service Extension that decrypts push notification content before display.
 /// This avoids the double-notification problem where iOS first shows a generic alert,
@@ -20,9 +21,11 @@ class NotificationService: UNNotificationServiceExtension {
     private static let TAG_SIZE = 16
     private static let APP_GROUP = "group.network.bisq.mobile"
     private static let PENDING_NOTIFICATION_KEY = "pending_decrypted_notification"
+    private static let NSE_BREADCRUMB_KEY = "nse_last_invocation"
     private static let KEYCHAIN_SERVICE = "network.bisq.mobile"
     private static let KEYCHAIN_ACCOUNT = "push_notification_symmetric_key"
-    private static let KEYCHAIN_ACCESS_GROUP = "$(AppIdentifierPrefix)network.bisq.mobile"
+
+    private let log = OSLog(subsystem: "network.bisq.mobile.BisqNotificationService", category: "NSE")
 
     private var contentHandler: ((UNNotificationContent) -> Void)?
     private var bestAttemptContent: UNMutableNotificationContent?
@@ -31,26 +34,39 @@ class NotificationService: UNNotificationServiceExtension {
         _ request: UNNotificationRequest,
         withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void
     ) {
+        os_log("NSE didReceive invoked", log: log, type: .info)
+        writeBreadcrumb(stage: "didReceive_start")
+
         self.contentHandler = contentHandler
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
 
         guard let bestAttemptContent = bestAttemptContent else {
+            os_log("NSE: no mutable content available", log: log, type: .error)
+            writeBreadcrumb(stage: "no_mutable_content")
             contentHandler(request.content)
             return
         }
 
         guard let encryptedBase64 = request.content.userInfo["encrypted"] as? String,
               let encryptedData = Data(base64Encoded: encryptedBase64) else {
+            os_log("NSE: no 'encrypted' field in userInfo or Base64 decode failed", log: log, type: .error)
+            writeBreadcrumb(stage: "no_encrypted_field")
             contentHandler(bestAttemptContent)
             return
         }
 
+        os_log("NSE: encrypted payload found (%{public}d bytes)", log: log, type: .info, encryptedData.count)
+
         guard let keyData = retrieveSymmetricKey() else {
+            os_log("NSE: keychain retrieval failed — showing fallback", log: log, type: .error)
+            writeBreadcrumb(stage: "keychain_retrieval_failed")
             bestAttemptContent.title = "Bisq"
             bestAttemptContent.body = "New notification"
             contentHandler(bestAttemptContent)
             return
         }
+
+        os_log("NSE: symmetric key retrieved (%{public}d bytes)", log: log, type: .info, keyData.count)
 
         do {
             let decryptedData = try decryptAESGCM(data: encryptedData, keyData: keyData)
@@ -71,7 +87,12 @@ class NotificationService: UNNotificationServiceExtension {
                 "notification_id": payload.id,
                 "notification_category": summary.rawValue,
             ]) { _, new in new }
+
+            os_log("NSE: decryption success, category=%{public}@", log: log, type: .info, summary.rawValue)
+            writeBreadcrumb(stage: "decrypt_success:\(summary.rawValue)")
         } catch {
+            os_log("NSE: decryption failed: %{public}@", log: log, type: .error, error.localizedDescription)
+            writeBreadcrumb(stage: "decrypt_failed:\(error.localizedDescription)")
             bestAttemptContent.title = "Bisq"
             bestAttemptContent.body = "New notification"
         }
@@ -80,6 +101,8 @@ class NotificationService: UNNotificationServiceExtension {
     }
 
     override func serviceExtensionTimeWillExpire() {
+        os_log("NSE: serviceExtensionTimeWillExpire — delivering best attempt", log: log, type: .error)
+        writeBreadcrumb(stage: "time_expired")
         if let contentHandler = contentHandler, let bestAttemptContent = bestAttemptContent {
             contentHandler(bestAttemptContent)
         }
@@ -137,6 +160,25 @@ class NotificationService: UNNotificationServiceExtension {
         defaults.set(pending, forKey: NotificationService.PENDING_NOTIFICATION_KEY)
     }
 
+    // MARK: - Diagnostic breadcrumbs
+
+    /// Writes a breadcrumb to the shared app group UserDefaults so the main app
+    /// (or a developer inspecting the device) can verify the NSE was invoked.
+    private func writeBreadcrumb(stage: String) {
+        guard let defaults = UserDefaults(suiteName: NotificationService.APP_GROUP) else { return }
+        let entry: [String: String] = [
+            "stage": stage,
+            "timestamp": ISO8601DateFormatter().string(from: Date()),
+        ]
+        var breadcrumbs = defaults.array(forKey: NotificationService.NSE_BREADCRUMB_KEY) as? [[String: String]] ?? []
+        breadcrumbs.append(entry)
+        // Keep bounded — only retain the last 20 breadcrumbs
+        if breadcrumbs.count > 20 {
+            breadcrumbs = Array(breadcrumbs.suffix(20))
+        }
+        defaults.set(breadcrumbs, forKey: NotificationService.NSE_BREADCRUMB_KEY)
+    }
+
     // MARK: - Decryption
 
     private func decryptAESGCM(data: Data, keyData: Data) throws -> Data {
@@ -159,13 +201,16 @@ class NotificationService: UNNotificationServiceExtension {
     // MARK: - Keychain
 
     private func retrieveSymmetricKey() -> Data? {
+        // Note: kSecAttrAccessible is intentionally NOT included in the search query.
+        // It is a storage attribute, not a search filter. Including it causes
+        // SecItemCopyMatching to silently return errSecItemNotFound if there is
+        // any mismatch with how the item was originally stored.
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: NotificationService.KEYCHAIN_ACCOUNT,
             kSecAttrService as String: NotificationService.KEYCHAIN_SERVICE,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
 
         var result: CFTypeRef?
@@ -174,6 +219,7 @@ class NotificationService: UNNotificationServiceExtension {
         if status == errSecSuccess, let data = result as? Data {
             return data
         }
+        os_log("NSE: SecItemCopyMatching returned status %{public}d", log: log, type: .error, status)
         return nil
     }
 }

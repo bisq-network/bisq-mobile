@@ -267,6 +267,54 @@ do {
 }
 print("")
 
+// Test 9: Empty encrypted field is rejected gracefully
+print("Test 9: Empty/missing encrypted payload handled gracefully")
+do {
+    let keyData = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+
+    // Empty string should fail Base64 decode (returns empty Data)
+    let emptyData = Data(base64Encoded: "")!
+    do {
+        _ = try decryptAESGCM(data: emptyData, keyData: keyData)
+        failed += 1
+        print("  FAIL: Should have thrown with empty data")
+    } catch {
+        passed += 1
+        print("  PASS: Empty encrypted data correctly rejected")
+    }
+
+    // Valid Base64 but too short for nonce+tag (< 28 bytes)
+    let shortPayload = Data([0, 1, 2, 3, 4, 5])
+    do {
+        _ = try decryptAESGCM(data: shortPayload, keyData: keyData)
+        failed += 1
+        print("  FAIL: Should have thrown with short payload")
+    } catch {
+        passed += 1
+        print("  PASS: Short payload correctly rejected")
+    }
+}
+print("")
+
+// Test 10: Payload with extra JSON fields decodes (forward compatibility)
+print("Test 10: Payload with extra fields decodes successfully")
+do {
+    let keyData = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+    let jsonStr = "{\"id\":\"compat-1\",\"title\":\"Trade update\",\"message\":\"test\",\"extraField\":42}"
+    let json = jsonStr.data(using: .utf8)!
+
+    let encrypted = try encryptAESGCM(plaintext: json, keyData: keyData)
+    let decrypted = try decryptAESGCM(data: encrypted, keyData: keyData)
+    let decoded = try JSONDecoder().decode(NotificationPayload.self, from: decrypted)
+
+    assert(decoded.id == "compat-1", "ID decoded despite extra fields")
+    assert(decoded.title == "Trade update", "Title decoded despite extra fields")
+} catch {
+    failed += 1
+    print("  FAIL: Forward compatibility test threw error: \(error)")
+}
+print("")
+
 // Summary
 print("==========================================")
 print("Results: \(passed) passed, \(failed) failed")
