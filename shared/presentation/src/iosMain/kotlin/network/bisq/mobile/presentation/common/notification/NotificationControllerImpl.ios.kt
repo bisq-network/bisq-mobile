@@ -318,14 +318,22 @@ class NotificationControllerImpl(
                         didReceiveNotificationResponse.actionIdentifier.let {
                             if (it == UNNotificationDefaultActionIdentifier) "default" else it
                         }
+                    log.i {
+                        "didReceiveNotificationResponse: actionId=$actionId, " +
+                            "userInfo keys=${(userInfo as? Map<*, *>)?.keys}, " +
+                            "requestId=${didReceiveNotificationResponse.notification.request.identifier}"
+                    }
                     when (actionId) {
                         "default",
                         "route",
                         -> {
                             val userInfoMap = userInfo as? Map<*, *>
                             val uri = userInfoMap?.get(actionId) as? String
+                            log.i { "Deep link URI from notification: $uri" }
                             if (uri != null) {
                                 ExternalUriHandler.onNewUri(uri)
+                            } else {
+                                log.w { "No URI found for actionId=$actionId in userInfo" }
                             }
                         }
                     }
