@@ -13,7 +13,16 @@ public class PushNotificationKeyStore: NSObject {
     // groups) can access the same keychain item.
     // Resolved at build time from Info.plist via $(AppIdentifierPrefix), so it works
     // for any developer team without hardcoding the team ID.
-    private static let ACCESS_GROUP: String? = Bundle.main.object(forInfoDictionaryKey: "KeychainAccessGroup") as? String
+    private static let ACCESS_GROUP: String? = {
+        let group = Bundle.main.object(forInfoDictionaryKey: "KeychainAccessGroup") as? String
+        if group == nil {
+            #if DEBUG
+            assertionFailure("KeychainAccessGroup missing from Info.plist — keychain sharing between app and NSE will fail")
+            #endif
+            NSLog("[PushNotificationKeyStore] WARNING: KeychainAccessGroup missing from Info.plist")
+        }
+        return group
+    }()
 
     @objc public static let shared = PushNotificationKeyStore()
 

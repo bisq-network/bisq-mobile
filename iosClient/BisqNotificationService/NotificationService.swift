@@ -20,7 +20,6 @@ class NotificationService: UNNotificationServiceExtension {
     private static let NONCE_SIZE = 12
     private static let TAG_SIZE = 16
     private static let APP_GROUP = "group.network.bisq.mobile"
-    private static let PENDING_NOTIFICATION_KEY = "pending_decrypted_notification"
     private static let NSE_BREADCRUMB_KEY = "nse_last_invocation"
     private static let KEYCHAIN_SERVICE = "network.bisq.mobile"
     private static let KEYCHAIN_ACCOUNT = "push_notification_symmetric_key"
@@ -77,13 +76,9 @@ class NotificationService: UNNotificationServiceExtension {
             let payload = try JSONDecoder().decode(NotificationPayload.self, from: decryptedData)
 
             // Privacy: show only a category-based summary on the lock screen.
-            // Full content is stored for the main app to display after unlock.
             let summary = NotificationCategory.from(title: payload.title)
             bestAttemptContent.title = "Bisq"
             bestAttemptContent.body = summary.displayText
-
-            // Store full decrypted content for in-app display
-            storePendingNotification(payload)
 
             // Pass opaque identifiers only — no human-readable trade details in userInfo
             bestAttemptContent.userInfo = bestAttemptContent.userInfo.merging([
@@ -142,26 +137,6 @@ class NotificationService: UNNotificationServiceExtension {
             }
             return .general
         }
-    }
-
-    // MARK: - Pending notification storage
-
-    private func storePendingNotification(_ payload: NotificationPayload) {
-        // Store in shared UserDefaults (app group) so the main app can read after unlock
-        guard let defaults = UserDefaults(suiteName: NotificationService.APP_GROUP) else { return }
-        let entry: [String: String] = [
-            "id": payload.id,
-            "title": payload.title,
-            "message": payload.message,
-            "timestamp": ISO8601DateFormatter().string(from: Date()),
-        ]
-        var pending = defaults.array(forKey: NotificationService.PENDING_NOTIFICATION_KEY) as? [[String: String]] ?? []
-        pending.append(entry)
-        // Keep bounded — drop oldest if over 50
-        if pending.count > 50 {
-            pending = Array(pending.suffix(50))
-        }
-        defaults.set(pending, forKey: NotificationService.PENDING_NOTIFICATION_KEY)
     }
 
     // MARK: - Diagnostic breadcrumbs
