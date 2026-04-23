@@ -107,6 +107,7 @@ class NotificationControllerImpl(
         // Remove any NSE-delivered push notifications before posting the richer local
         // notification. The NSE shows a privacy-safe generic message (e.g. "Trade update");
         // once the app wakes up and has full context, we replace it with detailed content.
+        log.d { "notify(): removing NSE notifications before posting local '$requestId'" }
         removeNseDeliveredNotifications {
             UNUserNotificationCenter
                 .currentNotificationCenter()
@@ -129,23 +130,37 @@ class NotificationControllerImpl(
     private fun removeNseDeliveredNotifications(onComplete: () -> Unit) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         center.getDeliveredNotificationsWithCompletionHandler { delivered ->
-            val nseIds = delivered
-                ?.mapNotNull { it as? UNNotification }
-                ?.filter { it.request.content.userInfo["nse_decrypted"] != null }
-                ?.map { it.request.identifier }
-                ?: emptyList()
+            val allNotifications = delivered?.mapNotNull { it as? UNNotification } ?: emptyList()
+            log.d { "Delivered notifications count: ${allNotifications.size}" }
+            allNotifications.forEach { notification ->
+                val userInfo = notification.request.content.userInfo
+                log.d {
+                    "  Notification id=${notification.request.identifier}, " +
+                        "title='${notification.request.content.title}', " +
+                        "nse_decrypted=${userInfo["nse_decrypted"]}, " +
+                        "keys=${userInfo.keys.joinToString()}"
+                }
+            }
+
+            val nseIds =
+                allNotifications
+                    .filter { it.request.content.userInfo["nse_decrypted"] != null }
+                    .map { it.request.identifier }
 
             if (nseIds.isNotEmpty()) {
-                logDebug("Removing ${nseIds.size} NSE-delivered notification(s)")
+                log.d { "Removing ${nseIds.size} NSE-delivered notification(s): $nseIds" }
                 center.removeDeliveredNotificationsWithIdentifiers(nseIds)
+            } else {
+                log.d { "No NSE notifications found to remove" }
             }
             onComplete()
         }
     }
 
     override fun clearPreRenderedNotifications() {
+        log.i { "clearPreRenderedNotifications called (app entered foreground)" }
         removeNseDeliveredNotifications {
-            logDebug("Pre-rendered (NSE) notifications cleared on foreground entry")
+            log.i { "Pre-rendered (NSE) notifications cleared on foreground entry" }
         }
     }
 
