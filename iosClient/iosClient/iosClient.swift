@@ -38,7 +38,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let userInfo = notification.request.content.userInfo
-        if userInfo["skipForeground"] == nil {
+        // Suppress NSE notifications when the app is in foreground — the app can
+        // handle the event directly via WebSocket, so showing the generic "Trade update"
+        // placeholder would just flicker before being replaced or dismissed.
+        if userInfo["skipForeground"] == nil && userInfo["nse_decrypted"] == nil {
             completionHandler([.alert, .sound, .badge])
         } else {
             completionHandler([])
