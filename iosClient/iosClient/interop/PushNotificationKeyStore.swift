@@ -8,11 +8,12 @@ public class PushNotificationKeyStore: NSObject {
     private static let KEY_ACCOUNT = "push_notification_symmetric_key"
 
     // Keychain access group shared between main app and NSE.
-    // When running via Xcode, the entitlements handle access group scoping automatically.
-    // We omit the explicit group here so the default app keychain is used, which is
-    // shared with extensions that have the same keychain-access-groups entitlement.
-    // The NSE reads directly with the same service/account identifiers.
-    private static let ACCESS_GROUP: String? = nil
+    // Must be explicitly specified in queries so that both the main app process and
+    // the NSE process (which have different bundle IDs and different default keychain
+    // groups) can access the same keychain item.
+    // Resolved at build time from Info.plist via $(AppIdentifierPrefix), so it works
+    // for any developer team without hardcoding the team ID.
+    private static let ACCESS_GROUP: String? = Bundle.main.object(forInfoDictionaryKey: "KeychainAccessGroup") as? String
 
     @objc public static let shared = PushNotificationKeyStore()
 

@@ -24,6 +24,10 @@ class NotificationService: UNNotificationServiceExtension {
     private static let NSE_BREADCRUMB_KEY = "nse_last_invocation"
     private static let KEYCHAIN_SERVICE = "network.bisq.mobile"
     private static let KEYCHAIN_ACCOUNT = "push_notification_symmetric_key"
+    // Resolved at build time from Info.plist via $(AppIdentifierPrefix).
+    // Falls back to nil (default keychain group) if the plist key is missing,
+    // though that would fail for NSE since it has a different default group.
+    private static let KEYCHAIN_ACCESS_GROUP: String? = Bundle.main.object(forInfoDictionaryKey: "KeychainAccessGroup") as? String
 
     private let log = OSLog(subsystem: "network.bisq.mobile.BisqNotificationService", category: "NSE")
 
@@ -205,13 +209,19 @@ class NotificationService: UNNotificationServiceExtension {
         // It is a storage attribute, not a search filter. Including it causes
         // SecItemCopyMatching to silently return errSecItemNotFound if there is
         // any mismatch with how the item was originally stored.
-        let query: [String: Any] = [
+        // kSecAttrAccessGroup MUST be specified because the NSE runs as a separate
+        // process with a different bundle ID (and thus different default keychain group)
+        // than the main app. Without it, the NSE searches its own group and finds nothing.
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: NotificationService.KEYCHAIN_ACCOUNT,
             kSecAttrService as String: NotificationService.KEYCHAIN_SERVICE,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
+        if let group = NotificationService.KEYCHAIN_ACCESS_GROUP {
+            query[kSecAttrAccessGroup as String] = group
+        }
 
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
