@@ -11,7 +11,6 @@ import network.bisq.mobile.presentation.common.notification.model.NotificationCo
 import network.bisq.mobile.presentation.common.notification.model.NotificationPressAction
 import network.bisq.mobile.presentation.common.notification.model.ios.IosNotificationCategory
 import network.bisq.mobile.presentation.common.notification.model.toPlatformEnum
-import network.bisq.mobile.presentation.common.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import platform.Foundation.NSNumber
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
@@ -21,16 +20,9 @@ import platform.UserNotifications.UNNotificationAction
 import platform.UserNotifications.UNNotificationActionOptionForeground
 import platform.UserNotifications.UNNotificationCategory
 import platform.UserNotifications.UNNotificationCategoryOptionNone
-import platform.UserNotifications.UNNotificationDefaultActionIdentifier
-import platform.UserNotifications.UNNotificationPresentationOptionAlert
-import platform.UserNotifications.UNNotificationPresentationOptionBadge
-import platform.UserNotifications.UNNotificationPresentationOptionSound
-import platform.UserNotifications.UNNotificationPresentationOptions
 import platform.UserNotifications.UNNotificationRequest
-import platform.UserNotifications.UNNotificationResponse
 import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNUserNotificationCenter
-import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -40,9 +32,6 @@ class NotificationControllerImpl(
 ) : NotificationController,
     Logging {
     private val logScope = CoroutineScope(Dispatchers.Main)
-
-    // strong reference to delegate to keep it in memory and working
-    private var notificationDelegate: NSObject? = null
 
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun hasPermission(): Boolean =
@@ -303,64 +292,12 @@ class NotificationControllerImpl(
         }
     }
 
-    private fun setupDelegate() {
-        val delegate =
-            object : NSObject(), UNUserNotificationCenterDelegateProtocol {
-                // Handle user actions on the notification
-                override fun userNotificationCenter(
-                    center: UNUserNotificationCenter,
-                    didReceiveNotificationResponse: UNNotificationResponse,
-                    withCompletionHandler: () -> Unit,
-                ) {
-                    // Handle the response when the user taps the notification
-                    val userInfo = didReceiveNotificationResponse.notification.request.content.userInfo
-                    val actionId =
-                        didReceiveNotificationResponse.actionIdentifier.let {
-                            if (it == UNNotificationDefaultActionIdentifier) "default" else it
-                        }
-                    log.i {
-                        "didReceiveNotificationResponse: actionId=$actionId, " +
-                            "userInfo keys=${(userInfo as? Map<*, *>)?.keys}, " +
-                            "requestId=${didReceiveNotificationResponse.notification.request.identifier}"
-                    }
-                    when (actionId) {
-                        "default",
-                        "route",
-                        -> {
-                            val userInfoMap = userInfo as? Map<*, *>
-                            val uri = userInfoMap?.get(actionId) as? String
-                            log.i { "Deep link URI from notification: $uri" }
-                            if (uri != null) {
-                                ExternalUriHandler.onNewUri(uri)
-                            } else {
-                                log.w { "No URI found for actionId=$actionId in userInfo" }
-                            }
-                        }
-                    }
-                    withCompletionHandler()
-                }
-
-                // Asks the delegate how to handle a notification that arrived while
-                // the app was running in the foreground.
-                override fun userNotificationCenter(
-                    center: UNUserNotificationCenter,
-                    willPresentNotification: UNNotification,
-                    withCompletionHandler: (UNNotificationPresentationOptions) -> Unit,
-                ) {
-                    val userInfo = willPresentNotification.request.content.userInfo
-
-                    if (!userInfo.contains("skipForeground")) {
-                        // Display alert, sound, or badge when the app is in the foreground
-                        withCompletionHandler(
-                            UNNotificationPresentationOptionAlert or UNNotificationPresentationOptionSound or UNNotificationPresentationOptionBadge,
-                        )
-                    }
-                }
-            }
-        notificationDelegate = delegate
-        UNUserNotificationCenter.currentNotificationCenter().delegate = delegate
-        logDebug("Notification center delegate applied")
-    }
+    // NOTE: The UNUserNotificationCenter delegate is now set in Swift's AppDelegate
+    // (didFinishLaunchingWithOptions) to ensure it's available before iOS delivers any
+    // pending notification responses. Previously it was set here in Kotlin, but that was
+    // too late — tapping a notification while the app was terminated caused the response
+    // to be silently dropped. The Swift delegate handles both didReceiveNotificationResponse
+    // (deep linking via ExternalUriHandler) and willPresent (foreground presentation).
 
     private fun setupNotificationCategories() {
         setNotificationCategories(
@@ -383,7 +320,6 @@ class NotificationControllerImpl(
 
     @Suppress("unused") // Called from iosClient.swift
     fun setup() {
-        setupDelegate()
         setupNotificationCategories()
     }
 }

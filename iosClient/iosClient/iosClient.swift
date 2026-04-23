@@ -3,7 +3,7 @@ import UIKit
 import UserNotifications
 import ClientApp
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     // handles deep links
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
@@ -11,7 +11,47 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 
+    // MARK: - UNUserNotificationCenterDelegate
+
+    // Handle notification tap — must be on the delegate set in didFinishLaunchingWithOptions,
+    // otherwise iOS drops the response when the app launches from a terminated state.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        let actionId = response.actionIdentifier == UNNotificationDefaultActionIdentifier ? "default" : response.actionIdentifier
+
+        if actionId == "default" || actionId == "route" {
+            if let uri = userInfo[actionId] as? String {
+                ExternalUriHandler.shared.onNewUri(uri: uri)
+            }
+        }
+        completionHandler()
+    }
+
+    // Handle notification presentation while app is in foreground
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        let userInfo = notification.request.content.userInfo
+        if userInfo["skipForeground"] == nil {
+            completionHandler([.alert, .sound, .badge])
+        } else {
+            completionHandler([])
+        }
+    }
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Set the notification center delegate early — before the system delivers any
+        // pending notification responses. If the delegate is set too late (e.g., after
+        // Compose initializes), tapping a notification while the app is terminated
+        // causes the response to be silently dropped by iOS.
+        UNUserNotificationCenter.current().delegate = self
+
         // Provide Kotlin with a callback to trigger remote notification registration.
         // This replaces the old polling timer approach — Kotlin invokes this directly
         // when it needs a device token, and APNs delivers the result back via the
