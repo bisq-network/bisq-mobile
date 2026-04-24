@@ -199,6 +199,25 @@ class TrustedNodeSetupPresenterTest {
         }
 
     @Test
+    fun `when initialize with workflow false and connectivity reconnecting then shows reconnecting status`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
+            every { connectivityService.status } returns
+                MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
+            setupPresenter()
+
+            // When
+            presenter.initialize(isWorkflow = false)
+            advanceUntilIdle()
+
+            // Then
+            val state = presenter.uiState.value
+            assertEquals(validRestApiUrl, state.apiUrl)
+            assertEquals(TrustedNodeConnectionStatus.Reconnecting, state.status)
+        }
+
+    @Test
     fun `when initialize with workflow false and connectivity not connected then shows unable to connect`() =
         runTest(testDispatcher) {
             // Given
@@ -237,6 +256,30 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             assertEquals(TrustedNodeConnectionStatus.Connected, presenter.uiState.value.status)
+        }
+
+    @Test
+    fun `when connectivity changes from reconnecting to disconnected in setup phase then shows unable to connect`() =
+        runTest(testDispatcher) {
+            // Given: matches transition after max reconnecting duration (e.g. DISCONNECTED from base timeout)
+            val connectivityFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
+            coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
+            every { connectivityService.status } returns connectivityFlow
+            setupPresenter()
+            presenter.initialize(isWorkflow = false)
+            advanceUntilIdle()
+            assertEquals(TrustedNodeConnectionStatus.Reconnecting, presenter.uiState.value.status)
+
+            // When
+            connectivityFlow.value = ConnectivityService.ConnectivityStatus.DISCONNECTED
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(presenter.uiState.value.status is TrustedNodeConnectionStatus.Failed)
+            assertEquals(
+                TrustedNodeConnectionStatus.Failed("mobile.trustedNodeSetup.status.notConnected").displayString,
+                presenter.uiState.value.status.displayString,
+            )
         }
 
     @Test

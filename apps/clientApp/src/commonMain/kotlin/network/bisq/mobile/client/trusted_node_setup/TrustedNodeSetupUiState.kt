@@ -31,6 +31,8 @@ data class TrustedNodeSetupUiState(
             status == TrustedNodeConnectionStatus.BootstrappingTor ||
             status == TrustedNodeConnectionStatus.Connecting
 
+    fun isReconnecting(): Boolean = status == TrustedNodeConnectionStatus.Reconnecting
+
     fun canScanQrCode(isWorkflow: Boolean): Boolean =
         !isConnectionInProgress() &&
             status != TrustedNodeConnectionStatus.Connected &&
@@ -52,7 +54,7 @@ data class TrustedNodeSetupUiState(
         get() = status == TrustedNodeConnectionStatus.Connected
 
     val isWarningStatus: Boolean
-        get() = isConnectionInProgress()
+        get() = isConnectionInProgress() || isReconnecting()
 
     val isErrorStatus: Boolean
         get() = status == TrustedNodeConnectionStatus.IncompatibleHttpApiVersion || status is TrustedNodeConnectionStatus.Failed

@@ -30,6 +30,10 @@ sealed class TrustedNodeConnectionStatus(
         override val displayString: String = i18nKey.i18n()
     }
 
+    object Reconnecting : TrustedNodeConnectionStatus("mobile.trustedNodeSetup.status.reconnecting") {
+        override val displayString: String = i18nKey.i18n()
+    }
+
     object Connected : TrustedNodeConnectionStatus("mobile.trustedNodeSetup.status.connected") {
         override val displayString: String = i18nKey.i18n()
     }
