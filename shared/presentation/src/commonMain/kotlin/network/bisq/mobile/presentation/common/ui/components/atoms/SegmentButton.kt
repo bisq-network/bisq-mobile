@@ -48,7 +48,7 @@ private val FlatRadius = BisqUIConstants.BorderRadiusSmall
 private val SegmentHeight = 44.dp
 private val InnerPadding = BisqUIConstants.ScreenPadding2
 private val TextHorizontalPadding = BisqUIConstants.ScreenPaddingHalf
-private const val ANIMATION_DURATION_MS = 300
+private const val ANIMATION_DURATION_MS = 230
 
 @Composable
 fun <T> BisqSegmentButton(
