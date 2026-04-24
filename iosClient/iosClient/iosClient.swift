@@ -38,13 +38,17 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let userInfo = notification.request.content.userInfo
-        // Suppress NSE notifications when the app is in foreground — the app can
-        // handle the event directly via WebSocket, so showing the generic "Trade update"
-        // placeholder would just flicker before being replaced or dismissed.
-        if userInfo["skipForeground"] == nil && userInfo["nse_decrypted"] == nil {
-            completionHandler([.alert, .sound, .badge])
-        } else {
+        // Suppress all remote push notifications when the app is in foreground.
+        // iOS skips the NSE for foreground apps, delivering the raw APNs payload
+        // ("Bisq Connect Notification") which is unhelpful. The app's WebSocket
+        // handles all trade/chat events directly when active.
+        // Local notifications (from OpenTradesNotificationService) don't have "aps"
+        // in userInfo, so they pass through unless skipForeground is set.
+        let isRemotePush = userInfo["aps"] != nil
+        if userInfo["skipForeground"] != nil || isRemotePush {
             completionHandler([])
+        } else {
+            completionHandler([.alert, .sound, .badge])
         }
     }
 
