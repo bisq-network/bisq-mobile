@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -59,11 +60,13 @@ fun <T> BisqSegmentButton(
     val selectedIndex = items.indexOfFirst { it.first == value }.coerceAtLeast(0)
 
     val density = LocalDensity.current
-    val innerHeight = SegmentHeight - InnerPadding * 2
+    val innerMinHeight = SegmentHeight - InnerPadding * 2
 
     val optionWidths = remember(items) { mutableStateMapOf<Int, Int>() }
     val optionOffsets = remember(items) { mutableStateMapOf<Int, Int>() }
     var containerWidthPx by remember { mutableStateOf(0) }
+    var rowHeightPx by remember { mutableStateOf(0) }
+    val rowHeightDp = with(density) { rowHeightPx.toDp() }
 
     val selectedWidthPx = optionWidths[selectedIndex] ?: 0
     val selectedOffsetPx = optionOffsets[selectedIndex] ?: 0
@@ -90,7 +93,7 @@ fun <T> BisqSegmentButton(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(SegmentHeight)
+                    .defaultMinSize(minHeight = SegmentHeight)
                     .clip(RoundedCornerShape(CornerRadius))
                     .background(BisqTheme.colors.secondaryDisabled)
                     .padding(InnerPadding)
@@ -117,14 +120,18 @@ fun <T> BisqSegmentButton(
                         Modifier
                             .offset(x = animatedOffset)
                             .width(animatedWidth)
-                            .height(innerHeight)
+                            .height(rowHeightDp)
                             .clip(indicatorShape)
                             .background(BisqTheme.colors.primary),
                 )
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth().selectableGroup(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .selectableGroup()
+                        .onGloballyPositioned { rowHeightPx = it.size.height },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEachIndexed { index, pair ->
@@ -166,7 +173,7 @@ fun <T> BisqSegmentButton(
                         modifier =
                             Modifier
                                 .weight(1f)
-                                .height(innerHeight)
+                                .defaultMinSize(minHeight = innerMinHeight)
                                 .onGloballyPositioned { coordinates ->
                                     optionWidths[index] = coordinates.size.width
                                     optionOffsets[index] = coordinates.positionInParent().x.toInt()
@@ -203,8 +210,8 @@ private enum class DemoSort(
 ) {
     NEWEST("Newest"),
     OLDEST("Oldest"),
-    AMT_HIGH("Amt ↓"),
-    AMT_LOW("Amt ↑"),
+    AMT_HIGH("Amt↓"),
+    AMT_LOW("Amt↑"),
 }
 
 private enum class DemoOutcome(
@@ -226,6 +233,7 @@ private enum class DemoRole(
 
 @ExcludeFromCoverage
 @Preview(showBackground = true)
+@Preview(showBackground = true, fontScale = 3f)
 @Composable
 private fun V2_Interactive_Preview() {
     BisqTheme.Preview {
