@@ -9,18 +9,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,8 +66,8 @@ fun <T> BisqSegmentButton(
 
     val optionWidths = remember(items) { mutableStateMapOf<Int, Int>() }
     val optionOffsets = remember(items) { mutableStateMapOf<Int, Int>() }
-    var containerWidthPx by remember { mutableStateOf(0) }
-    var rowHeightPx by remember { mutableStateOf(0) }
+    var containerWidthPx by remember { mutableIntStateOf(0) }
+    var rowHeightPx by remember { mutableIntStateOf(0) }
     val rowHeightDp = with(density) { rowHeightPx.toDp() }
 
     val selectedWidthPx = optionWidths[selectedIndex] ?: 0
@@ -107,18 +109,18 @@ fun <T> BisqSegmentButton(
             val leftCorner = (CornerRadius - leftDistance).coerceIn(FlatRadius, CornerRadius)
             val rightCorner = (CornerRadius - rightDistance).coerceIn(FlatRadius, CornerRadius)
             val indicatorShape =
-                RoundedCornerShape(
-                    topStart = leftCorner,
-                    bottomStart = leftCorner,
-                    topEnd = rightCorner,
-                    bottomEnd = rightCorner,
+                AbsoluteRoundedCornerShape(
+                    topLeft = leftCorner,
+                    bottomLeft = leftCorner,
+                    topRight = rightCorner,
+                    bottomRight = rightCorner,
                 )
 
             if (selectedWidthPx > 0) {
                 Box(
                     modifier =
                         Modifier
-                            .offset(x = animatedOffset)
+                            .absoluteOffset(x = animatedOffset)
                             .width(animatedWidth)
                             .height(rowHeightDp)
                             .clip(indicatorShape)
