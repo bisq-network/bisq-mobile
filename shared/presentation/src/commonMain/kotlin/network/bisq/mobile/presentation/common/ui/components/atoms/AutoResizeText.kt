@@ -93,6 +93,7 @@ fun AutoResizeText(
     maxLines: Int = 1,
     overflow: TextOverflow = TextOverflow.Clip,
     minimumFontSize: TextUnit = 10.sp,
+    softWrap: Boolean = true,
 ) {
     val inPreview = LocalInspectionMode.current
     var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow) {
@@ -131,5 +132,6 @@ fun AutoResizeText(
                 readyToDraw = true
             }
         },
+        softWrap = softWrap,
     )
 }

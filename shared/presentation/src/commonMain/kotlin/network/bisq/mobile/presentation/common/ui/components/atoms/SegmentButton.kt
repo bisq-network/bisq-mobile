@@ -81,7 +81,10 @@ fun <T> BisqSegmentButton(
         if (!measured && selectedWidthPx > 0) measured = true
     }
 
-    val spec = if (measured) tween(durationMillis = ANIMATION_DURATION_MS) else snap<Dp>()
+    val spec =
+        remember(measured) {
+            if (measured) tween<Dp>(durationMillis = ANIMATION_DURATION_MS) else snap()
+        }
     val animatedWidth by animateDpAsState(targetValue = selectedWidthDp, animationSpec = spec)
     val animatedOffset by animateDpAsState(targetValue = selectedOffsetDp, animationSpec = spec)
 
