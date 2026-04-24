@@ -18,6 +18,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.data.utils.sanitizeUrlForLog
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.getLogger
@@ -82,19 +83,6 @@ class AndroidUrlLauncher(
         } catch (e: Exception) {
             log.e(e) { "Failed to open URL: $safeUrl" }
             return false
-        }
-    }
-
-    private fun sanitizeUrlForLog(rawUrl: String): String {
-        val uri = runCatching { rawUrl.toUri() }.getOrNull()
-        return if (uri != null) {
-            buildString {
-                append(uri.scheme ?: "unknown")
-                uri.host?.let { append("://").append(it) }
-                uri.path?.let { append(it) }
-            }.take(256)
-        } else {
-            "invalid-url"
         }
     }
 }

@@ -134,7 +134,9 @@ kotlin {
             // Koin
             implementation(libs.koin.core)
 
-            // Ktor - network only, used by KmpTorService for TCP socket verification
+            // Ktor
+            implementation(libs.ktor.http)
+            // network only, used by KmpTorService for TCP socket verification
             implementation(libs.ktor.network)
 
             // Other libraries

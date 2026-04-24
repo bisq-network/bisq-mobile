@@ -1,7 +1,9 @@
 package network.bisq.mobile.client.common.domain.httpclient
 
+import network.bisq.mobile.data.utils.sanitizeUrlForLog
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class UrlUtilsTest {
     private val defaultPort = 8090
@@ -111,5 +113,25 @@ class UrlUtilsTest {
         val input = "localhost"
         val expected = "http://localhost:9090"
         assertEquals(expected, sanitizeBaseUrl(input, 9090))
+    }
+
+    @Test
+    fun `sanitizeUrlForLog strips query and fragment`() {
+        val out =
+            sanitizeUrlForLog("https://example.com/path/to?token=secret&x=1#frag")
+        assertEquals("https://example.com/path/to", out)
+    }
+
+    @Test
+    fun `sanitizeUrlForLog returns invalid-url for empty`() {
+        assertEquals("invalid-url", sanitizeUrlForLog("   "))
+    }
+
+    @Test
+    fun `sanitizeUrlForLog truncates long strings`() {
+        val base = "https://example.com/"
+        val out = sanitizeUrlForLog(base + "x".repeat(200), maxLength = 40)
+        assertEquals(40, out.length)
+        assertTrue(out.startsWith(base))
     }
 }
