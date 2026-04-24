@@ -7,7 +7,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import org.junit.Rule
@@ -32,11 +32,11 @@ class PaymentAccountMethodIconUiTest {
     @Test
     fun `when payment method has icon then image with content description is displayed`() {
         // Given
-        val paymentMethod = PaymentMethodVO.WISE
+        val paymentMethod = PaymentTypeVO.WISE
 
         // When
         setTestContent {
-            PaymentAccountMethodIcon(paymentMethod = paymentMethod)
+            PaymentAccountTypeIcon(paymentType = paymentMethod)
         }
 
         // Then
@@ -49,11 +49,11 @@ class PaymentAccountMethodIconUiTest {
     @Test
     fun `when payment method has no icon then fallback overlay letter is displayed`() {
         // Given
-        val paymentMethod = PaymentMethodVO.CUSTOM
+        val paymentMethod = PaymentTypeVO.CUSTOM
 
         // When
         setTestContent {
-            PaymentAccountMethodIcon(paymentMethod = paymentMethod)
+            PaymentAccountTypeIcon(paymentType = paymentMethod)
         }
 
         // Then
@@ -66,11 +66,11 @@ class PaymentAccountMethodIconUiTest {
     @Test
     fun `when payment method has no icon then fallback is shown and no icon description is rendered`() {
         // Given
-        val paymentMethod = PaymentMethodVO.CUSTOM
+        val paymentMethod = PaymentTypeVO.CUSTOM
 
         // When
         setTestContent {
-            PaymentAccountMethodIcon(paymentMethod = paymentMethod)
+            PaymentAccountTypeIcon(paymentType = paymentMethod)
         }
 
         // Then

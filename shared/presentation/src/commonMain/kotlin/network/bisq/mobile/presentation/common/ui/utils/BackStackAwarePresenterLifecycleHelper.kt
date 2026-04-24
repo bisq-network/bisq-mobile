@@ -13,7 +13,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.koin.compose.getKoin
 
 /**
@@ -87,6 +86,8 @@ import org.koin.compose.getKoin
  * changes. Override [ViewPresenter.onViewRevealed] if you need to refresh data when the
  * screen returns.
  *
+ * Presenter identity is derived from presenter type (`T`) within the current owner,
+ * so different presenter classes can safely coexist in the same screen/back-stack entry.
  * @return The managed presenter instance — always the same instance across back-stack
  *         navigation and config changes. Use this for collecting StateFlows and invoking actions.
  */
@@ -98,10 +99,12 @@ inline fun <reified T : ViewPresenter> RememberPresenterLifecycleBackStackAware(
     // koin.get<T>() inside the viewModel factory is non-composable — safe to call there.
     val koin = getKoin()
 
+    val resolvedKey = "PresenterHolder:${T::class.qualifiedName ?: T::class.simpleName.orEmpty()}"
+
     val holder =
-        viewModel {
+        viewModel(key = resolvedKey) {
             PresenterHolder(koin.get<T>()).also {
-                log.d { "PresenterHolder created for ${T::class.simpleName}" }
+                log.d { "PresenterHolder created for ${T::class.simpleName} with key=$resolvedKey" }
             }
         }
 

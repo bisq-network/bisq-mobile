@@ -9,12 +9,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 @ExcludeFromCoverage
 @Composable
 fun PaymentAccountReviewScreen(
+    paymentAccount: PaymentAccount,
     onCreatePaymentAccount: () -> Unit = {},
 ) {
     Column(

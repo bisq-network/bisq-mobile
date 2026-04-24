@@ -14,12 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
-import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountMethodIcon
+import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
 
 @Composable
 fun CryptoPaymentMethodCard(
@@ -43,8 +43,8 @@ fun CryptoPaymentMethodCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
-            PaymentAccountMethodIcon(
-                paymentMethod = paymentMethod.paymentMethod,
+            PaymentAccountTypeIcon(
+                paymentType = paymentMethod.paymentType,
                 size = BisqUIConstants.ScreenPadding2X,
             )
             Column {
@@ -56,14 +56,15 @@ fun CryptoPaymentMethodCard(
 }
 
 private fun previewCryptoPaymentMethod(
-    paymentMethod: PaymentMethodVO = PaymentMethodVO.XMR,
+    paymentType: PaymentTypeVO = PaymentTypeVO.XMR,
     code: String = "XMR",
     name: String = "Monero",
 ): CryptoPaymentMethodVO =
     CryptoPaymentMethodVO(
-        paymentMethod = paymentMethod,
+        paymentType = paymentType,
         code = code,
         name = name,
+        supportAutoConf = false,
     )
 
 @Preview
@@ -83,7 +84,7 @@ private fun CryptoPaymentMethodCardPreview_LightningBtcPreview() {
         CryptoPaymentMethodCard(
             paymentMethod =
                 previewCryptoPaymentMethod(
-                    paymentMethod = PaymentMethodVO.LNBTC,
+                    paymentType = PaymentTypeVO.LNBTC,
                     code = "LN-BTC",
                     name = "Lightning Bitcoin",
                 ),

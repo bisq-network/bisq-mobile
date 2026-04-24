@@ -15,7 +15,7 @@ import io.mockk.verify
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.model.CryptoAccountVO
@@ -165,7 +165,7 @@ class PaymentAccountsMusigContentUiTest {
         val fiatAccounts =
             listOf(
                 sampleFiatAccount(accountName = "SEPA Personal"),
-                sampleFiatAccount(accountName = "Zelle Family", paymentMethod = PaymentMethodVO.ZELLE),
+                sampleFiatAccount(accountName = "Zelle Family", paymentMethod = PaymentTypeVO.ZELLE),
             )
         val uiState = createUiState(selectedTab = PaymentAccountTab.FIAT, fiatAccounts = fiatAccounts)
 
@@ -203,7 +203,7 @@ class PaymentAccountsMusigContentUiTest {
                 sampleCryptoAccount(
                     accountName = "Ethereum Wallet",
                     currencyName = "Ethereum",
-                    paymentMethod = PaymentMethodVO.ETH,
+                    paymentMethod = PaymentTypeVO.ETH,
                 ),
             )
         val uiState = createUiState(selectedTab = PaymentAccountTab.CRYPTO, cryptoAccounts = cryptoAccounts)
@@ -382,7 +382,7 @@ class PaymentAccountsMusigContentUiTest {
     private fun sampleFiatAccount(
         accountName: String = "SEPA Personal",
         chargebackRisk: FiatPaymentMethodChargebackRiskVO = FiatPaymentMethodChargebackRiskVO.LOW,
-        paymentMethod: PaymentMethodVO = PaymentMethodVO.SEPA,
+        paymentMethod: PaymentTypeVO = PaymentTypeVO.SEPA,
         paymentMethodName: String = "Sepa",
         country: String = "Germany",
         currency: String = "EUR (Euro)",
@@ -390,7 +390,7 @@ class PaymentAccountsMusigContentUiTest {
         FiatAccountVO(
             accountName = accountName,
             chargebackRisk = chargebackRisk,
-            paymentMethod = paymentMethod,
+            paymentType = paymentMethod,
             paymentMethodName = paymentMethodName,
             country = country,
             currency = currency,
@@ -400,12 +400,12 @@ class PaymentAccountsMusigContentUiTest {
         accountName: String = "Monero Main",
         currencyName: String = "Monero",
         address: String = "84ABcdXy12pqRstUvw3456EfGh7890JKLMnOPQ",
-        paymentMethod: PaymentMethodVO = PaymentMethodVO.XMR,
+        paymentMethod: PaymentTypeVO = PaymentTypeVO.XMR,
     ): CryptoAccountVO =
         CryptoAccountVO(
             accountName = accountName,
             currencyName = currencyName,
             address = address,
-            paymentMethod = paymentMethod,
+            paymentType = paymentMethod,
         )
 }

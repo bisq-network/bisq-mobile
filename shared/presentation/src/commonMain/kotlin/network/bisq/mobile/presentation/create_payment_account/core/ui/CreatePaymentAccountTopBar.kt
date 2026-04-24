@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.create_payment_account
+package network.bisq.mobile.presentation.create_payment_account.core.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack

@@ -6,10 +6,21 @@ object PaymentAccountValidation {
     const val HOLDER_NAME_MIN_LENGTH: Int = 2
     const val HOLDER_NAME_MAX_LENGTH: Int = 70
 
+    // Values taken from bisq2 bisq.desktop.main.content.user.accounts.fiat_accounts.create.summary PaymentSummaryModel
+    const val ACCOUNT_NAME_MIN_LENGTH: Int = 2
+    const val ACCOUNT_NAME_MAX_LENGTH: Int = 50
+
     fun validateHolderName(name: String) {
         val trimmed = name.trim()
         require(trimmed.length in HOLDER_NAME_MIN_LENGTH..HOLDER_NAME_MAX_LENGTH) {
             "Holder name must be between $HOLDER_NAME_MIN_LENGTH and $HOLDER_NAME_MAX_LENGTH characters"
+        }
+    }
+
+    fun validateUniqueAccountName(name: String) {
+        val trimmed = name.trim()
+        require(trimmed.length in ACCOUNT_NAME_MIN_LENGTH..ACCOUNT_NAME_MAX_LENGTH) {
+            "Unique account name must be between $ACCOUNT_NAME_MIN_LENGTH and $ACCOUNT_NAME_MAX_LENGTH characters"
         }
     }
 

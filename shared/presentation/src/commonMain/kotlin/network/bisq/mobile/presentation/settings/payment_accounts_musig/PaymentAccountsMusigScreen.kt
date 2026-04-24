@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
@@ -213,7 +213,7 @@ private val previewFiatAccounts =
         FiatAccountVO(
             accountName = "Zelle - Personal",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.LOW,
-            paymentMethod = PaymentMethodVO.ZELLE,
+            paymentType = PaymentTypeVO.ZELLE,
             paymentMethodName = "Zelle",
             country = "United States",
             currency = "USD (US Dollar)",
@@ -221,7 +221,7 @@ private val previewFiatAccounts =
         FiatAccountVO(
             accountName = "SEPA - Household",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.VERY_LOW,
-            paymentMethod = PaymentMethodVO.SEPA,
+            paymentType = PaymentTypeVO.SEPA,
             paymentMethodName = "Sepa",
             country = "Germany",
             currency = "EUR (Euro)",
@@ -229,7 +229,7 @@ private val previewFiatAccounts =
         FiatAccountVO(
             accountName = "Wise Main",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.MODERATE,
-            paymentMethod = PaymentMethodVO.WISE,
+            paymentType = PaymentTypeVO.WISE,
             paymentMethodName = "Wise",
             country = "United Kingdom",
             currency = "GBP (Pound Sterling)",
@@ -242,19 +242,19 @@ private val previewCryptoAccounts =
             accountName = "Monero Main",
             currencyName = "Monero",
             address = "84ABcdXy12pqRstUvw3456EfGh7890JKLMnOPQ",
-            paymentMethod = PaymentMethodVO.XMR,
+            paymentType = PaymentTypeVO.XMR,
         ),
         CryptoAccountVO(
             accountName = "Ethereum Wallet",
             currencyName = "Ethereum",
             address = "0x1fA2b3C4d5E6f708901234567890AbCdEf123456",
-            paymentMethod = PaymentMethodVO.ETH,
+            paymentType = PaymentTypeVO.ETH,
         ),
         CryptoAccountVO(
             accountName = "BSQ Savings",
             currencyName = "Bisq DAO",
             address = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-            paymentMethod = PaymentMethodVO.BSQ,
+            paymentType = PaymentTypeVO.BSQ,
         ),
     )
 

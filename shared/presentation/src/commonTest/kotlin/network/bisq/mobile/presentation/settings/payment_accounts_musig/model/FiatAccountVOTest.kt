@@ -8,7 +8,7 @@ import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPaylo
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,7 +28,7 @@ class FiatAccountVOTest {
         assertNotNull(result)
         assertEquals("Zelle Main", result.accountName)
         assertEquals(FiatPaymentMethodChargebackRiskVO.LOW, result.chargebackRisk)
-        assertEquals(PaymentMethodVO.ZELLE, result.paymentMethod)
+        assertEquals(PaymentTypeVO.ZELLE, result.paymentType)
         assertEquals("Zelle", result.paymentMethodName)
         assertEquals("US", result.country)
         assertEquals("USD", result.currency)
@@ -46,7 +46,7 @@ class FiatAccountVOTest {
         assertNotNull(result)
         assertEquals("Custom Main", result.accountName)
         assertEquals(FiatPaymentMethodChargebackRiskVO.VERY_LOW, result.chargebackRisk)
-        assertEquals(PaymentMethodVO.CUSTOM, result.paymentMethod)
+        assertEquals(PaymentTypeVO.CUSTOM, result.paymentType)
         assertEquals("My Custom Method", result.paymentMethodName)
         assertEquals("DE", result.country)
         assertEquals("EUR", result.currency)

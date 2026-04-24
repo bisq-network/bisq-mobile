@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.create_payment_account
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination
@@ -13,6 +15,10 @@ import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
+import network.bisq.mobile.presentation.create_payment_account.core.navigation.CreatePaymentAccountNavHost
+import network.bisq.mobile.presentation.create_payment_account.core.navigation.CreatePaymentAccountRoute
+import network.bisq.mobile.presentation.create_payment_account.core.ui.CreatePaymentAccountTopBar
 import org.koin.compose.koinInject
 
 @ExcludeFromCoverage
@@ -20,9 +26,26 @@ import org.koin.compose.koinInject
 fun CreatePaymentAccountScreen(
     accountType: PaymentAccountType,
 ) {
+    val presenter = RememberPresenterLifecycleBackStackAware<CreatePaymentAccountPresenter>()
+    val uiState by presenter.uiState.collectAsState()
+
     val flowNavController = rememberNavController()
     val navigationManager: NavigationManager = koinInject()
     val backStackEntry by flowNavController.currentBackStackEntryAsState()
+
+    LaunchedEffect(presenter) {
+        presenter.effect.collect { effect ->
+            when (effect) {
+                is CreatePaymentAccountEffect.NavigateToPaymentAccountForm -> {
+                    flowNavController.navigate(CreatePaymentAccountRoute.PaymentAccountForm)
+                }
+
+                is CreatePaymentAccountEffect.NavigateToPaymentAccountReview -> {
+                    flowNavController.navigate(CreatePaymentAccountRoute.PaymentAccountReview)
+                }
+            }
+        }
+    }
 
     val topBarState = getCreatePaymentAccountTopBarState(backStackEntry?.destination, accountType)
 
@@ -44,7 +67,15 @@ fun CreatePaymentAccountScreen(
     ) { paddingValues ->
         CreatePaymentAccountNavHost(
             navController = flowNavController,
+            paymentAccount = uiState.paymentAccount,
             accountType = accountType,
+            paymentMethod = uiState.paymentMethod,
+            onNavigateFromSelectPaymentMethod = { paymentMethod ->
+                presenter.onAction(CreatePaymentAccountUiAction.OnNavigateFromSelectPaymentMethod(paymentMethod))
+            },
+            onNavigateFromPaymentAccountForm = { paymentAccount ->
+                presenter.onAction(CreatePaymentAccountUiAction.OnNavigateFromPaymentAccountForm(paymentAccount))
+            },
             onBack = { navigationManager.navigateBack() },
             modifier = Modifier.padding(paddingValues),
         )

@@ -10,7 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.model.FiatAccountVO
@@ -150,7 +150,7 @@ class FiatPaymentAccountCardUiTest {
     private fun sampleAccount(
         accountName: String = "My SEPA Account",
         chargebackRisk: FiatPaymentMethodChargebackRiskVO = FiatPaymentMethodChargebackRiskVO.LOW,
-        paymentMethod: PaymentMethodVO = PaymentMethodVO.SEPA,
+        paymentMethod: PaymentTypeVO = PaymentTypeVO.SEPA,
         paymentMethodName: String = "Sepa",
         country: String = "United States",
         currency: String = "USD (US Dollar)",
@@ -158,7 +158,7 @@ class FiatPaymentAccountCardUiTest {
         FiatAccountVO(
             accountName = accountName,
             chargebackRisk = chargebackRisk,
-            paymentMethod = paymentMethod,
+            paymentType = paymentMethod,
             paymentMethodName = paymentMethodName,
             country = country,
             currency = currency,

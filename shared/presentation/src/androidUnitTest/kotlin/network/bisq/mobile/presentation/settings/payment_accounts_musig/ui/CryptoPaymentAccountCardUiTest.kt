@@ -9,7 +9,7 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.model.CryptoAccountVO
@@ -78,7 +78,7 @@ class CryptoPaymentAccountCardUiTest {
     @Test
     fun `when payment method has no icon then fallback overlay letter is displayed`() {
         // Given
-        val account = sampleAccount(paymentMethod = PaymentMethodVO.LTC)
+        val account = sampleAccount(paymentMethod = PaymentTypeVO.LTC)
 
         // When
         setTestContent {
@@ -119,12 +119,12 @@ class CryptoPaymentAccountCardUiTest {
         accountName: String = "Main Monero Wallet",
         currencyName: String = "Monero",
         address: String = "44AFFq5kSiGBoZ",
-        paymentMethod: PaymentMethodVO = PaymentMethodVO.XMR,
+        paymentMethod: PaymentTypeVO = PaymentTypeVO.XMR,
     ): CryptoAccountVO =
         CryptoAccountVO(
             accountName = accountName,
             currencyName = currencyName,
             address = address,
-            paymentMethod = paymentMethod,
+            paymentType = paymentMethod,
         )
 }

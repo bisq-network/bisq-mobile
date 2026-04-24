@@ -190,6 +190,7 @@ class ClientPaymentAccountsServiceFacadeTest {
                     code = "XMR",
                     name = "Monero",
                     category = "PRIVACY",
+                    supportAutoConf = true,
                 )
             coEvery { apiGateway.getCryptoPaymentMethods() } returns Result.success(listOf(cryptoMethodDto))
 
@@ -202,6 +203,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             assertEquals("XMR", method.code)
             assertEquals("Monero", method.name)
             assertEquals("PRIVACY", method.category)
+            assertTrue(method.supportAutoConf)
         }
 
     @Test

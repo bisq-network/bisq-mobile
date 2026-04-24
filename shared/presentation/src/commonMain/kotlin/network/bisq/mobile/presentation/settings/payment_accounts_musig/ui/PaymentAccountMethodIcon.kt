@@ -14,7 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.platform.CUSTOM_PAYMENT_BACKGROUND_COLORS
 import network.bisq.mobile.presentation.common.ui.platform.customPaymentOverlayLetterColor
@@ -24,8 +24,8 @@ import network.bisq.mobile.presentation.common.ui.utils.customPaymentIconIndex
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun PaymentAccountMethodIcon(
-    paymentMethod: PaymentMethodVO,
+fun PaymentAccountTypeIcon(
+    paymentType: PaymentTypeVO,
     modifier: Modifier = Modifier,
     size: Dp = 36.dp,
 ) {
@@ -33,10 +33,10 @@ fun PaymentAccountMethodIcon(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
-        if (paymentMethod.icon == null) {
-            val fallbackIndex = customPaymentIconIndex(paymentMethod.name, CUSTOM_PAYMENT_BACKGROUND_COLORS.size)
+        if (paymentType.icon == null) {
+            val fallbackIndex = customPaymentIconIndex(paymentType.name, CUSTOM_PAYMENT_BACKGROUND_COLORS.size)
             val bgColor = CUSTOM_PAYMENT_BACKGROUND_COLORS[fallbackIndex]
-            val overlayLetter = paymentMethod.name.firstOrNull()?.uppercase() ?: "?"
+            val overlayLetter = paymentType.name.firstOrNull()?.uppercase() ?: "?"
 
             Box(
                 modifier =
@@ -56,8 +56,8 @@ fun PaymentAccountMethodIcon(
             )
         } else {
             Image(
-                painter = painterResource(paymentMethod.icon),
-                contentDescription = paymentMethod.name,
+                painter = painterResource(paymentType.icon),
+                contentDescription = paymentType.name,
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(BisqUIConstants.BorderRadius)),
             )
         }
@@ -66,16 +66,16 @@ fun PaymentAccountMethodIcon(
 
 @Preview
 @Composable
-private fun PaymentAccountMethodIcon_FallbackPreview() {
+private fun PaymentAccountTypeIcon_FallbackPreview() {
     BisqTheme.Preview {
-        PaymentAccountMethodIcon(paymentMethod = PaymentMethodVO.SEPA)
+        PaymentAccountTypeIcon(paymentType = PaymentTypeVO.SEPA)
     }
 }
 
 @Preview
 @Composable
-private fun PaymentAccountMethodIcon_RealIconPreview() {
+private fun PaymentAccountTypeIcon_RealIconPreview() {
     BisqTheme.Preview {
-        PaymentAccountMethodIcon(paymentMethod = PaymentMethodVO.WISE)
+        PaymentAccountTypeIcon(paymentType = PaymentTypeVO.WISE)
     }
 }

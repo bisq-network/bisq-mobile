@@ -7,4 +7,5 @@ data class CryptoPaymentMethodDto(
     val code: String,
     val name: String,
     val category: String,
+    val supportAutoConf: Boolean,
 )

@@ -26,7 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -57,8 +57,8 @@ fun FiatPaymentAccountCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
-            PaymentAccountMethodIcon(
-                paymentMethod = account.paymentMethod,
+            PaymentAccountTypeIcon(
+                paymentType = account.paymentType,
             )
             Column(modifier = Modifier.weight(1f)) {
                 BisqText.H4Regular(account.accountName)
@@ -150,7 +150,7 @@ private fun ChargebackRiskBadge(risk: FiatPaymentMethodChargebackRiskVO) {
 private fun previewFiatAccount(
     accountName: String = "My SEPA Account",
     chargebackRisk: FiatPaymentMethodChargebackRiskVO = FiatPaymentMethodChargebackRiskVO.LOW,
-    paymentMethod: PaymentMethodVO = PaymentMethodVO.SEPA,
+    paymentMethod: PaymentTypeVO = PaymentTypeVO.SEPA,
     paymentMethodName: String = "Sepa",
     currency: String = "XPF (CFP Franc), YER (Yemeni Rial), ZAR (South African Rand)",
     country: String = "Germany",
@@ -158,7 +158,7 @@ private fun previewFiatAccount(
     FiatAccountVO(
         accountName = accountName,
         chargebackRisk = chargebackRisk,
-        paymentMethod = paymentMethod,
+        paymentType = paymentMethod,
         paymentMethodName = paymentMethodName,
         currency = currency,
         country = country,
@@ -182,7 +182,7 @@ private fun FiatPaymentAccountCardPreview_NoCurrencyAndNoCountryPreview() {
             account =
                 previewFiatAccount(
                     accountName = "Wise Personal",
-                    paymentMethod = PaymentMethodVO.WISE,
+                    paymentMethod = PaymentTypeVO.WISE,
                     paymentMethodName = "Wise",
                     currency = "",
                     country = "",
@@ -200,7 +200,7 @@ private fun FiatPaymentAccountCardPreview_ModerateRiskLongNamesPreview() {
                 previewFiatAccount(
                     accountName = "Primary Household Transfer Account",
                     chargebackRisk = FiatPaymentMethodChargebackRiskVO.MODERATE,
-                    paymentMethod = PaymentMethodVO.ZELLE,
+                    paymentMethod = PaymentTypeVO.ZELLE,
                     paymentMethodName = "Zelle",
                 ),
         )
@@ -216,7 +216,7 @@ private fun FiatPaymentAccountCardPreview_VeryLowRiskPreview() {
                 previewFiatAccount(
                     accountName = "EU Settlement",
                     chargebackRisk = FiatPaymentMethodChargebackRiskVO.VERY_LOW,
-                    paymentMethod = PaymentMethodVO.SEPA,
+                    paymentMethod = PaymentTypeVO.SEPA,
                     paymentMethodName = "Sepa",
                 ),
         )
@@ -232,7 +232,7 @@ private fun FiatPaymentAccountCardPreview_MediumRiskPreview() {
                 previewFiatAccount(
                     accountName = "EU Settlement",
                     chargebackRisk = FiatPaymentMethodChargebackRiskVO.MEDIUM,
-                    paymentMethod = PaymentMethodVO.SEPA,
+                    paymentMethod = PaymentTypeVO.SEPA,
                     paymentMethodName = "Sepa",
                 ),
         )
@@ -247,7 +247,7 @@ private fun FiatPaymentAccountCardPreview_CustomPaymentMethodFallbackIconPreview
             account =
                 previewFiatAccount(
                     accountName = "Custom Transfer",
-                    paymentMethod = PaymentMethodVO.CUSTOM,
+                    paymentMethod = PaymentTypeVO.CUSTOM,
                     paymentMethodName = "Custom",
                     currency = "ARS (Argentine Peso)",
                     country = "Argentina",
@@ -264,7 +264,7 @@ private fun FiatPaymentAccountCardPreview_CountryOnlyPreview() {
             account =
                 previewFiatAccount(
                     accountName = "Country-only account",
-                    paymentMethod = PaymentMethodVO.ZELLE,
+                    paymentMethod = PaymentTypeVO.ZELLE,
                     paymentMethodName = "Zelle",
                     currency = "",
                     country = "United States",
@@ -281,7 +281,7 @@ private fun FiatPaymentAccountCardPreview_LongCurrencyClickableHintPreview() {
             account =
                 previewFiatAccount(
                     accountName = "Wide currency list",
-                    paymentMethod = PaymentMethodVO.SEPA,
+                    paymentMethod = PaymentTypeVO.SEPA,
                     paymentMethodName = "Sepa",
                     currency = "SVC (Salvadoran Colón), SYP (Syrian Pound), SZL (Swazi Lilangeni), THB (Thai Baht), TJS (Tajikistani Somoni), TMT (Turkmenistani Manat), TND (Tunisian Dinar), TOP (Tongan Paʻanga), TRY (Turkish Lira), TTD (Trinidad & Tobago Dollar), TWD (New Taiwan Dollar), TZS (Tanzanian Shilling), UAH (Ukrainian Hryvnia), UGX (Ugandan Shilling), USD (US Dollar), UYU (Uruguayan Peso), UZS (Uzbekistani Som), VES (Venezuelan Bolívar), VND (Vietnamese Dong), VUV (Vanuatu Vatu), WST (Samoan Tala), XAF (Central African CFA Franc), XCD (East Caribbean Dollar), XCG (Caribbean Guilder), XOF (West African CFA Franc), XPF (CFP Franc), YER (Yemeni Rial), ZAR (South African Rand), ZMW (Zambian Kwacha), ZWL (Zimbabwean Dollar (2009))",
                     country = "Germany",

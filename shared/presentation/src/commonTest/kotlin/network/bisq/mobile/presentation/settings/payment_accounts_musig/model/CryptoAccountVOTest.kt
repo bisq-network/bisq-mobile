@@ -4,7 +4,7 @@ import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccountPayload
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -24,7 +24,7 @@ class CryptoAccountVOTest {
         assertEquals("Monero Main", result.accountName)
         assertEquals("Monero", result.currencyName)
         assertEquals("84ABcdXy12pqRstUvw3456EfGh7890JKLMnOPQ", result.address)
-        assertEquals(PaymentMethodVO.XMR, result.paymentMethod)
+        assertEquals(PaymentTypeVO.XMR, result.paymentType)
     }
 
     @Test
@@ -40,7 +40,7 @@ class CryptoAccountVOTest {
         assertEquals("Other Crypto", result.accountName)
         assertEquals("Ethereum", result.currencyName)
         assertEquals("0x1fA2b3C4d5E6f708901234567890AbCdEf123456", result.address)
-        assertEquals(PaymentMethodVO.ETH, result.paymentMethod)
+        assertEquals(PaymentTypeVO.ETH, result.paymentType)
     }
 
     @Test
@@ -53,7 +53,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.LTC, result.paymentMethod)
+        assertEquals(PaymentTypeVO.LTC, result.paymentType)
     }
 
     @Test
@@ -66,7 +66,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.ETH, result.paymentMethod)
+        assertEquals(PaymentTypeVO.ETH, result.paymentType)
     }
 
     @Test
@@ -79,7 +79,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.BSQ, result.paymentMethod)
+        assertEquals(PaymentTypeVO.BSQ, result.paymentType)
     }
 
     @Test
@@ -92,7 +92,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.ETC, result.paymentMethod)
+        assertEquals(PaymentTypeVO.ETC, result.paymentType)
     }
 
     @Test
@@ -105,7 +105,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.LBTC, result.paymentMethod)
+        assertEquals(PaymentTypeVO.LBTC, result.paymentType)
     }
 
     @Test
@@ -118,7 +118,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.LNBTC, result.paymentMethod)
+        assertEquals(PaymentTypeVO.LNBTC, result.paymentType)
     }
 
     @Test
@@ -131,7 +131,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.GRIN, result.paymentMethod)
+        assertEquals(PaymentTypeVO.GRIN, result.paymentType)
     }
 
     @Test
@@ -144,7 +144,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.ZEC, result.paymentMethod)
+        assertEquals(PaymentTypeVO.ZEC, result.paymentType)
     }
 
     @Test
@@ -157,7 +157,7 @@ class CryptoAccountVOTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(PaymentMethodVO.DOGE, result.paymentMethod)
+        assertEquals(PaymentTypeVO.DOGE, result.paymentType)
     }
 
     @Test

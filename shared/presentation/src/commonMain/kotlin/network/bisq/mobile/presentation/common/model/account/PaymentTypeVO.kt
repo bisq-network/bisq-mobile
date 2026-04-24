@@ -46,7 +46,7 @@ import bisqapps.shared.presentation.generated.resources.payment_icon_xmr
 import bisqapps.shared.presentation.generated.resources.payment_icon_zelle
 import org.jetbrains.compose.resources.DrawableResource
 
-enum class PaymentMethodVO(
+enum class PaymentTypeVO(
     val icon: DrawableResource? = null,
 ) {
     // Fiat
@@ -107,17 +107,17 @@ enum class PaymentMethodVO(
     DOGE,
 }
 
-fun getPaymentMethodVOFromCryptoCurrencyCode(cryptoCurrencyCode: String): PaymentMethodVO? =
+fun getPaymentTypeVOFromCryptoCurrencyCode(cryptoCurrencyCode: String): PaymentTypeVO? =
     when (cryptoCurrencyCode.trim().uppercase()) {
-        "XMR" -> PaymentMethodVO.XMR
-        "LTC" -> PaymentMethodVO.LTC
-        "ETH" -> PaymentMethodVO.ETH
-        "BSQ" -> PaymentMethodVO.BSQ
-        "ETC" -> PaymentMethodVO.ETC
-        "L-BTC" -> PaymentMethodVO.LBTC
-        "LN-BTC" -> PaymentMethodVO.LNBTC
-        "GRIN" -> PaymentMethodVO.GRIN
-        "ZEC" -> PaymentMethodVO.ZEC
-        "DOGE" -> PaymentMethodVO.DOGE
+        "XMR" -> PaymentTypeVO.XMR
+        "LTC" -> PaymentTypeVO.LTC
+        "ETH" -> PaymentTypeVO.ETH
+        "BSQ" -> PaymentTypeVO.BSQ
+        "ETC" -> PaymentTypeVO.ETC
+        "L-BTC" -> PaymentTypeVO.LBTC
+        "LN-BTC" -> PaymentTypeVO.LNBTC
+        "GRIN" -> PaymentTypeVO.GRIN
+        "ZEC" -> PaymentTypeVO.ZEC
+        "DOGE" -> PaymentTypeVO.DOGE
         else -> null
     }

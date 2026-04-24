@@ -1,0 +1,3 @@
+package network.bisq.mobile.presentation.create_payment_account.payment_account_form.form
+
+interface AccountFormUiState

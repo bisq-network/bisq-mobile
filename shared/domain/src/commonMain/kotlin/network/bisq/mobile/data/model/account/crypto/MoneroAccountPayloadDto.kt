@@ -10,7 +10,7 @@ data class MoneroAccountPayloadDto(
     val subAddress: String? = null,
     val accountIndex: Int? = null,
     val initialSubAddressIndex: Int? = null,
-    override val currencyName: String,
+    override val currencyName: String?,
     override val address: String,
     override val isInstant: Boolean,
     override val isAutoConf: Boolean? = null,

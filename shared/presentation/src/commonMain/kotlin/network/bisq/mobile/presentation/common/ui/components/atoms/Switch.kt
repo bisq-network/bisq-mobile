@@ -5,13 +5,19 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
 fun BisqSwitch(
@@ -30,6 +36,7 @@ fun BisqSwitch(
             label,
             modifier =
                 Modifier
+                    .padding(end = BisqUIConstants.ScreenPadding)
                     .weight(1f)
                     .clickable(
                         enabled = !disabled,
@@ -66,6 +73,48 @@ fun BisqSwitch(
                     disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
                     disabledUncheckedIconColor = BisqTheme.colors.backgroundColor,
                 ),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BisqSwitch_LongLabelUncheckedPreview() {
+    BisqTheme.Preview {
+        var checked by remember { mutableStateOf(false) }
+        BisqSwitch(
+            checked = checked,
+            label =
+                "This is a very long switch label to validate wrapping behavior and spacing when text becomes much longer than usual in the same row.",
+            onSwitch = { checked = it },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BisqSwitch_CheckedPreview() {
+    BisqTheme.Preview {
+        var checked by remember { mutableStateOf(true) }
+        BisqSwitch(
+            checked = checked,
+            label =
+                "This is a normal switch label toggle to validate",
+            onSwitch = { checked = it },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BisqSwitch_LongLabelDisabledPreview() {
+    BisqTheme.Preview {
+        BisqSwitch(
+            checked = true,
+            disabled = true,
+            label =
+                "This is a very long switch label in disabled state to validate readability and layout when interaction is turned off.",
+            onSwitch = {},
         )
     }
 }

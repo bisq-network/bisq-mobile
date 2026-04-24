@@ -4,21 +4,21 @@ import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRai
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.model.account.toVO
 
 data class FiatPaymentMethodVO(
-    val paymentMethod: PaymentMethodVO,
-    val name: String,
+    override val paymentType: PaymentTypeVO,
+    override val name: String,
     val supportedCurrencyCodes: String,
     val countryNames: String,
     val chargebackRisk: FiatPaymentMethodChargebackRiskVO?,
-)
+) : PaymentMethodVO
 
 fun FiatPaymentMethod.toVO(): FiatPaymentMethodVO? =
-    paymentRail.toPaymentMethodVO()?.let { paymentMethod ->
+    paymentRail.toPaymentTypeVO()?.let { paymentType ->
         FiatPaymentMethodVO(
-            paymentMethod = paymentMethod,
+            paymentType = paymentType,
             name = name,
             supportedCurrencyCodes = supportedCurrencyCodes,
             countryNames = countryNames,
@@ -28,7 +28,7 @@ fun FiatPaymentMethod.toVO(): FiatPaymentMethodVO? =
 
 private val log = getLogger("FiatPaymentMethodVO")
 
-fun FiatPaymentRail.toPaymentMethodVO(): PaymentMethodVO? =
-    runCatching { PaymentMethodVO.valueOf(name) }
-        .onFailure { e -> log.w(e) { "Unknown payment rail '$name' -> paymentMethod is null" } }
+fun FiatPaymentRail.toPaymentTypeVO(): PaymentTypeVO? =
+    runCatching { PaymentTypeVO.valueOf(name) }
+        .onFailure { e -> log.w(e) { "Unknown payment rail '$name' -> paymentType is null" } }
         .getOrNull()

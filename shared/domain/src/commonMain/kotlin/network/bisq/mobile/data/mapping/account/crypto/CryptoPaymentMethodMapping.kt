@@ -8,4 +8,5 @@ fun CryptoPaymentMethodDto.toDomain(): CryptoPaymentMethod =
         code = code,
         name = name,
         category = category,
+        supportAutoConf = supportAutoConf,
     )

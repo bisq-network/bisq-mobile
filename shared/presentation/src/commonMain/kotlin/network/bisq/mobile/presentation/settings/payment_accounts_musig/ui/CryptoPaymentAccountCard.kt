@@ -16,7 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -44,8 +44,8 @@ fun CryptoPaymentAccountCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
-            PaymentAccountMethodIcon(
-                paymentMethod = account.paymentMethod,
+            PaymentAccountTypeIcon(
+                paymentType = account.paymentType,
             )
             Column(modifier = Modifier.weight(1f)) {
                 BisqText.H4Regular(account.accountName)
@@ -72,13 +72,13 @@ private fun previewCryptoAccount(
     accountName: String = "Main Monero Wallet",
     currencyName: String = "Monero",
     address: String = "44AFFq5kSiGBoZ",
-    paymentMethod: PaymentMethodVO = PaymentMethodVO.XMR,
+    paymentMethod: PaymentTypeVO = PaymentTypeVO.XMR,
 ): CryptoAccountVO =
     CryptoAccountVO(
         accountName = accountName,
         currencyName = currencyName,
         address = address,
-        paymentMethod = paymentMethod,
+        paymentType = paymentMethod,
     )
 
 @Preview
@@ -101,7 +101,7 @@ private fun CryptoPaymentAccountCardPreview_LitecoinLongNamePreview() {
                     accountName = "Cold Storage Savings Wallet",
                     currencyName = "Litecoin",
                     address = "ltc1qexampleaddress",
-                    paymentMethod = PaymentMethodVO.LTC,
+                    paymentMethod = PaymentTypeVO.LTC,
                 ),
         )
     }

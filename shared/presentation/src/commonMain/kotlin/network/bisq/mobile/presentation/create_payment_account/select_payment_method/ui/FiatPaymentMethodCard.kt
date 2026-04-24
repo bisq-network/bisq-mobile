@@ -25,13 +25,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentMethodVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.AccountFlowDialog
-import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountMethodIcon
+import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
 
 @Composable
 fun FiatPaymentMethodCard(
@@ -60,8 +60,8 @@ fun FiatPaymentMethodCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         ) {
-            PaymentAccountMethodIcon(
-                paymentMethod = paymentMethod.paymentMethod,
+            PaymentAccountTypeIcon(
+                paymentType = paymentMethod.paymentType,
                 size = BisqUIConstants.ScreenPadding2X,
             )
             Column(modifier = Modifier.weight(1f)) {
@@ -154,7 +154,7 @@ fun FiatPaymentMethodCard(
 
 private val previewFiatPaymentMethod =
     FiatPaymentMethodVO(
-        paymentMethod = PaymentMethodVO.ZELLE,
+        paymentType = PaymentTypeVO.ZELLE,
         name = "Zelle",
         supportedCurrencyCodes = "USD",
         countryNames = "United States, United States, United States, United States, United States, United States, United States",
