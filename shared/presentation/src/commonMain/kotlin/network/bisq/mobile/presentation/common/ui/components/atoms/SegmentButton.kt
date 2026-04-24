@@ -240,7 +240,7 @@ private enum class DemoRole(
 @Preview(showBackground = true)
 @Preview(showBackground = true, fontScale = 3f)
 @Composable
-private fun V2_Interactive_Preview() {
+private fun Interactive_Preview() {
     BisqTheme.Preview {
         var sort by remember { mutableStateOf(DemoSort.NEWEST) }
         var outcome by remember { mutableStateOf(DemoOutcome.ALL) }
@@ -275,7 +275,7 @@ private fun V2_Interactive_Preview() {
 @ExcludeFromCoverage
 @Preview(showBackground = true)
 @Composable
-private fun V2_Disabled_Preview() {
+private fun Disabled_Preview() {
     BisqTheme.Preview {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -286,6 +286,56 @@ private fun V2_Disabled_Preview() {
                 value = DemoOutcome.DONE,
                 items = DemoOutcome.entries.map { it to it.label },
                 disabled = true,
+            )
+        }
+    }
+}
+
+@ExcludeFromCoverage
+@Preview(showBackground = true)
+@Composable
+private fun LongI18nLabels_Preview() {
+    BisqTheme.Preview {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            // Simulates German-length labels
+            BisqSegmentButton(
+                label = "Sortieren nach",
+                value = "newest",
+                items =
+                    listOf(
+                        "newest" to "Neueste zuerst",
+                        "oldest" to "Älteste zuerst",
+                        "amt_high" to "Betrag abst.",
+                        "amt_low" to "Betrag aufst.",
+                    ),
+            )
+            // Simulates Portuguese-length labels
+            BisqSegmentButton(
+                label = "Filtrar por resultado",
+                value = "all",
+                items =
+                    listOf(
+                        "all" to "Todos",
+                        "completed" to "Concluídos",
+                        "cancelled" to "Cancelados",
+                        "failed" to "Fracassados",
+                    ),
+            )
+            // Stress test: 5 options with long labels
+            BisqSegmentButton(
+                label = "Stress test (5 options)",
+                value = "opt1",
+                items =
+                    listOf(
+                        "opt1" to "Very long option one",
+                        "opt2" to "Another long opt",
+                        "opt3" to "Medium text",
+                        "opt4" to "Short",
+                        "opt5" to "Extra long label here",
+                    ),
             )
         }
     }
