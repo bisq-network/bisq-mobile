@@ -87,13 +87,15 @@ abstract class ConnectivityService :
                         } catch (e: CancellationException) {
                             return@launch
                         }
+                        if (reconnectingTimeoutJob != scheduledJob) {
+                            // Another transition replaced/cancelled this job after delay returned.
+                            return@launch
+                        }
                         if (_status.value == ConnectivityStatus.RECONNECTING) {
                             isReconnectingTimedOut = true
                             _status.value = ConnectivityStatus.DISCONNECTED
                         }
-                        if (reconnectingTimeoutJob === scheduledJob) {
-                            reconnectingTimeoutJob = null
-                        }
+                        reconnectingTimeoutJob = null
                     }
                 reconnectingTimeoutJob = scheduledJob
             }
@@ -110,18 +112,18 @@ abstract class ConnectivityService :
         reconnectingTimeoutJob = null
     }
 
-    private fun onLifecycleShutdown() {
+    private fun resetReconnectingTimeoutState() {
         cancelReconnectingTimeoutJob()
         isReconnectingTimedOut = false
     }
 
     override suspend fun activate() {
-        onLifecycleShutdown()
+        resetReconnectingTimeoutState()
         _status.value = ConnectivityStatus.BOOTSTRAPPING
     }
 
     override suspend fun deactivate() {
-        onLifecycleShutdown()
+        resetReconnectingTimeoutState()
         _status.value = ConnectivityStatus.BOOTSTRAPPING
     }
 

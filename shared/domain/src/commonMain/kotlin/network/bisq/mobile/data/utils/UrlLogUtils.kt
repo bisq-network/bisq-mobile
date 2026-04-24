@@ -1,5 +1,6 @@
 package network.bisq.mobile.data.utils
 
+import io.ktor.http.DEFAULT_PORT
 import io.ktor.http.parseUrl
 
 /**
@@ -16,6 +17,12 @@ fun sanitizeUrlForLog(
         if (url.host.isNotEmpty()) {
             append("://")
             append(url.host)
+            val port = url.specifiedPort
+            val defaultPort = url.protocolOrNull?.defaultPort ?: url.protocol.defaultPort
+            if (port != DEFAULT_PORT && port != defaultPort) {
+                append(':')
+                append(port)
+            }
         }
         if (url.encodedPath.isNotEmpty()) {
             append(url.encodedPath)
