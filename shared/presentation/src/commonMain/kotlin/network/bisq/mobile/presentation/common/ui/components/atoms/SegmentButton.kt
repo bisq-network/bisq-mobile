@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,7 +47,7 @@ private val FlatRadius = BisqUIConstants.BorderRadiusSmall
 private val SegmentHeight = 44.dp
 private val InnerPadding = BisqUIConstants.ScreenPadding2
 private val TextHorizontalPadding = BisqUIConstants.ScreenPaddingHalf
-private const val ANIMATION_DURATION_MS = 230
+private const val ANIMATION_DURATION_MS = 180
 
 @Composable
 fun <T> BisqSegmentButton(
@@ -64,23 +63,24 @@ fun <T> BisqSegmentButton(
     val density = LocalDensity.current
     val innerMinHeight = SegmentHeight - InnerPadding * 2
 
-    val optionWidths = remember(items) { mutableStateMapOf<Int, Int>() }
-    val optionOffsets = remember(items) { mutableStateMapOf<Int, Int>() }
+    val optionWidths = remember(items) { IntArray(items.size) }
+    val optionOffsets = remember(items) { IntArray(items.size) }
     var containerWidthPx by remember { mutableIntStateOf(0) }
     var rowHeightPx by remember { mutableIntStateOf(0) }
     val rowHeightDp = with(density) { rowHeightPx.toDp() }
 
-    val selectedWidthPx = optionWidths[selectedIndex] ?: 0
-    val selectedOffsetPx = optionOffsets[selectedIndex] ?: 0
+    var selectedWidthPx by remember(items) { mutableIntStateOf(0) }
+    var selectedOffsetPx by remember(items) { mutableIntStateOf(0) }
+
+    LaunchedEffect(selectedIndex, items) {
+        selectedWidthPx = optionWidths.getOrElse(selectedIndex) { 0 }
+        selectedOffsetPx = optionOffsets.getOrElse(selectedIndex) { 0 }
+    }
 
     val selectedWidthDp = with(density) { selectedWidthPx.toDp() }
     val selectedOffsetDp = with(density) { selectedOffsetPx.toDp() }
 
-    var measured by remember(items) { mutableStateOf(false) }
-    LaunchedEffect(items, selectedWidthPx) {
-        if (!measured && selectedWidthPx > 0) measured = true
-    }
-
+    val measured = selectedWidthPx > 0
     val spec =
         remember(measured) {
             if (measured) tween<Dp>(durationMillis = ANIMATION_DURATION_MS) else snap()
@@ -186,8 +186,12 @@ fun <T> BisqSegmentButton(
                                 .onGloballyPositioned { coordinates ->
                                     val w = coordinates.size.width
                                     val x = coordinates.positionInParent().x.toInt()
-                                    if (optionWidths[index] != w) optionWidths[index] = w
-                                    if (optionOffsets[index] != x) optionOffsets[index] = x
+                                    optionWidths[index] = w
+                                    optionOffsets[index] = x
+                                    if (index == selectedIndex) {
+                                        selectedWidthPx = w
+                                        selectedOffsetPx = x
+                                    }
                                 }.clip(segmentShape)
                                 .selectable(
                                     selected = isSelected,
