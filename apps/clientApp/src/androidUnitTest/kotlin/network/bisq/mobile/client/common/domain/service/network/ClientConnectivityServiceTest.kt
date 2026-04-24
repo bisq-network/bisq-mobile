@@ -429,16 +429,15 @@ class ClientConnectivityServiceTest {
                     webSocketClientService,
                     androidPlatformInfo,
                 )
-            service.activate()
-            service.startMonitoring(period = 100, startDelay = 0)
-            delay(100)
-            assertEquals(
-                ConnectivityService.ConnectivityStatus.RECONNECTING,
-                service.status.value,
-            )
-            testDispatcher.scheduler.advanceTimeBy(500L)
-
             try {
+                service.activate()
+                service.startMonitoring(period = 100, startDelay = 0)
+                delay(100)
+                assertEquals(
+                    ConnectivityService.ConnectivityStatus.RECONNECTING,
+                    service.status.value,
+                )
+                testDispatcher.scheduler.advanceTimeBy(500L)
                 assertEquals(
                     ConnectivityService.ConnectivityStatus.DISCONNECTED,
                     service.status.value,
@@ -459,24 +458,27 @@ class ClientConnectivityServiceTest {
                     webSocketClientService,
                     androidPlatformInfo,
                 )
-            service.activate()
-            service.startMonitoring(period = 100, startDelay = 0)
-            delay(100)
-            assertEquals(
-                ConnectivityService.ConnectivityStatus.RECONNECTING,
-                service.status.value,
-            )
-            testDispatcher.scheduler.advanceTimeBy(500L)
-            assertEquals(ConnectivityService.ConnectivityStatus.DISCONNECTED, service.status.value)
+            try {
+                service.activate()
+                service.startMonitoring(period = 100, startDelay = 0)
+                delay(100)
+                assertEquals(
+                    ConnectivityService.ConnectivityStatus.RECONNECTING,
+                    service.status.value,
+                )
+                testDispatcher.scheduler.advanceTimeBy(500L)
+                assertEquals(ConnectivityService.ConnectivityStatus.DISCONNECTED, service.status.value)
 
-            // Further polls still submit RECONNECTING; base class keeps DISCONNECTED
-            delay(200)
-            assertEquals(
-                ConnectivityService.ConnectivityStatus.DISCONNECTED,
-                service.status.value,
-                "Should not oscillate back to RECONNECTING after timeout",
-            )
-            service.stopMonitoring()
+                // Further polls still submit RECONNECTING; base class keeps DISCONNECTED
+                delay(200)
+                assertEquals(
+                    ConnectivityService.ConnectivityStatus.DISCONNECTED,
+                    service.status.value,
+                    "Should not oscillate back to RECONNECTING after timeout",
+                )
+            } finally {
+                service.stopMonitoring()
+            }
         }
 
     @Test

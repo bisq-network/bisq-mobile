@@ -123,6 +123,30 @@ class UrlUtilsTest {
     }
 
     @Test
+    fun `sanitizeUrlForLog includes non-default port`() {
+        assertEquals(
+            "http://localhost:8080/api",
+            sanitizeUrlForLog("http://localhost:8080/api?x=1"),
+        )
+        assertEquals(
+            "http://localhost:9090/",
+            sanitizeUrlForLog("http://localhost:9090/#frag"),
+        )
+    }
+
+    @Test
+    fun `sanitizeUrlForLog omits default port for scheme`() {
+        assertEquals(
+            "http://example.com/path",
+            sanitizeUrlForLog("http://example.com:80/path"),
+        )
+        assertEquals(
+            "https://example.com/path",
+            sanitizeUrlForLog("https://example.com:443/path?q=1"),
+        )
+    }
+
+    @Test
     fun `sanitizeUrlForLog returns invalid-url for empty`() {
         assertEquals("invalid-url", sanitizeUrlForLog("   "))
     }
