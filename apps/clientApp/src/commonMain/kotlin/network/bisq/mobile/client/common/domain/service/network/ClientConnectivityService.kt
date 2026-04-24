@@ -23,7 +23,7 @@ import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 
-class ClientConnectivityService(
+open class ClientConnectivityService(
     private val webSocketClientService: WebSocketClientService,
     private val platformInfo: PlatformInfo = getPlatformInfo(),
 ) : ConnectivityService(),
@@ -126,11 +126,11 @@ class ClientConnectivityService(
     }
 
     private suspend fun checkConnectivity() {
+        val previousStatus = status.value
         try {
-            val previousStatus = _status.value
             val connected = isConnected()
             log.d { "Health cycle: isConnected=$connected, connectionUntrusted=$connectionUntrusted, previousStatus=$previousStatus" }
-            val newStatus =
+            val rawStatus =
                 when {
                     !connected || connectionUntrusted -> {
                         // When connectionUntrusted is true, we don't trust isConnected()
@@ -204,10 +204,11 @@ class ClientConnectivityService(
                         }
                     }
                 }
-            _status.value = newStatus
+            setConnectivityStatus(rawStatus)
+            val newStatus = status.value
             if (previousStatus != newStatus) {
                 log.d { "Connectivity transition from $previousStatus to $newStatus" }
-                if (previousStatus == ConnectivityStatus.RECONNECTING) {
+                if (previousStatus == ConnectivityStatus.RECONNECTING && newStatus.isConnected()) {
                     runPendingBlocks()
                 }
             }
@@ -220,12 +221,12 @@ class ClientConnectivityService(
             log.i { "Session expired (401 from health check), attempting session renewal" }
             connectionUntrusted = true
             webSocketClientService.attemptSessionRenewal()
-            _status.value = ConnectivityStatus.RECONNECTING
+            setConnectivityStatus(ConnectivityStatus.RECONNECTING)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             log.e(e) { "Failed checking connectivity" }
-            _status.value = ConnectivityStatus.DISCONNECTED
+            setConnectivityStatus(ConnectivityStatus.DISCONNECTED)
         }
     }
 

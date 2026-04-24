@@ -64,6 +64,14 @@ class ClientConnectivityServiceTest {
             override val type = PlatformType.IOS
         }
 
+    private class TestClientConnectivityService(
+        webSocket: WebSocketClientService,
+        platform: PlatformInfo,
+    ) : ClientConnectivityService(webSocket, platform) {
+        override val maxReconnectingDurationMs: Long
+            get() = 400L
+    }
+
     private fun createIosService(): ClientConnectivityService = ClientConnectivityService(webSocketClientService, iosPlatformInfo)
 
     @After
@@ -408,6 +416,67 @@ class ClientConnectivityServiceTest {
                 ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
                 clientConnectivityService.status.value,
             )
+        }
+
+    @Test
+    fun `prolonged RECONNECTING transitions to DISCONNECT after timeout`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns false
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+
+            val service =
+                TestClientConnectivityService(
+                    webSocketClientService,
+                    androidPlatformInfo,
+                )
+            service.activate()
+            service.startMonitoring(period = 100, startDelay = 0)
+            delay(100)
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.RECONNECTING,
+                service.status.value,
+            )
+            testDispatcher.scheduler.advanceTimeBy(500L)
+
+            try {
+                assertEquals(
+                    ConnectivityService.ConnectivityStatus.DISCONNECTED,
+                    service.status.value,
+                )
+            } finally {
+                service.stopMonitoring()
+            }
+        }
+
+    @Test
+    fun `after RECONNECTING timeout status stays DISCONNECT while reconnection still fails`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns false
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+
+            val service =
+                TestClientConnectivityService(
+                    webSocketClientService,
+                    androidPlatformInfo,
+                )
+            service.activate()
+            service.startMonitoring(period = 100, startDelay = 0)
+            delay(100)
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.RECONNECTING,
+                service.status.value,
+            )
+            testDispatcher.scheduler.advanceTimeBy(500L)
+            assertEquals(ConnectivityService.ConnectivityStatus.DISCONNECTED, service.status.value)
+
+            // Further polls still submit RECONNECTING; base class keeps DISCONNECTED
+            delay(200)
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.DISCONNECTED,
+                service.status.value,
+                "Should not oscillate back to RECONNECTING after timeout",
+            )
+            service.stopMonitoring()
         }
 
     @Test
