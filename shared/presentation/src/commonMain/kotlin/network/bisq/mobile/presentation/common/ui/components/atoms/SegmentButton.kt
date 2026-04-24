@@ -102,7 +102,9 @@ fun <T> BisqSegmentButton(
                     .clip(RoundedCornerShape(CornerRadius))
                     .background(BisqTheme.colors.secondaryDisabled)
                     .padding(InnerPadding)
-                    .onGloballyPositioned { containerWidthPx = it.size.width },
+                    .onGloballyPositioned {
+                        if (containerWidthPx != it.size.width) containerWidthPx = it.size.width
+                    },
         ) {
             val containerWidthDp = with(density) { containerWidthPx.toDp() }
             val innerContainerWidthDp = (containerWidthDp - InnerPadding * 2).coerceAtLeast(0.dp)
@@ -136,7 +138,9 @@ fun <T> BisqSegmentButton(
                     Modifier
                         .fillMaxWidth()
                         .selectableGroup()
-                        .onGloballyPositioned { rowHeightPx = it.size.height },
+                        .onGloballyPositioned {
+                            if (rowHeightPx != it.size.height) rowHeightPx = it.size.height
+                        },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEachIndexed { index, pair ->
@@ -180,8 +184,10 @@ fun <T> BisqSegmentButton(
                                 .weight(1f)
                                 .defaultMinSize(minHeight = innerMinHeight)
                                 .onGloballyPositioned { coordinates ->
-                                    optionWidths[index] = coordinates.size.width
-                                    optionOffsets[index] = coordinates.positionInParent().x.toInt()
+                                    val w = coordinates.size.width
+                                    val x = coordinates.positionInParent().x.toInt()
+                                    if (optionWidths[index] != w) optionWidths[index] = w
+                                    if (optionOffsets[index] != x) optionOffsets[index] = x
                                 }.clip(segmentShape)
                                 .selectable(
                                     selected = isSelected,
