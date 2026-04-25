@@ -355,18 +355,26 @@ To provide reliable push notifications on iOS, Bisq Connect uses **Apple Push No
 
 **How it works:**
 
-1. The iOS device generates a device-specific encryption key pair and stores the private key locally
-2. During registration, the device shares its public key and APNs device token with the trusted Bisq2 node
-3. When a trade event occurs, the Bisq2 node encrypts the notification payload using the device's public key
-4. The encrypted payload is forwarded to a **bisq-relay server** ([bisq-relay project](https://github.com/bisq-network/bisq-relay)) which passes it to APNs
-5. APNs routes the notification to the iOS device
-6. The app decrypts the payload locally using its private key
+1. The iOS device generates a 256-bit AES symmetric key and stores it in a shared Keychain accessible by both the main app and the Notification Service Extension (NSE)
+2. During registration, the device shares the symmetric key (Base64), APNs device token, and an ECIES public key with the trusted Bisq2 node. The symmetric key is rotated on each re-registration to limit the exposure window
+3. When a trade event occurs, the Bisq2 node encrypts the notification payload with AES-256-GCM using the device's symmetric key
+4. The encrypted payload is sent via POST to the **bisq-relay server** ([bisq-relay project](https://github.com/bisq-network/bisq-relay)), which forwards it to APNs with `mutable-content: 1`
+5. The iOS **Notification Service Extension** (NSE) intercepts the push before display, decrypts it using the shared Keychain key, and shows a privacy-safe category summary (e.g., "Trade update") — never counterparty names, amounts, or trade details on the lock screen
+6. When the app wakes up (from background), it replaces the generic NSE notification with a richer, contextual one via the WebSocket data stream. If the app is killed, the NSE notification is all the user sees
 
 **What is protected:**
 - The notification content (trade details, messages) is **end-to-end encrypted** — neither the relay server nor Apple can read it
+- Lock-screen banners show only category-based summaries (e.g., "Trade update", "New message") — no sensitive trade data is ever displayed on the lock screen
+- Remote push notifications are suppressed entirely when the app is in the foreground
 - Only the generic notification metadata and timing/frequency are visible to Apple (this is unavoidable with APNs)
 
 **Trade-off:** This delivers reliable, always-on push notifications even when the app is fully killed. The cost is the introduction of centralized infrastructure: a 24/7 **bisq-relay server** and Apple's APNs servers sit in the notification path. While neither can see the notification content thanks to E2E encryption, they do participate in the delivery chain, which is a departure from Bisq's fully decentralized philosophy for this specific platform.
+
+**Developer notes:**
+- The NSE target (`BisqNotificationService`) must have `CODE_SIGN_ENTITLEMENTS` pointing to its entitlements file with the shared `keychain-access-groups` entry
+- The `KeychainAccessGroup` is injected via Info.plist using `$(AppIdentifierPrefix)` — no hardcoded team IDs
+- The `UNUserNotificationCenterDelegate` must be set in `AppDelegate.didFinishLaunchingWithOptions` (not in Kotlin/Compose) to avoid dropped notification tap responses
+- Test scripts: `support/test_nse_decryption.swift` (unit tests), `support/test_nse_simulator.sh` (simulator), `support/test_relay_with_nse.sh` (real device via relay)
 
 For more details on the iOS implementation design, see [issue #895](https://github.com/bisq-network/bisq-mobile/issues/895).
 
