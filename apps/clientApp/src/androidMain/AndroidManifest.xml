@@ -48,6 +48,24 @@
             android:foregroundServiceType="remoteMessaging"
             android:permission="android.permission.FOREGROUND_SERVICE" />
 
+        <!-- Firebase Cloud Messaging — receives relayed push notifications.
+             Fires only when the user has opted in (default OFF) and a device
+             token has been registered with the trusted node. -->
+        <service
+            android:name="network.bisq.mobile.client.common.domain.service.push_notification.BisqFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="BISQ_TRADE_UPDATES_CHANNEL" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

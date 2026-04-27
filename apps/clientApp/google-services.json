@@ -1,0 +1,49 @@
+{
+  "_comment": "PLACEHOLDER — replace with the real google-services.json from the Bisq LLC Firebase Console before any production build. Without a real file, the build succeeds but FCM token retrieval will fail at runtime, which is the same as having push notifications disabled.",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "bisq-mobile-placeholder",
+    "storage_bucket": "bisq-mobile-placeholder.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "network.bisq.mobile.client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "PLACEHOLDER_API_KEY_REPLACE_BEFORE_PROD"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:1111111111111111111111",
+        "android_client_info": {
+          "package_name": "network.bisq.mobile.client.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "PLACEHOLDER_API_KEY_REPLACE_BEFORE_PROD"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

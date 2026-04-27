@@ -32,6 +32,7 @@ plugins {
     alias(libs.plugins.protobuf).apply(false)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.kover) // Apply kover in root for aggregated reports
+    alias(libs.plugins.google.services).apply(false) // applied in :apps:clientApp for FCM
 
     // For Java & KotlinMultiplatform/Jvm this is for stripping out unused compilations
     // of tor to reduce application binary size by keeping only the host/architecture

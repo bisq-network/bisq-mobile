@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kover)
+    alias(libs.plugins.google.services) // FCM — requires apps/clientApp/google-services.json
 }
 
 // -------------------- Version Configuration --------------------
@@ -158,12 +159,18 @@ kotlin {
             // AndroidX
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.splashscreen)
+            implementation(libs.androidx.security.crypto)
 
             // Koin
             implementation(libs.koin.android)
 
             // Ktor
             implementation(libs.ktor.client.okhttp)
+
+            // Firebase Cloud Messaging — version pinned by BoM
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.messaging.ktx)
+            implementation(libs.kotlinx.coroutines.play.services)
         }
 
         androidUnitTest.dependencies {

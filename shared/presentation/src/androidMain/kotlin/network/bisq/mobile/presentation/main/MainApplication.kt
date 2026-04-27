@@ -8,6 +8,7 @@ import android.media.AudioAttributes
 import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.data.utils.AndroidAppContext
 import network.bisq.mobile.data.utils.ResourceUtils
 import network.bisq.mobile.data.utils.getDeviceLanguageCode
 import network.bisq.mobile.data.utils.setDefaultLocale
@@ -36,6 +37,7 @@ abstract class MainApplication :
 
         // Initialize ApplicationContextProvider for code that needs context without Koin
         ApplicationContextProvider.initialize(this)
+        AndroidAppContext.initialize(this)
 
         setupI18n()
         setupSystemOutFiltering()

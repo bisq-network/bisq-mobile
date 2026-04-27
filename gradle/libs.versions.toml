@@ -31,6 +31,10 @@ android-minSdk = "24"
 android-node-minSdk = "33"
 desugar_jdk_libs = "2.1.5"
 android-mlkit-barcode-scanning = "17.3.0"
+firebase-bom = "33.7.0"
+google-services-plugin = "4.4.2"
+androidx-security-crypto = "1.1.0-beta01"
+kotlinx-coroutines-play-services = "1.10.2"
 
 # -------------------- AndroidX --------------------
 androidx-core = "1.16.0"
@@ -127,6 +131,10 @@ androidx-multidex = { module = "androidx.multidex:multidex", version.ref = "andr
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation-compose" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 android-mlkit-barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "android-mlkit-barcode-scanning" }
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines-play-services" }
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "androidx-camera" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "androidx-camera" }
 androidx-camera-extensions = { module = "androidx.camera:camera-extensions", version.ref = "androidx-camera" }
@@ -280,3 +288,4 @@ kmp-tor-resource-filterjar = { id = "io.matthewnelson.kmp.tor.resource-filterjar
 kmp-tor-resource-frameworks = { id = "io.matthewnelson.kmp.tor.resource-frameworks", version.ref = "kmp-tor-resource" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services-plugin" }
