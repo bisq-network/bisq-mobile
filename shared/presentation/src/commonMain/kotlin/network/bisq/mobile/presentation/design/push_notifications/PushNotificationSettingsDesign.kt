@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSwitch
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.InfoGreenIcon
@@ -62,12 +63,12 @@ private fun NotificationsSettingsSection(
 
         BisqGap.V1()
 
-        BisqText.H4Light("Notifications")
+        BisqText.H4Light("mobile.pushNotifications.settings.title".i18n())
 
         BisqGap.V1()
 
         BisqSwitch(
-            label = "Relayed push notifications",
+            label = "mobile.pushNotifications.settings.toggleLabel".i18n(),
             checked = relayEnabled,
             onSwitch = onRelayToggle,
         )
@@ -75,16 +76,14 @@ private fun NotificationsSettingsSection(
         BisqGap.VQuarter()
 
         BisqText.SmallLight(
-            text = "Receive trade alerts when the app is closed",
+            text = "mobile.pushNotifications.settings.subtitle".i18n(),
             color = BisqTheme.colors.mid_grey20,
         )
 
         if (!platform.hasLocalFallback) {
             BisqGap.VQuarter()
             BisqText.SmallLight(
-                text =
-                    "On iOS, this is the only way to receive notifications " +
-                        "when the app is not running.",
+                text = "mobile.pushNotifications.settings.iosOnlyOption".i18n(),
                 color = BisqTheme.colors.mid_grey20,
             )
         }
@@ -92,7 +91,7 @@ private fun NotificationsSettingsSection(
         BisqGap.VHalf()
 
         BisqText.SmallLight(
-            text = "How this works and what is shared \u2192",
+            text = "mobile.pushNotifications.settings.learnMoreLink".i18n(),
             color = BisqTheme.colors.primary,
             modifier = Modifier.clickable { onLearnMoreClick() },
         )
@@ -100,7 +99,7 @@ private fun NotificationsSettingsSection(
         if (!relayEnabled) {
             BisqGap.VHalf()
             BisqText.SmallLight(
-                text = "You may miss trade messages while the app is closed.",
+                text = "mobile.pushNotifications.settings.disabledWarning".i18n(),
                 color = BisqTheme.colors.warning,
             )
         }
@@ -118,32 +117,32 @@ private fun LearnMoreBottomSheetContent(platform: SimulatedPlatform) {
                 .fillMaxWidth()
                 .padding(BisqUIConstants.ScreenPadding),
     ) {
-        BisqText.H5Light("How relayed push notifications work")
+        BisqText.H5Light("mobile.pushNotifications.learnMore.title".i18n())
 
         BisqGap.V1()
 
         BisqText.SmallLight(
-            text = "What is shared with $provider",
+            text = "mobile.pushNotifications.learnMore.shared.heading".i18n(provider),
             color = BisqTheme.colors.light_grey10,
         )
         BisqGap.VQuarter()
-        BulletItem("Your device\u2019s notification token")
+        BulletItem("mobile.pushNotifications.learnMore.shared.token".i18n())
         if (isAndroid) {
-            BulletItem("A Firebase Installation ID (a per-install identifier separate from the token)")
+            BulletItem("mobile.pushNotifications.learnMore.shared.installationId".i18n())
         }
-        BulletItem("Encrypted notification payloads (content unreadable)")
-        BulletItem("Delivery timestamps, payload size, and your IP address")
+        BulletItem("mobile.pushNotifications.learnMore.shared.encrypted".i18n())
+        BulletItem("mobile.pushNotifications.learnMore.shared.metadata".i18n())
 
         BisqGap.V1()
 
         BisqText.SmallLight(
-            text = "What $provider cannot see",
+            text = "mobile.pushNotifications.learnMore.notShared.heading".i18n(provider),
             color = BisqTheme.colors.light_grey10,
         )
         BisqGap.VQuarter()
-        BulletItem("Your trade details or amounts")
-        BulletItem("Your counterparty\u2019s identity")
-        BulletItem("Your payment information")
+        BulletItem("mobile.pushNotifications.learnMore.notShared.tradeDetails".i18n())
+        BulletItem("mobile.pushNotifications.learnMore.notShared.counterparty".i18n())
+        BulletItem("mobile.pushNotifications.learnMore.notShared.payment".i18n())
 
         BisqGap.V1()
 
@@ -151,10 +150,7 @@ private fun LearnMoreBottomSheetContent(platform: SimulatedPlatform) {
             InfoGreenIcon(modifier = Modifier.size(16.dp))
             BisqGap.HHalf()
             BisqText.SmallLight(
-                text =
-                    "Notification content is end-to-end encrypted between your " +
-                        "Bisq node and this device. $provider only delivers an " +
-                        "opaque encrypted payload.",
+                text = "mobile.pushNotifications.learnMore.encryptionNote".i18n(provider),
                 color = BisqTheme.colors.mid_grey20,
             )
         }
@@ -162,19 +158,12 @@ private fun LearnMoreBottomSheetContent(platform: SimulatedPlatform) {
         if (isAndroid) {
             BisqGap.V1()
             BisqText.SmallLight(
-                text =
-                    "Bisq talks to Google only after you turn this on. While the " +
-                        "toggle is off, the FCM library is bundled but inert — no " +
-                        "connection to Google\u2019s servers is opened. Turning the " +
-                        "toggle off again revokes the token and stops all traffic.",
+                text = "mobile.pushNotifications.learnMore.android.optInNote".i18n(),
                 color = BisqTheme.colors.mid_grey20,
             )
             BisqGap.VHalf()
             BisqText.SmallLight(
-                text =
-                    "This feature requires Google Play Services. It will not work " +
-                        "on de-Googled Android (GrapheneOS, /e/OS, LineageOS without " +
-                        "GApps). Local notifications still work while the app is open.",
+                text = "mobile.pushNotifications.learnMore.android.deGoogledWarning".i18n(),
                 color = BisqTheme.colors.warning,
             )
         }

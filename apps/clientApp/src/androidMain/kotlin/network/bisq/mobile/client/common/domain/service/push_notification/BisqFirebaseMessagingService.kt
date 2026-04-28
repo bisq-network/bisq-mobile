@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.data.crypto.readPushNotificationKeyBase64
 import network.bisq.mobile.data.utils.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationChannels
 import org.koin.core.context.GlobalContext
 import javax.crypto.Cipher
@@ -103,7 +104,7 @@ class BisqFirebaseMessagingService :
                 .Builder(this, NotificationChannels.TRADE_UPDATES)
                 .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))
                 .setContentTitle("Bisq")
-                .setContentText(category.displayText)
+                .setContentText(category.displayTextKey.i18n())
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
         pending?.let(builder::setContentIntent)
@@ -122,16 +123,18 @@ class BisqFirebaseMessagingService :
 
     /**
      * Privacy: the lock-screen banner shows a category, not the full title /
-     * message. Mirrors iOS NSE category mapping.
+     * message. Mirrors iOS NSE category mapping. The display text is resolved
+     * from `mobile.properties` at notification-post time so the user sees it
+     * in their locale.
      */
     private enum class NotificationCategory(
         val id: String,
-        val displayText: String,
+        val displayTextKey: String,
     ) {
-        TRADE_UPDATE("trade_update", "Trade update"),
-        CHAT_MESSAGE("chat_message", "New message"),
-        OFFER_UPDATE("offer_update", "Offer update"),
-        GENERAL("general", "New notification"),
+        TRADE_UPDATE("trade_update", "mobile.pushNotifications.category.tradeUpdate"),
+        CHAT_MESSAGE("chat_message", "mobile.pushNotifications.category.chatMessage"),
+        OFFER_UPDATE("offer_update", "mobile.pushNotifications.category.offerUpdate"),
+        GENERAL("general", "mobile.pushNotifications.category.general"),
         ;
 
         companion object {
