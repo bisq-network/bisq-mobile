@@ -41,7 +41,10 @@ class BisqFirebaseMessagingService :
     FirebaseMessagingService(),
     Logging {
     override fun onNewToken(token: String) {
-        log.i { "FCM new token: ${token.take(10)}..." }
+        // Privacy: do not log the FCM token (or any prefix of it) — even a
+        // 10-char prefix is a stable per-install identifier that aggregates
+        // into log files, crash reporters, etc. Just record the event.
+        log.i { "FCM token refreshed; forwarding to facade" }
         // The facade hook is suspend and ultimately performs a network call to
         // the trusted node (registerDevice). Blocking the FCM callback thread
         // would risk an ANR on slow networks, so we hand the work off to a
@@ -86,7 +89,7 @@ class BisqFirebaseMessagingService :
                 return
             }
 
-        val category = NotificationCategory.fromTitle(payload.title)
+        val category = NotificationCategory.fromPayload(payload)
         showNotification(payload.id, category)
     }
 
@@ -126,10 +129,14 @@ class BisqFirebaseMessagingService :
     }
 
     @Serializable
-    private data class NotificationPayload(
+    internal data class NotificationPayload(
         val id: String,
         val title: String,
         val message: String,
+        // Optional explicit category from the trusted node — preferred over
+        // the brittle title-keyword mapping. Default null for backwards
+        // compatibility with bisq2 versions that don't populate it yet.
+        val category: String? = null,
     )
 
     /**
@@ -138,7 +145,7 @@ class BisqFirebaseMessagingService :
      * from `mobile.properties` at notification-post time so the user sees it
      * in their locale.
      */
-    private enum class NotificationCategory(
+    internal enum class NotificationCategory(
         val id: String,
         val displayTextKey: String,
     ) {
@@ -149,7 +156,21 @@ class BisqFirebaseMessagingService :
         ;
 
         companion object {
-            fun fromTitle(title: String): NotificationCategory {
+            /**
+             * Prefers the explicit `payload.category` when present — that's
+             * the stable wire signal. Falls back to title-keyword scanning
+             * only when the trusted node hasn't populated it yet (older
+             * bisq2 versions). Once all trusted nodes emit `category`, the
+             * `fromTitle` heuristic can be retired.
+             */
+            fun fromPayload(payload: NotificationPayload): NotificationCategory {
+                payload.category
+                    ?.let { id -> entries.firstOrNull { it.id == id } }
+                    ?.let { return it }
+                return fromTitle(payload.title)
+            }
+
+            internal fun fromTitle(title: String): NotificationCategory {
                 val lower = title.lowercase()
                 return when {
                     lower.contains("trade") || lower.contains("payment") || lower.contains("btc") -> TRADE_UPDATE

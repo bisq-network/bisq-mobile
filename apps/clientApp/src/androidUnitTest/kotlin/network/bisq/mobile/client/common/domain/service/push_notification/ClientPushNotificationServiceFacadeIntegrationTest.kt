@@ -17,6 +17,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
+import network.bisq.mobile.data.crypto.PushNotificationKeyStore
+import network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory
 import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
 import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
@@ -31,6 +33,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -74,6 +77,8 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             publishDate = System.currentTimeMillis(),
         )
 
+    private val savedKeyStoreFactory = pushNotificationKeyStoreFactory
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -86,6 +91,12 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             Settings.Secure.getString(mockContentResolver, Settings.Secure.ANDROID_ID)
         } returns "test-android-id-12345"
         ApplicationContextProvider.initialize(mockContext)
+
+        // Robolectric can't run Tink-backed EncryptedSharedPreferences. Seed
+        // an in-memory fake so getOrCreatePushNotificationKeyBase64() returns
+        // a valid key — otherwise validateSymmetricKey aborts registration
+        // before the apiGateway.registerDevice mock is exercised.
+        pushNotificationKeyStoreFactory = { InMemoryKeyStoreForTest() }
 
         apiGateway = mockk(relaxed = true)
         settingsRepository = SettingsRepositoryMock()
@@ -109,6 +120,17 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     fun tearDown() {
         unmockkStatic(Settings.Secure::class)
         Dispatchers.resetMain()
+        pushNotificationKeyStoreFactory = savedKeyStoreFactory
+    }
+
+    private class InMemoryKeyStoreForTest : PushNotificationKeyStore {
+        private var stored: String? = null
+
+        override fun put(base64: String) {
+            stored = base64
+        }
+
+        override fun get(): String? = stored
     }
 
     @Test
@@ -218,7 +240,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("valid-device-token")
-            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
             // When
             val result = facade.registerForPushNotifications()
@@ -227,7 +249,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             assertTrue(result.isSuccess)
             assertTrue(facade.isDeviceRegistered.value)
             assertEquals("valid-device-token", facade.deviceToken.value)
-            coVerify { apiGateway.registerDevice(any(), "valid-device-token", any(), any(), any()) }
+            coVerify { apiGateway.registerDevice(any(), "valid-device-token", any(), any(), any(), any()) }
         }
 
     @Test
@@ -236,7 +258,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("valid-token")
-            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
             // When
             facade.registerForPushNotifications()
@@ -293,9 +315,24 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
     @Test
     fun `unregisterFromPushNotifications surfaces revokeDeviceToken failure but still clears local state`() =
         runTest {
-            // Given — server unregister succeeds, but the platform-side token
-            // revoke fails (e.g., FCM unreachable, isAutoInitEnabled couldn't
-            // be flipped). The user-facing result must reflect this so the
+            // Given — first put the facade into a fully-registered state so
+            // the assertions below actually prove that unregister cleared it,
+            // not that it was never set. We register, then mock unregister to
+            // fail at the platform-token-revoke step.
+            coEvery { tokenProvider.requestPermission() } returns true
+            coEvery { tokenProvider.requestDeviceToken() } returns Result.success("seeded-token")
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
+            facade.registerForPushNotifications()
+            assertTrue(facade.isDeviceRegistered.value, "precondition: facade must be registered")
+            assertEquals("seeded-token", facade.deviceToken.value, "precondition: deviceToken must be set")
+            assertTrue(
+                settingsRepository.fetch().pushNotificationsEnabled,
+                "precondition: pushNotificationsEnabled must be true",
+            )
+
+            // Server unregister succeeds, but the platform-side token revoke
+            // fails (e.g., FCM unreachable, isAutoInitEnabled couldn't be
+            // flipped). The user-facing result must reflect this so the
             // caller can warn the user / retry — silently treating it as
             // success would leave the device receiving pushes despite opt-out.
             coEvery { apiGateway.unregisterDevice(any()) } returns Result.success(Unit)
@@ -316,6 +353,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             )
             // Local state is still cleared so the next opt-in starts fresh.
             assertFalse(facade.isDeviceRegistered.value)
+            assertNull(facade.deviceToken.value)
             assertFalse(settingsRepository.fetch().pushNotificationsEnabled)
         }
 
@@ -345,7 +383,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
 
             // Then
             assertEquals(newToken, facade.deviceToken.value)
-            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
         }
 
     @Test
@@ -354,7 +392,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             // Given
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("valid-token")
-            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns
                 Result.failure(RuntimeException("Server error"))
 
             // When

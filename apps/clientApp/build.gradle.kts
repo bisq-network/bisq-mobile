@@ -188,9 +188,11 @@ kotlin {
             // Ktor
             implementation(libs.ktor.client.okhttp)
 
-            // Firebase Cloud Messaging — version pinned by BoM
+            // Firebase Cloud Messaging — version pinned by BoM. Note: the
+            // `-ktx` artifact has been deprecated; the main `firebase-messaging`
+            // module now bundles the Kotlin extensions.
             implementation(project.dependencies.platform(libs.firebase.bom))
-            implementation(libs.firebase.messaging.ktx)
+            implementation(libs.firebase.messaging)
             implementation(libs.kotlinx.coroutines.play.services)
         }
 

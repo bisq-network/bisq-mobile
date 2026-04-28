@@ -54,7 +54,8 @@ class AndroidPushNotificationTokenProvider :
 
             val token = FirebaseMessaging.getInstance().token.await()
             check(token.isNotBlank()) { "FCM returned a blank token" }
-            log.i { "Got FCM token: ${token.take(10)}..." }
+            // Privacy: never log token contents (not even a prefix).
+            log.i { "Fetched FCM token (${token.length} chars)" }
             token
         }.recoverCatching { throwable ->
             log.e(throwable) { "Failed to fetch FCM token" }

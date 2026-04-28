@@ -236,4 +236,48 @@ class ClientPushNotificationServiceFacadeTest {
         // Then
         assertEquals(Platform.ANDROID, platform)
     }
+
+    // ----- validateSymmetricKey -----
+    // Both platforms decrypt with AES-GCM and require a key. A null key must
+    // abort registration, regardless of platform — otherwise the trusted node
+    // would either fail to encrypt or fall back to a path the device can't
+    // decrypt, leaving pushes silently broken.
+
+    @Test
+    fun `validateSymmetricKey returns null when key is present (iOS)`() {
+        val result = validateSymmetricKey(PlatformType.IOS, "some-base64")
+        assertEquals(null, result)
+    }
+
+    @Test
+    fun `validateSymmetricKey returns null when key is present (Android)`() {
+        val result = validateSymmetricKey(PlatformType.ANDROID, "some-base64")
+        assertEquals(null, result)
+    }
+
+    @Test
+    fun `validateSymmetricKey fails on iOS when key is null`() {
+        val result = validateSymmetricKey(PlatformType.IOS, null)
+        assertNotNull(result)
+        assertTrue(result.isFailure)
+        val ex = result.exceptionOrNull()
+        assertTrue(ex is PushNotificationException)
+        assertTrue(
+            ex.message?.contains("iOS symmetric key creation failed") == true,
+            "expected iOS-specific message; got: ${ex.message}",
+        )
+    }
+
+    @Test
+    fun `validateSymmetricKey fails on Android when key is null`() {
+        val result = validateSymmetricKey(PlatformType.ANDROID, null)
+        assertNotNull(result)
+        assertTrue(result.isFailure)
+        val ex = result.exceptionOrNull()
+        assertTrue(ex is PushNotificationException)
+        assertTrue(
+            ex.message?.contains("Android symmetric key creation failed") == true,
+            "expected Android-specific message; got: ${ex.message}",
+        )
+    }
 }

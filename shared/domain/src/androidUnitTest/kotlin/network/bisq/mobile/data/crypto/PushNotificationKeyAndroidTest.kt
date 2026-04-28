@@ -74,6 +74,29 @@ class PushNotificationKeyAndroidTest {
         assertTrue(!base64.contains('\n'), "Base64 must not contain newlines: $base64")
     }
 
+    @Test
+    fun `getOrCreate returns null when the underlying store fails to persist`() {
+        // Simulates SharedPreferences.commit() returning false (or any other
+        // write failure). The outer runCatching in getOrCreatePushNotificationKeyBase64
+        // must convert this into a null return — callers (validateSymmetricKey)
+        // then abort registration before the trusted node receives a key the
+        // device can't actually decrypt with.
+        pushNotificationKeyStoreFactory = { ThrowingKeyStore() }
+
+        val base64 = getOrCreatePushNotificationKeyBase64()
+
+        assertNull(base64)
+    }
+
+    @Test
+    fun `read returns null when the underlying store throws`() {
+        pushNotificationKeyStoreFactory = { ThrowingKeyStore() }
+
+        val read = readPushNotificationKeyBase64()
+
+        assertNull(read)
+    }
+
     private class InMemoryKeyStore : PushNotificationKeyStore {
         private var stored: String? = null
 
@@ -82,5 +105,11 @@ class PushNotificationKeyAndroidTest {
         }
 
         override fun get(): String? = stored
+    }
+
+    private class ThrowingKeyStore : PushNotificationKeyStore {
+        override fun put(base64: String): Unit = throw IllegalStateException("Failed to persist push notification symmetric key")
+
+        override fun get(): String? = throw IllegalStateException("Failed to read")
     }
 }

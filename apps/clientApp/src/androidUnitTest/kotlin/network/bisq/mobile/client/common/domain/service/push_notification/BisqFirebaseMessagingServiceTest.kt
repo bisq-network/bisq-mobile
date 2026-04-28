@@ -71,6 +71,104 @@ class BisqFirebaseMessagingServiceTest {
         assertTrue(thrown.isFailure, "decryption must fail with a mismatched key")
     }
 
+    // ----- NotificationCategory tests -----
+
+    @Test
+    fun `fromPayload prefers the explicit category id when present`() {
+        val payload =
+            BisqFirebaseMessagingService.NotificationPayload(
+                id = "1",
+                title = "Random title that would otherwise classify as GENERAL",
+                message = "msg",
+                category = "trade_update",
+            )
+
+        val category = BisqFirebaseMessagingService.NotificationCategory.fromPayload(payload)
+
+        assertEquals(
+            BisqFirebaseMessagingService.NotificationCategory.TRADE_UPDATE,
+            category,
+        )
+    }
+
+    @Test
+    fun `fromPayload falls back to title parsing when category is null`() {
+        val payload =
+            BisqFirebaseMessagingService.NotificationPayload(
+                id = "1",
+                title = "New chat message arrived",
+                message = "msg",
+                category = null,
+            )
+
+        val category = BisqFirebaseMessagingService.NotificationCategory.fromPayload(payload)
+
+        assertEquals(
+            BisqFirebaseMessagingService.NotificationCategory.CHAT_MESSAGE,
+            category,
+        )
+    }
+
+    @Test
+    fun `fromPayload falls back to title parsing when category id is unknown`() {
+        val payload =
+            BisqFirebaseMessagingService.NotificationPayload(
+                id = "1",
+                title = "Trade update",
+                message = "msg",
+                category = "made-up-category-from-some-future-bisq2",
+            )
+
+        val category = BisqFirebaseMessagingService.NotificationCategory.fromPayload(payload)
+
+        // Falls back to title-keyword scan, which classifies "trade" as TRADE_UPDATE.
+        assertEquals(
+            BisqFirebaseMessagingService.NotificationCategory.TRADE_UPDATE,
+            category,
+        )
+    }
+
+    @Test
+    fun `fromTitle classifies trade and payment and btc keywords as TRADE_UPDATE`() {
+        listOf("Trade started", "Payment received", "BTC confirmed").forEach { title ->
+            assertEquals(
+                BisqFirebaseMessagingService.NotificationCategory.TRADE_UPDATE,
+                BisqFirebaseMessagingService.NotificationCategory.fromTitle(title),
+                "unexpected category for title: $title",
+            )
+        }
+    }
+
+    @Test
+    fun `fromTitle classifies message and chat keywords as CHAT_MESSAGE`() {
+        listOf("New message", "Chat update", "MESSAGE waiting").forEach { title ->
+            assertEquals(
+                BisqFirebaseMessagingService.NotificationCategory.CHAT_MESSAGE,
+                BisqFirebaseMessagingService.NotificationCategory.fromTitle(title),
+                "unexpected category for title: $title",
+            )
+        }
+    }
+
+    @Test
+    fun `fromTitle classifies offer keyword as OFFER_UPDATE`() {
+        assertEquals(
+            BisqFirebaseMessagingService.NotificationCategory.OFFER_UPDATE,
+            BisqFirebaseMessagingService.NotificationCategory.fromTitle("New offer matched"),
+        )
+    }
+
+    @Test
+    fun `fromTitle returns GENERAL for unmatched titles`() {
+        listOf("Something else", "Hello world", "").forEach { title ->
+            assertEquals(
+                BisqFirebaseMessagingService.NotificationCategory.GENERAL,
+                BisqFirebaseMessagingService.NotificationCategory.fromTitle(title),
+                "unexpected category for title: $title",
+            )
+        }
+    }
+
     private fun aesGcmEncrypt(
         plaintext: ByteArray,
         keyBytes: ByteArray,

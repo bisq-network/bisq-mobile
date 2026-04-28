@@ -77,12 +77,20 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
 
     override fun additionalModules(): List<Module> = listOf(module { })
 
+    private val savedKeyStoreFactory = network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory
+
     override fun onSetup() {
         every { mockContext.applicationContext } returns mockContext
         every { mockContext.contentResolver } returns mockContentResolver
         mockkStatic(Settings.Secure::class)
         every { Settings.Secure.getString(mockContentResolver, Settings.Secure.ANDROID_ID) } returns "test-android-id"
         ApplicationContextProvider.initialize(mockContext)
+
+        // Robolectric can't run Tink-backed EncryptedSharedPreferences. Seed
+        // an in-memory fake so getOrCreatePushNotificationKeyBase64() returns
+        // a valid key — otherwise validateSymmetricKey aborts registration
+        // before the apiGateway.registerDevice mock is exercised.
+        network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = { InMemoryKeyStoreForTest() }
 
         apiGateway = mockk(relaxed = true)
         settingsRepository = SettingsRepositoryMock()
@@ -103,6 +111,17 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
 
     override fun onTearDown() {
         unmockkStatic(Settings.Secure::class)
+        network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = savedKeyStoreFactory
+    }
+
+    private class InMemoryKeyStoreForTest : network.bisq.mobile.data.crypto.PushNotificationKeyStore {
+        private var stored: String? = null
+
+        override fun put(base64: String) {
+            stored = base64
+        }
+
+        override fun get(): String? = stored
     }
 
     @Test
@@ -123,7 +142,7 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
             advanceUntilIdle()
             assertTrue(facade.isPushNotificationsEnabled.value)
             assertFalse(facade.isDeviceRegistered.value)
-            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
         }
 
     @Test
@@ -132,7 +151,7 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
             sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-device-token")
-            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
             facade.activate()
             advanceUntilIdle()
             settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
@@ -160,14 +179,14 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
             sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("initial-token")
-            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
             facade.activate()
             advanceUntilIdle()
             settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
             advanceUntilIdle()
             facade.onDeviceTokenReceived("new-device-token")
             advanceUntilIdle()
-            coVerify(atLeast = 1) { apiGateway.registerDevice(any(), eq("new-device-token"), any(), any(), any()) }
+            coVerify(atLeast = 1) { apiGateway.registerDevice(any(), eq("new-device-token"), any(), any(), any(), any()) }
         }
 
     @Test
@@ -178,7 +197,7 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
             advanceUntilIdle()
             facade.onDeviceTokenReceived("new-device-token")
             advanceUntilIdle()
-            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
         }
 
     @Test
@@ -187,12 +206,12 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
             sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("initial-token")
-            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
             facade.activate()
             advanceUntilIdle()
             settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
             advanceUntilIdle()
-            coEvery { apiGateway.registerDevice(any(), eq("new-token"), any(), any(), any()) } returns
+            coEvery { apiGateway.registerDevice(any(), eq("new-token"), any(), any(), any(), any()) } returns
                 Result.failure(Exception("Network error"))
             facade.onDeviceTokenReceived("new-token")
             advanceUntilIdle()
@@ -216,7 +235,7 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
             sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-token")
-            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any()) } returns
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns
                 Result.failure(Exception("API error"))
 
             // When

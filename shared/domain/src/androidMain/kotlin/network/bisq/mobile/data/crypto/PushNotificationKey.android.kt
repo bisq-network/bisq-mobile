@@ -2,12 +2,13 @@ package network.bisq.mobile.data.crypto
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Base64
 import androidx.annotation.VisibleForTesting
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import network.bisq.mobile.data.utils.AndroidAppContext
 import java.security.SecureRandom
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 private const val KEY_SIZE_BYTES = 32 // AES-256
 private const val PREFS_FILE = "bisq_push_notification_keystore"
@@ -26,14 +27,20 @@ private const val PREF_KEY_SYMMETRIC = "push_notification_symmetric_key_base64"
  * in-memory fake to bypass `AndroidKeyStore` (which Robolectric can't fully
  * emulate — Tink's master-key generation fails in unit tests).
  */
-internal interface PushNotificationKeyStore {
+@VisibleForTesting
+interface PushNotificationKeyStore {
     fun put(base64: String)
 
     fun get(): String?
 }
 
+/**
+ * Seam for tests in modules other than `:shared:domain` to swap in a fake
+ * key store (`internal` would block them via Kotlin module visibility).
+ * Production code keeps the default factory; nothing else should mutate it.
+ */
 @VisibleForTesting
-internal var pushNotificationKeyStoreFactory: () -> PushNotificationKeyStore = {
+var pushNotificationKeyStoreFactory: () -> PushNotificationKeyStore = {
     EncryptedSharedPrefsKeyStore(AndroidAppContext.context)
 }
 
@@ -49,12 +56,16 @@ internal var pushNotificationKeyStoreFactory: () -> PushNotificationKeyStore = {
  * encrypts notification payloads with AES-256-GCM that this device decrypts in
  * its `FirebaseMessagingService`.
  */
+@OptIn(ExperimentalEncodingApi::class)
 actual fun getOrCreatePushNotificationKeyBase64(): String? =
     runCatching {
         val store = pushNotificationKeyStoreFactory()
         val keyBytes = ByteArray(KEY_SIZE_BYTES)
         SecureRandom().nextBytes(keyBytes)
-        val base64 = Base64.encodeToString(keyBytes, Base64.NO_WRAP)
+        // Kotlin stdlib Base64 (works on plain JVM and Android — `android.util.Base64`
+        // returns null in non-Robolectric unit tests, so we use the stdlib variant
+        // for portability).
+        val base64 = Base64.encode(keyBytes)
         store.put(base64)
         base64
     }.getOrNull()
