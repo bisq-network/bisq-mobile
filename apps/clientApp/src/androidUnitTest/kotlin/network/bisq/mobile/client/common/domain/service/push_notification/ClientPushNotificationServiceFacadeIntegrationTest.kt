@@ -291,9 +291,13 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
         }
 
     @Test
-    fun `unregisterFromPushNotifications still clears local state when revokeDeviceToken fails`() =
+    fun `unregisterFromPushNotifications surfaces revokeDeviceToken failure but still clears local state`() =
         runTest {
-            // Given
+            // Given — server unregister succeeds, but the platform-side token
+            // revoke fails (e.g., FCM unreachable, isAutoInitEnabled couldn't
+            // be flipped). The user-facing result must reflect this so the
+            // caller can warn the user / retry — silently treating it as
+            // success would leave the device receiving pushes despite opt-out.
             coEvery { apiGateway.unregisterDevice(any()) } returns Result.success(Unit)
             coEvery { tokenProvider.revokeDeviceToken() } returns
                 Result.failure(RuntimeException("FCM unreachable"))
@@ -301,9 +305,16 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             // When
             val result = facade.unregisterFromPushNotifications()
 
-            // Then — the API call succeeded and local state is cleared even
-            // though revoke threw. The device is logically unregistered.
-            assertTrue(result.isSuccess)
+            // Then — the aggregated result is a failure, with a clear message
+            // distinguishing it from a server-side unregister failure.
+            assertTrue(result.isFailure)
+            val ex = result.exceptionOrNull()
+            assertTrue(ex is PushNotificationException)
+            assertTrue(
+                ex.message?.contains("local platform token revoke failed") == true,
+                "expected aggregated-failure message; got: ${ex.message}",
+            )
+            // Local state is still cleared so the next opt-in starts fresh.
             assertFalse(facade.isDeviceRegistered.value)
             assertFalse(settingsRepository.fetch().pushNotificationsEnabled)
         }

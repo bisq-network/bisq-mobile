@@ -33,7 +33,7 @@ desugar_jdk_libs = "2.1.5"
 android-mlkit-barcode-scanning = "17.3.0"
 firebase-bom = "33.7.0"
 google-services-plugin = "4.4.2"
-androidx-security-crypto = "1.1.0-beta01"
+androidx-security-crypto = "1.1.0"
 kotlinx-coroutines-play-services = "1.10.2"
 
 # -------------------- AndroidX --------------------

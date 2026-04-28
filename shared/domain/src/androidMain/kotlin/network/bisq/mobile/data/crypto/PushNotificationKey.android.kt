@@ -13,6 +13,13 @@ private const val KEY_SIZE_BYTES = 32 // AES-256
 private const val PREFS_FILE = "bisq_push_notification_keystore"
 private const val PREF_KEY_SYMMETRIC = "push_notification_symmetric_key_base64"
 
+// TODO(follow-up): migrate from EncryptedSharedPreferences/MasterKey
+// (deprecated in androidx.security-crypto 1.1.0) to direct Android Keystore
+// APIs. The wrapper still works but Google now recommends generating an AES
+// key in Keystore and using it to wrap/unwrap the per-device symmetric key
+// stored in plain SharedPreferences. Tracked as a nitpick — the deprecated
+// APIs remain functional in 1.1.0.
+
 /**
  * Read/write port for the push notification symmetric key. Production swaps in
  * an `EncryptedSharedPreferences`-backed implementation; tests can swap in an
@@ -82,7 +89,13 @@ private class EncryptedSharedPrefsKeyStore(
         }
 
     override fun put(base64: String) {
-        prefs.edit().putString(PREF_KEY_SYMMETRIC, base64).apply()
+        // commit() (synchronous) rather than apply() (async): the symmetric
+        // key is registered with the trusted node immediately after this
+        // returns. If apply() were used and the process died before the
+        // write hit disk, the server and device would diverge on the key
+        // and decryption would silently fail.
+        val ok = prefs.edit().putString(PREF_KEY_SYMMETRIC, base64).commit()
+        check(ok) { "Failed to persist push notification symmetric key" }
     }
 
     override fun get(): String? = prefs.getString(PREF_KEY_SYMMETRIC, null)

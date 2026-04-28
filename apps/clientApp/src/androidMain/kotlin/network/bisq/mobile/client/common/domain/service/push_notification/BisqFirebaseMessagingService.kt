@@ -7,7 +7,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.data.crypto.readPushNotificationKeyBase64
@@ -39,15 +42,23 @@ class BisqFirebaseMessagingService :
     Logging {
     override fun onNewToken(token: String) {
         log.i { "FCM new token: ${token.take(10)}..." }
-        runCatching {
-            val facade =
-                GlobalContext
-                    .getOrNull()
-                    ?.get<network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade>()
-            // FirebaseMessagingService runs on its own thread; the facade hook
-            // is suspend, so we block this short call. No UI thread involved.
-            facade?.let { runBlocking { it.onDeviceTokenReceived(token) } }
-        }.onFailure { log.e(it) { "Failed to forward FCM token" } }
+        // The facade hook is suspend and ultimately performs a network call to
+        // the trusted node (registerDevice). Blocking the FCM callback thread
+        // would risk an ANR on slow networks, so we hand the work off to a
+        // background scope and return immediately. The Firebase service keeps
+        // the process alive long enough for typical network round-trips; if
+        // the process dies mid-flight, the next app launch's
+        // `ClientPushNotificationServiceFacade.activate()` will re-register
+        // automatically when the saved token has changed.
+        val facade =
+            GlobalContext
+                .getOrNull()
+                ?.get<network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade>()
+                ?: return
+        tokenForwardScope.launch {
+            runCatching { facade.onDeviceTokenReceived(token) }
+                .onFailure { log.e(it) { "Failed to forward FCM token" } }
+        }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -153,6 +164,12 @@ class BisqFirebaseMessagingService :
     companion object {
         private const val NONCE_SIZE = 12
         private const val GCM_TAG_BITS = 128
+
+        // Long-lived scope used to forward FCM tokens to the facade off the
+        // FCM callback thread. SupervisorJob so a single failure doesn't
+        // cancel future deliveries; Dispatchers.IO because the work is a
+        // network call to the trusted node.
+        private val tokenForwardScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         /**
          * Decrypts a Base64 payload produced by the trusted node's AES-256-GCM

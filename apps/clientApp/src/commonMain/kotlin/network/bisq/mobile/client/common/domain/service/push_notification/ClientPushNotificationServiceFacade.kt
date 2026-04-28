@@ -178,7 +178,7 @@ class ClientPushNotificationServiceFacade(
         // Get deterministic device-specific deviceId (always available from hardware)
         val deviceIdToUnregister = getDeviceId()
 
-        val result = apiGateway.unregisterDevice(deviceIdToUnregister)
+        val apiResult = apiGateway.unregisterDevice(deviceIdToUnregister)
         // Always update local state regardless of API result
         _isDeviceRegistered.value = false
         _deviceId.value = null
@@ -187,16 +187,35 @@ class ClientPushNotificationServiceFacade(
 
         // Revoke the platform token and (Android) disable Firebase auto-init so
         // we stop talking to Google's servers until the user opts in again.
-        pushNotificationTokenProvider
-            .revokeDeviceToken()
-            .onFailure { log.w(it) { "Failed to revoke platform device token (continuing)" } }
-
-        if (result.isSuccess) {
-            log.i { "Device unregistered successfully" }
-        } else {
-            log.e { "Failed to unregister device from server: ${result.exceptionOrNull()?.message}" }
+        // The result is captured separately and surfaced to the caller — a
+        // false success here would mean we keep an active FCM connection
+        // despite the user having opted out.
+        val revokeResult = pushNotificationTokenProvider.revokeDeviceToken()
+        revokeResult.onFailure {
+            log.e(it) { "Failed to revoke platform device token" }
         }
-        return result
+
+        if (apiResult.isSuccess) {
+            log.i { "Device unregistered from server successfully" }
+        } else {
+            log.e { "Failed to unregister device from server: ${apiResult.exceptionOrNull()?.message}" }
+        }
+
+        // Combine results: server failure is the primary error; if the server
+        // succeeded but the local revoke failed, surface that as a distinct
+        // failure so the caller can warn the user / retry.
+        return when {
+            apiResult.isFailure -> apiResult
+            revokeResult.isFailure ->
+                Result.failure(
+                    PushNotificationException(
+                        "Server unregister succeeded but local platform token revoke failed — " +
+                            "the device may still receive pushes until the next opt-in/out cycle",
+                        revokeResult.exceptionOrNull(),
+                    ),
+                )
+            else -> Result.success(Unit)
+        }
     }
 
     override suspend fun onDeviceTokenReceived(token: String) {

@@ -21,8 +21,24 @@ object AndroidAppContext {
                     "AndroidAppContext not initialized. Call initialize() in Application.onCreate().",
                 )
 
+    /**
+     * Initializes the Application context. Idempotent for the same context
+     * instance. Throws [IllegalStateException] if a different context is
+     * passed after initialization — that signals a lifecycle / init-order
+     * bug we want to surface immediately rather than silently swap context.
+     */
     fun initialize(context: Context) {
-        _context = context.applicationContext
+        val newContext = context.applicationContext
+        val current = _context
+        when {
+            current == null -> _context = newContext
+            current === newContext -> Unit // re-init with same context — no-op
+            else ->
+                error(
+                    "AndroidAppContext is already initialized with a different Context. " +
+                        "Re-initializing with another instance indicates a lifecycle bug.",
+                )
+        }
     }
 
     @VisibleForTesting

@@ -69,10 +69,15 @@ class AndroidPushNotificationTokenProvider :
     override suspend fun revokeDeviceToken(): Result<Unit> =
         runCatching {
             log.i { "Revoking FCM token and disabling Firebase auto-init" }
-            // deleteToken() unregisters the device on Google's side. We do this
-            // first so the token is invalidated before we sever the connection.
-            runCatching { FirebaseMessaging.getInstance().deleteToken().await() }
-                .onFailure { log.w(it) { "deleteToken() failed — continuing with auto-init off" } }
-            FirebaseMessaging.getInstance().isAutoInitEnabled = false
+            try {
+                // deleteToken() unregisters the device on Google's side.
+                // If this throws, the failure propagates up to the outer
+                // runCatching so the caller can observe it.
+                FirebaseMessaging.getInstance().deleteToken().await()
+            } finally {
+                // Always disable auto-init — even on deleteToken() failure
+                // we want to stop talking to Google's servers locally.
+                FirebaseMessaging.getInstance().isAutoInitEnabled = false
+            }
         }
 }
