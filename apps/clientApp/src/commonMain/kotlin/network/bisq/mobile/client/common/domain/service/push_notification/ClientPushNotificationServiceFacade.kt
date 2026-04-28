@@ -182,7 +182,14 @@ class ClientPushNotificationServiceFacade(
         // Always update local state regardless of API result
         _isDeviceRegistered.value = false
         _deviceId.value = null
+        _deviceToken.value = null
         settingsRepository.update { it.copy(pushNotificationsEnabled = false) }
+
+        // Revoke the platform token and (Android) disable Firebase auto-init so
+        // we stop talking to Google's servers until the user opts in again.
+        pushNotificationTokenProvider
+            .revokeDeviceToken()
+            .onFailure { log.w(it) { "Failed to revoke platform device token (continuing)" } }
 
         if (result.isSuccess) {
             log.i { "Device unregistered successfully" }

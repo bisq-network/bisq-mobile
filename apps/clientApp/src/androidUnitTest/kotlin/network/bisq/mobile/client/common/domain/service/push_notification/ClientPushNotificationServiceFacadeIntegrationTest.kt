@@ -276,6 +276,39 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
         }
 
     @Test
+    fun `unregisterFromPushNotifications revokes platform token (Android disables Firebase auto-init)`() =
+        runTest {
+            // Given
+            coEvery { apiGateway.unregisterDevice(any()) } returns Result.success(Unit)
+            coEvery { tokenProvider.revokeDeviceToken() } returns Result.success(Unit)
+
+            // When
+            facade.unregisterFromPushNotifications()
+
+            // Then — the platform-side cleanup must run so we stop talking to
+            // the upstream push provider (Google FCM on Android).
+            coVerify(exactly = 1) { tokenProvider.revokeDeviceToken() }
+        }
+
+    @Test
+    fun `unregisterFromPushNotifications still clears local state when revokeDeviceToken fails`() =
+        runTest {
+            // Given
+            coEvery { apiGateway.unregisterDevice(any()) } returns Result.success(Unit)
+            coEvery { tokenProvider.revokeDeviceToken() } returns
+                Result.failure(RuntimeException("FCM unreachable"))
+
+            // When
+            val result = facade.unregisterFromPushNotifications()
+
+            // Then — the API call succeeded and local state is cleared even
+            // though revoke threw. The device is logically unregistered.
+            assertTrue(result.isSuccess)
+            assertFalse(facade.isDeviceRegistered.value)
+            assertFalse(settingsRepository.fetch().pushNotificationsEnabled)
+        }
+
+    @Test
     fun `onDeviceTokenReceived updates token`() =
         runTest {
             // Given

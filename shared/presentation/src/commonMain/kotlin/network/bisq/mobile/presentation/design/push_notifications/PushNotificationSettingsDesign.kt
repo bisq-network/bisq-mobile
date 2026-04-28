@@ -110,6 +110,7 @@ private fun NotificationsSettingsSection(
 @Composable
 private fun LearnMoreBottomSheetContent(platform: SimulatedPlatform) {
     val provider = platform.relayProvider
+    val isAndroid = platform == SimulatedPlatform.ANDROID
 
     Column(
         modifier =
@@ -127,8 +128,11 @@ private fun LearnMoreBottomSheetContent(platform: SimulatedPlatform) {
         )
         BisqGap.VQuarter()
         BulletItem("Your device\u2019s notification token")
+        if (isAndroid) {
+            BulletItem("A Firebase Installation ID (a per-install identifier separate from the token)")
+        }
         BulletItem("Encrypted notification payloads (content unreadable)")
-        BulletItem("Delivery timestamps")
+        BulletItem("Delivery timestamps, payload size, and your IP address")
 
         BisqGap.V1()
 
@@ -152,6 +156,26 @@ private fun LearnMoreBottomSheetContent(platform: SimulatedPlatform) {
                         "Bisq node and this device. $provider only delivers an " +
                         "opaque encrypted payload.",
                 color = BisqTheme.colors.mid_grey20,
+            )
+        }
+
+        if (isAndroid) {
+            BisqGap.V1()
+            BisqText.SmallLight(
+                text =
+                    "Bisq talks to Google only after you turn this on. While the " +
+                        "toggle is off, the FCM library is bundled but inert — no " +
+                        "connection to Google\u2019s servers is opened. Turning the " +
+                        "toggle off again revokes the token and stops all traffic.",
+                color = BisqTheme.colors.mid_grey20,
+            )
+            BisqGap.VHalf()
+            BisqText.SmallLight(
+                text =
+                    "This feature requires Google Play Services. It will not work " +
+                        "on de-Googled Android (GrapheneOS, /e/OS, LineageOS without " +
+                        "GApps). Local notifications still work while the app is open.",
+                color = BisqTheme.colors.warning,
             )
         }
     }
