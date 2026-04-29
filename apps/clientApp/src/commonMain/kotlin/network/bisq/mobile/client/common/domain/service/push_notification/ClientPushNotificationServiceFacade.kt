@@ -1,10 +1,12 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.data.crypto.getOrCreatePushNotificationKeyBase64
 import network.bisq.mobile.data.service.ServiceFacade
@@ -152,7 +154,11 @@ class ClientPushNotificationServiceFacade(
         //   ECIES decryption client-side).
         // Without a valid key, the trusted node would either fail to encrypt
         // or fall back to a path the device can't decrypt — abort registration.
-        val symmetricKeyBase64 = getOrCreatePushNotificationKeyBase64()
+        // Dispatched to IO because the Android implementation initializes Tink
+        // + AndroidKeyStore on first call (multi-second cost) and a synchronous
+        // `commit()` to disk — both block whatever thread they run on, and
+        // `presenterScope` runs on `Dispatchers.Main`.
+        val symmetricKeyBase64 = withContext(Dispatchers.IO) { getOrCreatePushNotificationKeyBase64() }
         validateSymmetricKey(platformInfo.type, symmetricKeyBase64)?.let { return it }
 
         log.i { "Registering device with deviceId: $deviceId, descriptor: $deviceDescriptor, platform: $platform" }

@@ -1,5 +1,11 @@
 package network.bisq.mobile.client.common.domain.service
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
@@ -48,9 +54,27 @@ class ClientApplicationLifecycleService(
     private val apiAccessService: ApiAccessService,
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
 ) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
+    /**
+     * Dedicated scope for the local-vs-relayed orchestration job. Kept separate
+     * from the Koin-injected `serviceScope` so this class stays unit-testable
+     * without bootstrapping Koin in the test fixture (the orchestration is pure
+     * plumbing — no platform dependencies).
+     */
+    private val pushModeScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /**
+     * Orchestrates local-vs-relayed notification mode by mirroring the user's
+     * push opt-in setting onto the local foreground service. Tracked here so we
+     * can cancel it cleanly on deactivate (otherwise it would keep ticking
+     * across app restarts).
+     */
+    private var pushModeOrchestrationJob: Job? = null
+
     override suspend fun activateServiceFacades() {
         // Start foreground service FIRST on Android, before any heavy work, to avoid
         // ForegroundServiceDidNotStartInTimeException. iOS doesn't need this.
+        // If relayed notifications are enabled, the orchestrator below will stop it
+        // immediately after the setting loads.
         if (getPlatformInfo().type == PlatformType.ANDROID) {
             log.i { "Starting foreground notification service" }
             openTradesNotificationService.startService()
@@ -78,9 +102,28 @@ class ClientApplicationLifecycleService(
 
         // Activate push notification service - will auto-register if user has granted permission
         pushNotificationServiceFacade.activate()
+
+        // Mirror the push-opt-in setting onto the local foreground service so that
+        // exactly one delivery path runs at a time:
+        //   - opt-in ON  → relayed (FCM/APNs); the local FG service stops.
+        //   - opt-in OFF → local FG service runs; no relay.
+        // The first emission lands shortly after `activate()` loads the persisted
+        // setting, which is why we accept a brief overlap when the FG service was
+        // just unconditionally started above.
+        pushModeOrchestrationJob?.cancel()
+        pushModeOrchestrationJob =
+            pushNotificationServiceFacade.isPushNotificationsEnabled
+                .onEach { enabled ->
+                    openTradesNotificationService.setRelayedNotificationsEnabled(enabled)
+                }.launchIn(pushModeScope)
     }
 
     override suspend fun deactivateServiceFacades() {
+        // Stop mirroring push opt-in to the FG service before tearing things down,
+        // otherwise the orchestrator could re-issue start/stop calls during teardown.
+        pushModeOrchestrationJob?.cancel()
+        pushModeOrchestrationJob = null
+
         // Tear down notification service on Android
         if (getPlatformInfo().type == PlatformType.ANDROID) {
             try {

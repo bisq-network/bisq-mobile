@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,7 +35,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHD
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
-import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.NotificationPermissionDialog
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -263,7 +264,13 @@ fun SettingsContent(
                         }
 
                         if (showPushPermissionExplainer) {
-                            NotificationPermissionDialog(
+                            ConfirmationDialog(
+                                headline = "mobile.pushNotifications.optIn.headline".i18n(),
+                                message = "mobile.pushNotifications.optIn.body".i18n(),
+                                confirmButtonText = "mobile.pushNotifications.optIn.confirm".i18n(),
+                                dismissButtonText = "mobile.pushNotifications.optIn.cancel".i18n(),
+                                verticalButtonPlacement = true,
+                                horizontalAlignment = Alignment.Start,
                                 onConfirm = {
                                     showPushPermissionExplainer = false
                                     notifPermissionLauncher.launch()

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
@@ -65,6 +66,18 @@ class OpenTradesNotificationService(
     @Volatile
     private var isServiceStarted = false
 
+    /**
+     * When true, the local Android foreground service is suppressed because
+     * notifications are being delivered via the relayed (FCM/APNs) path —
+     * keeping both running would either compete for the same notification ids
+     * or hold the process alive on battery for no benefit.
+     *
+     * Toggled by [setRelayedNotificationsEnabled] from the app's lifecycle
+     * orchestrator after it has read the user's settings.
+     */
+    @Volatile
+    private var relayedNotificationsEnabled = false
+
     companion object {
         private const val FOREGROUND_DEBOUNCE_MS = 1000L
     }
@@ -76,14 +89,56 @@ class OpenTradesNotificationService(
     /**
      * Starts the foreground service immediately. Should be called during app initialization
      * before any heavy work to avoid ForegroundServiceDidNotStartInTimeException.
+     *
+     * No-op when relayed notifications are enabled — FCM is responsible for waking the
+     * app, so keeping the local service alive would only burn battery and risk
+     * double-notifying the user.
      */
     fun startService() {
+        if (relayedNotificationsEnabled) {
+            log.d { "Relayed notifications enabled — skipping local foreground service start" }
+            return
+        }
         if (!isServiceStarted) {
             log.i { "Starting foreground service on app initialization" }
             foregroundServiceController.startService()
             isServiceStarted = true
         } else {
             log.d { "Foreground service already started" }
+        }
+    }
+
+    /**
+     * Switches between local and relayed (FCM/APNs) notification modes. Mutually
+     * exclusive: only one delivery path runs at a time.
+     *
+     *  - `true`  → stops the local foreground service and prevents the lifecycle
+     *              observer from re-arming background flow observers. The trusted
+     *              node delivers notifications via the relay; the device receives
+     *              them even if the app process is killed.
+     *  - `false` → restarts the local foreground service (the default). The app
+     *              keeps a foreground process alive in the background so it can
+     *              observe trade flows and post local notifications while the
+     *              app is running or recently backgrounded.
+     *
+     * Idempotent — repeated calls with the same value are a no-op.
+     */
+    fun setRelayedNotificationsEnabled(enabled: Boolean) {
+        if (relayedNotificationsEnabled == enabled) return
+        relayedNotificationsEnabled = enabled
+        if (enabled) {
+            log.i { "Switching to relayed notification mode — stopping local foreground service" }
+            scope.launch { unregisterObservers() }
+            foregroundServiceController.stopService()
+            isServiceStarted = false
+        } else {
+            log.i { "Switching to local notification mode — starting local foreground service" }
+            if (!isServiceStarted) {
+                foregroundServiceController.startService()
+                isServiceStarted = true
+            }
+            // The lifecycle observer will (re-)register flow observers next time
+            // the app moves to background — no need to register them here.
         }
     }
 
@@ -103,6 +158,11 @@ class OpenTradesNotificationService(
                         log.d { "App entered foreground (debounced). Unregistering observers." }
                         notificationController.clearPreRenderedNotifications()
                         unregisterObservers()
+                    } else if (relayedNotificationsEnabled) {
+                        // Relayed mode: the trusted node delivers notifications via FCM/APNs,
+                        // so we deliberately skip arming the local flow observers — otherwise
+                        // the user would see two notifications for the same event.
+                        log.d { "App entered background; relayed mode is on — skipping local observer registration." }
                     } else {
                         log.d { "App entered background (debounced). Registering observers." }
                         registerObservers()
