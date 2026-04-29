@@ -9,6 +9,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
@@ -31,10 +34,12 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHD
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
+import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.NotificationPermissionDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.common.ui.utils.rememberNotificationPermissionLauncher
 import org.koin.compose.koinInject
 
 @Composable
@@ -57,6 +62,20 @@ fun SettingsContent(
     onAction: (SettingsUiAction) -> Unit,
     topBar: @Composable () -> Unit = {},
 ) {
+    // Pre-prompt explainer + system permission launcher for the push-notifications
+    // opt-in toggle. The runtime POST_NOTIFICATIONS prompt (Android 13+) needs an
+    // Activity context, so we launch it here rather than from the presenter.
+    // On grant we dispatch the toggle-on action; on denial the switch stays off
+    // (`uiState.pushNotificationsEnabled` is the source of truth and only flips
+    // after the facade actually registers).
+    var showPushPermissionExplainer by remember { mutableStateOf(false) }
+    val notifPermissionLauncher =
+        rememberNotificationPermissionLauncher { granted ->
+            if (granted) {
+                onAction(SettingsUiAction.OnPushNotificationsToggle(true))
+            }
+        }
+
     BisqScaffold(
         topBar = topBar,
     ) { paddingValues ->
@@ -219,7 +238,13 @@ fun SettingsContent(
                         BisqSwitch(
                             label = "mobile.pushNotifications.settings.toggleLabel".i18n(),
                             checked = uiState.pushNotificationsEnabled,
-                            onSwitch = { onAction(SettingsUiAction.OnPushNotificationsToggle(it)) },
+                            onSwitch = { newValue ->
+                                if (newValue) {
+                                    showPushPermissionExplainer = true
+                                } else {
+                                    onAction(SettingsUiAction.OnPushNotificationsToggle(false))
+                                }
+                            },
                         )
 
                         BisqGap.VQuarter()
@@ -234,6 +259,18 @@ fun SettingsContent(
                             BisqText.SmallLight(
                                 text = "mobile.pushNotifications.settings.disabledWarning".i18n(),
                                 color = BisqTheme.colors.warning,
+                            )
+                        }
+
+                        if (showPushPermissionExplainer) {
+                            NotificationPermissionDialog(
+                                onConfirm = {
+                                    showPushPermissionExplainer = false
+                                    notifPermissionLauncher.launch()
+                                },
+                                onDismiss = {
+                                    showPushPermissionExplainer = false
+                                },
                             )
                         }
                     }

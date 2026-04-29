@@ -1,6 +1,9 @@
 package network.bisq.mobile.client.common.di
 
-import network.bisq.mobile.client.common.domain.service.push_notification.NoOpClientPushNotificationServiceFacade
+import network.bisq.mobile.client.common.domain.service.push_notification.AndroidPushNotificationTokenProvider
+import network.bisq.mobile.client.common.domain.service.push_notification.ClientPushNotificationServiceFacade
+import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
+import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
 import network.bisq.mobile.client.main.ClientMainActivity
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
@@ -28,10 +31,11 @@ val androidClientDomainModule =
             OpenTradesNotificationService(get(), get(), get(), get(), get())
         }
 
-        // Push notification service - NoOp for Android (uses WebSocket notifications)
-        // When FCM support is added, replace NoOpClientPushNotificationServiceFacade with
-        // a proper implementation similar to iOS
+        // Push notification services — FCM-backed (auto-init OFF until user opts in,
+        // see AndroidManifest.xml meta-data + AndroidPushNotificationTokenProvider).
+        single<PushNotificationTokenProvider> { AndroidPushNotificationTokenProvider() }
+        single { PushNotificationApiGateway(get()) }
         single<PushNotificationServiceFacade> {
-            NoOpClientPushNotificationServiceFacade()
+            ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())
         }
     }
