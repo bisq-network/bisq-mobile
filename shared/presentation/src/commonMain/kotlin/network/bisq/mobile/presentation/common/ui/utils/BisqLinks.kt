@@ -18,4 +18,5 @@ object BisqLinks {
     const val REDDIT = "https://www.reddit.com/r/bisq/"
     const val BISQ_AI = "https://ai.bisq.network"
     const val BISQ_CONNECT_WIKI_URL = "https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect"
+    const val BISQ_CONNECT_PUSH_NOTIFICATIONS_WIKI_URL = "https://github.com/bisq-network/bisq-mobile/wiki/Push-Notifications-Android"
 }

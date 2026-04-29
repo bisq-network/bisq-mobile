@@ -19,6 +19,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -103,6 +104,8 @@ open class SettingsPresenter(
             SettingsUiAction.OnResetAllDontShowAgainClick -> onResetAllDontShowAgainClick()
             SettingsUiAction.OnRetryLoadSettingsClick -> fetchSettings()
             is SettingsUiAction.OnPushNotificationsToggle -> onPushNotificationsToggle(action.enabled)
+            SettingsUiAction.OnPushNotificationsLearnMore ->
+                navigateToUrl(BisqLinks.BISQ_CONNECT_PUSH_NOTIFICATIONS_WIKI_URL)
         }
     }
 

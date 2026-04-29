@@ -66,4 +66,7 @@ sealed interface SettingsUiAction {
     data class OnPushNotificationsToggle(
         val enabled: Boolean,
     ) : SettingsUiAction
+
+    /** User tapped a "Learn more" affordance in the relayed-push-notifications section. */
+    data object OnPushNotificationsLearnMore : SettingsUiAction
 }

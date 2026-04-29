@@ -175,8 +175,8 @@ fun DashboardScreen() {
                 //     weaken their battery defaults would be misleading.
                 isBatteryOptimizationsDialogVisible =
                     notifPermissionState == PermissionState.GRANTED &&
-                        batteryPermissionState == BatteryOptimizationState.NOT_IGNORED &&
-                        !pushNotificationsEnabled
+                    batteryPermissionState == BatteryOptimizationState.NOT_IGNORED &&
+                    !pushNotificationsEnabled
             }
 
             BatteryOptimizationState.DONT_ASK_AGAIN -> {

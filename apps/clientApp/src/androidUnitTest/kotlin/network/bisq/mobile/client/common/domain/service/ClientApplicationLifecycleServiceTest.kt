@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
+import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
@@ -23,6 +24,8 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import org.junit.Before
 import org.junit.Test
@@ -52,6 +55,8 @@ class ClientApplicationLifecycleServiceTest {
     private val connectivityService: ConnectivityService = mockk(relaxed = true)
     private val apiAccessService: ApiAccessService = mockk(relaxed = true)
     private val pushNotificationServiceFacade: PushNotificationServiceFacade = mockk(relaxed = true)
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val notificationController: NotificationController = mockk(relaxed = true)
 
     private lateinit var service: ClientApplicationLifecycleService
 
@@ -59,6 +64,12 @@ class ClientApplicationLifecycleServiceTest {
     fun setUp() {
         configureActivationTracking()
         configureDeactivationTracking()
+        // Default the persisted opt-in to false and OS notification permission
+        // to granted so the activation-order test continues to assert that the
+        // local foreground service starts first (the default delivery path).
+        // Tests that need other paths override these themselves.
+        coEvery { settingsRepository.fetch() } returns Settings(pushNotificationsEnabled = false)
+        coEvery { notificationController.hasPermission() } returns true
         service =
             ClientApplicationLifecycleService(
                 openTradesNotificationService = openTradesNotificationService,
@@ -82,6 +93,8 @@ class ClientApplicationLifecycleServiceTest {
                 connectivityService = connectivityService,
                 apiAccessService = apiAccessService,
                 pushNotificationServiceFacade = pushNotificationServiceFacade,
+                settingsRepository = settingsRepository,
+                notificationController = notificationController,
             )
     }
 
@@ -115,6 +128,43 @@ class ClientApplicationLifecycleServiceTest {
                 ),
                 order,
             )
+        }
+
+    @Test
+    fun `activate skips foreground notification service start when relayed push notifications are persisted as enabled`() =
+        runTest {
+            order.clear()
+            coEvery { settingsRepository.fetch() } returns Settings(pushNotificationsEnabled = true)
+
+            service.activate()
+
+            // The "notification.start" entry must NOT appear: when the user has
+            // previously opted in to relayed notifications, FCM/APNs is the
+            // delivery path and the local FG service should never even briefly
+            // start (battery + ForegroundServiceDidNotStartInTimeException risk).
+            assertEquals(false, order.contains("notification.start"))
+            // Sanity check: the rest of the activation chain still runs.
+            assertEquals("apiAccess.activate", order.first())
+            assertEquals("push.activate", order.last())
+        }
+
+    @Test
+    fun `activate skips foreground notification service start when notification permission is not granted`() =
+        runTest {
+            order.clear()
+            // Default delivery mode (relayed off) BUT POST_NOTIFICATIONS not granted.
+            // The FG service exists to keep the process alive so we can post local
+            // notifications; without permission those `notify` calls are dropped,
+            // making the service pure overhead. Bootstrap should skip starting it.
+            coEvery { settingsRepository.fetch() } returns Settings(pushNotificationsEnabled = false)
+            coEvery { notificationController.hasPermission() } returns false
+
+            service.activate()
+
+            assertEquals(false, order.contains("notification.start"))
+            // Sanity check: the rest of the activation chain still runs.
+            assertEquals("apiAccess.activate", order.first())
+            assertEquals("push.activate", order.last())
         }
 
     @Test

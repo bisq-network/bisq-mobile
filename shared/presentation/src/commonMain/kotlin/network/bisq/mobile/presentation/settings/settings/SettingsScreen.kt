@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.settings.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -255,6 +256,17 @@ fun SettingsContent(
                             color = BisqTheme.colors.mid_grey20,
                         )
 
+                        BisqGap.VHalf()
+
+                        BisqText.SmallLight(
+                            text = "mobile.pushNotifications.settings.learnMoreLink".i18n(),
+                            color = BisqTheme.colors.primary,
+                            modifier =
+                                Modifier.clickable {
+                                    onAction(SettingsUiAction.OnPushNotificationsLearnMore)
+                                },
+                        )
+
                         if (!uiState.pushNotificationsEnabled) {
                             BisqGap.VHalf()
                             BisqText.SmallLight(
@@ -271,6 +283,16 @@ fun SettingsContent(
                                 dismissButtonText = "mobile.pushNotifications.optIn.cancel".i18n(),
                                 verticalButtonPlacement = true,
                                 horizontalAlignment = Alignment.Start,
+                                extraContent = {
+                                    BisqText.SmallLight(
+                                        text = "mobile.pushNotifications.settings.learnMoreLink".i18n(),
+                                        color = BisqTheme.colors.primary,
+                                        modifier =
+                                            Modifier.clickable {
+                                                onAction(SettingsUiAction.OnPushNotificationsLearnMore)
+                                            },
+                                    )
+                                },
                                 onConfirm = {
                                     showPushPermissionExplainer = false
                                     notifPermissionLauncher.launch()
