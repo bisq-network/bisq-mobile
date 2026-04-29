@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Base64
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -13,11 +14,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.main.ClientMainActivity
 import network.bisq.mobile.data.crypto.readPushNotificationKeyBase64
 import network.bisq.mobile.data.utils.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationChannels
+import network.bisq.mobile.presentation.common.ui.navigation.DeepLinkableRoute
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import org.koin.core.context.GlobalContext
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
@@ -97,21 +101,7 @@ class BisqFirebaseMessagingService :
         notificationId: String,
         category: NotificationCategory,
     ) {
-        val launchIntent =
-            packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-                putExtra("notification_id", notificationId)
-                putExtra("notification_category", category.id)
-            }
-        val pending =
-            launchIntent?.let {
-                PendingIntent.getActivity(
-                    this,
-                    notificationId.hashCode(),
-                    it,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-            }
+        val pending = pendingIntentFor(notificationId, category)
 
         val builder =
             NotificationCompat
@@ -127,6 +117,58 @@ class BisqFirebaseMessagingService :
             .from(applicationContext)
             .notify(notificationId.hashCode(), builder.build())
     }
+
+    /**
+     * Builds the tap-action intent. When the category maps to a deep-linkable
+     * destination, we use the navigation deep-link URI so the activity routes
+     * straight to the relevant screen (matches the local foreground service's
+     * behaviour in `NotificationControllerImpl.createNavDeepLinkPendingIntent`).
+     * For categories without a matching deep link we fall back to the plain
+     * launcher intent so tapping still opens the app.
+     *
+     * The encrypted FCM payload only carries `id`, `title`, `message`, and
+     * `category` — no trade id — so the deepest we can route is the trade list
+     * (open trades / chats) and the offerbook list.
+     */
+    private fun pendingIntentFor(
+        notificationId: String,
+        category: NotificationCategory,
+    ): PendingIntent? {
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val requestCode = notificationId.hashCode()
+
+        val deepLinkRoute = deepLinkRouteFor(category)
+        if (deepLinkRoute != null) {
+            val intent =
+                Intent(
+                    Intent.ACTION_VIEW,
+                    deepLinkRoute.toUriString().toUri(),
+                    this,
+                    ClientMainActivity::class.java,
+                ).apply {
+                    setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                }
+            return PendingIntent.getActivity(this, requestCode, intent, flags)
+        }
+
+        val launchIntent =
+            packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            } ?: return null
+        return PendingIntent.getActivity(this, requestCode, launchIntent, flags)
+    }
+
+    private fun deepLinkRouteFor(category: NotificationCategory): DeepLinkableRoute? =
+        when (category) {
+            NotificationCategory.TRADE_UPDATE,
+            NotificationCategory.CHAT_MESSAGE,
+            -> NavRoute.TabOpenTradeList
+            // No deep link for offerbook market or general — fall back to
+            // launcher intent in `pendingIntentFor`.
+            NotificationCategory.OFFER_UPDATE,
+            NotificationCategory.GENERAL,
+            -> null
+        }
 
     @Serializable
     internal data class NotificationPayload(

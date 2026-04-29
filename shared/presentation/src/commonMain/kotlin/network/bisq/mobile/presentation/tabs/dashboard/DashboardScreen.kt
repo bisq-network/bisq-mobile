@@ -67,6 +67,7 @@ fun DashboardScreen() {
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val notifPermissionState by presenter.savedNotifPermissionState.collectAsState()
     val batteryPermissionState by presenter.savedBatteryOptimizationState.collectAsState()
+    val pushNotificationsEnabled by presenter.isPushNotificationsEnabled.collectAsState()
     var isPermissionRequestDialogVisible by remember { mutableStateOf(false) }
     var isBatteryOptimizationsDialogVisible by remember { mutableStateOf(false) }
     val isForeground by presenter.isForeground.collectAsState()
@@ -152,7 +153,7 @@ fun DashboardScreen() {
             }
         }
 
-    LaunchedEffect(batteryPermissionState, notifPermissionState) {
+    LaunchedEffect(batteryPermissionState, notifPermissionState, pushNotificationsEnabled) {
         when (batteryPermissionState) {
             BatteryOptimizationState.IGNORED -> {
                 if (presenter.platformSettingsManager.isIgnoringBatteryOptimizations()) {
@@ -165,16 +166,17 @@ fun DashboardScreen() {
             }
 
             BatteryOptimizationState.NOT_IGNORED -> {
-                // we only show this dialog if user has chosen to receive notifications
-                // otherwise it doesn't make much sense
+                // We only show this dialog when:
+                //  1. The user has notification permission (otherwise it does
+                //     nothing useful), AND
+                //  2. Relayed push notifications are NOT enabled — when they
+                //     are, the local foreground service is stopped and FCM/APNs
+                //     deliver pushes regardless of Doze, so asking the user to
+                //     weaken their battery defaults would be misleading.
                 isBatteryOptimizationsDialogVisible =
-                    if (notifPermissionState == PermissionState.GRANTED &&
-                        batteryPermissionState == BatteryOptimizationState.NOT_IGNORED
-                    ) {
-                        true
-                    } else {
-                        false
-                    }
+                    notifPermissionState == PermissionState.GRANTED &&
+                        batteryPermissionState == BatteryOptimizationState.NOT_IGNORED &&
+                        !pushNotificationsEnabled
             }
 
             BatteryOptimizationState.DONT_ASK_AGAIN -> {

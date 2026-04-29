@@ -53,6 +53,19 @@ open class DashboardPresenter(
 
     open val showNumConnections: Boolean = false
 
+    /**
+     * Mirrors the user's relayed-push-notifications opt-in. Used by the
+     * dashboard to suppress the battery-optimization prompt when relayed mode
+     * is on — that prompt only makes sense when the local foreground service
+     * is the delivery path (it asks the user to exempt Bisq from Doze so the
+     * background process keeps the WebSocket alive). With relayed mode on,
+     * the foreground service is stopped and FCM/APNs deliver pushes whether
+     * or not the process is alive, so there is nothing to gain from asking
+     * the user to weaken their battery defaults.
+     */
+    val isPushNotificationsEnabled: StateFlow<Boolean>
+        get() = pushNotificationServiceFacade.isPushNotificationsEnabled
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val savedNotifPermissionState: StateFlow<PermissionState?> =
         settingsRepository.data
