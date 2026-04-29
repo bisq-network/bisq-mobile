@@ -29,7 +29,7 @@ val androidNodePresentationModule =
     module {
         single<ShareFileService> { AndroidShareFileService(androidContext()) }
 
-        factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) }
+        factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get(), get()) }
 
         factory {
             NodeOnboardingPresenter(

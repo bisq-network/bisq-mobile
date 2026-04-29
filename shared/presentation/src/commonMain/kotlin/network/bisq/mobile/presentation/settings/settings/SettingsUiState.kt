@@ -20,4 +20,11 @@ data class SettingsUiState(
     val hasChangesTradePriceTolerance: Boolean = false,
     val hasChangesNumDaysAfterRedactingTradeData: Boolean = false,
     val hasChangesPowFactor: Boolean = false,
+    /**
+     * Set by the presenter from the platform — true on Connect (Android client
+     * + iOS), false on Node app where push notifications go through the
+     * embedded local foreground service rather than the relay.
+     */
+    val shouldShowPushNotificationsToggle: Boolean = true,
+    val pushNotificationsEnabled: Boolean = false,
 )

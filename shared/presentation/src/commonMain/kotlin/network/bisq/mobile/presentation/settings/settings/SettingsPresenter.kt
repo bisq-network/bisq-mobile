@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.settings.DEFAULT_MAX_TRADE_PRICE_DEVIATION
 import network.bisq.mobile.data.replicated.settings.DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.setDefaultLocale
@@ -24,6 +25,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 open class SettingsPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
+    private val pushNotificationServiceFacade: PushNotificationServiceFacade,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _uiState =
@@ -38,6 +40,14 @@ open class SettingsPresenter(
 
     open val shouldShowPoWAdjustmentFactor = false
 
+    /**
+     * Whether the relayed-push-notifications opt-in toggle should be shown.
+     * True on Connect; the Node app overrides to false because the embedded
+     * Bisq2 process posts notifications through its local foreground service
+     * (no relay needed and no FCM token to register).
+     */
+    open val shouldShowPushNotificationsToggle: Boolean = true
+
     // Store original values from fetchSettings for cancel operations (raw numeric values)
     private var originalMaxTradePriceDeviation: Double = DEFAULT_MAX_TRADE_PRICE_DEVIATION
     private var originalNumDaysAfterRedactingTradeData: Int = DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
@@ -46,6 +56,23 @@ open class SettingsPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         fetchSettings()
+        observePushNotificationsEnabled()
+    }
+
+    private fun observePushNotificationsEnabled() {
+        // Reflect the facade's StateFlow into our UI state. The facade itself
+        // stays the source of truth — re-registers, server roundtrips, and
+        // permission revocations from OS Settings all flow through here.
+        presenterScope.launch {
+            pushNotificationServiceFacade.isPushNotificationsEnabled.collect { enabled ->
+                _uiState.update {
+                    it.copy(
+                        pushNotificationsEnabled = enabled,
+                        shouldShowPushNotificationsToggle = shouldShowPushNotificationsToggle,
+                    )
+                }
+            }
+        }
     }
 
     fun onAction(action: SettingsUiAction) {
@@ -75,6 +102,32 @@ open class SettingsPresenter(
             is SettingsUiAction.OnIgnorePowChange -> setIgnorePow(action.value)
             SettingsUiAction.OnResetAllDontShowAgainClick -> onResetAllDontShowAgainClick()
             SettingsUiAction.OnRetryLoadSettingsClick -> fetchSettings()
+            is SettingsUiAction.OnPushNotificationsToggle -> onPushNotificationsToggle(action.enabled)
+        }
+    }
+
+    private fun onPushNotificationsToggle(enabled: Boolean) {
+        presenterScope.launch {
+            showLoading()
+            val result =
+                if (enabled) {
+                    pushNotificationServiceFacade.registerForPushNotifications()
+                } else {
+                    pushNotificationServiceFacade.unregisterFromPushNotifications()
+                }
+            result
+                .onSuccess {
+                    val msgKey =
+                        if (enabled) {
+                            "mobile.pushNotifications.registrationSuccess"
+                        } else {
+                            "mobile.pushNotifications.toggleOffSuccess"
+                        }
+                    showSnackbar(msgKey.i18n())
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
+            hideLoading()
         }
     }
 

@@ -16,6 +16,7 @@ import network.bisq.mobile.data.replicated.settings.DEFAULT_MAX_TRADE_PRICE_DEVI
 import network.bisq.mobile.data.replicated.settings.DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.formatters.NumberFormatter
@@ -52,6 +53,7 @@ class SettingsPresenterTest {
 
     private lateinit var settingsServiceFacade: SettingsServiceFacade
     private lateinit var languageServiceFacade: LanguageServiceFacade
+    private lateinit var pushNotificationServiceFacade: PushNotificationServiceFacade
     private lateinit var mainPresenter: MainPresenter
     private lateinit var globalUiManager: GlobalUiManager
     private lateinit var presenter: SettingsPresenter
@@ -85,6 +87,7 @@ class SettingsPresenterTest {
         // Setup mocks
         settingsServiceFacade = mockk(relaxed = true)
         languageServiceFacade = mockk(relaxed = true)
+        pushNotificationServiceFacade = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
 
@@ -103,6 +106,9 @@ class SettingsPresenterTest {
         every { languageServiceFacade.allPairs } returns MutableStateFlow(sampleAllPairs)
         every { settingsServiceFacade.difficultyAdjustmentFactor } returns MutableStateFlow(DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR)
         every { settingsServiceFacade.ignoreDiffAdjustmentFromSecManager } returns MutableStateFlow(false)
+        every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns MutableStateFlow(false)
+        every { pushNotificationServiceFacade.isDeviceRegistered } returns MutableStateFlow(false)
+        every { pushNotificationServiceFacade.deviceToken } returns MutableStateFlow(null)
     }
 
     @AfterTest
@@ -119,6 +125,7 @@ class SettingsPresenterTest {
         SettingsPresenter(
             settingsServiceFacade,
             languageServiceFacade,
+            pushNotificationServiceFacade,
             mainPresenter,
         )
 
@@ -888,5 +895,70 @@ class SettingsPresenterTest {
             val state = presenter.uiState.value
             assertFalse(state.hasChangesTradePriceTolerance)
             assertTrue(state.hasChangesNumDaysAfterRedactingTradeData)
+        }
+
+    // ----- push notifications toggle -----
+
+    @Test
+    fun `when toggle pushNotifications on then registers via facade`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns Result.success(Unit)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            presenter.onAction(SettingsUiAction.OnPushNotificationsToggle(true))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { pushNotificationServiceFacade.registerForPushNotifications() }
+            coVerify(exactly = 0) { pushNotificationServiceFacade.unregisterFromPushNotifications() }
+        }
+
+    @Test
+    fun `when toggle pushNotifications off then unregisters via facade`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } returns Result.success(Unit)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            presenter.onAction(SettingsUiAction.OnPushNotificationsToggle(false))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { pushNotificationServiceFacade.unregisterFromPushNotifications() }
+            coVerify(exactly = 0) { pushNotificationServiceFacade.registerForPushNotifications() }
+        }
+
+    @Test
+    fun `presenter mirrors facade isPushNotificationsEnabled into UI state`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            val flow = MutableStateFlow(false)
+            every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns flow
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.pushNotificationsEnabled)
+
+            // Facade-side flip (e.g. from auto-register on activate, or token re-registration)
+            // must propagate into the UI state without an explicit user action.
+            flow.value = true
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.pushNotificationsEnabled)
+        }
+
+    @Test
+    fun `shouldShowPushNotificationsToggle defaults to true (Connect app)`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.shouldShowPushNotificationsToggle)
         }
 }

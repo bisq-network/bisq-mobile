@@ -209,6 +209,35 @@ fun SettingsContent(
                         fullWidth = true,
                     )
 
+                    if (uiState.shouldShowPushNotificationsToggle) {
+                        BisqHDivider()
+
+                        BisqText.H4Light("mobile.pushNotifications.settings.title".i18n())
+
+                        BisqGap.V1()
+
+                        BisqSwitch(
+                            label = "mobile.pushNotifications.settings.toggleLabel".i18n(),
+                            checked = uiState.pushNotificationsEnabled,
+                            onSwitch = { onAction(SettingsUiAction.OnPushNotificationsToggle(it)) },
+                        )
+
+                        BisqGap.VQuarter()
+
+                        BisqText.SmallLight(
+                            text = "mobile.pushNotifications.settings.subtitle".i18n(),
+                            color = BisqTheme.colors.mid_grey20,
+                        )
+
+                        if (!uiState.pushNotificationsEnabled) {
+                            BisqGap.VHalf()
+                            BisqText.SmallLight(
+                                text = "mobile.pushNotifications.settings.disabledWarning".i18n(),
+                                color = BisqTheme.colors.warning,
+                            )
+                        }
+                    }
+
                     if (uiState.shouldShowPoWAdjustmentFactor) {
                         BisqHDivider()
 

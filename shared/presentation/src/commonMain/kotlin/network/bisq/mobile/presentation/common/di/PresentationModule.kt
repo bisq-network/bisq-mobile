@@ -126,7 +126,7 @@ val presentationModule =
             )
         }
 
-        factory { SettingsPresenter(get(), get(), get()) }
+        factory { SettingsPresenter(get(), get(), get(), get()) }
 
         factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 
