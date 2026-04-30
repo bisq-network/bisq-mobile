@@ -626,4 +626,71 @@ class ClientConnectivityServiceTest {
             assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
             coVerify(atLeast = 1) { webSocketClientService.attemptSessionRenewal() }
         }
+
+    @Test
+    fun `pending blocks run when connection recovers from DISCONNECTED after RECONNECTING timeout`() =
+        runBlocking {
+            var connected = false
+            every { webSocketClientService.isConnected() } answers { connected }
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+            coEvery { webSocketClientService.forceReconnect() } just Runs
+
+            val service =
+                TestClientConnectivityService(
+                    webSocketClientService,
+                    androidPlatformInfo,
+                )
+
+            @Suppress("UNCHECKED_CAST")
+            val pendingBlocks =
+                ClientConnectivityService::class.java
+                    .getDeclaredField("pendingConnectivityBlocks")
+                    .apply { isAccessible = true }
+                    .get(service) as MutableList<suspend () -> Unit>
+            pendingBlocks.add { /* marker; we observe whether it gets drained */ }
+            assertEquals(1, pendingBlocks.size, "Pre-condition: marker block was injected")
+
+            try {
+                service.activate()
+                service.startMonitoring(period = 100, startDelay = 0)
+
+                // 1. Server is down → status becomes RECONNECTING
+                delay(150)
+                assertEquals(
+                    ConnectivityService.ConnectivityStatus.RECONNECTING,
+                    service.status.value,
+                )
+
+                // Fire the RECONNECTING → DISCONNECTED timeout in the base
+                // class.  The timeout coroutine runs on the test dispatcher
+                // (Main), so we advance virtual time to make it fire.
+                // `maxReconnectingDurationMs = 400L` in the test subclass.
+                testDispatcher.scheduler.advanceTimeBy(500L)
+                testDispatcher.scheduler.runCurrent()
+                assertEquals(
+                    ConnectivityService.ConnectivityStatus.DISCONNECTED,
+                    service.status.value,
+                )
+
+                // Connection comes back.  The next monitor cycle should
+                // transition DISCONNECTED → CONNECTED_AND_DATA_RECEIVED and
+                // flush any pending connectivity blocks.
+                connected = true
+                delay(300)
+                assertEquals(
+                    ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
+                    service.status.value,
+                )
+
+                delay(300)
+
+                assertEquals(
+                    0,
+                    pendingBlocks.size,
+                    "After recovery from DISCONNECTED, pending connectivity blocks should be drained.",
+                )
+            } finally {
+                service.stopMonitoring()
+            }
+        }
 }
