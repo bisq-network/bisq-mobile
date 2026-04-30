@@ -9,4 +9,5 @@ data class FiatPaymentMethodDto(
     val supportedCurrencyCodes: String,
     val countryNames: String,
     val chargebackRisk: FiatPaymentMethodChargebackRiskDto,
+    val restrictions: String,
 )

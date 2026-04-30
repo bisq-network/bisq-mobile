@@ -217,6 +217,7 @@ private fun PaymentAccountFormContentPreview_DefaultPreview() {
             supportedCurrencyCodes = "",
             countryNames = "",
             chargebackRisk = null,
+            restrictions = EMPTY_STRING,
         )
     BisqTheme.Preview {
         PaymentAccountFormContent(
@@ -245,6 +246,7 @@ private fun PaymentAccountFormContentPreview_ErrorPreview() {
             supportedCurrencyCodes = "",
             countryNames = "",
             chargebackRisk = null,
+            restrictions = EMPTY_STRING,
         )
     BisqTheme.Preview {
         PaymentAccountFormContent(

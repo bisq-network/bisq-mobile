@@ -118,6 +118,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.inputfiel
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountReviewFieldRow
 
 // -------------------------------------------------------------------------------------
 // Simulated data for preview purposes
@@ -915,7 +916,7 @@ fun CreateFiatAccount_Step3_Review(
             BisqGap.V1()
 
             // Country availability in review
-            ReviewFieldRow(
+            AccountReviewFieldRow(
                 label = "Available in",
                 value =
                     when (val avail = selectedMethod.countryAvailability) {
@@ -932,7 +933,7 @@ fun CreateFiatAccount_Step3_Review(
 
             // Field summary rows
             formFields.forEach { field ->
-                ReviewFieldRow(
+                AccountReviewFieldRow(
                     label = field.label,
                     value = fieldValues[field.fieldId] ?: "—",
                 )
@@ -952,22 +953,6 @@ fun CreateFiatAccount_Step3_Review(
                 "You can edit or delete it from the Payment Accounts screen at any time.",
             color = BisqTheme.colors.mid_grey30,
         )
-    }
-}
-
-/**
- * A labeled key-value row in the review summary card.
- * Label in subdued grey (SmallLight), value in white (BaseRegular).
- */
-@Composable
-private fun ReviewFieldRow(
-    label: String,
-    value: String,
-) {
-    Column {
-        BisqText.SmallLight(label, color = BisqTheme.colors.mid_grey20)
-        BisqGap.VQuarter()
-        BisqText.BaseRegular(value)
     }
 }
 

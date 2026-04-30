@@ -24,11 +24,10 @@ import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManag
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.CryptoAccountFormUiAction
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.monero.MoneroPaymentAccountFormContent
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.After
@@ -117,62 +116,55 @@ class MoneroFormContentUiTest {
     }
 
     @Test
-    fun `when use sub addresses toggled on then shows subaddress fields and hides direct address`() {
-        // Given
+    fun `when sub address feature is gated off then switch and subaddress fields are hidden`() {
         setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
 
-        // When
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
-            .performClick()
-
-        // Then
         composeTestRule.waitForIdle()
-        composeTestRule.onAllNodesWithText("paymentAccounts.crypto.address.address".i18n()).assertCountEquals(0)
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.xmr.mainAddresses".i18n()).assertIsDisplayed()
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.xmr.privateViewKey".i18n()).assertIsDisplayed()
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.xmr.accountIndex".i18n()).assertIsDisplayed()
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.initialSubAddressIndex".i18n())
-            .assertIsDisplayed()
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
+            .assertCountEquals(0)
         composeTestRule
-            .onAllNodesWithText("TODO: SubAddress creation not implemented yet", substring = true)
-            .assertCountEquals(1)
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.mainAddresses".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.privateViewKey".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.accountIndex".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.initialSubAddressIndex".i18n())
+            .assertCountEquals(0)
     }
 
     @Test
     fun `when payment method does not support auto conf then auto conf section is hidden`() {
-        // Given
         setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = false))
 
-        // Then
         composeTestRule.waitForIdle()
-        composeTestRule.onAllNodesWithText("paymentAccounts.crypto.address.autoConf.use".i18n()).assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.use".i18n())
+            .assertCountEquals(0)
     }
 
     @Test
-    fun `when auto conf enabled and supported then auto conf input fields are shown`() {
-        // Given
-        presenter.onAction(
-            CryptoAccountFormUiAction.OnIsAutoConfChange(
-                true,
-            ),
-        )
+    fun `when auto conf state is true but feature is gated off then auto conf controls stay hidden`() {
+        presenter.onAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
         setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
 
-        // Then
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.autoConf.use".i18n()).assertIsDisplayed()
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.autoConf.numConfirmations".i18n())
-            .assertIsDisplayed()
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.use".i18n())
+            .assertCountEquals(0)
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.autoConf.maxTradeAmount".i18n())
-            .assertIsDisplayed()
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.numConfirmations".i18n())
+            .assertCountEquals(0)
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.autoConf.explorerUrls".i18n())
-            .assertIsDisplayed()
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.maxTradeAmount".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.explorerUrls".i18n())
+            .assertCountEquals(0)
     }
 
     @Test
@@ -207,174 +199,44 @@ class MoneroFormContentUiTest {
     }
 
     @Test
-    fun `when use sub addresses switch clicked then presenter state updates`() {
-        // Given
+    fun `when sub address feature is gated off then sub-address interactions are unavailable`() {
         setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
 
-        // When
+        composeTestRule.waitForIdle()
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
-            .performClick()
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(true, presenter.uiState.value.useSubAddresses)
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.mainAddresses.prompt".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.privateViewKey.prompt".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.accountIndex.prompt".i18n())
+            .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithText("paymentAccounts.crypto.address.xmr.initialSubAddressIndex.prompt".i18n())
+            .assertCountEquals(0)
     }
 
     @Test
-    fun `when main address field typed then presenter state updates`() {
-        // Given
-        val mainAddress = "48A_MAIN"
+    fun `when auto conf feature is gated off then auto conf interactions are unavailable`() {
         setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
+
         composeTestRule.waitForIdle()
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        // When
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.use".i18n())
+            .assertCountEquals(0)
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.mainAddresses.prompt".i18n())
-            .performTextInput(mainAddress)
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(mainAddress, presenter.uiState.value.mainAddressEntry.value)
-    }
-
-    @Test
-    fun `when private view key field typed then presenter state updates`() {
-        // Given
-        val privateViewKey = "abcdef0123456789"
-        setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.numConfirmations.prompt".i18n())
+            .assertCountEquals(0)
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        // When
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.maxTradeAmount.prompt".i18n())
+            .assertCountEquals(0)
         composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.privateViewKey.prompt".i18n())
-            .performTextInput(privateViewKey)
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(privateViewKey, presenter.uiState.value.privateViewKeyEntry.value)
-    }
-
-    @Test
-    fun `when account index field typed then presenter state updates`() {
-        // Given
-        val accountIndex = "4"
-        setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        // When
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.accountIndex.prompt".i18n())
-            .performTextInput(accountIndex)
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(accountIndex, presenter.uiState.value.accountIndexEntry.value)
-    }
-
-    @Test
-    fun `when initial sub address index field typed then presenter state updates`() {
-        // Given
-        val initialSubIndex = "2"
-        setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        // When
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.xmr.initialSubAddressIndex.prompt".i18n())
-            .performTextInput(initialSubIndex)
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(initialSubIndex, presenter.uiState.value.initialSubAddressIndexEntry.value)
-    }
-
-    @Test
-    fun `when auto conf switch clicked then presenter state updates`() {
-        // Given
-        setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
-
-        // When
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.autoConf.use".i18n()).performClick()
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(true, presenter.uiState.value.crypto.isAutoConf)
-    }
-
-    @Test
-    fun `when auto conf num confirmations field typed then presenter state updates`() {
-        // Given
-        val numConfirmations = "3"
-        setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.autoConf.use".i18n()).performClick()
-        composeTestRule.waitForIdle()
-
-        // When
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.autoConf.numConfirmations.prompt".i18n())
-            .performTextInput(numConfirmations)
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(numConfirmations, presenter.uiState.value.crypto.autoConfNumConfirmationsEntry.value)
-    }
-
-    @Test
-    fun `when auto conf max trade amount field typed then presenter state updates`() {
-        // Given
-        val maxTradeAmount = "1.5"
-        setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.autoConf.use".i18n()).performClick()
-        composeTestRule.waitForIdle()
-
-        // When
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.autoConf.maxTradeAmount.prompt".i18n())
-            .performTextInput(maxTradeAmount)
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(maxTradeAmount, presenter.uiState.value.crypto.autoConfMaxTradeAmountEntry.value)
-    }
-
-    @Test
-    fun `when auto conf explorer urls field typed then presenter state updates`() {
-        // Given
-        val explorerUrls = "https://explorer.example"
-        setTestContent(paymentMethod = samplePaymentMethod(supportAutoConf = true))
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.autoConf.use".i18n()).performClick()
-        composeTestRule.waitForIdle()
-
-        // When
-        composeTestRule
-            .onNodeWithText("paymentAccounts.crypto.address.autoConf.explorerUrls.prompt".i18n())
-            .performTextInput(explorerUrls)
-
-        // Then
-        composeTestRule.waitForIdle()
-        assertEquals(explorerUrls, presenter.uiState.value.crypto.autoConfExplorerUrlsEntry.value)
+            .onAllNodesWithText("paymentAccounts.crypto.address.autoConf.explorerUrls.prompt".i18n())
+            .assertCountEquals(0)
     }
 
     @Test
@@ -431,5 +293,6 @@ class MoneroFormContentUiTest {
             code = "XMR",
             name = "Monero",
             supportAutoConf = supportAutoConf,
+            restrictions = EMPTY_STRING,
         )
 }

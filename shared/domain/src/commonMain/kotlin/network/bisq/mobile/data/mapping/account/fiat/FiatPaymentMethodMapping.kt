@@ -13,6 +13,7 @@ fun FiatPaymentMethodDto.toDomain(): FiatPaymentMethod =
         supportedCurrencyCodes = supportedCurrencyCodes,
         countryNames = countryNames,
         chargebackRisk = chargebackRisk.toDomain(),
+        restrictions = restrictions,
     )
 
 fun FiatPaymentMethodChargebackRiskDto.toDomain(): FiatPaymentMethodChargebackRisk = FiatPaymentMethodChargebackRisk.valueOf(name)

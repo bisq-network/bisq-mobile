@@ -423,5 +423,6 @@ class SelectFiatPaymentMethodPresenterTest {
             supportedCurrencyCodes = supportedCurrencyCodes,
             countryNames = countryNames,
             chargebackRisk = risk,
+            restrictions = "restrictions",
         )
 }

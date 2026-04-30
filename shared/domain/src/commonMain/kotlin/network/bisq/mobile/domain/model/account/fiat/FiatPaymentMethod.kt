@@ -8,4 +8,5 @@ data class FiatPaymentMethod(
     val supportedCurrencyCodes: String,
     val countryNames: String,
     val chargebackRisk: FiatPaymentMethodChargebackRisk,
+    val restrictions: String,
 )

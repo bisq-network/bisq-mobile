@@ -17,12 +17,16 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSwitch
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.CryptoAccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.MoneroFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormUiState
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
+
+private const val MONERO_SUB_ADDRESSES_ENABLED =
+    false // TODO: remove once bisq2 issue https://github.com/bisq-network/bisq2/issues/4682 is resolved
 
 @Composable
 fun MoneroPaymentAccountFormContent(
@@ -78,69 +82,73 @@ private fun MoneroFormContent(
             onSwitch = { onAction(CryptoAccountFormUiAction.OnIsInstantChange(it)) },
         )
 
-        BisqSwitch(
-            checked = uiState.useSubAddresses,
-            modifier = Modifier.padding(top = 12.dp),
-            label = "paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n(),
-            onSwitch = { onAction(MoneroFormUiAction.OnUseSubAddressesChange(it)) },
-        )
-
-        if (uiState.useSubAddresses) {
-            BisqTextFieldV0(
+        // This feature is disabled for now until we get this fixed in Bisq2
+        if (MONERO_SUB_ADDRESSES_ENABLED) {
+            BisqSwitch(
+                checked = uiState.useSubAddresses,
                 modifier = Modifier.padding(top = 12.dp),
-                value = uiState.mainAddressEntry.value,
-                onValueChange = { onAction(MoneroFormUiAction.OnMainAddressChange(it)) },
-                label = "paymentAccounts.crypto.address.xmr.mainAddresses".i18n(),
-                placeholder = "paymentAccounts.crypto.address.xmr.mainAddresses.prompt".i18n(),
-                isError = uiState.mainAddressEntry.errorMessage != null,
-                bottomMessage = uiState.mainAddressEntry.errorMessage,
-                singleLine = true,
+                label = "paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n(),
+                onSwitch = { onAction(MoneroFormUiAction.OnUseSubAddressesChange(it)) },
             )
 
-            BisqTextFieldV0(
-                modifier = Modifier.padding(top = 12.dp),
-                value = uiState.privateViewKeyEntry.value,
-                onValueChange = { onAction(MoneroFormUiAction.OnPrivateViewKeyChange(it)) },
-                label = "paymentAccounts.crypto.address.xmr.privateViewKey".i18n(),
-                placeholder = "paymentAccounts.crypto.address.xmr.privateViewKey.prompt".i18n(),
-                isError = uiState.privateViewKeyEntry.errorMessage != null,
-                bottomMessage = uiState.privateViewKeyEntry.errorMessage,
-                singleLine = true,
-            )
+            if (uiState.useSubAddresses) {
+                BisqTextFieldV0(
+                    modifier = Modifier.padding(top = 12.dp),
+                    value = uiState.mainAddressEntry.value,
+                    onValueChange = { onAction(MoneroFormUiAction.OnMainAddressChange(it)) },
+                    label = "paymentAccounts.crypto.address.xmr.mainAddresses".i18n(),
+                    placeholder = "paymentAccounts.crypto.address.xmr.mainAddresses.prompt".i18n(),
+                    isError = uiState.mainAddressEntry.errorMessage != null,
+                    bottomMessage = uiState.mainAddressEntry.errorMessage,
+                    singleLine = true,
+                )
 
-            BisqTextFieldV0(
-                modifier = Modifier.padding(top = 12.dp),
-                value = uiState.accountIndexEntry.value,
-                onValueChange = { onAction(MoneroFormUiAction.OnAccountIndexChange(it)) },
-                label = "paymentAccounts.crypto.address.xmr.accountIndex".i18n(),
-                placeholder = "paymentAccounts.crypto.address.xmr.accountIndex.prompt".i18n(),
-                isError = uiState.accountIndexEntry.errorMessage != null,
-                bottomMessage = uiState.accountIndexEntry.errorMessage,
-                singleLine = true,
-            )
+                BisqTextFieldV0(
+                    modifier = Modifier.padding(top = 12.dp),
+                    value = uiState.privateViewKeyEntry.value,
+                    onValueChange = { onAction(MoneroFormUiAction.OnPrivateViewKeyChange(it)) },
+                    label = "paymentAccounts.crypto.address.xmr.privateViewKey".i18n(),
+                    placeholder = "paymentAccounts.crypto.address.xmr.privateViewKey.prompt".i18n(),
+                    isError = uiState.privateViewKeyEntry.errorMessage != null,
+                    bottomMessage = uiState.privateViewKeyEntry.errorMessage,
+                    singleLine = true,
+                )
 
-            BisqTextFieldV0(
-                modifier = Modifier.padding(top = 12.dp),
-                value = uiState.initialSubAddressIndexEntry.value,
-                onValueChange = { onAction(MoneroFormUiAction.OnInitialSubAddressIndexChange(it)) },
-                label = "paymentAccounts.crypto.address.xmr.initialSubAddressIndex".i18n(),
-                placeholder = "paymentAccounts.crypto.address.xmr.initialSubAddressIndex.prompt".i18n(),
-                isError = uiState.initialSubAddressIndexEntry.errorMessage != null,
-                bottomMessage = uiState.initialSubAddressIndexEntry.errorMessage,
-                singleLine = true,
-            )
+                BisqTextFieldV0(
+                    modifier = Modifier.padding(top = 12.dp),
+                    value = uiState.accountIndexEntry.value,
+                    onValueChange = { onAction(MoneroFormUiAction.OnAccountIndexChange(it)) },
+                    label = "paymentAccounts.crypto.address.xmr.accountIndex".i18n(),
+                    placeholder = "paymentAccounts.crypto.address.xmr.accountIndex.prompt".i18n(),
+                    isError = uiState.accountIndexEntry.errorMessage != null,
+                    bottomMessage = uiState.accountIndexEntry.errorMessage,
+                    singleLine = true,
+                )
 
-            BisqTextFieldV0(
-                modifier = Modifier.padding(top = 12.dp),
-                value = uiState.subAddressEntry.value,
-                onValueChange = {},
-                readOnly = true,
-                label = "paymentAccounts.crypto.address.xmr.subAddress".i18n(),
-                singleLine = true,
-            )
+                BisqTextFieldV0(
+                    modifier = Modifier.padding(top = 12.dp),
+                    value = uiState.initialSubAddressIndexEntry.value,
+                    onValueChange = { onAction(MoneroFormUiAction.OnInitialSubAddressIndexChange(it)) },
+                    label = "paymentAccounts.crypto.address.xmr.initialSubAddressIndex".i18n(),
+                    placeholder = "paymentAccounts.crypto.address.xmr.initialSubAddressIndex.prompt".i18n(),
+                    isError = uiState.initialSubAddressIndexEntry.errorMessage != null,
+                    bottomMessage = uiState.initialSubAddressIndexEntry.errorMessage,
+                    singleLine = true,
+                )
+
+                BisqTextFieldV0(
+                    modifier = Modifier.padding(top = 12.dp),
+                    value = uiState.subAddressEntry.value,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = "paymentAccounts.crypto.address.xmr.subAddress".i18n(),
+                    singleLine = true,
+                )
+            }
         }
 
-        if (paymentMethod.supportAutoConf) {
+        // This feature is disabled for now until we get this fixed in Bisq2
+        if (paymentMethod.supportAutoConf && MONERO_SUB_ADDRESSES_ENABLED) {
             BisqSwitch(
                 checked = uiState.crypto.isAutoConf,
                 modifier = Modifier.padding(top = 12.dp),
@@ -194,6 +202,7 @@ fun previewPaymentMethod(): CryptoPaymentMethodVO =
         code = "XMR",
         name = "Monero",
         supportAutoConf = true,
+        restrictions = EMPTY_STRING,
     )
 
 @Preview

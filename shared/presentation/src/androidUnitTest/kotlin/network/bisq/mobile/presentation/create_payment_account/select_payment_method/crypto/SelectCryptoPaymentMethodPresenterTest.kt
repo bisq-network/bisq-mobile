@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -295,5 +296,6 @@ class SelectCryptoPaymentMethodPresenterTest {
             name = name,
             category = category,
             supportAutoConf = supportAutoConf,
+            restrictions = EMPTY_STRING,
         )
 }

@@ -9,6 +9,7 @@ data class CryptoPaymentMethodVO(
     val code: String,
     override val name: String,
     val supportAutoConf: Boolean,
+    override val restrictions: String,
 ) : PaymentMethodVO
 
 fun CryptoPaymentMethod.toVO(): CryptoPaymentMethodVO? =
@@ -18,5 +19,6 @@ fun CryptoPaymentMethod.toVO(): CryptoPaymentMethodVO? =
             code = code,
             name = name,
             supportAutoConf = supportAutoConf,
+            restrictions = restrictions,
         )
     }

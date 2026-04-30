@@ -27,6 +27,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
@@ -151,12 +152,14 @@ private val previewCryptoPaymentMethods =
             code = "XMR",
             name = "Monero",
             supportAutoConf = false,
+            restrictions = EMPTY_STRING,
         ),
         CryptoPaymentMethodVO(
             paymentType = PaymentTypeVO.LNBTC,
             code = "LN-BTC",
             name = "Lightning Bitcoin",
             supportAutoConf = false,
+            restrictions = EMPTY_STRING,
         ),
     )
 

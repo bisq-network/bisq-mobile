@@ -18,6 +18,7 @@ import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
 
@@ -65,6 +66,7 @@ private fun previewCryptoPaymentMethod(
         code = code,
         name = name,
         supportAutoConf = false,
+        restrictions = EMPTY_STRING,
     )
 
 @Preview

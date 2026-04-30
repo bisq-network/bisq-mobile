@@ -178,5 +178,6 @@ class SelectFiatPaymentMethodContentUiTest {
             supportedCurrencyCodes = supportedCurrencyCodes,
             countryNames = countryNames,
             chargebackRisk = chargebackRisk,
+            restrictions = "restrictions",
         )
 }

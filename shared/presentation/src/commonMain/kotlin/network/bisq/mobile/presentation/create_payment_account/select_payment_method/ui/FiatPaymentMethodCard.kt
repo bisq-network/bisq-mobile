@@ -29,6 +29,7 @@ import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.AccountFlowDialog
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
@@ -159,6 +160,7 @@ private val previewFiatPaymentMethod =
         supportedCurrencyCodes = "USD",
         countryNames = "United States, United States, United States, United States, United States, United States, United States",
         chargebackRisk = FiatPaymentMethodChargebackRiskVO.LOW,
+        restrictions = EMPTY_STRING,
     )
 
 @Preview

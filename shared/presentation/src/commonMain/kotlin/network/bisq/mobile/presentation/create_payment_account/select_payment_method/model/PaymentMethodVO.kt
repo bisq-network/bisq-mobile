@@ -5,4 +5,5 @@ import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 interface PaymentMethodVO {
     val paymentType: PaymentTypeVO
     val name: String
+    val restrictions: String
 }

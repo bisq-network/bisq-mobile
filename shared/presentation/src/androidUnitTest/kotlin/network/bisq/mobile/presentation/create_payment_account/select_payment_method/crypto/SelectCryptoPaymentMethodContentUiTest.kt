@@ -15,6 +15,7 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import org.junit.Before
@@ -172,5 +173,6 @@ class SelectCryptoPaymentMethodContentUiTest {
             code = code,
             name = name,
             supportAutoConf = false,
+            restrictions = EMPTY_STRING,
         )
 }

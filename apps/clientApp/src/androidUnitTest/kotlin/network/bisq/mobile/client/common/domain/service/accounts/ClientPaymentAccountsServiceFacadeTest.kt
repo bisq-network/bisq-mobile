@@ -17,6 +17,7 @@ import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -153,6 +154,7 @@ class ClientPaymentAccountsServiceFacadeTest {
                     supportedCurrencyCodes = "EUR",
                     countryNames = "Germany",
                     chargebackRisk = FiatPaymentMethodChargebackRiskDto.LOW,
+                    restrictions = EMPTY_STRING,
                 )
             coEvery { apiGateway.getFiatPaymentMethods() } returns Result.success(listOf(fiatMethodDto))
 
@@ -191,6 +193,7 @@ class ClientPaymentAccountsServiceFacadeTest {
                     name = "Monero",
                     category = "PRIVACY",
                     supportAutoConf = true,
+                    restrictions = EMPTY_STRING,
                 )
             coEvery { apiGateway.getCryptoPaymentMethods() } returns Result.success(listOf(cryptoMethodDto))
 

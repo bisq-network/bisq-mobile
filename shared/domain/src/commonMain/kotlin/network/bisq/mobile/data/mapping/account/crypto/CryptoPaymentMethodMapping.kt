@@ -9,4 +9,5 @@ fun CryptoPaymentMethodDto.toDomain(): CryptoPaymentMethod =
         name = name,
         category = category,
         supportAutoConf = supportAutoConf,
+        restrictions = restrictions,
     )

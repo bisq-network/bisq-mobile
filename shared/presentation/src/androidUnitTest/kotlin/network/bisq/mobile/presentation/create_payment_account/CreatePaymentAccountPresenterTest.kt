@@ -18,6 +18,7 @@ import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
@@ -163,6 +164,7 @@ class CreatePaymentAccountPresenterTest {
             supportedCurrencyCodes = "EUR",
             countryNames = "Germany",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.VERY_LOW,
+            restrictions = EMPTY_STRING,
         )
 
     private fun sampleUserDefinedFiatAccount(accountName: String): UserDefinedFiatAccount =

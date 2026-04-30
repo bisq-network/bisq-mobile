@@ -28,6 +28,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.crypto.SelectCryptoPaymentMethodUiState
@@ -196,6 +197,7 @@ private val previewFiatPaymentMethods =
             supportedCurrencyCodes = "EUR, USD, GBP",
             countryNames = "Germany, France, Netherlands",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.VERY_LOW,
+            restrictions = EMPTY_STRING,
         ),
         FiatPaymentMethodVO(
             paymentType = PaymentTypeVO.ZELLE,
@@ -203,6 +205,7 @@ private val previewFiatPaymentMethods =
             supportedCurrencyCodes = "USD",
             countryNames = "United States",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.LOW,
+            restrictions = EMPTY_STRING,
         ),
     )
 

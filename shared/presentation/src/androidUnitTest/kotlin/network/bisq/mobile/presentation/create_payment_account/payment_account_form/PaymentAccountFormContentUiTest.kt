@@ -17,7 +17,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.PaymentAccountFormContent
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import org.junit.Before
 import org.junit.Rule
@@ -163,5 +162,6 @@ class PaymentAccountFormContentUiTest {
             supportedCurrencyCodes = "USD",
             countryNames = "United States",
             chargebackRisk = null,
+            restrictions = "restrictions",
         )
 }
