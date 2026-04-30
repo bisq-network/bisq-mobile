@@ -79,45 +79,8 @@ class ClientApplicationLifecycleService(
     private var pushModeOrchestrationJob: Job? = null
 
     override suspend fun activateServiceFacades() {
-        // Decide BEFORE the start call whether the local foreground service should
-        // run. Two things can suppress it:
-        //
-        //  1. The user has opted in to relayed (FCM/APNs) notifications. In that
-        //     case the trusted node delivers via the relay and the local FG
-        //     service would only burn battery and risk a double-notification.
-        //
-        //  2. The OS-level POST_NOTIFICATIONS permission is denied. The FG
-        //     service exists to keep the process alive so we can post trade /
-        //     chat notifications when in background — without the permission
-        //     those `notify(...)` calls are silently dropped. Running the
-        //     service then is pure overhead with no user-visible benefit (and
-        //     a persistent foreground notification users may find confusing).
-        //
-        // We can't lazily start-then-stop: on a cold start triggered by an FCM
-        // push (relayed mode), or on a fresh install where the user hasn't
-        // granted POST_NOTIFICATIONS yet, calling `startForegroundService()`
-        // and then immediately stopping it can still trip
-        // `ForegroundServiceDidNotStartInTimeException` if the bootstrap
-        // finishes faster than the orchestrator's first emission. The repo
-        // read and the OS permission check are both cheap and `activate` is
-        // already suspend, so awaiting them costs nothing observable.
-        val pushNotificationsEnabled = settingsRepository.fetch().pushNotificationsEnabled
-        val notificationPermissionGranted = notificationController.hasPermission()
-        if (getPlatformInfo().type == PlatformType.ANDROID) {
-            when {
-                pushNotificationsEnabled ->
-                    log.i { "Skipping foreground notification service start (relayed mode is on)" }
-                !notificationPermissionGranted ->
-                    log.i {
-                        "Skipping foreground notification service start " +
-                            "(POST_NOTIFICATIONS permission not granted — nothing useful to deliver)"
-                    }
-                else -> {
-                    log.i { "Starting foreground notification service (local delivery, permission granted)" }
-                    openTradesNotificationService.startService()
-                }
-            }
-        }
+        // Decide BEFORE the start call whether the local foreground service should run.
+        maybeLaunchForegroundNotificationService()
 
         apiAccessService.activate()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
@@ -142,33 +105,7 @@ class ClientApplicationLifecycleService(
         // Activate push notification service - will auto-register if user has granted permission
         pushNotificationServiceFacade.activate()
 
-        // Drive the local foreground service from the combination of both flags
-        // that should pause it: relayed mode being on, or the OS notification
-        // permission not being granted. Either alone is sufficient to suppress.
-        // The initial state is already correct from the bootstrap gate above;
-        // this orchestrator catches runtime transitions:
-        //   - User flips the relayed-push toggle in Settings.
-        //   - User grants POST_NOTIFICATIONS via the dashboard explainer (the
-        //     dashboard's `LaunchedEffect` writes the new state into
-        //     `settingsRepository.notificationPermissionState`, which we
-        //     observe here).
-        //   - User revokes permission via system Settings and returns to the
-        //     dashboard, which re-syncs the state.
-        // Permission state is sourced from the persisted flag (kept fresh by
-        // the dashboard) rather than polled from the OS — that's the only
-        // reactive surface available, and the dashboard re-checks on every
-        // foreground transition so the lag is bounded.
-        pushModeOrchestrationJob?.cancel()
-        pushModeOrchestrationJob =
-            combine(
-                pushNotificationServiceFacade.isPushNotificationsEnabled,
-                settingsRepository.data.map { it.notificationPermissionState == PermissionState.GRANTED },
-            ) { relayed, permissionGranted ->
-                relayed || !permissionGranted
-            }.distinctUntilChanged()
-                .onEach { suppressed ->
-                    openTradesNotificationService.setLocalDeliverySuppressed(suppressed)
-                }.launchIn(pushModeScope)
+        launchForegroundNotificationServiceSupressorJob()
     }
 
     override suspend fun deactivateServiceFacades() {
@@ -208,5 +145,83 @@ class ClientApplicationLifecycleService(
         networkServiceFacade.deactivate()
         applicationBootstrapFacade.deactivate()
         apiAccessService.deactivate()
+    }
+
+    /**
+     * Two things can suppress it:
+     *
+     *           1. The user has opted in to relayed (FCM/APNs) notifications. In that
+     *              case the trusted node delivers via the relay and the local FG
+     *              service would only burn battery and risk a double-notification.
+     *
+     *           2. The OS-level POST_NOTIFICATIONS permission is denied. The FG
+     *              service exists to keep the process alive so we can post trade /
+     *              chat notifications when in background — without the permission
+     *              those `notify(...)` calls are silently dropped. Running the
+     *              service then is pure overhead with no user-visible benefit (and
+     *              a persistent foreground notification users may find confusing).
+     *
+     *          We can't lazily start-then-stop: on a cold start triggered by an FCM
+     *          push (relayed mode), or on a fresh install where the user hasn't
+     *          granted POST_NOTIFICATIONS yet, calling `startForegroundService()`
+     *          and then immediately stopping it can still trip
+     *          `ForegroundServiceDidNotStartInTimeException` if the bootstrap
+     *          finishes faster than the orchestrator's first emission. The repo
+     *          read and the OS permission check are both cheap and `activate` is
+     *          already suspend, so awaiting them costs nothing observable.
+     */
+    private suspend fun maybeLaunchForegroundNotificationService() {
+        val pushNotificationsEnabled = settingsRepository.fetch().pushNotificationsEnabled
+        val notificationPermissionGranted = notificationController.hasPermission()
+        if (getPlatformInfo().type == PlatformType.ANDROID) {
+            when {
+                pushNotificationsEnabled ->
+                    log.i { "Skipping foreground notification service start (relayed mode is on)" }
+
+                !notificationPermissionGranted ->
+                    log.i {
+                        "Skipping foreground notification service start " +
+                            "(POST_NOTIFICATIONS permission not granted — nothing useful to deliver)"
+                    }
+
+                else -> {
+                    log.i { "Starting foreground notification service (local delivery, permission granted)" }
+                    openTradesNotificationService.startService()
+                }
+            }
+        }
+    }
+
+    /**
+     * Enables/disables the foreground notification service based on user preferences + permissions
+     */
+    private fun launchForegroundNotificationServiceSupressorJob() {
+        // Drive the local foreground service from the combination of both flags
+        // that should pause it: relayed mode being on, or the OS notification
+        // permission not being granted. Either alone is sufficient to suppress.
+        // The initial state is already correct from the bootstrap gate above;
+        // this orchestrator catches runtime transitions:
+        //   - User flips the relayed-push toggle in Settings.
+        //   - User grants POST_NOTIFICATIONS via the dashboard explainer (the
+        //     dashboard's `LaunchedEffect` writes the new state into
+        //     `settingsRepository.notificationPermissionState`, which we
+        //     observe here).
+        //   - User revokes permission via system Settings and returns to the
+        //     dashboard, which re-syncs the state.
+        // Permission state is sourced from the persisted flag (kept fresh by
+        // the dashboard) rather than polled from the OS — that's the only
+        // reactive surface available, and the dashboard re-checks on every
+        // foreground transition so the lag is bounded.
+        pushModeOrchestrationJob?.cancel()
+        pushModeOrchestrationJob =
+            combine(
+                pushNotificationServiceFacade.isPushNotificationsEnabled,
+                settingsRepository.data.map { it.notificationPermissionState == PermissionState.GRANTED },
+            ) { relayed, permissionGranted ->
+                relayed || !permissionGranted
+            }.distinctUntilChanged()
+                .onEach { suppressed ->
+                    openTradesNotificationService.setLocalDeliverySuppressed(suppressed)
+                }.launchIn(pushModeScope)
     }
 }
