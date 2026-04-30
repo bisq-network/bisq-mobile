@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.BaseService
 import network.bisq.mobile.data.service.LifeCycleAware
 import network.bisq.mobile.i18n.i18n
+import kotlin.concurrent.Volatile
 
 /**
  * Base definition for the connectivity service. Each app type should implement / override the default
@@ -23,6 +24,10 @@ import network.bisq.mobile.i18n.i18n
 abstract class ConnectivityService :
     BaseService(),
     LifeCycleAware {
+    companion object {
+        const val MAX_RECONNECTING_DURATION_MS: Long = 3 * 60 * 1000L
+    }
+
     /**
      * How long to stay in [ConnectivityStatus.RECONNECTING] before the base class forces
      * [ConnectivityStatus.DISCONNECTED]. Subclasses can override (e.g. for tests or tuning).
@@ -36,6 +41,7 @@ abstract class ConnectivityService :
      * After a successful timeout, raw RECONNECTING from a subclass is mapped to DISCONNECTED until
      * connectivity is restored (any non-RECONNECTING [setConnectivityStatus]).
      */
+    @Volatile
     private var isReconnectingTimedOut: Boolean = false
 
     enum class ConnectivityStatus(
@@ -125,9 +131,5 @@ abstract class ConnectivityService :
     override suspend fun deactivate() {
         resetReconnectingTimeoutState()
         _status.value = ConnectivityStatus.BOOTSTRAPPING
-    }
-
-    companion object {
-        const val MAX_RECONNECTING_DURATION_MS: Long = 3 * 60 * 1000L
     }
 }

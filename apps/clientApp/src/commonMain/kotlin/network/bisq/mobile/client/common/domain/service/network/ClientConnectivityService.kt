@@ -208,7 +208,7 @@ open class ClientConnectivityService(
             val newStatus = status.value
             if (previousStatus != newStatus) {
                 log.d { "Connectivity transition from $previousStatus to $newStatus" }
-                if (previousStatus == ConnectivityStatus.RECONNECTING && newStatus.isConnected()) {
+                if (!previousStatus.isConnected() && newStatus.isConnected()) {
                     runPendingBlocks()
                 }
             }
