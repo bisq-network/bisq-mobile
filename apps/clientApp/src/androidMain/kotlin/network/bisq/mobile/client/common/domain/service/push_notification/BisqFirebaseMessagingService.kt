@@ -1,10 +1,13 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.util.Base64
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -44,6 +47,51 @@ import javax.crypto.spec.SecretKeySpec
 class BisqFirebaseMessagingService :
     FirebaseMessagingService(),
     Logging {
+    companion object {
+        private const val NONCE_SIZE = 12
+        private const val GCM_TAG_BITS = 128
+
+        // String literal rather than `Manifest.permission.POST_NOTIFICATIONS`
+        // so the SDK-version handling stays inside ContextCompat (same approach
+        // as `NotificationControllerImpl.POST_NOTIFS_PERM`).
+        private const val POST_NOTIFICATIONS_PERMISSION = "android.permission.POST_NOTIFICATIONS"
+
+        // Long-lived scope used to forward FCM tokens to the facade off the
+        // FCM callback thread. SupervisorJob so a single failure doesn't
+        // cancel future deliveries; Dispatchers.IO because the work is a
+        // network call to the trusted node.
+        private val tokenForwardScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        // `ignoreUnknownKeys = true` so newer trusted-node payloads (e.g. when
+        // bisq2 adds `tradeId` / `deepLinkUri` for richer deep linking) don't
+        // break older clients with a SerializationException. Without this,
+        // the runCatching above would swallow the parse failure and the user
+        // would silently miss the notification.
+        private val payloadJson = Json { ignoreUnknownKeys = true }
+
+        /**
+         * Decrypts a Base64 payload produced by the trusted node's AES-256-GCM
+         * encryption. The wire layout is `nonce(12) || ciphertext || tag(16)`,
+         * matching the iOS NSE.
+         */
+        internal fun decryptAesGcm(
+            ciphertextBase64: String,
+            keyBase64: String,
+        ): String {
+            val combined = Base64.decode(ciphertextBase64, Base64.NO_WRAP)
+            require(combined.size > NONCE_SIZE) { "Encrypted payload too short" }
+            val nonce = combined.copyOfRange(0, NONCE_SIZE)
+            val ciphertextWithTag = combined.copyOfRange(NONCE_SIZE, combined.size)
+
+            val keyBytes = Base64.decode(keyBase64, Base64.NO_WRAP)
+            val key = SecretKeySpec(keyBytes, "AES")
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, nonce))
+            val plaintextBytes = cipher.doFinal(ciphertextWithTag)
+            return String(plaintextBytes, Charsets.UTF_8)
+        }
+    }
+
     override fun onNewToken(token: String) {
         // Privacy: do not log the FCM token (or any prefix of it) — even a
         // 10-char prefix is a stable per-install identifier that aggregates
@@ -87,7 +135,7 @@ class BisqFirebaseMessagingService :
                         ciphertextBase64 = encryptedBase64,
                         keyBase64 = keyBase64,
                     )
-                Json.decodeFromString(NotificationPayload.serializer(), plaintext)
+                payloadJson.decodeFromString(NotificationPayload.serializer(), plaintext)
             }.getOrElse {
                 log.e(it) { "Failed to decrypt push notification — dropping" }
                 return
@@ -97,10 +145,30 @@ class BisqFirebaseMessagingService :
         showNotification(payload.id, category)
     }
 
+    /**
+     * Posts the (already-decrypted) push as a category-only system notification.
+     *
+     * `@SuppressLint("MissingPermission")` is justified because we manually check
+     * [hasPostNotificationsPermission] before calling `notify(...)` — the lint
+     * rule can't trace our runtime check, but the call is permission-safe.
+     *
+     * If POST_NOTIFICATIONS is denied (e.g. user revoked it via system Settings
+     * after opting in), we drop the notification rather than crash. The orchestrator
+     * in `ClientApplicationLifecycleService` will eventually pick up the OS state
+     * and stop registering the device for relayed pushes; this is the bounded
+     * window where one or two notifications can arrive on the device but can't
+     * be displayed.
+     */
+    @SuppressLint("MissingPermission")
     private fun showNotification(
         notificationId: String,
         category: NotificationCategory,
     ) {
+        if (!hasPostNotificationsPermission()) {
+            log.w { "POST_NOTIFICATIONS not granted — dropping decrypted push" }
+            return
+        }
+
         val pending = pendingIntentFor(notificationId, category)
 
         val builder =
@@ -117,6 +185,16 @@ class BisqFirebaseMessagingService :
             .from(applicationContext)
             .notify(notificationId.hashCode(), builder.build())
     }
+
+    private fun hasPostNotificationsPermission(): Boolean =
+        // ContextCompat.checkSelfPermission handles SDK differences:
+        // returns GRANTED automatically on API < 33 where the runtime
+        // permission doesn't exist. Same approach as
+        // `NotificationControllerImpl.hasPermissionSync()`.
+        ContextCompat.checkSelfPermission(
+            applicationContext,
+            POST_NOTIFICATIONS_PERMISSION,
+        ) == PackageManager.PERMISSION_GRANTED
 
     /**
      * Builds the tap-action intent. When the category maps to a deep-linkable
@@ -221,39 +299,6 @@ class BisqFirebaseMessagingService :
                     else -> GENERAL
                 }
             }
-        }
-    }
-
-    companion object {
-        private const val NONCE_SIZE = 12
-        private const val GCM_TAG_BITS = 128
-
-        // Long-lived scope used to forward FCM tokens to the facade off the
-        // FCM callback thread. SupervisorJob so a single failure doesn't
-        // cancel future deliveries; Dispatchers.IO because the work is a
-        // network call to the trusted node.
-        private val tokenForwardScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-        /**
-         * Decrypts a Base64 payload produced by the trusted node's AES-256-GCM
-         * encryption. The wire layout is `nonce(12) || ciphertext || tag(16)`,
-         * matching the iOS NSE.
-         */
-        internal fun decryptAesGcm(
-            ciphertextBase64: String,
-            keyBase64: String,
-        ): String {
-            val combined = Base64.decode(ciphertextBase64, Base64.NO_WRAP)
-            require(combined.size > NONCE_SIZE) { "Encrypted payload too short" }
-            val nonce = combined.copyOfRange(0, NONCE_SIZE)
-            val ciphertextWithTag = combined.copyOfRange(NONCE_SIZE, combined.size)
-
-            val keyBytes = Base64.decode(keyBase64, Base64.NO_WRAP)
-            val key = SecretKeySpec(keyBytes, "AES")
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, nonce))
-            val plaintextBytes = cipher.doFinal(ciphertextWithTag)
-            return String(plaintextBytes, Charsets.UTF_8)
         }
     }
 }

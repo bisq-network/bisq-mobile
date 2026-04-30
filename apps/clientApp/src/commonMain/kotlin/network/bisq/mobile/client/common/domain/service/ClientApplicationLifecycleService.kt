@@ -7,10 +7,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
-import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
@@ -105,7 +103,7 @@ class ClientApplicationLifecycleService(
         // Activate push notification service - will auto-register if user has granted permission
         pushNotificationServiceFacade.activate()
 
-        launchForegroundNotificationServiceSupressorJob()
+        launchForegroundNotificationServiceSuppressorJob()
     }
 
     override suspend fun deactivateServiceFacades() {
@@ -148,27 +146,25 @@ class ClientApplicationLifecycleService(
     }
 
     /**
+     * Decides at bootstrap whether to start the local foreground notification service.
      * Two things can suppress it:
      *
-     *           1. The user has opted in to relayed (FCM/APNs) notifications. In that
-     *              case the trusted node delivers via the relay and the local FG
-     *              service would only burn battery and risk a double-notification.
+     *  1. The user has opted in to relayed (FCM/APNs) notifications. In that case the
+     *     trusted node delivers via the relay and the local FG service would only burn
+     *     battery and risk a double-notification.
+     *  2. The OS-level POST_NOTIFICATIONS permission is denied. The FG service exists
+     *     to keep the process alive so we can post trade / chat notifications when in
+     *     background — without the permission those `notify(...)` calls are silently
+     *     dropped. Running the service then is pure overhead with no user-visible
+     *     benefit (and a persistent foreground notification users may find confusing).
      *
-     *           2. The OS-level POST_NOTIFICATIONS permission is denied. The FG
-     *              service exists to keep the process alive so we can post trade /
-     *              chat notifications when in background — without the permission
-     *              those `notify(...)` calls are silently dropped. Running the
-     *              service then is pure overhead with no user-visible benefit (and
-     *              a persistent foreground notification users may find confusing).
-     *
-     *          We can't lazily start-then-stop: on a cold start triggered by an FCM
-     *          push (relayed mode), or on a fresh install where the user hasn't
-     *          granted POST_NOTIFICATIONS yet, calling `startForegroundService()`
-     *          and then immediately stopping it can still trip
-     *          `ForegroundServiceDidNotStartInTimeException` if the bootstrap
-     *          finishes faster than the orchestrator's first emission. The repo
-     *          read and the OS permission check are both cheap and `activate` is
-     *          already suspend, so awaiting them costs nothing observable.
+     * We can't lazily start-then-stop: on a cold start triggered by an FCM push
+     * (relayed mode), or on a fresh install where the user hasn't granted
+     * POST_NOTIFICATIONS yet, calling `startForegroundService()` and then immediately
+     * stopping it can still trip `ForegroundServiceDidNotStartInTimeException` if the
+     * bootstrap finishes faster than the orchestrator's first emission. The repo read
+     * and the OS permission check are both cheap and `activate` is already suspend,
+     * so awaiting them costs nothing observable.
      */
     private suspend fun maybeLaunchForegroundNotificationService() {
         val pushNotificationsEnabled = settingsRepository.fetch().pushNotificationsEnabled
@@ -193,32 +189,35 @@ class ClientApplicationLifecycleService(
     }
 
     /**
-     * Enables/disables the foreground notification service based on user preferences + permissions
+     * Enables/disables the foreground notification service based on user preferences + permissions.
+     *
+     * Two inputs decide whether the local foreground delivery should be suppressed:
+     *  - relayed-push opt-in (from the push-notifications facade)
+     *  - OS POST_NOTIFICATIONS permission (queried directly from the OS each tick)
+     *
+     * `settingsRepository.data` is observed only as a "something changed, re-evaluate" trigger —
+     * the persisted `notificationPermissionState` can lag the OS (e.g. user revokes via system
+     * Settings while the app is killed) so we don't trust its value, only the fact that it
+     * emits. The OS query inside the transform is `ContextCompat.checkSelfPermission` on
+     * Android — cheap to call. `distinctUntilChanged` keeps `setLocalDeliverySuppressed`
+     * idempotent.
+     *
+     * Catches the runtime transitions the bootstrap gate misses:
+     *  - User flips the relayed-push toggle in Settings.
+     *  - User grants POST_NOTIFICATIONS via the dashboard explainer (the dashboard's
+     *    `LaunchedEffect` writes the new state into `settingsRepository`, which triggers a
+     *    re-evaluation here that picks up the now-`true` OS truth).
+     *  - User revokes permission via system Settings and returns to the dashboard; same path.
      */
-    private fun launchForegroundNotificationServiceSupressorJob() {
-        // Drive the local foreground service from the combination of both flags
-        // that should pause it: relayed mode being on, or the OS notification
-        // permission not being granted. Either alone is sufficient to suppress.
-        // The initial state is already correct from the bootstrap gate above;
-        // this orchestrator catches runtime transitions:
-        //   - User flips the relayed-push toggle in Settings.
-        //   - User grants POST_NOTIFICATIONS via the dashboard explainer (the
-        //     dashboard's `LaunchedEffect` writes the new state into
-        //     `settingsRepository.notificationPermissionState`, which we
-        //     observe here).
-        //   - User revokes permission via system Settings and returns to the
-        //     dashboard, which re-syncs the state.
-        // Permission state is sourced from the persisted flag (kept fresh by
-        // the dashboard) rather than polled from the OS — that's the only
-        // reactive surface available, and the dashboard re-checks on every
-        // foreground transition so the lag is bounded.
+    private fun launchForegroundNotificationServiceSuppressorJob() {
         pushModeOrchestrationJob?.cancel()
         pushModeOrchestrationJob =
             combine(
                 pushNotificationServiceFacade.isPushNotificationsEnabled,
-                settingsRepository.data.map { it.notificationPermissionState == PermissionState.GRANTED },
-            ) { relayed, permissionGranted ->
-                relayed || !permissionGranted
+                settingsRepository.data,
+            ) { relayed, _ ->
+                val osGranted = notificationController.hasPermission()
+                relayed || !osGranted
             }.distinctUntilChanged()
                 .onEach { suppressed ->
                     openTradesNotificationService.setLocalDeliverySuppressed(suppressed)
