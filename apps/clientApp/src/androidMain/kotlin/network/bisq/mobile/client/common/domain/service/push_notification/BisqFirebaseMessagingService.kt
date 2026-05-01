@@ -128,16 +128,36 @@ class BisqFirebaseMessagingService :
             return
         }
 
+        // Two separate try/catch blocks rather than one runCatching, because the
+        // failure modes have very different privacy implications:
+        //
+        //  - Decryption failures (`AEADBadTagException`, key/length mismatches, …)
+        //    don't carry plaintext — safe to log the full exception.
+        //
+        //  - Deserialization failures (`SerializationException`,
+        //    `JsonDecodingException`) include a snippet of the parsed JSON in the
+        //    exception message — that JSON IS the decrypted plaintext (trade id,
+        //    peer username, etc.). Logging the exception would leak that to
+        //    logcat / crash reporters. We log only a sanitized static message
+        //    in that branch.
+        val plaintext =
+            try {
+                decryptAesGcm(
+                    ciphertextBase64 = encryptedBase64,
+                    keyBase64 = keyBase64,
+                )
+            } catch (e: Exception) {
+                log.e(e) { "Failed to decrypt push notification — dropping" }
+                return
+            }
+
         val payload =
-            runCatching {
-                val plaintext =
-                    decryptAesGcm(
-                        ciphertextBase64 = encryptedBase64,
-                        keyBase64 = keyBase64,
-                    )
+            try {
                 payloadJson.decodeFromString(NotificationPayload.serializer(), plaintext)
-            }.getOrElse {
-                log.e(it) { "Failed to decrypt push notification — dropping" }
+            } catch (_: Exception) {
+                // Privacy: do not include the exception or its message — both
+                // can carry decrypted plaintext.
+                log.e { "Failed to parse decrypted push notification — dropping" }
                 return
             }
 

@@ -12,6 +12,12 @@ import androidx.annotation.VisibleForTesting
  */
 @SuppressLint("StaticFieldLeak")
 object AndroidAppContext {
+    // `@Volatile` so the write performed by the main thread in
+    // [initialize] is visible to background-thread readers (FCM service
+    // thread, IO dispatcher, Koin-owned threads, …). Without this the JMM
+    // doesn't guarantee visibility, and a cold start triggered by an FCM
+    // push could observe `_context == null` even after main has written.
+    @Volatile
     private var _context: Context? = null
 
     val context: Context
@@ -26,7 +32,12 @@ object AndroidAppContext {
      * instance. Throws [IllegalStateException] if a different context is
      * passed after initialization — that signals a lifecycle / init-order
      * bug we want to surface immediately rather than silently swap context.
+     *
+     * `@Synchronized` guarantees the read-then-write is atomic with respect
+     * to other writers (e.g. tests calling [reset] between [initialize]
+     * calls). Cheap — this method runs once at app startup.
      */
+    @Synchronized
     fun initialize(context: Context) {
         val newContext = context.applicationContext
         val current = _context
@@ -42,6 +53,7 @@ object AndroidAppContext {
     }
 
     @VisibleForTesting
+    @Synchronized
     fun reset() {
         _context = null
     }

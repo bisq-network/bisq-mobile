@@ -65,6 +65,15 @@ class ClientApplicationLifecycleService(
      * from the Koin-injected `serviceScope` so this class stays unit-testable
      * without bootstrapping Koin in the test fixture (the orchestration is pure
      * plumbing — no platform dependencies).
+     *
+     * Intentionally NOT cancelled in [deactivateServiceFacades]. The base class
+     * supports `deactivate()` followed by `activate()` (e.g., the trigger-full-
+     * lifecycle-restart flow). Cancelling the scope on deactivate would mean
+     * the next `launchIn(pushModeScope)` attaches to a cancelled scope and
+     * silently no-ops. For permanent teardown (terminateApp / restartApp) the
+     * process dies and the scope goes with it — not a leak in practice. The
+     * scope holds a SupervisorJob with no children between cycles, which is
+     * essentially free.
      */
     private val pushModeScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
