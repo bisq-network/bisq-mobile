@@ -298,16 +298,22 @@ class BisqFirebaseMessagingService :
         companion object {
             /**
              * Prefers the explicit `payload.category` when present — that's
-             * the stable wire signal. Falls back to title-keyword scanning
-             * only when the trusted node hasn't populated it yet (older
-             * bisq2 versions). Once all trusted nodes emit `category`, the
-             * `fromTitle` heuristic can be retired.
+             * the stable wire signal. Two distinct cases:
+             *
+             *  - `category` absent (null): older bisq2 client that doesn't
+             *    populate it yet. Fall back to title-keyword scanning. Once
+             *    all trusted nodes emit `category`, the `fromTitle` heuristic
+             *    can be retired.
+             *  - `category` present but unknown to us: a newer bisq2 has
+             *    introduced a category id this app version doesn't know about
+             *    (e.g. `dispute_alert`). Returning [GENERAL] is more honest
+             *    than guessing from the title — the trusted node already told
+             *    us "this is a specific category", we just don't recognize
+             *    it, so showing the generic banner avoids miscategorising.
              */
             fun fromPayload(payload: NotificationPayload): NotificationCategory {
-                payload.category
-                    ?.let { id -> entries.firstOrNull { it.id == id } }
-                    ?.let { return it }
-                return fromTitle(payload.title)
+                val explicitCategory = payload.category ?: return fromTitle(payload.title)
+                return entries.firstOrNull { it.id == explicitCategory } ?: GENERAL
             }
 
             internal fun fromTitle(title: String): NotificationCategory {

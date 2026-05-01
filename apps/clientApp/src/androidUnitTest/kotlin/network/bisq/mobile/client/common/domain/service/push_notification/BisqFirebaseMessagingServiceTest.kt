@@ -110,20 +110,25 @@ class BisqFirebaseMessagingServiceTest {
     }
 
     @Test
-    fun `fromPayload falls back to title parsing when category id is unknown`() {
+    fun `fromPayload returns GENERAL when explicit category id is unknown to this client`() {
+        // Contract: an explicit `category` from the trusted node is the stable
+        // wire signal. If we don't recognize it (e.g., a newer bisq2 introduced
+        // `dispute_alert`), we return GENERAL rather than running the title
+        // heuristic — the trusted node already told us this is a specific
+        // category, we just don't know which one yet, so showing the generic
+        // banner is more honest than guessing from the title.
         val payload =
             BisqFirebaseMessagingService.NotificationPayload(
                 id = "1",
-                title = "Trade update",
+                title = "Trade update", // would have matched TRADE_UPDATE under the old behavior
                 message = "msg",
                 category = "made-up-category-from-some-future-bisq2",
             )
 
         val category = BisqFirebaseMessagingService.NotificationCategory.fromPayload(payload)
 
-        // Falls back to title-keyword scan, which classifies "trade" as TRADE_UPDATE.
         assertEquals(
-            BisqFirebaseMessagingService.NotificationCategory.TRADE_UPDATE,
+            BisqFirebaseMessagingService.NotificationCategory.GENERAL,
             category,
         )
     }

@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -116,9 +117,18 @@ class ClientApplicationLifecycleService(
     }
 
     override suspend fun deactivateServiceFacades() {
-        // Stop mirroring push opt-in to the FG service before tearing things down,
-        // otherwise the orchestrator could re-issue start/stop calls during teardown.
-        pushModeOrchestrationJob?.cancel()
+        // Stop mirroring push opt-in to the FG service before tearing things down.
+        //
+        // `cancelAndJoin` (not just `cancel`) is required: `cancel()` is non-blocking
+        // and only signals cancellation. The in-flight `onEach { setLocalDeliverySuppressed(...) }`
+        // block runs synchronous calls into `OpenTradesNotificationService`
+        // (which in turn calls `foregroundServiceController.startService()` /
+        // `stopService()`). Without joining, the orchestrator can race against
+        // `stopNotificationService()` below — `setLocalDeliverySuppressed(false)`
+        // could fire `startService()` AFTER the controller has already been
+        // disposed, leaving a stale FG service start that bypasses teardown.
+        // Joining drains any in-flight emission before we proceed.
+        pushModeOrchestrationJob?.cancelAndJoin()
         pushModeOrchestrationJob = null
 
         // Tear down notification service on Android
