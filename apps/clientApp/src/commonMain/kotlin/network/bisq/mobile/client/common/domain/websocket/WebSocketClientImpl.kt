@@ -83,6 +83,7 @@ class WebSocketClientImpl(
         const val MAX_RECONNECT_ATTEMPTS = 5
         const val MAX_RECONNECT_DELAY = 10000L // 10 seconds max delay
         const val RECONNECT_CONNECT_TIMEOUT = 30_000L // shorter timeout during reconnect
+        const val API_VERSION_PROBE_TIMEOUT = 5_000L
         const val HEALTH_CHECK_PATH = "/api/v1/settings/version"
         const val STALE_RECONNECT_THRESHOLD_MS = 30_000L // cancel reconnect if stuck this long
     }
@@ -156,7 +157,7 @@ class WebSocketClientImpl(
                     listenerJob =
                         clientScope.launch { startListening(newSession) }
 
-                    withTimeout(remainingTime) {
+                    withTimeout(remainingTime.coerceAtLeast(API_VERSION_PROBE_TIMEOUT)) {
                         val nodeApiVersion = getApiVersion()
                         if (!isApiCompatible(nodeApiVersion)) {
                             doDisconnect()
@@ -210,12 +211,13 @@ class WebSocketClientImpl(
             // cancel it so the next triggerReconnect() call can start fresh.
             val connectStart = reconnectConnectStartMs
             val elapsed = if (connectStart > 0) DateUtils.now() - connectStart else 0
-            if (elapsed > STALE_RECONNECT_THRESHOLD_MS) {
+            if (elapsed > STALE_RECONNECT_THRESHOLD_MS + API_VERSION_PROBE_TIMEOUT) {
                 log.d { "Reconnect connect stuck for ${elapsed}ms, cancelling for fresh retry" }
                 reconnectJob?.cancel()
+            } else {
+                // else: reconnect already in progress and not elapsed, silently skip
+                return
             }
-            // else: reconnect already in progress, silently skip
-            return
         }
         reconnectJob?.cancel()
 
@@ -263,6 +265,9 @@ class WebSocketClientImpl(
             }
         reconnectJob = newReconnectJob
         newReconnectJob.invokeOnCompletion {
+            if (reconnectJob !== newReconnectJob) {
+                return@invokeOnCompletion
+            }
             reconnectConnectStartMs = 0
             isReconnecting.value = false
             if (it == null) {

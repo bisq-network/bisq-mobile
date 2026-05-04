@@ -8,6 +8,10 @@ captures
 .cxx
 local.properties
 xcuserdata
+debug
+
+# Optional Cursor/agent local debug log dumps (not required for bisq-mobile builds)
+.cursor/debug*.log
 
 spot.xml
 hs_err_pid*
