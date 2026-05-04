@@ -1,1 +1,1 @@
-bitcoin,bisq,decentralized,exchange,trading,crypto,websocket,tor,privacy,p2p
+p2p,decentralized,network,tor,privacy,non-custodial,bitcoin,peer-to-peer,network client,open source

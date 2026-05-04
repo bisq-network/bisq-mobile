@@ -1,11 +1,24 @@
-Bisq Connect is a utility app that enables users to securely connect to their trusted Bisq Node via WebSocket. It serves as a remote interface to interact with the Bisq decentralized Bitcoin exchange network through a node you control and trust.
+Bisq Connect is a mobile client for the Bisq peer-to-peer network — a decentralized, non-custodial protocol for coordinating Bitcoin-related communication and reputation between users. The app pairs with your trusted Bisq node and provides a clean mobile interface for the network's data and messaging features.
 
-PURPOSE:
-This app requires connection to a self-hosted Bisq node (Bisq 2 desktop) to function. Users establish a secure, encrypted connection by entering a pairing code provided by their node administrator (or scanning a QR code). The app provides remote access to view market data, monitor trades, and manage offers—all without storing any data on third-party servers.
+USE BISQ CONNECT TO:
+• Pair with your trusted Bisq node via QR code or pairing code
+• Browse network data published by other users
+• Coordinate peer-to-peer messages with other network participants
+• Track your network reputation
+• Configure notification and connectivity preferences
 
-KEY FEATURES:
-• Secure WebSocket connection to your trusted Bisq node
-• Server-controlled configuration via pairing code
-• Privacy-first design — no data tracking or third-party servers
-• Built-in Tor support for enhanced privacy
-• View market offers, monitor trades, and manage your Bisq activity remotely
+WHAT BISQ CONNECT IS NOT:
+• Not a cryptocurrency exchange
+• Not a wallet — your Bitcoin remains in your own wallet, never in the app
+• Not a custodial service — the app holds no user funds
+• Not a managed marketplace — Bisq is an open-source P2P protocol with no operator
+
+BUILT ON OPEN-SOURCE PROTOCOLS:
+The Bisq2 protocol that powers this app is fully open-source (github.com/bisq-network/bisq2). The mobile client connects to a Bisq node — software you run yourself, or a node you choose to trust. All network state, identity, reputation, and communication is handled by your node, not by this app or by Bisq the organization.
+
+PRIVACY BY DESIGN:
+Built-in Tor support routes network traffic through onion services for private connectivity. The app stores no user data on third-party servers; your Bisq identity and reputation belong to you and remain portable across the network.
+
+LEARN MORE:
+• bisq.network
+• github.com/bisq-network/bisq-mobile

@@ -1,1 +1,1 @@
-Connect to your trusted Bisq node
+Bisq P2P network client

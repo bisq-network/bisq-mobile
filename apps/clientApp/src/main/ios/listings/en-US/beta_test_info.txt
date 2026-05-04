@@ -1,20 +1,18 @@
-Bisq Connect is a utility app that enables users to securely connect to their trusted Bisq Node via WebSocket. It serves as a remote interface to interact with the Bisq decentralized Bitcoin exchange network through a node you control and trust.
+Thanks for testing Bisq Connect — a mobile client for the Bisq peer-to-peer network.
 
-PURPOSE:
-This app requires connection to a self-hosted Bisq node (Bisq 2 desktop) to function. Users establish a secure, encrypted connection by entering a pairing code provided by their node administrator (or scanning a QR code). The app provides remote access to view market data, monitor trades, and manage offers—all without storing any data on third-party servers.
+WHAT TO TEST:
+• Pairing flow — pair with your Bisq2 desktop via QR code or pasted pairing code
+• Offerbook and market data browsing from your trusted node
+• User profile, payment accounts, and reputation views
+• Tor connectivity (the app embeds a Tor client for .onion node addresses)
+• Settings — language, notifications (Android), trade rules
 
-IMPORTANT NOTE FOR APP REVIEWERS:
-To evaluate the app without connecting to a live node, please use DEMO MODE:
+NO BISQ2 NODE? USE DEMO MODE:
+Enter the pairing code BISQ_DEMO_PAIRING_CODE on the trusted-node setup screen to launch the app with simulated data. Demo mode runs fully offline and showcases the app's UI without a live node connection. Some features are intentionally limited in demo mode (offer creation, push notifications, live transaction flows).
 
-1. When prompted for the pairing code on first launch, enter: BISQ_DEMO_PAIRING_CODE
-2. This activates a demonstration environment with simulated data
-3. Demo mode uses fake/sample data and some features have minimal or disabled functionality (e.g., creating offers, push notifications, and certain trade actions are limited or unavailable)
+REPORTING ISSUES:
+Please report any bugs, crashes, or UX issues at github.com/bisq-network/bisq-mobile/issues with steps to reproduce, your iOS version, and the build number from Settings → About.
 
-Demo mode is provided solely for App Store review purposes to showcase the app's interface and core functionality without requiring a live Bisq node connection.
-
-KEY FEATURES:
-• Secure WebSocket connection to your trusted Bisq node
-• Server-controlled configuration via pairing code
-• Privacy-first design — no data tracking or third-party servers
-• Built-in Tor support for enhanced privacy
-• View market offers, monitor trades, and manage your Bisq activity remotely
+LEARN MORE:
+• bisq.network
+• github.com/bisq-network/bisq-mobile

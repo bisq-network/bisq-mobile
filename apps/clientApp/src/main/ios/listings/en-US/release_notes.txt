@@ -1,6 +1,8 @@
-• First App Store release
-• Built-in Tor support for enhanced privacy
-• Secure WebSocket connection to trusted nodes
-• Demo mode for testing without a live node
-• Improved connection stability
-• Enhanced UI/UX
+First App Store release of Bisq Connect.
+
+• Pair with your Bisq2 node via QR code or pairing code
+• Browse the Bisq peer-to-peer network from your phone
+• Built-in Tor support for private connectivity
+• Demo mode for previewing the app without a live node
+• Compatible with Bisq2 v2.1.10+
+• Localized in 13 languages
