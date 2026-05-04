@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.i18n.i18n
 import org.koin.core.scope.Scope
+import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSBundle
@@ -71,6 +72,7 @@ import platform.UIKit.UILabel
 import platform.UIKit.UILayoutConstraintAxisVertical
 import platform.UIKit.UILayoutPriorityRequired
 import platform.UIKit.UIPasteboard
+import platform.UIKit.UIRectFill
 import platform.UIKit.UITextView
 import platform.UIKit.UIView
 import platform.UIKit.UIViewContentMode
@@ -517,9 +519,15 @@ actual class PlatformImage(
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun createEmptyImage(): PlatformImage {
-    // Create a 1x1 transparent image
-    val size = CGSizeMake(1.0, 1.0)
+    // Render a 16x16 neutral-grey square with actual pixel data drawn into the
+    // context. A 1x1 unfilled context produces a UIImage whose CGImage is unbacked,
+    // and PNG-encoding it fails on iOS with "No IDATs written into file" /
+    // "IDAT: CRC error" when downstream code tries to cache or serialize it.
+    val side = 16.0
+    val size = CGSizeMake(side, side)
     UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+    UIColor.grayColor.setFill()
+    UIRectFill(CGRectMake(0.0, 0.0, side, side))
     val image = UIGraphicsGetImageFromCurrentImageContext()!!
     UIGraphicsEndImageContext()
     return PlatformImage(image)

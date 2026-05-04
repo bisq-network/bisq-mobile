@@ -274,6 +274,50 @@ class WebSocketClientDemoTest {
         }
 
     @Test
+    fun `subscribe returns fake data for NUM_USER_PROFILES topic`() =
+        runTest {
+            // Bootstrap progress UI hangs forever in demo mode unless this topic emits —
+            // it's one of the three subscriptions tracked by initialSubscriptionsReceivedData.
+            val observer = WebSocketEventObserver()
+            val result = demoClient.subscribe(Topic.NUM_USER_PROFILES, null, observer)
+            assertNotNull(result)
+            val event = result.webSocketEvent.value
+            assertNotNull(event, "NUM_USER_PROFILES must emit a payload — bootstrap depends on it")
+            assertEquals(Topic.NUM_USER_PROFILES, event.topic)
+            // Payload must deserialize as Int (the consumer in ClientUserProfileServiceFacade
+            // reads it as WebSocketEventPayload<Int>).
+            assertNotNull(event.deferredPayload)
+        }
+
+    @Test
+    fun `FakeSubscriptionData offers cover multiple markets for a populated screenshot`() {
+        // Each market in marketListDemoObj should have at least one demo offer so the
+        // App Store screenshots show market diversity rather than a single-currency app.
+        val coveredMarkets =
+            FakeSubscriptionData.offers
+                .map { it.bisqEasyOffer.market.quoteCurrencyCode }
+                .toSet()
+        assertTrue(
+            coveredMarkets.size >= 5,
+            "Expected demo offers to span at least 5 quote currencies; got: $coveredMarkets",
+        )
+    }
+
+    @Test
+    fun `FakeSubscriptionData offers have unique maker pubKey hashes for distinct avatars`() {
+        // The cat-hash service generates a per-user avatar from pubKey.hash. If makers
+        // share a hash, the offerbook screenshot shows duplicate avatars.
+        val makerHashes =
+            FakeSubscriptionData.offers.map { it.userProfile.networkId.pubKey.hash }
+        // Allow some duplication (a maker may post multiple offers) but not collapse to 1.
+        val uniqueRatio = makerHashes.toSet().size.toDouble() / makerHashes.size
+        assertTrue(
+            uniqueRatio > 0.5,
+            "Expected demo offers to have varied maker hashes; got ${makerHashes.toSet().size} unique of ${makerHashes.size}",
+        )
+    }
+
+    @Test
     fun `subscribe returns observer without event for unsupported topic`() =
         runTest {
             val observer = WebSocketEventObserver()

@@ -36,7 +36,9 @@ val userProfileDemoObj by lazy {
                 solutionEncoded = "sol",
                 duration = 100L,
             ),
-        avatarVersion = 1,
+        // BaseClientCatHashService only supports avatarVersion=0; using 1 triggers the
+        // fallback path which produces a corrupt PNG on iOS ("No IDATs written into file").
+        avatarVersion = 0,
         networkId =
             NetworkIdVO(
                 addressByTransportTypeMap = AddressByTransportTypeMapVO(mapOf()),

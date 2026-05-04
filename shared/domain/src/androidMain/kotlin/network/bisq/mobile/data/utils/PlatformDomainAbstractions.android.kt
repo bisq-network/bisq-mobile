@@ -142,8 +142,11 @@ actual class PlatformImage(
 }
 
 actual fun createEmptyImage(): PlatformImage {
-    val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-    bitmap.eraseColor(Color.TRANSPARENT)
+    // 16x16 neutral-grey square. Aligned with the iOS actual so the fallback path
+    // produces the same predictable visual on both platforms (also serialises to a
+    // valid PNG, unlike a 1x1 transparent image — see iOS comment).
+    val bitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
+    bitmap.eraseColor(Color.GRAY)
     return PlatformImage(bitmap.asImageBitmap())
 }
 
