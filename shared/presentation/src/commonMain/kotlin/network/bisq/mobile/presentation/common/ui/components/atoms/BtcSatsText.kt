@@ -110,7 +110,12 @@ private fun formatSatsToDisplay(
         val leadingZeros = formattedFractional.takeWhile { it == '0' || it == ' ' }
         val significantDigits = formattedFractional.dropWhile { it == '0' || it == ' ' }
 
-        val prefixColor = if (integerPart.toInt() > 0) BisqTheme.colors.white else BisqTheme.colors.mid_grey20
+        // The integer part comes from a locale-formatted string and may contain a
+        // grouping separator ("1,234" or "1 234") for BTC amounts ≥ 1000, which makes
+        // toInt() throw. It can also be empty (".5" without a leading 0) or overflow
+        // Int.MAX_VALUE on extreme inputs. A digit scan is locale-agnostic and crash-safe.
+        val isPositive = integerPart.any { it in '1'..'9' }
+        val prefixColor = if (isPositive) BisqTheme.colors.white else BisqTheme.colors.mid_grey20
 
         withStyle(style = SpanStyle(color = prefixColor)) {
             append(integerPart)
