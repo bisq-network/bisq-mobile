@@ -4,6 +4,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +21,10 @@ import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.model.PlatformInfo
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.i18n
@@ -951,7 +956,7 @@ class SettingsPresenterTest {
         }
 
     @Test
-    fun `shouldShowPushNotificationsToggle defaults to true (Connect app)`() =
+    fun `shouldShowPushNotificationsToggle is true on Android Connect`() =
         runTest(testDispatcher) {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -959,6 +964,33 @@ class SettingsPresenterTest {
             presenter.onViewAttached()
             advanceUntilIdle()
 
+            // Test JVM resolves PlatformType.ANDROID, so the default Connect presenter
+            // shows the toggle.
             assertTrue(presenter.uiState.value.shouldShowPushNotificationsToggle)
+        }
+
+    @Test
+    fun `shouldShowPushNotificationsToggle is false on iOS Connect`() =
+        runTest(testDispatcher) {
+            // iOS APNs delivery isn't yet wired through the trusted node — exposing the
+            // toggle would let users opt in to a path that doesn't deliver. Hide it.
+            mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+            try {
+                every { getPlatformInfo() } returns
+                    object : PlatformInfo {
+                        override val name = "iOS"
+                        override val type = PlatformType.IOS
+                    }
+
+                coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+                presenter = createPresenter()
+                presenter.onViewAttached()
+                advanceUntilIdle()
+
+                assertFalse(presenter.uiState.value.shouldShowPushNotificationsToggle)
+            } finally {
+                unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+            }
         }
 }

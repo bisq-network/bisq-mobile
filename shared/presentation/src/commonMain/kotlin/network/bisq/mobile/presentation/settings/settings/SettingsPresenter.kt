@@ -11,9 +11,11 @@ import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.data.utils.setDefaultLocale
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.i18n.DEFAULT_LANGUAGE_CODE
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -43,11 +45,14 @@ open class SettingsPresenter(
 
     /**
      * Whether the relayed-push-notifications opt-in toggle should be shown.
-     * True on Connect; the Node app overrides to false because the embedded
-     * Bisq2 process posts notifications through its local foreground service
-     * (no relay needed and no FCM token to register).
+     * - Android Connect: true (FCM-relayed path is wired through the trusted node).
+     * - iOS Connect: false (APNs-relayed path is not yet wired end-to-end; exposing
+     *   the toggle would let users opt in to a delivery path that doesn't work).
+     * - Node (Android only): overridden to false because the embedded Bisq2 process
+     *   posts notifications through its local foreground service.
      */
-    open val shouldShowPushNotificationsToggle: Boolean = true
+    open val shouldShowPushNotificationsToggle: Boolean
+        get() = getPlatformInfo().type == PlatformType.ANDROID
 
     // Store original values from fetchSettings for cancel operations (raw numeric values)
     private var originalMaxTradePriceDeviation: Double = DEFAULT_MAX_TRADE_PRICE_DEVIATION
