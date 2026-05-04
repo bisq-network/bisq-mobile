@@ -18,6 +18,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
+import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
+import network.bisq.mobile.client.common.domain.access.DEMO_WS_URL
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
@@ -92,6 +94,21 @@ class TrustedNodeSetupUseCaseTest {
                 ),
             webSocketUrl = "ws://example.com:8080",
             restApiUrl = "http://example.com:8080",
+            tlsFingerprint = null,
+            torClientAuthSecret = null,
+        )
+
+    private val demoPairingQrCode =
+        PairingQrCode(
+            version = PairingCode.VERSION,
+            pairingCode =
+                PairingCode(
+                    id = "demo-pairing-id",
+                    expiresAt = testExpiresAt,
+                    grantedPermissions = setOf(Permission.SETTINGS),
+                ),
+            webSocketUrl = DEMO_WS_URL,
+            restApiUrl = DEMO_API_URL,
             tlsFingerprint = null,
             torClientAuthSecret = null,
         )
@@ -308,7 +325,8 @@ class TrustedNodeSetupUseCaseTest {
     @Test
     fun `when switching from Tor to clearnet then stops Tor after connection`() =
         runTest(testDispatcher) {
-            // Given
+            // Given - simulate Tor running before the switch (the realistic scenario)
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
             setupSuccessfulPairing()
             setupSuccessfulWebSocketConnection()
             coEvery { kmpTorService.stopTor() } returns Unit
@@ -769,6 +787,99 @@ class TrustedNodeSetupUseCaseTest {
 
             // Then
             assertEquals(TrustedNodeConnectionStatus.Connected, useCase.state.value.connectionStatus)
+        }
+
+    // ========== Demo Short-circuit Tests ==========
+
+    @Test
+    fun `when demo URL then disposes prior WS client before settings update`() =
+        runTest(testDispatcher) {
+            // Given - simulate prior Tor pairing in flight
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
+            setupSuccessfulPairing(demoPairingQrCode)
+            setupSuccessfulWebSocketConnection()
+            useCase = createUseCase()
+
+            // When
+            useCase(demoPairingQrCode)
+            advanceUntilIdle()
+
+            // Then — disposeClient must be called BEFORE updateSettings so the Tor-routed
+            // reconnect loop is gone before the demo URL propagates through reactive flows.
+            coVerify {
+                wsClientService.disposeClient()
+                apiAccessService.updateSettings(demoPairingQrCode)
+            }
+        }
+
+    @Test
+    fun `when demo URL and Tor running then stops Tor before settings update`() =
+        runTest(testDispatcher) {
+            // Given
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
+            setupSuccessfulPairing(demoPairingQrCode)
+            setupSuccessfulWebSocketConnection()
+            useCase = createUseCase()
+
+            // When
+            useCase(demoPairingQrCode)
+            advanceUntilIdle()
+
+            // Then
+            coVerify { kmpTorService.stopTor() }
+        }
+
+    @Test
+    fun `when demo URL and Tor already stopped then does not call stopTor`() =
+        runTest(testDispatcher) {
+            // Given
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
+            setupSuccessfulPairing(demoPairingQrCode)
+            setupSuccessfulWebSocketConnection()
+            useCase = createUseCase()
+
+            // When
+            useCase(demoPairingQrCode)
+            advanceUntilIdle()
+
+            // Then — no need to stop something that's already stopped
+            coVerify(exactly = 0) { kmpTorService.stopTor() }
+        }
+
+    @Test
+    fun `when non-demo URL then does not eagerly dispose WS client`() =
+        runTest(testDispatcher) {
+            // Given
+            setupSuccessfulPairing()
+            setupSuccessfulWebSocketConnection()
+            useCase = createUseCase()
+
+            // When
+            useCase(clearnetPairingQrCode)
+            advanceUntilIdle()
+
+            // Then — the eager teardown is demo-only; non-demo paths must keep the
+            // existing reactive update path so we don't churn working connections.
+            coVerify(exactly = 0) { wsClientService.disposeClient() }
+        }
+
+    @Test
+    fun `when demo URL and dispose throws then continues with settings update`() =
+        runTest(testDispatcher) {
+            // Given — disposeClient must not abort the demo flow even if it fails
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
+            coEvery { wsClientService.disposeClient() } throws IllegalStateException("dispose failed")
+            setupSuccessfulPairing(demoPairingQrCode)
+            setupSuccessfulWebSocketConnection()
+            useCase = createUseCase()
+
+            // When
+            val result = useCase(demoPairingQrCode)
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(result)
+            coVerify { apiAccessService.updateSettings(demoPairingQrCode) }
         }
 
     // ========== Helper Methods ==========

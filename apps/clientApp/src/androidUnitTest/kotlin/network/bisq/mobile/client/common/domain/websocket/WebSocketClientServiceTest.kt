@@ -854,6 +854,102 @@ class WebSocketClientServiceTest {
         }
 
     @Test
+    fun `proxy mode change disposes prior client and stops collecting its state updates`() =
+        runTest(testDispatcher) {
+            // Given — simulate the demo switch: previous Tor-routed client gets replaced
+            // by a clearnet client. The prior client's still-cancelling reconnect loop
+            // must not leak ConnectionState updates into the new client's lifecycle.
+            val priorStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val priorClient = mockk<WebSocketClient>(relaxed = true)
+            every { priorClient.webSocketClientStatus } returns priorStateFlow
+            every { priorClient.apiUrl } returns
+                mockk {
+                    every { host } returns "abc.onion"
+                }
+            val newClient = mockk<WebSocketClient>(relaxed = true)
+            every { newClient.webSocketClientStatus } returns MutableStateFlow(ConnectionState.Disconnected())
+            every { newClient.apiUrl } returns
+                mockk {
+                    every { host } returns "demo.bisq"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returnsMany
+                listOf(priorClient, newClient)
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // First emission: Tor-routed client created
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://abc.onion:8090",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    externalProxyUrl = "127.0.0.1:9050",
+                    isTorProxy = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertTrue(webSocketClientService.isConnected())
+
+            // When — proxy switches off (demo)
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://demo.bisq:21",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Old client must be disposed
+            coVerify { priorClient.dispose() }
+
+            // And — critically — a late status emission from the still-cancelling old
+            // client must NOT pollute the new client's connection state.
+            priorStateFlow.value =
+                ConnectionState.Disconnected(error = IllegalStateException("late ghost emission"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then connectionState reflects the new client (Disconnected with no error),
+            // not the late ghost emission from the disposed old client.
+            val state = webSocketClientService.connectionState.value
+            assertTrue(state is ConnectionState.Disconnected)
+            assertEquals(null, state.error)
+        }
+
+    @Test
+    fun `proxy mode unchanged with identical settings still skips redundant update`() =
+        runTest(testDispatcher) {
+            // Given — defensive check: the new proxy-mode-change branch must not regress
+            // the existing "skip identical settings" optimisation.
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val settings =
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                )
+            httpClientChangedFlow.emit(settings)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // When — identical re-emission
+            httpClientChangedFlow.emit(settings)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then — factory called once only (not on the redundant emission)
+            verify(exactly = 1) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    @Test
     fun `session renewal does not trigger when sessionService is null`() =
         runTest(testDispatcher) {
             // Given - service without sessionService

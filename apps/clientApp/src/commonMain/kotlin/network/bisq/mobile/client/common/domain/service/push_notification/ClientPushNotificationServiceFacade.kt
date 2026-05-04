@@ -154,11 +154,12 @@ class ClientPushNotificationServiceFacade(
         //   ECIES decryption client-side).
         // Without a valid key, the trusted node would either fail to encrypt
         // or fall back to a path the device can't decrypt — abort registration.
-        // Dispatched to IO because the Android implementation initializes Tink
-        // + AndroidKeyStore on first call (multi-second cost) and a synchronous
+        // Dispatched off the main thread because the Android implementation initializes
+        // Tink + AndroidKeyStore on first call (multi-second cost) and a synchronous
         // `commit()` to disk — both block whatever thread they run on, and
-        // `presenterScope` runs on `Dispatchers.Main`.
-        val symmetricKeyBase64 = withContext(Dispatchers.IO) { getOrCreatePushNotificationKeyBase64() }
+        // `presenterScope` runs on `Dispatchers.Main`. Using `Default` instead of `IO`
+        // because `Dispatchers.IO` is JVM-only (internal on Kotlin/Native).
+        val symmetricKeyBase64 = withContext(Dispatchers.Default) { getOrCreatePushNotificationKeyBase64() }
         validateSymmetricKey(platformInfo.type, symmetricKeyBase64)?.let { return it }
 
         log.i { "Registering device with deviceId: $deviceId, descriptor: $deviceDescriptor, platform: $platform" }

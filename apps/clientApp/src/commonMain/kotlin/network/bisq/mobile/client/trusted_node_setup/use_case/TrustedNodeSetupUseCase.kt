@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
+import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.getProxyOptionFromRestUrl
 import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.parseAndNormalizeUrl
@@ -70,6 +71,13 @@ class TrustedNodeSetupUseCase(
                 return false
             }
 
+            // Demo pairing must not inherit Tor/onion state from a prior session.
+            // Tear down any in-flight WS reconnect loop and stop Tor before settings
+            // propagate, so the reactive client recreation lands cleanly in NONE-proxy mode.
+            if (pairingQrCode.restApiUrl == DEMO_API_URL) {
+                tearDownPriorConnection()
+            }
+
             apiAccessService.updateSettings(pairingQrCode)
 
             val proxySettings = determineProxySettings(pairingQrCode, newApiUrl.host)
@@ -111,7 +119,7 @@ class TrustedNodeSetupUseCase(
 
             updateState(TrustedNodeConnectionStatus.Connected)
 
-            if (!proxySettings.isTor) {
+            if (!proxySettings.isTor && kmpTorService.state.value !is KmpTorService.TorState.Stopped) {
                 try {
                     kmpTorService.stopTor()
                 } catch (e: Exception) {
@@ -138,6 +146,21 @@ class TrustedNodeSetupUseCase(
                 connectionStatus = status,
                 serverVersion = serverVersion ?: it.serverVersion,
             )
+        }
+    }
+
+    private suspend fun tearDownPriorConnection() {
+        try {
+            wsClientService.disposeClient()
+        } catch (e: Exception) {
+            log.w(e) { "Failed to dispose WS client before demo switch" }
+        }
+        if (kmpTorService.state.value !is KmpTorService.TorState.Stopped) {
+            try {
+                kmpTorService.stopTor()
+            } catch (e: Exception) {
+                log.w(e) { "Failed to stop Tor before demo switch" }
+            }
         }
     }
 
