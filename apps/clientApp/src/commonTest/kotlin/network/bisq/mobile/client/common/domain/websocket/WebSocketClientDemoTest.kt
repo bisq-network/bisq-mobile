@@ -284,9 +284,13 @@ class WebSocketClientDemoTest {
             val event = result.webSocketEvent.value
             assertNotNull(event, "NUM_USER_PROFILES must emit a payload — bootstrap depends on it")
             assertEquals(Topic.NUM_USER_PROFILES, event.topic)
-            // Payload must deserialize as Int (the consumer in ClientUserProfileServiceFacade
-            // reads it as WebSocketEventPayload<Int>).
-            assertNotNull(event.deferredPayload)
+            // Payload must deserialize to Int — the consumer in ClientUserProfileServiceFacade
+            // reads it as WebSocketEventPayload<Int>. Verifying the contract here, not just
+            // that a non-null string was emitted.
+            val rawPayload = event.deferredPayload
+            assertNotNull(rawPayload)
+            val decoded = json.decodeFromString<Int>(rawPayload)
+            assertTrue(decoded > 0, "Demo NUM_USER_PROFILES count should be a positive Int")
         }
 
     @Test

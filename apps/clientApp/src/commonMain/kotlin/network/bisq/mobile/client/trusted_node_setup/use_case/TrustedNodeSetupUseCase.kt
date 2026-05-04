@@ -152,12 +152,17 @@ class TrustedNodeSetupUseCase(
     private suspend fun tearDownPriorConnection() {
         try {
             wsClientService.disposeClient()
+        } catch (e: CancellationException) {
+            // Cancellation must propagate — the parent coroutine wants to abort.
+            throw e
         } catch (e: Exception) {
             log.w(e) { "Failed to dispose WS client before demo switch" }
         }
         if (kmpTorService.state.value !is KmpTorService.TorState.Stopped) {
             try {
                 kmpTorService.stopTor()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.w(e) { "Failed to stop Tor before demo switch" }
             }

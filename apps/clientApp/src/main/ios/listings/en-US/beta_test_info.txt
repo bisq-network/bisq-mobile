@@ -5,7 +5,7 @@ WHAT TO TEST:
 • Offerbook and market data browsing from your trusted node
 • User profile, payment accounts, and reputation views
 • Tor connectivity (the app embeds a Tor client for .onion node addresses)
-• Settings — language, notifications (Android), trade rules
+• Settings — language, trade rules
 
 NO BISQ2 NODE? USE DEMO MODE:
 Enter the pairing code BISQ_DEMO_PAIRING_CODE on the trusted-node setup screen to launch the app with simulated data. Demo mode runs fully offline and showcases the app's UI without a live node connection. Some features are intentionally limited in demo mode (offer creation, push notifications, live transaction flows).

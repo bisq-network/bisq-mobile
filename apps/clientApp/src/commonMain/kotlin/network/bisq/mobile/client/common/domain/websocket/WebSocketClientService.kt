@@ -204,10 +204,17 @@ class WebSocketClientService(
      */
     suspend fun disposeClient() {
         clientUpdateMutex.withLock {
+            // Cancel state collection BEFORE disposing the client so a final dying
+            // status emission from the disposed client cannot overwrite the next
+            // updateWebSocketClient()'s fresh state. Symmetric with the
+            // proxyModeChanged branch in updateWebSocketClient().
+            stateCollectionJob?.cancel()
+            stateCollectionJob = null
             httpClientService.disposeClient()
             currentClient.value?.dispose()
             currentClient.value = null
             currentClientSettings = null
+            _connectionState.value = ConnectionState.Disconnected()
             requestedSubscriptions.value.forEach { entry ->
                 entry.value.resetSequence()
             }

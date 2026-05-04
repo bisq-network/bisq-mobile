@@ -292,23 +292,28 @@ object FakeSubscriptionData {
             )
         val offerDate = nowMillis - (spec.daysAgo * oneDayMillis)
         val makerKey = spec.makerKey
+        // The maker IS the user-profile owner, so makerNetworkId.pubKey must match
+        // userProfile.networkId.pubKey exactly (real protocol invariant). Build once
+        // and reuse to prevent drift.
+        val makerPubKey =
+            PubKeyVO(
+                publicKey = PublicKeyVO(encoded = "$makerKey-pub"),
+                keyId = "$makerKey-keyid",
+                hash = "$makerKey-hash",
+                id = makerKey,
+            )
+        val makerNetworkId =
+            NetworkIdVO(
+                addressByTransportTypeMap = AddressByTransportTypeMapVO(map = mapOf()),
+                pubKey = makerPubKey,
+            )
 
         return OfferItemPresentationDto(
             bisqEasyOffer =
                 BisqEasyOfferVO(
                     id = "demo-offer-$idx",
                     date = offerDate,
-                    makerNetworkId =
-                        NetworkIdVO(
-                            addressByTransportTypeMap = AddressByTransportTypeMapVO(map = mapOf()),
-                            pubKey =
-                                PubKeyVO(
-                                    publicKey = PublicKeyVO(encoded = "$makerKey-pub"),
-                                    keyId = "$makerKey-keyid",
-                                    hash = "$makerKey-hash",
-                                    id = makerKey,
-                                ),
-                        ),
+                    makerNetworkId = makerNetworkId,
                     direction = spec.direction,
                     market = market,
                     amountSpec = QuoteSideFixedAmountSpecVO(amount = spec.fiatAmount),
@@ -346,17 +351,7 @@ object FakeSubscriptionData {
                             duration = 2000L,
                         ),
                     avatarVersion = 0,
-                    networkId =
-                        NetworkIdVO(
-                            addressByTransportTypeMap = AddressByTransportTypeMapVO(map = mapOf()),
-                            pubKey =
-                                PubKeyVO(
-                                    publicKey = PublicKeyVO("$makerKey-pubkey"),
-                                    keyId = "$makerKey-keyid",
-                                    hash = "$makerKey-pubkeyhash",
-                                    id = "$makerKey-id",
-                                ),
-                        ),
+                    networkId = makerNetworkId,
                     terms = "",
                     statement = "",
                     applicationVersion = "",
@@ -369,8 +364,11 @@ object FakeSubscriptionData {
             formattedBaseAmount = "",
             formattedPrice = "",
             formattedPriceSpec = "",
-            quoteSidePaymentMethods = listOf(spec.bitcoinPaymentMethod),
-            baseSidePaymentMethods = listOf(spec.fiatPaymentMethod),
+            // baseSide = BTC delivery method, quoteSide = fiat delivery method.
+            // The original hardcoded demo offers had these swapped; preserved here as
+            // the correct mapping while keeping the existing field naming.
+            baseSidePaymentMethods = listOf(spec.bitcoinPaymentMethod),
+            quoteSidePaymentMethods = listOf(spec.fiatPaymentMethod),
             reputationScore =
                 ReputationScoreVO(
                     totalScore = spec.reputationTotalScore,

@@ -922,6 +922,53 @@ class WebSocketClientServiceTest {
         }
 
     @Test
+    fun `disposeClient cancels state collection so old client cannot pollute new state`() =
+        runTest(testDispatcher) {
+            // Given - a connected client whose state flow we control after disposal
+            val priorStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val priorClient = mockk<WebSocketClient>(relaxed = true)
+            every { priorClient.webSocketClientStatus } returns priorStateFlow
+            every { priorClient.apiUrl } returns
+                mockk {
+                    every { host } returns "abc.onion"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns priorClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://abc.onion:8090",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    externalProxyUrl = "127.0.0.1:9050",
+                    isTorProxy = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertTrue(webSocketClientService.isConnected())
+
+            // When - disposeClient() is called explicitly
+            webSocketClientService.disposeClient()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // The old client's state collector must be cancelled — a late ghost
+            // emission from the (now disposed) client's StateFlow must not leak
+            // through into _connectionState.
+            priorStateFlow.value =
+                ConnectionState.Disconnected(error = IllegalStateException("late ghost emission"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then connectionState reflects the clean disconnected state from
+            // disposeClient(), not the late ghost emission.
+            val state = webSocketClientService.connectionState.value
+            assertTrue(state is ConnectionState.Disconnected)
+            assertEquals(null, state.error)
+        }
+
+    @Test
     fun `proxy mode unchanged with identical settings still skips redundant update`() =
         runTest(testDispatcher) {
             // Given — defensive check: the new proxy-mode-change branch must not regress

@@ -4,9 +4,12 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -861,6 +864,33 @@ class TrustedNodeSetupUseCaseTest {
             // Then — the eager teardown is demo-only; non-demo paths must keep the
             // existing reactive update path so we don't churn working connections.
             coVerify(exactly = 0) { wsClientService.disposeClient() }
+        }
+
+    @Test
+    fun `when invoke is cancelled during teardown then aborts before settings update`() =
+        runTest(testDispatcher) {
+            // Given - dispose is suspended (simulating an in-flight teardown). When the
+            // parent coroutine is cancelled, tearDownPriorConnection must rethrow the
+            // CancellationException (not swallow it) so updateSettings is never reached.
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
+            val disposeStarted = CompletableDeferred<Unit>()
+            coEvery { wsClientService.disposeClient() } coAnswers {
+                disposeStarted.complete(Unit)
+                awaitCancellation()
+            }
+            useCase = createUseCase()
+
+            // When
+            val job =
+                backgroundScope.async {
+                    useCase(demoPairingQrCode)
+                }
+            disposeStarted.await()
+            job.cancel()
+            advanceUntilIdle()
+
+            // Then — updateSettings must NOT have been called; cancellation aborted the flow.
+            coVerify(exactly = 0) { apiAccessService.updateSettings(any()) }
         }
 
     @Test
