@@ -16,6 +16,8 @@ import network.bisq.mobile.data.service.network.KmpTorService
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.test.KoinTest
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -26,17 +28,29 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ApplicationBootstrapFacadeTest : KoinTest {
     private val testDispatcher = StandardTestDispatcher()
+    private var previousOut: PrintStream? = null
+    private var previousErr: PrintStream? = null
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         startKoin { modules(testModule) }
+        // Failure-path tests intentionally drive the facade through Tor failures; the
+        // production code logs the staged failure to stdout/stderr. Capture both for the
+        // lifetime of the test so that diagnostic output (in particular anything that
+        // could pattern-match Gradle's test-worker-failure heuristic) is contained.
+        previousOut = System.out
+        previousErr = System.err
+        System.setOut(PrintStream(ByteArrayOutputStream()))
+        System.setErr(PrintStream(ByteArrayOutputStream()))
     }
 
     @AfterTest
     fun tearDown() {
         stopKoin()
         Dispatchers.resetMain()
+        previousOut?.let { System.setOut(it) }
+        previousErr?.let { System.setErr(it) }
     }
 
     @Test
