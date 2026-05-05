@@ -43,7 +43,7 @@ fun MyTradesScreen(initialTab: Int = 0) {
         Column(modifier = Modifier.fillMaxSize()) {
             ToggleTab(
                 options = tabOptions,
-                selectedOption = tabOptions[uiState.selectedTab],
+                selectedOption = tabOptions.getOrElse(uiState.selectedTab) { tabOptions.first() },
                 onOptionSelect = { option ->
                     presenter.onAction(MyTradesUiAction.OnSelectTab(tabOptions.indexOf(option)))
                 },

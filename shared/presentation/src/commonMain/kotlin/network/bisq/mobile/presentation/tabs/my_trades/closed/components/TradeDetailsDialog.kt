@@ -243,10 +243,13 @@ private fun buildAmountAndPrice(item: ClosedTradeListItem): AnnotatedString {
         withStyle(greyBase) { append(" (") }
         withStyle(greyBase) { append(baseAmount) }
         withStyle(greySmall) { append(" BTC") }
-        withStyle(greyBase) { append(") @ ") }
-        append(priceValue)
-        if (priceCodes.isNotBlank()) {
-            withStyle(whiteSmall) { append(" $priceCodes") }
+        withStyle(greyBase) { append(")") }
+        if (priceValue.isNotBlank()) {
+            withStyle(greyBase) { append(" @ ") }
+            append(priceValue)
+            if (priceCodes.isNotBlank()) {
+                withStyle(whiteSmall) { append(" $priceCodes") }
+            }
         }
     }
 }

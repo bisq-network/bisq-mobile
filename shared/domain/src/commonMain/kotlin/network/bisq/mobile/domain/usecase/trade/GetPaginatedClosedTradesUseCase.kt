@@ -21,7 +21,7 @@ class GetPaginatedClosedTradesUseCase(
     ): Result<PaginatedResponse<ClosedTradeListItem>> =
         tradesServiceFacade.getClosedTradesPaginated(
             params = PaginationParams.of(page, pageSize),
-            search = searchQuery.takeIf { it.isNotBlank() },
+            search = searchQuery.trim().takeIf { it.isNotEmpty() },
             sortBy = sortBy,
             outcomeFilter = outcomeFilter,
             roleFilter = roleFilter,

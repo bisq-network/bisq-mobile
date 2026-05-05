@@ -36,7 +36,10 @@ class ClosedTradesPagingSource(
                     nextKey = if (page >= response.totalPages) null else page + 1,
                 )
             },
-            onFailure = { LoadResult.Error(it) },
+            onFailure = {
+                totalCountSink.value = null
+                LoadResult.Error(it)
+            },
         )
     }
 

@@ -260,7 +260,7 @@ class BisqFirebaseMessagingService :
         when (category) {
             NotificationCategory.TRADE_UPDATE,
             NotificationCategory.CHAT_MESSAGE,
-            -> NavRoute.TabOpenTradeList
+            -> NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN)
             // No deep link for offerbook market or general — fall back to
             // launcher intent in `pendingIntentFor`.
             NotificationCategory.OFFER_UPDATE,

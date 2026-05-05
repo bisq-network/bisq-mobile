@@ -170,6 +170,7 @@ private fun OpenTradeListContent(
 
                     OpenTradeListBody(
                         filteredOpenTrades = uiState.filteredOpenTrades,
+                        searchQuery = uiState.searchQuery,
                         tradeRulesConfirmed = tradeRulesConfirmed,
                         tradeGuideVisible = uiState.tradeGuideVisible,
                         tradesWithUnreadMessages = tradesWithUnreadMessages,
@@ -186,6 +187,7 @@ private fun OpenTradeListContent(
 @Composable
 private fun OpenTradeListBody(
     filteredOpenTrades: List<TradeItemPresentationModel>,
+    searchQuery: String,
     tradeRulesConfirmed: Boolean,
     tradeGuideVisible: Boolean,
     tradesWithUnreadMessages: Map<String, Int>,
@@ -196,7 +198,15 @@ private fun OpenTradeListBody(
     if (filteredOpenTrades.isEmpty()) {
         OpenTradeListNoResultsState(
             modifier = Modifier.fillMaxSize(),
-            onClearSearch = { onAction(OpenTradeListUiAction.OnClearSearch) },
+            onClearSearch = {
+                onAction(
+                    if (searchQuery.isNotBlank()) {
+                        OpenTradeListUiAction.OnClearSearch
+                    } else {
+                        OpenTradeListUiAction.OnResetFilters
+                    },
+                )
+            },
         )
         return
     }

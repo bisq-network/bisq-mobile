@@ -131,7 +131,7 @@ class TradesApiGateway(
             buildList {
                 add("page=$page")
                 add("pageSize=$pageSize")
-                search?.let { add("search=${it.encodeURLParameter()}") }
+                search?.trim()?.takeIf { it.isNotEmpty() }?.let { add("search=${it.encodeURLParameter()}") }
                 sortByQuery?.let { add("sortBy=$it") }
                 directionQuery?.let { add("direction=$it") }
                 role.toRoleQueryValue()?.let { add("role=$it") }

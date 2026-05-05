@@ -207,7 +207,7 @@ val presentationModule =
                 get(),
             )
         }
-        factory { FilterOpenTradesUseCase() }
+        single { FilterOpenTradesUseCase() }
         factory { OpenTradeListPresenter(get(), get(), get(), get(), get()) }
         factory { MyTradesPresenter(get()) }
         // Trade history dependencies
