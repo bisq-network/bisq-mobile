@@ -18,7 +18,7 @@ fun CryptoPaymentAccount.toVO(): CryptoAccountVO? =
         is MoneroAccount ->
             CryptoAccountVO(
                 accountName = accountName,
-                currencyName = accountPayload.currencyName.orEmpty(),
+                currencyName = "${accountPayload.currencyName} (${accountPayload.currencyCode})",
                 address = accountPayload.address,
                 paymentType = PaymentTypeVO.XMR,
             )
@@ -27,7 +27,7 @@ fun CryptoPaymentAccount.toVO(): CryptoAccountVO? =
             getPaymentTypeVOFromCryptoCurrencyCode(accountPayload.currencyCode)?.let { paymentMethod ->
                 CryptoAccountVO(
                     accountName = accountName,
-                    currencyName = accountPayload.currencyName.orEmpty(),
+                    currencyName = "${accountPayload.currencyName} (${accountPayload.currencyCode})",
                     address = accountPayload.address,
                     paymentType = paymentMethod,
                 )

@@ -195,8 +195,5 @@ class UserDefinedPaymentAccountsApiGatewayTest {
         UserDefinedFiatAccountDto(
             accountName = accountName,
             accountPayload = UserDefinedFiatAccountPayloadDto(accountData = accountData),
-            tradeLimitInfo = null,
-            tradeDuration = null,
-            creationDate = null,
         )
 }

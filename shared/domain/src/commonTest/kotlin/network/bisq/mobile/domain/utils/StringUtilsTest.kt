@@ -102,5 +102,26 @@ class StringUtilsTest {
         assertEquals("%E6%97%A5%E6%9C%AC", "日本".urlEncode()) // Japanese word for Japan
         assertEquals("%F0%9F%8D%95%F0%9F%8D%94", "🍕🍔".urlEncode()) // pizza + burger emoji
     }
+
     /** url-encoding end **/
+
+    @Test
+    fun `EMPTY_STRING is empty`() {
+        assertEquals("", EMPTY_STRING)
+    }
+
+    @Test
+    fun `EMPTY_STRING has zero length`() {
+        assertEquals(0, EMPTY_STRING.length)
+    }
+
+    @Test
+    fun `EMPTY_STRING is blank`() {
+        assertEquals(true, EMPTY_STRING.isBlank())
+    }
+
+    @Test
+    fun `EMPTY_STRING is empty check`() {
+        assertEquals(true, EMPTY_STRING.isEmpty())
+    }
 }

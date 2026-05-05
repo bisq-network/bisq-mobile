@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -53,6 +52,8 @@ abstract class MiscItemsPresenter(
         loadIgnoredUsers()
     }
 
+    abstract fun getPaymentAccountNavRoute(): NavRoute
+
     private fun buildMenu(showIgnoredUser: Boolean): MenuItem.Parent {
         val defaultList: MutableList<MenuItem> =
             mutableListOf(
@@ -64,7 +65,7 @@ abstract class MiscItemsPresenter(
                 MenuItem.Leaf(
                     label = "mobile.more.paymentAccounts".i18n(),
                     icon = Res.drawable.nav_accounts,
-                    route = if (BuildConfig.MU_SIG_ENABLED) NavRoute.PaymentAccountsMusig else NavRoute.PaymentAccounts,
+                    route = getPaymentAccountNavRoute(),
                 ),
                 MenuItem.Leaf(
                     label = "mobile.more.reputation".i18n(),

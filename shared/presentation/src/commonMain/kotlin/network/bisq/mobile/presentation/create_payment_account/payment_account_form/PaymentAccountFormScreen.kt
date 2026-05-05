@@ -26,6 +26,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
@@ -38,6 +39,7 @@ import network.bisq.mobile.presentation.create_payment_account.payment_account_f
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.PaymentMethodVO
+import network.bisq.mobile.presentation.create_payment_account.ui.UnsupportedAccountState
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
 
 @ExcludeFromCoverage
@@ -51,15 +53,11 @@ fun PaymentAccountFormScreen(
 
     PaymentAccountFormContent(
         paymentMethod = paymentMethod,
-        accountName = accountNameEntryState?.value?.value ?: EMPTY_STRING,
-        accountNameError = accountNameEntryState?.value?.errorMessage,
-        onAccountNameChange = {
-            methodPresenter?.onAction(AccountFormUiAction.OnUniqueAccountNameChange(it))
+        accountNameEntry = accountNameEntryState?.value ?: DataEntry(),
+        onAction = { action ->
+            methodPresenter?.onAction(action)
         },
         isNextEnabled = methodPresenter != null,
-        onNextClick = {
-            methodPresenter?.onAction(AccountFormUiAction.OnNextClick)
-        },
         formContent = {
             PaymentMethodFormContent(
                 paymentMethod = paymentMethod,
@@ -73,11 +71,9 @@ fun PaymentAccountFormScreen(
 @Composable
 fun PaymentAccountFormContent(
     paymentMethod: PaymentMethodVO,
-    accountName: String,
-    accountNameError: String?,
-    onAccountNameChange: (String) -> Unit,
+    accountNameEntry: DataEntry,
+    onAction: (AccountFormUiAction) -> Unit,
     isNextEnabled: Boolean,
-    onNextClick: () -> Unit,
     formContent: @Composable () -> Unit = {},
 ) {
     val accountNameHelperText = "mobile.user.paymentAccounts.details.accountName.helper".i18n()
@@ -98,15 +94,15 @@ fun PaymentAccountFormContent(
                     .verticalScroll(rememberScrollState()),
         ) {
             BisqTextFieldV0(
-                value = accountName,
-                onValueChange = onAccountNameChange,
+                value = accountNameEntry.value,
+                onValueChange = { onAction(AccountFormUiAction.OnUniqueAccountNameChange(it)) },
                 label = "paymentAccounts.summary.accountNameOverlay.accountName.description".i18n(),
                 placeholder =
                     "paymentAccounts.createAccount.prompt".i18n(
                         "paymentAccounts.summary.accountNameOverlay.accountName.description".i18n().lowercase(),
                     ),
-                isError = accountNameError != null,
-                bottomMessage = accountNameError ?: accountNameHelperText,
+                isError = accountNameEntry.errorMessage != null,
+                bottomMessage = accountNameEntry.errorMessage ?: accountNameHelperText,
                 singleLine = true,
             )
 
@@ -143,7 +139,7 @@ fun PaymentAccountFormContent(
             text = "action.next".i18n(),
             modifier = Modifier.fillMaxWidth(),
             disabled = !isNextEnabled,
-            onClick = onNextClick,
+            onClick = { onAction(AccountFormUiAction.OnNextClick) },
         )
     }
 }
@@ -158,14 +154,16 @@ private fun PaymentMethodFormContent(
     when (paymentMethod.paymentType) {
         PaymentTypeVO.ZELLE -> {
             val presenter = methodPresenter as? ZelleFormPresenter
-            if (presenter != null) {
+            val fiatPaymentMethod = paymentMethod as? FiatPaymentMethodVO
+            if (presenter != null && fiatPaymentMethod != null) {
                 ZellePaymentAccountFormContent(
                     presenter = presenter,
+                    paymentMethod = fiatPaymentMethod,
                     onNavigateToNextScreen = onNavigateToNextScreen,
                     modifier = modifier,
                 )
             } else {
-                UnsupportedPaymentMethodFormState(modifier = modifier)
+                UnsupportedAccountState(modifier = modifier.fillMaxWidth())
             }
         }
 
@@ -180,30 +178,21 @@ private fun PaymentMethodFormContent(
                     modifier = modifier,
                 )
             } else {
-                UnsupportedPaymentMethodFormState(modifier = modifier)
+                UnsupportedAccountState(modifier = modifier.fillMaxWidth())
             }
         }
 
         else -> {
-            UnsupportedPaymentMethodFormState(modifier = modifier)
+            UnsupportedAccountState(modifier = modifier.fillMaxWidth())
         }
     }
-}
-
-@Composable
-private fun UnsupportedPaymentMethodFormState(modifier: Modifier = Modifier) {
-    BisqText.BaseRegular(
-        text = "mobile.error.generic".i18n(),
-        color = BisqTheme.colors.warning,
-        modifier = modifier.fillMaxWidth(),
-    )
 }
 
 @Preview
 @Composable
 private fun UnsupportedPaymentMethodFormStatePreview() {
     BisqTheme.Preview {
-        UnsupportedPaymentMethodFormState()
+        UnsupportedAccountState(modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -217,16 +206,15 @@ private fun PaymentAccountFormContentPreview_DefaultPreview() {
             supportedCurrencyCodes = "",
             countryNames = "",
             chargebackRisk = null,
-            restrictions = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
         )
     BisqTheme.Preview {
         PaymentAccountFormContent(
             paymentMethod = paymentMethod,
-            accountName = "My account",
-            accountNameError = null,
-            onAccountNameChange = {},
+            accountNameEntry = DataEntry(value = "My account"),
+            onAction = {},
             isNextEnabled = true,
-            onNextClick = {},
             formContent = {
                 Column {
                     BisqText.BaseRegularGrey("Method-specific form preview")
@@ -246,16 +234,19 @@ private fun PaymentAccountFormContentPreview_ErrorPreview() {
             supportedCurrencyCodes = "",
             countryNames = "",
             chargebackRisk = null,
-            restrictions = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
         )
     BisqTheme.Preview {
         PaymentAccountFormContent(
             paymentMethod = paymentMethod,
-            accountName = "a",
-            accountNameError = "validation.tooShortOrTooLong".i18n(3, 100),
-            onAccountNameChange = {},
+            accountNameEntry =
+                DataEntry(
+                    value = "a",
+                    errorMessage = "validation.tooShortOrTooLong".i18n(3, 100),
+                ),
+            onAction = {},
             isNextEnabled = false,
-            onNextClick = {},
             formContent = {
                 Column {
                     BisqText.BaseRegularGrey("Method-specific form preview")

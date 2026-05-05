@@ -78,11 +78,10 @@ fun CreatePaymentAccountNavHost(
         }
 
         composable<CreatePaymentAccountRoute.PaymentAccountReview> {
-            if (paymentAccount != null && paymentMethod != null) {
+            if (paymentAccount != null) {
                 PaymentAccountReviewScreen(
                     onCloseCreateAccountFlow = onBack,
                     paymentAccount = paymentAccount,
-                    paymentMethod = paymentMethod,
                 )
             } else {
                 ErrorState(message = "mobile.error.generic".i18n())

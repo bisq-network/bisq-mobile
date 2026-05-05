@@ -296,6 +296,7 @@ class SelectCryptoPaymentMethodPresenterTest {
             name = name,
             category = category,
             supportAutoConf = supportAutoConf,
-            restrictions = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
         )
 }

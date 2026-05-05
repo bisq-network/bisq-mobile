@@ -66,7 +66,8 @@ private fun previewCryptoPaymentMethod(
         code = code,
         name = name,
         supportAutoConf = false,
-        restrictions = EMPTY_STRING,
+        tradeLimitInfo = EMPTY_STRING,
+        tradeDuration = EMPTY_STRING,
     )
 
 @Preview

@@ -42,6 +42,7 @@ import network.bisq.mobile.presentation.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersScreen
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsScreen
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.PaymentAccountsMusigScreen
+import network.bisq.mobile.presentation.settings.payment_accounts_musig.detail.PaymentAccountMusigDetailScreen
 import network.bisq.mobile.presentation.settings.reputation.ReputationScreen
 import network.bisq.mobile.presentation.settings.resources.ResourcesScreen
 import network.bisq.mobile.presentation.settings.settings.SettingsScreen
@@ -116,6 +117,10 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     addScreen<NavRoute.UserProfile> { UserProfileScreen() }
     addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
     addScreen<NavRoute.PaymentAccountsMusig> { PaymentAccountsMusigScreen() }
+    addScreen<NavRoute.PaymentAccountsMusigDetail> { backStackEntry ->
+        val route: NavRoute.PaymentAccountsMusigDetail = backStackEntry.toRoute()
+        PaymentAccountMusigDetailScreen(accountName = route.accountName)
+    }
     addScreen<NavRoute.CreatePaymentAccount> { backStackEntry ->
         val route: NavRoute.CreatePaymentAccount = backStackEntry.toRoute()
         val accountType = runCatching { PaymentAccountType.valueOf(route.accountTypeName) }.getOrNull()

@@ -3,8 +3,10 @@ package network.bisq.mobile.client.tabs.more
 import bisqapps.apps.clientapp.generated.resources.Res
 import bisqapps.apps.clientapp.generated.resources.nav_trusted_node
 import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetupSettings
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 
@@ -12,6 +14,8 @@ class ClientMiscItemsPresenter(
     userProfileService: UserProfileServiceFacade,
     mainPresenter: MainPresenter,
 ) : MiscItemsPresenter(userProfileService, mainPresenter) {
+    override fun getPaymentAccountNavRoute(): NavRoute = if (BuildConfig.MU_SIG_ENABLED) NavRoute.PaymentAccountsMusig else NavRoute.PaymentAccounts
+
     override fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
         menuItems.add(
             menuItems.size - 2,

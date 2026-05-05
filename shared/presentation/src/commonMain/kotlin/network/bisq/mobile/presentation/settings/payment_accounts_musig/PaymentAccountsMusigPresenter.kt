@@ -33,13 +33,8 @@ open class PaymentAccountsMusigPresenter(
 
     fun onAction(action: PaymentAccountsMusigUiAction) {
         when (action) {
-            is PaymentAccountsMusigUiAction.OnDeleteAccountClick -> onDeleteAccountClick()
-            is PaymentAccountsMusigUiAction.OnCancelDeleteAccountClick -> onCancelDeleteAccountClick()
-            is PaymentAccountsMusigUiAction.OnConfirmDeleteAccountClick -> onConfirmDeleteAccountClick()
-            is PaymentAccountsMusigUiAction.OnSaveAccountClick -> onSaveAccountClick()
             is PaymentAccountsMusigUiAction.OnRetryLoadAccountsClick -> onRetryLoadAccountsClick()
-            is PaymentAccountsMusigUiAction.OnAccountSelect -> onAccountSelect(action.index)
-            is PaymentAccountsMusigUiAction.OnEditAccountClick -> onEditAccountClick()
+            is PaymentAccountsMusigUiAction.OnAccountClick -> onAccountClick(action.index)
             is PaymentAccountsMusigUiAction.OnTabSelect -> onTabSelect(action.tab)
             PaymentAccountsMusigUiAction.OnAddCryptoAccountClick -> onAddCryptoAccountClick()
             PaymentAccountsMusigUiAction.OnAddFiatAccountClick -> onAddFiatAccountClick()
@@ -86,7 +81,7 @@ open class PaymentAccountsMusigPresenter(
 
     private fun observeAccounts() {
         presenterScope.launch {
-            paymentAccountsServiceFacade.accounts.collect { accounts ->
+            paymentAccountsServiceFacade.accountsFlow.collect { accounts ->
                 _uiState.update { state ->
                     state.copy(
                         fiatAccounts = getFiatAccounts(accounts).mapNotNull { it.toVO() },
@@ -101,22 +96,22 @@ open class PaymentAccountsMusigPresenter(
         loadAccounts()
     }
 
-    private fun onEditAccountClick() {
-    }
+    private fun onAccountClick(index: Int) {
+        val state = uiState.value
+        val accountName =
+            if (state.selectedTab == PaymentAccountTab.FIAT) {
+                state.fiatAccounts
+                    .getOrNull(index)
+                    ?.accountName
+            } else {
+                state.cryptoAccounts
+                    .getOrNull(index)
+                    ?.accountName
+            }
 
-    private fun onSaveAccountClick() {
-    }
-
-    private fun onDeleteAccountClick() {
-    }
-
-    private fun onAccountSelect(index: Int) {
-    }
-
-    private fun onCancelDeleteAccountClick() {
-    }
-
-    private fun onConfirmDeleteAccountClick() {
+        if (accountName != null) {
+            navigateTo(NavRoute.PaymentAccountsMusigDetail(accountName))
+        }
     }
 
     private fun getFiatAccounts(accounts: List<PaymentAccount>): List<FiatPaymentAccount> = accounts.filterIsInstance<FiatPaymentAccount>()

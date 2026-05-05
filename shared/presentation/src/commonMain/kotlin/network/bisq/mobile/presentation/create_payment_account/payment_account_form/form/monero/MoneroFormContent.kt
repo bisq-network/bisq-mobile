@@ -38,6 +38,10 @@ fun MoneroPaymentAccountFormContent(
     val uiState by presenter.uiState.collectAsState()
     val currentOnNavigate by rememberUpdatedState(onNavigateToNextScreen)
 
+    LaunchedEffect(presenter, paymentMethod) {
+        presenter.initialize(paymentMethod)
+    }
+
     LaunchedEffect(presenter) {
         presenter.effect.collect { effect ->
             when (effect) {
@@ -55,7 +59,7 @@ fun MoneroPaymentAccountFormContent(
 }
 
 @Composable
-private fun MoneroFormContent(
+fun MoneroFormContent(
     uiState: MoneroFormUiState,
     paymentMethod: CryptoPaymentMethodVO,
     onAction: (AccountFormUiAction) -> Unit,
@@ -202,7 +206,8 @@ fun previewPaymentMethod(): CryptoPaymentMethodVO =
         code = "XMR",
         name = "Monero",
         supportAutoConf = true,
-        restrictions = EMPTY_STRING,
+        tradeLimitInfo = EMPTY_STRING,
+        tradeDuration = EMPTY_STRING,
     )
 
 @Preview

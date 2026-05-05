@@ -106,6 +106,9 @@ private fun SellerState1_WithAccountsAndDataPreview() {
                 accountPayload =
                     UserDefinedFiatAccountPayload(
                         accountData = "user@example.com",
+                        currency = "USD",
+                        country = "US",
+                        paymentMethodName = "PayPal",
                     ),
             ),
             UserDefinedFiatAccount(
@@ -113,6 +116,9 @@ private fun SellerState1_WithAccountsAndDataPreview() {
                 accountPayload =
                     UserDefinedFiatAccountPayload(
                         accountData = "IBAN: DE89370400440532013000",
+                        currency = "EUR",
+                        country = "DE",
+                        paymentMethodName = "Bank Transfer",
                     ),
             ),
             UserDefinedFiatAccount(
@@ -120,6 +126,9 @@ private fun SellerState1_WithAccountsAndDataPreview() {
                 accountPayload =
                     UserDefinedFiatAccountPayload(
                         accountData = "+1234567890",
+                        currency = "USD",
+                        country = "US",
+                        paymentMethodName = "Revolut",
                     ),
             ),
         )
@@ -146,6 +155,9 @@ private fun SellerState1_WithAccountsEmptyDataPreview() {
                 accountPayload =
                     UserDefinedFiatAccountPayload(
                         accountData = "user@example.com",
+                        currency = "USD",
+                        country = "US",
+                        paymentMethodName = "PayPal",
                     ),
             ),
             UserDefinedFiatAccount(
@@ -153,6 +165,9 @@ private fun SellerState1_WithAccountsEmptyDataPreview() {
                 accountPayload =
                     UserDefinedFiatAccountPayload(
                         accountData = "IBAN: DE89370400440532013000",
+                        currency = "EUR",
+                        country = "DE",
+                        paymentMethodName = "Bank Transfer",
                     ),
             ),
         )

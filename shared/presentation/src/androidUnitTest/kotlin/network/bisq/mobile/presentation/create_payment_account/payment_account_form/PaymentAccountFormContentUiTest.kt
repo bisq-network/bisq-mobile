@@ -14,9 +14,12 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import org.junit.Before
 import org.junit.Rule
@@ -28,6 +31,17 @@ import kotlin.test.assertEquals
 class PaymentAccountFormContentUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    val sampleZellePaymentMethod: FiatPaymentMethodVO =
+        FiatPaymentMethodVO(
+            paymentType = PaymentTypeVO.ZELLE,
+            name = "Zelle",
+            supportedCurrencyCodes = "USD",
+            countryNames = "United States",
+            chargebackRisk = FiatPaymentMethodChargebackRiskVO.MODERATE,
+            tradeLimitInfo = "5000.00",
+            tradeDuration = "4 days",
+        )
 
     @Before
     fun setup() {
@@ -48,12 +62,10 @@ class PaymentAccountFormContentUiTest {
     fun `renders form shell and payment method metadata`() {
         setTestContent {
             PaymentAccountFormContent(
-                paymentMethod = samplePaymentMethod(),
-                accountName = "My account",
-                accountNameError = null,
-                onAccountNameChange = {},
+                paymentMethod = sampleZellePaymentMethod,
+                accountNameEntry = DataEntry(value = "My account"),
+                onAction = {},
                 isNextEnabled = true,
-                onNextClick = {},
             )
         }
 
@@ -72,12 +84,10 @@ class PaymentAccountFormContentUiTest {
     fun `when next disabled then next button is disabled`() {
         setTestContent {
             PaymentAccountFormContent(
-                paymentMethod = samplePaymentMethod(),
-                accountName = "",
-                accountNameError = null,
-                onAccountNameChange = {},
+                paymentMethod = sampleZellePaymentMethod,
+                accountNameEntry = DataEntry(value = ""),
+                onAction = {},
                 isNextEnabled = false,
-                onNextClick = {},
             )
         }
 
@@ -85,51 +95,49 @@ class PaymentAccountFormContentUiTest {
     }
 
     @Test
-    fun `when next enabled then clicking next invokes callback`() {
-        var nextClicks = 0
+    fun `when next enabled then clicking next invokes action`() {
+        var latestAction: AccountFormUiAction? = null
         setTestContent {
             PaymentAccountFormContent(
-                paymentMethod = samplePaymentMethod(),
-                accountName = "Ready",
-                accountNameError = null,
-                onAccountNameChange = {},
+                paymentMethod = sampleZellePaymentMethod,
+                accountNameEntry = DataEntry(value = "Ready"),
+                onAction = { action -> latestAction = action },
                 isNextEnabled = true,
-                onNextClick = { nextClicks++ },
             )
         }
 
         composeTestRule.onNodeWithText("action.next".i18n()).assertIsEnabled().performClick()
-        assertEquals(1, nextClicks)
+        assertEquals(AccountFormUiAction.OnNextClick, latestAction)
     }
 
     @Test
-    fun `typing account name invokes change callback`() {
-        var latestValue = ""
+    fun `typing account name emits unique account name change action`() {
+        var latestAction: AccountFormUiAction? = null
         setTestContent {
             PaymentAccountFormContent(
-                paymentMethod = samplePaymentMethod(),
-                accountName = "",
-                accountNameError = null,
-                onAccountNameChange = { latestValue = it },
+                paymentMethod = sampleZellePaymentMethod,
+                accountNameEntry = DataEntry(value = ""),
+                onAction = { action -> latestAction = action },
                 isNextEnabled = true,
-                onNextClick = {},
             )
         }
 
         composeTestRule.onNode(hasSetTextAction()).performTextInput("Updated")
-        assertEquals("Updated", latestValue)
+        assertEquals(AccountFormUiAction.OnUniqueAccountNameChange("Updated"), latestAction)
     }
 
     @Test
     fun `when account name has error then shows error instead of helper`() {
         setTestContent {
             PaymentAccountFormContent(
-                paymentMethod = samplePaymentMethod(),
-                accountName = "a",
-                accountNameError = "validation.tooShortOrTooLong".i18n(3, 100),
-                onAccountNameChange = {},
+                paymentMethod = sampleZellePaymentMethod,
+                accountNameEntry =
+                    DataEntry(
+                        value = "a",
+                        errorMessage = "validation.tooShortOrTooLong".i18n(3, 100),
+                    ),
+                onAction = {},
                 isNextEnabled = true,
-                onNextClick = {},
             )
         }
 
@@ -140,12 +148,10 @@ class PaymentAccountFormContentUiTest {
     fun `renders method specific slot content`() {
         setTestContent {
             PaymentAccountFormContent(
-                paymentMethod = samplePaymentMethod(),
-                accountName = "My account",
-                accountNameError = null,
-                onAccountNameChange = {},
+                paymentMethod = sampleZellePaymentMethod,
+                accountNameEntry = DataEntry(value = "My account"),
+                onAction = {},
                 isNextEnabled = true,
-                onNextClick = {},
                 formContent = {
                     Text("Method-specific form preview")
                 },
@@ -154,14 +160,4 @@ class PaymentAccountFormContentUiTest {
 
         composeTestRule.onNodeWithText("Method-specific form preview").assertIsDisplayed()
     }
-
-    private fun samplePaymentMethod(): FiatPaymentMethodVO =
-        FiatPaymentMethodVO(
-            paymentType = PaymentTypeVO.ZELLE,
-            name = "Zelle",
-            supportedCurrencyCodes = "USD",
-            countryNames = "United States",
-            chargebackRisk = null,
-            restrictions = "restrictions",
-        )
 }

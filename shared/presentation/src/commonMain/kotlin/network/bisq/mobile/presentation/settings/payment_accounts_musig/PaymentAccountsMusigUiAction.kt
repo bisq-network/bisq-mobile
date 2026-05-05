@@ -7,19 +7,9 @@ sealed interface PaymentAccountsMusigUiAction {
 
     data object OnAddCryptoAccountClick : PaymentAccountsMusigUiAction
 
-    data object OnDeleteAccountClick : PaymentAccountsMusigUiAction
-
-    data object OnCancelDeleteAccountClick : PaymentAccountsMusigUiAction
-
-    data object OnConfirmDeleteAccountClick : PaymentAccountsMusigUiAction
-
-    data object OnSaveAccountClick : PaymentAccountsMusigUiAction
-
-    data class OnAccountSelect(
+    data class OnAccountClick(
         val index: Int,
     ) : PaymentAccountsMusigUiAction
-
-    data object OnEditAccountClick : PaymentAccountsMusigUiAction
 
     data class OnTabSelect(
         val tab: PaymentAccountTab,

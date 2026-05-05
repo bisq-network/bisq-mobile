@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.create_payment_account.payment_account_f
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormUiState
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.validateOptionalIntInRange
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 
 const val SUB_ADDRESS_PLACEHOLDER = "TODO: SubAddress creation not implemented yet"
@@ -33,6 +34,12 @@ open class MoneroFormPresenter(
 
     private val _effect = MutableSharedFlow<MoneroFormEffect>()
     val effect = _effect.asSharedFlow()
+
+    lateinit var paymentMethod: CryptoPaymentMethodVO
+
+    fun initialize(paymentMethod: CryptoPaymentMethodVO) {
+        this.paymentMethod = paymentMethod
+    }
 
     override fun updateCryptoUiState(transform: (CryptoAccountFormUiState) -> CryptoAccountFormUiState) {
         _uiState.update { it.copy(crypto = transform(it.crypto)) }
@@ -111,6 +118,10 @@ open class MoneroFormPresenter(
     }
 
     override fun onNextClick() {
+        if (!::paymentMethod.isInitialized) {
+            return
+        }
+
         val validatedState =
             _uiState.updateAndGet { current ->
                 val validatedCrypto =
@@ -251,6 +262,9 @@ open class MoneroFormPresenter(
                     } else {
                         null
                     },
+                currencyCode = paymentMethod.code,
+                currencyName = paymentMethod.name,
+                supportAutoConf = paymentMethod.supportAutoConf,
             )
 
         presenterScope.launch {
@@ -261,8 +275,8 @@ open class MoneroFormPresenter(
                             accountName = uniqueAccountNameEntry.value.value.trim(),
                             accountPayload = payload,
                             creationDate = null,
-                            tradeLimitInfo = null,
-                            tradeDuration = null,
+                            tradeLimitInfo = paymentMethod.tradeLimitInfo,
+                            tradeDuration = paymentMethod.tradeDuration,
                         ),
                 ),
             )

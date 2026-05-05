@@ -22,7 +22,7 @@ class CryptoAccountVOTest {
         // Then
         assertNotNull(result)
         assertEquals("Monero Main", result.accountName)
-        assertEquals("Monero", result.currencyName)
+        assertEquals("Monero (XMR)", result.currencyName)
         assertEquals("84ABcdXy12pqRstUvw3456EfGh7890JKLMnOPQ", result.address)
         assertEquals(PaymentTypeVO.XMR, result.paymentType)
     }
@@ -38,7 +38,7 @@ class CryptoAccountVOTest {
         // Then
         assertNotNull(result)
         assertEquals("Other Crypto", result.accountName)
-        assertEquals("Ethereum", result.currencyName)
+        assertEquals("Ethereum (ETH)", result.currencyName)
         assertEquals("0x1fA2b3C4d5E6f708901234567890AbCdEf123456", result.address)
         assertEquals(PaymentTypeVO.ETH, result.paymentType)
     }
@@ -54,19 +54,6 @@ class CryptoAccountVOTest {
         // Then
         assertNotNull(result)
         assertEquals(PaymentTypeVO.LTC, result.paymentType)
-    }
-
-    @Test
-    fun `when mapping OtherCryptoAssetAccount with ETH then maps to ETH payment method via toVO`() {
-        // Given
-        val account = sampleOtherCryptoAssetAccount(currencyCode = "ETH", currencyName = "Ethereum")
-
-        // When
-        val result = account.toVO()
-
-        // Then
-        assertNotNull(result)
-        assertEquals(PaymentTypeVO.ETH, result.paymentType)
     }
 
     @Test
@@ -181,6 +168,8 @@ class CryptoAccountVOTest {
                     address = "84ABcdXy12pqRstUvw3456EfGh7890JKLMnOPQ",
                     isInstant = false,
                     useSubAddresses = false,
+                    supportAutoConf = true,
+                    currencyCode = "XMR",
                 ),
             creationDate = null,
             tradeLimitInfo = null,
@@ -199,6 +188,7 @@ class CryptoAccountVOTest {
                     currencyName = currencyName,
                     address = "0x1fA2b3C4d5E6f708901234567890AbCdEf123456",
                     isInstant = false,
+                    supportAutoConf = false,
                 ),
             creationDate = null,
             tradeLimitInfo = null,

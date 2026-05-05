@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.service.accounts.all.ClientPaymentAccountsServiceFacade
 import network.bisq.mobile.client.common.domain.service.accounts.all.PaymentAccountsApiGateway
@@ -14,7 +15,8 @@ import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentRailDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
-import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
@@ -41,11 +43,13 @@ class ClientPaymentAccountsServiceFacadeTest {
 
             // Then
             assertTrue(result.isSuccess)
-            val state = facade.accounts.value
+            val state = facade.accountsFlow.first()
             assertEquals(2, state.size)
             assertIs<UserDefinedFiatAccount>(state[0])
             assertEquals("A", state[0].accountName)
             assertEquals("B", state[1].accountName)
+            val accountsByName = facade.accountsByName.first()
+            assertEquals(setOf("A", "B"), accountsByName.keys)
             coVerify(exactly = 1) { apiGateway.getPaymentAccounts() }
         }
 
@@ -62,7 +66,8 @@ class ClientPaymentAccountsServiceFacadeTest {
             // Then
             assertTrue(result.isFailure)
             assertEquals(exception, result.exceptionOrNull())
-            assertTrue(facade.accounts.value.isEmpty())
+            assertTrue(facade.accountsFlow.first().isEmpty())
+            assertTrue(facade.accountsByName.first().isEmpty())
         }
 
     @Test
@@ -79,8 +84,10 @@ class ClientPaymentAccountsServiceFacadeTest {
 
             // Then
             assertTrue(result.isSuccess)
-            val state = facade.accounts.value
+            val state = facade.accountsFlow.first()
             assertEquals(listOf("A", "B"), state.map { it.accountName })
+            val accountsByName = facade.accountsByName.first()
+            assertEquals(setOf("A", "B"), accountsByName.keys)
             coVerify(exactly = 1) { apiGateway.addAccount(any()) }
         }
 
@@ -90,6 +97,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             // Given
             coEvery { apiGateway.getPaymentAccounts() } returns Result.success(listOf(sampleAccountDto("A")))
             facade.getAccounts()
+            val mapBefore = facade.accountsByName.first()
             val exception = RuntimeException("add failed")
             coEvery { apiGateway.addAccount(any()) } returns Result.failure(exception)
 
@@ -99,7 +107,8 @@ class ClientPaymentAccountsServiceFacadeTest {
             // Then
             assertTrue(result.isFailure)
             assertEquals(exception, result.exceptionOrNull())
-            assertEquals(listOf("A"), facade.accounts.value.map { it.accountName })
+            assertEquals(listOf("A"), currentAccountNames())
+            assertEquals(mapBefore, facade.accountsByName.first())
         }
 
     @Test
@@ -121,7 +130,9 @@ class ClientPaymentAccountsServiceFacadeTest {
 
             // Then
             assertTrue(result.isSuccess)
-            assertEquals(listOf("B"), facade.accounts.value.map { it.accountName })
+            assertEquals(listOf("B"), currentAccountNames())
+            val accountsByName = facade.accountsByName.first()
+            assertEquals(setOf("B"), accountsByName.keys)
             coVerify(exactly = 1) { apiGateway.deleteAccount("A") }
         }
 
@@ -131,6 +142,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             // Given
             coEvery { apiGateway.getPaymentAccounts() } returns Result.success(listOf(sampleAccountDto("A")))
             facade.getAccounts()
+            val mapBefore = facade.accountsByName.first()
             val exception = RuntimeException("delete failed")
             coEvery { apiGateway.deleteAccount("A") } returns Result.failure(exception)
 
@@ -140,11 +152,28 @@ class ClientPaymentAccountsServiceFacadeTest {
             // Then
             assertTrue(result.isFailure)
             assertEquals(exception, result.exceptionOrNull())
-            assertEquals(listOf("A"), facade.accounts.value.map { it.accountName })
+            assertEquals(listOf("A"), currentAccountNames())
+            assertEquals(mapBefore, facade.accountsByName.first())
         }
 
     @Test
-    fun `when getFiatPaymentMethods succeeds then maps dto list to domain list`() =
+    fun `when getAccounts has duplicate names then returns failure and keeps map state unchanged`() =
+        runTest {
+            // Given
+            coEvery { apiGateway.getPaymentAccounts() } returns Result.success(listOf(sampleAccountDto("A"), sampleAccountDto("A")))
+
+            // When
+            val result = facade.getAccounts()
+
+            // Then
+            assertTrue(result.isFailure)
+            assertIs<IllegalArgumentException>(result.exceptionOrNull())
+            assertTrue(facade.accountsFlow.first().isEmpty())
+            assertTrue(facade.accountsByName.first().isEmpty())
+        }
+
+    @Test
+    fun `when getFiatPaymentMethods succeeds then returns FiatPaymentMethod list`() =
         runTest {
             // Given
             val fiatMethodDto =
@@ -154,7 +183,8 @@ class ClientPaymentAccountsServiceFacadeTest {
                     supportedCurrencyCodes = "EUR",
                     countryNames = "Germany",
                     chargebackRisk = FiatPaymentMethodChargebackRiskDto.LOW,
-                    restrictions = EMPTY_STRING,
+                    tradeLimitInfo = EMPTY_STRING,
+                    tradeDuration = EMPTY_STRING,
                 )
             coEvery { apiGateway.getFiatPaymentMethods() } returns Result.success(listOf(fiatMethodDto))
 
@@ -163,9 +193,10 @@ class ClientPaymentAccountsServiceFacadeTest {
 
             // Then
             assertTrue(result.isSuccess)
-            val method = result.getOrThrow().single()
-            assertEquals(FiatPaymentRail.SEPA, method.paymentRail)
-            assertEquals("SEPA", method.name)
+            val methods = result.getOrThrow()
+            assertEquals(1, methods.size)
+            assertIs<FiatPaymentMethod>(methods.single())
+            coVerify(exactly = 1) { apiGateway.getFiatPaymentMethods() }
         }
 
     @Test
@@ -184,16 +215,17 @@ class ClientPaymentAccountsServiceFacadeTest {
         }
 
     @Test
-    fun `when getCryptoPaymentMethods succeeds then maps dto list to domain list`() =
+    fun `when getCryptoPaymentMethods succeeds then returns CryptoPaymentMethod list`() =
         runTest {
             // Given
             val cryptoMethodDto =
                 CryptoPaymentMethodDto(
                     code = "XMR",
                     name = "Monero",
-                    category = "PRIVACY",
+                    category = EMPTY_STRING,
                     supportAutoConf = true,
-                    restrictions = EMPTY_STRING,
+                    tradeLimitInfo = EMPTY_STRING,
+                    tradeDuration = EMPTY_STRING,
                 )
             coEvery { apiGateway.getCryptoPaymentMethods() } returns Result.success(listOf(cryptoMethodDto))
 
@@ -202,11 +234,10 @@ class ClientPaymentAccountsServiceFacadeTest {
 
             // Then
             assertTrue(result.isSuccess)
-            val method = result.getOrThrow().single()
-            assertEquals("XMR", method.code)
-            assertEquals("Monero", method.name)
-            assertEquals("PRIVACY", method.category)
-            assertTrue(method.supportAutoConf)
+            val methods = result.getOrThrow()
+            assertEquals(1, methods.size)
+            assertIs<CryptoPaymentMethod>(methods.single())
+            coVerify(exactly = 1) { apiGateway.getCryptoPaymentMethods() }
         }
 
     @Test
@@ -224,21 +255,26 @@ class ClientPaymentAccountsServiceFacadeTest {
             assertEquals(exception, result.exceptionOrNull())
         }
 
+    private suspend fun currentAccountNames(): List<String> = facade.accountsFlow.first().map { it.accountName }
+
     private fun sampleDomainAccount(accountName: String): UserDefinedFiatAccount =
         UserDefinedFiatAccount(
             accountName = accountName,
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "account-data",
+                    currency = EMPTY_STRING,
+                    country = EMPTY_STRING,
+                    paymentMethodName = EMPTY_STRING,
                 ),
         )
 
     private fun sampleAccountDto(accountName: String): PaymentAccountDto =
         UserDefinedFiatAccountDto(
             accountName = accountName,
-            accountPayload = UserDefinedFiatAccountPayloadDto(accountData = "account-data"),
-            tradeLimitInfo = null,
-            tradeDuration = null,
-            creationDate = null,
+            accountPayload =
+                UserDefinedFiatAccountPayloadDto(
+                    accountData = "account-data",
+                ),
         )
 }

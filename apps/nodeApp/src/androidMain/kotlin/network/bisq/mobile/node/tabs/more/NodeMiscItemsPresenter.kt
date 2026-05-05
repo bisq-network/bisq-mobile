@@ -12,6 +12,8 @@ class NodeMiscItemsPresenter(
     userProfileService: UserProfileServiceFacade,
     mainPresenter: MainPresenter,
 ) : MiscItemsPresenter(userProfileService, mainPresenter) {
+    override fun getPaymentAccountNavRoute(): NavRoute = NavRoute.PaymentAccounts
+
     override fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
         menuItems.add(
             MenuItem.Leaf(

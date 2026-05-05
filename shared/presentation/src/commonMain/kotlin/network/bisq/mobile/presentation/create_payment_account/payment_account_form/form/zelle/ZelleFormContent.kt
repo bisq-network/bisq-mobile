@@ -22,16 +22,22 @@ import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.ZelleFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.ui.PaymentMethodBackgroundInformationDialog
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 
 @ExcludeFromCoverage
 @Composable
 fun ZellePaymentAccountFormContent(
     presenter: ZelleFormPresenter,
+    paymentMethod: FiatPaymentMethodVO,
     onNavigateToNextScreen: (PaymentAccount) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by presenter.uiState.collectAsState()
     val currentOnNavigate by rememberUpdatedState(onNavigateToNextScreen)
+
+    LaunchedEffect(presenter, paymentMethod) {
+        presenter.initialize(paymentMethod)
+    }
 
     LaunchedEffect(presenter) {
         presenter.effect.collect { effect ->
@@ -53,7 +59,7 @@ fun ZellePaymentAccountFormContent(
 
 @ExcludeFromCoverage
 @Composable
-private fun ZelleFormContent(
+fun ZelleFormContent(
     uiState: ZelleFormUiState,
     onAction: (ZelleFormUiAction) -> Unit,
     modifier: Modifier = Modifier,

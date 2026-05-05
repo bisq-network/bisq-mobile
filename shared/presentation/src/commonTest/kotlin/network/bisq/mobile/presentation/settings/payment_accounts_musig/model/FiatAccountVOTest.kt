@@ -63,9 +63,9 @@ class FiatAccountVOTest {
         // Then
         assertNotNull(result)
         assertNull(result.chargebackRisk)
-        assertEquals(EMPTY_STRING, result.paymentMethodName)
+        assertEquals("Zelle", result.paymentMethodName)
         assertEquals(EMPTY_STRING, result.country)
-        assertEquals(EMPTY_STRING, result.currency)
+        assertEquals("USD", result.currency)
     }
 
     @Test
@@ -105,9 +105,9 @@ class FiatAccountVOTest {
                     holderName = "Alice Doe",
                     emailOrMobileNr = "alice@example.com",
                     chargebackRisk = null,
-                    paymentMethodName = null,
-                    currency = null,
                     country = null,
+                    paymentMethodName = "Zelle",
+                    currency = "USD",
                 ),
             creationDate = null,
             tradeLimitInfo = null,

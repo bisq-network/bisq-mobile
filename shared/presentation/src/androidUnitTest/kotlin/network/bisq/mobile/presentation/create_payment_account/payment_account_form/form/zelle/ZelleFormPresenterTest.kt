@@ -11,15 +11,14 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.ZelleFormUiAction
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZelleFormEffect
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZelleFormPresenter
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.validateEmailOrMobile
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.validateHolderName
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -56,6 +55,17 @@ class ZelleFormPresenterTest {
         }
 
         presenter = ZelleFormPresenter(mainPresenter = mainPresenter)
+        presenter.initialize(
+            FiatPaymentMethodVO(
+                paymentType = PaymentTypeVO.ZELLE,
+                name = "Zelle",
+                supportedCurrencyCodes = "USD",
+                countryNames = "United States",
+                chargebackRisk = FiatPaymentMethodChargebackRiskVO.MODERATE,
+                tradeLimitInfo = "5000.00",
+                tradeDuration = "4 days",
+            ),
+        )
     }
 
     @AfterTest
@@ -131,8 +141,8 @@ class ZelleFormPresenterTest {
             assertEquals("John Doe", account.accountPayload.holderName)
             assertEquals("user@example.com", account.accountPayload.emailOrMobileNr)
             assertNull(account.creationDate)
-            assertNull(account.tradeLimitInfo)
-            assertNull(account.tradeDuration)
+            assertEquals("5000.00", account.tradeLimitInfo)
+            assertEquals("4 days", account.tradeDuration)
         }
 
     @Test
@@ -156,8 +166,8 @@ class ZelleFormPresenterTest {
             assertEquals("Jane Doe", account.accountPayload.holderName)
             assertEquals("+1 202-555-0171", account.accountPayload.emailOrMobileNr)
             assertNull(account.creationDate)
-            assertNull(account.tradeLimitInfo)
-            assertNull(account.tradeDuration)
+            assertEquals("5000.00", account.tradeLimitInfo)
+            assertEquals("4 days", account.tradeDuration)
         }
 
     @Test

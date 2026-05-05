@@ -36,8 +36,8 @@ private fun FiatPaymentAccount.toFiatAccountVO(paymentMethod: PaymentTypeVO): Fi
         accountName = accountName,
         chargebackRisk = payload.chargebackRisk.toVO(),
         paymentType = paymentMethod,
-        paymentMethodName = payload.paymentMethodName ?: EMPTY_STRING,
+        paymentMethodName = payload.paymentMethodName,
         country = payload.country ?: EMPTY_STRING,
-        currency = payload.currency ?: EMPTY_STRING,
+        currency = payload.currency,
     )
 }

@@ -113,7 +113,7 @@ class SelectFiatPaymentMethodContentUiTest {
     @Test
     fun `when fiat method clicked then triggers fiat click action`() {
         // Given
-        val fiatMethod = sampleFiatMethod(name = "SEPA")
+        val fiatMethod = sampleFiatMethod(name = "SEPA", paymentType = PaymentTypeVO.SEPA)
         val uiState = createUiState(paymentMethods = listOf(fiatMethod))
         setTestContent {
             SelectFiatPaymentMethodContent(
@@ -166,18 +166,17 @@ class SelectFiatPaymentMethodContentUiTest {
         )
 
     private fun sampleFiatMethod(
-        name: String = "SEPA",
-        paymentType: PaymentTypeVO = PaymentTypeVO.SEPA,
-        supportedCurrencyCodes: String = "EUR",
-        countryNames: String = "Germany",
+        name: String,
+        paymentType: PaymentTypeVO,
         chargebackRisk: FiatPaymentMethodChargebackRiskVO? = FiatPaymentMethodChargebackRiskVO.VERY_LOW,
     ): FiatPaymentMethodVO =
         FiatPaymentMethodVO(
             paymentType = paymentType,
             name = name,
-            supportedCurrencyCodes = supportedCurrencyCodes,
-            countryNames = countryNames,
+            supportedCurrencyCodes = "supportedCurrencyCodes",
+            countryNames = "countryNames",
             chargebackRisk = chargebackRisk,
-            restrictions = "restrictions",
+            tradeLimitInfo = "tradeLimitInfo",
+            tradeDuration = "tradeDuration",
         )
 }

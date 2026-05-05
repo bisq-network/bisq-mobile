@@ -13,7 +13,8 @@ data class FiatPaymentMethodVO(
     val supportedCurrencyCodes: String,
     val countryNames: String,
     val chargebackRisk: FiatPaymentMethodChargebackRiskVO?,
-    override val restrictions: String,
+    override val tradeLimitInfo: String,
+    override val tradeDuration: String,
 ) : PaymentMethodVO
 
 fun FiatPaymentMethod.toVO(): FiatPaymentMethodVO? =
@@ -24,7 +25,8 @@ fun FiatPaymentMethod.toVO(): FiatPaymentMethodVO? =
             supportedCurrencyCodes = supportedCurrencyCodes,
             countryNames = countryNames,
             chargebackRisk = chargebackRisk.toVO(),
-            restrictions = restrictions,
+            tradeLimitInfo = tradeLimitInfo,
+            tradeDuration = tradeDuration,
         )
     }
 

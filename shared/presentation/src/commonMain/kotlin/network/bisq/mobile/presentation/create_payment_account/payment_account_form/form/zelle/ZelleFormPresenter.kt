@@ -14,9 +14,11 @@ import network.bisq.mobile.data.replicated.common.validation.PhoneNumberValidati
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.model.account.toDomain
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.AccountFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.ZelleFormUiAction
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 
 private const val US_REGION_CODE = "US"
@@ -30,6 +32,12 @@ open class ZelleFormPresenter(
 
     private val _effect = MutableSharedFlow<ZelleFormEffect>()
     val effect = _effect.asSharedFlow()
+
+    lateinit var paymentMethod: FiatPaymentMethodVO
+
+    fun initialize(paymentMethod: FiatPaymentMethodVO) {
+        this.paymentMethod = paymentMethod
+    }
 
     override fun onCustomAction(action: AccountFormUiAction) {
         when (action) {
@@ -54,6 +62,10 @@ open class ZelleFormPresenter(
     }
 
     override fun onNextClick() {
+        if (!::paymentMethod.isInitialized) {
+            return
+        }
+
         val validatedState =
             _uiState.updateAndGet {
                 it.copy(
@@ -77,7 +89,13 @@ open class ZelleFormPresenter(
                                     emailOrMobileNr =
                                         uiState.value.emailOrMobileNrEntry.value
                                             .trim(),
+                                    chargebackRisk = paymentMethod.chargebackRisk.toDomain(),
+                                    paymentMethodName = paymentMethod.name,
+                                    currency = paymentMethod.supportedCurrencyCodes,
+                                    country = paymentMethod.countryNames,
                                 ),
+                            tradeDuration = paymentMethod.tradeDuration,
+                            tradeLimitInfo = paymentMethod.tradeLimitInfo,
                         ),
                     ),
                 )

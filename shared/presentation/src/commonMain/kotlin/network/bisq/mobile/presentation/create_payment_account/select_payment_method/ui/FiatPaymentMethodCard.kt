@@ -160,7 +160,8 @@ private val previewFiatPaymentMethod =
         supportedCurrencyCodes = "USD",
         countryNames = "United States, United States, United States, United States, United States, United States, United States",
         chargebackRisk = FiatPaymentMethodChargebackRiskVO.LOW,
-        restrictions = EMPTY_STRING,
+        tradeLimitInfo = EMPTY_STRING,
+        tradeDuration = EMPTY_STRING,
     )
 
 @Preview

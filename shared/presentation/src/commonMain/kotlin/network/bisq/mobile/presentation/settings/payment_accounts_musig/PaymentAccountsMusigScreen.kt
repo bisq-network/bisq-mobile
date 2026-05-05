@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -89,13 +89,6 @@ fun PaymentAccountsMusigContent(
                 )
             }
         }
-
-        if (uiState.showDeleteConfirmationDialog) {
-            ConfirmationDialog(
-                onConfirm = { onAction(PaymentAccountsMusigUiAction.OnConfirmDeleteAccountClick) },
-                onDismiss = { onAction(PaymentAccountsMusigUiAction.OnCancelDeleteAccountClick) },
-            )
-        }
     }
 }
 
@@ -149,7 +142,10 @@ private fun AccountsLoadedState(
                     if (uiState.fiatAccounts.isEmpty()) {
                         EmptyAccountsInfoSection()
                     } else {
-                        FiatAccountsList(uiState.fiatAccounts)
+                        FiatAccountsList(
+                            accounts = uiState.fiatAccounts,
+                            onAccountClick = { index -> onAction(PaymentAccountsMusigUiAction.OnAccountClick(index)) },
+                        )
                     }
                 }
 
@@ -157,7 +153,10 @@ private fun AccountsLoadedState(
                     if (uiState.cryptoAccounts.isEmpty()) {
                         EmptyAccountsInfoSection()
                     } else {
-                        CryptoAccountsList(uiState.cryptoAccounts)
+                        CryptoAccountsList(
+                            accounts = uiState.cryptoAccounts,
+                            onAccountClick = { index -> onAction(PaymentAccountsMusigUiAction.OnAccountClick(index)) },
+                        )
                     }
                 }
             }
@@ -175,23 +174,35 @@ private fun AccountsLoadedState(
 }
 
 @Composable
-fun FiatAccountsList(accounts: List<FiatAccountVO>) {
+fun FiatAccountsList(
+    accounts: List<FiatAccountVO>,
+    onAccountClick: (Int) -> Unit,
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(accounts, key = { it.accountName }) { account ->
-            FiatPaymentAccountCard(account)
+        itemsIndexed(accounts, key = { _, account -> account.accountName }) { index, account ->
+            FiatPaymentAccountCard(
+                account = account,
+                onClick = { onAccountClick(index) },
+            )
         }
     }
 }
 
 @Composable
-fun CryptoAccountsList(accounts: List<CryptoAccountVO>) {
+fun CryptoAccountsList(
+    accounts: List<CryptoAccountVO>,
+    onAccountClick: (Int) -> Unit,
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(accounts, key = { it.accountName }) { account ->
-            CryptoPaymentAccountCard(account)
+        itemsIndexed(accounts, key = { _, account -> account.accountName }) { index, account ->
+            CryptoPaymentAccountCard(
+                account = account,
+                onClick = { onAccountClick(index) },
+            )
         }
     }
 }

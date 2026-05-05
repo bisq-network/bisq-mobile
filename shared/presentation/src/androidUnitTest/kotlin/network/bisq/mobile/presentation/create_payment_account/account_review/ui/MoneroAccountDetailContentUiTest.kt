@@ -1,9 +1,6 @@
 package network.bisq.mobile.presentation.create_payment_account.account_review.ui
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -14,17 +11,15 @@ import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class MoneroAccountReviewContentUiTest {
+class MoneroAccountDetailContentUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -33,15 +28,11 @@ class MoneroAccountReviewContentUiTest {
         I18nSupport.setLanguage()
     }
 
-    private fun setTestContent(
-        paymentMethod: CryptoPaymentMethodVO,
-        account: MoneroAccount,
-    ) {
+    private fun setTestContent(account: MoneroAccount) {
         composeTestRule.setContent {
             CompositionLocalProvider(LocalIsTest provides true) {
                 BisqTheme {
-                    MoneroAccountReviewContent(
-                        paymentMethod = paymentMethod,
+                    MoneroAccountDetailContent(
                         account = account,
                     )
                 }
@@ -52,7 +43,6 @@ class MoneroAccountReviewContentUiTest {
     @Test
     fun `when direct address mode then header and direct address rows are shown`() {
         setTestContent(
-            paymentMethod = sampleMethod(supportAutoConf = true),
             account = sampleAccount(useSubAddresses = false),
         )
 
@@ -71,7 +61,6 @@ class MoneroAccountReviewContentUiTest {
     @Test
     fun `when sub addresses enabled then direct address hidden and sub address rows shown`() {
         setTestContent(
-            paymentMethod = sampleMethod(supportAutoConf = true),
             account =
                 sampleAccount(
                     useSubAddresses = true,
@@ -107,8 +96,7 @@ class MoneroAccountReviewContentUiTest {
     @Test
     fun `when auto conf supported but disabled then only toggle row shown`() {
         setTestContent(
-            paymentMethod = sampleMethod(supportAutoConf = true),
-            account = sampleAccount(isAutoConf = false),
+            account = sampleAccount(isAutoConf = false, supportAutoConf = true),
         )
 
         composeTestRule.waitForIdle()
@@ -129,7 +117,6 @@ class MoneroAccountReviewContentUiTest {
     @Test
     fun `when auto conf enabled then detail rows are shown`() {
         setTestContent(
-            paymentMethod = sampleMethod(supportAutoConf = true),
             account =
                 sampleAccount(
                     isAutoConf = true,
@@ -154,8 +141,7 @@ class MoneroAccountReviewContentUiTest {
     @Test
     fun `when auto conf not supported then auto conf rows are hidden`() {
         setTestContent(
-            paymentMethod = sampleMethod(supportAutoConf = false),
-            account = sampleAccount(isAutoConf = true),
+            account = sampleAccount(isAutoConf = true, supportAutoConf = false),
         )
 
         composeTestRule.waitForIdle()
@@ -167,51 +153,10 @@ class MoneroAccountReviewContentUiTest {
             .assertCountEquals(0)
     }
 
-    @Test
-    fun `when restrictions provided then restrictions row is shown and hidden when empty`() {
-        var restrictions by mutableStateOf("Max. trade amount: 0.02 XMR")
-
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    MoneroAccountReviewContent(
-                        paymentMethod = sampleMethod(restrictions = restrictions),
-                        account = sampleAccount(),
-                    )
-                }
-            }
-        }
-
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onNodeWithText("paymentAccounts.restrictions".i18n())
-            .assertIsDisplayed()
-
-        composeTestRule.runOnIdle {
-            restrictions = ""
-        }
-
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onAllNodesWithText("paymentAccounts.restrictions".i18n())
-            .assertCountEquals(0)
-    }
-
-    private fun sampleMethod(
-        supportAutoConf: Boolean = true,
-        restrictions: String = "",
-    ): CryptoPaymentMethodVO =
-        CryptoPaymentMethodVO(
-            paymentType = PaymentTypeVO.XMR,
-            code = "XMR",
-            name = "Monero",
-            supportAutoConf = supportAutoConf,
-            restrictions = restrictions,
-        )
-
     private fun sampleAccount(
         useSubAddresses: Boolean = false,
         isAutoConf: Boolean? = null,
+        supportAutoConf: Boolean = true,
         mainAddress: String? = null,
         privateViewKey: String? = null,
         accountIndex: Int? = null,
@@ -237,6 +182,9 @@ class MoneroAccountReviewContentUiTest {
                     subAddress = subAddress,
                     accountIndex = accountIndex,
                     initialSubAddressIndex = initialSubAddressIndex,
+                    currencyCode = "XMR",
+                    currencyName = "Monero",
+                    supportAutoConf = supportAutoConf,
                 ),
             creationDate = null,
             tradeLimitInfo = null,

@@ -197,7 +197,8 @@ private val previewFiatPaymentMethods =
             supportedCurrencyCodes = "EUR, USD, GBP",
             countryNames = "Germany, France, Netherlands",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.VERY_LOW,
-            restrictions = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
         ),
         FiatPaymentMethodVO(
             paymentType = PaymentTypeVO.ZELLE,
@@ -205,7 +206,8 @@ private val previewFiatPaymentMethods =
             supportedCurrencyCodes = "USD",
             countryNames = "United States",
             chargebackRisk = FiatPaymentMethodChargebackRiskVO.LOW,
-            restrictions = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
         ),
     )
 

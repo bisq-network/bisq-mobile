@@ -57,6 +57,9 @@ class PaymentAccountsPresenterTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "user@example.com",
+                    currency = "USD",
+                    country = "United States",
+                    paymentMethodName = "PayPal",
                 ),
         )
 
@@ -66,6 +69,9 @@ class PaymentAccountsPresenterTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "IBAN: DE89370400440532013000",
+                    currency = "EUR",
+                    country = "Germany",
+                    paymentMethodName = "Bank Transfer",
                 ),
         )
 

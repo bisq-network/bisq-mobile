@@ -9,8 +9,8 @@ data class ZelleAccountPayload(
     val holderName: String,
     val emailOrMobileNr: String,
     override val chargebackRisk: FiatPaymentMethodChargebackRisk? = null,
-    override val paymentMethodName: String? = null,
-    override val currency: String? = null,
+    override val paymentMethodName: String,
+    override val currency: String,
     override val country: String? = null,
 ) : FiatPaymentAccountPayload {
     init {
@@ -19,6 +19,8 @@ data class ZelleAccountPayload(
 
     fun verify() {
         NetworkDataValidation.validateCode("US")
+        require(paymentMethodName.isNotBlank()) { "Payment method name is required" }
+        require(currency.isNotBlank()) { "Currency is required" }
         PaymentAccountValidation.validateHolderName(holderName)
         require(
             EmailValidation.isValid(emailOrMobileNr) ||

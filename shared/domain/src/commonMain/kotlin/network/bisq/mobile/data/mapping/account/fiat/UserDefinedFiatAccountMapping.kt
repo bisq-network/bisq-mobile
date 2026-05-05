@@ -35,4 +35,7 @@ fun UserDefinedFiatAccountPayloadDto.toDomain(): UserDefinedFiatAccountPayload =
 fun UserDefinedFiatAccountPayload.toDto(): UserDefinedFiatAccountPayloadDto =
     UserDefinedFiatAccountPayloadDto(
         accountData = accountData,
+        paymentMethodName = paymentMethodName,
+        currency = currency,
+        country = country,
     )

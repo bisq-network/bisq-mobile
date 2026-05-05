@@ -37,4 +37,7 @@ fun ZelleAccountPayload.toDto(): ZelleAccountPayloadDto =
     ZelleAccountPayloadDto(
         holderName = holderName,
         emailOrMobileNr = emailOrMobileNr,
+        paymentMethodName = paymentMethodName,
+        currency = currency,
+        country = country,
     )

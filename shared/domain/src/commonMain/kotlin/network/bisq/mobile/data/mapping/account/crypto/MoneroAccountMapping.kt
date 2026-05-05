@@ -38,11 +38,14 @@ fun MoneroAccountPayloadDto.toDomain(): MoneroAccountPayload =
         subAddress = subAddress,
         accountIndex = accountIndex,
         initialSubAddressIndex = initialSubAddressIndex,
+        supportAutoConf = supportAutoConf,
+        currencyCode = currencyCode,
     )
 
 fun MoneroAccountPayload.toDto(): MoneroAccountPayloadDto =
     MoneroAccountPayloadDto(
         currencyName = currencyName,
+        currencyCode = currencyCode,
         address = address,
         isInstant = isInstant,
         isAutoConf = isAutoConf,
@@ -55,4 +58,5 @@ fun MoneroAccountPayload.toDto(): MoneroAccountPayloadDto =
         subAddress = subAddress,
         accountIndex = accountIndex,
         initialSubAddressIndex = initialSubAddressIndex,
+        supportAutoConf = supportAutoConf,
     )

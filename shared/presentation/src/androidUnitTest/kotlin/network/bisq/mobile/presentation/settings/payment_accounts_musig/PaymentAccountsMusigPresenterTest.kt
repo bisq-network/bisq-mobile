@@ -69,7 +69,7 @@ class PaymentAccountsMusigPresenterTest {
             )
         }
 
-        every { paymentAccountsServiceFacade.accounts } returns accountsFlow
+        every { paymentAccountsServiceFacade.accountsFlow } returns accountsFlow
         coEvery { paymentAccountsServiceFacade.getAccounts() } returns Result.success(Unit)
     }
 
@@ -288,6 +288,8 @@ class PaymentAccountsMusigPresenterTest {
                     address = "84ABcdXy12pqRstUvw3456EfGh7890JKLMnOPQ",
                     isInstant = false,
                     useSubAddresses = false,
+                    supportAutoConf = true,
+                    currencyCode = "XMR",
                 ),
             creationDate = null,
             tradeLimitInfo = null,

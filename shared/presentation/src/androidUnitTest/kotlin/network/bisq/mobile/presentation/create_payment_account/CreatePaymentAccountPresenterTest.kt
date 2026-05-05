@@ -11,14 +11,10 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
-import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
@@ -37,6 +33,9 @@ class CreatePaymentAccountPresenterTest {
 
     private lateinit var mainPresenter: MainPresenter
     private lateinit var presenter: CreatePaymentAccountPresenter
+
+    val mockFiatPaymentMethod: FiatPaymentMethodVO = mockk(relaxed = true)
+    val mockUserDefinedFiatAccount: UserDefinedFiatAccount = mockk(relaxed = true)
 
     @BeforeTest
     fun setUp() {
@@ -88,7 +87,7 @@ class CreatePaymentAccountPresenterTest {
         runTest(testDispatcher) {
             // Given
             presenter = createPresenter()
-            val paymentMethod = sampleFiatPaymentMethod(name = "SEPA")
+            val paymentMethod = mockFiatPaymentMethod
 
             // When
             val effectDeferred = async { presenter.effect.first() }
@@ -109,7 +108,7 @@ class CreatePaymentAccountPresenterTest {
         runTest(testDispatcher) {
             // Given
             presenter = createPresenter()
-            val paymentAccount = sampleUserDefinedFiatAccount(accountName = "My Account")
+            val paymentAccount = mockUserDefinedFiatAccount
 
             // When
             val effectDeferred = async { presenter.effect.first() }
@@ -130,8 +129,8 @@ class CreatePaymentAccountPresenterTest {
         runTest(testDispatcher) {
             // Given
             presenter = createPresenter()
-            val paymentMethod = sampleFiatPaymentMethod(name = "SEPA")
-            val paymentAccount = sampleUserDefinedFiatAccount(accountName = "SEPA Personal")
+            val paymentMethod = mockFiatPaymentMethod
+            val paymentAccount = mockUserDefinedFiatAccount
 
             // When
             val firstEffectDeferred = async { presenter.effect.first() }
@@ -153,23 +152,4 @@ class CreatePaymentAccountPresenterTest {
             assertEquals(paymentMethod, state.paymentMethod)
             assertEquals(paymentAccount, state.paymentAccount)
         }
-
-    private fun sampleFiatPaymentMethod(
-        name: String,
-        paymentType: PaymentTypeVO = PaymentTypeVO.SEPA,
-    ): FiatPaymentMethodVO =
-        FiatPaymentMethodVO(
-            paymentType = paymentType,
-            name = name,
-            supportedCurrencyCodes = "EUR",
-            countryNames = "Germany",
-            chargebackRisk = FiatPaymentMethodChargebackRiskVO.VERY_LOW,
-            restrictions = EMPTY_STRING,
-        )
-
-    private fun sampleUserDefinedFiatAccount(accountName: String): UserDefinedFiatAccount =
-        UserDefinedFiatAccount(
-            accountName = accountName,
-            accountPayload = UserDefinedFiatAccountPayload(accountData = "sample-data"),
-        )
 }

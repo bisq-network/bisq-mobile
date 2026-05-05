@@ -77,8 +77,6 @@ buildConfig {
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
-        // Node app always uses MU_SIG_ENABLED false
-        buildConfigField("MU_SIG_ENABLED", false)
         // Note: Update when updating kmp-tor lib
         buildConfigField("TOR_VERSION", "0.4.8.17") // is TOR DAEMON version
         buildConfigField(

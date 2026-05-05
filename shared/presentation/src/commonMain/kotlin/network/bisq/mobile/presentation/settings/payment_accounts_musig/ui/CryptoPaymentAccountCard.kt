@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.settings.payment_accounts_musig.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,11 +29,13 @@ import network.bisq.mobile.presentation.settings.payment_accounts_musig.model.Cr
 fun CryptoPaymentAccountCard(
     account: CryptoAccountVO,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
 ) {
     Column(
         modifier =
             modifier
                 .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                .clickable(onClick = onClick)
                 .background(BisqTheme.colors.dark_grey40)
                 .padding(BisqUIConstants.ScreenPadding)
                 .fillMaxWidth(),

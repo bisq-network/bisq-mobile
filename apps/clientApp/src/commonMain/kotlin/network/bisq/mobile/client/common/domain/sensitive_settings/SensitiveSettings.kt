@@ -2,7 +2,7 @@ package network.bisq.mobile.client.common.domain.sensitive_settings
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
-import network.bisq.mobile.client.common.domain.utils.EMPTY_STRING
+import network.bisq.mobile.domain.utils.EMPTY_STRING
 
 @Serializable
 data class SensitiveSettings(

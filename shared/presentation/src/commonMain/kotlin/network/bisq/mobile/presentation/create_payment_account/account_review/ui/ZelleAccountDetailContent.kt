@@ -8,29 +8,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
+import network.bisq.mobile.presentation.common.model.account.toVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountReviewFieldRow
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountDetailDetailsSection
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountDetailFieldRow
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.FiatChargebackRiskBadge
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
 
 @Composable
-fun ZelleAccountReviewContent(
-    paymentMethod: FiatPaymentMethodVO,
+fun ZelleAccountDetailContent(
     account: ZelleAccount,
 ) {
+    val chargebackRisk =
+        remember(account.accountPayload.chargebackRisk) {
+            account.accountPayload.chargebackRisk?.toVO()
+        }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
@@ -47,12 +53,12 @@ fun ZelleAccountReviewContent(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
                 PaymentAccountTypeIcon(
-                    paymentType = paymentMethod.paymentType,
+                    paymentType = PaymentTypeVO.ZELLE,
                     size = BisqUIConstants.ScreenPadding2X,
                 )
                 Column {
-                    BisqText.BaseRegular(paymentMethod.name)
-                    BisqText.BaseRegularGrey(paymentMethod.supportedCurrencyCodes)
+                    BisqText.BaseRegular(account.accountPayload.paymentMethodName)
+                    BisqText.BaseRegularGrey(account.accountPayload.currency)
                 }
             }
 
@@ -60,29 +66,30 @@ fun ZelleAccountReviewContent(
                 modifier = Modifier.padding(BisqUIConstants.ScreenPadding),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
-                AccountReviewFieldRow(
-                    label = "paymentAccounts.country".i18n(),
-                    value = paymentMethod.countryNames,
-                )
+                account.accountPayload.country?.let { country ->
+                    AccountDetailFieldRow(
+                        label = "paymentAccounts.country".i18n(),
+                        value = country,
+                    )
+                }
 
-                AccountReviewFieldRow(
+                AccountDetailFieldRow(
                     label = "paymentAccounts.holderName".i18n(),
                     value = account.accountPayload.holderName,
                 )
 
-                AccountReviewFieldRow(
+                AccountDetailFieldRow(
                     label = "paymentAccounts.emailOrMobileNr".i18n(),
                     value = account.accountPayload.emailOrMobileNr,
                 )
 
-                if (paymentMethod.restrictions.isNotEmpty()) {
-                    AccountReviewFieldRow(
-                        label = "paymentAccounts.restrictions".i18n(),
-                        value = paymentMethod.restrictions,
-                    )
-                }
+                AccountDetailDetailsSection(
+                    creationDate = account.creationDate,
+                    tradeLimitInfo = account.tradeLimitInfo,
+                    tradeDuration = account.tradeDuration,
+                )
 
-                paymentMethod.chargebackRisk?.let { risk ->
+                chargebackRisk?.let { risk ->
                     BisqGap.VQuarter()
                     FiatChargebackRiskBadge(risk = risk)
                 }
@@ -91,16 +98,6 @@ fun ZelleAccountReviewContent(
     }
 }
 
-private val previewPaymentMethod =
-    FiatPaymentMethodVO(
-        paymentType = PaymentTypeVO.ZELLE,
-        name = "Zelle",
-        supportedCurrencyCodes = "USD",
-        countryNames = "United States",
-        chargebackRisk = FiatPaymentMethodChargebackRiskVO.LOW,
-        restrictions = "Max. trade amount: 5000.00 / Max. trade duration: 4 days",
-    )
-
 private val previewAccount =
     ZelleAccount(
         accountName = "Alice Doe",
@@ -108,15 +105,21 @@ private val previewAccount =
             ZelleAccountPayload(
                 holderName = "Alice Doe",
                 emailOrMobileNr = "alice@example.com",
+                paymentMethodName = "Zelle",
+                currency = "USD",
+                country = "United States",
+                chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
             ),
+        tradeDuration = "8 days",
+        tradeLimitInfo = "1000 USD",
+        creationDate = "Apr 3, 2026",
     )
 
 @Preview
 @Composable
-private fun ZelleAccountReviewContentPreview() {
+private fun ZelleAccountDetailContentPreview() {
     BisqTheme.Preview {
-        ZelleAccountReviewContent(
-            paymentMethod = previewPaymentMethod,
+        ZelleAccountDetailContent(
             account = previewAccount,
         )
     }

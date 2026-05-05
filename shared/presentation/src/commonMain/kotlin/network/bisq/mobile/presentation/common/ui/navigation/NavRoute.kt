@@ -131,6 +131,11 @@ interface NavRoute {
     data object PaymentAccountsMusig : NavRoute
 
     @Serializable
+    data class PaymentAccountsMusigDetail(
+        val accountName: String,
+    ) : NavRoute
+
+    @Serializable
     @ConsistentCopyVisibility
     data class CreatePaymentAccount private constructor(
         val accountTypeName: String,

@@ -22,3 +22,12 @@ fun FiatPaymentMethodChargebackRisk?.toVO(): FiatPaymentMethodChargebackRiskVO? 
         FiatPaymentMethodChargebackRisk.MODERATE -> FiatPaymentMethodChargebackRiskVO.MODERATE
         else -> null
     }
+
+fun FiatPaymentMethodChargebackRiskVO?.toDomain(): FiatPaymentMethodChargebackRisk? =
+    when (this) {
+        FiatPaymentMethodChargebackRiskVO.VERY_LOW -> FiatPaymentMethodChargebackRisk.VERY_LOW
+        FiatPaymentMethodChargebackRiskVO.LOW -> FiatPaymentMethodChargebackRisk.LOW
+        FiatPaymentMethodChargebackRiskVO.MEDIUM -> FiatPaymentMethodChargebackRisk.MEDIUM
+        FiatPaymentMethodChargebackRiskVO.MODERATE -> FiatPaymentMethodChargebackRisk.MODERATE
+        else -> null
+    }

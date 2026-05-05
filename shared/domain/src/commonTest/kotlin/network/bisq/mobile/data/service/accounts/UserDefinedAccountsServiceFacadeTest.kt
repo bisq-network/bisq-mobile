@@ -40,6 +40,9 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "accountA@example.com",
+                    currency = "USD",
+                    country = "United States",
+                    paymentMethodName = "PayPal",
                 ),
         )
 
@@ -49,6 +52,9 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "accountB@example.com",
+                    currency = "EUR",
+                    country = "Germany",
+                    paymentMethodName = "Bank Transfer",
                 ),
         )
 
@@ -362,6 +368,9 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "updated@example.com",
+                            currency = "EUR",
+                            country = "Germany",
+                            paymentMethodName = "Bank Transfer",
                         ),
                 )
 
@@ -392,6 +401,9 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "test@example.com",
+                            currency = "USD",
+                            country = "United States",
+                            paymentMethodName = "PayPal",
                         ),
                 )
 

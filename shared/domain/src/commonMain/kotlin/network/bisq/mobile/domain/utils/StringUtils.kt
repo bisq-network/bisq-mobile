@@ -79,3 +79,5 @@ object StringUtils {
             }
         }
 }
+
+const val EMPTY_STRING = ""

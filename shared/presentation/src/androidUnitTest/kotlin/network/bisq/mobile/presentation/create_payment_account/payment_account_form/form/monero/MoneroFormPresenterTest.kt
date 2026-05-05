@@ -11,12 +11,14 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.CryptoAccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.MoneroFormUiAction
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -57,6 +59,16 @@ class MoneroFormPresenterTest {
             MoneroFormPresenter(
                 mainPresenter = mainPresenter,
             )
+        presenter.initialize(
+            CryptoPaymentMethodVO(
+                paymentType = PaymentTypeVO.XMR,
+                code = "XMR",
+                name = "Monero",
+                supportAutoConf = true,
+                tradeLimitInfo = "5000.00",
+                tradeDuration = "4 days",
+            ),
+        )
     }
 
     @AfterTest
@@ -258,7 +270,7 @@ class MoneroFormPresenterTest {
             val account = effect.account
             assertEquals("Monero Account", account.accountName)
             val payload = account.accountPayload
-            assertNull(payload.currencyName)
+            assertEquals("Monero", payload.currencyName)
             assertEquals("48A_DIRECT_ADDRESS", payload.address)
             assertEquals(false, payload.useSubAddresses)
             assertNull(payload.mainAddress)
@@ -325,7 +337,7 @@ class MoneroFormPresenterTest {
 
             val account = effect.account
             val payload = account.accountPayload
-            assertNull(payload.currencyName)
+            assertEquals("Monero", payload.currencyName)
             assertEquals("48A_MAIN_ADDRESS_123", payload.address)
             assertTrue(payload.useSubAddresses)
             assertEquals("48A_MAIN_ADDRESS_123", payload.mainAddress)

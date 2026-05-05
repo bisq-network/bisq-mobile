@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.settings.ignored_users.IIgnoredUsersPres
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsPresenter
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.PaymentAccountsMusigPresenter
+import network.bisq.mobile.presentation.settings.payment_accounts_musig.detail.PaymentAccountMusigDetailPresenter
 import network.bisq.mobile.presentation.settings.reputation.ReputationPresenter
 import network.bisq.mobile.presentation.settings.resources.ResourcesPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
@@ -133,6 +134,7 @@ val presentationModule =
         factory { PaymentAccountsPresenter(get(), get()) }
 
         factory { PaymentAccountsMusigPresenter(get(), get()) }
+        factory { PaymentAccountMusigDetailPresenter(get(), get()) }
 
         factory { ComputeOfferbookMarketListUseCase(get()) }
 

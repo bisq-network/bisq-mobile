@@ -33,6 +33,7 @@ fun OtherCryptoAssetAccountPayloadDto.toDomain(): OtherCryptoAssetAccountPayload
         autoConfMaxTradeAmount = autoConfMaxTradeAmount,
         autoConfExplorerUrls = autoConfExplorerUrls,
         currencyName = currencyName,
+        supportAutoConf = supportAutoConf,
     )
 
 fun OtherCryptoAssetAccountPayload.toDto(): OtherCryptoAssetAccountPayloadDto =
@@ -45,4 +46,5 @@ fun OtherCryptoAssetAccountPayload.toDto(): OtherCryptoAssetAccountPayloadDto =
         autoConfMaxTradeAmount = autoConfMaxTradeAmount,
         autoConfExplorerUrls = autoConfExplorerUrls,
         currencyCode = currencyCode,
+        supportAutoConf = supportAutoConf,
     )

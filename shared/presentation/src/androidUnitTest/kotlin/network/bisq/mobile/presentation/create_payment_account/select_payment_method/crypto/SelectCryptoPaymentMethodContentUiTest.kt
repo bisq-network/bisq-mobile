@@ -113,7 +113,7 @@ class SelectCryptoPaymentMethodContentUiTest {
     @Test
     fun `when crypto method clicked then triggers crypto click action`() {
         // Given
-        val cryptoMethod = sampleCryptoMethod(code = "XMR", name = "Monero")
+        val cryptoMethod = sampleCryptoMethod(code = "XMR", name = "Monero", paymentType = PaymentTypeVO.XMR)
         val uiState = createUiState(paymentMethods = listOf(cryptoMethod))
         setTestContent {
             SelectCryptoPaymentMethodContent(
@@ -164,15 +164,16 @@ class SelectCryptoPaymentMethodContentUiTest {
         )
 
     private fun sampleCryptoMethod(
-        code: String = "XMR",
-        name: String = "Monero",
-        paymentType: PaymentTypeVO = PaymentTypeVO.XMR,
+        code: String,
+        name: String,
+        paymentType: PaymentTypeVO,
     ): CryptoPaymentMethodVO =
         CryptoPaymentMethodVO(
             paymentType = paymentType,
             code = code,
             name = name,
             supportAutoConf = false,
-            restrictions = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
         )
 }

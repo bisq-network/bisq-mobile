@@ -17,10 +17,12 @@ import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.toVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -102,12 +104,10 @@ class SelectFiatPaymentMethodPresenterTest {
                     sampleFiatMethod(
                         rail = FiatPaymentRail.ZELLE,
                         name = "Zelle",
-                        risk = FiatPaymentMethodChargebackRisk.LOW,
                     ),
                     sampleFiatMethod(
                         rail = FiatPaymentRail.REVOLUT,
                         name = "Revolut",
-                        risk = FiatPaymentMethodChargebackRisk.VERY_LOW,
                     ),
                 )
             coEvery { paymentAccountsServiceFacade.getFiatPaymentMethods() } returns Result.success(methods)
@@ -120,7 +120,7 @@ class SelectFiatPaymentMethodPresenterTest {
             // Then
             coVerify(exactly = 1) { paymentAccountsServiceFacade.getFiatPaymentMethods() }
             val state = presenter.uiState.value
-            assertEquals(2, state.paymentMethods.size)
+            assertEquals(methods.mapNotNull { it.toVO() }, state.paymentMethods)
             assertFalse(state.isLoading)
             assertFalse(state.isError)
         }
@@ -129,7 +129,10 @@ class SelectFiatPaymentMethodPresenterTest {
     fun `when fiat methods load fails then error state is set`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { paymentAccountsServiceFacade.getFiatPaymentMethods() } returns Result.failure(IllegalStateException("fiat fail"))
+            coEvery { paymentAccountsServiceFacade.getFiatPaymentMethods() } returns
+                Result.failure(
+                    IllegalStateException("fiat fail"),
+                )
             presenter = createPresenter()
 
             // When
@@ -148,7 +151,14 @@ class SelectFiatPaymentMethodPresenterTest {
     fun `when retry is clicked after failure then methods are requested again and error clears on success`() =
         runTest(testDispatcher) {
             // Given
-            val methods = listOf(sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle", risk = FiatPaymentMethodChargebackRisk.LOW))
+            val methods =
+                listOf(
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
+                )
             coEvery { paymentAccountsServiceFacade.getFiatPaymentMethods() } returnsMany
                 listOf(
                     Result.failure(IllegalStateException("first fail")),
@@ -176,7 +186,11 @@ class SelectFiatPaymentMethodPresenterTest {
             // Given
             val methods =
                 listOf(
-                    sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle", risk = FiatPaymentMethodChargebackRisk.LOW),
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
                     sampleFiatMethod(
                         rail = FiatPaymentRail.REVOLUT,
                         name = "Revolut",
@@ -204,7 +218,11 @@ class SelectFiatPaymentMethodPresenterTest {
             // Given
             val methods =
                 listOf(
-                    sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle", risk = FiatPaymentMethodChargebackRisk.LOW),
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
                     sampleFiatMethod(
                         rail = FiatPaymentRail.REVOLUT,
                         name = "Revolut",
@@ -232,7 +250,11 @@ class SelectFiatPaymentMethodPresenterTest {
             // Given
             val methods =
                 listOf(
-                    sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle Fast", risk = FiatPaymentMethodChargebackRisk.LOW),
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle Fast",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
                     sampleFiatMethod(
                         rail = FiatPaymentRail.CASH_APP,
                         name = "Cash App",
@@ -265,7 +287,11 @@ class SelectFiatPaymentMethodPresenterTest {
             // Given
             val methods =
                 listOf(
-                    sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle", risk = FiatPaymentMethodChargebackRisk.LOW),
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
                     sampleFiatMethod(
                         rail = FiatPaymentRail.REVOLUT,
                         name = "Revolut",
@@ -298,7 +324,11 @@ class SelectFiatPaymentMethodPresenterTest {
             // Given
             val methods =
                 listOf(
-                    sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle", risk = FiatPaymentMethodChargebackRisk.LOW),
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
                     sampleFiatMethod(
                         rail = FiatPaymentRail.REVOLUT,
                         name = "Revolut",
@@ -332,7 +362,11 @@ class SelectFiatPaymentMethodPresenterTest {
             // Given
             val methods =
                 listOf(
-                    sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle", risk = FiatPaymentMethodChargebackRisk.LOW),
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
                 )
             coEvery { paymentAccountsServiceFacade.getFiatPaymentMethods() } returns Result.success(methods)
             presenter = createPresenter()
@@ -356,7 +390,11 @@ class SelectFiatPaymentMethodPresenterTest {
             // Given
             val methods =
                 listOf(
-                    sampleFiatMethod(rail = FiatPaymentRail.ZELLE, name = "Zelle", risk = FiatPaymentMethodChargebackRisk.LOW),
+                    sampleFiatMethod(
+                        rail = FiatPaymentRail.ZELLE,
+                        name = "Zelle",
+                        risk = FiatPaymentMethodChargebackRisk.LOW,
+                    ),
                     sampleFiatMethod(
                         rail = FiatPaymentRail.REVOLUT,
                         name = "Revolut",
@@ -413,7 +451,7 @@ class SelectFiatPaymentMethodPresenterTest {
     private fun sampleFiatMethod(
         rail: FiatPaymentRail,
         name: String,
-        risk: FiatPaymentMethodChargebackRisk,
+        risk: FiatPaymentMethodChargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
         supportedCurrencyCodes: String = "USD",
         countryNames: String = "United States",
     ): FiatPaymentMethod =
@@ -423,6 +461,7 @@ class SelectFiatPaymentMethodPresenterTest {
             supportedCurrencyCodes = supportedCurrencyCodes,
             countryNames = countryNames,
             chargebackRisk = risk,
-            restrictions = "restrictions",
+            tradeDuration = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
         )
 }

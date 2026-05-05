@@ -341,6 +341,9 @@ private fun PaymentAccountsScreen_WithAccountsPreview() {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "user@example.com",
+                            currency = "USD",
+                            country = "US",
+                            paymentMethodName = "PayPal",
                         ),
                 ),
                 UserDefinedFiatAccount(
@@ -348,6 +351,9 @@ private fun PaymentAccountsScreen_WithAccountsPreview() {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "IBAN: DE89370400440532013000",
+                            currency = "EUR",
+                            country = "DE",
+                            paymentMethodName = "Bank Transfer",
                         ),
                 ),
                 UserDefinedFiatAccount(
@@ -355,6 +361,9 @@ private fun PaymentAccountsScreen_WithAccountsPreview() {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "+1234567890",
+                            currency = "USD",
+                            country = "US",
+                            paymentMethodName = "Revolut",
                         ),
                 ),
             )
@@ -387,6 +396,9 @@ private fun PaymentAccountsScreen_EditModePreview() {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "user@example.com",
+                            currency = "USD",
+                            country = "US",
+                            paymentMethodName = "PayPal",
                         ),
                 ),
                 UserDefinedFiatAccount(
@@ -394,6 +406,9 @@ private fun PaymentAccountsScreen_EditModePreview() {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "IBAN: DE89370400440532013000",
+                            currency = "EUR",
+                            country = "DE",
+                            paymentMethodName = "Bank Transfer",
                         ),
                 ),
                 UserDefinedFiatAccount(
@@ -401,6 +416,9 @@ private fun PaymentAccountsScreen_EditModePreview() {
                     accountPayload =
                         UserDefinedFiatAccountPayload(
                             accountData = "+1234567890",
+                            currency = "USD",
+                            country = "US",
+                            paymentMethodName = "Revolut",
                         ),
                 ),
             )

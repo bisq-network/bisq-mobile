@@ -152,14 +152,16 @@ private val previewCryptoPaymentMethods =
             code = "XMR",
             name = "Monero",
             supportAutoConf = false,
-            restrictions = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
         ),
         CryptoPaymentMethodVO(
             paymentType = PaymentTypeVO.LNBTC,
             code = "LN-BTC",
             name = "Lightning Bitcoin",
             supportAutoConf = false,
-            restrictions = EMPTY_STRING,
+            tradeLimitInfo = EMPTY_STRING,
+            tradeDuration = EMPTY_STRING,
         ),
     )
 

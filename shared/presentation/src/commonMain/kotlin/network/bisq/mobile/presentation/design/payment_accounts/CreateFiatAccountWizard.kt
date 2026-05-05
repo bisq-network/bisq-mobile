@@ -118,7 +118,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.inputfiel
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
-import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountReviewFieldRow
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountDetailFieldRow
 
 // -------------------------------------------------------------------------------------
 // Simulated data for preview purposes
@@ -916,7 +916,7 @@ fun CreateFiatAccount_Step3_Review(
             BisqGap.V1()
 
             // Country availability in review
-            AccountReviewFieldRow(
+            AccountDetailFieldRow(
                 label = "Available in",
                 value =
                     when (val avail = selectedMethod.countryAvailability) {
@@ -933,7 +933,7 @@ fun CreateFiatAccount_Step3_Review(
 
             // Field summary rows
             formFields.forEach { field ->
-                AccountReviewFieldRow(
+                AccountDetailFieldRow(
                     label = field.label,
                     value = fieldValues[field.fieldId] ?: "—",
                 )
