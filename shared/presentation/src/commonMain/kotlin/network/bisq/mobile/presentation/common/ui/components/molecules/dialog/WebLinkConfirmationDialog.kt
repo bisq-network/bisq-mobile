@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCheckbox
@@ -31,12 +30,10 @@ fun WebLinkConfirmationDialog(
 ) {
     val presenter: WebLinkConfirmationDialogPresenter = koinInject()
     val clipboard = LocalClipboard.current
-    val uriHandler = LocalUriHandler.current
 
     RememberPresenterLifecycle(presenter, {
         presenter.initialize(
             link = link,
-            uriHandler = uriHandler,
             clipboard = clipboard,
             onConfirm = onConfirm,
             onDismiss = onDismiss,

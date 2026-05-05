@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 
 import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,13 +25,11 @@ class WebLinkConfirmationDialogPresenter(
     private var userOnConfirm: () -> Unit = {}
     private var userOnDismiss: () -> Unit = {}
     private var userOnError: () -> Unit = {}
-    private var currentUriHandler: UriHandler? = null
     private var currentClipboard: Clipboard? = null
     private var activeLink: String = ""
 
     fun initialize(
         link: String,
-        uriHandler: UriHandler,
         clipboard: Clipboard,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
@@ -43,7 +40,6 @@ class WebLinkConfirmationDialogPresenter(
         userOnConfirm = onConfirm
         userOnDismiss = onDismiss
         userOnError = onError
-        currentUriHandler = uriHandler
         currentClipboard = clipboard
 
         _uiState.value = WebLinkConfirmationUiState()
@@ -92,7 +88,9 @@ class WebLinkConfirmationDialogPresenter(
                         dontShowAgain = _uiState.value.dontShowAgain,
                     )
                 }
-                currentUriHandler?.openUri(uri)
+                if (!navigateToUrl(uri)) {
+                    throw IllegalStateException("Failed to open URI")
+                }
                 userOnConfirm.invoke()
             } catch (cancellationException: CancellationException) {
                 throw cancellationException

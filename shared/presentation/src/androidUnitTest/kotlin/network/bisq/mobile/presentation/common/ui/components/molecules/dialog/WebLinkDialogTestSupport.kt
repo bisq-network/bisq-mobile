@@ -78,6 +78,7 @@ internal fun startKoinWithWebLinkDeps(
     permitOpeningBrowser: Boolean = true,
     setPermitResult: Result<Unit> = Result.success(Unit),
     setDontShowAgainResult: Result<Unit> = Result.success(Unit),
+    openUrlResult: Boolean = true,
 ): Pair<SettingsServiceFacade, MainPresenter> {
     runCatching { stopKoin() }
     val showFlow = MutableStateFlow(showWebLinkConfirmation)
@@ -89,6 +90,7 @@ internal fun startKoinWithWebLinkDeps(
     coEvery { facade.setPermitOpeningBrowser(false) } returns setPermitResult
     coEvery { facade.setWebLinkDontShowAgain() } returns setDontShowAgainResult
     val presenter = mockk<MainPresenter>(relaxed = true)
+    every { presenter.navigateToUrl(any()) } returns openUrlResult
     startKoin {
         modules(
             module {
@@ -106,9 +108,11 @@ internal fun startKoinWithWebLinkDeps(
 
 internal fun startKoinWithWebLinkDialogFake(
     fake: WebLinkDialogSettingsServiceFake = WebLinkDialogSettingsServiceFake(),
+    openUrlResult: Boolean = true,
 ): Pair<WebLinkDialogSettingsServiceFake, MainPresenter> {
     runCatching { stopKoin() }
     val presenter = mockk<MainPresenter>(relaxed = true)
+    every { presenter.navigateToUrl(any()) } returns openUrlResult
     startKoin {
         modules(
             module {
