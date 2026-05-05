@@ -82,6 +82,7 @@ object DateUtils {
             day(Padding.NONE)
             chars(", ")
             year()
+            // the double space is intentional
             chars("  ")
             hour()
             char(':')
