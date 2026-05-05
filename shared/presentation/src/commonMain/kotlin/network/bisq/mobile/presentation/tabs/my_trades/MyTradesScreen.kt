@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticLayout
@@ -29,12 +28,10 @@ fun MyTradesScreen(initialTab: Int = 0) {
     val isInteractive by presenter.isInteractive.collectAsState()
 
     val tabOptions =
-        remember {
-            listOf(
-                "mobile.myTrades.tab.open".i18n(),
-                "mobile.myTrades.tab.history".i18n(),
-            )
-        }
+        listOf(
+            "mobile.myTrades.tab.open".i18n(),
+            "mobile.myTrades.tab.history".i18n(),
+        )
 
     BisqStaticLayout(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
