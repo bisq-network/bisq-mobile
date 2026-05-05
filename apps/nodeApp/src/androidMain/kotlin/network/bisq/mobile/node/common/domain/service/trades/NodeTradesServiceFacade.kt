@@ -682,12 +682,14 @@ class NodeTradesServiceFacade(
         val tradeItemPresentationVO = TradeItemPresentationDtoFactory.create(trade, channel, userProfileService, reputationService)
         val openTradeItem = TradeItemPresentationModel.from(tradeItemPresentationVO)
 
-        // If already in a final state (e.g. app restarted with trade closed), add directly to closed.
+        // The trade is already in a final state at the time we observe it (for example, on app
+        // restart when a previously closed trade is replayed). In this case we skip adding it to
+        // openTradeItems and skip installing the state observer below, since that observer would
+        // never fire (the state is already final and will not transition again). The closed-trade
+        // list is read directly from bisqEasyTradeService.closedTrades via getClosedTradesPaginated,
+        // so we only need to bump the tick to signal consumers to refresh their views.
         val currentState = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(trade.tradeState)
         if (currentState.isFinalState) {
-            // Trade is already closed (e.g. app restart with a closed trade). No need to add it to
-            // openTradeItems. Bump the tick so consumers refresh closed-trade views; the actual
-            // list is read from bisqEasyTradeService.closedTrades via getClosedTradesPaginated.
             bumpClosedTradesTick()
             return
         }
