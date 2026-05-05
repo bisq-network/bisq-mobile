@@ -283,7 +283,7 @@ class NavigationManagerImpl(
     private fun NavDestination.getTabNavRoute(): TabNavRoute? =
         when {
             this.hasRoute<NavRoute.TabHome>() -> NavRoute.TabHome
-            this.hasRoute<NavRoute.TabOpenTradeList>() -> NavRoute.TabOpenTradeList
+            this.hasRoute<NavRoute.TabMyTrades>() -> NavRoute.TabMyTrades()
             this.hasRoute<NavRoute.TabOfferbookMarket>() -> NavRoute.TabOfferbookMarket
             this.hasRoute<NavRoute.TabMiscItems>() -> NavRoute.TabMiscItems
             else -> null

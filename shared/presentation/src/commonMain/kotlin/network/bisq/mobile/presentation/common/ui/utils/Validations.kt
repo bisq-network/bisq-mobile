@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.common.ui.utils
 
+import network.bisq.mobile.data.replicated.common.monetary.FIAT_SCALE_FACTOR
+import network.bisq.mobile.data.replicated.common.monetary.fiatToDecimal
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
 
@@ -44,8 +46,8 @@ object AmountValidator {
 
         return when {
             _value == null -> "mobile.validations.amountValidator.invalidNumber".i18n()
-            _value * 10000 < min -> "mobile.validations.amountValidator.shouldBeGreaterThan".i18n() + " ${min / 10000.0}"
-            _value * 10000 > max -> "mobile.validations.amountValidator.shouldBeLessThan".i18n() + " ${max / 10000.0}"
+            _value * FIAT_SCALE_FACTOR < min -> "mobile.validations.amountValidator.shouldBeGreaterThan".i18n() + " ${min.fiatToDecimal()}"
+            _value * FIAT_SCALE_FACTOR > max -> "mobile.validations.amountValidator.shouldBeLessThan".i18n() + " ${max.fiatToDecimal()}"
             else -> null
         }
     }

@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.formatters
 
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.data.replicated.common.monetary.fiatToDecimal
 import network.bisq.mobile.data.utils.decimalFormatter
 
 object MarketPriceFormatter {
@@ -9,8 +10,7 @@ object MarketPriceFormatter {
         quote: Long,
         market: MarketVO,
     ): String {
-        val doubleValue: Double = quote.toDouble() / 10000
-        val stringValue: String = decimalFormatter.format(doubleValue, 2) // doubleValue.roundTo(2).toString()
+        val stringValue: String = decimalFormatter.format(quote.fiatToDecimal(), 2)
         return stringValue + " " + market.marketCodes
     }
 }

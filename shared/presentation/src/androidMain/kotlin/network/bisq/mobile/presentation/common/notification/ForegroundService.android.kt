@@ -43,7 +43,7 @@ open class ForegroundService :
             val notificationController: NotificationControllerImpl = get()
 
             val contentPendingIntent =
-                notificationController.createNavDeepLinkPendingIntent(NavRoute.TabOpenTradeList)
+                notificationController.createNavDeepLinkPendingIntent(NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN))
 
             NotificationCompat
                 .Builder(this, NotificationChannels.BISQ_SERVICE)

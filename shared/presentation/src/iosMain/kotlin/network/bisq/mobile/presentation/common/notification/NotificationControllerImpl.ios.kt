@@ -246,7 +246,7 @@ class NotificationControllerImpl(
 
             is NotificationPressAction.Default -> {
                 content.setUserInfo(
-                    content.userInfo + (id to NavRoute.TabOpenTradeList.toUriString()),
+                    content.userInfo + (id to NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN).toUriString()),
                 )
             }
         }

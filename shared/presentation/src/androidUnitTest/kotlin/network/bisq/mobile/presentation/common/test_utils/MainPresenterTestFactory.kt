@@ -29,6 +29,7 @@ object MainPresenterTestFactory {
         val tradesServiceFacade = mockk<TradesServiceFacade>(relaxed = true)
         every { tradesServiceFacade.openTradeItems } returns openTradeItems
         every { tradesServiceFacade.selectedTrade } returns selectedTrade
+        every { tradesServiceFacade.closedTradesChangeTick } returns MutableStateFlow(0)
 
         val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds

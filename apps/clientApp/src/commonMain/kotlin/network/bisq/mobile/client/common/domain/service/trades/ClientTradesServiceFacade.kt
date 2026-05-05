@@ -6,17 +6,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.data.mapping.trade.toClosedTradeListItem
 import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Subscription
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
+import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.core.pagination.PaginatedResponse
+import network.bisq.mobile.domain.core.pagination.PaginationParams
+import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
+import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
+import network.bisq.mobile.domain.model.trade.TradeRoleFilter
+import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
 /**
@@ -47,7 +55,6 @@ class ClientTradesServiceFacade(
     TradesServiceFacade {
     companion object {
         private const val MAX_CACHED_TRADE_PROPERTIES = 500
-        private const val TRADE_STATE_SYNC_DELAY = 2000L
     }
 
     // Cache for trade properties received before trades list is populated
@@ -57,13 +64,29 @@ class ClientTradesServiceFacade(
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
     override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems.asStateFlow()
 
+    private val _closedTradesChangeTick = MutableStateFlow(0)
+    override val closedTradesChangeTick: StateFlow<Int> = _closedTradesChangeTick.asStateFlow()
+
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     override val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
 
     // Misc
     private val tradeId get() = selectedTrade.value?.tradeId
     private val openTradesSubscription: Subscription<TradeItemPresentationDto> =
-        Subscription(webSocketClientService, json, Topic.TRADES, this::handleTradeItemPresentationChange)
+        Subscription(
+            webSocketClientService,
+            json,
+            Topic.TRADES,
+            this::handleTradeItemPresentationChange,
+        )
+
+    private val closedTradesSubscription: Subscription<ClosedTradeListItemDto> =
+        Subscription(
+            webSocketClientService,
+            json,
+            Topic.CLOSED_TRADES,
+            this::handleClosedTradesChange,
+        )
 
     private val tradePropertiesSubscription: Subscription<Map<String, TradePropertiesDto>> =
         Subscription(webSocketClientService, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
@@ -72,11 +95,13 @@ class ClientTradesServiceFacade(
         super<ServiceFacade>.activate()
 
         openTradesSubscription.subscribe()
+        closedTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
     }
 
     override suspend fun deactivate() {
         openTradesSubscription.dispose()
+        closedTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
 
         super<ServiceFacade>.deactivate()
@@ -176,6 +201,31 @@ class ClientTradesServiceFacade(
         _selectedTrade.value = null
     }
 
+    override suspend fun getClosedTradesPaginated(
+        params: PaginationParams,
+        search: String?,
+        sortBy: TradeSort?,
+        outcomeFilter: TradeOutcomeFilter,
+        roleFilter: TradeRoleFilter,
+    ): Result<PaginatedResponse<ClosedTradeListItem>> =
+        apiGateway
+            .getClosedTradesPaginated(
+                page = params.page,
+                pageSize = params.pageSize,
+                search = search,
+                sortBy = sortBy,
+                role = roleFilter,
+                outcome = outcomeFilter,
+            ).map { paginatedResponse ->
+                PaginatedResponse(
+                    items = paginatedResponse.items.map(ClosedTradeListItemDto::toClosedTradeListItem),
+                    page = paginatedResponse.page,
+                    pageSize = paginatedResponse.pageSize,
+                    totalItems = paginatedResponse.totalItems,
+                    totalPages = paginatedResponse.totalPages,
+                )
+            }
+
     // Private
     private fun handleTradeItemPresentationChange(
         payload: List<TradeItemPresentationDto>,
@@ -212,6 +262,14 @@ class ClientTradesServiceFacade(
                 }
             }
         }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun handleClosedTradesChange(
+        payload: List<ClosedTradeListItemDto>,
+        modificationType: ModificationType,
+    ) {
+        _closedTradesChangeTick.update { it + 1 }
     }
 
     /**

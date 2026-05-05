@@ -2,10 +2,10 @@ package network.bisq.mobile.data.replicated.presentation.open_trades
 
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.i18n.i18n
 
@@ -14,9 +14,13 @@ import network.bisq.mobile.i18n.i18n
  */
 data class TradeItemPresentationModel(
     private val tradeItemPresentationDto: TradeItemPresentationDto,
-    val bisqEasyOpenTradeChannelModel: BisqEasyOpenTradeChannelModel,
+    private val channelModel: BisqEasyOpenTradeChannelModel?,
     val bisqEasyTradeModel: BisqEasyTradeModel,
 ) {
+    // Non-null accessor: throws for closed trades if called in open-trade context
+    val bisqEasyOpenTradeChannelModel: BisqEasyOpenTradeChannelModel
+        get() = channelModel ?: error("Trade $tradeId has no channel (closed trade)")
+
     // Delegates of tradeItemPresentationVO
     val makerUserProfile: UserProfileVO get() = tradeItemPresentationDto.makerUserProfile
     val takerUserProfile: UserProfileVO get() = tradeItemPresentationDto.takerUserProfile
@@ -34,25 +38,21 @@ data class TradeItemPresentationModel(
     val market: String get() = tradeItemPresentationDto.market
     val price: Long get() = tradeItemPresentationDto.price
     val formattedPrice: String get() = tradeItemPresentationDto.formattedPrice
-    val formattedPriceSpec: String get() = PriceSpecFormatter.getFormattedPriceSpec(bisqEasyOffer.priceSpec, true)
+    val formattedPriceSpec: String
+        get() {
+            val spec = bisqEasyOffer.priceSpec
+            return if (spec is FixPriceSpecVO) "" else "(${PriceSpecFormatter.getFormattedPriceSpec(spec, true)})"
+        }
     val baseAmount: Long get() = tradeItemPresentationDto.baseAmount
-    val formattedBaseAmount: String get() = NumberFormatter.btcFormat(baseAmount)
+    val formattedBaseAmount: String get() = tradeItemPresentationDto.formattedBaseAmount
     val quoteAmount: Long get() = tradeItemPresentationDto.quoteAmount
-    val formattedQuoteAmount: String get() = NumberFormatter.format(quoteAmount.toDouble() / 10000.0)
+    val formattedQuoteAmount: String get() = tradeItemPresentationDto.formattedQuoteAmount
     val bitcoinSettlementMethod: String get() = tradeItemPresentationDto.bitcoinSettlementMethod
     val bitcoinSettlementMethodDisplayString: String get() = tradeItemPresentationDto.bitcoinSettlementMethodDisplayString
     val fiatPaymentMethod: String get() = tradeItemPresentationDto.fiatPaymentMethod
     val fiatPaymentMethodDisplayString: String get() = tradeItemPresentationDto.fiatPaymentMethodDisplayString
     val paymentMethodCsvDisplayString: String
-        get() {
-            val btc =
-                tradeItemPresentationDto.bitcoinSettlementMethodCsvDisplayString
-                    .takeUnless { it.isNullOrEmpty() } ?: bitcoinSettlementMethodDisplayString
-            val fiat =
-                tradeItemPresentationDto.fiatPaymentMethodCsvDisplayString
-                    .takeUnless { it.isNullOrEmpty() } ?: fiatPaymentMethodDisplayString
-            return "$btc / $fiat"
-        }
+        get() = "$bitcoinSettlementMethodDisplayString / $fiatPaymentMethodDisplayString"
     val isFiatPaymentMethodCustom: Boolean get() = tradeItemPresentationDto.isFiatPaymentMethodCustom
     val formattedMyRole: String get() = tradeItemPresentationDto.formattedMyRole
 
@@ -72,13 +72,14 @@ data class TradeItemPresentationModel(
     val mediator: UserProfileVO? get() = bisqEasyTradeModel.contract.mediator
     val mediatorUserName: String? get() = mediator?.userName
 
-    val bisqEasyOffer: BisqEasyOfferVO get() = bisqEasyOpenTradeChannelModel.bisqEasyOffer
+    val bisqEasyOffer: BisqEasyOfferVO
+        get() = channelModel?.bisqEasyOffer ?: bisqEasyTradeModel.contract.offer
     val offerId: String get() = bisqEasyOffer.id
     val tradeId: String get() = bisqEasyTradeModel.id
     val shortTradeId: String get() = bisqEasyTradeModel.shortId
     val baseCurrencyCode: String get() = bisqEasyOffer.market.baseCurrencyCode
     val quoteCurrencyCode: String get() = bisqEasyOffer.market.quoteCurrencyCode
-    val quoteAmountWithCode: String get() = "${NumberFormatter.format(quoteAmount.toDouble() / 10000.0)} $quoteCurrencyCode"
+    val quoteAmountWithCode: String get() = "$formattedQuoteAmount $quoteCurrencyCode"
     val baseAmountWithCode: String get() = "$formattedBaseAmount $baseCurrencyCode"
 
     override fun toString(): String =
@@ -110,10 +111,7 @@ data class TradeItemPresentationModel(
         fun from(tradeItemPresentationDto: TradeItemPresentationDto): TradeItemPresentationModel =
             TradeItemPresentationModel(
                 tradeItemPresentationDto = tradeItemPresentationDto,
-                bisqEasyOpenTradeChannelModel =
-                    BisqEasyOpenTradeChannelModel(
-                        tradeItemPresentationDto.channel,
-                    ),
+                channelModel = BisqEasyOpenTradeChannelModel(tradeItemPresentationDto.channel),
                 bisqEasyTradeModel = BisqEasyTradeModel(tradeItemPresentationDto.trade),
             )
     }

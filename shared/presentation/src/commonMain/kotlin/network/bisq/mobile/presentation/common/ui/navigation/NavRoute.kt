@@ -45,8 +45,18 @@ interface NavRoute {
     data object TabOfferbookMarket : NavRoute, TabNavRoute
 
     @Serializable
-    data object TabOpenTradeList : NavRoute, TabNavRoute, DeepLinkableRoute {
-        override fun toUriString(): String = getDeepLinkBasePath(this)
+    @Immutable
+    data class TabMyTrades(
+        val initialTab: Int = TAB_OPEN,
+    ) : NavRoute,
+        TabNavRoute,
+        DeepLinkableRoute {
+        override fun toUriString(): String = "${getDeepLinkBasePath(this)}?initialTab=$initialTab"
+
+        companion object {
+            const val TAB_OPEN: Int = 0
+            const val TAB_HISTORY: Int = 1
+        }
     }
 
     @Serializable

@@ -42,6 +42,12 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.core.pagination.PaginatedResponse
+import network.bisq.mobile.domain.core.pagination.PaginationParams
+import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
+import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
+import network.bisq.mobile.domain.model.trade.TradeRoleFilter
+import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
@@ -190,6 +196,15 @@ class CreateOfferPricePresenterTest {
     private class FakeTradesServiceFacade : TradesServiceFacade {
         override val selectedTrade: StateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
         override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
+        override val closedTradesChangeTick: StateFlow<Int> = MutableStateFlow(0)
+
+        override suspend fun getClosedTradesPaginated(
+            params: PaginationParams,
+            search: String?,
+            sortBy: TradeSort?,
+            outcomeFilter: TradeOutcomeFilter,
+            roleFilter: TradeRoleFilter,
+        ): Result<PaginatedResponse<ClosedTradeListItem>> = Result.success(PaginatedResponse(emptyList(), params.page, params.pageSize, 0L, 0))
 
         override suspend fun takeOffer(
             bisqEasyOffer: BisqEasyOfferVO,

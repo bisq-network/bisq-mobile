@@ -1,7 +1,10 @@
 package network.bisq.mobile.domain.trade.export
 
+import network.bisq.mobile.data.replicated.common.monetary.fiatToDecimal
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.trade.export.TradeCompletedCsv.CsvSpreadsheetFormulaDangerFirstChars
+import network.bisq.mobile.domain.trade.export.TradeCompletedCsv.escapeCsvField
 
 /**
  * Builds a UTF-8 CSV matching bisq2 desktop export: one header row + one data row.
@@ -22,7 +25,7 @@ object TradeCompletedCsv {
                 .orEmpty()
         val amountBtcCell = "${NumberFormatter.btcFormatForCsvExport(trade.baseAmount)} BTC"
         val quoteAmountFormatted =
-            NumberFormatter.formatForCsvExport(trade.quoteAmount.toDouble() / 10000.0)
+            NumberFormatter.formatForCsvExport(trade.quoteAmount.fiatToDecimal())
         val amountQuoteCell = "$quoteAmountFormatted ${trade.quoteCurrencyCode}"
         val paymentMethodCell = trade.paymentMethodCsvDisplayString
 

@@ -34,9 +34,7 @@ object TradeItemPresentationDtoFactory {
         reputationService: ReputationService,
     ): TradeItemPresentationDto {
         val myUserProfile = userProfileService.getManagedUserProfile(channel.myUserIdentity.userProfile)
-        val myUserProfileVO = Mappings.UserProfileMapping.fromBisq2Model(myUserProfile)
         val peersUserProfile = userProfileService.getManagedUserProfile(channel.peer)
-        val peersUserProfileVO = Mappings.UserProfileMapping.fromBisq2Model(peersUserProfile)
         val contract: BisqEasyContract = trade.contract
         val date = contract.takeOfferDate
         val directionalTitle: String = BisqEasyTradeFormatter.getDirectionalTitle(trade)
@@ -51,16 +49,16 @@ object TradeItemPresentationDtoFactory {
         val quoteAmountString: String = BisqEasyTradeFormatter.formatQuoteSideAmount(trade)
         val bitcoinSettlementMethod: String = contract.baseSidePaymentMethodSpec.paymentMethodName
         val bitcoinSettlementMethodDisplayString: String = contract.baseSidePaymentMethodSpec.shortDisplayString
-        val bitcoinSettlementMethodCsvDisplayString: String? = contract.baseSidePaymentMethodSpec.displayString
         val fiatPaymentMethod: String = contract.quoteSidePaymentMethodSpec.paymentMethodName
         val fiatPaymentMethodDisplayString: String = contract.quoteSidePaymentMethodSpec.shortDisplayString
-        val fiatPaymentMethodCsvDisplayString: String? = contract.quoteSidePaymentMethodSpec.displayString
         val isFiatPaymentMethodCustom: Boolean = contract.quoteSidePaymentMethodSpec.paymentMethod.isCustomPaymentMethod
         val myRole: String = BisqEasyTradeFormatter.getMakerTakerRole(trade)
 
         val channelVO = Mappings.BisqEasyOpenTradeChannelVOMapping.fromBisq2Model(channel)
         val tradeVO = Mappings.BisqEasyTradeVOMapping.fromBisq2Model(trade)
         val contractVO = Mappings.BisqEasyContractMapping.fromBisq2Model(trade.contract)
+        val myUserProfileVO = Mappings.UserProfileMapping.fromBisq2Model(myUserProfile)
+        val peersUserProfileVO = Mappings.UserProfileMapping.fromBisq2Model(peersUserProfile)
 
         val makerUserProfile: UserProfileVO
         val takerUserProfile: UserProfileVO
@@ -72,35 +70,33 @@ object TradeItemPresentationDtoFactory {
             takerUserProfile = myUserProfileVO
         }
 
-        val mediatorUserProfile: UserProfileVO? = if (contractVO.mediator != null) contractVO.mediator!! else null
+        val mediatorUserProfile: UserProfileVO? = contractVO.mediator
         val peersReputationScore = reputationService.getReputationScore(peersUserProfile.id)
         val peersRReputationScoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(peersReputationScore)
 
         return TradeItemPresentationDto(
-            channelVO,
-            tradeVO,
-            makerUserProfile,
-            takerUserProfile,
-            mediatorUserProfile,
-            directionalTitle,
-            formattedDate,
-            formattedTime,
-            market,
-            price,
-            priceString,
-            baseAmount,
-            baseAmountString,
-            quoteAmount,
-            quoteAmountString,
-            bitcoinSettlementMethod,
-            bitcoinSettlementMethodDisplayString,
-            bitcoinSettlementMethodCsvDisplayString,
-            fiatPaymentMethod,
-            fiatPaymentMethodDisplayString,
-            fiatPaymentMethodCsvDisplayString,
-            isFiatPaymentMethodCustom,
-            myRole,
-            peersRReputationScoreVO,
+            channel = channelVO,
+            trade = tradeVO,
+            makerUserProfile = makerUserProfile,
+            takerUserProfile = takerUserProfile,
+            mediatorUserProfile = mediatorUserProfile,
+            directionalTitle = directionalTitle,
+            formattedDate = formattedDate,
+            formattedTime = formattedTime,
+            market = market,
+            price = price,
+            formattedPrice = priceString,
+            baseAmount = baseAmount,
+            formattedBaseAmount = baseAmountString,
+            quoteAmount = quoteAmount,
+            formattedQuoteAmount = quoteAmountString,
+            bitcoinSettlementMethod = bitcoinSettlementMethod,
+            bitcoinSettlementMethodDisplayString = bitcoinSettlementMethodDisplayString,
+            fiatPaymentMethod = fiatPaymentMethod,
+            fiatPaymentMethodDisplayString = fiatPaymentMethodDisplayString,
+            isFiatPaymentMethodCustom = isFiatPaymentMethodCustom,
+            formattedMyRole = myRole,
+            peersReputationScore = peersRReputationScoreVO,
         )
     }
 }

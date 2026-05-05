@@ -13,6 +13,7 @@ class Subscription<T>(
     private val json: Json,
     private val topic: Topic,
     private val resultHandler: (List<T>, ModificationType) -> Unit,
+    private val parameter: String? = null,
 ) : Logging {
     private var job: Job? = null
 
@@ -21,7 +22,7 @@ class Subscription<T>(
         job =
             CoroutineScope(Dispatchers.Default).launch {
                 // subscribe blocks until we get a response
-                val observer = webSocketClientService.subscribe(topic)
+                val observer = webSocketClientService.subscribe(topic, parameter)
                 observer.webSocketEvent.collect { webSocketEvent ->
                     try {
                         if (webSocketEvent?.deferredPayload == null) {

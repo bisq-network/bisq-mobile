@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.tabs.open_trades
+package network.bisq.mobile.presentation.tabs.my_trades.open.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

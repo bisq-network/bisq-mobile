@@ -36,15 +36,24 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.data.replicated.common.monetary.fiatToDecimal
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.core.pagination.PaginatedResponse
+import network.bisq.mobile.domain.core.pagination.PaginationParams
+import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
+import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
+import network.bisq.mobile.domain.model.trade.TradeRoleFilter
+import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.TradeItemPresentationDtoFactory
+import network.bisq.mobile.node.common.domain.mapping.trade.toClosedTradeListItem
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
@@ -99,6 +108,15 @@ class NodeTradesServiceFacade(
     // purposedly avoid get() to ensure same instance is used for registration/deregistration
     // core fix for nasty crash on notifications
     override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems.asStateFlow()
+
+    // Change tick bumped whenever a trade transitions into a final state. Consumers re-query
+    // `bisqEasyTradeService.closedTrades` via getClosedTradesPaginated (source of truth).
+    private val _closedTradesChangeTick = MutableStateFlow(0)
+    override val closedTradesChangeTick: StateFlow<Int> = _closedTradesChangeTick.asStateFlow()
+
+    private fun bumpClosedTradesTick() {
+        _closedTradesChangeTick.update { it + 1 }
+    }
 
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     override val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
@@ -156,6 +174,7 @@ class NodeTradesServiceFacade(
 
         unbindAllPinsByTradeId()
         _openTradeItems.value = emptyList()
+        bumpClosedTradesTick()
         _selectedTrade.value = null
 
         super<ServiceFacade>.deactivate()
@@ -393,6 +412,83 @@ class NodeTradesServiceFacade(
         _selectedTrade.value = null
     }
 
+    override suspend fun getClosedTradesPaginated(
+        params: PaginationParams,
+        search: String?,
+        sortBy: TradeSort?,
+        outcomeFilter: TradeOutcomeFilter,
+        roleFilter: TradeRoleFilter,
+    ): Result<PaginatedResponse<ClosedTradeListItem>> =
+        try {
+            withContext(Dispatchers.IO) {
+                val allClosedTrades = bisqEasyTradeService.closedTrades
+                val items =
+                    allClosedTrades
+                        .asSequence()
+                        .map { it.toClosedTradeListItem(reputationService) }
+                        .toList()
+
+                // Apply filtering and sorting (Maybe we need this at bisq2 lib layer)
+                var filtered = items
+
+                if (outcomeFilter != TradeOutcomeFilter.ALL) {
+                    filtered = filtered.filter { outcomeFilter.matches(it.outcome) }
+                }
+                if (roleFilter != TradeRoleFilter.ALL) {
+                    filtered = filtered.filter { roleFilter.matches(it.isBuyer) }
+                }
+
+                search?.trim()?.takeIf { it.isNotEmpty() }?.let { query ->
+                    filtered = filtered.filter { it.matchesSearch(query) }
+                }
+
+                filtered =
+                    when (sortBy) {
+                        TradeSort.OLDEST_FIRST -> filtered.sortedBy { it.tradeCompletedDate ?: it.takeOfferDate }
+                        TradeSort.AMOUNT_HIGH_LOW -> filtered.sortedByDescending { it.quoteAmount }
+                        TradeSort.AMOUNT_LOW_HIGH -> filtered.sortedBy { it.quoteAmount }
+                        TradeSort.NEWEST_FIRST, null -> filtered.sortedByDescending { it.tradeCompletedDate ?: it.takeOfferDate }
+                    }
+
+                // Node runs in-process with bisq2 lib; closed trades already in memory.
+                // Mapping/filter/sort is O(n) regardless, so return everything as a single page.
+                val total = filtered.size
+                Result.success(
+                    PaginatedResponse(
+                        items = filtered,
+                        page = 1,
+                        pageSize = total,
+                        totalItems = total.toLong(),
+                        totalPages = 1,
+                    ),
+                )
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Error getting paginated closed trades" }
+            Result.failure(e)
+        }
+
+    /**
+     * Mirrors server-side ClosedTradesQuery.matches: searches across formatted display
+     * fields (not raw enum names), tradeId, both user profiles' username + nym, market
+     * codes, directional title, role, and formatted price/amount strings. Short-circuits
+     * via `||` and uses `ignoreCase` to avoid allocating lowercased copies per haystack.
+     */
+    private fun ClosedTradeListItem.matchesSearch(needle: String): Boolean =
+        tradeId.contains(needle, ignoreCase = true) ||
+            priceMarketCodes.contains(needle, ignoreCase = true) ||
+            directionalTitle.contains(needle, ignoreCase = true) ||
+            myRole.contains(needle, ignoreCase = true) ||
+            formattedPriceValue.contains(needle, ignoreCase = true) ||
+            formattedBaseAmount.contains(needle, ignoreCase = true) ||
+            formattedQuoteAmount.contains(needle, ignoreCase = true) ||
+            peersUserProfile.userName.contains(needle, ignoreCase = true) ||
+            peersUserProfile.nym.contains(needle, ignoreCase = true) ||
+            myUserName.contains(needle, ignoreCase = true) ||
+            myUserNym.contains(needle, ignoreCase = true) ||
+            bitcoinSettlementMethodDisplay.contains(needle, ignoreCase = true) ||
+            fiatPaymentMethodDisplay.contains(needle, ignoreCase = true)
+
     // Private
     private suspend fun doTakeOffer(
         bisqEasyOffer: BisqEasyOffer,
@@ -585,6 +681,17 @@ class NodeTradesServiceFacade(
 
         val tradeItemPresentationVO = TradeItemPresentationDtoFactory.create(trade, channel, userProfileService, reputationService)
         val openTradeItem = TradeItemPresentationModel.from(tradeItemPresentationVO)
+
+        // If already in a final state (e.g. app restarted with trade closed), add directly to closed.
+        val currentState = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(trade.tradeState)
+        if (currentState.isFinalState) {
+            // Trade is already closed (e.g. app restart with a closed trade). No need to add it to
+            // openTradeItems. Bump the tick so consumers refresh closed-trade views; the actual
+            // list is read from bisqEasyTradeService.closedTrades via getClosedTradesPaginated.
+            bumpClosedTradesTick()
+            return
+        }
+
         _openTradeItems.update { it + openTradeItem }
 
         val tradeId = trade.id
@@ -595,8 +702,13 @@ class NodeTradesServiceFacade(
         // openTradeItems
         pins +=
             trade.tradeStateObservable().addObserver { tradeState ->
-                openTradeItem.bisqEasyTradeModel.tradeState.value = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(tradeState)
+                val mappedState = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(tradeState)
+                openTradeItem.bisqEasyTradeModel.tradeState.value = mappedState
                 openTradeItem.bisqEasyTradeModel.tradeCompletedDate.value = trade.tradeCompletedDate.orElse(null)
+                if (mappedState.isFinalState) {
+                    _openTradeItems.update { list -> list.filter { it.tradeId != trade.id } }
+                    bumpClosedTradesTick()
+                }
             }
         pins +=
             trade.interruptTradeInitiator.addObserver { interruptTradeInitiator ->

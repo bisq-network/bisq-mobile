@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.common.di
 
+import network.bisq.mobile.domain.usecase.trade.FilterOpenTradesUseCase
+import network.bisq.mobile.domain.usecase.trade.GetPaginatedClosedTradesUseCase
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationBannerPresenter
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
@@ -44,9 +46,11 @@ import network.bisq.mobile.presentation.startup.user_agreement.IAgreementPresent
 import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementPresenter
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.dashboard.welcome_carousel.WelcomeCarouselPresenter
+import network.bisq.mobile.presentation.tabs.my_trades.MyTradesPresenter
+import network.bisq.mobile.presentation.tabs.my_trades.closed.ClosedTradeListPresenter
+import network.bisq.mobile.presentation.tabs.my_trades.open.OpenTradeListPresenter
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketPresenter
 import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
-import network.bisq.mobile.presentation.tabs.open_trades.OpenTradeListPresenter
 import network.bisq.mobile.presentation.tabs.tab.ITabContainerPresenter
 import network.bisq.mobile.presentation.tabs.tab.TabContainerPresenter
 import network.bisq.mobile.presentation.trade.trade_chat.TradeChatPresenter
@@ -203,7 +207,12 @@ val presentationModule =
                 get(),
             )
         }
-        factory { OpenTradeListPresenter(get(), get(), get(), get()) }
+        factory { FilterOpenTradesUseCase() }
+        factory { OpenTradeListPresenter(get(), get(), get(), get(), get()) }
+        factory { MyTradesPresenter(get()) }
+        // Trade history dependencies
+        factory { GetPaginatedClosedTradesUseCase(get()) }
+        factory { ClosedTradeListPresenter(get(), get(), get(), get()) }
         factory { TradeDetailsHeaderPresenter(get(), get(), get(), get()) }
         factory { InterruptedTradePresenter(get(), get(), get(), get()) }
         factory { TradeFlowPresenter(get(), get(), get()) }

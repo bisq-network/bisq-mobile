@@ -13,8 +13,10 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.atoms.StarPainters
 import network.bisq.mobile.presentation.common.ui.components.atoms.StarRating
 import network.bisq.mobile.presentation.common.ui.components.atoms.animations.AnimatedBadge
+import network.bisq.mobile.presentation.common.ui.components.atoms.rememberStarPainters
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
@@ -25,6 +27,7 @@ fun UserProfileRow(
     modifier: Modifier = Modifier,
     showUserName: Boolean = true,
     badgeCount: Int = 0,
+    starPainters: StarPainters = rememberStarPainters(),
 ) {
     val fiveSystemScore = reputation.fiveSystemScore
 
@@ -54,7 +57,7 @@ fun UserProfileRow(
                     singleLine = true,
                 )
             }
-            StarRating(fiveSystemScore)
+            StarRating(rating = fiveSystemScore, painters = starPainters)
         }
     }
 }

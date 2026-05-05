@@ -64,7 +64,7 @@ fun TabContainerScreen() {
             ),
             BottomNavigationItem(
                 "mobile.bottomNavigation.myTrades".i18n(),
-                NavRoute.TabOpenTradeList,
+                NavRoute.TabMyTrades(),
                 Res.drawable.nav_trades,
             ),
             BottomNavigationItem(
@@ -87,7 +87,7 @@ fun TabContainerScreen() {
                     when (currentTab) {
                         NavRoute.TabHome -> ""
                         NavRoute.TabOfferbookMarket -> navigationItems[1].title
-                        NavRoute.TabOpenTradeList -> "mobile.bottomNavigation.myOpenTrades".i18n()
+                        is NavRoute.TabMyTrades -> "mobile.bottomNavigation.myTrades".i18n()
                         NavRoute.TabMiscItems -> "mobile.bottomNavigation.miscItems.headline".i18n()
                         else -> "mobile.bottomNavigation.app".i18n()
                     },

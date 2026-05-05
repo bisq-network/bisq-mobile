@@ -26,7 +26,7 @@ class TradeItemPresentationModelDirectionTest {
         val model =
             TradeItemPresentationModel(
                 tradeItemPresentationDto = dto,
-                bisqEasyOpenTradeChannelModel = channelModel,
+                channelModel = channelModel,
                 bisqEasyTradeModel = tradeModel,
             )
 
@@ -46,7 +46,7 @@ class TradeItemPresentationModelDirectionTest {
         val model =
             TradeItemPresentationModel(
                 tradeItemPresentationDto = dto,
-                bisqEasyOpenTradeChannelModel = channelModel,
+                channelModel = channelModel,
                 bisqEasyTradeModel = tradeModel,
             )
 

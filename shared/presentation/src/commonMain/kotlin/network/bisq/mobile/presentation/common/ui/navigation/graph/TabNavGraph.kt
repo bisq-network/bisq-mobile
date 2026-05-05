@@ -11,6 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
+import network.bisq.mobile.presentation.common.ui.navigation.NAV_BASE_PATH
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -18,8 +20,8 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardScreen
 import network.bisq.mobile.presentation.tabs.more.MiscItemsScreen
+import network.bisq.mobile.presentation.tabs.my_trades.MyTradesScreen
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketScreen
-import network.bisq.mobile.presentation.tabs.open_trades.OpenTradeListScreen
 import org.koin.compose.koinInject
 
 @ExcludeFromCoverage
@@ -47,15 +49,20 @@ fun TabNavGraph(navController: NavHostController) {
                 OfferbookMarketScreen()
             }
 
-            composable<NavRoute.TabOpenTradeList>(
+            composable<NavRoute.TabMyTrades>(
                 deepLinks =
                     listOf(
-                        navDeepLink<NavRoute.TabOpenTradeList>(
-                            basePath = NavUtils.getDeepLinkBasePath<NavRoute.TabOpenTradeList>(),
+                        navDeepLink<NavRoute.TabMyTrades>(
+                            basePath = NavUtils.getDeepLinkBasePath<NavRoute.TabMyTrades>(),
+                        ),
+                        // Backward-compat: legacy deep link before TabOpenTradeList was renamed to TabMyTrades.
+                        navDeepLink<NavRoute.TabMyTrades>(
+                            basePath = NAV_BASE_PATH + "TabOpenTradeList",
                         ),
                     ),
-            ) {
-                OpenTradeListScreen()
+            ) { entry ->
+                val route = entry.toRoute<NavRoute.TabMyTrades>()
+                MyTradesScreen(initialTab = route.initialTab)
             }
 
             composable<NavRoute.TabMiscItems> {

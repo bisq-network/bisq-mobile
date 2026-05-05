@@ -4,6 +4,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.FIAT_SCALE_FACTOR
 import network.bisq.mobile.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.from
@@ -34,7 +35,8 @@ object BisqEasyTradeAmountLimits {
                 MarketVO("BTC", quoteCurrencyCode),
                 DEFAULT_MIN_USD_TRADE_AMOUNT,
             )
-        return ((minFiatAmount?.value?.toDouble() ?: 0.0) / 10000).roundToLong() * 10000
+        // Round scaled fiat long to whole fiat units (drop sub-unit precision).
+        return ((minFiatAmount?.value?.toDouble() ?: 0.0) / FIAT_SCALE_FACTOR).roundToLong() * FIAT_SCALE_FACTOR.toLong()
     }
 
     fun getMaxAmountValue(
@@ -47,7 +49,7 @@ object BisqEasyTradeAmountLimits {
                 MarketVO("BTC", quoteCurrencyCode),
                 MAX_USD_TRADE_AMOUNT,
             )
-        return ((maxFiatAmount?.value?.toDouble() ?: 0.0) / 10000).roundToLong() * 10000
+        return ((maxFiatAmount?.value?.toDouble() ?: 0.0) / FIAT_SCALE_FACTOR).roundToLong() * FIAT_SCALE_FACTOR.toLong()
     }
 
     val TOLERANCE: Double = 0.05

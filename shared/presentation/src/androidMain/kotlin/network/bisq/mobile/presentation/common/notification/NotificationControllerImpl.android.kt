@@ -101,7 +101,7 @@ class NotificationControllerImpl(
 
                 is NotificationPressAction.Default ->
                     builder.setContentIntent(
-                        createNavDeepLinkPendingIntent(NavRoute.TabOpenTradeList),
+                        createNavDeepLinkPendingIntent(NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN)),
                     )
 
                 null -> {

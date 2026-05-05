@@ -689,7 +689,7 @@ class Mappings {
             Identity(
                 value.tag,
                 NetworkIdMapping.toBisq2Model(value.networkId),
-                KeyBundleMapping.toBisq2Model(value.keyBundle),
+                KeyBundleMapping.toBisq2Model(requireNotNull(value.keyBundle) { "keyBundle required for toBisq2Model" }),
             )
 
         fun fromBisq2Model(value: Identity): IdentityVO =
