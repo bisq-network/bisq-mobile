@@ -269,6 +269,10 @@ class ClientTradesServiceFacade(
         payload: List<ClosedTradeListItemDto>,
         modificationType: ModificationType,
     ) {
+        // Closed trades are paginated, so we don't hold the full list in memory.
+        // Inserting items live would place them at the wrong position relative to
+        // unloaded pages. Instead, bump a tick to invalidate the paging source and
+        // let it re-fetch from the server, which is the source of truth for ordering.
         _closedTradesChangeTick.update { it + 1 }
     }
 
