@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -35,6 +36,7 @@ import kotlin.test.assertTrue
 class LinkButtonUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+    private lateinit var mainPresenter: MainPresenter
 
     private val dialogTitle get() = "hyperlinks.openInBrowser.attention.headline".i18n()
 
@@ -44,14 +46,19 @@ class LinkButtonUiTest {
         initKoin(showWebLinkConfirmation = true)
     }
 
-    private fun initKoin(showWebLinkConfirmation: Boolean) {
+    private fun initKoin(
+        showWebLinkConfirmation: Boolean,
+        openUrlResult: Boolean = true,
+    ) {
         runCatching { stopKoin() }
+        mainPresenter = mockk(relaxed = true)
+        every { mainPresenter.navigateToUrl(any()) } returns openUrlResult
         val settingsFacade =
             WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = showWebLinkConfirmation)
         startKoin {
             modules(
                 module {
-                    single<MainPresenter> { mockk(relaxed = true) }
+                    single<MainPresenter> { mainPresenter }
                     single<SettingsServiceFacade> { settingsFacade }
                     factory { WebLinkConfirmationDialogPresenter(get(), get()) }
                 },
@@ -170,11 +177,27 @@ class LinkButtonUiTest {
     }
 
     @Test
-    fun `when dialog confirm clicked then opens uri and invokes onClick`() {
-        val capturingUriHandler = CapturingUriHandler()
+    fun `when openConfirmation false and link is blank then invokes onClick without opening uri`() {
         val onClick = mockk<() -> Unit>(relaxed = true)
         setLinkButton(
-            uriHandler = capturingUriHandler,
+            uriHandler = ThrowingUriHandler(),
+            link = "   ",
+            onClick = onClick,
+            openConfirmation = false,
+        )
+
+        composeTestRule.onNodeWithText("Open docs").performClick()
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 1) { onClick() }
+        assertNoNodeWithText(dialogTitle)
+    }
+
+    @Test
+    fun `when dialog confirm clicked then opens uri and invokes onClick`() {
+        val onClick = mockk<() -> Unit>(relaxed = true)
+        setLinkButton(
+            uriHandler = NoopUriHandler(),
             link = "https://example.com/confirm",
             onClick = onClick,
         )
@@ -185,7 +208,7 @@ class LinkButtonUiTest {
         composeTestRule.waitForIdle()
 
         verify(exactly = 1) { onClick() }
-        assertEquals(listOf("https://example.com/confirm"), capturingUriHandler.openedUris)
+        verify(exactly = 1) { mainPresenter.navigateToUrl("https://example.com/confirm") }
         assertNoNodeWithText(dialogTitle)
     }
 
@@ -225,10 +248,11 @@ class LinkButtonUiTest {
 
     @Test
     fun `when uri open fails then invokes onError and closes dialog without invoking onClick`() {
+        initKoin(showWebLinkConfirmation = true, openUrlResult = false)
         val onClick = mockk<() -> Unit>(relaxed = true)
         val onError = mockk<(Throwable) -> Unit>(relaxed = true)
         setLinkButton(
-            uriHandler = ThrowingUriHandler(),
+            uriHandler = NoopUriHandler(),
             link = "https://example.com/fail",
             onClick = onClick,
             onError = onError,

@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.CancellationException
@@ -11,6 +12,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -88,7 +90,13 @@ class WebLinkConfirmationDialogPresenter(
                         dontShowAgain = _uiState.value.dontShowAgain,
                     )
                 }
+                // navigateToUrl returns false when already non-interactive (anti double-tap)
+                // before attempting to open; snapshot before call to tell that apart from a real failure.
+                val interactiveBeforeOpen = isInteractive.value
                 if (!navigateToUrl(uri)) {
+                    if (!interactiveBeforeOpen) {
+                        return@launch
+                    }
                     throw IllegalStateException("Failed to open URI")
                 }
                 userOnConfirm.invoke()
@@ -97,7 +105,7 @@ class WebLinkConfirmationDialogPresenter(
             } catch (throwable: Throwable) {
                 log.e(throwable) { "Failed to open URI from web link confirmation dialog" }
                 userOnError.invoke()
-                showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+                mainPresenter.showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
             } finally {
                 if (persist) hideLoading()
             }

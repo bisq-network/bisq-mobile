@@ -14,16 +14,24 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.MutableStateFlow
+import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.di.presentationTestModule
+import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
+import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.GlobalContext
+import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 import kotlin.test.assertEquals
 
 /**
@@ -564,6 +572,14 @@ class WebLinkDialogUiKoinTest {
         verify(exactly = 1) { presenter.navigateToUrl(link) }
         verify(exactly = 1) { onError() }
         verify(exactly = 0) { onConfirm() }
+        verify(exactly = 1) {
+            presenter.showSnackbar(
+                "mobile.error.generic".i18n(),
+                SnackbarType.ERROR,
+                SnackbarPosition.BOTTOM,
+                SnackbarDuration.Short,
+            )
+        }
     }
 
     /**
@@ -702,4 +718,50 @@ class WebLinkDialogUiKoinTest {
         }
         composeTestRule.assertNoNodeWithText(headline)
     }
+
+    @Test
+    fun `when confirm clicked while presenter non interactive then skips navigation`() {
+        runCatching { stopKoin() }
+        val fake = WebLinkDialogSettingsServiceFake()
+        val mainPresenter = mockk<MainPresenter>(relaxed = true)
+        every { mainPresenter.navigateToUrl(any()) } returns false
+        startKoin {
+            modules(
+                module {
+                    single<SettingsServiceFacade> { fake }
+                    single<MainPresenter> { mainPresenter }
+                    single { WebLinkConfirmationDialogPresenter(get(), get()) }
+                },
+                presentationTestModule,
+            )
+        }
+        val dialogPresenter =
+            GlobalContext.get().get<WebLinkConfirmationDialogPresenter>()
+        val link = "https://example.com/noninteractive-guard"
+        setTestContent(WebLinkDialogTestFixtures.noopUriHandler) {
+            WebLinkConfirmationDialog(
+                link = link,
+                onConfirm = {},
+                onDismiss = {},
+                onError = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        dialogPresenter.setInteractiveFlagForTest(false)
+        composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 0) { mainPresenter.navigateToUrl(any()) }
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun BasePresenter.setInteractiveFlagForTest(value: Boolean) {
+    val field =
+        BasePresenter::class.java.getDeclaredField("_isInteractive").apply {
+            isAccessible = true
+        }
+    val flow = field.get(this) as MutableStateFlow<Boolean>
+    flow.value = value
 }

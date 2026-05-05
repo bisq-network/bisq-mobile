@@ -13,7 +13,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
@@ -45,23 +47,14 @@ class ReputationWebLinkDialogUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private lateinit var uriHandler: TestUriHandler
+    private lateinit var uriHandler: NoopUriHandler
+    private lateinit var mainPresenter: MainPresenter
 
     @Before
     fun setup() {
         I18nSupport.setLanguage()
-        uriHandler = TestUriHandler()
-
-        startKoin {
-            modules(
-                module {
-                    single<MainPresenter> { mockk(relaxed = true) }
-                    single<SettingsServiceFacade> { WebLinkDialogSettingsServiceFake() }
-                    factory { WebLinkConfirmationDialogPresenter(get(), get()) }
-                },
-                presentationTestModule,
-            )
-        }
+        uriHandler = NoopUriHandler()
+        initKoin(openUrlResult = true)
     }
 
     @After
@@ -95,12 +88,12 @@ class ReputationWebLinkDialogUiTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
         composeTestRule.waitForIdle()
         assertNoDialog()
-        assertEquals(listOf("https://example.com/confirm"), uriHandler.openedUris)
+        verify(exactly = 1) { mainPresenter.navigateToUrl("https://example.com/confirm") }
     }
 
     @Test
     fun `error callback clears selected link and closes dialog when uri open fails`() {
-        uriHandler.shouldThrow = true
+        initKoin(openUrlResult = false)
         var selectedWebLink by mutableStateOf<String?>(null)
         var errorFlag = false
         var clearedFlag = false
@@ -125,7 +118,7 @@ class ReputationWebLinkDialogUiTest {
         assertNoDialog()
         assertTrue(errorFlag)
         assertFalse(clearedFlag)
-        assertTrue(uriHandler.failureTriggered)
+        verify(exactly = 1) { mainPresenter.navigateToUrl("https://example.com/error") }
     }
 
     private val dialogTitle get() = "hyperlinks.openInBrowser.attention.headline".i18n()
@@ -151,6 +144,22 @@ class ReputationWebLinkDialogUiTest {
         }
     }
 
+    private fun initKoin(openUrlResult: Boolean) {
+        runCatching { stopKoin() }
+        mainPresenter = mockk(relaxed = true)
+        every { mainPresenter.navigateToUrl(any()) } returns openUrlResult
+        startKoin {
+            modules(
+                module {
+                    single<MainPresenter> { mainPresenter }
+                    single<SettingsServiceFacade> { WebLinkDialogSettingsServiceFake() }
+                    factory { WebLinkConfirmationDialogPresenter(get(), get()) }
+                },
+                presentationTestModule,
+            )
+        }
+    }
+
     private fun assertNoDialog() {
         val nodes =
             composeTestRule
@@ -159,17 +168,7 @@ class ReputationWebLinkDialogUiTest {
         assertTrue(nodes.isEmpty(), "Expected dialog to be dismissed")
     }
 
-    private class TestUriHandler : UriHandler {
-        var shouldThrow = false
-        var failureTriggered = false
-        val openedUris = mutableListOf<String>()
-
-        override fun openUri(uri: String) {
-            if (shouldThrow) {
-                failureTriggered = true
-                throw RuntimeException("forced failure")
-            }
-            openedUris += uri
-        }
+    private class NoopUriHandler : UriHandler {
+        override fun openUri(uri: String) {}
     }
 }

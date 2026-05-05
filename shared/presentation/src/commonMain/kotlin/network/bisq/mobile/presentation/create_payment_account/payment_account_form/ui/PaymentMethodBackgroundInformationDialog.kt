@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -29,6 +30,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.openUriSafely
 
 private val HyperlinkTokenRegex = Regex("\\[HYPERLINK:\\s*([^]]+)]")
 
@@ -102,7 +104,7 @@ private fun LinkifiedBodyText(bodyText: String) {
                                         ),
                                 ),
                             linkInteractionListener = {
-                                uriHandler.openUri(url)
+                                paymentMethodBackgroundHyperlinkInteraction(uriHandler, url)
                             },
                         ),
                     ) {
@@ -128,6 +130,16 @@ private fun LinkifiedBodyText(bodyText: String) {
             ),
     )
 }
+
+internal fun paymentMethodBackgroundHyperlinkInteraction(
+    uriHandler: UriHandler,
+    url: String,
+): Boolean = openPaymentMethodBackgroundInfoUri(uriHandler, url)
+
+internal fun openPaymentMethodBackgroundInfoUri(
+    uriHandler: UriHandler,
+    url: String,
+): Boolean = uriHandler.openUriSafely(url)
 
 @Preview
 @Composable
