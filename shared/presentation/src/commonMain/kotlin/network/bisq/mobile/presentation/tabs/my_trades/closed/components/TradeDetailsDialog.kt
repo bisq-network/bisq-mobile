@@ -133,11 +133,11 @@ fun TradeDetailsDialog(
             label = "mobile.tradeHistory.details.offerTypeAndMarket".i18n(),
             value = formatOfferTypeAndMarket(item),
         )
-        formatPeerNetworkAddress(item.peersUserProfile)?.let { address ->
+        formatPeerNetworkAddress(item.peersUserProfile)?.let { (display, rawAddress) ->
             DetailRow(
                 label = "mobile.tradeHistory.details.peerNetworkAddress".i18n(),
-                value = address,
-                copyValue = address.substringAfter(": ", address),
+                value = display,
+                copyValue = rawAddress,
             )
         }
         item.mediatorUserProfile?.let { mediator ->
@@ -305,7 +305,12 @@ private fun outcomeLabel(outcome: TradeOutcome): String =
         TradeOutcome.FAILED -> "mobile.tradeHistory.outcome.failed".i18n()
     }
 
-private fun formatPeerNetworkAddress(profile: UserProfileVO): String? {
+private data class PeerNetworkAddressDisplay(
+    val display: String,
+    val rawAddress: String,
+)
+
+private fun formatPeerNetworkAddress(profile: UserProfileVO): PeerNetworkAddressDisplay? {
     val entry =
         profile.networkId.addressByTransportTypeMap.map.entries
             .firstOrNull() ?: return null
@@ -316,7 +321,10 @@ private fun formatPeerNetworkAddress(profile: UserProfileVO): String? {
             TransportTypeEnum.TOR -> "mobile.tradeHistory.details.networkAddress.tor"
             TransportTypeEnum.I2P -> "mobile.tradeHistory.details.networkAddress.i2p"
         }
-    return key.i18n(address)
+    return PeerNetworkAddressDisplay(
+        display = key.i18n(address),
+        rawAddress = address,
+    )
 }
 
 @ExcludeFromCoverage
