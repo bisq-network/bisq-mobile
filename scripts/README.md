@@ -6,7 +6,7 @@ These bash scripts measure timing between Bisq **desktop** (`Bisq2.app`) restart
 
 | Script | Role |
 |--------|------|
-| [`run_bisq_reconnect_rounds.sh`](run_bisq_reconnect_rounds.sh) | Android: tails desktop log + `adb logcat` while cycling Bisq2 |
+| [`run_bisq_reconnect_rounds_android.sh`](run_bisq_reconnect_rounds_android.sh) | Android: tails desktop log + `adb logcat` while cycling Bisq2 |
 | [`run_bisq_reconnect_rounds_ios.sh`](run_bisq_reconnect_rounds_ios.sh) | iOS Simulator: tails desktop log + `simctl log stream` |
 
 **Requirements:** Bash, [ripgrep](https://github.com/BurntSushi/ripgrep) (`rg`), Bisq2 desktop installed. The Android script also needs `adb` (exactly one connected device/emulator, or set `ANDROID_SERIAL`). The iOS script needs Xcode Command Line Tools (`xcrun`); it uses **Simulator** log streaming, not USB device capture by default.
@@ -17,7 +17,7 @@ Artifacts default to `debug/<timestamped-folder>/` under the **repository root**
 
 Each **round** repeats the steps below. Timestamps **t1** / **t2** and **duration** (`t2 − t1`, whole seconds) are only set when both waits succeed.
 
-#### [`run_bisq_reconnect_rounds.sh`](run_bisq_reconnect_rounds.sh) (Android)
+#### [`run_bisq_reconnect_rounds_android.sh`](run_bisq_reconnect_rounds_android.sh) (Android)
 
 1. Snapshot `bisq_start_line` (line count of the desktop `BISQ_LOG` file before this round’s restart).
 2. **Clear** logcat buffers (`adb logcat -b all -c`, twice), sleep 1s, log a post-clear dump line count.

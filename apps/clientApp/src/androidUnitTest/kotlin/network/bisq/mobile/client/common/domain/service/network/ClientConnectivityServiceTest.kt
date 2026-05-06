@@ -443,7 +443,7 @@ class ClientConnectivityServiceTest {
                     service.status.value,
                 )
             } finally {
-                service.stopMonitoring()
+                service.deactivate()
             }
         }
 
@@ -477,7 +477,7 @@ class ClientConnectivityServiceTest {
                     "Should not oscillate back to RECONNECTING after timeout",
                 )
             } finally {
-                service.stopMonitoring()
+                service.deactivate()
             }
         }
 
@@ -690,7 +690,7 @@ class ClientConnectivityServiceTest {
                     "After recovery from DISCONNECTED, pending connectivity blocks should be drained.",
                 )
             } finally {
-                service.stopMonitoring()
+                service.deactivate()
             }
         }
 }

@@ -157,15 +157,17 @@ class WebSocketClientImpl(
                     listenerJob =
                         clientScope.launch { startListening(newSession) }
 
-                    withTimeout(remainingTime.coerceAtLeast(API_VERSION_PROBE_TIMEOUT)) {
-                        val nodeApiVersion = getApiVersion()
-                        if (!isApiCompatible(nodeApiVersion)) {
-                            doDisconnect()
-                            awaitDisconnection() // so that we update the disconnect reason correctly
-                            throw IncompatibleHttpApiVersionException(
-                                nodeApiVersion.version,
-                            )
+                    try {
+                        withTimeout(remainingTime.coerceAtLeast(API_VERSION_PROBE_TIMEOUT)) {
+                            val nodeApiVersion = getApiVersion()
+                            if (!isApiCompatible(nodeApiVersion)) {
+                                throw IncompatibleHttpApiVersionException(nodeApiVersion.version)
+                            }
                         }
+                    } catch (e: Throwable) {
+                        doDisconnect()
+                        awaitDisconnection() // so that we update the disconnect reason correctly
+                        throw e
                     }
 
                     _webSocketClientStatus.value = ConnectionState.Connected
