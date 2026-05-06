@@ -83,11 +83,15 @@ open class ClientConnectivityService(
 
     override suspend fun activate() {
         super.activate()
+        consecutiveReconnectingCycles = 0
+        connectionUntrusted = false
         startMonitoring()
     }
 
     override suspend fun deactivate() {
         stopMonitoring()
+        consecutiveReconnectingCycles = 0
+        connectionUntrusted = false
         super.deactivate()
     }
 
@@ -219,9 +223,13 @@ open class ClientConnectivityService(
             // We must NOT call forceReconnect() here because that reconnects with the stale
             // sessionId, which the server immediately rejects.
             log.i { "Session expired (401 from health check), attempting session renewal" }
-            connectionUntrusted = true
-            webSocketClientService.attemptSessionRenewal()
             setConnectivityStatus(ConnectivityStatus.RECONNECTING)
+            connectionUntrusted = true
+            try {
+                webSocketClientService.attemptSessionRenewal()
+            } catch (renewalError: Exception) {
+                log.e(renewalError) { "Session renewal failed" }
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

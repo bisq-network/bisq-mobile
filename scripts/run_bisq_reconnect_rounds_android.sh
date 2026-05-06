@@ -120,6 +120,13 @@ cleanup_adb_tail() {
   fi
 }
 
+ADB_LOGCAT_PID=""
+on_exit() {
+  cleanup_adb_tail "$ADB_LOGCAT_PID"
+  ADB_LOGCAT_PID=""
+}
+trap on_exit EXIT INT TERM
+
 clear_adb_logcat() {
   log_step "Round ${CURRENT_ROUND}: clearing adb logcat buffers with 'adb logcat -b all -c'"
   adb_cmd logcat -b all -c
@@ -226,6 +233,7 @@ for round in $(seq 1 "$ROUNDS"); do
   clear_adb_logcat
   adb_cmd logcat -b all -v time > "$local_adb_file" 2>&1 &
   adb_pid="$!"
+  ADB_LOGCAT_PID="$adb_pid"
 
   # 1) Kill Bisq2 app.
   log_step "Round $round: killing Bisq2"
@@ -265,6 +273,7 @@ for round in $(seq 1 "$ROUNDS"); do
   fi
 
   cleanup_adb_tail "$adb_pid"
+  ADB_LOGCAT_PID=""
   clear_adb_logcat
 
   {
