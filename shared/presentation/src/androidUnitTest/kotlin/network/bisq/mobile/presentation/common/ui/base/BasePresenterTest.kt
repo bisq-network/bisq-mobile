@@ -221,6 +221,14 @@ class BasePresenterTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(presenter.isInteractive.value)
         verify(exactly = 1) { urlLauncher.openUrl("https://bisq.network") }
+        verify(exactly = 1) {
+            globalUiManager.showSnackbar(
+                "mobile.error.cannotOpenUrl".i18n(),
+                SnackbarType.ERROR,
+                any(),
+                any(),
+            )
+        }
     }
 
     /**

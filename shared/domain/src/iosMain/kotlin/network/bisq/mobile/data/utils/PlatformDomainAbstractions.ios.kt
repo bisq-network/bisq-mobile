@@ -10,6 +10,8 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -340,19 +342,27 @@ class IOSUrlLauncher : UrlLauncher {
         val safeUrl = sanitizeUrlForLog(url)
         val nsUrl = NSURL.URLWithString(url)
         if (nsUrl == null) {
-            log.e(IllegalArgumentException("Invalid URL")) { "Failed to open URL: $safeUrl" }
+            log.w { "Failed to open URL (invalid URL string): $safeUrl" }
             return false
         }
         if (!UIApplication.sharedApplication.canOpenURL(nsUrl)) {
-            log.e(IllegalStateException("canOpenURL returned false")) {
-                "Failed to open URL (restricted or no handler): $safeUrl"
-            }
+            log.w { "Failed to open URL (restricted or no registered handler): $safeUrl" }
             return false
         }
+
         return try {
-            // fake secondary parameters are important so that iOS compiler knows which override to use
-            UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?, String>(), completionHandler = null)
-            true
+            val deferred = CompletableDeferred<Boolean>()
+            // Secondary parameters select the openURL:options:completionHandler: overload; completion runs on a private queue.
+            UIApplication.sharedApplication.openURL(
+                nsUrl,
+                options = mapOf<Any?, Any>(),
+                completionHandler = { success ->
+                    deferred.complete(success)
+                },
+            )
+            runBlocking {
+                deferred.await()
+            }
         } catch (e: Exception) {
             log.e(e) { "Failed to open URL: $safeUrl" }
             false

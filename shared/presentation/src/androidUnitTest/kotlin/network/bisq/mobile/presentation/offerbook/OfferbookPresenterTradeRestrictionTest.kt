@@ -22,6 +22,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -84,8 +85,13 @@ class OfferbookPresenterTradeRestrictionTest {
     // -------------------------------------------------------------------------
 
     private fun buildPresenter(activeAlert: AuthorizedAlertData? = null): OfferbookPresenter {
+        val urlLauncher = mockk<UrlLauncher>()
+        every { urlLauncher.openUrl(any()) } returns true
         val mainPresenter =
-            MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
+            MainPresenterTestFactory.create(
+                applicationLifecycleService = TestApplicationLifecycleService(),
+                urlLauncher = urlLauncher,
+            )
 
         val offersFlow =
             MutableStateFlow(emptyList<network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel>())

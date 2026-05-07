@@ -73,6 +73,19 @@ internal fun KoinTestHost(
     }
 }
 
+/** Stubs [MainPresenter.navigateToUrl] like production when opening fails ([openUrlResult] false). */
+internal fun mockNavigateToUrlBehavior(
+    presenter: MainPresenter,
+    openUrlResult: Boolean,
+) {
+    every { presenter.navigateToUrl(any()) } answers {
+        if (!openUrlResult) {
+            presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
+        }
+        openUrlResult
+    }
+}
+
 internal fun startKoinWithWebLinkDeps(
     showWebLinkConfirmation: Boolean = true,
     permitOpeningBrowser: Boolean = true,
@@ -90,12 +103,7 @@ internal fun startKoinWithWebLinkDeps(
     coEvery { facade.setPermitOpeningBrowser(false) } returns setPermitResult
     coEvery { facade.setWebLinkDontShowAgain() } returns setDontShowAgainResult
     val presenter = mockk<MainPresenter>(relaxed = true)
-    every { presenter.navigateToUrl(any()) } answers {
-        if (!openUrlResult) {
-            presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
-        }
-        openUrlResult
-    }
+    mockNavigateToUrlBehavior(presenter, openUrlResult)
     startKoin {
         modules(
             module {
@@ -117,12 +125,7 @@ internal fun startKoinWithWebLinkDialogFake(
 ): Pair<WebLinkDialogSettingsServiceFake, MainPresenter> {
     runCatching { stopKoin() }
     val presenter = mockk<MainPresenter>(relaxed = true)
-    every { presenter.navigateToUrl(any()) } answers {
-        if (!openUrlResult) {
-            presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
-        }
-        openUrlResult
-    }
+    mockNavigateToUrlBehavior(presenter, openUrlResult)
     startKoin {
         modules(
             module {

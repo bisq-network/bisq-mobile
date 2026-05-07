@@ -37,6 +37,7 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Main Presenter as an example of implementation for now.
@@ -201,6 +202,8 @@ open class MainPresenter(
                 showCannotOpenUrlSnackbar()
             }
             opened
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             log.e(e) { "Failed to navigate to URL: $url" }
             showCannotOpenUrlSnackbar()

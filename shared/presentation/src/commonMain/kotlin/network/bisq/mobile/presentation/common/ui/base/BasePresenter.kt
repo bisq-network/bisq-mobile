@@ -316,14 +316,16 @@ abstract class BasePresenter(
         }
     }
 
+    /**
+     * Delegates to [MainPresenter.navigateToUrl], which handles launcher failures and exceptions
+     * (snackbar + [Boolean] result). This wrapper only enforces the interactive/double-tap guard
+     * and always restores interactivity in a `finally` block.
+     */
     open fun navigateToUrl(url: String): Boolean {
         if (!_isInteractive.value) return false
         disableInteractive()
         return try {
             rootPresenter?.navigateToUrl(url) ?: false
-        } catch (e: Exception) {
-            log.e(e) { "Failed to navigate to URL: $url" }
-            false
         } finally {
             enableInteractive() // re-enables after 250ms delay — prevents rapid double-taps
         }

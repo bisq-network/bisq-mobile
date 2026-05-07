@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -71,8 +72,14 @@ class TabContainerPresenterTradeRestrictionTest {
     // -------------------------------------------------------------------------
 
     private fun buildPresenter(activeAlert: AuthorizedAlertData? = null): TabContainerPresenter {
+        // Relaxed UrlLauncher defaults openUrl to false → cannot-open snackbar → GlobalUiManager Koin; these tests are about dialog state, not URL failure.
+        val urlLauncher = mockk<UrlLauncher>()
+        every { urlLauncher.openUrl(any()) } returns true
         val mainPresenter =
-            MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
+            MainPresenterTestFactory.create(
+                applicationLifecycleService = TestApplicationLifecycleService(),
+                urlLauncher = urlLauncher,
+            )
         val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
 
         val settingsServiceFacade = mockk<SettingsServiceFacade>(relaxed = true)
