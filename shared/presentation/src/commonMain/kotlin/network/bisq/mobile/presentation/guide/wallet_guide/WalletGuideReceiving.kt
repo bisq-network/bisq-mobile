@@ -22,6 +22,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
@@ -64,12 +65,14 @@ fun WalletGuideReceiving() {
             "bisqEasy.walletGuide.receive.link1".i18n(),
             link = BisqLinks.BLUE_WALLET_TUTORIAL_1_URL,
             onClick = { presenter.navigateToBlueWalletTutorial1() },
+            onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         )
 
         LinkButton(
             "bisqEasy.walletGuide.receive.link2".i18n(),
             link = BisqLinks.BLUE_WALLET_TUTORIAL_2_URL,
             onClick = { presenter.navigateToBlueWalletTutorial2() },
+            onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         )
 
         BisqGap.V2()

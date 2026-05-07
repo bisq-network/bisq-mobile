@@ -130,6 +130,14 @@ class WebLinkDialogUiKoinTest {
         verify(exactly = 1) { presenter.navigateToUrl(link) }
         verify(exactly = 1) { onError() }
         verify(exactly = 0) { onConfirm() }
+        verify(exactly = 1) {
+            presenter.showSnackbar(
+                "mobile.error.cannotOpenUrl".i18n(),
+                SnackbarType.ERROR,
+                SnackbarPosition.BOTTOM,
+                SnackbarDuration.Short,
+            )
+        }
         composeTestRule.assertNoNodeWithText("Should not appear")
     }
 
@@ -574,7 +582,7 @@ class WebLinkDialogUiKoinTest {
         verify(exactly = 0) { onConfirm() }
         verify(exactly = 1) {
             presenter.showSnackbar(
-                "mobile.error.generic".i18n(),
+                "mobile.error.cannotOpenUrl".i18n(),
                 SnackbarType.ERROR,
                 SnackbarPosition.BOTTOM,
                 SnackbarDuration.Short,

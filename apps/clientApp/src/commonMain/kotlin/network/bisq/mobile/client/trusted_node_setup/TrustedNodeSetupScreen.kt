@@ -43,6 +43,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -73,6 +74,7 @@ fun TrustedNodeSetupScreen(
         uiState = uiState,
         onAction = presenter::onAction,
         isWorkflow = isWorkflow,
+        onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         topBar =
             if (!isWorkflow) {
                 { TopBar(title = "mobile.trustedNodeSetup.title".i18n()) }
@@ -88,6 +90,7 @@ fun TrustedNodeSetupContent(
     uiState: TrustedNodeSetupUiState,
     onAction: (TrustedNodeSetupUiAction) -> Unit,
     isWorkflow: Boolean = true,
+    onError: ((Throwable) -> Unit)? = null,
     topBar: @Composable () -> Unit = {},
 ) {
     BisqScaffold(
@@ -102,6 +105,7 @@ fun TrustedNodeSetupContent(
             onAction = onAction,
             isWorkflow = isWorkflow,
             paddingValues = paddingValues,
+            onError = onError,
         )
     }
 
@@ -180,6 +184,7 @@ private fun TrustedNodeSetupMainContent(
     onAction: (TrustedNodeSetupUiAction) -> Unit,
     isWorkflow: Boolean,
     paddingValues: PaddingValues,
+    onError: ((Throwable) -> Unit)?,
 ) {
     val scrollState = rememberScrollState()
 
@@ -361,6 +366,7 @@ private fun TrustedNodeSetupMainContent(
                     "mobile.trustedNodeSetup.help"
                         .i18n("mobile.trustedNodeSetup.help.link".i18n()),
                 link = BisqLinks.BISQ_CONNECT_WIKI_URL,
+                onError = onError,
             )
         }
         BisqGap.V2()

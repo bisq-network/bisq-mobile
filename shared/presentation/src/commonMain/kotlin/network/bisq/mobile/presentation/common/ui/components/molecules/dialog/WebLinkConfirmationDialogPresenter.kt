@@ -105,7 +105,7 @@ class WebLinkConfirmationDialogPresenter(
             } catch (throwable: Throwable) {
                 log.e(throwable) { "Failed to open URI from web link confirmation dialog" }
                 userOnError.invoke()
-                mainPresenter.showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
+                mainPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
             } finally {
                 if (persist) hideLoading()
             }

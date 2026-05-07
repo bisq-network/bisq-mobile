@@ -28,6 +28,7 @@ fun ReputationBasedSellerLimitsPopup(
     onRepLinkClick: () -> Unit,
     reputationScore: String,
     maxSellAmount: String,
+    onError: ((Throwable) -> Unit)? = null,
 ) {
     BisqDialog(
         horizontalAlignment = Alignment.Start,
@@ -49,6 +50,7 @@ fun ReputationBasedSellerLimitsPopup(
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             fullWidth = true,
             onClick = onBuildRepLinkClick,
+            onError = onError,
         )
 
         BisqGap.V1()

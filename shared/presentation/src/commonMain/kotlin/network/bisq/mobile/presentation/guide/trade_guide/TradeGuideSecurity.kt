@@ -11,6 +11,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.OrderedTextLi
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
@@ -29,6 +30,7 @@ fun TradeGuideSecurity() {
         prevClick = presenter::prevClick,
         nextClick = presenter::securityNextClick,
         learnMoreClick = presenter::navigateSecurityLearnMore,
+        onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
     )
 }
 
@@ -37,6 +39,7 @@ fun TradeGuideSecurity() {
     prevClick: () -> Unit,
     nextClick: () -> Unit,
     learnMoreClick: () -> Unit,
+    onError: ((Throwable) -> Unit)? = null,
 ) {
     val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.security".i18n()
 
@@ -71,6 +74,7 @@ fun TradeGuideSecurity() {
             "action.learnMore".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
             onClick = learnMoreClick,
+            onError = onError,
         )
     }
 }

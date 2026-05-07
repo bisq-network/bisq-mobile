@@ -19,6 +19,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.di.presentationTestModule
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkDialogSettingsServiceFake
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.After
@@ -247,7 +248,7 @@ class LinkButtonUiTest {
     }
 
     @Test
-    fun `when uri open fails then invokes onError and closes dialog without invoking onClick`() {
+    fun `when uri open fails then shows snackbar via main presenter and closes dialog without invoking onClick or composable onError`() {
         initKoin(showWebLinkConfirmation = true, openUrlResult = false)
         val onClick = mockk<() -> Unit>(relaxed = true)
         val onError = mockk<(Throwable) -> Unit>(relaxed = true)
@@ -263,7 +264,8 @@ class LinkButtonUiTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
         composeTestRule.waitForIdle()
 
-        verify(exactly = 1) { onError(any()) }
+        verify(exactly = 0) { onError(any()) }
+        verify(exactly = 1) { mainPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) }
         verify(exactly = 0) { onClick() }
         assertNoNodeWithText(dialogTitle)
     }

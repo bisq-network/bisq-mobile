@@ -17,6 +17,8 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.openUriSafely
 
+// TODO: Centralize URL-open logic via UrlLauncher and eliminate LocalUriHandler,
+// So the behavior can be customized per OS and exceptions handled in a single place.
 @Composable
 fun LinkButton(
     text: String,
@@ -73,7 +75,6 @@ fun LinkButton(
             },
             onError = {
                 showConfirmDialog = false
-                onError?.invoke(RuntimeException("Web link confirmation failed"))
             },
         )
     }
