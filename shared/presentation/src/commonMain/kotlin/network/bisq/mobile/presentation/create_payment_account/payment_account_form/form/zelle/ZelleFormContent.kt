@@ -16,11 +16,14 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.ZelleFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.ui.PaymentMethodBackgroundInformationDialog
 
+@ExcludeFromCoverage
 @Composable
 fun ZellePaymentAccountFormContent(
     presenter: ZelleFormPresenter,
@@ -42,14 +45,19 @@ fun ZellePaymentAccountFormContent(
         uiState = uiState,
         modifier = modifier,
         onAction = presenter::onAction,
+        onHyperlinkOpenError = {
+            presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
+        },
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun ZelleFormContent(
     uiState: ZelleFormUiState,
     onAction: (ZelleFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
+    onHyperlinkOpenError: (() -> Unit)? = null,
 ) {
     val isInPreview = LocalInspectionMode.current
     val (showBackgroundInformationDialog, setShowBackgroundInformationDialog) =
@@ -88,6 +96,7 @@ private fun ZelleFormContent(
         PaymentMethodBackgroundInformationDialog(
             bodyText = "paymentAccounts.createAccount.accountData.backgroundOverlay.zelle".i18n(),
             onDismissRequest = { setShowBackgroundInformationDialog(false) },
+            onError = onHyperlinkOpenError,
         )
     }
 }

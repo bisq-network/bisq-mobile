@@ -15,7 +15,7 @@ import kotlinx.coroutines.CancellationException
  */
 fun UriHandler.openUriSafely(
     uri: String,
-    onError: (Throwable) -> Unit = {},
+    onError: (Throwable) -> Unit = { _ -> },
 ): Boolean =
     try {
         openUri(uri)

@@ -26,11 +26,13 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarT
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.ReputationBasedBuyerLimitsPopup
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.ReputationBasedSellerLimitsPopup
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.AmountType
 import org.koin.compose.koinInject
 
+@ExcludeFromCoverage
 @Composable
 fun CreateOfferAmountScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
@@ -100,10 +102,11 @@ fun CreateOfferAmountScreen() {
         setShowLimitPopup = presenter::setShowLimitPopup,
         onReputationLinkClick = presenter::navigateToReputation,
         onBuildReputationLinkClick = presenter::navigateToBuildReputation,
-        onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+        onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 fun CreateOfferAmountContent(
     isBuy: Boolean,

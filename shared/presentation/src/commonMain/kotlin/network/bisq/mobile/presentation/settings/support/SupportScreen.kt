@@ -28,9 +28,11 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarT
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
+@ExcludeFromCoverage
 @Composable
 fun SupportScreen() {
     val presenter: SupportPresenter = koinInject()
@@ -57,25 +59,25 @@ fun SupportScreen() {
                 text = "mobile.support.matrix".i18n(),
                 link = BisqLinks.MATRIX,
                 onClick = { presenter.onOpenWebUrl(BisqLinks.MATRIX) },
-                onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+                onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
             SupportWeblink(
                 text = "mobile.support.forum".i18n(),
                 link = BisqLinks.FORUM,
                 onClick = { presenter.onOpenWebUrl(BisqLinks.FORUM) },
-                onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+                onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
             SupportWeblink(
                 text = "mobile.support.telegram".i18n(),
                 link = BisqLinks.TELEGRAM,
                 onClick = { presenter.onOpenWebUrl(BisqLinks.TELEGRAM) },
-                onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+                onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
             SupportWeblink(
                 text = "mobile.support.reddit".i18n(),
                 link = BisqLinks.REDDIT,
                 onClick = { presenter.onOpenWebUrl(BisqLinks.REDDIT) },
-                onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+                onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
         }
 
@@ -89,7 +91,7 @@ fun SupportScreen() {
             text = "mobile.support.wiki".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
             onClick = { presenter.onOpenWebUrl(BisqLinks.BISQ_EASY_WIKI_URL) },
-            onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             color = BisqTheme.colors.primary,
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )
@@ -126,7 +128,7 @@ fun SupportScreen() {
             text = "mobile.support.troubleShooting.github".i18n(),
             link = reportUrl,
             onClick = { presenter.onOpenWebUrl(reportUrl) },
-            onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             color = BisqTheme.colors.primary,
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )
@@ -166,6 +168,7 @@ fun SupportScreen() {
     }
 }
 
+@ExcludeFromCoverage
 @Composable
 fun SupportWeblink(
     text: String,

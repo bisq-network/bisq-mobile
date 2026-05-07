@@ -75,7 +75,7 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
             sessionUiState = sessionUiState,
             userProfileIconProvider = presenter.userProfileIconProvider,
             onAction = presenter::onAction,
-            onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         )
     }
 }

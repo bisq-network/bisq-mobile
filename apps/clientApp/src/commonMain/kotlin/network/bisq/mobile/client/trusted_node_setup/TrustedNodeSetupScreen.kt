@@ -74,7 +74,7 @@ fun TrustedNodeSetupScreen(
         uiState = uiState,
         onAction = presenter::onAction,
         isWorkflow = isWorkflow,
-        onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+        onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         topBar =
             if (!isWorkflow) {
                 { TopBar(title = "mobile.trustedNodeSetup.title".i18n()) }

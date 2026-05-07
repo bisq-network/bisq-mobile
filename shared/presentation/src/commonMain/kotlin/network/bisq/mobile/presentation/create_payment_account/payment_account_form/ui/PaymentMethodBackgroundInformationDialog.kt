@@ -30,14 +30,17 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.openUriSafely
 
 private val HyperlinkTokenRegex = Regex("\\[HYPERLINK:\\s*([^]]+)]")
 
+@ExcludeFromCoverage
 @Composable
 fun PaymentMethodBackgroundInformationDialog(
     bodyText: String,
     onDismissRequest: () -> Unit,
+    onError: (() -> Unit)? = null,
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
@@ -58,7 +61,7 @@ fun PaymentMethodBackgroundInformationDialog(
                         .weight(1f, false)
                         .verticalScroll(rememberScrollState()),
             ) {
-                LinkifiedBodyText(bodyText)
+                LinkifiedBodyText(bodyText = bodyText, onError = onError)
             }
             BisqGap.V1()
             BisqButton(
@@ -71,8 +74,12 @@ fun PaymentMethodBackgroundInformationDialog(
     }
 }
 
+@ExcludeFromCoverage
 @Composable
-private fun LinkifiedBodyText(bodyText: String) {
+private fun LinkifiedBodyText(
+    bodyText: String,
+    onError: (() -> Unit)?,
+) {
     val uriHandler = LocalUriHandler.current
     val text =
         buildAnnotatedString {
@@ -104,7 +111,7 @@ private fun LinkifiedBodyText(bodyText: String) {
                                         ),
                                 ),
                             linkInteractionListener = {
-                                paymentMethodBackgroundHyperlinkInteraction(uriHandler, url)
+                                paymentMethodBackgroundHyperlinkInteraction(uriHandler, url, onError)
                             },
                         ),
                     ) {
@@ -134,12 +141,20 @@ private fun LinkifiedBodyText(bodyText: String) {
 internal fun paymentMethodBackgroundHyperlinkInteraction(
     uriHandler: UriHandler,
     url: String,
-): Boolean = openPaymentMethodBackgroundInfoUri(uriHandler, url)
+    onError: (() -> Unit)? = null,
+): Boolean = openPaymentMethodBackgroundInfoUri(uriHandler, url, onError)
 
 internal fun openPaymentMethodBackgroundInfoUri(
     uriHandler: UriHandler,
     url: String,
-): Boolean = uriHandler.openUriSafely(url)
+    onError: (() -> Unit)? = null,
+): Boolean {
+    val result = uriHandler.openUriSafely(url)
+    if (!result) {
+        onError?.invoke()
+    }
+    return result
+}
 
 @Preview
 @Composable

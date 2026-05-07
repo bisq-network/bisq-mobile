@@ -20,7 +20,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.Bi
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
+@ExcludeFromCoverage
 @Composable
 fun ReputationBasedSellerLimitsPopup(
     onDismiss: () -> Unit,

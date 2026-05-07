@@ -26,9 +26,11 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
+@ExcludeFromCoverage
 @Composable
 fun ResourcesScreen() {
     val presenter: ResourcesPresenter = koinInject()
@@ -54,7 +56,7 @@ fun ResourcesScreen() {
 
         WebResources(
             onAction = presenter::onAction,
-            onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         )
 
         BisqHDivider(modifier = dividerModifier)
@@ -72,11 +74,12 @@ fun ResourcesScreen() {
 
         Legal(
             onAction = presenter::onAction,
-            onError = { presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
+            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         )
     }
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun Guides(
     onAction: (ResourcesUiAction) -> Unit,
@@ -100,6 +103,7 @@ private fun Guides(
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun WebResources(
     onAction: (ResourcesUiAction) -> Unit,
@@ -135,6 +139,7 @@ private fun WebResources(
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun Version(versionInfo: String) {
     BisqText.H3Light(
@@ -153,6 +158,7 @@ private fun Version(versionInfo: String) {
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun DeviceInfo(deviceInfo: String) {
     BisqText.H3Light(
@@ -171,6 +177,7 @@ private fun DeviceInfo(deviceInfo: String) {
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun Legal(
     onAction: (ResourcesUiAction) -> Unit,
@@ -192,6 +199,7 @@ private fun Legal(
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun ResourceWeblink(
     text: String,
@@ -214,6 +222,7 @@ private fun ResourceWeblink(
     )
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun AppLinkButton(
     text: String,

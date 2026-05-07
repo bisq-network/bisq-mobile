@@ -74,6 +74,7 @@ class ReputationWebLinkDialogUiTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_no").performClick()
         composeTestRule.waitForIdle()
         assertNoDialog()
+        verify(exactly = 0) { mainPresenter.navigateToUrl(any()) }
     }
 
     @Test
@@ -169,6 +170,6 @@ class ReputationWebLinkDialogUiTest {
     }
 
     private class NoopUriHandler : UriHandler {
-        override fun openUri(uri: String) {}
+        override fun openUri(uri: String) = Unit
     }
 }

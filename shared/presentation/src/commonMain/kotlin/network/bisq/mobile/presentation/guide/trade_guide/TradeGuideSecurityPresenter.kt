@@ -15,8 +15,4 @@ class TradeGuideSecurityPresenter(
     fun securityNextClick() {
         navigateTo(NavRoute.TradeGuideProcess)
     }
-
-    fun navigateSecurityLearnMore() {
-        navigateToUrl(BisqLinks.BISQ_EASY_WIKI_URL)
-    }
 }
