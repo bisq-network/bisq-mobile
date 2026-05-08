@@ -17,6 +17,8 @@ import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
+import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
+import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
@@ -33,6 +35,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.MoneroAccountDetailContent
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.OtherCryptoAssetAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.UserDefinedAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.ZelleAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountDetailFieldRow
@@ -104,6 +107,9 @@ fun PaymentAccountMusigDetailContent(
 
                             is UserDefinedFiatAccount ->
                                 UserDefinedAccountDetailContent(paymentAccount)
+
+                            is OtherCryptoAssetAccount ->
+                                OtherCryptoAssetAccountDetailContent(paymentAccount)
 
                             else -> UnsupportedAccountState(modifier = Modifier.fillMaxSize())
                         }
@@ -194,6 +200,23 @@ private val previewUnsupportedAccount =
         override val tradeDuration: String? = null
     }
 
+private val previewOtherCryptoAccount =
+    OtherCryptoAssetAccount(
+        accountName = "My Ethereum Account",
+        accountPayload =
+            OtherCryptoAssetAccountPayload(
+                address = "0x1234567890abcdef1234567890abcdef12345678",
+                isInstant = true,
+                isAutoConf = false,
+                currencyCode = "ETH",
+                currencyName = "Ethereum",
+                supportAutoConf = true,
+            ),
+        creationDate = null,
+        tradeLimitInfo = null,
+        tradeDuration = null,
+    )
+
 @Preview
 @Composable
 private fun PaymentAccountMusigDetail_ZelleLoadedPreview() {
@@ -218,6 +241,22 @@ private fun PaymentAccountMusigDetail_MoneroLoadedPreview() {
             uiState =
                 PaymentAccountMusigDetailUiState(
                     paymentAccount = previewMoneroAccount,
+                    isAccountMissing = false,
+                ),
+            onAction = {},
+            topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PaymentAccountMusigDetail_OtherCryptoLoadedPreview() {
+    BisqTheme.Preview {
+        PaymentAccountMusigDetailContent(
+            uiState =
+                PaymentAccountMusigDetailUiState(
+                    paymentAccount = previewOtherCryptoAccount,
                     isAccountMissing = false,
                 ),
             onAction = {},

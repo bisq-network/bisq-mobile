@@ -34,6 +34,8 @@ import network.bisq.mobile.presentation.create_payment_account.payment_account_f
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.monero.MoneroPaymentAccountFormContent
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormPresenter
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoPaymentAccountFormContent
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZellePaymentAccountFormContent
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
@@ -126,7 +128,14 @@ fun PaymentAccountFormContent(
                         paymentType = paymentMethod.paymentType,
                         size = BisqUIConstants.ScreenPadding2X,
                     )
-                    BisqText.BaseRegularGrey(paymentMethod.name)
+                    if (paymentMethod is CryptoPaymentMethodVO) {
+                        Column {
+                            BisqText.BaseRegular(paymentMethod.code)
+                            BisqText.BaseRegularGrey(paymentMethod.name)
+                        }
+                    } else {
+                        BisqText.BaseRegularGrey(paymentMethod.name)
+                    }
                 }
             }
 
@@ -179,6 +188,30 @@ private fun PaymentMethodFormContent(
                 )
             } else {
                 UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+            }
+        }
+
+        PaymentTypeVO.BSQ,
+        PaymentTypeVO.LTC,
+        PaymentTypeVO.ETH,
+        PaymentTypeVO.ETC,
+        PaymentTypeVO.LBTC,
+        PaymentTypeVO.LNBTC,
+        PaymentTypeVO.GRIN,
+        PaymentTypeVO.ZEC,
+        PaymentTypeVO.DOGE,
+        -> {
+            val presenter = methodPresenter as? OtherCryptoFormPresenter
+            val cryptoPaymentMethod = paymentMethod as? CryptoPaymentMethodVO
+            if (presenter != null && cryptoPaymentMethod != null) {
+                OtherCryptoPaymentAccountFormContent(
+                    presenter = presenter,
+                    onNavigateToNextScreen = onNavigateToNextScreen,
+                    paymentMethod = cryptoPaymentMethod,
+                    modifier = modifier,
+                )
+            } else {
+                UnsupportedAccountState(modifier = modifier)
             }
         }
 
@@ -261,5 +294,15 @@ private fun rememberMethodPresenter(paymentMethod: PaymentMethodVO): AccountForm
     when (paymentMethod.paymentType) {
         PaymentTypeVO.ZELLE -> RememberPresenterLifecycleBackStackAware<ZelleFormPresenter>()
         PaymentTypeVO.XMR -> RememberPresenterLifecycleBackStackAware<MoneroFormPresenter>()
+        PaymentTypeVO.BSQ,
+        PaymentTypeVO.LTC,
+        PaymentTypeVO.ETH,
+        PaymentTypeVO.ETC,
+        PaymentTypeVO.LBTC,
+        PaymentTypeVO.LNBTC,
+        PaymentTypeVO.GRIN,
+        PaymentTypeVO.ZEC,
+        PaymentTypeVO.DOGE,
+        -> RememberPresenterLifecycleBackStackAware<OtherCryptoFormPresenter>()
         else -> null
     }

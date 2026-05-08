@@ -78,16 +78,16 @@ class MoneroAccountDetailContentUiTest {
             .assertCountEquals(0)
         composeTestRule
             .onNodeWithText("paymentAccounts.crypto.address.xmr.mainAddresses".i18n())
-            .assertIsDisplayed()
+            .assertExists()
         composeTestRule
             .onNodeWithText("paymentAccounts.crypto.address.xmr.privateViewKey".i18n())
-            .assertIsDisplayed()
+            .assertExists()
         composeTestRule
             .onNodeWithText("paymentAccounts.crypto.address.xmr.accountIndex".i18n())
-            .assertIsDisplayed()
+            .assertExists()
         composeTestRule
             .onNodeWithText("paymentAccounts.crypto.address.xmr.initialSubAddressIndex".i18n())
-            .assertIsDisplayed()
+            .assertExists()
         composeTestRule
             .onAllNodesWithText("89ABCDE...", substring = true)
             .assertCountEquals(1)

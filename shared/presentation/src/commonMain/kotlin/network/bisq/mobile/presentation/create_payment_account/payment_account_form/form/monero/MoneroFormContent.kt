@@ -20,12 +20,12 @@ import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.CryptoAccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.MoneroFormUiAction
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CommonCryptoFormSection
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormUiState
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 
-private const val MONERO_SUB_ADDRESSES_ENABLED =
+private val moneroSubAddressesEnabled =
     false // TODO: remove once bisq2 issue https://github.com/bisq-network/bisq2/issues/4682 is resolved
 
 @Composable
@@ -66,28 +66,15 @@ fun MoneroFormContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        if (!uiState.useSubAddresses) {
-            BisqTextFieldV0(
-                value = uiState.crypto.addressEntry.value,
-                onValueChange = { onAction(CryptoAccountFormUiAction.OnAddressChange(it)) },
-                label = "paymentAccounts.crypto.address.address".i18n(),
-                placeholder =
-                    "paymentAccounts.crypto.address.address.prompt".i18n(),
-                isError = uiState.crypto.addressEntry.errorMessage != null,
-                bottomMessage = uiState.crypto.addressEntry.errorMessage,
-                singleLine = true,
-            )
-        }
-
-        BisqSwitch(
-            checked = uiState.crypto.isInstant,
-            modifier = Modifier.padding(top = 12.dp),
-            label = "paymentAccounts.crypto.address.isInstant".i18n(),
-            onSwitch = { onAction(CryptoAccountFormUiAction.OnIsInstantChange(it)) },
+        CommonCryptoFormSection(
+            cryptoUiState = uiState.crypto,
+            onAction = onAction,
+            showAddress = !uiState.useSubAddresses,
+            showAutoConf = moneroSubAddressesEnabled && paymentMethod.supportAutoConf,
         )
 
         // This feature is disabled for now until we get this fixed in Bisq2
-        if (MONERO_SUB_ADDRESSES_ENABLED) {
+        if (moneroSubAddressesEnabled) {
             BisqSwitch(
                 checked = uiState.useSubAddresses,
                 modifier = Modifier.padding(top = 12.dp),
@@ -147,52 +134,6 @@ fun MoneroFormContent(
                     readOnly = true,
                     label = "paymentAccounts.crypto.address.xmr.subAddress".i18n(),
                     singleLine = true,
-                )
-            }
-        }
-
-        // This feature is disabled for now until we get this fixed in Bisq2
-        if (paymentMethod.supportAutoConf && MONERO_SUB_ADDRESSES_ENABLED) {
-            BisqSwitch(
-                checked = uiState.crypto.isAutoConf,
-                modifier = Modifier.padding(top = 12.dp),
-                label = "paymentAccounts.crypto.address.autoConf.use".i18n(),
-                onSwitch = { onAction(CryptoAccountFormUiAction.OnIsAutoConfChange(it)) },
-            )
-
-            if (uiState.crypto.isAutoConf) {
-                BisqTextFieldV0(
-                    modifier = Modifier.padding(top = 12.dp),
-                    value = uiState.crypto.autoConfNumConfirmationsEntry.value,
-                    onValueChange = { onAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange(it)) },
-                    label = "paymentAccounts.crypto.address.autoConf.numConfirmations".i18n(),
-                    placeholder = "paymentAccounts.crypto.address.autoConf.numConfirmations.prompt".i18n(),
-                    isError = uiState.crypto.autoConfNumConfirmationsEntry.errorMessage != null,
-                    bottomMessage = uiState.crypto.autoConfNumConfirmationsEntry.errorMessage,
-                    singleLine = true,
-                )
-
-                BisqTextFieldV0(
-                    modifier = Modifier.padding(top = 12.dp),
-                    value = uiState.crypto.autoConfMaxTradeAmountEntry.value,
-                    onValueChange = { onAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange(it)) },
-                    label = "paymentAccounts.crypto.address.autoConf.maxTradeAmount".i18n(),
-                    placeholder = "paymentAccounts.crypto.address.autoConf.maxTradeAmount.prompt".i18n(),
-                    isError = uiState.crypto.autoConfMaxTradeAmountEntry.errorMessage != null,
-                    bottomMessage = uiState.crypto.autoConfMaxTradeAmountEntry.errorMessage,
-                    singleLine = true,
-                )
-
-                BisqTextFieldV0(
-                    modifier = Modifier.padding(top = 12.dp),
-                    value = uiState.crypto.autoConfExplorerUrlsEntry.value,
-                    onValueChange = { onAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange(it)) },
-                    label = "paymentAccounts.crypto.address.autoConf.explorerUrls".i18n(),
-                    placeholder = "paymentAccounts.crypto.address.autoConf.explorerUrls.prompt".i18n(),
-                    isError = uiState.crypto.autoConfExplorerUrlsEntry.errorMessage != null,
-                    bottomMessage =
-                        uiState.crypto.autoConfExplorerUrlsEntry.errorMessage
-                            ?: "paymentAccounts.crypto.address.autoConf.explorerUrls.help".i18n(),
                 )
             }
         }

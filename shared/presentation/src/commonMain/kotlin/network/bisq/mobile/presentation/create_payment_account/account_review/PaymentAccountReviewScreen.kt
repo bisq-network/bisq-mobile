@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
+import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.i18n.i18n
@@ -24,6 +25,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.MoneroAccountDetailContent
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.OtherCryptoAssetAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.ZelleAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountDetailFieldRow
 import network.bisq.mobile.presentation.create_payment_account.ui.UnsupportedAccountState
@@ -85,6 +87,9 @@ fun PaymentAccountReviewContent(
 
                 is MoneroAccount ->
                     MoneroAccountDetailContent(paymentAccount)
+
+                is OtherCryptoAssetAccount ->
+                    OtherCryptoAssetAccountDetailContent(paymentAccount)
 
                 else -> UnsupportedAccountState(modifier = Modifier.fillMaxWidth())
             }
