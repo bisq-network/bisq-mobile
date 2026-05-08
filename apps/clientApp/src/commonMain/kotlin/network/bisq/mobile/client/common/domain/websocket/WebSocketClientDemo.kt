@@ -18,6 +18,7 @@ import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.model.account.fiat.ZelleAccountDto
 import network.bisq.mobile.data.model.account.fiat.ZelleAccountPayloadDto
+import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelDto
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
@@ -59,6 +60,7 @@ import network.bisq.mobile.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.domain.core.pagination.PaginatedResponse
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.createUuid
 
@@ -67,6 +69,15 @@ class WebSocketClientDemo(
 ) : WebSocketClient,
     Logging {
     override val apiUrl = parseUrl("http://demo.bisq:21")!!
+
+    private val emptyClosedTradesPage =
+        PaginatedResponse<ClosedTradeListItemDto>(
+            items = emptyList(),
+            page = 1,
+            pageSize = 1,
+            totalItems = 0,
+            totalPages = 0,
+        )
 
     private val _webSocketClientStatus =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
@@ -148,6 +159,12 @@ class WebSocketClientDemo(
                 // Settings → Payment Accounts screen is populated for App Review.
                 webSocketRequest.path.contains("payment-accounts/fiat") ->
                     json.encodeToString(FakeSubscriptionData.paymentAccounts)
+
+                // Trades - closed trades paginated REST endpoint. Demo returns an
+                // empty page so (a) the BackendCapabilitiesService probe succeeds
+                // and (b) the closed-trades tab renders without parse errors.
+                webSocketRequest.path.contains("trades/closed") ->
+                    json.encodeToString(emptyClosedTradesPage)
 
                 // Reputation - return null-safe defaults
                 webSocketRequest.path.contains("reputation/profile-age/") -> "0"

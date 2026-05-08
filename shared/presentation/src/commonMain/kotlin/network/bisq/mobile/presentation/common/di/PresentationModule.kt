@@ -209,7 +209,7 @@ val presentationModule =
         }
         single { FilterOpenTradesUseCase() }
         factory { OpenTradeListPresenter(get(), get(), get(), get(), get()) }
-        factory { MyTradesPresenter(get()) }
+        factory { MyTradesPresenter(get(), get()) }
         // Trade history dependencies
         factory { GetPaginatedClosedTradesUseCase(get()) }
         factory { ClosedTradeListPresenter(get(), get(), get(), get()) }

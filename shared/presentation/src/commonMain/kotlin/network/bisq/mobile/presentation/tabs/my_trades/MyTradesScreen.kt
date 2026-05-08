@@ -26,30 +26,35 @@ fun MyTradesScreen(initialTab: Int = 0) {
 
     val uiState by presenter.uiState.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
+    val showHistoryTab by presenter.showHistoryTab.collectAsState()
 
     val tabOptions =
-        listOf(
-            "mobile.myTrades.tab.open".i18n(),
-            "mobile.myTrades.tab.history".i18n(),
-        )
+        buildList {
+            add("mobile.myTrades.tab.open".i18n())
+            if (showHistoryTab) add("mobile.myTrades.tab.history".i18n())
+        }
 
     BisqStaticLayout(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
         isInteractive = isInteractive,
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            ToggleTab(
-                options = tabOptions,
-                selectedOption = tabOptions.getOrElse(uiState.selectedTab) { tabOptions.first() },
-                onOptionSelect = { option ->
-                    presenter.onAction(MyTradesUiAction.OnSelectTab(tabOptions.indexOf(option)))
-                },
-                getDisplayString = { it },
-            )
+            if (showHistoryTab) {
+                ToggleTab(
+                    options = tabOptions,
+                    selectedOption = tabOptions.getOrElse(uiState.selectedTab) { tabOptions.first() },
+                    onOptionSelect = { option ->
+                        presenter.onAction(MyTradesUiAction.OnSelectTab(tabOptions.indexOf(option)))
+                    },
+                    getDisplayString = { it },
+                )
 
-            when (uiState.selectedTab) {
-                0 -> OpenTradeListScreen()
-                1 -> ClosedTradeListScreen()
+                when (uiState.selectedTab) {
+                    1 -> ClosedTradeListScreen()
+                    else -> OpenTradeListScreen()
+                }
+            } else {
+                OpenTradeListScreen()
             }
         }
     }
