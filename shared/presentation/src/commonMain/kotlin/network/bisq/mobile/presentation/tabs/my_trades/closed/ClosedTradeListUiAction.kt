@@ -20,9 +20,15 @@ sealed interface ClosedTradeListUiAction {
 
     data object OnDismissFilterSheet : ClosedTradeListUiAction
 
-    data class OnApplyFilters(
+    data class OnSortChange(
         val sort: TradeSort,
+    ) : ClosedTradeListUiAction
+
+    data class OnOutcomeFilterChange(
         val outcome: TradeOutcomeFilter,
+    ) : ClosedTradeListUiAction
+
+    data class OnRoleFilterChange(
         val role: TradeRoleFilter,
     ) : ClosedTradeListUiAction
 

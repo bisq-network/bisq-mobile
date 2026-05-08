@@ -13,8 +13,11 @@ sealed interface OpenTradeListUiAction {
 
     data object OnDismissFilterSheet : OpenTradeListUiAction
 
-    data class OnApplyFilters(
+    data class OnSortChange(
         val sort: TradeSort,
+    ) : OpenTradeListUiAction
+
+    data class OnRoleFilterChange(
         val role: TradeRoleFilter,
     ) : OpenTradeListUiAction
 

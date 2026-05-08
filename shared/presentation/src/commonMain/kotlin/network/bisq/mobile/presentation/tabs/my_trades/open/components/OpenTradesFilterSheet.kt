@@ -1,15 +1,9 @@
 package network.bisq.mobile.presentation.tabs.my_trades.open.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
@@ -28,15 +22,13 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 @Composable
 fun OpenTradesFilterSheet(
-    initialSort: TradeSort,
-    initialRole: TradeRoleFilter,
-    onApply: (TradeSort, TradeRoleFilter) -> Unit,
+    sort: TradeSort,
+    role: TradeRoleFilter,
+    onSortChange: (TradeSort) -> Unit,
+    onRoleChange: (TradeRoleFilter) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var sortOrder by remember { mutableStateOf(initialSort) }
-    var roleFilter by remember { mutableStateOf(initialRole) }
-
     BisqBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier =
@@ -48,9 +40,9 @@ fun OpenTradesFilterSheet(
             BisqGap.VHalf()
             BisqSegmentButton(
                 label = "",
-                value = sortOrder,
+                value = sort,
                 items = TradeSort.entries.map { it to it.labelKey.i18n() },
-                onValueChange = { pair -> sortOrder = pair.first },
+                onValueChange = { pair -> onSortChange(pair.first) },
             )
 
             BisqGap.V1()
@@ -59,35 +51,20 @@ fun OpenTradesFilterSheet(
             BisqGap.VHalf()
             BisqSegmentButton(
                 label = "",
-                value = roleFilter,
+                value = role,
                 items = TradeRoleFilter.entries.map { it to it.labelKey.i18n() },
-                onValueChange = { pair -> roleFilter = pair.first },
+                onValueChange = { pair -> onRoleChange(pair.first) },
             )
 
             BisqHDivider(verticalPadding = BisqUIConstants.ScreenPaddingHalf)
 
-            Row(
+            BisqButton(
+                text = "mobile.tradeHistory.filter.action.reset".i18n(),
+                type = BisqButtonType.Grey,
+                onClick = onReset,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-            ) {
-                BisqButton(
-                    text = "mobile.tradeHistory.filter.action.reset".i18n(),
-                    type = BisqButtonType.Grey,
-                    onClick = {
-                        sortOrder = TradeSort.NEWEST_FIRST
-                        roleFilter = TradeRoleFilter.ALL
-                        onReset()
-                    },
-                    modifier = Modifier.weight(1f),
-                    fullWidth = true,
-                )
-                BisqButton(
-                    text = "mobile.tradeHistory.filter.action.apply".i18n(),
-                    onClick = { onApply(sortOrder, roleFilter) },
-                    modifier = Modifier.weight(1f),
-                    fullWidth = true,
-                )
-            }
+                fullWidth = true,
+            )
         }
     }
 }
@@ -103,9 +80,10 @@ private fun SectionLabel(text: String) {
 private fun OpenTradesFilterSheet_Preview() {
     BisqTheme.Preview {
         OpenTradesFilterSheet(
-            initialSort = TradeSort.NEWEST_FIRST,
-            initialRole = TradeRoleFilter.ALL,
-            onApply = { _, _ -> },
+            sort = TradeSort.NEWEST_FIRST,
+            role = TradeRoleFilter.ALL,
+            onSortChange = {},
+            onRoleChange = {},
             onReset = {},
             onDismiss = {},
         )

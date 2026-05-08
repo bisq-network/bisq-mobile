@@ -41,6 +41,11 @@ class ClosedTradeListPresenter(
     private val useCase: GetPaginatedClosedTradesUseCase,
     private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
+    private companion object {
+        const val FILTER_DEBOUNCE_MS = 400L
+        const val CLOSED_TRADES_CHANGE_TICK_DEBOUNCE = 300L
+    }
+
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
         get() = userProfileServiceFacade::getUserProfileIcon
 
@@ -72,6 +77,7 @@ class ClosedTradeListPresenter(
                 _uiState
                     .map { Triple(it.sortBy, it.outcomeFilter, it.roleFilter) }
                     .distinctUntilChanged()
+                    .debounce(FILTER_DEBOUNCE_MS)
             combine(searchFlow, filtersFlow, refreshTick) { query, filters, tick ->
                 QueryKey(query, filters.first, filters.second, filters.third, tick)
             }.distinctUntilChanged()
@@ -102,7 +108,7 @@ class ClosedTradeListPresenter(
         presenterScope.launch {
             tradesServiceFacade.closedTradesChangeTick
                 .drop(1)
-                .debounce(300)
+                .debounce(CLOSED_TRADES_CHANGE_TICK_DEBOUNCE)
                 .collect { refreshTick.update { it + 1 } }
         }
     }
@@ -120,15 +126,15 @@ class ClosedTradeListPresenter(
 
             ClosedTradeListUiAction.OnShowFilterSheet -> _uiState.update { it.copy(showFilterSheet = true) }
             ClosedTradeListUiAction.OnDismissFilterSheet -> _uiState.update { it.copy(showFilterSheet = false) }
-            is ClosedTradeListUiAction.OnApplyFilters ->
-                _uiState.update {
-                    it.copy(
-                        sortBy = action.sort,
-                        outcomeFilter = action.outcome,
-                        roleFilter = action.role,
-                        showFilterSheet = false,
-                    )
-                }
+
+            is ClosedTradeListUiAction.OnSortChange ->
+                _uiState.update { it.copy(sortBy = action.sort) }
+
+            is ClosedTradeListUiAction.OnOutcomeFilterChange ->
+                _uiState.update { it.copy(outcomeFilter = action.outcome) }
+
+            is ClosedTradeListUiAction.OnRoleFilterChange ->
+                _uiState.update { it.copy(roleFilter = action.role) }
 
             ClosedTradeListUiAction.OnResetFilters ->
                 _uiState.update {

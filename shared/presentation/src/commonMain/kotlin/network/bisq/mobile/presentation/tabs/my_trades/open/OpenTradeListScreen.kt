@@ -90,11 +90,10 @@ fun OpenTradeListScreen() {
 
     if (uiState.showFilterSheet) {
         OpenTradesFilterSheet(
-            initialSort = uiState.sortBy,
-            initialRole = uiState.roleFilter,
-            onApply = { sort, role ->
-                presenter.onAction(OpenTradeListUiAction.OnApplyFilters(sort, role))
-            },
+            sort = uiState.sortBy,
+            role = uiState.roleFilter,
+            onSortChange = { presenter.onAction(OpenTradeListUiAction.OnSortChange(it)) },
+            onRoleChange = { presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(it)) },
             onReset = { presenter.onAction(OpenTradeListUiAction.OnResetFilters) },
             onDismiss = { presenter.onAction(OpenTradeListUiAction.OnDismissFilterSheet) },
         )

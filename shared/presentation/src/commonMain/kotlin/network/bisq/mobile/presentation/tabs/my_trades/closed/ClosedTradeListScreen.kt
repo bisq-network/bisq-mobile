@@ -96,12 +96,12 @@ fun ClosedTradeListScreen() {
 
     if (uiState.showFilterSheet) {
         ClosedTradeListFilterSheet(
-            initialSort = uiState.sortBy,
-            initialOutcome = uiState.outcomeFilter,
-            initialRole = uiState.roleFilter,
-            onApply = { sort, outcome, role ->
-                presenter.onAction(ClosedTradeListUiAction.OnApplyFilters(sort, outcome, role))
-            },
+            sort = uiState.sortBy,
+            outcome = uiState.outcomeFilter,
+            role = uiState.roleFilter,
+            onSortChange = { presenter.onAction(ClosedTradeListUiAction.OnSortChange(it)) },
+            onOutcomeChange = { presenter.onAction(ClosedTradeListUiAction.OnOutcomeFilterChange(it)) },
+            onRoleChange = { presenter.onAction(ClosedTradeListUiAction.OnRoleFilterChange(it)) },
             onReset = { presenter.onAction(ClosedTradeListUiAction.OnResetFilters) },
             onDismiss = { presenter.onAction(ClosedTradeListUiAction.OnDismissFilterSheet) },
         )

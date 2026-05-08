@@ -1,10 +1,12 @@
 package network.bisq.mobile.presentation.tabs.my_trades.open
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -25,6 +27,7 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarT
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
+@OptIn(FlowPreview::class)
 class OpenTradeListPresenter(
     private val mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
@@ -32,6 +35,10 @@ class OpenTradeListPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val filterOpenTradesUseCase: FilterOpenTradesUseCase,
 ) : BasePresenter(mainPresenter) {
+    private companion object {
+        const val FILTER_DEBOUNCE_MS = 400L
+    }
+
     private val _uiState = MutableStateFlow(OpenTradeListUiState())
     val uiState: StateFlow<OpenTradeListUiState> = _uiState.asStateFlow()
 
@@ -45,20 +52,30 @@ class OpenTradeListPresenter(
         tradesServiceFacade.resetSelectedTradeToNull()
         _uiState.update { it.copy(isLoading = true) }
         presenterScope.launch {
+            val searchKey =
+                _uiState
+                    .map { it.searchQuery }
+                    .distinctUntilChanged()
+
+            val filterKey =
+                _uiState
+                    .map { it.sortBy to it.roleFilter }
+                    .distinctUntilChanged()
+                    .debounce(FILTER_DEBOUNCE_MS)
+
             combine(
                 mainPresenter.tradesWithUnreadMessages,
                 tradesServiceFacade.openTradeItems,
                 mainPresenter.languageCode,
-                _uiState
-                    .map { Triple(it.searchQuery, it.sortBy, it.roleFilter) }
-                    .distinctUntilChanged(),
-            ) { _, openTrades, _, filterKey ->
+                searchKey,
+                filterKey,
+            ) { _, openTrades, _, query, (sort, role) ->
                 openTrades to
                     filterOpenTradesUseCase.invoke(
                         items = openTrades,
-                        searchQuery = filterKey.first,
-                        sortBy = filterKey.second,
-                        roleFilter = filterKey.third,
+                        searchQuery = query,
+                        sortBy = sort,
+                        roleFilter = role,
                     )
             }.flowOn(Dispatchers.Default)
                 .collect { (all, filtered) ->
@@ -78,7 +95,8 @@ class OpenTradeListPresenter(
             is OpenTradeListUiAction.OnSearchQueryChange -> onSearchQueryChange(action.query)
             OpenTradeListUiAction.OnShowFilterSheet -> onShowFilterSheet()
             OpenTradeListUiAction.OnDismissFilterSheet -> onDismissFilterSheet()
-            is OpenTradeListUiAction.OnApplyFilters -> onApplyFilters(action.sort, action.role)
+            is OpenTradeListUiAction.OnSortChange -> _uiState.update { it.copy(sortBy = action.sort) }
+            is OpenTradeListUiAction.OnRoleFilterChange -> _uiState.update { it.copy(roleFilter = action.role) }
             OpenTradeListUiAction.OnResetFilters -> onResetFilters()
             OpenTradeListUiAction.OnClearSearch -> onClearSearch()
             OpenTradeListUiAction.OnNavigateToOfferbook -> onNavigateToOfferbook()
@@ -98,19 +116,6 @@ class OpenTradeListPresenter(
 
     private fun onDismissFilterSheet() {
         _uiState.update { it.copy(showFilterSheet = false) }
-    }
-
-    private fun onApplyFilters(
-        sort: TradeSort,
-        role: TradeRoleFilter,
-    ) {
-        _uiState.update {
-            it.copy(
-                sortBy = sort,
-                roleFilter = role,
-                showFilterSheet = false,
-            )
-        }
     }
 
     private fun onResetFilters() {
