@@ -177,7 +177,7 @@ private fun DetailRow(
                 BisqText.BaseRegular(text = value)
             }
         }
-        if (copyValue != null) {
+        if (!copyValue.isNullOrBlank()) {
             CopyIconButton(value = copyValue)
         }
     }
@@ -311,12 +311,15 @@ private data class PeerNetworkAddressDisplay(
 )
 
 private fun formatPeerNetworkAddress(profile: UserProfileVO): PeerNetworkAddressDisplay? {
-    val entry =
-        profile.networkId.addressByTransportTypeMap.map.entries
-            .firstOrNull() ?: return null
-    val address = "${entry.value.host}:${entry.value.port}"
+    // Privacy-aware deterministic transport pick: prefer onion / I2P over clearnet so the
+    // displayed address never leaks a clearnet endpoint when an anonymous one is available.
+    val map = profile.networkId.addressByTransportTypeMap.map
+    val priority = listOf(TransportTypeEnum.TOR, TransportTypeEnum.I2P, TransportTypeEnum.CLEAR)
+    val transport = priority.firstOrNull { it in map } ?: return null
+    val addressVo = map.getValue(transport)
+    val address = "${addressVo.host}:${addressVo.port}"
     val key =
-        when (entry.key) {
+        when (transport) {
             TransportTypeEnum.CLEAR -> "mobile.tradeHistory.details.networkAddress.clear"
             TransportTypeEnum.TOR -> "mobile.tradeHistory.details.networkAddress.tor"
             TransportTypeEnum.I2P -> "mobile.tradeHistory.details.networkAddress.i2p"

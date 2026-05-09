@@ -6,6 +6,7 @@ import network.bisq.mobile.domain.model.trade.TradeOutcome
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class TradeOutcomeMappingTest {
     @Test
@@ -44,12 +45,12 @@ class TradeOutcomeMappingTest {
     }
 
     /**
-     * Asserts that every [BisqEasyTradeStateEnum] value maps to a non-null [TradeOutcome].
-     *
-     * Note: many in-progress states fall through to the silent `else -> FAILED` branch in
+     * Asserts that every [BisqEasyTradeStateEnum] value maps to a non-null [TradeOutcome] AND
+     * that every non-explicitly-terminal state lands in the silent `else -> FAILED` branch in
      * [network.bisq.mobile.data.mapping.trade.toTradeOutcome]. That branch is a smell — an
-     * in-progress trade state should never appear in closed-trade history — but changing the
-     * production mapping is tracked separately. The count logged here makes future diffs visible.
+     * in-progress trade state should never appear in closed-trade history — but until the
+     * production mapping is made exhaustive, this guard pins the current behavior so an
+     * accidental partial change doesn't slip through.
      */
     @Test
     fun allStates_mappingIsDeterministicAndNonNull() {
@@ -60,8 +61,6 @@ class TradeOutcomeMappingTest {
             val outcome = state.toTradeOutcome()
             assertNotNull(outcome, "Expected non-null outcome for state $state")
 
-            // Track states that fall into the else -> FAILED catch-all.
-            // These are in-progress FSM states that should not appear in closed trade history.
             val isExplicitTerminal =
                 state == BisqEasyTradeStateEnum.BTC_CONFIRMED ||
                     state == BisqEasyTradeStateEnum.CANCELLED ||
@@ -76,9 +75,24 @@ class TradeOutcomeMappingTest {
             }
         }
 
-        // Diagnostic: the else -> FAILED branch currently covers this many states.
-        // If this count changes, a reviewer should check whether the mapping needs updating.
-        val elseCount = elseBranchStates.size
-        println("[TradeOutcomeMappingTest] $elseCount states fall through to else->FAILED: $elseBranchStates")
+        // Regression guard: until the production mapping is made exhaustive, the silent
+        // else -> FAILED branch must continue to cover every non-terminal state.
+        // If any of these stop mapping to FAILED (or a new enum value gets added without
+        // explicit handling and lands somewhere unexpected), this test fails.
+        for (state in elseBranchStates) {
+            assertEquals(
+                TradeOutcome.FAILED,
+                state.toTradeOutcome(),
+                "Non-terminal state $state must currently map to FAILED via the else branch",
+            )
+        }
+
+        // Documents the smell: there ARE non-terminal states landing in else -> FAILED today.
+        // If this ever becomes false (mapping made exhaustive), this test should be revisited.
+        assertTrue(
+            elseBranchStates.isNotEmpty(),
+            "Expected at least one non-terminal state to fall into else -> FAILED. If the " +
+                "mapping has been made exhaustive, this regression guard can be removed.",
+        )
     }
 }

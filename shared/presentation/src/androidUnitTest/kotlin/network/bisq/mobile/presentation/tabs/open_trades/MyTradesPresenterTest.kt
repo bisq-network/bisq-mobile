@@ -83,15 +83,26 @@ class MyTradesPresenterTest {
     }
 
     @Test
-    fun `setInitialTab with valid index updates selectedTab`() {
+    fun `setInitialTab with valid index updates selectedTab when history available`() {
+        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
         presenter.setInitialTab(1)
         assertEquals(1, presenter.uiState.value.selectedTab)
     }
 
     @Test
-    fun `setInitialTab with index above LAST_TAB clamps to LAST_TAB`() {
+    fun `setInitialTab with index above LAST_TAB clamps to LAST_TAB when history available`() {
+        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
         presenter.setInitialTab(99)
         assertEquals(1, presenter.uiState.value.selectedTab)
+    }
+
+    @Test
+    fun `setInitialTab clamps to 0 when history is unavailable`() {
+        // Default capabilities: history unavailable → maxIndex collapses to 0.
+        presenter.setInitialTab(1)
+        assertEquals(0, presenter.uiState.value.selectedTab)
+        presenter.setInitialTab(99)
+        assertEquals(0, presenter.uiState.value.selectedTab)
     }
 
     @Test
@@ -101,15 +112,25 @@ class MyTradesPresenterTest {
     }
 
     @Test
-    fun `OnSelectTab action above LAST_TAB clamps to LAST_TAB`() {
+    fun `OnSelectTab action above LAST_TAB clamps to LAST_TAB when history available`() {
+        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
         presenter.onAction(MyTradesUiAction.OnSelectTab(99))
         assertEquals(1, presenter.uiState.value.selectedTab)
     }
 
     @Test
-    fun `OnSelectTab action with valid index updates selectedTab`() {
+    fun `OnSelectTab action with valid index updates selectedTab when history available`() {
+        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
         presenter.onAction(MyTradesUiAction.OnSelectTab(1))
         assertEquals(1, presenter.uiState.value.selectedTab)
+    }
+
+    @Test
+    fun `OnSelectTab clamps to 0 when history is unavailable`() {
+        presenter.onAction(MyTradesUiAction.OnSelectTab(1))
+        assertEquals(0, presenter.uiState.value.selectedTab)
+        presenter.onAction(MyTradesUiAction.OnSelectTab(99))
+        assertEquals(0, presenter.uiState.value.selectedTab)
     }
 
     @Test

@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.tabs.open_trades
 
-import androidx.paging.PagingConfig
 import androidx.paging.PagingSource.LoadParams
 import androidx.paging.PagingSource.LoadResult
 import io.mockk.coEvery
@@ -22,18 +21,20 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class ClosedTradesPagingSourceTest {
     private val useCase: GetPaginatedClosedTradesUseCase = mockk()
-    private val totalCountSink = MutableStateFlow<Int?>(null)
+    private lateinit var totalCountSink: MutableStateFlow<Int?>
 
-    private val pageSize = PagingConfig(pageSize = 20, enablePlaceholders = false).pageSize
+    private val pageSize = 20
 
     @BeforeTest
     fun setUp() {
         I18nSupport.initialize("en")
+        // Fresh sink per test so a value set by one test (e.g., the failure-reset case priming
+        // it to 99) cannot leak into another test's assertions.
+        totalCountSink = MutableStateFlow(null)
     }
 
     private fun buildSource(
@@ -111,6 +112,7 @@ class ClosedTradesPagingSourceTest {
 
             assertIs<LoadResult.Page<Int, ClosedTradeListItem>>(result)
             assertNull(result.nextKey)
+            assertEquals(2, result.prevKey)
         }
 
     // -----------------------------------------------------------------------
@@ -177,7 +179,6 @@ class ClosedTradesPagingSourceTest {
 
             buildSource().load(refreshParams(key = null))
 
-            assertNotNull(totalCountSink.value)
             assertEquals(42, totalCountSink.value)
         }
 }

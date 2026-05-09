@@ -89,6 +89,22 @@ class FilterOpenTradesUseCaseTest {
     }
 
     @Test
+    fun query_matchesShortTradeId_partial() {
+        val match = trade(tradeId = "a", shortTradeId = "abc123")
+        val miss = trade(tradeId = "b", shortTradeId = "zzz999")
+        val result = useCase.invoke(items = listOf(match, miss), searchQuery = "abc")
+        assertEquals(listOf("a"), result.map { it.tradeId })
+    }
+
+    @Test
+    fun query_matchesMyUserName_partial() {
+        val match = trade(tradeId = "a", myUserName = "Charlie")
+        val miss = trade(tradeId = "b", myUserName = "Dave")
+        val result = useCase.invoke(items = listOf(match, miss), searchQuery = "char")
+        assertEquals(listOf("a"), result.map { it.tradeId })
+    }
+
+    @Test
     fun query_matchesMarket() {
         val usd = trade(tradeId = "usd", market = "BTC/USD")
         val eur = trade(tradeId = "eur", market = "BTC/EUR")
@@ -161,16 +177,19 @@ class FilterOpenTradesUseCaseTest {
 
     @Test
     fun combinedQueryAndRoleAndSort_appliesAll() {
+        // Two items match (alice + buyer): a (older) and d (newer). One has role mismatch (b),
+        // one has query mismatch (c). With OLDEST_FIRST, a must precede d in the result.
         val a = trade(tradeId = "a", peersUserName = "Alice", isSeller = false, takeOfferDate = 100L)
         val b = trade(tradeId = "b", peersUserName = "Alice", isSeller = true, takeOfferDate = 200L)
         val c = trade(tradeId = "c", peersUserName = "Carol", isSeller = false, takeOfferDate = 300L)
+        val d = trade(tradeId = "d", peersUserName = "Alice", isSeller = false, takeOfferDate = 400L)
         val result =
             useCase.invoke(
-                items = listOf(a, b, c),
+                items = listOf(a, b, c, d),
                 searchQuery = "alice",
                 sortBy = TradeSort.OLDEST_FIRST,
                 roleFilter = TradeRoleFilter.BUYER,
             )
-        assertEquals(listOf("a"), result.map { it.tradeId })
+        assertEquals(listOf("a", "d"), result.map { it.tradeId })
     }
 }

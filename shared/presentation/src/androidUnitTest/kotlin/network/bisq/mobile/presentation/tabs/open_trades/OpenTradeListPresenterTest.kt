@@ -77,6 +77,12 @@ class OpenTradeListPresenterTest {
         I18nSupport.initialize("en")
         GenericErrorHandler.clearGenericError()
 
+        // Reset the shared MutableStateFlow fields to their initial values so a value set by
+        // one test (e.g. tradeRulesConfirmedFlow.value = true) cannot leak into another test.
+        openTradeItemsFlow.value = emptyList()
+        tradeRulesConfirmedFlow.value = false
+        tradesWithUnreadFlow.value = emptyMap()
+
         every { tradesServiceFacade.openTradeItems } returns openTradeItemsFlow
         every { settingsServiceFacade.tradeRulesConfirmed } returns tradeRulesConfirmedFlow
         every { mainPresenter.tradesWithUnreadMessages } returns tradesWithUnreadFlow
@@ -306,7 +312,7 @@ class OpenTradeListPresenterTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `OnSelectTrade when tradeRulesConfirmed true navigates to OpenTrade`() =
+    fun `OnSelectTrade when tradeRulesConfirmed true navigates to OpenTrade and does not show trade guide`() =
         runTest(testDispatcher) {
             tradeRulesConfirmedFlow.value = true
             val presenter = buildPresenter()
@@ -315,6 +321,7 @@ class OpenTradeListPresenterTest {
             presenter.onAction(OpenTradeListUiAction.OnSelectTrade(trade))
 
             verify { navigationManager.navigate(NavRoute.OpenTrade("t-abc"), any(), any()) }
+            assertFalse(presenter.uiState.value.tradeGuideVisible)
             presenter.onViewUnattaching()
         }
 

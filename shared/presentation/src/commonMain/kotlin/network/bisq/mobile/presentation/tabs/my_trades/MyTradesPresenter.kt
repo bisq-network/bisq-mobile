@@ -47,13 +47,21 @@ class MyTradesPresenter(
     }
 
     fun setInitialTab(index: Int) {
-        _uiState.update { it.copy(selectedTab = index.coerceIn(0, LAST_TAB)) }
+        _uiState.update { it.copy(selectedTab = index.coerceIn(0, currentMaxTabIndex())) }
     }
 
     fun onAction(action: MyTradesUiAction) {
         when (action) {
             is MyTradesUiAction.OnSelectTab ->
-                _uiState.update { it.copy(selectedTab = action.index.coerceIn(0, LAST_TAB)) }
+                _uiState.update { it.copy(selectedTab = action.index.coerceIn(0, currentMaxTabIndex())) }
         }
     }
+
+    /**
+     * The history tab (index 1) is only valid when the trusted node supports the closed-trades
+     * API. Reading [showHistoryTab].value at update time gives a dynamic clamp so a deep-link
+     * landing on `initialTab=1` against an unsupported node is rejected up front rather than
+     * snapped back to 0 by the [showHistoryTab] observer in [onViewAttached].
+     */
+    private fun currentMaxTabIndex(): Int = if (showHistoryTab.value) LAST_TAB else 0
 }
