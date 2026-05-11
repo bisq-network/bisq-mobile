@@ -16,6 +16,8 @@ import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodCh
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
@@ -87,7 +89,10 @@ class ZellePaymentAccountFormContentUiTest {
         onNavigateToNextScreen: (PaymentAccount) -> Unit = {},
     ) {
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
+            CompositionLocalProvider(
+                LocalIsTest provides true,
+                LocalExternalUrlOpener provides ExternalUrlOpener { true },
+            ) {
                 BisqTheme {
                     ZellePaymentAccountFormContent(
                         presenter = presenter,
