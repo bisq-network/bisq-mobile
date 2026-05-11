@@ -49,6 +49,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonTyp
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.context.LocalAnimationsEnabled
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.asExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.LoadingOverlay
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbar
@@ -138,6 +140,8 @@ fun App(
     navGraphContent: @Composable () -> Unit,
 ) {
     val presenter: AppPresenter = koinInject()
+    val mainPresenter: MainPresenter = koinInject()
+    val externalUrlOpener = remember(mainPresenter) { mainPresenter.asExternalUrlOpener() }
     RememberPresenterLifecycle(presenter)
     val alertNotificationPresenter: AlertNotificationBannerPresenter = koinInject()
     RememberPresenterLifecycle(alertNotificationPresenter)
@@ -191,7 +195,10 @@ fun App(
     BisqTheme {
         SafeInsetsContainer {
             SwipeBackIOSNavigationHandler(rootNavController) {
-                CompositionLocalProvider(LocalAnimationsEnabled provides showAnimation) {
+                CompositionLocalProvider(
+                    LocalAnimationsEnabled provides showAnimation,
+                    LocalExternalUrlOpener provides externalUrlOpener,
+                ) {
                     Column {
                         NetworkStatusBanner()
                         AlertNotificationBanner(alertNotificationPresenter)

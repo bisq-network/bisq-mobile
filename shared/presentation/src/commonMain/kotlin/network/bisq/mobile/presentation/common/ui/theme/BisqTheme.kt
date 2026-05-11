@@ -11,6 +11,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 
 object BisqTheme {
     private val LocalBisqTypography =
@@ -56,8 +58,12 @@ object BisqTheme {
     ) {
         I18nSupport.setLanguage(language)
         BisqTheme {
-            Box(modifier = Modifier.background(BisqTheme.colors.backgroundColor)) {
-                content()
+            CompositionLocalProvider(
+                LocalExternalUrlOpener provides ExternalUrlOpener { false },
+            ) {
+                Box(modifier = Modifier.background(BisqTheme.colors.backgroundColor)) {
+                    content()
+                }
             }
         }
     }

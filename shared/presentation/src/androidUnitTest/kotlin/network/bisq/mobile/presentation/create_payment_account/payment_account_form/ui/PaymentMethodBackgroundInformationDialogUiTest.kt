@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.create_payment_account.payment_account_form.ui
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -10,8 +8,9 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.create_payment_account.payment_account_form.ui.PaymentMethodBackgroundInformationDialog
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -23,12 +22,12 @@ class PaymentMethodBackgroundInformationDialogUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private lateinit var uriHandler: CapturingUriHandler
+    private lateinit var externalUrlOpener: CapturingExternalUrlOpener
 
     @Before
     fun setup() {
         I18nSupport.setLanguage()
-        uriHandler = CapturingUriHandler()
+        externalUrlOpener = CapturingExternalUrlOpener()
     }
 
     private fun setTestContent(
@@ -36,7 +35,7 @@ class PaymentMethodBackgroundInformationDialogUiTest {
         onDismissRequest: () -> Unit = {},
     ) {
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+            CompositionLocalProvider(LocalExternalUrlOpener provides externalUrlOpener) {
                 BisqTheme {
                     PaymentMethodBackgroundInformationDialog(
                         bodyText = bodyText,
@@ -79,14 +78,25 @@ class PaymentMethodBackgroundInformationDialogUiTest {
         setTestContent(bodyText = text)
 
         composeTestRule.onNodeWithText(text, substring = true).assertIsDisplayed()
-        assertEquals(emptyList(), uriHandler.openedUris)
+        assertEquals(emptyList(), externalUrlOpener.openedUrls)
     }
 
-    private class CapturingUriHandler : UriHandler {
-        val openedUris = mutableListOf<String>()
+    @Test
+    fun `when hyperlink clicked then opens url via external url opener`() {
+        setTestContent(bodyText = "Read more at [HYPERLINK:https://example.com/path] now.")
 
-        override fun openUri(uri: String) {
-            openedUris += uri
+        composeTestRule.onNodeWithText("https://example.com/path", substring = true).performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf("https://example.com/path"), externalUrlOpener.openedUrls)
+    }
+
+    private class CapturingExternalUrlOpener : ExternalUrlOpener {
+        val openedUrls = mutableListOf<String>()
+
+        override fun openUrl(url: String): Boolean {
+            openedUrls += url
+            return true
         }
     }
 }

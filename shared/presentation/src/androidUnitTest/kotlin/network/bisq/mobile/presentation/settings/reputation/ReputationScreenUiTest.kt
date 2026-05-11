@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.settings.reputation
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -14,6 +12,8 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.di.presentationTestModule
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
@@ -64,10 +64,7 @@ class ReputationScreenUiTest {
     private fun renderScreen() {
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalUriHandler provides
-                    object : UriHandler {
-                        override fun openUri(uri: String) = Unit
-                    },
+                LocalExternalUrlOpener provides ExternalUrlOpener { true },
             ) {
                 BisqTheme {
                     ReputationScreen()

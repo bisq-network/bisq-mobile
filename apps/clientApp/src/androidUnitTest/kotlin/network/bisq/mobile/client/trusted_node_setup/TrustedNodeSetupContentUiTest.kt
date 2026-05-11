@@ -22,6 +22,8 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
@@ -64,7 +66,10 @@ class TrustedNodeSetupContentUiTest {
      */
     private fun setTestContent(content: @Composable () -> Unit) {
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
+            CompositionLocalProvider(
+                LocalIsTest provides true,
+                LocalExternalUrlOpener provides ExternalUrlOpener { true },
+            ) {
                 BisqTheme {
                     content()
                 }

@@ -21,16 +21,13 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
-import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
-@ExcludeFromCoverage
 @Composable
 fun ResourcesScreen() {
     val presenter: ResourcesPresenter = koinInject()
@@ -54,10 +51,7 @@ fun ResourcesScreen() {
         BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
 
-        WebResources(
-            onAction = presenter::onAction,
-            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
-        )
+        WebResources(onAction = presenter::onAction)
 
         BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
@@ -72,14 +66,10 @@ fun ResourcesScreen() {
         BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
 
-        Legal(
-            onAction = presenter::onAction,
-            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
-        )
+        Legal(onAction = presenter::onAction)
     }
 }
 
-@ExcludeFromCoverage
 @Composable
 private fun Guides(
     onAction: (ResourcesUiAction) -> Unit,
@@ -103,11 +93,9 @@ private fun Guides(
     )
 }
 
-@ExcludeFromCoverage
 @Composable
 private fun WebResources(
     onAction: (ResourcesUiAction) -> Unit,
-    onError: (Throwable) -> Unit,
 ) {
     BisqText.H3Light(
         "support.resources.resources.headline".i18n(),
@@ -117,29 +105,24 @@ private fun WebResources(
         "support.resources.resources.webpage".i18n(),
         link = BisqLinks.WEBPAGE,
         onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.WEBPAGE)) },
-        onError = onError,
     )
     ResourceWeblink(
         "support.resources.resources.dao".i18n(),
         link = BisqLinks.DAO,
         onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.DAO)) },
-        onError = onError,
     )
     ResourceWeblink(
         "support.resources.resources.sourceCode".i18n(),
         link = BisqLinks.BISQ_MOBILE_GH,
         onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.BISQ_MOBILE_GH)) },
-        onError = onError,
     )
     ResourceWeblink(
         "support.resources.resources.community".i18n(),
         link = BisqLinks.MATRIX,
         onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.MATRIX)) },
-        onError = onError,
     )
 }
 
-@ExcludeFromCoverage
 @Composable
 private fun Version(versionInfo: String) {
     BisqText.H3Light(
@@ -158,7 +141,6 @@ private fun Version(versionInfo: String) {
     )
 }
 
-@ExcludeFromCoverage
 @Composable
 private fun DeviceInfo(deviceInfo: String) {
     BisqText.H3Light(
@@ -177,11 +159,9 @@ private fun DeviceInfo(deviceInfo: String) {
     )
 }
 
-@ExcludeFromCoverage
 @Composable
 private fun Legal(
     onAction: (ResourcesUiAction) -> Unit,
-    onError: (Throwable) -> Unit,
 ) {
     BisqText.H3Light(
         "support.resources.legal.headline".i18n(),
@@ -195,23 +175,19 @@ private fun Legal(
         "support.resources.legal.license".i18n(),
         link = BisqLinks.LICENSE,
         onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.LICENSE)) },
-        onError = onError,
     )
 }
 
-@ExcludeFromCoverage
 @Composable
 private fun ResourceWeblink(
     text: String,
     link: String,
     onClick: (() -> Unit)? = null,
-    onError: ((Throwable) -> Unit)? = null,
 ) {
     LinkButton(
         text,
         link = link,
         onClick = onClick,
-        onError = onError,
         leftIcon = { WebLinkIcon(modifier = Modifier.size(16.dp).alpha(0.5f)) },
         color = BisqTheme.colors.mid_grey20,
         padding =
@@ -222,7 +198,6 @@ private fun ResourceWeblink(
     )
 }
 
-@ExcludeFromCoverage
 @Composable
 private fun AppLinkButton(
     text: String,

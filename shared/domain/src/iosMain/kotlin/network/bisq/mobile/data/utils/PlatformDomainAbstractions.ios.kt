@@ -16,6 +16,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
+import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.i18n.i18n
 import org.koin.core.scope.Scope
 import platform.CoreGraphics.CGRectMake
@@ -333,15 +334,32 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
 }
 
 class IOSUrlLauncher : UrlLauncher {
+    private val log = getLogger("IOSUrlLauncher")
+
     override fun openUrl(url: String): Boolean {
+        val safeUrl = sanitizeUrlForLog(url)
         val nsUrl = NSURL.URLWithString(url)
-        if (nsUrl != null && UIApplication.sharedApplication.canOpenURL(nsUrl)) {
+        if (nsUrl == null) {
+            log.e(IllegalArgumentException("Invalid URL")) { "Failed to open URL: $safeUrl" }
+            return false
+        }
+        if (!UIApplication.sharedApplication.canOpenURL(nsUrl)) {
+            log.e(IllegalStateException("canOpenURL returned false")) {
+                "Failed to open URL (restricted or no handler): $safeUrl"
+            }
+            return false
+        }
+        return try {
             // fake secondary parameters are important so that iOS compiler knows which override to use
             UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?, String>(), completionHandler = null)
-            return true
+            true
+        } catch (e: Exception) {
+            log.e(e) { "Failed to open URL: $safeUrl" }
+            false
         }
-        return false
     }
+
+    private fun sanitizeUrlForLog(rawUrl: String): String = rawUrl.take(256).ifEmpty { "invalid-url" }
 }
 
 class IOSPlatformInfo : PlatformInfo {

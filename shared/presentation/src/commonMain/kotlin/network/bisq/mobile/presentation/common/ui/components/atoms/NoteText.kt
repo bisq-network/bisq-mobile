@@ -8,8 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -19,9 +17,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import kotlinx.coroutines.launch
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.openUriSafely
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 
 // Pass either uri or onLinkClick. Not both
@@ -33,9 +31,8 @@ fun NoteText(
     textAlign: TextAlign = TextAlign.Start,
     openConfirmation: Boolean = false,
     onLinkClick: (() -> Unit)? = null,
-    onError: ((Throwable) -> Unit)? = null,
 ) {
-    val uriHandler = LocalUriHandler.current
+    val externalUrlOpener = LocalExternalUrlOpener.current
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -58,11 +55,10 @@ fun NoteText(
                                     ),
                             ),
                         linkInteractionListener = { _ ->
-                            // Handle URL click with confirmation if needed
                             if (openConfirmation) {
                                 showConfirmDialog = true
                             } else {
-                                openNoteTextUri(uriHandler, uri, onError)
+                                externalUrlOpener.openUrl(uri)
                             }
                         },
                     ),
@@ -83,7 +79,6 @@ fun NoteText(
                                     ),
                             ),
                     ) {
-                        // Handle custom click with confirmation if needed
                         if (openConfirmation) {
                             showConfirmDialog = true
                         } else {
@@ -147,9 +142,3 @@ fun NoteText(
         )
     }
 }
-
-internal fun openNoteTextUri(
-    uriHandler: UriHandler,
-    uri: String,
-    onError: ((Throwable) -> Unit)?,
-): Boolean = uriHandler.openUriSafely(uri) { throwable -> onError?.invoke(throwable) }

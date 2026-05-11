@@ -22,17 +22,14 @@ import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenW
 import network.bisq.mobile.presentation.common.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.common.ui.components.molecules.amountSelector.BisqAmountSelector
 import network.bisq.mobile.presentation.common.ui.components.molecules.amountSelector.BisqRangeAmountSelector
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.ReputationBasedBuyerLimitsPopup
 import network.bisq.mobile.presentation.common.ui.components.organisms.create_offer.ReputationBasedSellerLimitsPopup
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator.AmountType
 import org.koin.compose.koinInject
 
-@ExcludeFromCoverage
 @Composable
 fun CreateOfferAmountScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
@@ -102,11 +99,9 @@ fun CreateOfferAmountScreen() {
         setShowLimitPopup = presenter::setShowLimitPopup,
         onReputationLinkClick = presenter::navigateToReputation,
         onBuildReputationLinkClick = presenter::navigateToBuildReputation,
-        onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
     )
 }
 
-@ExcludeFromCoverage
 @Composable
 fun CreateOfferAmountContent(
     isBuy: Boolean,
@@ -150,7 +145,6 @@ fun CreateOfferAmountContent(
     setShowLimitPopup: (Boolean) -> Unit,
     onReputationLinkClick: () -> Unit,
     onBuildReputationLinkClick: () -> Unit,
-    onError: ((Throwable) -> Unit)? = null,
 ) {
     val amountTypes = remember { AmountType.entries.toList() }
 
@@ -258,7 +252,6 @@ fun CreateOfferAmountContent(
                 maxSellAmount = reputationBasedMaxSellAmount,
                 onRepLinkClick = onReputationLinkClick,
                 onBuildRepLinkClick = onBuildReputationLinkClick,
-                onError = onError,
             )
         }
     }

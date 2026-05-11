@@ -97,7 +97,8 @@ class WebLinkConfirmationDialogPresenter(
                     if (!interactiveBeforeOpen) {
                         return@launch
                     }
-                    throw IllegalStateException("Failed to open URI")
+                    userOnError.invoke()
+                    return@launch
                 }
                 userOnConfirm.invoke()
             } catch (cancellationException: CancellationException) {

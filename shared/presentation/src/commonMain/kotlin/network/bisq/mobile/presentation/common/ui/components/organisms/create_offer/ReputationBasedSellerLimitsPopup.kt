@@ -20,9 +20,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.Bi
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
-import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
-@ExcludeFromCoverage
 @Composable
 fun ReputationBasedSellerLimitsPopup(
     onDismiss: () -> Unit,
@@ -30,7 +28,6 @@ fun ReputationBasedSellerLimitsPopup(
     onRepLinkClick: () -> Unit,
     reputationScore: String,
     maxSellAmount: String,
-    onError: ((Throwable) -> Unit)? = null,
 ) {
     BisqDialog(
         horizontalAlignment = Alignment.Start,
@@ -52,7 +49,6 @@ fun ReputationBasedSellerLimitsPopup(
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             fullWidth = true,
             onClick = onBuildRepLinkClick,
-            onError = onError,
         )
 
         BisqGap.V1()

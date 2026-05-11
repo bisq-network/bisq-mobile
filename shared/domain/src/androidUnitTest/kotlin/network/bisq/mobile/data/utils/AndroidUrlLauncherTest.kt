@@ -46,13 +46,31 @@ class AndroidUrlLauncherTest {
         assertEquals(1, context.startActivityCalls)
     }
 
+    @Test
+    fun `openUrl uses ACTION_VIEW with NEW_TASK flag`() {
+        val context = TestContext()
+        val launcher = AndroidUrlLauncher(context)
+
+        launcher.openUrl("https://bisq.network")
+
+        val intent = context.lastIntent ?: error("Expected intent")
+        assertEquals(Intent.ACTION_VIEW, intent.action)
+        assertEquals(
+            Intent.FLAG_ACTIVITY_NEW_TASK,
+            intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK,
+        )
+        assertEquals("https://bisq.network", intent.dataString)
+    }
+
     private class TestContext(
         private val exceptionToThrow: Exception? = null,
     ) : ContextWrapper(RuntimeEnvironment.getApplication()) {
         var startActivityCalls: Int = 0
+        var lastIntent: Intent? = null
 
         override fun startActivity(intent: Intent) {
             startActivityCalls++
+            lastIntent = intent
             exceptionToThrow?.let { throw it }
         }
     }

@@ -54,7 +54,6 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -75,7 +74,6 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
             sessionUiState = sessionUiState,
             userProfileIconProvider = presenter.userProfileIconProvider,
             onAction = presenter::onAction,
-            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         )
     }
 }
@@ -86,7 +84,6 @@ fun TradeDetailsHeaderContent(
     sessionUiState: TradeDetailsHeaderSessionUiState,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onAction: (TradeDetailsHeaderUiAction) -> Unit,
-    onError: ((Throwable) -> Unit)? = null,
 ) {
     val enterTransition =
         remember {
@@ -173,7 +170,6 @@ fun TradeDetailsHeaderContent(
                             forceConfirm = true,
                             padding = PaddingValues(0.dp),
                             modifier = Modifier.defaultMinSize(minHeight = 0.dp),
-                            onError = onError,
                         )
                     }
                 } else {

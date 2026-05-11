@@ -11,6 +11,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
@@ -36,7 +38,10 @@ class ZelleFormContentUiTest {
         onAction: (ZelleFormUiAction) -> Unit = {},
     ) {
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
+            CompositionLocalProvider(
+                LocalIsTest provides true,
+                LocalExternalUrlOpener provides ExternalUrlOpener { true },
+            ) {
                 BisqTheme {
                     ZelleFormContent(
                         uiState = uiState,

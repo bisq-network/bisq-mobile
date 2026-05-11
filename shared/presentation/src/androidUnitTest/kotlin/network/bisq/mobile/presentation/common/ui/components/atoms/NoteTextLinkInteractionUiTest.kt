@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -15,6 +13,8 @@ import io.mockk.verify
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.di.presentationTestModule
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkDialogSettingsServiceFake
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -67,9 +67,9 @@ class NoteTextLinkInteractionUiTest {
             )
         }
 
-        val handler = CapturingUriHandler()
+        val opener = CapturingExternalUrlOpener()
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalUriHandler provides handler) {
+            CompositionLocalProvider(LocalExternalUrlOpener provides opener) {
                 BisqTheme {
                     NoteText(
                         notes = "Read docs",
@@ -84,7 +84,7 @@ class NoteTextLinkInteractionUiTest {
         composeTestRule.onNodeWithText("Open link", substring = true).performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(listOf("https://example.com/note-direct"), handler.openedUris)
+        assertEquals(listOf("https://example.com/note-direct"), opener.openedUrls)
     }
 
     @Test
@@ -107,7 +107,7 @@ class NoteTextLinkInteractionUiTest {
         }
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalUriHandler provides NoopUriHandler()) {
+            CompositionLocalProvider(LocalExternalUrlOpener provides ExternalUrlOpener { true }) {
                 BisqTheme {
                     NoteText(
                         notes = "Read docs",
@@ -129,15 +129,12 @@ class NoteTextLinkInteractionUiTest {
         }
     }
 
-    private class CapturingUriHandler : UriHandler {
-        val openedUris = mutableListOf<String>()
+    private class CapturingExternalUrlOpener : ExternalUrlOpener {
+        val openedUrls = mutableListOf<String>()
 
-        override fun openUri(uri: String) {
-            openedUris += uri
+        override fun openUrl(url: String): Boolean {
+            openedUrls += url
+            return true
         }
-    }
-
-    private class NoopUriHandler : UriHandler {
-        override fun openUri(uri: String) {}
     }
 }

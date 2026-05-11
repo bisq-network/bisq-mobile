@@ -25,7 +25,6 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
@@ -71,25 +70,21 @@ fun ClientSupportScreen() {
                 text = "mobile.support.matrix".i18n(),
                 link = BisqLinks.MATRIX,
                 onClick = { supportPresenter.onOpenWebUrl(BisqLinks.MATRIX) },
-                onError = { _ -> supportPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
             SupportWeblink(
                 text = "mobile.support.forum".i18n(),
                 link = BisqLinks.FORUM,
                 onClick = { supportPresenter.onOpenWebUrl(BisqLinks.FORUM) },
-                onError = { _ -> supportPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
             SupportWeblink(
                 text = "mobile.support.telegram".i18n(),
                 link = BisqLinks.TELEGRAM,
                 onClick = { supportPresenter.onOpenWebUrl(BisqLinks.TELEGRAM) },
-                onError = { _ -> supportPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
             SupportWeblink(
                 text = "mobile.support.reddit".i18n(),
                 link = BisqLinks.REDDIT,
                 onClick = { supportPresenter.onOpenWebUrl(BisqLinks.REDDIT) },
-                onError = { _ -> supportPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             )
         }
 
@@ -103,7 +98,6 @@ fun ClientSupportScreen() {
             text = "mobile.support.wiki".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
             onClick = { supportPresenter.onOpenWebUrl(BisqLinks.BISQ_EASY_WIKI_URL) },
-            onError = { _ -> supportPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             color = BisqTheme.colors.primary,
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )
@@ -121,7 +115,6 @@ fun ClientSupportScreen() {
             text = "mobile.support.troubleShooting.github".i18n(),
             link = reportUrl,
             onClick = { supportPresenter.onOpenWebUrl(reportUrl) },
-            onError = { _ -> supportPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
             color = BisqTheme.colors.primary,
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )

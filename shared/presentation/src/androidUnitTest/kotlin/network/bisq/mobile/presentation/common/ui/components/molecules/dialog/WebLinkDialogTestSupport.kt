@@ -6,8 +6,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.core.app.ApplicationProvider
@@ -16,7 +14,11 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.di.presentationTestModule
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -32,27 +34,25 @@ import kotlin.test.assertTrue
  * [IsolatedTestHost] or [KoinTestHost].
  */
 internal object WebLinkDialogTestFixtures {
-    val noopUriHandler: UriHandler =
-        object : UriHandler {
-            override fun openUri(uri: String) {}
-        }
+    val noopExternalUrlOpener: ExternalUrlOpener = ExternalUrlOpener { false }
 }
 
-/** Records URIs passed to [UriHandler.openUri]. */
-internal class WebLinkDialogCapturingUriHandler : UriHandler {
-    val openedUris = mutableListOf<String>()
+/** Records URLs passed to [ExternalUrlOpener.openUrl]. */
+internal class WebLinkDialogCapturingExternalUrlOpener : ExternalUrlOpener {
+    val openedUrls = mutableListOf<String>()
 
-    override fun openUri(uri: String) {
-        openedUris.add(uri)
+    override fun openUrl(url: String): Boolean {
+        openedUrls.add(url)
+        return true
     }
 }
 
-/** [LocalIsTest] + noop [LocalUriHandler] + [BisqTheme] for isolated (no Koin) UI tests. */
+/** [LocalIsTest] + noop [LocalExternalUrlOpener] + [BisqTheme] for isolated (no Koin) UI tests. */
 @Composable
 internal fun IsolatedTestHost(content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalIsTest provides true,
-        LocalUriHandler provides WebLinkDialogTestFixtures.noopUriHandler,
+        LocalExternalUrlOpener provides WebLinkDialogTestFixtures.noopExternalUrlOpener,
     ) {
         BisqTheme {
             content()
@@ -60,13 +60,13 @@ internal fun IsolatedTestHost(content: @Composable () -> Unit) {
     }
 }
 
-/** [LocalUriHandler] + [BisqTheme] for Koin-backed tests ([LocalIsTest] remains default). */
+/** [LocalExternalUrlOpener] + [BisqTheme] for Koin-backed tests ([LocalIsTest] remains default). */
 @Composable
 internal fun KoinTestHost(
-    uriHandler: UriHandler,
+    externalUrlOpener: ExternalUrlOpener,
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+    CompositionLocalProvider(LocalExternalUrlOpener provides externalUrlOpener) {
         BisqTheme {
             content()
         }
@@ -90,7 +90,12 @@ internal fun startKoinWithWebLinkDeps(
     coEvery { facade.setPermitOpeningBrowser(false) } returns setPermitResult
     coEvery { facade.setWebLinkDontShowAgain() } returns setDontShowAgainResult
     val presenter = mockk<MainPresenter>(relaxed = true)
-    every { presenter.navigateToUrl(any()) } returns openUrlResult
+    every { presenter.navigateToUrl(any()) } answers {
+        if (!openUrlResult) {
+            presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
+        }
+        openUrlResult
+    }
     startKoin {
         modules(
             module {
@@ -112,7 +117,12 @@ internal fun startKoinWithWebLinkDialogFake(
 ): Pair<WebLinkDialogSettingsServiceFake, MainPresenter> {
     runCatching { stopKoin() }
     val presenter = mockk<MainPresenter>(relaxed = true)
-    every { presenter.navigateToUrl(any()) } returns openUrlResult
+    every { presenter.navigateToUrl(any()) } answers {
+        if (!openUrlResult) {
+            presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
+        }
+        openUrlResult
+    }
     startKoin {
         modules(
             module {

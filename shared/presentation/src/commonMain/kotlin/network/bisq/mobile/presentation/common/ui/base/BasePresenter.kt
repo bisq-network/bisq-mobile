@@ -334,10 +334,7 @@ abstract class BasePresenter(
     }
 
     override fun navigateToReportError() {
-        val isOpened = navigateToUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES)
-        if (!isOpened) {
-            showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
-        }
+        navigateToUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES)
     }
 
     protected fun isAtMainScreen(): Boolean = navigationManager.isAtMainScreen()

@@ -1,12 +1,12 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import org.junit.Rule
 import org.junit.Test
@@ -20,7 +20,7 @@ class NoteTextUiSmokeTest {
     @Test
     fun `renders note text with link`() {
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalUriHandler provides NoopUriHandler()) {
+            CompositionLocalProvider(LocalExternalUrlOpener provides ExternalUrlOpener { true }) {
                 BisqTheme {
                     NoteText(
                         notes = "Read docs",
@@ -33,9 +33,5 @@ class NoteTextUiSmokeTest {
         }
 
         composeTestRule.onNodeWithText("Read docs Open link").assertIsDisplayed()
-    }
-
-    private class NoopUriHandler : UriHandler {
-        override fun openUri(uri: String) {}
     }
 }

@@ -24,6 +24,8 @@ import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.StringUtils.truncateBitcoinIdentifier
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import org.junit.Before
@@ -68,7 +70,10 @@ class TradeDetailsHeaderContentUiTest {
 
     private fun setTestContent(content: @Composable () -> Unit) {
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
+            CompositionLocalProvider(
+                LocalIsTest provides true,
+                LocalExternalUrlOpener provides ExternalUrlOpener { true },
+            ) {
                 BisqTheme {
                     Column(Modifier.verticalScroll(rememberScrollState())) {
                         content()

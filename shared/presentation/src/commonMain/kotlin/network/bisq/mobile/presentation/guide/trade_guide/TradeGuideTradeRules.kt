@@ -14,14 +14,11 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.OrderedTextLi
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
-import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
-@ExcludeFromCoverage
 @Composable
 fun TradeGuideTradeRules() {
     val presenter: TradeGuideTradeRulesPresenter = koinInject()
@@ -67,7 +64,6 @@ fun TradeGuideTradeRules() {
             "action.learnMore".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
             onClick = { presenter.navigateSecurityLearnMore() },
-            onError = { _ -> presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR) },
         )
 
         BisqGap.V1()
