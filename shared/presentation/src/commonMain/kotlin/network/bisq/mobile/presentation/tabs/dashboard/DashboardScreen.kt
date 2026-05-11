@@ -213,6 +213,15 @@ private fun DashboardContent(
                 buttonHandler = onOpenTradeGuide,
             )
         }
+        BisqGap.V1()
+        BisqText.SmallRegularGrey(
+            text = "mobile.dashboard.disclaimer".i18n(),
+            textAlign = TextAlign.Start,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = BisqUIConstants.ScreenPadding),
+        )
         Spacer(modifier = Modifier.fillMaxHeight().weight(0.2f))
     }
 }

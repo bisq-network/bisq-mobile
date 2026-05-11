@@ -183,7 +183,7 @@ Screenshots are optional but recommended for AltStore listings.
 
 4. Commit and push
 
-**Tip:** You can reuse screenshots from the iOS App Store listing at `docs/listings/connect/ios/screenshots/` if available.
+**Tip:** You can reuse screenshots from the iOS App Store listing at `apps/clientApp/src/main/ios/listings/en-US/images/phoneScreenshots/` if available.
 
 ### App Description
 
@@ -215,7 +215,7 @@ Each version entry has its own `localizedDescription` for release notes:
 | `docs/assets/screenshots/` | App screenshots (optional) |
 | `docs/releases/ExportOptions-EU.plist` | Xcode export configuration |
 | `gradle.properties` | Version numbers |
-| `docs/listings/connect/ios/` | iOS App Store listing assets (reference) |
+| `apps/clientApp/src/main/ios/listings/en-US/` | iOS App Store listing assets (fastlane format) |
 
 ---
 
