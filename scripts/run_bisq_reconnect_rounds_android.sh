@@ -15,7 +15,7 @@ set -euo pipefail
 #   APP_PATH              Bisq2.app bundle (default /Applications/Bisq2.app)
 #   BISQ_LOG              Desktop bisq log file to tail for "ApplicationService initialized"
 #   OUT_DIR               Output directory (default ./debug/reconnect-round-logs-<timestamp>)
-#   SLEEP_BEFORE_OPEN     Seconds between kill and reopen (default 5)
+#   SLEEP_BEFORE_OPEN     Seconds between kill and reopen (default 45)
 #   BISQ_INIT_TIMEOUT_SEC Seconds to wait for desktop init marker (default 180)
 #   ADB_CONNECT_TIMEOUT_SEC  Seconds to wait for "WS connected successfully" in logcat (default 300)
 #   ANDROID_SERIAL        When multiple adb devices exist, set to the target UDID (adb devices).
@@ -34,7 +34,7 @@ unset _SCRIPT_DIR _REPO_ROOT
 ROUNDS="${1:-1}"
 APP_PATH="${APP_PATH:-/Applications/Bisq2.app}"
 BISQ_LOG="${BISQ_LOG:-$HOME/Library/Application Support/Bisq2/bisq.log}"
-SLEEP_BEFORE_OPEN="${SLEEP_BEFORE_OPEN:-5}"
+SLEEP_BEFORE_OPEN="${SLEEP_BEFORE_OPEN:-45}"
 BISQ_INIT_TIMEOUT_SEC="${BISQ_INIT_TIMEOUT_SEC:-180}"
 ADB_CONNECT_TIMEOUT_SEC="${ADB_CONNECT_TIMEOUT_SEC:-300}"
 OUT_DIR="${OUT_DIR:-$PWD/debug/reconnect-round-logs-$(date +%Y%m%d-%H%M%S)}"
