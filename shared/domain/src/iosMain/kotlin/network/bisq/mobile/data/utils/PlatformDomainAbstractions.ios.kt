@@ -10,6 +10,8 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -336,7 +338,7 @@ actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
 class IOSUrlLauncher : UrlLauncher {
     private val log = getLogger("IOSUrlLauncher")
 
-    override fun openUrl(url: String): Boolean {
+    override suspend fun openUrl(url: String): Boolean {
         val safeUrl = sanitizeUrlForLog(url)
         val nsUrl = NSURL.URLWithString(url)
         if (nsUrl == null) {
@@ -349,9 +351,25 @@ class IOSUrlLauncher : UrlLauncher {
         }
 
         return try {
-            // fake secondary parameters are important so that iOS compiler knows which override to use
-            UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?, String>(), completionHandler = null)
-            true
+            suspendCancellableCoroutine { cont ->
+                dispatch_async(dispatch_get_main_queue()) {
+                    if (!cont.isActive) {
+                        return@dispatch_async
+                    }
+                    // Secondary parameters select openURL:options:completionHandler: (vs deprecated openURL:).
+                    UIApplication.sharedApplication.openURL(
+                        nsUrl,
+                        options = emptyMap<Any?, Any?>(),
+                        completionHandler = completionHandler@{ success ->
+                            if (cont.isActive) {
+                                cont.resumeWith(Result.success(success))
+                            }
+                        },
+                    )
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             log.e(e) { "Failed to open URL: $safeUrl" }
             false

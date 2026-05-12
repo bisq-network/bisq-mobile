@@ -8,6 +8,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -53,7 +55,7 @@ class LinkButtonUiTest {
     ) {
         runCatching { stopKoin() }
         mainPresenter = mockk(relaxed = true)
-        every { mainPresenter.navigateToUrl(any()) } answers {
+        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } answers {
             if (!openUrlResult) {
                 mainPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
             }
@@ -192,7 +194,7 @@ class LinkButtonUiTest {
         composeTestRule.waitForIdle()
 
         verify(exactly = 1) { onClick() }
-        verify(exactly = 1) { mainPresenter.navigateToUrl("https://example.com/confirm") }
+        coVerify(exactly = 1) { mainPresenter.navigateToUrlWithLauncher("https://example.com/confirm") }
         assertNoNodeWithText(dialogTitle)
     }
 
@@ -263,7 +265,7 @@ class LinkButtonUiTest {
     private class CapturingExternalUrlOpener : ExternalUrlOpener {
         val openedUrls = mutableListOf<String>()
 
-        override fun openUrl(url: String): Boolean {
+        override suspend fun openUrl(url: String): Boolean {
             openedUrls += url
             return true
         }

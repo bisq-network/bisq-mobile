@@ -1,10 +1,11 @@
 package network.bisq.mobile.presentation.common.ui.alert
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -176,6 +177,7 @@ class AlertNotificationBannerPresenterTest {
     fun `update now opens releases url`() =
         runTest(testDispatcher) {
             val urlLauncher = mockk<UrlLauncher>(relaxed = true)
+            coEvery { urlLauncher.openUrl(any()) } returns true
             val alertsFlow = MutableStateFlow(listOf(alert(id = "emergency", type = AlertType.EMERGENCY, date = 5L)))
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create(urlLauncher = urlLauncher)
@@ -185,7 +187,7 @@ class AlertNotificationBannerPresenterTest {
             presenter.onAction(AlertNotificationUiAction.OnUpdateNow)
             advanceUntilIdle()
 
-            verify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_RELEASES) }
+            coVerify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_RELEASES) }
         }
 
     @Test

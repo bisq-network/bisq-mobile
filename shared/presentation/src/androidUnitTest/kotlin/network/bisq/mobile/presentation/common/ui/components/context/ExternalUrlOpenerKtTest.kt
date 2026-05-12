@@ -1,8 +1,9 @@
 package network.bisq.mobile.presentation.common.ui.components.context
 
-import io.mockk.every
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.Test
 import kotlin.test.assertFalse
@@ -10,24 +11,26 @@ import kotlin.test.assertTrue
 
 class ExternalUrlOpenerKtTest {
     @Test
-    fun `asExternalUrlOpener delegates openUrl to navigateToUrl`() {
-        val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        every { mainPresenter.navigateToUrl("https://bisq.network/") } returns true
+    fun `asExternalUrlOpener delegates openUrl to navigateToUrlAwait`() =
+        runBlocking {
+            val mainPresenter = mockk<MainPresenter>(relaxed = true)
+            coEvery { mainPresenter.navigateToUrlAwait("https://bisq.network/") } returns true
 
-        val opener = mainPresenter.asExternalUrlOpener()
-        assertTrue(opener.openUrl("https://bisq.network/"))
+            val opener = mainPresenter.asExternalUrlOpener()
+            assertTrue(opener.openUrl("https://bisq.network/"))
 
-        verify(exactly = 1) { mainPresenter.navigateToUrl("https://bisq.network/") }
-    }
+            coVerify(exactly = 1) { mainPresenter.navigateToUrlAwait("https://bisq.network/") }
+        }
 
     @Test
-    fun `asExternalUrlOpener propagates navigateToUrl false`() {
-        val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        every { mainPresenter.navigateToUrl(any()) } returns false
+    fun `asExternalUrlOpener propagates navigateToUrlAwait false`() =
+        runBlocking {
+            val mainPresenter = mockk<MainPresenter>(relaxed = true)
+            coEvery { mainPresenter.navigateToUrlAwait(any()) } returns false
 
-        val opener = mainPresenter.asExternalUrlOpener()
-        assertFalse(opener.openUrl("https://example.com"))
+            val opener = mainPresenter.asExternalUrlOpener()
+            assertFalse(opener.openUrl("https://example.com"))
 
-        verify(exactly = 1) { mainPresenter.navigateToUrl("https://example.com") }
-    }
+            coVerify(exactly = 1) { mainPresenter.navigateToUrlAwait("https://example.com") }
+        }
 }

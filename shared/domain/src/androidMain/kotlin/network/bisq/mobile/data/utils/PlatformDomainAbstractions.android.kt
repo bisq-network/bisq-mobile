@@ -69,7 +69,7 @@ class AndroidUrlLauncher(
 ) : UrlLauncher {
     private val log = getLogger("AndroidUrlLauncher")
 
-    override fun openUrl(url: String): Boolean {
+    override suspend fun openUrl(url: String): Boolean {
         val safeUrl = sanitizeUrlForLog(url)
         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK

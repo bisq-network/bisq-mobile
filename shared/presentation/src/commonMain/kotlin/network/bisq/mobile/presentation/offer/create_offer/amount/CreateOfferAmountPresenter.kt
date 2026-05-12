@@ -425,14 +425,6 @@ class CreateOfferAmountPresenter(
         navigateTo(NavRoute.CreateOfferPrice)
     }
 
-    fun navigateToReputation() {
-        navigateToUrl(BisqLinks.REPUTATION_WIKI_URL)
-    }
-
-    fun navigateToBuildReputation() {
-        navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
-    }
-
     fun validateTextField(value: String): String? {
         val maxAmountForValidation = getMaxAmountForValidation()
         val validateError = AmountValidator.validate(value, minAmount, maxAmountForValidation)

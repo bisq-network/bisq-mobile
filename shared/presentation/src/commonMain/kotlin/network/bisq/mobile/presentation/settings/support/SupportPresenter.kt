@@ -29,10 +29,6 @@ class SupportPresenter(
         _reportUrl.value = BisqLinks.BISQ_MOBILE_GH_ISSUES + "/new?body=" + body.urlEncode()
     }
 
-    fun onOpenWebUrl(url: String) {
-        navigateToUrl(url)
-    }
-
     fun onRestartApp() {
         restartApp()
     }

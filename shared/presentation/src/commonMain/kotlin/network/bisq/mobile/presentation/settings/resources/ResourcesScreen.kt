@@ -104,22 +104,18 @@ private fun WebResources(
     ResourceWeblink(
         "support.resources.resources.webpage".i18n(),
         link = BisqLinks.WEBPAGE,
-        onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.WEBPAGE)) },
     )
     ResourceWeblink(
         "support.resources.resources.dao".i18n(),
         link = BisqLinks.DAO,
-        onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.DAO)) },
     )
     ResourceWeblink(
         "support.resources.resources.sourceCode".i18n(),
         link = BisqLinks.BISQ_MOBILE_GH,
-        onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.BISQ_MOBILE_GH)) },
     )
     ResourceWeblink(
         "support.resources.resources.community".i18n(),
         link = BisqLinks.MATRIX,
-        onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.MATRIX)) },
     )
 }
 
@@ -174,7 +170,6 @@ private fun Legal(
     ResourceWeblink(
         "support.resources.legal.license".i18n(),
         link = BisqLinks.LICENSE,
-        onClick = { onAction(ResourcesUiAction.OnNavigateToUrl(BisqLinks.LICENSE)) },
     )
 }
 
@@ -182,12 +177,10 @@ private fun Legal(
 private fun ResourceWeblink(
     text: String,
     link: String,
-    onClick: (() -> Unit)? = null,
 ) {
     LinkButton(
         text,
         link = link,
-        onClick = onClick,
         leftIcon = { WebLinkIcon(modifier = Modifier.size(16.dp).alpha(0.5f)) },
         color = BisqTheme.colors.mid_grey20,
         padding =

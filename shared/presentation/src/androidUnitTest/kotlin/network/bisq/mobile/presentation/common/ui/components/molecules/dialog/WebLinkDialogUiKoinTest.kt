@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -94,7 +95,7 @@ class WebLinkDialogUiKoinTest {
 
         // Then
         composeTestRule.waitForIdle()
-        verify(exactly = 1) { presenter.navigateToUrl(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onConfirm() }
         composeTestRule.assertNoNodeWithText("Should not appear")
     }
@@ -127,7 +128,7 @@ class WebLinkDialogUiKoinTest {
 
         // Then
         composeTestRule.waitForIdle()
-        verify(exactly = 1) { presenter.navigateToUrl(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onError() }
         verify(exactly = 0) { onConfirm() }
         verify(exactly = 1) {
@@ -418,7 +419,7 @@ class WebLinkDialogUiKoinTest {
         // Then
         coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
         coVerify(exactly = 0) { facade.setWebLinkDontShowAgain() }
-        verify(exactly = 1) { presenter.navigateToUrl(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onConfirm() }
     }
 
@@ -452,7 +453,7 @@ class WebLinkDialogUiKoinTest {
         // Then
         coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
         coVerify(exactly = 1) { facade.setWebLinkDontShowAgain() }
-        verify(exactly = 1) { presenter.navigateToUrl(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onConfirm() }
     }
 
@@ -495,7 +496,7 @@ class WebLinkDialogUiKoinTest {
                 SnackbarDuration.Short,
             )
         }
-        verify(exactly = 1) { presenter.navigateToUrl(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onConfirm() }
     }
 
@@ -540,7 +541,7 @@ class WebLinkDialogUiKoinTest {
                 SnackbarDuration.Short,
             )
         }
-        verify(exactly = 1) { presenter.navigateToUrl(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onConfirm() }
     }
 
@@ -577,7 +578,7 @@ class WebLinkDialogUiKoinTest {
 
         // Then
         coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
-        verify(exactly = 1) { presenter.navigateToUrl(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onError() }
         verify(exactly = 0) { onConfirm() }
         verify(exactly = 1) {
@@ -638,7 +639,7 @@ class WebLinkDialogUiKoinTest {
         // Then — persisted state matches production semantics
         assertEquals(false, fake.showWebLinkConfirmation.value)
         assertEquals(true, fake.permitOpeningBrowser.value)
-        verify(exactly = 1) { presenter.navigateToUrl(link1) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link1) }
         verify(exactly = 1) { onConfirm() }
 
         // When — second link: suppressed confirmation, auto-open
@@ -646,7 +647,7 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        verify(exactly = 1) { presenter.navigateToUrl(link2) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link2) }
         verify(exactly = 2) { onConfirm() }
         composeTestRule.assertNoNodeWithText(headline)
     }
@@ -732,7 +733,7 @@ class WebLinkDialogUiKoinTest {
         runCatching { stopKoin() }
         val fake = WebLinkDialogSettingsServiceFake()
         val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        every { mainPresenter.navigateToUrl(any()) } returns false
+        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns false
         startKoin {
             modules(
                 module {
@@ -760,7 +761,7 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
         composeTestRule.waitForIdle()
 
-        verify(exactly = 0) { mainPresenter.navigateToUrl(any()) }
+        coVerify(exactly = 0) { mainPresenter.navigateToUrlWithLauncher(any()) }
     }
 }
 

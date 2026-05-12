@@ -44,7 +44,6 @@ fun WalletGuideDownload() {
         LinkButton(
             "bisqEasy.walletGuide.download.link".i18n(),
             link = presenter.blueWalletLink,
-            onClick = { presenter.navigateToBlueWallet() },
         )
 
         BisqGap.V2()

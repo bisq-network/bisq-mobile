@@ -63,13 +63,11 @@ fun WalletGuideReceiving() {
         LinkButton(
             "bisqEasy.walletGuide.receive.link1".i18n(),
             link = BisqLinks.BLUE_WALLET_TUTORIAL_1_URL,
-            onClick = { presenter.navigateToBlueWalletTutorial1() },
         )
 
         LinkButton(
             "bisqEasy.walletGuide.receive.link2".i18n(),
             link = BisqLinks.BLUE_WALLET_TUTORIAL_2_URL,
-            onClick = { presenter.navigateToBlueWalletTutorial2() },
         )
 
         BisqGap.V2()

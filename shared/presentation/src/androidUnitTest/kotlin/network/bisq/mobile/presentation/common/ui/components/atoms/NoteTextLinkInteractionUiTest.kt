@@ -6,10 +6,11 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
-import io.mockk.verify
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.di.presentationTestModule
@@ -56,7 +57,7 @@ class NoteTextLinkInteractionUiTest {
     fun `when uri link clicked without confirmation then opens uri`() {
         val settings = WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true)
         val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        every { mainPresenter.navigateToUrl(any()) } returns true
+        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns true
         startKoin {
             modules(
                 webLinkTestModules(settings, mainPresenter),
@@ -91,7 +92,7 @@ class NoteTextLinkInteractionUiTest {
     fun `when uri link clicked with confirmation then presenter navigates to url`() {
         val settings = WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true)
         val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        every { mainPresenter.navigateToUrl(any()) } returns true
+        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns true
 
         val presenterSpy =
             spyk(WebLinkConfirmationDialogPresenter(settings, mainPresenter))
@@ -124,15 +125,15 @@ class NoteTextLinkInteractionUiTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
         composeTestRule.waitForIdle()
 
-        verify(exactly = 1) {
-            presenterSpy.navigateToUrl("https://example.com/note-confirm")
+        coVerify(exactly = 1) {
+            presenterSpy.navigateToUrlAwait("https://example.com/note-confirm")
         }
     }
 
     private class CapturingExternalUrlOpener : ExternalUrlOpener {
         val openedUrls = mutableListOf<String>()
 
-        override fun openUrl(url: String): Boolean {
+        override suspend fun openUrl(url: String): Boolean {
             openedUrls += url
             return true
         }

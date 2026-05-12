@@ -41,7 +41,7 @@ internal object WebLinkDialogTestFixtures {
 internal class WebLinkDialogCapturingExternalUrlOpener : ExternalUrlOpener {
     val openedUrls = mutableListOf<String>()
 
-    override fun openUrl(url: String): Boolean {
+    override suspend fun openUrl(url: String): Boolean {
         openedUrls.add(url)
         return true
     }
@@ -73,12 +73,12 @@ internal fun KoinTestHost(
     }
 }
 
-/** Stubs [MainPresenter.navigateToUrl] like production when opening fails ([openUrlResult] false). */
+/** Stubs [MainPresenter.navigateToUrlWithLauncher] when opening fails ([openUrlResult] false). */
 internal fun mockNavigateToUrlBehavior(
     presenter: MainPresenter,
     openUrlResult: Boolean,
 ) {
-    every { presenter.navigateToUrl(any()) } answers {
+    coEvery { presenter.navigateToUrlWithLauncher(any()) } answers {
         if (!openUrlResult) {
             presenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
         }

@@ -12,11 +12,12 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -98,6 +99,7 @@ class AlertNotificationDialogUiTest {
     fun `update dialog renders version details and supports update plus dismiss`() =
         runTest(testDispatcher) {
             val urlLauncher = mockk<UrlLauncher>(relaxed = true)
+            coEvery { urlLauncher.openUrl(any()) } returns true
             val alertsFlow =
                 MutableStateFlow(
                     listOf(
@@ -135,7 +137,7 @@ class AlertNotificationDialogUiTest {
 
             composeTestRule.onNodeWithText("mobile.alert.update.button".i18n()).performClick()
             advanceUntilIdle()
-            verify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_RELEASES) }
+            coVerify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_RELEASES) }
 
             composeTestRule
                 .onNode(

@@ -63,7 +63,6 @@ fun TradeGuideTradeRules() {
         LinkButton(
             "action.learnMore".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
-            onClick = { presenter.navigateSecurityLearnMore() },
         )
 
         BisqGap.V1()

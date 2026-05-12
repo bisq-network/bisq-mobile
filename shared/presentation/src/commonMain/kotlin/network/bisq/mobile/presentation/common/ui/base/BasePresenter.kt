@@ -316,18 +316,36 @@ abstract class BasePresenter(
         }
     }
 
+    private fun mainPresenterForUrlNavigation(): MainPresenter? = rootPresenter ?: (this as? MainPresenter)
+
     /**
-     * Delegates to [MainPresenter.navigateToUrl], which handles launcher failures and exceptions
-     * (snackbar + [Boolean] result). This wrapper only enforces the interactive/double-tap guard
-     * and always restores interactivity in a `finally` block.
+     * Schedules opening [url] in the system browser. Delegates to [MainPresenter.navigateToUrlWithLauncher],
+     * which handles launcher failures and exceptions (snackbar + [Boolean] result).
+     * For the [Boolean] result inside a coroutine, use [navigateToUrlAwait].
      */
-    open fun navigateToUrl(url: String): Boolean {
+    open fun navigateToUrl(url: String) {
+        if (!_isInteractive.value) return
+        disableInteractive()
+        presenterScope.launch {
+            try {
+                mainPresenterForUrlNavigation()?.navigateToUrlWithLauncher(url)
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
+    /**
+     * Same as [navigateToUrl] but suspends until the URL handoff completes and returns whether it
+     * succeeded. Use from coroutines when the [Boolean] matters (e.g. web-link confirmation flow).
+     */
+    open suspend fun navigateToUrlAwait(url: String): Boolean {
         if (!_isInteractive.value) return false
         disableInteractive()
         return try {
-            rootPresenter?.navigateToUrl(url) ?: false
+            mainPresenterForUrlNavigation()?.navigateToUrlWithLauncher(url) ?: false
         } finally {
-            enableInteractive() // re-enables after 250ms delay — prevents rapid double-taps
+            enableInteractive()
         }
     }
 

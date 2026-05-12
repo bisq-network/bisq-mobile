@@ -94,7 +94,7 @@ class PaymentMethodBackgroundInformationDialogUiTest {
     private class CapturingExternalUrlOpener : ExternalUrlOpener {
         val openedUrls = mutableListOf<String>()
 
-        override fun openUrl(url: String): Boolean {
+        override suspend fun openUrl(url: String): Boolean {
             openedUrls += url
             return true
         }

@@ -5,9 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
@@ -32,6 +34,7 @@ fun LinkButton(
 ) {
     var showConfirmDialog by remember { mutableStateOf(false) }
     val externalUrlOpener = LocalExternalUrlOpener.current
+    val scope = rememberCoroutineScope()
 
     BisqButton(
         text = text,
@@ -47,8 +50,10 @@ fun LinkButton(
                     onClick?.invoke()
                     return@BisqButton
                 }
-                if (externalUrlOpener.openUrl(link)) {
-                    onClick?.invoke()
+                scope.launch {
+                    if (externalUrlOpener.openUrl(link)) {
+                        onClick?.invoke()
+                    }
                 }
             }
         },

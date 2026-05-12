@@ -69,22 +69,18 @@ fun ClientSupportScreen() {
             SupportWeblink(
                 text = "mobile.support.matrix".i18n(),
                 link = BisqLinks.MATRIX,
-                onClick = { supportPresenter.onOpenWebUrl(BisqLinks.MATRIX) },
             )
             SupportWeblink(
                 text = "mobile.support.forum".i18n(),
                 link = BisqLinks.FORUM,
-                onClick = { supportPresenter.onOpenWebUrl(BisqLinks.FORUM) },
             )
             SupportWeblink(
                 text = "mobile.support.telegram".i18n(),
                 link = BisqLinks.TELEGRAM,
-                onClick = { supportPresenter.onOpenWebUrl(BisqLinks.TELEGRAM) },
             )
             SupportWeblink(
                 text = "mobile.support.reddit".i18n(),
                 link = BisqLinks.REDDIT,
-                onClick = { supportPresenter.onOpenWebUrl(BisqLinks.REDDIT) },
             )
         }
 
@@ -97,7 +93,6 @@ fun ClientSupportScreen() {
         LinkButton(
             text = "mobile.support.wiki".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
-            onClick = { supportPresenter.onOpenWebUrl(BisqLinks.BISQ_EASY_WIKI_URL) },
             color = BisqTheme.colors.primary,
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )
@@ -114,7 +109,6 @@ fun ClientSupportScreen() {
         LinkButton(
             text = "mobile.support.troubleShooting.github".i18n(),
             link = reportUrl,
-            onClick = { supportPresenter.onOpenWebUrl(reportUrl) },
             color = BisqTheme.colors.primary,
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )

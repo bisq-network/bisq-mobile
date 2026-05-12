@@ -24,7 +24,6 @@ open class ResourcesPresenter(
     fun onAction(action: ResourcesUiAction) {
         when (action) {
             is ResourcesUiAction.OnNavigateToScreen -> navigateTo(action.route)
-            is ResourcesUiAction.OnNavigateToUrl -> navigateToUrl(action.link)
         }
     }
 }

@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.common.ui.base
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -8,6 +10,7 @@ import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -165,7 +168,7 @@ class BasePresenterTest {
     @Test
     fun `navigateToReportError shows error snackbar when URL launch fails`() {
         val urlLauncher = mockk<UrlLauncher>()
-        every { urlLauncher.openUrl(any()) } returns false
+        coEvery { urlLauncher.openUrl(any()) } returns false
         mainPresenter =
             MainPresenterTestFactory.create(
                 urlLauncher = urlLauncher,
@@ -174,8 +177,9 @@ class BasePresenterTest {
         val presenter = TestPresenter(mainPresenter)
 
         presenter.navigateToReportError()
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES) }
+        coVerify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES) }
         verify(exactly = 1) {
             globalUiManager.showSnackbar(
                 "mobile.error.cannotOpenUrl".i18n(),
@@ -189,7 +193,7 @@ class BasePresenterTest {
     @Test
     fun `navigateToReportError does not show error snackbar when URL launch succeeds`() {
         val urlLauncher = mockk<UrlLauncher>()
-        every { urlLauncher.openUrl(any()) } returns true
+        coEvery { urlLauncher.openUrl(any()) } returns true
         mainPresenter =
             MainPresenterTestFactory.create(
                 urlLauncher = urlLauncher,
@@ -198,15 +202,16 @@ class BasePresenterTest {
         val presenter = TestPresenter(mainPresenter)
 
         presenter.navigateToReportError()
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES) }
+        coVerify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES) }
         verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
     }
 
     @Test
     fun `navigateToUrl returns false and restores interactivity when URL launcher throws`() {
         val urlLauncher = mockk<UrlLauncher>()
-        every { urlLauncher.openUrl(any()) } throws IllegalStateException("unexpected")
+        coEvery { urlLauncher.openUrl(any()) } throws IllegalStateException("unexpected")
         mainPresenter =
             MainPresenterTestFactory.create(
                 urlLauncher = urlLauncher,
@@ -214,13 +219,13 @@ class BasePresenterTest {
             )
         val presenter = TestPresenter(mainPresenter)
 
-        val result = presenter.navigateToUrl("https://bisq.network")
+        val result = runBlocking { presenter.navigateToUrlAwait("https://bisq.network") }
 
         assertFalse(result)
         assertFalse(presenter.isInteractive.value)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(presenter.isInteractive.value)
-        verify(exactly = 1) { urlLauncher.openUrl("https://bisq.network") }
+        coVerify(exactly = 1) { urlLauncher.openUrl("https://bisq.network") }
         verify(exactly = 1) {
             globalUiManager.showSnackbar(
                 "mobile.error.cannotOpenUrl".i18n(),

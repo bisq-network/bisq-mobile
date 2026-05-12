@@ -11,9 +11,10 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
@@ -72,7 +73,7 @@ class ReputationWebLinkDialogUiTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_no").performClick()
         composeTestRule.waitForIdle()
         assertNoDialog()
-        verify(exactly = 0) { mainPresenter.navigateToUrl(any()) }
+        coVerify(exactly = 0) { mainPresenter.navigateToUrlWithLauncher(any()) }
     }
 
     @Test
@@ -87,7 +88,7 @@ class ReputationWebLinkDialogUiTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
         composeTestRule.waitForIdle()
         assertNoDialog()
-        verify(exactly = 1) { mainPresenter.navigateToUrl("https://example.com/confirm") }
+        coVerify(exactly = 1) { mainPresenter.navigateToUrlWithLauncher("https://example.com/confirm") }
     }
 
     @Test
@@ -117,7 +118,7 @@ class ReputationWebLinkDialogUiTest {
         assertNoDialog()
         assertTrue(errorFlag)
         assertFalse(clearedFlag)
-        verify(exactly = 1) { mainPresenter.navigateToUrl("https://example.com/error") }
+        coVerify(exactly = 1) { mainPresenter.navigateToUrlWithLauncher("https://example.com/error") }
     }
 
     private val dialogTitle get() = "hyperlinks.openInBrowser.attention.headline".i18n()
@@ -146,7 +147,7 @@ class ReputationWebLinkDialogUiTest {
     private fun initKoin(openUrlResult: Boolean) {
         runCatching { stopKoin() }
         mainPresenter = mockk(relaxed = true)
-        every { mainPresenter.navigateToUrl(any()) } returns openUrlResult
+        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns openUrlResult
         startKoin {
             modules(
                 module {

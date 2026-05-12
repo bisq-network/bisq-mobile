@@ -24,8 +24,6 @@ import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 @Composable
 fun ReputationBasedSellerLimitsPopup(
     onDismiss: () -> Unit,
-    onBuildRepLinkClick: () -> Unit,
-    onRepLinkClick: () -> Unit,
     reputationScore: String,
     maxSellAmount: String,
 ) {
@@ -48,7 +46,6 @@ fun ReputationBasedSellerLimitsPopup(
             type = BisqButtonType.Outline,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             fullWidth = true,
-            onClick = onBuildRepLinkClick,
         )
 
         BisqGap.V1()
@@ -56,8 +53,8 @@ fun ReputationBasedSellerLimitsPopup(
         NoteText(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
             linkText = BisqLinks.REPUTATION_WIKI_URL,
+            uri = BisqLinks.REPUTATION_WIKI_URL,
             openConfirmation = true,
-            onLinkClick = onRepLinkClick,
         )
 
         BisqGap.V3()
@@ -73,8 +70,6 @@ private fun ReputationBasedSellerLimitsPopupPreview() {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             ReputationBasedSellerLimitsPopup(
                 onDismiss = {},
-                onBuildRepLinkClick = {},
-                onRepLinkClick = {},
                 reputationScore = "100",
                 maxSellAmount = "1000",
             )

@@ -86,7 +86,7 @@ class OfferbookPresenterTradeRestrictionTest {
 
     private fun buildPresenter(activeAlert: AuthorizedAlertData? = null): OfferbookPresenter {
         val urlLauncher = mockk<UrlLauncher>()
-        every { urlLauncher.openUrl(any()) } returns true
+        coEvery { urlLauncher.openUrl(any()) } returns true
         val mainPresenter =
             MainPresenterTestFactory.create(
                 applicationLifecycleService = TestApplicationLifecycleService(),

@@ -2,6 +2,11 @@ package network.bisq.mobile.presentation.common.ui.theme
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -36,6 +41,10 @@ class BisqThemePreviewExternalUrlOpenerUiTest {
 
 @Composable
 private fun PreviewConsumer() {
-    val opened = LocalExternalUrlOpener.current.openUrl("https://example.com")
-    Text(text = "opened:$opened")
+    val opener = LocalExternalUrlOpener.current
+    var opened by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(opener) {
+        opened = opener.openUrl("https://example.com")
+    }
+    Text(text = "opened:${opened ?: "pending"}")
 }

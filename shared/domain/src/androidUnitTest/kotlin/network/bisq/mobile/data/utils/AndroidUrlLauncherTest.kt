@@ -3,6 +3,7 @@ package network.bisq.mobile.data.utils
 import android.content.ActivityNotFoundException
 import android.content.ContextWrapper
 import android.content.Intent
+import kotlinx.coroutines.runBlocking
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -18,7 +19,7 @@ class AndroidUrlLauncherTest {
         val context = TestContext()
         val launcher = AndroidUrlLauncher(context)
 
-        val result = launcher.openUrl("https://bisq.network")
+        val result = runBlocking { launcher.openUrl("https://bisq.network") }
 
         assertTrue(result)
         assertEquals(1, context.startActivityCalls)
@@ -29,7 +30,7 @@ class AndroidUrlLauncherTest {
         val context = TestContext(ActivityNotFoundException("No handler"))
         val launcher = AndroidUrlLauncher(context)
 
-        val result = launcher.openUrl("https://bisq.network")
+        val result = runBlocking { launcher.openUrl("https://bisq.network") }
 
         assertFalse(result)
         assertEquals(1, context.startActivityCalls)
@@ -40,7 +41,7 @@ class AndroidUrlLauncherTest {
         val context = TestContext(IllegalStateException("Broken context"))
         val launcher = AndroidUrlLauncher(context)
 
-        val result = launcher.openUrl("https://bisq.network")
+        val result = runBlocking { launcher.openUrl("https://bisq.network") }
 
         assertFalse(result)
         assertEquals(1, context.startActivityCalls)
@@ -51,7 +52,7 @@ class AndroidUrlLauncherTest {
         val context = TestContext()
         val launcher = AndroidUrlLauncher(context)
 
-        launcher.openUrl("https://bisq.network")
+        runBlocking { launcher.openUrl("https://bisq.network") }
 
         val intent = context.lastIntent ?: error("Expected intent")
         assertEquals(Intent.ACTION_VIEW, intent.action)

@@ -293,7 +293,7 @@ class TakeOfferAmountPresenterTest {
     }
 
     private class FakeUrlLauncher : UrlLauncher {
-        override fun openUrl(url: String): Boolean = true
+        override suspend fun openUrl(url: String): Boolean = true
     }
 
     private fun makeMainPresenter(): MainPresenter {

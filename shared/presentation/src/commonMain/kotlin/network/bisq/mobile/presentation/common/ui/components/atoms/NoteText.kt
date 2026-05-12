@@ -58,7 +58,7 @@ fun NoteText(
                             if (openConfirmation) {
                                 showConfirmDialog = true
                             } else {
-                                externalUrlOpener.openUrl(uri)
+                                scope.launch { externalUrlOpener.openUrl(uri) }
                             }
                         },
                     ),

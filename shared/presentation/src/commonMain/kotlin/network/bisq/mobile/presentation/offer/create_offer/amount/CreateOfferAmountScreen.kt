@@ -97,8 +97,6 @@ fun CreateOfferAmountScreen() {
         onNext = presenter::onNext,
         onClose = presenter::onClose,
         setShowLimitPopup = presenter::setShowLimitPopup,
-        onReputationLinkClick = presenter::navigateToReputation,
-        onBuildReputationLinkClick = presenter::navigateToBuildReputation,
     )
 }
 
@@ -143,8 +141,6 @@ fun CreateOfferAmountContent(
     onNext: () -> Unit,
     onClose: () -> Unit,
     setShowLimitPopup: (Boolean) -> Unit,
-    onReputationLinkClick: () -> Unit,
-    onBuildReputationLinkClick: () -> Unit,
 ) {
     val amountTypes = remember { AmountType.entries.toList() }
 
@@ -242,7 +238,6 @@ fun CreateOfferAmountContent(
         if (isBuy) {
             ReputationBasedBuyerLimitsPopup(
                 onDismiss = { setShowLimitPopup(false) },
-                onRepLinkClick = onReputationLinkClick,
                 amountLimitInfoOverlayInfo = amountLimitInfoOverlayInfo,
             )
         } else {
@@ -250,8 +245,6 @@ fun CreateOfferAmountContent(
                 onDismiss = { setShowLimitPopup(false) },
                 reputationScore = reputation.toString(),
                 maxSellAmount = reputationBasedMaxSellAmount,
-                onRepLinkClick = onReputationLinkClick,
-                onBuildRepLinkClick = onBuildReputationLinkClick,
             )
         }
     }
@@ -301,8 +294,6 @@ private fun CreateOfferAmountScreen_FixedAmount_Buyer_Preview() {
             onNext = {},
             onClose = {},
             setShowLimitPopup = {},
-            onReputationLinkClick = {},
-            onBuildReputationLinkClick = {},
         )
     }
 }
@@ -351,8 +342,6 @@ private fun CreateOfferAmountScreen_RangeAmount_Seller_Preview() {
             onNext = {},
             onClose = {},
             setShowLimitPopup = {},
-            onReputationLinkClick = {},
-            onBuildReputationLinkClick = {},
         )
     }
 }
@@ -401,8 +390,6 @@ private fun CreateOfferAmountScreen_WithWarningIcon_Preview() {
             onNext = {},
             onClose = {},
             setShowLimitPopup = {},
-            onReputationLinkClick = {},
-            onBuildReputationLinkClick = {},
         )
     }
 }
@@ -451,8 +438,6 @@ private fun CreateOfferAmountScreen_WithLimitPopup_Buyer_Preview() {
             onNext = {},
             onClose = {},
             setShowLimitPopup = {},
-            onReputationLinkClick = {},
-            onBuildReputationLinkClick = {},
         )
     }
 }
@@ -501,8 +486,6 @@ private fun CreateOfferAmountScreen_WithLimitPopup_Seller_Preview() {
             onNext = {},
             onClose = {},
             setShowLimitPopup = {},
-            onReputationLinkClick = {},
-            onBuildReputationLinkClick = {},
         )
     }
 }
@@ -551,8 +534,6 @@ private fun CreateOfferAmountScreen_InvalidAmount_Preview() {
             onNext = {},
             onClose = {},
             setShowLimitPopup = {},
-            onReputationLinkClick = {},
-            onBuildReputationLinkClick = {},
         )
     }
 }

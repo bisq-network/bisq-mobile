@@ -192,10 +192,11 @@ open class MainPresenter(
     }
 
     /**
-     * Opens [url] in the system browser. On failure or unexpected launcher errors,
-     * shows [mobile.error.cannotOpenUrl] once — callers should not duplicate that snackbar.
+     * Opens [url] in the system browser (suspend — awaits platform result). On failure or
+     * unexpected launcher errors, shows [mobile.error.cannotOpenUrl] once — callers should not
+     * duplicate that snackbar.
      */
-    final override fun navigateToUrl(url: String): Boolean =
+    suspend fun navigateToUrlWithLauncher(url: String): Boolean =
         try {
             val opened = urlLauncher.openUrl(url)
             if (!opened) {

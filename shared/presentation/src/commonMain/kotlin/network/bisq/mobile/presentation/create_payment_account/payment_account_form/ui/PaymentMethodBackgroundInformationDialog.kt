@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -74,6 +76,7 @@ private fun LinkifiedBodyText(
     bodyText: String,
 ) {
     val externalUrlOpener = LocalExternalUrlOpener.current
+    val scope = rememberCoroutineScope()
     val text =
         buildAnnotatedString {
             var lastIndex = 0
@@ -104,7 +107,7 @@ private fun LinkifiedBodyText(
                                         ),
                                 ),
                             linkInteractionListener = {
-                                externalUrlOpener.openUrl(url)
+                                scope.launch { externalUrlOpener.openUrl(url) }
                             },
                         ),
                     ) {

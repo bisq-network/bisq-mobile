@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.tabs.tab
 
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -74,7 +75,7 @@ class TabContainerPresenterTradeRestrictionTest {
     private fun buildPresenter(activeAlert: AuthorizedAlertData? = null): TabContainerPresenter {
         // Relaxed UrlLauncher defaults openUrl to false → cannot-open snackbar → GlobalUiManager Koin; these tests are about dialog state, not URL failure.
         val urlLauncher = mockk<UrlLauncher>()
-        every { urlLauncher.openUrl(any()) } returns true
+        coEvery { urlLauncher.openUrl(any()) } returns true
         val mainPresenter =
             MainPresenterTestFactory.create(
                 applicationLifecycleService = TestApplicationLifecycleService(),
