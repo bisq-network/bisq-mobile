@@ -43,6 +43,7 @@ import network.bisq.mobile.presentation.startup.create_profile.CreateProfilePres
 import network.bisq.mobile.presentation.startup.user_agreement.IAgreementPresenter
 import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementPresenter
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
+import network.bisq.mobile.presentation.tabs.dashboard.welcome_carousel.WelcomeCarouselPresenter
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketPresenter
 import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
 import network.bisq.mobile.presentation.tabs.open_trades.OpenTradeListPresenter
@@ -117,6 +118,14 @@ val presentationModule =
                 get(),
                 get(),
                 get(), // pushNotificationServiceFacade
+            )
+        }
+
+        factory<WelcomeCarouselPresenter> {
+            WelcomeCarouselPresenter(
+                mainPresenter = get(),
+                settingsRepository = get(),
+                pushNotificationServiceFacade = get(),
             )
         }
 
