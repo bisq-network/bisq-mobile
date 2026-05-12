@@ -10,8 +10,6 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.usePinned
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -351,18 +349,9 @@ class IOSUrlLauncher : UrlLauncher {
         }
 
         return try {
-            val deferred = CompletableDeferred<Boolean>()
-            // Secondary parameters select the openURL:options:completionHandler: overload; completion runs on a private queue.
-            UIApplication.sharedApplication.openURL(
-                nsUrl,
-                options = mapOf<Any?, Any>(),
-                completionHandler = { success ->
-                    deferred.complete(success)
-                },
-            )
-            runBlocking {
-                deferred.await()
-            }
+            // fake secondary parameters are important so that iOS compiler knows which override to use
+            UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?, String>(), completionHandler = null)
+            true
         } catch (e: Exception) {
             log.e(e) { "Failed to open URL: $safeUrl" }
             false
