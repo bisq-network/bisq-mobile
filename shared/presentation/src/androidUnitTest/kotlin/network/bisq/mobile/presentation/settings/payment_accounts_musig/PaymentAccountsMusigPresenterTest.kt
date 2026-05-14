@@ -18,6 +18,8 @@ import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -178,14 +180,16 @@ class PaymentAccountsMusigPresenterTest {
             accountsFlow.value =
                 listOf(
                     sampleZelleAccount(accountName = "Zelle Personal"),
+                    sampleWiseAccount(),
                     sampleMoneroAccount(),
                 )
             advanceUntilIdle()
 
             // Then
             val state = presenter.uiState.value
-            assertEquals(1, state.fiatAccounts.size)
-            assertEquals("Zelle Personal", state.fiatAccounts.first().accountName)
+            assertEquals(2, state.fiatAccounts.size)
+            assertTrue(state.fiatAccounts.any { it.accountName == "Zelle Personal" })
+            assertTrue(state.fiatAccounts.any { it.accountName == "Wise Main" })
             assertEquals(1, state.cryptoAccounts.size)
             assertEquals("Monero Main", state.cryptoAccounts.first().accountName)
         }
@@ -273,6 +277,22 @@ class PaymentAccountsMusigPresenterTest {
                     paymentMethodName = "Zelle",
                     currency = "USD",
                     country = "United States",
+                ),
+            creationDate = null,
+            tradeLimitInfo = null,
+            tradeDuration = null,
+        )
+
+    private fun sampleWiseAccount(accountName: String = "Wise Main"): WiseAccount =
+        WiseAccount(
+            accountName = accountName,
+            accountPayload =
+                WiseAccountPayload(
+                    selectedCurrencyCodes = listOf("USD", "EUR"),
+                    holderName = "Satoshi",
+                    email = "satoshi@example.com",
+                    chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
+                    paymentMethodName = "Wise",
                 ),
             creationDate = null,
             tradeLimitInfo = null,

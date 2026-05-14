@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.create_payment_account.select_payment_m
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.utils.getLogger
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.model.account.toVO
@@ -22,8 +23,13 @@ fun FiatPaymentMethod.toVO(): FiatPaymentMethodVO? =
         FiatPaymentMethodVO(
             paymentType = paymentType,
             name = name,
-            supportedCurrencyCodes = supportedCurrencyCodes,
-            countryNames = countryNames,
+            supportedCurrencyCodes = supportedCurrencies.joinToString(", ") { it.code },
+            countryNames =
+                if (matchesAllCountries) {
+                    "paymentAccounts.allCountries".i18n()
+                } else {
+                    supportedCountries.joinToString(", ") { it.name }
+                },
             chargebackRisk = chargebackRisk.toVO(),
             tradeLimitInfo = tradeLimitInfo,
             tradeDuration = tradeDuration,

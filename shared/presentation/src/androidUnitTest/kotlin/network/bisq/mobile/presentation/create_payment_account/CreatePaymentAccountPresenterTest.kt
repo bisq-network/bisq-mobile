@@ -10,12 +10,17 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
+import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.Country
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -34,8 +39,26 @@ class CreatePaymentAccountPresenterTest {
     private lateinit var mainPresenter: MainPresenter
     private lateinit var presenter: CreatePaymentAccountPresenter
 
-    val mockFiatPaymentMethod: FiatPaymentMethodVO = mockk(relaxed = true)
-    val mockUserDefinedFiatAccount: UserDefinedFiatAccount = mockk(relaxed = true)
+    val mockFiatPaymentMethod: FiatPaymentMethod =
+        FiatPaymentMethod(
+            paymentRail = FiatPaymentRail.ZELLE,
+            name = "Zelle",
+            supportedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar")),
+            supportedCountries = listOf(Country(code = "US", name = "United States")),
+            matchesAllCountries = false,
+            chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
+            tradeLimitInfo = "5000.00 USD",
+            tradeDuration = "1 day",
+        )
+    val mockCreateAccount =
+        CreateZelleAccount(
+            accountName = "Zelle Personal",
+            accountPayload =
+                CreateZelleAccountPayload(
+                    holderName = "Alice",
+                    emailOrMobileNr = "alice@example.com",
+                ),
+        )
 
     @BeforeTest
     fun setUp() {
@@ -69,7 +92,7 @@ class CreatePaymentAccountPresenterTest {
         )
 
     @Test
-    fun `when initial state then payment method and payment account are null`() =
+    fun `when initial state then payment method and create account are null`() =
         runTest(testDispatcher) {
             // Given
             presenter = createPresenter()
@@ -79,7 +102,7 @@ class CreatePaymentAccountPresenterTest {
 
             // Then
             assertNull(state.paymentMethod)
-            assertNull(state.paymentAccount)
+            assertNull(state.createPaymentAccount)
         }
 
     @Test
@@ -97,28 +120,28 @@ class CreatePaymentAccountPresenterTest {
             // Then
             val state = presenter.uiState.value
             assertEquals(paymentMethod, state.paymentMethod)
-            assertNull(state.paymentAccount)
+            assertNull(state.createPaymentAccount)
 
             val effect = effectDeferred.await()
             assertTrue(effect is CreatePaymentAccountEffect.NavigateToPaymentAccountForm)
         }
 
     @Test
-    fun `when navigate from payment account form then updates account and emits review navigation effect`() =
+    fun `when navigate from payment account form then updates create account and emits review navigation effect`() =
         runTest(testDispatcher) {
             // Given
             presenter = createPresenter()
-            val paymentAccount = mockUserDefinedFiatAccount
+            val createAccount = mockCreateAccount
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(CreatePaymentAccountUiAction.OnNavigateFromPaymentAccountForm(paymentAccount))
+            presenter.onAction(CreatePaymentAccountUiAction.OnNavigateFromPaymentAccountForm(createAccount))
             advanceUntilIdle()
 
             // Then
             val state = presenter.uiState.value
             assertNull(state.paymentMethod)
-            assertEquals(paymentAccount, state.paymentAccount)
+            assertEquals(createAccount, state.createPaymentAccount)
 
             val effect = effectDeferred.await()
             assertTrue(effect is CreatePaymentAccountEffect.NavigateToPaymentAccountReview)
@@ -130,7 +153,7 @@ class CreatePaymentAccountPresenterTest {
             // Given
             presenter = createPresenter()
             val paymentMethod = mockFiatPaymentMethod
-            val paymentAccount = mockUserDefinedFiatAccount
+            val createAccount = mockCreateAccount
 
             // When
             val firstEffectDeferred = async { presenter.effect.first() }
@@ -141,7 +164,7 @@ class CreatePaymentAccountPresenterTest {
             assertTrue(firstEffect is CreatePaymentAccountEffect.NavigateToPaymentAccountForm)
 
             val secondEffectDeferred = async { presenter.effect.first() }
-            presenter.onAction(CreatePaymentAccountUiAction.OnNavigateFromPaymentAccountForm(paymentAccount))
+            presenter.onAction(CreatePaymentAccountUiAction.OnNavigateFromPaymentAccountForm(createAccount))
             advanceUntilIdle()
 
             // Then
@@ -150,6 +173,6 @@ class CreatePaymentAccountPresenterTest {
 
             val state = presenter.uiState.value
             assertEquals(paymentMethod, state.paymentMethod)
-            assertEquals(paymentAccount, state.paymentAccount)
+            assertEquals(createAccount, state.createPaymentAccount)
         }
 }

@@ -12,6 +12,8 @@ import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.i18n.I18nSupport
@@ -91,6 +93,18 @@ class PaymentAccountReviewContentUiTest {
     }
 
     @Test
+    fun `when wise account provided then wise specific fields render`() {
+        setTestContent(
+            paymentAccount = sampleWiseAccount(),
+        )
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.wise.holderName".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.wise.email".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.wise.picker.title".i18n()).assertIsDisplayed()
+    }
+
+    @Test
     fun `when unsupported account type provided then branch specific fields are not rendered`() {
         setTestContent(
             paymentAccount = sampleUnsupportedAccount(),
@@ -127,6 +141,18 @@ class PaymentAccountReviewContentUiTest {
                     country = "United States",
                     currency = "USD",
                     paymentMethodName = "Zelle",
+                ),
+        )
+
+    private fun sampleWiseAccount(): WiseAccount =
+        WiseAccount(
+            accountName = "Wise Main",
+            accountPayload =
+                WiseAccountPayload(
+                    selectedCurrencyCodes = listOf("USD", "EUR"),
+                    holderName = "Satoshi Nakamoto",
+                    email = "satoshi@example.com",
+                    paymentMethodName = "Wise",
                 ),
         )
 

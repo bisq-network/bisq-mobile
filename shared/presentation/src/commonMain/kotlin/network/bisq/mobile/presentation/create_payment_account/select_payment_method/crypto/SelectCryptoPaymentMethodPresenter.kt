@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.toVO
@@ -26,6 +27,7 @@ class SelectCryptoPaymentMethodPresenter(
     private val _effect = MutableSharedFlow<SelectCryptoPaymentMethodEffect>()
     val effect = _effect.asSharedFlow()
     private var allCryptoPaymentMethods: List<CryptoPaymentMethodVO> = emptyList()
+    private var cryptoPaymentMethodByCode: Map<String, CryptoPaymentMethod> = emptyMap()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -38,6 +40,7 @@ class SelectCryptoPaymentMethodPresenter(
             paymentAccountsServiceFacade
                 .getCryptoPaymentMethods()
                 .onSuccess { cryptoPaymentMethods ->
+                    cryptoPaymentMethodByCode = cryptoPaymentMethods.associateBy { it.code }
                     allCryptoPaymentMethods = cryptoPaymentMethods.mapNotNull { it.toVO() }
                     val query = _uiState.value.searchQuery
                     val filteredCryptoPaymentMethods = filterCryptoPaymentMethods(query)
@@ -96,8 +99,10 @@ class SelectCryptoPaymentMethodPresenter(
 
     private fun onNextClick() {
         val selectedPaymentMethod = _uiState.value.selectedPaymentMethod ?: return
+        val selectedDomainPaymentMethod = cryptoPaymentMethodByCode[selectedPaymentMethod.code] ?: return
+
         presenterScope.launch {
-            _effect.emit(SelectCryptoPaymentMethodEffect.NavigateToNextScreen(selectedPaymentMethod))
+            _effect.emit(SelectCryptoPaymentMethodEffect.NavigateToNextScreen(selectedDomainPaymentMethod))
         }
     }
 

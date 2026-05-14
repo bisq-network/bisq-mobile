@@ -17,9 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
+import network.bisq.mobile.domain.model.account.PaymentMethod
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
+import network.bisq.mobile.presentation.common.model.account.getPaymentTypeVOFromPaymentMethod
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
@@ -36,38 +42,47 @@ import network.bisq.mobile.presentation.create_payment_account.payment_account_f
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.monero.MoneroPaymentAccountFormContent
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoPaymentAccountFormContent
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.wise.WiseFormPresenter
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.wise.WisePaymentAccountFormContent
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZellePaymentAccountFormContent
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.PaymentMethodVO
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.toVO
 import network.bisq.mobile.presentation.create_payment_account.ui.UnsupportedAccountState
 import network.bisq.mobile.presentation.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
 
 @ExcludeFromCoverage
 @Composable
 fun PaymentAccountFormScreen(
-    paymentMethod: PaymentMethodVO,
-    onNavigateToNextScreen: (PaymentAccount) -> Unit = {},
+    paymentMethod: PaymentMethod,
+    onNavigateToNextScreen: (CreatePaymentAccount) -> Unit = {},
 ) {
-    val methodPresenter = rememberMethodPresenter(paymentMethod)
+    val paymentType = getPaymentTypeVOFromPaymentMethod(paymentMethod)
+    val paymentMethodVO = paymentMethod.toVO()
+    val methodPresenter = rememberMethodPresenter(paymentType)
     val accountNameEntryState = methodPresenter?.uniqueAccountNameEntry?.collectAsState()
 
-    PaymentAccountFormContent(
-        paymentMethod = paymentMethod,
-        accountNameEntry = accountNameEntryState?.value ?: DataEntry(),
-        onAction = { action ->
-            methodPresenter?.onAction(action)
-        },
-        isNextEnabled = methodPresenter != null,
-        formContent = {
-            PaymentMethodFormContent(
-                paymentMethod = paymentMethod,
-                methodPresenter = methodPresenter,
-                onNavigateToNextScreen = onNavigateToNextScreen,
-            )
-        },
-    )
+    if (paymentMethodVO == null) {
+        UnsupportedAccountState(modifier = Modifier.fillMaxWidth())
+    } else {
+        PaymentAccountFormContent(
+            paymentMethod = paymentMethodVO,
+            accountNameEntry = accountNameEntryState?.value ?: DataEntry(),
+            onAction = { action ->
+                methodPresenter?.onAction(action)
+            },
+            isNextEnabled = methodPresenter != null,
+            formContent = {
+                PaymentMethodFormContent(
+                    paymentMethod = paymentMethod,
+                    methodPresenter = methodPresenter,
+                    onNavigateToNextScreen = onNavigateToNextScreen,
+                )
+            },
+        )
+    }
 }
 
 @Composable
@@ -155,69 +170,74 @@ fun PaymentAccountFormContent(
 
 @Composable
 private fun PaymentMethodFormContent(
-    paymentMethod: PaymentMethodVO,
+    paymentMethod: PaymentMethod,
     methodPresenter: AccountFormPresenter?,
-    onNavigateToNextScreen: (PaymentAccount) -> Unit,
+    onNavigateToNextScreen: (CreatePaymentAccount) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (paymentMethod.paymentType) {
-        PaymentTypeVO.ZELLE -> {
-            val presenter = methodPresenter as? ZelleFormPresenter
-            val fiatPaymentMethod = paymentMethod as? FiatPaymentMethodVO
-            if (presenter != null && fiatPaymentMethod != null) {
-                ZellePaymentAccountFormContent(
-                    presenter = presenter,
-                    paymentMethod = fiatPaymentMethod,
-                    onNavigateToNextScreen = onNavigateToNextScreen,
-                    modifier = modifier,
-                )
-            } else {
-                UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+    when (paymentMethod) {
+        is FiatPaymentMethod -> {
+            when (paymentMethod.paymentRail) {
+                FiatPaymentRail.ZELLE -> {
+                    val presenter = methodPresenter as? ZelleFormPresenter
+                    if (presenter != null) {
+                        ZellePaymentAccountFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
+                FiatPaymentRail.WISE -> {
+                    val presenter = methodPresenter as? WiseFormPresenter
+                    if (presenter != null) {
+                        WisePaymentAccountFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            paymentMethod = paymentMethod,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
+                else -> UnsupportedAccountState(modifier = modifier.fillMaxWidth())
             }
         }
 
-        PaymentTypeVO.XMR -> {
-            val presenter = methodPresenter as? MoneroFormPresenter
-            val cryptoPaymentMethod = paymentMethod as? CryptoPaymentMethodVO
-            if (presenter != null && cryptoPaymentMethod != null) {
-                MoneroPaymentAccountFormContent(
-                    presenter = presenter,
-                    onNavigateToNextScreen = onNavigateToNextScreen,
-                    paymentMethod = cryptoPaymentMethod,
-                    modifier = modifier,
-                )
+        is CryptoPaymentMethod -> {
+            if (paymentMethod.code.equals("XMR", ignoreCase = true)) {
+                val presenter = methodPresenter as? MoneroFormPresenter
+                if (presenter != null) {
+                    MoneroPaymentAccountFormContent(
+                        presenter = presenter,
+                        onNavigateToNextScreen = onNavigateToNextScreen,
+                        paymentMethod = paymentMethod,
+                        modifier = modifier,
+                    )
+                } else {
+                    UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                }
             } else {
-                UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                val presenter = methodPresenter as? OtherCryptoFormPresenter
+                if (presenter != null) {
+                    OtherCryptoPaymentAccountFormContent(
+                        presenter = presenter,
+                        onNavigateToNextScreen = onNavigateToNextScreen,
+                        paymentMethod = paymentMethod,
+                        modifier = modifier,
+                    )
+                } else {
+                    UnsupportedAccountState(modifier = modifier)
+                }
             }
         }
 
-        PaymentTypeVO.BSQ,
-        PaymentTypeVO.LTC,
-        PaymentTypeVO.ETH,
-        PaymentTypeVO.ETC,
-        PaymentTypeVO.LBTC,
-        PaymentTypeVO.LNBTC,
-        PaymentTypeVO.GRIN,
-        PaymentTypeVO.ZEC,
-        PaymentTypeVO.DOGE,
-        -> {
-            val presenter = methodPresenter as? OtherCryptoFormPresenter
-            val cryptoPaymentMethod = paymentMethod as? CryptoPaymentMethodVO
-            if (presenter != null && cryptoPaymentMethod != null) {
-                OtherCryptoPaymentAccountFormContent(
-                    presenter = presenter,
-                    onNavigateToNextScreen = onNavigateToNextScreen,
-                    paymentMethod = cryptoPaymentMethod,
-                    modifier = modifier,
-                )
-            } else {
-                UnsupportedAccountState(modifier = modifier)
-            }
-        }
-
-        else -> {
-            UnsupportedAccountState(modifier = modifier.fillMaxWidth())
-        }
+        else -> UnsupportedAccountState(modifier = modifier.fillMaxWidth())
     }
 }
 
@@ -229,22 +249,23 @@ private fun UnsupportedPaymentMethodFormStatePreview() {
     }
 }
 
+private fun previewPaymentMethodVO(): PaymentMethodVO =
+    FiatPaymentMethodVO(
+        paymentType = PaymentTypeVO.ZELLE,
+        name = "Zelle",
+        supportedCurrencyCodes = "",
+        countryNames = "",
+        chargebackRisk = null,
+        tradeDuration = EMPTY_STRING,
+        tradeLimitInfo = EMPTY_STRING,
+    )
+
 @Preview
 @Composable
 private fun PaymentAccountFormContentPreview_DefaultPreview() {
-    val paymentMethod =
-        FiatPaymentMethodVO(
-            paymentType = PaymentTypeVO.ZELLE,
-            name = "Zelle",
-            supportedCurrencyCodes = "",
-            countryNames = "",
-            chargebackRisk = null,
-            tradeDuration = EMPTY_STRING,
-            tradeLimitInfo = EMPTY_STRING,
-        )
     BisqTheme.Preview {
         PaymentAccountFormContent(
-            paymentMethod = paymentMethod,
+            paymentMethod = previewPaymentMethodVO(),
             accountNameEntry = DataEntry(value = "My account"),
             onAction = {},
             isNextEnabled = true,
@@ -260,19 +281,9 @@ private fun PaymentAccountFormContentPreview_DefaultPreview() {
 @Preview
 @Composable
 private fun PaymentAccountFormContentPreview_ErrorPreview() {
-    val paymentMethod =
-        FiatPaymentMethodVO(
-            paymentType = PaymentTypeVO.ZELLE,
-            name = "Zelle",
-            supportedCurrencyCodes = "",
-            countryNames = "",
-            chargebackRisk = null,
-            tradeDuration = EMPTY_STRING,
-            tradeLimitInfo = EMPTY_STRING,
-        )
     BisqTheme.Preview {
         PaymentAccountFormContent(
-            paymentMethod = paymentMethod,
+            paymentMethod = previewPaymentMethodVO(),
             accountNameEntry =
                 DataEntry(
                     value = "a",
@@ -290,10 +301,11 @@ private fun PaymentAccountFormContentPreview_ErrorPreview() {
 }
 
 @Composable
-private fun rememberMethodPresenter(paymentMethod: PaymentMethodVO): AccountFormPresenter? =
-    when (paymentMethod.paymentType) {
+private fun rememberMethodPresenter(paymentType: PaymentTypeVO?): AccountFormPresenter? =
+    when (paymentType) {
         PaymentTypeVO.ZELLE -> RememberPresenterLifecycleBackStackAware<ZelleFormPresenter>()
         PaymentTypeVO.XMR -> RememberPresenterLifecycleBackStackAware<MoneroFormPresenter>()
+        PaymentTypeVO.WISE -> RememberPresenterLifecycleBackStackAware<WiseFormPresenter>()
         PaymentTypeVO.BSQ,
         PaymentTypeVO.LTC,
         PaymentTypeVO.ETH,
@@ -304,5 +316,6 @@ private fun rememberMethodPresenter(paymentMethod: PaymentMethodVO): AccountForm
         PaymentTypeVO.ZEC,
         PaymentTypeVO.DOGE,
         -> RememberPresenterLifecycleBackStackAware<OtherCryptoFormPresenter>()
+
         else -> null
     }

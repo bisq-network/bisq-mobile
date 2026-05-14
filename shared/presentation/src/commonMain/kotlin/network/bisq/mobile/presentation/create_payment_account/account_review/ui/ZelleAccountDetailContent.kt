@@ -66,10 +66,10 @@ fun ZelleAccountDetailContent(
                 modifier = Modifier.padding(BisqUIConstants.ScreenPadding),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
-                account.accountPayload.country?.let { country ->
+                if (account.accountPayload.country.isNotBlank()) {
                     AccountDetailFieldRow(
                         label = "paymentAccounts.country".i18n(),
-                        value = country,
+                        value = account.accountPayload.country,
                     )
                 }
 

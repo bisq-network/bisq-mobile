@@ -9,9 +9,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
@@ -19,7 +19,6 @@ import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.CryptoAccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormUiState
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +37,7 @@ class MoneroFormContentUiTest {
 
     private fun setTestContent(
         uiState: MoneroFormUiState = sampleUiState(),
-        paymentMethod: CryptoPaymentMethodVO = samplePaymentMethod(supportAutoConf = true),
+        paymentMethod: CryptoPaymentMethod = samplePaymentMethod(supportAutoConf = true),
         onAction: (AccountFormUiAction) -> Unit = {},
     ) {
         composeTestRule.setContent {
@@ -180,9 +179,8 @@ class MoneroFormContentUiTest {
             .assertCountEquals(0)
     }
 
-    private fun samplePaymentMethod(supportAutoConf: Boolean): CryptoPaymentMethodVO =
-        CryptoPaymentMethodVO(
-            paymentType = PaymentTypeVO.XMR,
+    private fun samplePaymentMethod(supportAutoConf: Boolean): CryptoPaymentMethod =
+        CryptoPaymentMethod(
             code = "XMR",
             name = "Monero",
             supportAutoConf = supportAutoConf,

@@ -8,6 +8,6 @@ data class ZelleAccountPayloadDto(
     val emailOrMobileNr: String,
     override val chargebackRisk: FiatPaymentMethodChargebackRiskDto? = null,
     override val paymentMethodName: String,
-    override val currency: String,
-    override val country: String? = null,
+    val currency: String,
+    val country: String,
 ) : FiatPaymentAccountPayloadDto

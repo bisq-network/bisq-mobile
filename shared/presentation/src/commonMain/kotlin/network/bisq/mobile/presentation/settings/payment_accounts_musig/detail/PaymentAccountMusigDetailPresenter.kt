@@ -44,7 +44,7 @@ class PaymentAccountMusigDetailPresenter(
             showLoading()
             _uiState.update { state -> state.copy(showDeleteConfirmationDialog = false) }
             paymentAccountsServiceFacade
-                .deleteAccount(account)
+                .deleteAccount(account.accountName)
                 .onSuccess {
                     navigateBack()
                 }.onFailure {

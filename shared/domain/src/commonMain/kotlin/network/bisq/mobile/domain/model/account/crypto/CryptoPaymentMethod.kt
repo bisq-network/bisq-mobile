@@ -1,10 +1,11 @@
 package network.bisq.mobile.domain.model.account.crypto
 
+import network.bisq.mobile.domain.model.account.PaymentMethod
+
 data class CryptoPaymentMethod(
     val code: String,
-    val name: String,
-    val category: String,
+    override val name: String,
     val supportAutoConf: Boolean,
-    val tradeLimitInfo: String,
-    val tradeDuration: String,
-)
+    override val tradeLimitInfo: String,
+    override val tradeDuration: String,
+) : PaymentMethod

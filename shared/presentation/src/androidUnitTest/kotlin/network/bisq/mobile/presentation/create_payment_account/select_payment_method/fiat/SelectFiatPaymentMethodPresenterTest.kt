@@ -14,6 +14,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.fiat.Country
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -458,8 +460,9 @@ class SelectFiatPaymentMethodPresenterTest {
         FiatPaymentMethod(
             paymentRail = rail,
             name = name,
-            supportedCurrencyCodes = supportedCurrencyCodes,
-            countryNames = countryNames,
+            supportedCurrencies = listOf(FiatCurrency(code = supportedCurrencyCodes, name = supportedCurrencyCodes)),
+            supportedCountries = listOf(Country(code = countryNames, name = countryNames)),
+            matchesAllCountries = false,
             chargebackRisk = risk,
             tradeDuration = EMPTY_STRING,
             tradeLimitInfo = EMPTY_STRING,

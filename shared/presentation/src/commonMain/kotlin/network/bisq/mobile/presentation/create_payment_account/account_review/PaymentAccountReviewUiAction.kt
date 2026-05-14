@@ -1,9 +1,9 @@
 package network.bisq.mobile.presentation.create_payment_account.account_review
 
-import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 
 sealed interface PaymentAccountReviewUiAction {
     data class OnCreateAccountClick(
-        val account: PaymentAccount,
+        val account: CreatePaymentAccount,
     ) : PaymentAccountReviewUiAction
 }

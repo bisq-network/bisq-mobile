@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.accounts.AccountsState
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -57,8 +58,6 @@ class PaymentAccountsPresenterTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "user@example.com",
-                    currency = "USD",
-                    country = "United States",
                     paymentMethodName = "PayPal",
                 ),
         )
@@ -69,8 +68,6 @@ class PaymentAccountsPresenterTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "IBAN: DE89370400440532013000",
-                    currency = "EUR",
-                    country = "Germany",
                     paymentMethodName = "Bank Transfer",
                 ),
         )
@@ -464,9 +461,16 @@ class PaymentAccountsPresenterTest {
             every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } coAnswers {
+                val createAccount = firstArg<CreateUserDefinedFiatAccount>()
                 accountStateFlow.value =
                     AccountsState(
-                        accounts = listOf(firstArg()),
+                        accounts =
+                            listOf(
+                                UserDefinedFiatAccount(
+                                    accountName = createAccount.accountName,
+                                    accountPayload = UserDefinedFiatAccountPayload(accountData = createAccount.accountPayload.accountData),
+                                ),
+                            ),
                         selectedAccountIndex = 0,
                     )
                 Result.success(Unit)
@@ -490,7 +494,7 @@ class PaymentAccountsPresenterTest {
             val accountState = accountStateFlow.value
             assertEquals(1, accountState.accounts.size)
             assertEquals("New Account", accountState.accounts[0].accountName)
-            val payload = accountState.accounts[0].accountPayload as UserDefinedFiatAccountPayload
+            val payload = accountState.accounts[0].accountPayload
             assertEquals("account@example.com", payload.accountData)
             assertFalse(presenter.uiState.value.showAddAccountState) // Dialog should be closed
 

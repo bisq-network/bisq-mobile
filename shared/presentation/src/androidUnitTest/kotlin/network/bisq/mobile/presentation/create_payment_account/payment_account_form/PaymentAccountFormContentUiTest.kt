@@ -20,6 +20,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
+import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import org.junit.Before
 import org.junit.Rule
@@ -78,6 +79,30 @@ class PaymentAccountFormContentUiTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText("Zelle").assertIsDisplayed()
         composeTestRule.onNodeWithText("action.next".i18n()).assertIsDisplayed()
+    }
+
+    @Test
+    fun `when crypto payment method rendered then shows code and name`() {
+        setTestContent {
+            PaymentAccountFormContent(
+                paymentMethod =
+                    CryptoPaymentMethodVO(
+                        paymentType = PaymentTypeVO.ETH,
+                        code = "ETH",
+                        name = "Ethereum",
+                        supportAutoConf = true,
+                        tradeLimitInfo = "1 BTC",
+                        tradeDuration = "1 hour",
+                    ),
+                accountNameEntry = DataEntry(value = "My ETH account"),
+                onAction = {},
+                isNextEnabled = true,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("ETH").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Ethereum").assertIsDisplayed()
     }
 
     @Test

@@ -28,7 +28,9 @@ open class CreatePaymentAccountPresenter(
                 }
 
                 is CreatePaymentAccountUiAction.OnNavigateFromPaymentAccountForm -> {
-                    _uiState.update { it.copy(paymentAccount = action.paymentAccount) }
+                    _uiState.update { state ->
+                        state.copy(createPaymentAccount = action.createPaymentAccount)
+                    }
                     _effect.emit(CreatePaymentAccountEffect.NavigateToPaymentAccountReview)
                 }
             }

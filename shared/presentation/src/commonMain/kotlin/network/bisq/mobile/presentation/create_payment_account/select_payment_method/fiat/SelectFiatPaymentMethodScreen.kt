@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
@@ -31,18 +32,14 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.crypto.SelectCryptoPaymentMethodUiState
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.PaymentMethodVO
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.ui.CryptoPaymentMethodCard
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.ui.FiatChargebackRiskFilterSection
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.ui.FiatPaymentMethodCard
 
 @ExcludeFromCoverage
 @Composable
 fun SelectFiatPaymentMethodScreen(
-    onNavigateToNextScreen: (PaymentMethodVO) -> Unit,
+    onNavigateToNextScreen: (PaymentMethod) -> Unit,
 ) {
     val presenter = RememberPresenterLifecycleBackStackAware<SelectFiatPaymentMethodPresenter>()
 
@@ -152,34 +149,6 @@ private fun ColumnScope.FiatPaymentMethodsSection(
         ) {
             items(uiState.paymentMethods, key = { it.paymentType }) { account ->
                 FiatPaymentMethodCard(
-                    paymentMethod = account,
-                    isSelected = uiState.selectedPaymentMethod == account,
-                    onClick = { onPaymentMethodClick(account) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ColumnScope.CryptoPaymentMethodsSection(
-    uiState: SelectCryptoPaymentMethodUiState,
-    onPaymentMethodClick: (CryptoPaymentMethodVO) -> Unit,
-) {
-    BisqGap.VHalfQuarter()
-
-    if (uiState.paymentMethods.isEmpty()) {
-        EmptyPaymentMethodsState(
-            modifier = Modifier.weight(1f),
-            text = "mobile.components.select.empty".i18n(),
-        )
-    } else {
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(uiState.paymentMethods, key = { it.paymentType }) { account ->
-                CryptoPaymentMethodCard(
                     paymentMethod = account,
                     isSelected = uiState.selectedPaymentMethod == account,
                     onClick = { onPaymentMethodClick(account) },

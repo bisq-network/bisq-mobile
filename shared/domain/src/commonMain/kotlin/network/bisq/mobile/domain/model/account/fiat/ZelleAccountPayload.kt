@@ -11,8 +11,10 @@ data class ZelleAccountPayload(
     override val chargebackRisk: FiatPaymentMethodChargebackRisk? = null,
     override val paymentMethodName: String,
     override val currency: String,
-    override val country: String? = null,
-) : FiatPaymentAccountPayload {
+    override val country: String,
+) : FiatPaymentAccountPayload,
+    FiatPaymentCountryBasedAccountPayload,
+    FiatPaymentSingleCurrencyAccountPayload {
     init {
         verify()
     }

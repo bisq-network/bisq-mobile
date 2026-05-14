@@ -6,8 +6,6 @@ data class UserDefinedFiatAccountPayload(
     val accountData: String,
     override val chargebackRisk: FiatPaymentMethodChargebackRisk? = null,
     override val paymentMethodName: String = EMPTY_STRING,
-    override val currency: String = EMPTY_STRING,
-    override val country: String? = null,
 ) : FiatPaymentAccountPayload {
     companion object {
         const val MAX_DATA_LENGTH = 1000

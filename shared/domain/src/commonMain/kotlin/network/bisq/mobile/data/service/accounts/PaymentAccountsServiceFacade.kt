@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 
@@ -17,14 +18,9 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
     // Abstract methods for backend-specific operations
     protected abstract suspend fun executeGetAccounts(): Result<List<PaymentAccount>>
 
-    protected abstract suspend fun executeAddAccount(account: PaymentAccount): Result<PaymentAccount>
+    protected abstract suspend fun executeAddAccount(account: CreatePaymentAccount): Result<PaymentAccount>
 
-    protected abstract suspend fun executeSaveAccount(
-        accountName: String,
-        account: PaymentAccount,
-    ): Result<Unit>
-
-    protected abstract suspend fun executeDeleteAccount(account: PaymentAccount): Result<Unit>
+    protected abstract suspend fun executeDeleteAccount(accountName: String): Result<Unit>
 
     protected abstract suspend fun executeGetFiatPaymentMethods(): Result<List<FiatPaymentMethod>>
 
@@ -39,7 +35,7 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
             _accountsByName.update { getAccountsByName(accounts) }
         }
 
-    suspend fun addAccount(account: PaymentAccount): Result<Unit> =
+    suspend fun addAccount(account: CreatePaymentAccount): Result<Unit> =
         runCatching {
             val addedAccount =
                 executeAddAccount(account)
@@ -49,11 +45,11 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
             }
         }
 
-    suspend fun deleteAccount(account: PaymentAccount): Result<Unit> =
+    suspend fun deleteAccount(accountName: String): Result<Unit> =
         runCatching {
-            executeDeleteAccount(account).getOrThrow()
+            executeDeleteAccount(accountName).getOrThrow()
             _accountsByName.update { current ->
-                getAccountsByName(current.values.filter { it.accountName != account.accountName })
+                getAccountsByName(current.values.filter { it.accountName != accountName })
             }
         }
 

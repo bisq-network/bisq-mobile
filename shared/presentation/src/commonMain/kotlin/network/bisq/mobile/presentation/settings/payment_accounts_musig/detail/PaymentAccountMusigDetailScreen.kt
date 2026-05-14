@@ -20,6 +20,8 @@ import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.i18n.i18n
@@ -37,6 +39,7 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.MoneroAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.OtherCryptoAssetAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.UserDefinedAccountDetailContent
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.WiseAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.ZelleAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountDetailFieldRow
 import network.bisq.mobile.presentation.create_payment_account.ui.UnsupportedAccountState
@@ -110,6 +113,9 @@ fun PaymentAccountMusigDetailContent(
 
                             is OtherCryptoAssetAccount ->
                                 OtherCryptoAssetAccountDetailContent(paymentAccount)
+
+                            is WiseAccount ->
+                                WiseAccountDetailContent(paymentAccount)
 
                             else -> UnsupportedAccountState(modifier = Modifier.fillMaxSize())
                         }
@@ -191,6 +197,21 @@ private val previewMoneroAccount =
         tradeDuration = null,
     )
 
+private val previewWiseAccount =
+    WiseAccount(
+        accountName = "Wise Main",
+        accountPayload =
+            WiseAccountPayload(
+                selectedCurrencyCodes = listOf("USD", "EUR", "GBP"),
+                holderName = "Satoshi Nakamoto",
+                email = "satoshi@example.com",
+                paymentMethodName = "Wise",
+            ),
+        creationDate = null,
+        tradeLimitInfo = "5000.00",
+        tradeDuration = "4 days",
+    )
+
 private val previewUnsupportedAccount =
     object : PaymentAccount {
         override val accountName: String = "Unsupported"
@@ -241,6 +262,22 @@ private fun PaymentAccountMusigDetail_MoneroLoadedPreview() {
             uiState =
                 PaymentAccountMusigDetailUiState(
                     paymentAccount = previewMoneroAccount,
+                    isAccountMissing = false,
+                ),
+            onAction = {},
+            topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PaymentAccountMusigDetail_WiseLoadedPreview() {
+    BisqTheme.Preview {
+        PaymentAccountMusigDetailContent(
+            uiState =
+                PaymentAccountMusigDetailUiState(
+                    paymentAccount = previewWiseAccount,
                     isAccountMissing = false,
                 ),
             onAction = {},

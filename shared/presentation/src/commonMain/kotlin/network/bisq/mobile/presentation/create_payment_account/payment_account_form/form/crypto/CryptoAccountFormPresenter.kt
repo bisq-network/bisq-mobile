@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto
 
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.AccountFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.CryptoAccountFormUiAction

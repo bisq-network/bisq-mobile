@@ -9,11 +9,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
-import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
@@ -23,7 +21,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.ZelleFormUiAction
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.After
 import org.junit.Before
@@ -45,17 +42,6 @@ class ZellePaymentAccountFormContentUiTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var mainPresenter: MainPresenter
     private lateinit var presenter: ZelleFormPresenter
-
-    private val samplePaymentMethod: FiatPaymentMethodVO =
-        FiatPaymentMethodVO(
-            paymentType = PaymentTypeVO.ZELLE,
-            name = "Zelle",
-            supportedCurrencyCodes = "USD",
-            countryNames = "United States",
-            chargebackRisk = FiatPaymentMethodChargebackRiskVO.MODERATE,
-            tradeLimitInfo = "5000.00",
-            tradeDuration = "4 days",
-        )
 
     @Before
     fun setup() {
@@ -86,7 +72,7 @@ class ZellePaymentAccountFormContentUiTest {
     }
 
     private fun setTestContent(
-        onNavigateToNextScreen: (PaymentAccount) -> Unit = {},
+        onNavigateToNextScreen: (CreatePaymentAccount) -> Unit = {},
     ) {
         composeTestRule.setContent {
             CompositionLocalProvider(
@@ -96,7 +82,6 @@ class ZellePaymentAccountFormContentUiTest {
                 BisqTheme {
                     ZellePaymentAccountFormContent(
                         presenter = presenter,
-                        paymentMethod = samplePaymentMethod,
                         onNavigateToNextScreen = onNavigateToNextScreen,
                     )
                 }
@@ -105,17 +90,8 @@ class ZellePaymentAccountFormContentUiTest {
     }
 
     @Test
-    fun `when wrapper is composed then it initializes presenter with payment method`() {
-        setTestContent()
-
-        composeTestRule.waitForIdle()
-
-        assertEquals(samplePaymentMethod, presenter.paymentMethod)
-    }
-
-    @Test
     fun `when presenter emits next effect then wrapper navigates with account`() {
-        var navigatedAccount: PaymentAccount? = null
+        var navigatedAccount: CreatePaymentAccount? = null
 
         setTestContent(onNavigateToNextScreen = { navigatedAccount = it })
         composeTestRule.waitForIdle()

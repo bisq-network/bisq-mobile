@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.data.model.account.PaymentAccountDto
+import network.bisq.mobile.data.model.account.create.CreatePaymentAccountDto
 import network.bisq.mobile.data.model.account.crypto.CryptoPaymentMethodDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodDto
 import network.bisq.mobile.data.utils.encodeURIParam
@@ -25,22 +26,11 @@ class PaymentAccountsApiGateway(
             decoded
         }
 
-    suspend fun addAccount(account: PaymentAccountDto): Result<PaymentAccountDto> = webSocketApiClient.post(basePath, account)
+    suspend fun addAccount(account: CreatePaymentAccountDto): Result<PaymentAccountDto> = webSocketApiClient.post(basePath, account)
 
     suspend fun deleteAccount(accountName: String): Result<Unit> {
         val parsedAccountName = encodeURIParam(accountName)
         return webSocketApiClient.delete("$basePath?accountName=$parsedAccountName")
-    }
-
-    suspend fun saveAccount(
-        accountName: String,
-        account: PaymentAccountDto,
-    ): Result<Unit> {
-        val parsedAccountName = encodeURIParam(accountName)
-        return webSocketApiClient.put(
-            "$basePath?accountName=$parsedAccountName",
-            account,
-        )
     }
 
     suspend fun getFiatPaymentMethods(): Result<List<FiatPaymentMethodDto>> = webSocketApiClient.get("$paymentMethodsBasePath/fiat")

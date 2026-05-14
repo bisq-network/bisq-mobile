@@ -14,10 +14,15 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.Country
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
-import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -32,6 +37,9 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PaymentAccountReviewPresenterTest {
@@ -80,10 +88,42 @@ class PaymentAccountReviewPresenterTest {
         )
 
     @Test
+    fun `when initial state then loading is true and payment account is null`() =
+        runTest(testDispatcher) {
+            // Given
+            presenter = createPresenter()
+
+            // When
+            val state = presenter.uiState.value
+
+            // Then
+            assertTrue(state.isLoading)
+            assertNull(state.paymentAccount)
+        }
+
+    @Test
+    fun `when initialized then clears loading and derives review payment account state`() =
+        runTest(testDispatcher) {
+            // Given
+            val account = sampleCreateZelleAccount()
+            presenter = createPresenter()
+
+            // When
+            presenter.initialize(account, samplePaymentMethod())
+            advanceUntilIdle()
+
+            // Then
+            val state = presenter.uiState.value
+            assertFalse(state.isLoading)
+            val paymentAccount = assertIs<ZelleAccount>(state.paymentAccount)
+            assertEquals("Zelle Personal", paymentAccount.accountName)
+        }
+
+    @Test
     fun `when create account action succeeds then adds account and emits close flow effect`() =
         runTest(testDispatcher) {
             // Given
-            val account = sampleZelleAccount()
+            val account = sampleCreateZelleAccount()
             coEvery { paymentAccountsServiceFacade.addAccount(account) } returns Result.success(Unit)
             presenter = createPresenter()
 
@@ -103,7 +143,7 @@ class PaymentAccountReviewPresenterTest {
     fun `when create account action fails then shows error snackbar and does not emit close flow effect`() =
         runTest(testDispatcher) {
             // Given
-            val account = sampleZelleAccount()
+            val account = sampleCreateZelleAccount()
             coEvery { paymentAccountsServiceFacade.addAccount(account) } returns Result.failure(IllegalStateException("create failed"))
             presenter = createPresenter()
 
@@ -128,20 +168,25 @@ class PaymentAccountReviewPresenterTest {
             effectDeferred.cancel()
         }
 
-    private fun sampleZelleAccount(accountName: String = "Zelle Personal"): ZelleAccount =
-        ZelleAccount(
+    private fun samplePaymentMethod(): FiatPaymentMethod =
+        FiatPaymentMethod(
+            paymentRail = FiatPaymentRail.ZELLE,
+            name = "Zelle",
+            supportedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar")),
+            supportedCountries = listOf(Country(code = "US", name = "United States")),
+            matchesAllCountries = false,
+            chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
+            tradeLimitInfo = "5000.00 USD",
+            tradeDuration = "1 day",
+        )
+
+    private fun sampleCreateZelleAccount(accountName: String = "Zelle Personal"): CreateZelleAccount =
+        CreateZelleAccount(
             accountName = accountName,
             accountPayload =
-                ZelleAccountPayload(
+                CreateZelleAccountPayload(
                     holderName = "Alice",
                     emailOrMobileNr = "alice@example.com",
-                    chargebackRisk = FiatPaymentMethodChargebackRisk.LOW,
-                    paymentMethodName = "Zelle",
-                    currency = "USD",
-                    country = "United States",
                 ),
-            creationDate = null,
-            tradeLimitInfo = null,
-            tradeDuration = null,
         )
 }

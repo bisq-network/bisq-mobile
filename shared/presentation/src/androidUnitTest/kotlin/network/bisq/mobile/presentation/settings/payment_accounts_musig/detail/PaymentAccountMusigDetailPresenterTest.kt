@@ -175,7 +175,7 @@ class PaymentAccountMusigDetailPresenterTest {
             // Given
             val account = sampleZelleAccount()
             accountsByNameFlow.value = mapOf(account.accountName to account)
-            coEvery { paymentAccountsServiceFacade.deleteAccount(account) } returns Result.success(Unit)
+            coEvery { paymentAccountsServiceFacade.deleteAccount(account.accountName) } returns Result.success(Unit)
             presenter = createPresenter()
             presenter.initialize(account.accountName)
             presenter.onAction(PaymentAccountMusigDetailUiAction.OnDeleteAccountClick)
@@ -186,7 +186,7 @@ class PaymentAccountMusigDetailPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify(exactly = 1) { paymentAccountsServiceFacade.deleteAccount(account) }
+            coVerify(exactly = 1) { paymentAccountsServiceFacade.deleteAccount(account.accountName) }
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
             verify(exactly = 1) { globalUiManager.hideLoading() }
             verify(exactly = 1) { navigationManager.navigateBack(any()) }
@@ -199,7 +199,7 @@ class PaymentAccountMusigDetailPresenterTest {
             // Given
             val account = sampleZelleAccount()
             accountsByNameFlow.value = mapOf(account.accountName to account)
-            coEvery { paymentAccountsServiceFacade.deleteAccount(account) } returns Result.failure(IllegalStateException("delete failed"))
+            coEvery { paymentAccountsServiceFacade.deleteAccount(account.accountName) } returns Result.failure(IllegalStateException("delete failed"))
             presenter = createPresenter()
             presenter.initialize(account.accountName)
             presenter.onAction(PaymentAccountMusigDetailUiAction.OnDeleteAccountClick)
@@ -210,7 +210,7 @@ class PaymentAccountMusigDetailPresenterTest {
             advanceUntilIdle()
 
             // Then
-            coVerify(exactly = 1) { paymentAccountsServiceFacade.deleteAccount(account) }
+            coVerify(exactly = 1) { paymentAccountsServiceFacade.deleteAccount(account.accountName) }
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
             verify(exactly = 1) { globalUiManager.hideLoading() }
             verify(exactly = 0) { navigationManager.navigateBack(any()) }

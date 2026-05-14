@@ -44,6 +44,10 @@ import bisqapps.shared.presentation.generated.resources.payment_icon_wise
 import bisqapps.shared.presentation.generated.resources.payment_icon_wise_us
 import bisqapps.shared.presentation.generated.resources.payment_icon_xmr
 import bisqapps.shared.presentation.generated.resources.payment_icon_zelle
+import network.bisq.mobile.domain.model.account.PaymentMethod
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
+import network.bisq.mobile.domain.utils.getLogger
 import org.jetbrains.compose.resources.DrawableResource
 
 enum class PaymentTypeVO(
@@ -107,6 +111,17 @@ enum class PaymentTypeVO(
     DOGE,
 }
 
+fun getPaymentTypeVOFromPaymentMethod(paymentMethod: PaymentMethod): PaymentTypeVO? =
+    when (paymentMethod) {
+        is FiatPaymentMethod -> {
+            runCatching { PaymentTypeVO.valueOf(paymentMethod.paymentRail.name) }
+                .onFailure { e -> log.w(e) { "Unknown payment rail '${paymentMethod.paymentRail.name}' -> paymentType is null" } }
+                .getOrNull()
+        }
+        is CryptoPaymentMethod -> getPaymentTypeVOFromCryptoCurrencyCode(paymentMethod.code)
+        else -> null
+    }
+
 fun getPaymentTypeVOFromCryptoCurrencyCode(cryptoCurrencyCode: String): PaymentTypeVO? =
     when (cryptoCurrencyCode.trim().uppercase()) {
         "XMR" -> PaymentTypeVO.XMR
@@ -121,3 +136,5 @@ fun getPaymentTypeVOFromCryptoCurrencyCode(cryptoCurrencyCode: String): PaymentT
         "DOGE" -> PaymentTypeVO.DOGE
         else -> null
     }
+
+private val log = getLogger("PaymentTypeVO")

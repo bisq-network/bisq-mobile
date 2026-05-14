@@ -7,7 +7,6 @@ fun CryptoPaymentMethodDto.toDomain(): CryptoPaymentMethod =
     CryptoPaymentMethod(
         code = code,
         name = name,
-        category = category,
         supportAutoConf = supportAutoConf,
         tradeLimitInfo = tradeLimitInfo,
         tradeDuration = tradeDuration,

@@ -6,6 +6,8 @@ import bisq.common.util.StringUtils
 import bisq.security.keys.KeyGeneration
 import bisq.account.accounts.fiat.UserDefinedFiatAccount as Bisq2UserDefinedFiatAccount
 import bisq.account.accounts.fiat.UserDefinedFiatAccountPayload as Bisq2UserDefinedFiatAccountPayload
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount as DomainCreateUserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccountPayload as DomainCreateUserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount as DomainUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload as DomainUserDefinedFiatAccountPayload
 
@@ -15,8 +17,22 @@ fun Bisq2UserDefinedFiatAccount.toDomain(): DomainUserDefinedFiatAccount =
         accountPayload = accountPayload.toDomain(),
     )
 
-fun DomainUserDefinedFiatAccount.toBisq2(): Bisq2UserDefinedFiatAccount {
-    val payload = accountPayload.toBisq2()
+fun DomainUserDefinedFiatAccount.toBisq2(): Bisq2UserDefinedFiatAccount =
+    createBisq2UserDefinedFiatAccount(
+        accountName = accountName,
+        payload = accountPayload.toBisq2(),
+    )
+
+fun DomainCreateUserDefinedFiatAccount.toBisq2(): Bisq2UserDefinedFiatAccount =
+    createBisq2UserDefinedFiatAccount(
+        accountName = accountName,
+        payload = accountPayload.toBisq2(),
+    )
+
+private fun createBisq2UserDefinedFiatAccount(
+    accountName: String,
+    payload: Bisq2UserDefinedFiatAccountPayload,
+): Bisq2UserDefinedFiatAccount {
     val keyPair = KeyGeneration.generateDefaultEcKeyPair()
     val keyAlgorithm = KeyType.EC
     return Bisq2UserDefinedFiatAccount(
@@ -36,6 +52,12 @@ fun Bisq2UserDefinedFiatAccountPayload.toDomain(): DomainUserDefinedFiatAccountP
     )
 
 fun DomainUserDefinedFiatAccountPayload.toBisq2(): Bisq2UserDefinedFiatAccountPayload =
+    Bisq2UserDefinedFiatAccountPayload(
+        StringUtils.createUid(),
+        accountData,
+    )
+
+fun DomainCreateUserDefinedFiatAccountPayload.toBisq2(): Bisq2UserDefinedFiatAccountPayload =
     Bisq2UserDefinedFiatAccountPayload(
         StringUtils.createUid(),
         accountData,

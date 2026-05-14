@@ -48,12 +48,12 @@ class FiatAccountVOTest {
         assertEquals(FiatPaymentMethodChargebackRiskVO.VERY_LOW, result.chargebackRisk)
         assertEquals(PaymentTypeVO.CUSTOM, result.paymentType)
         assertEquals("My Custom Method", result.paymentMethodName)
-        assertEquals("DE", result.country)
-        assertEquals("EUR", result.currency)
+        assertEquals(EMPTY_STRING, result.country)
+        assertEquals(EMPTY_STRING, result.currency)
     }
 
     @Test
-    fun `when mapping account with null optional payload fields then defaults to empty strings`() {
+    fun `when mapping account with null chargeback risk then maps remaining payload fields`() {
         // Given
         val account = sampleZelleAccountWithNullOptionalFields()
 
@@ -64,7 +64,7 @@ class FiatAccountVOTest {
         assertNotNull(result)
         assertNull(result.chargebackRisk)
         assertEquals("Zelle", result.paymentMethodName)
-        assertEquals(EMPTY_STRING, result.country)
+        assertEquals("United States", result.country)
         assertEquals("USD", result.currency)
     }
 
@@ -105,7 +105,7 @@ class FiatAccountVOTest {
                     holderName = "Alice Doe",
                     emailOrMobileNr = "alice@example.com",
                     chargebackRisk = null,
-                    country = null,
+                    country = "United States",
                     paymentMethodName = "Zelle",
                     currency = "USD",
                 ),
@@ -122,8 +122,6 @@ class FiatAccountVOTest {
                     accountData = "iban:DE89370400440532013000",
                     chargebackRisk = FiatPaymentMethodChargebackRisk.VERY_LOW,
                     paymentMethodName = "My Custom Method",
-                    currency = "EUR",
-                    country = "DE",
                 ),
             creationDate = null,
             tradeLimitInfo = null,

@@ -1,13 +1,15 @@
 package network.bisq.mobile.domain.model.account.fiat
 
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
+import network.bisq.mobile.domain.model.account.PaymentMethod
 
 data class FiatPaymentMethod(
     val paymentRail: FiatPaymentRail,
-    val name: String,
-    val supportedCurrencyCodes: String,
-    val countryNames: String,
+    override val name: String,
+    val supportedCurrencies: List<FiatCurrency>,
+    val supportedCountries: List<Country>,
+    val matchesAllCountries: Boolean,
     val chargebackRisk: FiatPaymentMethodChargebackRisk,
-    val tradeLimitInfo: String,
-    val tradeDuration: String,
-)
+    override val tradeLimitInfo: String,
+    override val tradeDuration: String,
+) : PaymentMethod

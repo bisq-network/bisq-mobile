@@ -173,8 +173,6 @@ class UserDefinedAccountDetailContentUiTest {
                 UserDefinedFiatAccountPayload(
                     accountData = accountData,
                     paymentMethodName = "Bank Transfer",
-                    currency = "EUR",
-                    country = "Germany",
                     chargebackRisk = chargebackRisk,
                 ),
             creationDate = creationDate,

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
@@ -31,13 +32,12 @@ import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.PaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.ui.CryptoPaymentMethodCard
 
 @ExcludeFromCoverage
 @Composable
 fun SelectCryptoPaymentMethodScreen(
-    onNavigateToNextScreen: (PaymentMethodVO) -> Unit,
+    onNavigateToNextScreen: (PaymentMethod) -> Unit,
 ) {
     val presenter = RememberPresenterLifecycleBackStackAware<SelectCryptoPaymentMethodPresenter>()
 
