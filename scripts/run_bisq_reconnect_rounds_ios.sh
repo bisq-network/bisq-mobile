@@ -20,6 +20,8 @@ set -euo pipefail
 #   BISQ_LOG              Desktop bisq log file for "ApplicationService initialized"
 #   OUT_DIR               Output directory (default ./debug/reconnect-round-logs-ios-<timestamp>)
 #   SLEEP_BEFORE_OPEN     Seconds between kill and reopen (default 45)
+#   SLEEP_AFTER_CONNECT_SEC  After WS connect succeeds, seconds to wait before the next round
+#                            when more rounds remain (default 30; set 0 to skip)
 #   BISQ_INIT_TIMEOUT_SEC Seconds to wait for desktop init marker (default 180)
 #   IOS_CONNECT_TIMEOUT_SEC  Seconds to wait for WS success markers in sim logs (default 300)
 #   IOS_WS_MARKER         Primary substring marker for success (default "WS connected successfully")
@@ -45,6 +47,7 @@ ROUNDS="${1:-1}"
 APP_PATH="${APP_PATH:-/Applications/Bisq2.app}"
 BISQ_LOG="${BISQ_LOG:-$HOME/Library/Application Support/Bisq2/bisq.log}"
 SLEEP_BEFORE_OPEN="${SLEEP_BEFORE_OPEN:-45}"
+SLEEP_AFTER_CONNECT_SEC="${SLEEP_AFTER_CONNECT_SEC:-30}"
 BISQ_INIT_TIMEOUT_SEC="${BISQ_INIT_TIMEOUT_SEC:-180}"
 IOS_CONNECT_TIMEOUT_SEC="${IOS_CONNECT_TIMEOUT_SEC:-300}"
 IOS_WS_MARKER="${IOS_WS_MARKER:-WS connected successfully}"
@@ -271,6 +274,10 @@ for round in $(seq 1 "$ROUNDS"); do
       t2_iso="$(date '+%Y-%m-%d %H:%M:%S')"
       duration_sec="$((t2_epoch - t1_epoch))"
       log_step "Round $round: captured t2=$t2_iso duration=${duration_sec}s"
+      if [[ "$round" -lt "$ROUNDS" ]] && [[ "${SLEEP_AFTER_CONNECT_SEC:-0}" =~ ^[0-9]+$ ]] && [[ "${SLEEP_AFTER_CONNECT_SEC:-0}" -gt 0 ]]; then
+        log_step "Round $round: sleeping ${SLEEP_AFTER_CONNECT_SEC}s after WS connect before next round"
+        sleep "$SLEEP_AFTER_CONNECT_SEC"
+      fi
     else
       round_status="ios-connect-timeout"
       log_step "Round $round: timeout waiting for iOS WS connect marker"
