@@ -44,6 +44,8 @@ import network.bisq.mobile.client.common.domain.access.utils.Headers
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.utils.createHttpClient
+import network.bisq.mobile.client.common.domain.utils.invalidateUnderlyingSession
+import network.bisq.mobile.client.common.domain.utils.releaseUnderlyingSessionTracking
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.network.KmpTorService
@@ -98,6 +100,20 @@ class HttpClientService(
                     // Clear before closing so getClient() waits for the new client
                     // instead of returning the stale closed client
                     _httpClient.value = null
+                    // Routine settings-change replacement (e.g. when the bootstrap
+                    // session-id update triggers a new HttpClient): release the iOS
+                    // session-registry entry to prevent unbounded growth, but DO NOT
+                    // call invalidateAndCancel here. The WebSocketClientService observer
+                    // will dispose the old WebSocketClient gracefully via
+                    // _httpClientChangedFlow, sending a proper close frame on the
+                    // in-flight WS task. close() below uses Ktor Darwin's
+                    // finishTasksAndInvalidate, which lets that handshake finish.
+                    //
+                    // For abrupt teardown (forced recreation, app deactivate,
+                    // test-connection cleanup) callers use invalidateUnderlyingSession()
+                    // instead — see disposeClient(), recreateClient(), and
+                    // WebSocketClientService.{forceClientRecreation, testConnection}.
+                    oldClient?.releaseUnderlyingSessionTracking()
                     oldClient?.close()
                     _httpClient.value = createNewInstance(newConfig)
                     _generation.incrementAndGet()
@@ -147,7 +163,20 @@ class HttpClientService(
             stopFlow,
         )
 
+    /**
+     * Non-suspending snapshot of the current [HttpClient], or `null` if none is built yet.
+     *
+     * Use ONLY from cleanup/forced-recovery paths that need to act on the existing
+     * client without waiting (notably [WebSocketClientService.forceClientRecreation],
+     * which must `invalidateUnderlyingSession()` on the still-attached iOS NSURLSession
+     * BEFORE disposing the WebSocketClient so its `connectionMutex` releases). For
+     * regular request flow use [getClient], which suspends until the client is ready.
+     */
+    fun peekClient(): HttpClient? = _httpClient.value
+
     fun disposeClient() {
+        // Drain in-flight iOS tasks synchronously before close (no-op on Android).
+        _httpClient.value?.invalidateUnderlyingSession()
         _httpClient.value?.close()
         _httpClient.value = null
         lastConfig = null
@@ -165,6 +194,14 @@ class HttpClientService(
         val config = lastConfig ?: return
         val oldClient = _httpClient.value
         _httpClient.value = null
+        // invalidateAndCancel BEFORE close on iOS: this surfaces NSURLErrorCancelled
+        // (Code=-999) into any suspended `httpClient.webSocketSession { ... }` call
+        // that is currently holding the WebSocketClientImpl.connectionMutex, which
+        // is what otherwise traps `forceClientRecreation()` for ~19s waiting for the
+        // mutex to be released by a doomed `withTimeout(30000)`. The cancellation
+        // also drains the connection pool so the next NSURLSession does not reuse
+        // a zombie SOCKS slot (avoids the `reused=1` 120s tasks observed in logs).
+        oldClient?.invalidateUnderlyingSession()
         oldClient?.close()
         lastConfig = null
         // Treat as new config by resetting lastConfig first
