@@ -6,7 +6,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.PaymentMethod
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
@@ -15,7 +16,6 @@ import network.bisq.mobile.presentation.create_payment_account.account_review.Pa
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.PaymentAccountFormScreen
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.crypto.SelectCryptoPaymentMethodScreen
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.fiat.SelectFiatPaymentMethodScreen
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.PaymentMethodVO
 
 @ExcludeFromCoverage
 sealed interface CreatePaymentAccountRoute {
@@ -37,10 +37,10 @@ sealed interface CreatePaymentAccountRoute {
 fun CreatePaymentAccountNavHost(
     navController: NavHostController,
     accountType: PaymentAccountType,
-    paymentAccount: PaymentAccount?,
-    paymentMethod: PaymentMethodVO?,
-    onNavigateFromSelectPaymentMethod: (PaymentMethodVO) -> Unit,
-    onNavigateFromPaymentAccountForm: (PaymentAccount) -> Unit,
+    createPaymentAccount: CreatePaymentAccount?,
+    paymentMethod: PaymentMethod?,
+    onNavigateFromSelectPaymentMethod: (PaymentMethod) -> Unit,
+    onNavigateFromPaymentAccountForm: (CreatePaymentAccount) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -78,10 +78,11 @@ fun CreatePaymentAccountNavHost(
         }
 
         composable<CreatePaymentAccountRoute.PaymentAccountReview> {
-            if (paymentAccount != null) {
+            if (createPaymentAccount != null && paymentMethod != null) {
                 PaymentAccountReviewScreen(
                     onCloseCreateAccountFlow = onBack,
-                    paymentAccount = paymentAccount,
+                    createPaymentAccount = createPaymentAccount,
+                    paymentMethod = paymentMethod,
                 )
             } else {
                 ErrorState(message = "mobile.error.generic".i18n())

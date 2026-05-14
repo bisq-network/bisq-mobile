@@ -288,13 +288,11 @@ class SelectCryptoPaymentMethodPresenterTest {
     private fun sampleCryptoMethod(
         code: String,
         name: String,
-        category: String = "ALTCOIN",
         supportAutoConf: Boolean = false,
     ): CryptoPaymentMethod =
         CryptoPaymentMethod(
             code = code,
             name = name,
-            category = category,
             supportAutoConf = supportAutoConf,
             tradeDuration = EMPTY_STRING,
             tradeLimitInfo = EMPTY_STRING,

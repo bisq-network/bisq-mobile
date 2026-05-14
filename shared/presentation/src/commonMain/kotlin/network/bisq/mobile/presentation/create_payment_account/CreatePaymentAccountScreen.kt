@@ -67,7 +67,7 @@ fun CreatePaymentAccountScreen(
     ) { paddingValues ->
         CreatePaymentAccountNavHost(
             navController = flowNavController,
-            paymentAccount = uiState.paymentAccount,
+            createPaymentAccount = uiState.createPaymentAccount,
             accountType = accountType,
             paymentMethod = uiState.paymentMethod,
             onNavigateFromSelectPaymentMethod = { paymentMethod ->

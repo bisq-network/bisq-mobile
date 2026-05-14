@@ -25,14 +25,3 @@ fun PaymentAccountDto.toDomain(): PaymentAccount =
         is OtherCryptoAssetAccountDto -> toDomain()
         else -> throw IllegalArgumentException("Unsupported PaymentAccountDto type: ${this::class.simpleName}")
     }
-
-fun PaymentAccount.toDto(): PaymentAccountDto =
-    when (this) {
-        // Fiat
-        is UserDefinedFiatAccount -> toDto()
-        is ZelleAccount -> toDto()
-        // Crypto
-        is MoneroAccount -> toDto()
-        is OtherCryptoAssetAccount -> toDto()
-        else -> throw IllegalArgumentException("Unsupported PaymentAccount type: ${this::class.simpleName}")
-    }

@@ -6,8 +6,9 @@ import kotlinx.serialization.Serializable
 data class FiatPaymentMethodDto(
     val paymentRail: FiatPaymentRailDto,
     val name: String,
-    val supportedCurrencyCodes: String,
-    val countryNames: String,
+    val supportedCurrencies: List<FiatCurrencyDto>,
+    val supportedCountries: List<CountryDto>,
+    val matchesAllCountries: Boolean,
     val chargebackRisk: FiatPaymentMethodChargebackRiskDto,
     val tradeLimitInfo: String,
     val tradeDuration: String,

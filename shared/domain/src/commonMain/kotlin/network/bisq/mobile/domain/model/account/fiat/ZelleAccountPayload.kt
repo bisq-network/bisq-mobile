@@ -11,22 +11,7 @@ data class ZelleAccountPayload(
     override val chargebackRisk: FiatPaymentMethodChargebackRisk? = null,
     override val paymentMethodName: String,
     override val currency: String,
-    override val country: String? = null,
-) : FiatPaymentAccountPayload {
-    init {
-        verify()
-    }
-
-    fun verify() {
-        NetworkDataValidation.validateCode("US")
-        require(paymentMethodName.isNotBlank()) { "Payment method name is required" }
-        require(currency.isNotBlank()) { "Currency is required" }
-        PaymentAccountValidation.validateHolderName(holderName)
-        require(
-            EmailValidation.isValid(emailOrMobileNr) ||
-                PhoneNumberValidation.isValid(emailOrMobileNr, "US"),
-        ) {
-            "Email or mobile number is invalid"
-        }
-    }
-}
+    override val country: String,
+) : FiatPaymentAccountPayload,
+    FiatPaymentCountryBasedAccountPayload,
+    FiatPaymentSingleCurrencyAccountPayload

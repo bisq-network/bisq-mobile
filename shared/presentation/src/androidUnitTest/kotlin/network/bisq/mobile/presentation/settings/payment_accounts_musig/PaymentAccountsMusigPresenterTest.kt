@@ -185,7 +185,7 @@ class PaymentAccountsMusigPresenterTest {
             // Then
             val state = presenter.uiState.value
             assertEquals(1, state.fiatAccounts.size)
-            assertEquals("Zelle Personal", state.fiatAccounts.first().accountName)
+            assertTrue(state.fiatAccounts.any { it.accountName == "Zelle Personal" })
             assertEquals(1, state.cryptoAccounts.size)
             assertEquals("Monero Main", state.cryptoAccounts.first().accountName)
         }

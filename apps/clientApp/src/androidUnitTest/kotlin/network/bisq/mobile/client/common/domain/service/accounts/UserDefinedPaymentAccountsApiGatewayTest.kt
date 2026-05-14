@@ -10,13 +10,14 @@ import io.mockk.slot
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.service.accounts.user_defined.SaveUserDefinedAccountRequest
 import network.bisq.mobile.client.common.domain.service.accounts.user_defined.UserDefinedPaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountDto
+import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.utils.encodeURIParam
 import org.junit.After
 import org.junit.Test
@@ -75,7 +76,7 @@ class UserDefinedPaymentAccountsApiGatewayTest {
                         }
                         """.trimIndent(),
                 )
-            val account = sampleAccountDto(accountName = "Account One", accountData = "alice@example.com")
+            val account = sampleCreateAccountDto(accountName = "Account One", accountData = "alice@example.com")
 
             // When
             val result = gateway.addAccount(account)
@@ -117,16 +118,15 @@ class UserDefinedPaymentAccountsApiGatewayTest {
             coEvery {
                 webSocketClientService.sendRequestAndAwaitResponse(capture(requestSlot))
             } returns WebSocketRestApiResponse(requestId = "request-1", statusCode = HttpStatusCode.NoContent.value, body = "")
-            val account = sampleAccountDto(accountName = "Selected Account", accountData = "selected@example.com")
+            val accountName = "Selected Account"
 
             // When
-            val result = gateway.setSelectedAccount(account)
+            val result = gateway.setSelectedAccount(accountName)
 
             // Then
             assertTrue(result.isSuccess)
             assertEquals("PATCH", requestSlot.captured.method)
             assertEquals("/api/v1/payment-accounts/fiat/selected", requestSlot.captured.path)
-            assertTrue(requestSlot.captured.body.contains("\"selectedAccount\":"))
             assertTrue(requestSlot.captured.body.contains("\"accountName\":\"Selected Account\""))
         }
 
@@ -173,8 +173,23 @@ class UserDefinedPaymentAccountsApiGatewayTest {
             val requestSlot = slot<WebSocketRestApiRequest>()
             coEvery {
                 webSocketClientService.sendRequestAndAwaitResponse(capture(requestSlot))
-            } returns WebSocketRestApiResponse(requestId = "request-1", statusCode = HttpStatusCode.NoContent.value, body = "")
-            val account = sampleAccountDto(accountName = "Saved Account", accountData = "save@example.com")
+            } returns
+                WebSocketRestApiResponse(
+                    requestId = "request-1",
+                    statusCode = HttpStatusCode.OK.value,
+                    body =
+                        """
+                        {
+                          "accountName": "Saved Account",
+                          "accountPayload": {"accountData": "save@example.com"},
+                          "paymentRail": "CUSTOM",
+                          "tradeLimitInfo": null,
+                          "tradeDuration": null,
+                          "creationDate": null
+                        }
+                        """.trimIndent(),
+                )
+            val account = sampleCreateAccountDto(accountName = "Saved Account", accountData = "save@example.com")
 
             // When
             val result = gateway.saveAccount("Saved Account", account)
@@ -183,17 +198,19 @@ class UserDefinedPaymentAccountsApiGatewayTest {
             assertTrue(result.isSuccess)
             assertEquals("PUT", requestSlot.captured.method)
             assertEquals("/api/v1/payment-accounts/fiat?accountName=Saved%20Account", requestSlot.captured.path)
-            assertTrue(requestSlot.captured.body.contains("\"account\":"))
-            assertTrue(requestSlot.captured.body.contains("\"accountName\":\"Saved Account\""))
-            assertTrue(requestSlot.captured.body.contains("\"accountData\":\"save@example.com\""))
+            val request = Json.decodeFromString<SaveUserDefinedAccountRequest>(requestSlot.captured.body)
+            assertEquals("Saved Account", request.account.accountName)
+            assertEquals("save@example.com", request.account.accountPayload.accountData)
+            assertEquals("Saved Account", result.getOrNull()?.accountName)
+            assertEquals("save@example.com", result.getOrNull()?.accountPayload?.accountData)
         }
 
-    private fun sampleAccountDto(
+    private fun sampleCreateAccountDto(
         accountName: String,
         accountData: String,
-    ): UserDefinedFiatAccountDto =
-        UserDefinedFiatAccountDto(
+    ): CreateUserDefinedFiatAccountDto =
+        CreateUserDefinedFiatAccountDto(
             accountName = accountName,
-            accountPayload = UserDefinedFiatAccountPayloadDto(accountData = accountData),
+            accountPayload = CreateUserDefinedFiatAccountPayloadDto(accountData = accountData),
         )
 }

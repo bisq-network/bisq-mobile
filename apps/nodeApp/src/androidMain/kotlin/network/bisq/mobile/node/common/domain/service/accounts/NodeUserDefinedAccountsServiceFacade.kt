@@ -6,6 +6,7 @@ import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacad
 import network.bisq.mobile.node.common.domain.mapping.toBisq2
 import network.bisq.mobile.node.common.domain.mapping.toDomain
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount as DomainCreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount as DomainUserDefinedFiatAccount
 
 class NodeUserDefinedAccountsServiceFacade(
@@ -36,40 +37,43 @@ class NodeUserDefinedAccountsServiceFacade(
             }
         }
 
-    override suspend fun executeAddAccount(account: DomainUserDefinedFiatAccount): Result<Unit> =
+    override suspend fun executeAddAccount(account: DomainCreateUserDefinedFiatAccount): Result<DomainUserDefinedFiatAccount> =
         runCatching {
             val bisq2Account = account.toBisq2()
-            accountService.addPaymentAccount(bisq2Account)
+            check(accountService.addPaymentAccount(bisq2Account)) {
+                "Account already exists: ${bisq2Account.accountName}"
+            }
+            bisq2Account.toDomain()
         }
 
     override suspend fun executeSaveAccount(
         accountName: String,
-        account: DomainUserDefinedFiatAccount,
-    ): Result<Unit> =
+        account: DomainCreateUserDefinedFiatAccount,
+    ): Result<DomainUserDefinedFiatAccount> =
         runCatching {
-            // updatePaymentAccount was removed in Bisq2 2.1.9; use remove + add
-            val existingAccount = accountService.accountByNameMap[accountName]
-            if (existingAccount != null) {
-                accountService.removePaymentAccount(existingAccount)
-            }
-            accountService.addPaymentAccount(
-                account.toBisq2(),
-            )
+            val savedAccount = account.toBisq2()
+            accountService.updatePaymentAccount(accountName, savedAccount)
+            savedAccount.toDomain()
         }
 
-    override suspend fun executeDeleteAccount(account: DomainUserDefinedFiatAccount): Result<Unit> =
+    override suspend fun executeDeleteAccount(accountName: String): Result<Unit> =
         runCatching {
             val existingAccount =
-                accountService.accountByNameMap[account.accountName]
-                    ?: throw IllegalStateException("Account not found: ${account.accountName}")
+                accountService.accountByNameMap[accountName]
+                    ?: throw IllegalStateException("Account not found: $accountName")
 
             accountService.removePaymentAccount(existingAccount)
         }
 
-    override suspend fun executeSetSelectedAccount(account: DomainUserDefinedFiatAccount): Result<Unit> =
+    override suspend fun executeSetSelectedAccount(accountName: String): Result<Unit> =
         runCatching {
-            accountService.setSelectedAccount(
-                account.toBisq2(),
-            )
+            val account =
+                accountService
+                    .findAccount(accountName)
+                    .orElseThrow { IllegalStateException("Account not found: $accountName") }
+            check(account is UserDefinedFiatAccount) {
+                "Account is not a UserDefinedFiatAccount: $accountName"
+            }
+            accountService.setSelectedAccount(account)
         }
 }

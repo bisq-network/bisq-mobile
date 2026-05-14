@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 data class CryptoPaymentMethodDto(
     val code: String,
     val name: String,
-    val category: String,
     val supportAutoConf: Boolean,
     val tradeLimitInfo: String,
     val tradeDuration: String,

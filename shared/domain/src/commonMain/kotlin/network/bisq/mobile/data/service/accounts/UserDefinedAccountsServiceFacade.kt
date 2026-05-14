@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 
 abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
@@ -18,16 +19,16 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
 
     protected abstract suspend fun executeGetSelectedAccount(): Result<UserDefinedFiatAccount?>
 
-    protected abstract suspend fun executeAddAccount(account: UserDefinedFiatAccount): Result<Unit>
+    protected abstract suspend fun executeAddAccount(account: CreateUserDefinedFiatAccount): Result<UserDefinedFiatAccount>
 
     protected abstract suspend fun executeSaveAccount(
         accountName: String,
-        account: UserDefinedFiatAccount,
-    ): Result<Unit>
+        account: CreateUserDefinedFiatAccount,
+    ): Result<UserDefinedFiatAccount>
 
-    protected abstract suspend fun executeDeleteAccount(account: UserDefinedFiatAccount): Result<Unit>
+    protected abstract suspend fun executeDeleteAccount(accountName: String): Result<Unit>
 
-    protected abstract suspend fun executeSetSelectedAccount(account: UserDefinedFiatAccount): Result<Unit>
+    protected abstract suspend fun executeSetSelectedAccount(accountName: String): Result<Unit>
 
     // Concrete implementations with shared business logic
     suspend fun getAccounts(): Result<List<UserDefinedFiatAccount>> =
@@ -56,12 +57,12 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
             }
         }
 
-    suspend fun addAccount(account: UserDefinedFiatAccount): Result<Unit> =
+    suspend fun addAccount(account: CreateUserDefinedFiatAccount): Result<Unit> =
         runCatching {
-            executeAddAccount(account).getOrThrow()
+            val createdAccount = executeAddAccount(account).getOrThrow()
             val accounts = _accountState.value.accounts
-            val sortedAccounts = getSortedAccounts(accounts + account)
-            val selectedIndex = sortedAccounts.indexOf(account)
+            val sortedAccounts = getSortedAccounts(accounts + createdAccount)
+            val selectedIndex = sortedAccounts.indexOf(createdAccount)
             _accountState.update {
                 it.copy(
                     accounts = sortedAccounts,
@@ -71,14 +72,14 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
             setSelectedAccountIndex(selectedIndex)
         }
 
-    suspend fun saveAccount(account: UserDefinedFiatAccount): Result<Unit> =
+    suspend fun saveAccount(account: CreateUserDefinedFiatAccount): Result<Unit> =
         runCatching {
             val accountName = getCurrentSelectedAccount()?.accountName
             if (accountName == null) throw IllegalStateException("No account selected")
-            executeSaveAccount(accountName, account).getOrThrow()
+            val savedAccount = executeSaveAccount(accountName, account).getOrThrow()
             val accountList = getAccountsExcluding(accountName)
-            val sortedAccounts = getSortedAccounts(accountList + account)
-            val selectedIndex = sortedAccounts.indexOf(account)
+            val sortedAccounts = getSortedAccounts(accountList + savedAccount)
+            val selectedIndex = sortedAccounts.indexOf(savedAccount)
             _accountState.update {
                 it.copy(
                     accounts = sortedAccounts,
@@ -87,13 +88,13 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
             }
         }
 
-    suspend fun deleteAccount(account: UserDefinedFiatAccount): Result<Unit> =
+    suspend fun deleteAccount(accountName: String): Result<Unit> =
         runCatching {
             val selectedAccount = getCurrentSelectedAccount()
-            executeDeleteAccount(account).getOrThrow()
-            val accountList = getAccountsExcluding(account.accountName)
+            executeDeleteAccount(accountName).getOrThrow()
+            val accountList = getAccountsExcluding(accountName)
             val newSelectedIndex =
-                if (selectedAccount?.accountName == account.accountName && accountList.isNotEmpty()) {
+                if (selectedAccount?.accountName == accountName && accountList.isNotEmpty()) {
                     0
                 } else {
                     accountList.indexOf(selectedAccount)
@@ -115,7 +116,7 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
             }
             val selectedAccount = _accountState.value.accounts.getOrNull(accountIndex)
             selectedAccount?.let {
-                executeSetSelectedAccount(it).getOrThrow()
+                executeSetSelectedAccount(it.accountName).getOrThrow()
             }
         }
 

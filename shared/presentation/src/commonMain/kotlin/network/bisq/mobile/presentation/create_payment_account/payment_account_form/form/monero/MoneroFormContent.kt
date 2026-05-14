@@ -10,9 +10,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSwitch
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -23,24 +23,19 @@ import network.bisq.mobile.presentation.create_payment_account.payment_account_f
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.MoneroFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CommonCryptoFormSection
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormUiState
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 
 private val moneroSubAddressesEnabled =
     false // TODO: remove once bisq2 issue https://github.com/bisq-network/bisq2/issues/4682 is resolved
 
 @Composable
-fun MoneroPaymentAccountFormContent(
+fun MoneroFormContent(
     presenter: MoneroFormPresenter,
-    paymentMethod: CryptoPaymentMethodVO,
-    onNavigateToNextScreen: (PaymentAccount) -> Unit,
+    paymentMethod: CryptoPaymentMethod,
+    onNavigateToNextScreen: (CreatePaymentAccount) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by presenter.uiState.collectAsState()
     val currentOnNavigate by rememberUpdatedState(onNavigateToNextScreen)
-
-    LaunchedEffect(presenter, paymentMethod) {
-        presenter.initialize(paymentMethod)
-    }
 
     LaunchedEffect(presenter) {
         presenter.effect.collect { effect ->
@@ -59,9 +54,9 @@ fun MoneroPaymentAccountFormContent(
 }
 
 @Composable
-fun MoneroFormContent(
+private fun MoneroFormContent(
     uiState: MoneroFormUiState,
-    paymentMethod: CryptoPaymentMethodVO,
+    paymentMethod: CryptoPaymentMethod,
     onAction: (AccountFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -141,9 +136,8 @@ fun MoneroFormContent(
 }
 
 @ExcludeFromCoverage
-fun previewPaymentMethod(): CryptoPaymentMethodVO =
-    CryptoPaymentMethodVO(
-        paymentType = PaymentTypeVO.XMR,
+fun previewPaymentMethod(): CryptoPaymentMethod =
+    CryptoPaymentMethod(
         code = "XMR",
         name = "Monero",
         supportAutoConf = true,

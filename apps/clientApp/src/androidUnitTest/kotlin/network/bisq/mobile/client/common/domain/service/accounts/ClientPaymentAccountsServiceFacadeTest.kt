@@ -10,15 +10,18 @@ import network.bisq.mobile.client.common.domain.service.accounts.all.ClientPayme
 import network.bisq.mobile.client.common.domain.service.accounts.all.PaymentAccountsApiGateway
 import network.bisq.mobile.data.model.account.PaymentAccountDto
 import network.bisq.mobile.data.model.account.crypto.CryptoPaymentMethodDto
+import network.bisq.mobile.data.model.account.fiat.CountryDto
+import network.bisq.mobile.data.model.account.fiat.FiatCurrencyDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodChargebackRiskDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentRailDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
-import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -76,7 +79,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             // Given
             coEvery { apiGateway.getPaymentAccounts() } returns Result.success(listOf(sampleAccountDto("A")))
             facade.getAccounts()
-            val accountB = sampleDomainAccount("B")
+            val accountB = sampleCreateAccount("B")
             coEvery { apiGateway.addAccount(any()) } returns Result.success(sampleAccountDto("B"))
 
             // When
@@ -102,7 +105,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             coEvery { apiGateway.addAccount(any()) } returns Result.failure(exception)
 
             // When
-            val result = facade.addAccount(sampleDomainAccount("B"))
+            val result = facade.addAccount(sampleCreateAccount("B"))
 
             // Then
             assertTrue(result.isFailure)
@@ -126,7 +129,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             coEvery { apiGateway.deleteAccount("A") } returns Result.success(Unit)
 
             // When
-            val result = facade.deleteAccount(sampleDomainAccount("A"))
+            val result = facade.deleteAccount("A")
 
             // Then
             assertTrue(result.isSuccess)
@@ -147,7 +150,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             coEvery { apiGateway.deleteAccount("A") } returns Result.failure(exception)
 
             // When
-            val result = facade.deleteAccount(sampleDomainAccount("A"))
+            val result = facade.deleteAccount("A")
 
             // Then
             assertTrue(result.isFailure)
@@ -180,8 +183,9 @@ class ClientPaymentAccountsServiceFacadeTest {
                 FiatPaymentMethodDto(
                     paymentRail = FiatPaymentRailDto.SEPA,
                     name = "SEPA",
-                    supportedCurrencyCodes = "EUR",
-                    countryNames = "Germany",
+                    supportedCurrencies = listOf(FiatCurrencyDto(code = "EUR", name = "Euro")),
+                    supportedCountries = listOf(CountryDto(code = "DE", name = "Germany")),
+                    matchesAllCountries = false,
                     chargebackRisk = FiatPaymentMethodChargebackRiskDto.LOW,
                     tradeLimitInfo = EMPTY_STRING,
                     tradeDuration = EMPTY_STRING,
@@ -222,7 +226,6 @@ class ClientPaymentAccountsServiceFacadeTest {
                 CryptoPaymentMethodDto(
                     code = "XMR",
                     name = "Monero",
-                    category = EMPTY_STRING,
                     supportAutoConf = true,
                     tradeLimitInfo = EMPTY_STRING,
                     tradeDuration = EMPTY_STRING,
@@ -257,15 +260,12 @@ class ClientPaymentAccountsServiceFacadeTest {
 
     private suspend fun currentAccountNames(): List<String> = facade.accountsFlow.first().map { it.accountName }
 
-    private fun sampleDomainAccount(accountName: String): UserDefinedFiatAccount =
-        UserDefinedFiatAccount(
+    private fun sampleCreateAccount(accountName: String): CreateUserDefinedFiatAccount =
+        CreateUserDefinedFiatAccount(
             accountName = accountName,
             accountPayload =
-                UserDefinedFiatAccountPayload(
+                CreateUserDefinedFiatAccountPayload(
                     accountData = "account-data",
-                    currency = EMPTY_STRING,
-                    country = EMPTY_STRING,
-                    paymentMethodName = EMPTY_STRING,
                 ),
         )
 

@@ -12,7 +12,6 @@ class CryptoPaymentMethodMappingTest {
             CryptoPaymentMethodDto(
                 code = "XMR",
                 name = "Monero",
-                category = "PRIVACY",
                 supportAutoConf = true,
                 tradeLimitInfo = "5000.00",
                 tradeDuration = "4 days",
@@ -24,7 +23,6 @@ class CryptoPaymentMethodMappingTest {
         // Then
         assertEquals("XMR", result.code)
         assertEquals("Monero", result.name)
-        assertEquals("PRIVACY", result.category)
         assertEquals(true, result.supportAutoConf)
         assertEquals("5000.00", result.tradeLimitInfo)
         assertEquals("4 days", result.tradeDuration)

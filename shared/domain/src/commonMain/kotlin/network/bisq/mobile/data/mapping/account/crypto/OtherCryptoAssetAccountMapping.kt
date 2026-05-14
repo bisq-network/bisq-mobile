@@ -2,6 +2,10 @@ package network.bisq.mobile.data.mapping.account.crypto
 
 import network.bisq.mobile.data.model.account.crypto.OtherCryptoAssetAccountDto
 import network.bisq.mobile.data.model.account.crypto.OtherCryptoAssetAccountPayloadDto
+import network.bisq.mobile.data.model.account.crypto.create.CreateOtherCryptoAssetAccountDto
+import network.bisq.mobile.data.model.account.crypto.create.CreateOtherCryptoAssetAccountPayloadDto
+import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccount
+import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccountPayload
 
@@ -11,15 +15,6 @@ fun OtherCryptoAssetAccountDto.toDomain(): OtherCryptoAssetAccount =
         accountPayload = accountPayload.toDomain(),
         creationDate = creationDate,
         tradeLimitInfo = tradeLimitInfo,
-        tradeDuration = tradeDuration,
-    )
-
-fun OtherCryptoAssetAccount.toDto(): OtherCryptoAssetAccountDto =
-    OtherCryptoAssetAccountDto(
-        accountName = accountName,
-        accountPayload = accountPayload.toDto(),
-        tradeLimitInfo = tradeLimitInfo,
-        creationDate = creationDate,
         tradeDuration = tradeDuration,
     )
 
@@ -36,15 +31,19 @@ fun OtherCryptoAssetAccountPayloadDto.toDomain(): OtherCryptoAssetAccountPayload
         supportAutoConf = supportAutoConf,
     )
 
-fun OtherCryptoAssetAccountPayload.toDto(): OtherCryptoAssetAccountPayloadDto =
-    OtherCryptoAssetAccountPayloadDto(
-        currencyName = currencyName,
+fun CreateOtherCryptoAssetAccount.toDto(): CreateOtherCryptoAssetAccountDto =
+    CreateOtherCryptoAssetAccountDto(
+        accountName = accountName,
+        accountPayload = accountPayload.toDto(),
+    )
+
+fun CreateOtherCryptoAssetAccountPayload.toDto(): CreateOtherCryptoAssetAccountPayloadDto =
+    CreateOtherCryptoAssetAccountPayloadDto(
+        currencyCode = currencyCode,
         address = address,
         isInstant = isInstant,
         isAutoConf = isAutoConf,
         autoConfNumConfirmations = autoConfNumConfirmations,
         autoConfMaxTradeAmount = autoConfMaxTradeAmount,
         autoConfExplorerUrls = autoConfExplorerUrls,
-        currencyCode = currencyCode,
-        supportAutoConf = supportAutoConf,
     )

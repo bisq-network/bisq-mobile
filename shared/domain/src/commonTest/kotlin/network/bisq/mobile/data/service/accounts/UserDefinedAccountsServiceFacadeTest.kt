@@ -8,7 +8,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.di.testModule
-import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import org.koin.core.context.startKoin
@@ -40,8 +41,6 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "accountA@example.com",
-                    currency = "USD",
-                    country = "United States",
                     paymentMethodName = "PayPal",
                 ),
         )
@@ -52,11 +51,13 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             accountPayload =
                 UserDefinedFiatAccountPayload(
                     accountData = "accountB@example.com",
-                    currency = "EUR",
-                    country = "Germany",
                     paymentMethodName = "Bank Transfer",
                 ),
         )
+
+    private val createAccountA = accountA.toCreateAccount()
+
+    private val createAccountB = accountB.toCreateAccount()
 
     private val accountC =
         UserDefinedFiatAccount(
@@ -265,11 +266,11 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.getAccounts()
             advanceUntilIdle()
 
-            testFacade.mockExecuteAddAccount = { Result.success(Unit) }
+            testFacade.mockExecuteAddAccount = { Result.success(accountB) }
             testFacade.mockExecuteSetSelectedAccount = { Result.success(Unit) }
 
             // When - add Account B (should be inserted in middle)
-            val result = testFacade.addAccount(accountB)
+            val result = testFacade.addAccount(createAccountB)
             advanceUntilIdle()
 
             // Then
@@ -286,11 +287,11 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
     fun `when addAccount to empty list then adds and selects it`() =
         runTest(testDispatcher) {
             // Given - empty state
-            testFacade.mockExecuteAddAccount = { Result.success(Unit) }
+            testFacade.mockExecuteAddAccount = { Result.success(accountA) }
             testFacade.mockExecuteSetSelectedAccount = { Result.success(Unit) }
 
             // When
-            val result = testFacade.addAccount(accountA)
+            val result = testFacade.addAccount(createAccountA)
             advanceUntilIdle()
 
             // Then
@@ -314,7 +315,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteAddAccount = { Result.failure(exception) }
 
             // When
-            val result = testFacade.addAccount(accountB)
+            val result = testFacade.addAccount(createAccountB)
             advanceUntilIdle()
 
             // Then
@@ -328,7 +329,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
     fun `when addAccount succeeds then calls setSelectedAccountIndex`() =
         runTest(testDispatcher) {
             // Given
-            testFacade.mockExecuteAddAccount = { Result.success(Unit) }
+            testFacade.mockExecuteAddAccount = { Result.success(accountA) }
             var setSelectedAccountIndexCalled = false
             var capturedIndex = -1
             testFacade.mockExecuteSetSelectedAccount = {
@@ -338,7 +339,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             }
 
             // When
-            testFacade.addAccount(accountA)
+            testFacade.addAccount(createAccountA)
             advanceUntilIdle()
 
             // Then
@@ -363,18 +364,15 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
 
             // Create updated account with new name
             val updatedAccount =
-                UserDefinedFiatAccount(
+                CreateUserDefinedFiatAccount(
                     accountName = "Account Z Updated",
                     accountPayload =
-                        UserDefinedFiatAccountPayload(
+                        CreateUserDefinedFiatAccountPayload(
                             accountData = "updated@example.com",
-                            currency = "EUR",
-                            country = "Germany",
-                            paymentMethodName = "Bank Transfer",
                         ),
                 )
 
-            testFacade.mockExecuteSaveAccount = { _, _ -> Result.success(Unit) }
+            testFacade.mockExecuteSaveAccount = { _, account -> Result.success(account.toPersistedAccount()) }
 
             // When
             val result = testFacade.saveAccount(updatedAccount)
@@ -396,14 +394,11 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
         runTest(testDispatcher) {
             // Given - no selected account (index -1)
             val updatedAccount =
-                UserDefinedFiatAccount(
+                CreateUserDefinedFiatAccount(
                     accountName = "Updated",
                     accountPayload =
-                        UserDefinedFiatAccountPayload(
+                        CreateUserDefinedFiatAccountPayload(
                             accountData = "test@example.com",
-                            currency = "USD",
-                            country = "United States",
-                            paymentMethodName = "PayPal",
                         ),
                 )
 
@@ -432,7 +427,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteSaveAccount = { _, _ -> Result.failure(exception) }
 
             // When
-            val result = testFacade.saveAccount(accountA)
+            val result = testFacade.saveAccount(createAccountA)
             advanceUntilIdle()
 
             // Then
@@ -458,7 +453,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteDeleteAccount = { Result.success(Unit) }
 
             // When - delete accountC (not selected)
-            val result = testFacade.deleteAccount(accountC)
+            val result = testFacade.deleteAccount(accountC.accountName)
             advanceUntilIdle()
 
             // Then
@@ -486,7 +481,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteDeleteAccount = { Result.success(Unit) }
 
             // When - delete selected accountB
-            val result = testFacade.deleteAccount(accountB)
+            val result = testFacade.deleteAccount(accountB.accountName)
             advanceUntilIdle()
 
             // Then
@@ -513,7 +508,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteDeleteAccount = { Result.success(Unit) }
 
             // When - delete the only account
-            val result = testFacade.deleteAccount(accountA)
+            val result = testFacade.deleteAccount(accountA.accountName)
             advanceUntilIdle()
 
             // Then
@@ -536,7 +531,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteDeleteAccount = { Result.failure(exception) }
 
             // When
-            val result = testFacade.deleteAccount(accountA)
+            val result = testFacade.deleteAccount(accountA.accountName)
             advanceUntilIdle()
 
             // Then
@@ -566,7 +561,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.mockExecuteDeleteAccount = { Result.success(Unit) }
 
             // When - delete selected account
-            testFacade.deleteAccount(accountA)
+            testFacade.deleteAccount(accountA.accountName)
             advanceUntilIdle()
 
             // Then - should call setSelectedAccountIndex
@@ -587,9 +582,9 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             testFacade.setSelectedAccountIndex(0) // Select first
             advanceUntilIdle()
 
-            var capturedAccount: PaymentAccount? = null
-            testFacade.mockExecuteSetSelectedAccount = { account ->
-                capturedAccount = account
+            var capturedAccountName: String? = null
+            testFacade.mockExecuteSetSelectedAccount = { accountName ->
+                capturedAccountName = accountName
                 Result.success(Unit)
             }
 
@@ -601,8 +596,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             assertTrue(result.isSuccess)
             val state = testFacade.accountState.value
             assertEquals(1, state.selectedAccountIndex)
-            val captured = requireNotNull(capturedAccount)
-            assertEquals("Account B", captured.accountName)
+            assertEquals("Account B", capturedAccountName)
         }
 
     @Test
@@ -772,7 +766,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
         runTest(testDispatcher) {
             // Given
             testFacade.mockExecuteGetAccounts = { Result.success(listOf(accountA)) }
-            testFacade.mockExecuteAddAccount = { Result.success(Unit) }
+            testFacade.mockExecuteAddAccount = { Result.success(accountB) }
             testFacade.mockExecuteSetSelectedAccount = { Result.success(Unit) }
 
             // When - perform operations and verify state after each
@@ -782,7 +776,7 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             val stateAfterGet = testFacade.accountState.value
             assertEquals(1, stateAfterGet.accounts.size)
 
-            testFacade.addAccount(accountB)
+            testFacade.addAccount(createAccountB)
             advanceUntilIdle()
 
             // Then - verify final state has both accounts
@@ -791,6 +785,18 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
             assertEquals("Account A", finalState.accounts[0].accountName)
             assertEquals("Account B", finalState.accounts[1].accountName)
         }
+
+    private fun UserDefinedFiatAccount.toCreateAccount(): CreateUserDefinedFiatAccount =
+        CreateUserDefinedFiatAccount(
+            accountName = accountName,
+            accountPayload = CreateUserDefinedFiatAccountPayload(accountData = accountPayload.accountData),
+        )
+
+    private fun CreateUserDefinedFiatAccount.toPersistedAccount(): UserDefinedFiatAccount =
+        UserDefinedFiatAccount(
+            accountName = accountName,
+            accountPayload = UserDefinedFiatAccountPayload(accountData = accountPayload.accountData),
+        )
 
     // ========== Test Implementation ==========
 
@@ -805,32 +811,46 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
         var mockExecuteGetSelectedAccount: () -> Result<UserDefinedFiatAccount?> =
             { Result.success(null) }
 
-        var mockExecuteAddAccount: (UserDefinedFiatAccount) -> Result<Unit> =
+        var mockExecuteAddAccount: (CreateUserDefinedFiatAccount) -> Result<UserDefinedFiatAccount> =
+            { account ->
+                Result.success(
+                    UserDefinedFiatAccount(
+                        accountName = account.accountName,
+                        accountPayload = UserDefinedFiatAccountPayload(accountData = account.accountPayload.accountData),
+                    ),
+                )
+            }
+
+        var mockExecuteSaveAccount: (String, CreateUserDefinedFiatAccount) -> Result<UserDefinedFiatAccount> =
+            { _, account ->
+                Result.success(
+                    UserDefinedFiatAccount(
+                        accountName = account.accountName,
+                        accountPayload = UserDefinedFiatAccountPayload(accountData = account.accountPayload.accountData),
+                    ),
+                )
+            }
+
+        var mockExecuteDeleteAccount: (String) -> Result<Unit> =
             { Result.success(Unit) }
 
-        var mockExecuteSaveAccount: (String, UserDefinedFiatAccount) -> Result<Unit> =
-            { _, _ -> Result.success(Unit) }
-
-        var mockExecuteDeleteAccount: (UserDefinedFiatAccount) -> Result<Unit> =
-            { Result.success(Unit) }
-
-        var mockExecuteSetSelectedAccount: (UserDefinedFiatAccount) -> Result<Unit> =
+        var mockExecuteSetSelectedAccount: (String) -> Result<Unit> =
             { Result.success(Unit) }
 
         override suspend fun executeGetAccounts(): Result<List<UserDefinedFiatAccount>> = mockExecuteGetAccounts()
 
         override suspend fun executeGetSelectedAccount(): Result<UserDefinedFiatAccount?> = mockExecuteGetSelectedAccount()
 
-        override suspend fun executeAddAccount(account: UserDefinedFiatAccount): Result<Unit> = mockExecuteAddAccount(account)
+        override suspend fun executeAddAccount(account: CreateUserDefinedFiatAccount): Result<UserDefinedFiatAccount> = mockExecuteAddAccount(account)
 
         override suspend fun executeSaveAccount(
             accountName: String,
-            account: UserDefinedFiatAccount,
-        ): Result<Unit> = mockExecuteSaveAccount(accountName, account)
+            account: CreateUserDefinedFiatAccount,
+        ): Result<UserDefinedFiatAccount> = mockExecuteSaveAccount(accountName, account)
 
-        override suspend fun executeDeleteAccount(account: UserDefinedFiatAccount): Result<Unit> = mockExecuteDeleteAccount(account)
+        override suspend fun executeDeleteAccount(accountName: String): Result<Unit> = mockExecuteDeleteAccount(accountName)
 
-        override suspend fun executeSetSelectedAccount(account: UserDefinedFiatAccount): Result<Unit> = mockExecuteSetSelectedAccount(account)
+        override suspend fun executeSetSelectedAccount(accountName: String): Result<Unit> = mockExecuteSetSelectedAccount(accountName)
 
         // Expose protected methods for testing
         fun testGetSortedAccounts(accounts: List<UserDefinedFiatAccount>) = getSortedAccounts(accounts)

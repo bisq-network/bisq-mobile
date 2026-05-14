@@ -2,6 +2,7 @@ package network.bisq.mobile.client.common.domain.service.accounts.user_defined
 
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
+import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountDto
 import network.bisq.mobile.data.utils.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
 
@@ -12,7 +13,7 @@ class UserDefinedPaymentAccountsApiGateway(
 
     suspend fun getPaymentAccounts(): Result<List<UserDefinedFiatAccountDto>> = webSocketApiClient.get(basePath)
 
-    suspend fun addAccount(account: UserDefinedFiatAccountDto): Result<UserDefinedFiatAccountDto> {
+    suspend fun addAccount(account: CreateUserDefinedFiatAccountDto): Result<UserDefinedFiatAccountDto> {
         val addUserDefinedAccountRequest = AddUserDefinedAccountRequest(account = account)
         return webSocketApiClient.post(basePath, addUserDefinedAccountRequest)
     }
@@ -22,18 +23,18 @@ class UserDefinedPaymentAccountsApiGateway(
         return webSocketApiClient.delete("$basePath?accountName=$parsedAccountName")
     }
 
-    suspend fun setSelectedAccount(account: UserDefinedFiatAccountDto): Result<Unit> =
+    suspend fun setSelectedAccount(accountName: String): Result<Unit> =
         webSocketApiClient.patch(
             "$basePath/selected",
-            SetSelectedUserDefinedAccountRequest(account),
+            SetSelectedUserDefinedAccountRequest(accountName),
         )
 
     suspend fun getSelectedAccount(): Result<UserDefinedFiatAccountDto?> = webSocketApiClient.getNullable("$basePath/selected")
 
     suspend fun saveAccount(
         accountName: String,
-        account: UserDefinedFiatAccountDto,
-    ): Result<Unit> {
+        account: CreateUserDefinedFiatAccountDto,
+    ): Result<UserDefinedFiatAccountDto> {
         val parsedAccountName = encodeURIParam(accountName)
         return webSocketApiClient.put(
             "$basePath?accountName=$parsedAccountName",

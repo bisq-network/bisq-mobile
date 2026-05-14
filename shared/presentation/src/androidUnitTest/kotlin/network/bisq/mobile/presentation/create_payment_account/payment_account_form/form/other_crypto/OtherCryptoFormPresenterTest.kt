@@ -10,14 +10,13 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.CryptoAccountFormUiAction
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -164,11 +163,6 @@ class OtherCryptoFormPresenterTest {
             assertEquals(1L, payload.autoConfMaxTradeAmount)
             assertEquals("https://explorer.eth", payload.autoConfExplorerUrls)
             assertEquals("ETH", payload.currencyCode)
-            assertEquals("Ethereum", payload.currencyName)
-            assertTrue(payload.supportAutoConf)
-            assertEquals("5000.00", account.tradeLimitInfo)
-            assertEquals("4 days", account.tradeDuration)
-            assertNull(account.creationDate)
         }
 
     @Test
@@ -199,9 +193,8 @@ class OtherCryptoFormPresenterTest {
             assertNull(payload.autoConfExplorerUrls)
         }
 
-    private fun samplePaymentMethod(): CryptoPaymentMethodVO =
-        CryptoPaymentMethodVO(
-            paymentType = PaymentTypeVO.ETH,
+    private fun samplePaymentMethod(): CryptoPaymentMethod =
+        CryptoPaymentMethod(
             code = "ETH",
             name = "Ethereum",
             supportAutoConf = true,

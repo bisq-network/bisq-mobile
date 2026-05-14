@@ -6,6 +6,7 @@ import network.bisq.mobile.data.mapping.account.toDomain
 import network.bisq.mobile.data.mapping.account.toDto
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 
@@ -17,22 +18,14 @@ class ClientPaymentAccountsServiceFacade(
             apiGateway.getPaymentAccounts().getOrThrow().map { it.toDomain() }
         }
 
-    override suspend fun executeAddAccount(account: PaymentAccount): Result<PaymentAccount> =
+    override suspend fun executeAddAccount(account: CreatePaymentAccount): Result<PaymentAccount> =
         runCatching {
             apiGateway.addAccount(account.toDto()).getOrThrow().toDomain()
         }
 
-    override suspend fun executeSaveAccount(
-        accountName: String,
-        account: PaymentAccount,
-    ): Result<Unit> =
+    override suspend fun executeDeleteAccount(accountName: String): Result<Unit> =
         runCatching {
-            apiGateway.saveAccount(accountName, account.toDto()).getOrThrow()
-        }
-
-    override suspend fun executeDeleteAccount(account: PaymentAccount): Result<Unit> =
-        runCatching {
-            apiGateway.deleteAccount(account.accountName).getOrThrow()
+            apiGateway.deleteAccount(accountName).getOrThrow()
         }
 
     override suspend fun executeGetFiatPaymentMethods(): Result<List<FiatPaymentMethod>> =

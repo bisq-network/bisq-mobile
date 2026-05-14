@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.domain.service.accounts.user_defined
 import network.bisq.mobile.data.mapping.account.fiat.toDomain
 import network.bisq.mobile.data.mapping.account.fiat.toDto
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 
 class ClientUserDefinedAccountsServiceFacade(
@@ -18,26 +19,26 @@ class ClientUserDefinedAccountsServiceFacade(
             apiGateway.getSelectedAccount().getOrThrow()?.toDomain()
         }
 
-    override suspend fun executeAddAccount(account: UserDefinedFiatAccount): Result<Unit> =
+    override suspend fun executeAddAccount(account: CreateUserDefinedFiatAccount): Result<UserDefinedFiatAccount> =
         runCatching {
-            apiGateway.addAccount(account.toDto()).getOrThrow()
+            apiGateway.addAccount(account.toDto()).getOrThrow().toDomain()
         }
 
     override suspend fun executeSaveAccount(
         accountName: String,
-        account: UserDefinedFiatAccount,
-    ): Result<Unit> =
+        account: CreateUserDefinedFiatAccount,
+    ): Result<UserDefinedFiatAccount> =
         runCatching {
-            apiGateway.saveAccount(accountName, account.toDto()).getOrThrow()
+            apiGateway.saveAccount(accountName, account.toDto()).getOrThrow().toDomain()
         }
 
-    override suspend fun executeDeleteAccount(account: UserDefinedFiatAccount): Result<Unit> =
+    override suspend fun executeDeleteAccount(accountName: String): Result<Unit> =
         runCatching {
-            apiGateway.deleteAccount(account.accountName).getOrThrow()
+            apiGateway.deleteAccount(accountName).getOrThrow()
         }
 
-    override suspend fun executeSetSelectedAccount(account: UserDefinedFiatAccount): Result<Unit> =
+    override suspend fun executeSetSelectedAccount(accountName: String): Result<Unit> =
         runCatching {
-            apiGateway.setSelectedAccount(account.toDto()).getOrThrow()
+            apiGateway.setSelectedAccount(accountName).getOrThrow()
         }
 }

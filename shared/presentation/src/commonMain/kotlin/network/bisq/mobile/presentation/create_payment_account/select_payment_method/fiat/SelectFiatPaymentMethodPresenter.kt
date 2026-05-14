@@ -8,8 +8,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.FiatPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.toVO
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -28,6 +31,7 @@ class SelectFiatPaymentMethodPresenter(
     val effect = _effect.asSharedFlow()
 
     private var allFiatPaymentMethods: List<FiatPaymentMethodVO> = emptyList()
+    private var fiatPaymentMethodByPaymentType: Map<String, FiatPaymentMethod> = emptyMap()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -40,6 +44,7 @@ class SelectFiatPaymentMethodPresenter(
             paymentAccountsServiceFacade
                 .getFiatPaymentMethods()
                 .onSuccess { paymentMethods ->
+                    fiatPaymentMethodByPaymentType = paymentMethods.associateBy { it.paymentRail.name }
                     allFiatPaymentMethods = paymentMethods.mapNotNull { it.toVO() }
                     val query = _uiState.value.searchQuery
                     val riskFilter = _uiState.value.activeRiskFilter
@@ -119,9 +124,24 @@ class SelectFiatPaymentMethodPresenter(
     }
 
     private fun onNextClick() {
-        val selectedPaymentMethod = _uiState.value.selectedPaymentMethod ?: return
+        fun showSelectionError() {
+            showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
+        }
+
+        val selectedPaymentMethod =
+            _uiState.value.selectedPaymentMethod ?: run {
+                showSelectionError()
+                return
+            }
+
+        val selectedDomainPaymentMethod =
+            fiatPaymentMethodByPaymentType[selectedPaymentMethod.paymentType.name] ?: run {
+                showSelectionError()
+                return
+            }
+
         presenterScope.launch {
-            _effect.emit(SelectFiatPaymentMethodEffect.NavigateToNextScreen(selectedPaymentMethod))
+            _effect.emit(SelectFiatPaymentMethodEffect.NavigateToNextScreen(selectedDomainPaymentMethod))
         }
     }
 

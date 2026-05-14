@@ -8,7 +8,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.toVO
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -26,6 +29,7 @@ class SelectCryptoPaymentMethodPresenter(
     private val _effect = MutableSharedFlow<SelectCryptoPaymentMethodEffect>()
     val effect = _effect.asSharedFlow()
     private var allCryptoPaymentMethods: List<CryptoPaymentMethodVO> = emptyList()
+    private var cryptoPaymentMethodByCode: Map<String, CryptoPaymentMethod> = emptyMap()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -38,6 +42,7 @@ class SelectCryptoPaymentMethodPresenter(
             paymentAccountsServiceFacade
                 .getCryptoPaymentMethods()
                 .onSuccess { cryptoPaymentMethods ->
+                    cryptoPaymentMethodByCode = cryptoPaymentMethods.associateBy { it.code }
                     allCryptoPaymentMethods = cryptoPaymentMethods.mapNotNull { it.toVO() }
                     val query = _uiState.value.searchQuery
                     val filteredCryptoPaymentMethods = filterCryptoPaymentMethods(query)
@@ -95,9 +100,24 @@ class SelectCryptoPaymentMethodPresenter(
     }
 
     private fun onNextClick() {
-        val selectedPaymentMethod = _uiState.value.selectedPaymentMethod ?: return
+        fun showSelectionError() {
+            showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
+        }
+
+        val selectedPaymentMethod =
+            _uiState.value.selectedPaymentMethod ?: run {
+                showSelectionError()
+                return
+            }
+
+        val selectedDomainPaymentMethod =
+            cryptoPaymentMethodByCode[selectedPaymentMethod.code] ?: run {
+                showSelectionError()
+                return
+            }
+
         presenterScope.launch {
-            _effect.emit(SelectCryptoPaymentMethodEffect.NavigateToNextScreen(selectedPaymentMethod))
+            _effect.emit(SelectCryptoPaymentMethodEffect.NavigateToNextScreen(selectedDomainPaymentMethod))
         }
     }
 

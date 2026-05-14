@@ -17,6 +17,8 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountDto
+import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.utils.encodeURIParam
 import org.junit.After
 import org.junit.Test
@@ -75,7 +77,11 @@ class PaymentAccountsApiGatewayTest {
                         }
                         """.trimIndent(),
                 )
-            val account = sampleAccountDto(accountName = "Account One", accountData = "alice@example.com")
+            val account =
+                CreateUserDefinedFiatAccountDto(
+                    accountName = "Account One",
+                    accountPayload = CreateUserDefinedFiatAccountPayloadDto(accountData = "alice@example.com"),
+                )
 
             // When
             val result = gateway.addAccount(account)
@@ -106,29 +112,6 @@ class PaymentAccountsApiGatewayTest {
             assertTrue(result.isSuccess)
             assertEquals("DELETE", requestSlot.captured.method)
             assertEquals("/api/v1/payment-accounts?accountName=My%20Account%201", requestSlot.captured.path)
-        }
-
-    @Test
-    fun `when saveAccount then delegates PUT request with account payload`() =
-        runTest {
-            // Given
-            mockkStatic(::encodeURIParam)
-            every { encodeURIParam("Saved Account") } returns "Saved%20Account"
-            val requestSlot = slot<WebSocketRestApiRequest>()
-            coEvery {
-                webSocketClientService.sendRequestAndAwaitResponse(capture(requestSlot))
-            } returns WebSocketRestApiResponse(requestId = "request-1", statusCode = HttpStatusCode.NoContent.value, body = "")
-            val account = sampleAccountDto(accountName = "Saved Account", accountData = "save@example.com")
-
-            // When
-            val result = gateway.saveAccount("Saved Account", account)
-
-            // Then
-            assertTrue(result.isSuccess)
-            assertEquals("PUT", requestSlot.captured.method)
-            assertEquals("/api/v1/payment-accounts?accountName=Saved%20Account", requestSlot.captured.path)
-            assertTrue(requestSlot.captured.body.contains("\"accountName\":\"Saved Account\""))
-            assertTrue(requestSlot.captured.body.contains("\"accountData\":\"save@example.com\""))
         }
 
     @Test

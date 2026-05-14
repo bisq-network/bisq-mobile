@@ -6,8 +6,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
-import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -165,11 +166,11 @@ open class PaymentAccountsPresenter(
     private fun createAccount(
         name: String,
         description: String,
-    ): UserDefinedFiatAccount =
-        UserDefinedFiatAccount(
+    ): CreateUserDefinedFiatAccount =
+        CreateUserDefinedFiatAccount(
             accountName = name,
             accountPayload =
-                UserDefinedFiatAccountPayload(
+                CreateUserDefinedFiatAccountPayload(
                     accountData = description,
                 ),
         )
@@ -234,7 +235,7 @@ open class PaymentAccountsPresenter(
         presenterScope.launch {
             showLoading()
             userDefinedAccountsServiceFacade
-                .deleteAccount(selectedAccount)
+                .deleteAccount(selectedAccount.accountName)
                 .onSuccess {
                     showSnackbar(
                         "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),

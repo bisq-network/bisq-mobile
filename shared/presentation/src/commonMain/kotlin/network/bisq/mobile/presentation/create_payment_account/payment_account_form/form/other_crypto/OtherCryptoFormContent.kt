@@ -8,21 +8,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import network.bisq.mobile.domain.model.account.PaymentAccount
-import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
+import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CommonCryptoFormSection
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormUiState
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 
 @Composable
-fun OtherCryptoPaymentAccountFormContent(
+fun OtherCryptoFormContent(
     presenter: OtherCryptoFormPresenter,
-    paymentMethod: CryptoPaymentMethodVO,
-    onNavigateToNextScreen: (PaymentAccount) -> Unit,
+    paymentMethod: CryptoPaymentMethod,
+    onNavigateToNextScreen: (CreatePaymentAccount) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by presenter.uiState.collectAsState()
@@ -49,9 +48,9 @@ fun OtherCryptoPaymentAccountFormContent(
 }
 
 @Composable
-fun OtherCryptoFormContent(
+private fun OtherCryptoFormContent(
     uiState: OtherCryptoFormUiState,
-    paymentMethod: CryptoPaymentMethodVO,
+    paymentMethod: CryptoPaymentMethod,
     onAction: (AccountFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -67,9 +66,8 @@ fun OtherCryptoFormContent(
 
 private fun previewPaymentMethod(
     supportAutoConf: Boolean,
-): CryptoPaymentMethodVO =
-    CryptoPaymentMethodVO(
-        paymentType = PaymentTypeVO.ETH,
+): CryptoPaymentMethod =
+    CryptoPaymentMethod(
         code = "ETH",
         name = "Ethereum",
         supportAutoConf = supportAutoConf,

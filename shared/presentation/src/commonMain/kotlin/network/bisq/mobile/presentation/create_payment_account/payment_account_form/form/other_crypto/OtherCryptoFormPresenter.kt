@@ -8,11 +8,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
-import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccountPayload
+import network.bisq.mobile.domain.model.account.PaymentMethod
+import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccount
+import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccountPayload
+import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.crypto.CryptoAccountFormUiState
-import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
 import network.bisq.mobile.presentation.main.MainPresenter
 
 open class OtherCryptoFormPresenter(
@@ -24,9 +26,9 @@ open class OtherCryptoFormPresenter(
     private val _effect = MutableSharedFlow<OtherCryptoFormEffect>()
     val effect = _effect.asSharedFlow()
 
-    lateinit var paymentMethod: CryptoPaymentMethodVO
+    lateinit var paymentMethod: CryptoPaymentMethod
 
-    fun initialize(paymentMethod: CryptoPaymentMethodVO) {
+    fun initialize(paymentMethod: CryptoPaymentMethod) {
         this.paymentMethod = paymentMethod
     }
 
@@ -60,7 +62,7 @@ open class OtherCryptoFormPresenter(
         }
 
         val payload =
-            OtherCryptoAssetAccountPayload(
+            CreateOtherCryptoAssetAccountPayload(
                 address =
                     validatedState.crypto.addressEntry.value
                         .trim(),
@@ -91,20 +93,15 @@ open class OtherCryptoFormPresenter(
                         null
                     },
                 currencyCode = paymentMethod.code,
-                currencyName = paymentMethod.name,
-                supportAutoConf = paymentMethod.supportAutoConf,
             )
 
         presenterScope.launch {
             _effect.emit(
                 OtherCryptoFormEffect.NavigateToNextScreen(
                     account =
-                        OtherCryptoAssetAccount(
+                        CreateOtherCryptoAssetAccount(
                             accountName = uniqueAccountNameEntry.value.value.trim(),
                             accountPayload = payload,
-                            creationDate = null,
-                            tradeLimitInfo = paymentMethod.tradeLimitInfo,
-                            tradeDuration = paymentMethod.tradeDuration,
                         ),
                 ),
             )

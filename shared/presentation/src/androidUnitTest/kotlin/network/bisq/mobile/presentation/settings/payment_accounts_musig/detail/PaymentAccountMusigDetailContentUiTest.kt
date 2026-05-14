@@ -330,8 +330,6 @@ class PaymentAccountMusigDetailContentUiTest {
                 UserDefinedFiatAccountPayload(
                     paymentMethodName = "Bank Transfer",
                     accountData = "IBAN: DE89370400440532013000",
-                    currency = "EUR",
-                    country = "Germany",
                 ),
             creationDate = null,
             tradeLimitInfo = null,

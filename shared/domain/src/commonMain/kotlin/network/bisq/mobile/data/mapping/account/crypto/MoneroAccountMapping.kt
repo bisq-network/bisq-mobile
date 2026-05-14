@@ -2,6 +2,10 @@ package network.bisq.mobile.data.mapping.account.crypto
 
 import network.bisq.mobile.data.model.account.crypto.MoneroAccountDto
 import network.bisq.mobile.data.model.account.crypto.MoneroAccountPayloadDto
+import network.bisq.mobile.data.model.account.crypto.create.CreateMoneroAccountDto
+import network.bisq.mobile.data.model.account.crypto.create.CreateMoneroAccountPayloadDto
+import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccount
+import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 
@@ -9,15 +13,6 @@ fun MoneroAccountDto.toDomain(): MoneroAccount =
     MoneroAccount(
         accountName = accountName,
         accountPayload = accountPayload.toDomain(),
-        creationDate = creationDate,
-        tradeLimitInfo = tradeLimitInfo,
-        tradeDuration = tradeDuration,
-    )
-
-fun MoneroAccount.toDto(): MoneroAccountDto =
-    MoneroAccountDto(
-        accountName = accountName,
-        accountPayload = accountPayload.toDto(),
         creationDate = creationDate,
         tradeLimitInfo = tradeLimitInfo,
         tradeDuration = tradeDuration,
@@ -42,10 +37,14 @@ fun MoneroAccountPayloadDto.toDomain(): MoneroAccountPayload =
         currencyCode = currencyCode,
     )
 
-fun MoneroAccountPayload.toDto(): MoneroAccountPayloadDto =
-    MoneroAccountPayloadDto(
-        currencyName = currencyName,
-        currencyCode = currencyCode,
+fun CreateMoneroAccount.toDto(): CreateMoneroAccountDto =
+    CreateMoneroAccountDto(
+        accountName = accountName,
+        accountPayload = accountPayload.toDto(),
+    )
+
+fun CreateMoneroAccountPayload.toDto(): CreateMoneroAccountPayloadDto =
+    CreateMoneroAccountPayloadDto(
         address = address,
         isInstant = isInstant,
         isAutoConf = isAutoConf,
@@ -58,5 +57,4 @@ fun MoneroAccountPayload.toDto(): MoneroAccountPayloadDto =
         subAddress = subAddress,
         accountIndex = accountIndex,
         initialSubAddressIndex = initialSubAddressIndex,
-        supportAutoConf = supportAutoConf,
     )
