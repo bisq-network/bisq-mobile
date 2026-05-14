@@ -13,6 +13,22 @@ import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 
+/**
+ * ios specific function
+ * On Android (OkHttp engine) this is a no-op because OkHttp's `Dispatcher.cancelAll()` is already
+ * called by `HttpClient.close()` and the connection pool is per-OkHttpClient.
+ */
+actual fun HttpClient.invalidateUnderlyingSession() {
+    // intentionally empty
+}
+
+/**
+ * ios specific function
+ */
+actual fun HttpClient.releaseUnderlyingSessionTracking() {
+    // intentionally empty
+}
+
 actual fun createHttpClient(
     host: String,
     tlsFingerprint: String?,

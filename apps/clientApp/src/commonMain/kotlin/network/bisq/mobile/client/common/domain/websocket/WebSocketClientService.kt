@@ -29,6 +29,7 @@ import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.utils.invalidateUnderlyingSession
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
@@ -491,6 +492,10 @@ class WebSocketClientService(
             stateCollectionJob?.cancel()
             stateCollectionJob = null
 
+            // BEFORE we dispose() the WebSocketClient, forcibly invalidate the iOS
+            // NSURLSession that backs its HttpClient.
+            httpClientService.peekClient()?.invalidateUnderlyingSession()
+
             // Dispose current client and clear settings so updateWebSocketClient
             // treats the next call as a fresh configuration.
             val oldClient = currentClient.value
@@ -660,6 +665,10 @@ class WebSocketClientService(
             return error
         } finally {
             wsClient.dispose()
+            // Symmetric to HttpClientService.disposeClient(): invalidate the underlying
+            // NSURLSession on iOS so this ephemeral test client cannot leak a zombie task
+            // or pollute the next client's pool via a shared SOCKS connection slot.
+            httpClient.invalidateUnderlyingSession()
             httpClient.close()
         }
     }

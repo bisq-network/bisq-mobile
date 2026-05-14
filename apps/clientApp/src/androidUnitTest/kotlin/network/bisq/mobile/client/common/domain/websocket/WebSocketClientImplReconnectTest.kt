@@ -5,6 +5,8 @@ import io.ktor.http.Url
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.spyk
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
@@ -207,6 +209,62 @@ class WebSocketClientImplReconnectTest {
 
             // Then - should be able to retry again (counter was reset)
             assertTrue(connectCallCount >= 1)
+        }
+
+    @Test
+    fun `dispose preempts in-flight reconnect-launched connect rather than waiting on connectionMutex`() =
+        runTest(testDispatcher) {
+            // Reproduces (and locks in the fix for) the iOS forceClientRecreation
+            // pathology: with the previous dispose() ordering (disconnect() → clientScope.cancel()),
+            // a connect() suspended inside `connectionMutex.withLock { withTimeout(timeout) {
+            // httpClient.webSocketSession { ... } } }` blocked dispose() for up to
+            // the full connect timeout (~30s) waiting for withTimeout to fire and
+            // release the mutex.
+            //
+            // The fix cancels reconnectJob and clientScope BEFORE disconnect(), so
+            // the in-flight connect() launched by reconnect() inside clientScope
+            // is cancelled promptly. We verify it by observing that the
+            // CancellationException reaches the connect() coroutine body.
+            val httpClient = mockk<HttpClient>(relaxed = true)
+            val isolatedClientScope = CoroutineScope(testDispatcher + SupervisorJob())
+            val client =
+                spyk(
+                    WebSocketClientImpl(
+                        httpClient = httpClient,
+                        json = json,
+                        apiUrl = apiUrl,
+                        sessionId = "session-id",
+                        clientId = "client-id",
+                        clientScope = isolatedClientScope,
+                    ),
+                )
+
+            var connectCalled = false
+            var connectCancelled = false
+            coEvery { client.connect(any()) } coAnswers {
+                connectCalled = true
+                try {
+                    delay(30_000)
+                    null
+                } catch (e: CancellationException) {
+                    connectCancelled = true
+                    throw e
+                }
+            }
+
+            client.reconnect()
+            testDispatcher.scheduler.advanceTimeBy(WebSocketClientImpl.DELAY_TO_RECONNECT + 100)
+            testDispatcher.scheduler.runCurrent()
+
+            assertTrue(connectCalled, "reconnect() must launch connect() inside clientScope before we can test cancellation")
+
+            client.dispose()
+            testDispatcher.scheduler.runCurrent()
+
+            assertTrue(
+                connectCancelled,
+                "dispose() must cancel the reconnect-launched connect() (the one that was holding connectionMutex on iOS)",
+            )
         }
 
     @Test

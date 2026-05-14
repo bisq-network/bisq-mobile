@@ -542,8 +542,23 @@ class WebSocketClientImpl(
     }
 
     override suspend fun dispose() {
+        // The previous order (disconnect → stopFlow → clientScope.cancel) caused
+        // dispose() to block for up to the connect timeout (≈29s) whenever it ran
+        // while a reconnect attempt was suspended inside
+        //     connectionMutex.withLock { withTimeout(timeout) {
+        //         httpClient.webSocketSession { ... }
+        //     } }
+        // because disconnect() also acquires connectionMutex.
+        //
+        // Cancelling the reconnect path BEFORE calling disconnect() releases the
+        // mutex instantly: the cancellation propagates through withTimeout,
+        // surfaces as CancellationException out of webSocketSession,
+        // and the suspended withLock unwinds.
+        val cancellation = CancellationException("WebSocket client disposed")
+        reconnectJob?.cancel(cancellation)
+        reconnectJob = null
+        clientScope.cancel(cancellation)
         disconnect()
         stopFlow.tryEmit(Unit)
-        clientScope.cancel(CancellationException("WebSocket client disposed"))
     }
 }
