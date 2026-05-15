@@ -108,8 +108,7 @@ fi
 
 mkdir -p "$OUT_DIR"
 SUMMARY_CSV="$OUT_DIR/summary.csv"
-SUMMARY_TMP="$OUT_DIR/.summary_rows.tsv"
-: > "$SUMMARY_TMP"
+echo "round,node_start_timestamp,app_connect_timestamp,duration_seconds,status" > "$SUMMARY_CSV"
 
 log_step() {
   echo "[$(date '+%H:%M:%S')] $*"
@@ -326,23 +325,16 @@ for round in $(seq 1 "$ROUNDS"); do
   node_start_ts="${t1_iso:-<missing>}"
   app_connect_ts="${t2_iso:-<missing>}"
   duration_value="${duration_sec:-<missing>}"
-  printf "%s\t%s\t%s\t%s\t%s\n" \
+  printf "%s,%s,%s,%s,%s\n" \
     "$round" \
     "$node_start_ts" \
     "$app_connect_ts" \
     "$duration_value" \
-    "$round_status" >> "$SUMMARY_TMP"
+    "$round_status" >> "$SUMMARY_CSV"
   echo "Saved: $local_round_file"
+  echo "Updated: $SUMMARY_CSV"
   echo
 done
-
-{
-  echo "round,node_start_timestamp,app_connect_timestamp,duration_seconds,status"
-  while IFS=$'\t' read -r round_num node_start app_connect duration status; do
-    echo "${round_num},${node_start},${app_connect},${duration},${status}"
-  done < "$SUMMARY_TMP"
-} > "$SUMMARY_CSV"
-rm -f "$SUMMARY_TMP"
 
 echo "Summary CSV: $SUMMARY_CSV"
 echo "Done. Logs directory: $OUT_DIR"
