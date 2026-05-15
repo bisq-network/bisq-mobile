@@ -120,6 +120,18 @@ class WebSocketClientImpl(
 
     override suspend fun connect(timeout: Long): Throwable? {
         connectionMutex.withLock {
+            // Guard: check the coroutine is still active immediately after acquiring
+            // the mutex. The lock may have been released by a proactive connect timing
+            // out at the exact moment forceClientRecreation() runs:
+            //   1. proactiveConnect releases connectionMutex (timeout)
+            //   2. forceClientRecreation() calls prepareForRecreation() → cancels
+            //      clientScope, then calls invalidateUnderlyingSession()
+            //   3. the reconnect coroutine (on cancelled clientScope) acquires the
+            //      mutex before Kotlin's cooperative cancellation can propagate
+            //   4. without this check, webSocketSession() calls
+            //      NSURLSession.webSocketTaskForRequest() on the now-invalidated
+            //      session → uncaught NSGenericException → app crash
+            currentCoroutineContext().ensureActive()
             try {
                 // websocket wont attempt a connect while connecting due to connectionMutex lock
                 // so we always reach here either in connected or disconnected state
@@ -129,11 +141,11 @@ class WebSocketClientImpl(
                 doDisconnect() // clean up state
                 log.d { "WS connecting to $apiUrl ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
-                val startTime = DateUtils.now()
                 val wsProtocol =
                     if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
                 val wsHost = apiUrl.host
                 val wsPort = apiUrl.port
+                val startTime = DateUtils.now()
                 val newSession =
                     withTimeout(timeout) {
                         httpClient.webSocketSession {
@@ -541,6 +553,18 @@ class WebSocketClientImpl(
         }
     }
 
+    @Volatile
+    private var preparedForRecreation = false
+
+    override fun prepareForRecreation() {
+        if (preparedForRecreation) return
+        preparedForRecreation = true
+        val cancellation = CancellationException("WebSocket client preparing for recreation")
+        reconnectJob?.cancel(cancellation)
+        reconnectJob = null
+        clientScope.cancel(cancellation)
+    }
+
     override suspend fun dispose() {
         // The previous order (disconnect → stopFlow → clientScope.cancel) caused
         // dispose() to block for up to the connect timeout (≈29s) whenever it ran
@@ -558,7 +582,11 @@ class WebSocketClientImpl(
         reconnectJob?.cancel(cancellation)
         reconnectJob = null
         clientScope.cancel(cancellation)
-        disconnect()
+        // disconnect() may have been short-circuited by an earlier
+        // prepareForRecreation() call (which cancels clientScope). Even so,
+        // calling it again is safe — it simply observes the cancelled state
+        // and unwinds quickly via the connectionMutex coroutine semantics.
+        runCatching { disconnect() }
         stopFlow.tryEmit(Unit)
     }
 }

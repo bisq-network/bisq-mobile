@@ -71,6 +71,13 @@ class WebSocketClientService(
     companion object {
         private const val SESSION_RENEWAL_COOLDOWN_MS = 30_000L
 
+        /**
+         * Cooldown between consecutive [forceClientRecreation] invocations triggered
+         * by the iOS connect-timeout fast-path. Prevents thrashing if the
+         * underlying network (Tor / SOCKS) is itself unhealthy.
+         */
+        internal const val IOS_CONNECT_TIMEOUT_RECREATION_COOLDOWN_MS = 30_000L
+
         // Initial subscriptions tracked for network banner:
         private val initialSubscriptionTypes =
             setOf(
@@ -82,6 +89,10 @@ class WebSocketClientService(
 
     @Volatile
     private var lastSessionRenewalAttemptMs = 0L
+
+    /** Tracks the timestamp of the last iOS-timeout-driven forceClientRecreation. */
+    @Volatile
+    private var lastIosTimeoutRecreationMs = 0L
 
     private val _clientRevoked = MutableStateFlow(false)
 
@@ -188,6 +199,8 @@ class WebSocketClientService(
         stateCollectionJob?.cancel()
         stateCollectionJob = null
         currentClient.value?.disconnect()
+        currentClient.value = null
+        currentClientSettings = null
         subscriptionMutex.withLock {
             subscriptionsAreApplied = false
             requestedSubscriptions.value.forEach { it.value.resetSequence() }
@@ -318,6 +331,23 @@ class WebSocketClientService(
                                 if (state.error is UnauthorizedApiAccessException) {
                                     // Session expired — renew and reconnect with fresh credentials
                                     serviceScope.launch { attemptSessionRenewal() }
+                                } else if (isIosConnectTimeout(state.error)) {
+                                    // iOS connect-timeout leaves a zombie NSURLSessionWebSocketTask
+                                    // alive on the underlying NSURLSession for up to 120s(transaction_duration_ms
+                                    // Subsequent connect() calls stack additional zombies on the same
+                                    // session, poisoning the Tor SOCKS pool until ClientConnectivityService
+                                    // fires forceClientRecreation after ~60s (IOS_FORCE_RECREATE_CYCLES=12).
+                                    // Trigger forceClientRecreation immediately to drain the zombie now.
+                                    val now = DateUtils.now()
+                                    val sinceLast = now - lastIosTimeoutRecreationMs
+                                    if (sinceLast > IOS_CONNECT_TIMEOUT_RECREATION_COOLDOWN_MS) {
+                                        lastIosTimeoutRecreationMs = now
+                                        log.e { "iOS WS connect timed out; forcing client recreation early" }
+                                        serviceScope.launch { forceClientRecreation() }
+                                    } else if (shouldAttemptReconnect(state.error)) {
+                                        log.e { "iOS WS connect timeout but recreation cooldown active; falling back to reconnect" }
+                                        newClient.reconnect()
+                                    }
                                 } else if (shouldAttemptReconnect(state.error)) {
                                     // We disconnected abnormally and we have not reached maximum retry
                                     newClient.reconnect()
@@ -342,6 +372,32 @@ class WebSocketClientService(
                 newClient.connect(timeout)
             }
         }
+    }
+
+    /**
+     * Detects whether [error] represents an iOS-platform connect timeout where the
+     * underlying [NSURLSessionWebSocketTask] is likely still alive holding a Tor SOCKS slot.
+     *
+     * Two cases are handled:
+     *
+     * 1. [TimeoutCancellationException] / "Timed out waiting": The Darwin engine does not
+     *    propagate Kotlin coroutine cancellation to the platform task, so a zombie
+     *    NSURLSessionWebSocketTask remains alive after the Kotlin timeout fires.
+     *
+     * 2. NSURLErrorDomain Code=-1000 "bad URL": The iOS Tor SOCKS proxy accepted the TCP
+     *    connection but returned SOCKS general-failure (status 1), meaning the proxy is up
+     *    but cannot route to the .onion destination (circuit not yet established). The task
+     *    is dead and the SOCKS connection slot is wasted. Periodic [forceClientRecreation]
+     *    opens a fresh NSURLSession (new SOCKS handshake), giving the Tor daemon an
+     *    opportunity to assign a different — potentially healthier — circuit for the next
+     *    connection attempt.
+     */
+    private fun isIosConnectTimeout(error: Throwable): Boolean {
+        if (getPlatformInfo().type != PlatformType.IOS) return false
+        if (error is kotlinx.coroutines.TimeoutCancellationException) return true
+        val msg = error.message ?: return false
+        if (msg.contains("Timed out waiting", ignoreCase = true)) return true
+        return msg.contains("bad URL", ignoreCase = true)
     }
 
     private fun shouldAttemptReconnect(error: Throwable): Boolean {
@@ -484,6 +540,14 @@ class WebSocketClientService(
      * same session instance.
      */
     internal suspend fun forceClientRecreation() {
+        // Update the recreation timestamp here (not only in stateCollectionJob) so that
+        // CCS-triggered recreations also reset the cooldown. Without this, a CCS recreation
+        // doesn't update lastIosTimeoutRecreationMs, and the next "bad URL" error in
+        // stateCollectionJob sees sinceLast > 30s and immediately fires another recreation,
+        // causing back-to-back client churn every ~23-30s.
+        if (getPlatformInfo().type == PlatformType.IOS) {
+            lastIosTimeoutRecreationMs = DateUtils.now()
+        }
         clientUpdateMutex.withLock {
             if (currentClientSettings == null) return@withLock
             log.i { "Forcing full client recreation to recover stale iOS NSURLSession" }
@@ -492,13 +556,32 @@ class WebSocketClientService(
             stateCollectionJob?.cancel()
             stateCollectionJob = null
 
+            val oldClient = currentClient.value
+
+            // CRITICAL CRASH FIX: the WebSocketClientImpl's
+            // `reconnectJob` and `clientScope` MUST be cancelled BEFORE we
+            // invalidate the underlying NSURLSession. Otherwise the in-flight
+            // reconnect job's `invokeOnCompletion` receives the
+            // invalidate-triggered `DarwinHttpRequestException("…cancelled")`,
+            // sees `it == null` (the deferred completed *normally* returning
+            // the error), and recursively calls `reconnect()`. That spawns a
+            // fresh `connect()` → `httpClient.webSocketSession { … }` →
+            // `NSURLSession.webSocketTaskForRequest(…)` on the now-invalidated
+            // session, raising the uncatchable
+            //     NSGenericException: 'Task created in a session that has been invalidated'
+            // which crashes the app.
+            //
+            // `prepareForRecreation()` cancels both `reconnectJob` and `clientScope`
+            // It is non-blocking and does NOT acquire `connectionMutex`, so it cannot itself stall on a
+            // doomed `withTimeout(30000) { webSocketSession {…} }`.
+            oldClient?.prepareForRecreation()
+
             // BEFORE we dispose() the WebSocketClient, forcibly invalidate the iOS
             // NSURLSession that backs its HttpClient.
             httpClientService.peekClient()?.invalidateUnderlyingSession()
 
             // Dispose current client and clear settings so updateWebSocketClient
             // treats the next call as a fresh configuration.
-            val oldClient = currentClient.value
             currentClient.value = null
             oldClient?.dispose()
             subscriptionMutex.withLock {
