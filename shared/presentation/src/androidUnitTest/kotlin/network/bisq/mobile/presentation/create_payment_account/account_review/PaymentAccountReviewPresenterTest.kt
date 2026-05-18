@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
+import network.bisq.mobile.data.service.accounts.PaymentAccountNameAlreadyExistsException
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccount
 import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccountPayload
@@ -137,6 +138,36 @@ class PaymentAccountReviewPresenterTest {
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
             verify(exactly = 1) { globalUiManager.hideLoading() }
             assertEquals(PaymentAccountReviewEffect.CloseCreateAccountFlow, effectDeferred.await())
+        }
+
+    @Test
+    fun `when create account action conflicts then shows duplicate account snackbar and does not emit close flow effect`() =
+        runTest(testDispatcher) {
+            // Given
+            val account = sampleCreateZelleAccount()
+            coEvery { paymentAccountsServiceFacade.addAccount(account) } returns
+                Result.failure(PaymentAccountNameAlreadyExistsException("Payment account already exists: Zelle Personal"))
+            presenter = createPresenter()
+
+            // When
+            val effectDeferred = async { presenter.effect.first() }
+            presenter.onAction(PaymentAccountReviewUiAction.OnCreateAccountClick(account))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { paymentAccountsServiceFacade.addAccount(account) }
+            verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
+            verify(exactly = 1) { globalUiManager.hideLoading() }
+            verify {
+                globalUiManager.showSnackbar(
+                    "Account name already exists. Please choose a different one.",
+                    SnackbarType.ERROR,
+                    any(),
+                    any(),
+                )
+            }
+            assertFalse(effectDeferred.isCompleted)
+            effectDeferred.cancel()
         }
 
     @Test

@@ -19,6 +19,7 @@ import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.i18n.i18n
@@ -32,6 +33,7 @@ import network.bisq.mobile.presentation.create_payment_account.account_review.ui
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.OtherCryptoAssetAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.ZelleAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.account_review.ui.core.AccountDetailFieldRow
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.wise.WiseAccountDetailContent
 import network.bisq.mobile.presentation.create_payment_account.ui.UnsupportedAccountState
 
 @Composable
@@ -109,6 +111,9 @@ private fun PaymentAccountReviewContent(
 
                 is OtherCryptoAssetAccount ->
                     OtherCryptoAssetAccountDetailContent(paymentAccount)
+
+                is WiseAccount ->
+                    WiseAccountDetailContent(paymentAccount)
 
                 else -> UnsupportedAccountState(modifier = Modifier.fillMaxWidth())
             }

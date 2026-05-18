@@ -1,9 +1,12 @@
 package network.bisq.mobile.client.common.domain.service.accounts.all
 
+import io.ktor.http.HttpStatusCode
+import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.data.mapping.account.crypto.toDomain
 import network.bisq.mobile.data.mapping.account.fiat.toDomain
 import network.bisq.mobile.data.mapping.account.toDomain
 import network.bisq.mobile.data.mapping.account.toDto
+import network.bisq.mobile.data.service.accounts.PaymentAccountNameAlreadyExistsException
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
@@ -21,6 +24,11 @@ class ClientPaymentAccountsServiceFacade(
     override suspend fun executeAddAccount(account: CreatePaymentAccount): Result<PaymentAccount> =
         runCatching {
             apiGateway.addAccount(account.toDto()).getOrThrow().toDomain()
+        }.recoverCatching { exception ->
+            if (exception is WebSocketRestApiException && exception.httpStatusCode == HttpStatusCode.Conflict) {
+                throw PaymentAccountNameAlreadyExistsException(exception.message)
+            }
+            throw exception
         }
 
     override suspend fun executeDeleteAccount(accountName: String): Result<Unit> =

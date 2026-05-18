@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.accounts
 
+import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -8,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.service.accounts.all.ClientPaymentAccountsServiceFacade
 import network.bisq.mobile.client.common.domain.service.accounts.all.PaymentAccountsApiGateway
+import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.data.model.account.PaymentAccountDto
 import network.bisq.mobile.data.model.account.crypto.CryptoPaymentMethodDto
 import network.bisq.mobile.data.model.account.fiat.CountryDto
@@ -17,6 +19,7 @@ import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentRailDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.data.service.accounts.PaymentAccountNameAlreadyExistsException
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
@@ -79,7 +82,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             // Given
             coEvery { apiGateway.getPaymentAccounts() } returns Result.success(listOf(sampleAccountDto("A")))
             facade.getAccounts()
-            val accountB = sampleCreateAccount("B")
+            val accountB = sampleCreateAccountB()
             coEvery { apiGateway.addAccount(any()) } returns Result.success(sampleAccountDto("B"))
 
             // When
@@ -95,6 +98,27 @@ class ClientPaymentAccountsServiceFacadeTest {
         }
 
     @Test
+    fun `when addAccount conflicts then maps to duplicate account exception and keeps existing state`() =
+        runTest {
+            // Given
+            coEvery { apiGateway.getPaymentAccounts() } returns Result.success(listOf(sampleAccountDto("A")))
+            facade.getAccounts()
+            val mapBefore = facade.accountsByName.first()
+            val exception = WebSocketRestApiException(HttpStatusCode.Conflict, "Payment account already exists: B")
+            coEvery { apiGateway.addAccount(any()) } returns Result.failure(exception)
+
+            // When
+            val result = facade.addAccount(sampleCreateAccountB())
+
+            // Then
+            assertTrue(result.isFailure)
+            val mappedException = assertIs<PaymentAccountNameAlreadyExistsException>(result.exceptionOrNull())
+            assertEquals(exception.message, mappedException.message)
+            assertEquals(listOf("A"), currentAccountNames())
+            assertEquals(mapBefore, facade.accountsByName.first())
+        }
+
+    @Test
     fun `when addAccount fails then returns failure and keeps existing state`() =
         runTest {
             // Given
@@ -105,7 +129,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             coEvery { apiGateway.addAccount(any()) } returns Result.failure(exception)
 
             // When
-            val result = facade.addAccount(sampleCreateAccount("B"))
+            val result = facade.addAccount(sampleCreateAccountB())
 
             // Then
             assertTrue(result.isFailure)
@@ -260,9 +284,9 @@ class ClientPaymentAccountsServiceFacadeTest {
 
     private suspend fun currentAccountNames(): List<String> = facade.accountsFlow.first().map { it.accountName }
 
-    private fun sampleCreateAccount(accountName: String): CreateUserDefinedFiatAccount =
+    private fun sampleCreateAccountB(): CreateUserDefinedFiatAccount =
         CreateUserDefinedFiatAccount(
-            accountName = accountName,
+            accountName = "B",
             accountPayload =
                 CreateUserDefinedFiatAccountPayload(
                     accountData = "account-data",

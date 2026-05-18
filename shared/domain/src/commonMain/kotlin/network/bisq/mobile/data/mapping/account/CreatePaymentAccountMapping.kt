@@ -7,12 +7,14 @@ import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccount
 import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccount
 import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccount
 
 fun CreatePaymentAccount.toDto(): CreatePaymentAccountDto =
     when (this) {
         is CreateUserDefinedFiatAccount -> toDto()
         is CreateZelleAccount -> toDto()
+        is CreateWiseAccount -> toDto()
         is CreateMoneroAccount -> toDto()
         is CreateOtherCryptoAssetAccount -> toDto()
         else -> error("Unsupported create payment account type: ${this::class.simpleName}")

@@ -8,10 +8,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.bisq.mobile.data.service.accounts.PaymentAccountNameAlreadyExistsException
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.create_payment_account.core.mapping.toReviewPaymentAccount
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -57,9 +60,18 @@ class PaymentAccountReviewPresenter(
                     .onSuccess {
                         _effect.emit(PaymentAccountReviewEffect.CloseCreateAccountFlow)
                     }.onFailure {
-                        handleError(it)
+                        handleError(it, customHandler = ::handleCreateAccountError)
                     }
                 hideLoading()
             }
+    }
+
+    private fun handleCreateAccountError(exception: Throwable): Boolean {
+        if (exception !is PaymentAccountNameAlreadyExistsException) return false
+        showSnackbar(
+            "mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n(),
+            SnackbarType.ERROR,
+        )
+        return true
     }
 }

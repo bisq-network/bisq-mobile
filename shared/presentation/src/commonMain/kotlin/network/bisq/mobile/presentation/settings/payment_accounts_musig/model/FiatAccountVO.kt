@@ -6,6 +6,7 @@ import network.bisq.mobile.domain.model.account.fiat.FiatPaymentCountryBasedAcco
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentSingleCurrencyAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.presentation.common.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.presentation.common.model.account.PaymentTypeVO
@@ -25,6 +26,7 @@ fun FiatPaymentAccount.toVO(): FiatAccountVO? {
     val paymentMethod =
         when (this) {
             is ZelleAccount -> PaymentTypeVO.ZELLE
+            is WiseAccount -> PaymentTypeVO.WISE
             is UserDefinedFiatAccount -> PaymentTypeVO.CUSTOM
             else -> return null
         }

@@ -17,7 +17,10 @@ import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -177,15 +180,17 @@ class PaymentAccountsMusigPresenterTest {
             // When
             accountsFlow.value =
                 listOf(
-                    sampleZelleAccount(accountName = "Zelle Personal"),
+                    sampleZelleAccount(),
+                    sampleWiseAccount(),
                     sampleMoneroAccount(),
                 )
             advanceUntilIdle()
 
             // Then
             val state = presenter.uiState.value
-            assertEquals(1, state.fiatAccounts.size)
+            assertEquals(2, state.fiatAccounts.size)
             assertTrue(state.fiatAccounts.any { it.accountName == "Zelle Personal" })
+            assertTrue(state.fiatAccounts.any { it.accountName == "Wise Main" })
             assertEquals(1, state.cryptoAccounts.size)
             assertEquals("Monero Main", state.cryptoAccounts.first().accountName)
         }
@@ -199,7 +204,7 @@ class PaymentAccountsMusigPresenterTest {
             advanceUntilIdle()
 
             // When
-            accountsFlow.value = listOf(sampleZelleAccount(accountName = "Only Fiat"))
+            accountsFlow.value = listOf(sampleZelleAccount())
             advanceUntilIdle()
 
             // Then
@@ -262,7 +267,7 @@ class PaymentAccountsMusigPresenterTest {
             }
         }
 
-    private fun sampleZelleAccount(accountName: String): ZelleAccount =
+    private fun sampleZelleAccount(accountName: String = "Zelle Personal"): ZelleAccount =
         ZelleAccount(
             accountName = accountName,
             accountPayload =
@@ -277,6 +282,22 @@ class PaymentAccountsMusigPresenterTest {
             creationDate = null,
             tradeLimitInfo = null,
             tradeDuration = null,
+        )
+
+    private fun sampleWiseAccount(accountName: String = "Wise Main"): WiseAccount =
+        WiseAccount(
+            accountName = accountName,
+            accountPayload =
+                WiseAccountPayload(
+                    selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")),
+                    holderName = "Satoshi",
+                    email = "satoshi@example.com",
+                    chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
+                    paymentMethodName = "Wise",
+                ),
+            creationDate = null,
+            tradeLimitInfo = "5000.00",
+            tradeDuration = "4 days",
         )
 
     private fun sampleMoneroAccount(accountName: String = "Monero Main"): MoneroAccount =

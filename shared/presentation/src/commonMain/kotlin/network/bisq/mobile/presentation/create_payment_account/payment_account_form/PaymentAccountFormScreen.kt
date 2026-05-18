@@ -41,6 +41,8 @@ import network.bisq.mobile.presentation.create_payment_account.payment_account_f
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormContent
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormPresenter
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.wise.WiseFormContent
+import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.wise.WiseFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZelleFormContent
 import network.bisq.mobile.presentation.create_payment_account.payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.presentation.create_payment_account.select_payment_method.model.CryptoPaymentMethodVO
@@ -187,6 +189,20 @@ private fun PaymentMethodFormContent(
                     }
                 }
 
+                FiatPaymentRail.WISE -> {
+                    val presenter = methodPresenter as? WiseFormPresenter
+                    if (presenter != null) {
+                        WiseFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            paymentMethod = paymentMethod,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
                 else -> UnsupportedAccountState(modifier = modifier.fillMaxWidth())
             }
         }
@@ -288,6 +304,7 @@ private fun rememberMethodPresenter(paymentType: PaymentTypeVO?): AccountFormPre
     when (paymentType) {
         PaymentTypeVO.ZELLE -> RememberPresenterLifecycleBackStackAware<ZelleFormPresenter>()
         PaymentTypeVO.XMR -> RememberPresenterLifecycleBackStackAware<MoneroFormPresenter>()
+        PaymentTypeVO.WISE -> RememberPresenterLifecycleBackStackAware<WiseFormPresenter>()
         PaymentTypeVO.BSQ,
         PaymentTypeVO.LTC,
         PaymentTypeVO.ETH,

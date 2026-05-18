@@ -1,0 +1,98 @@
+package network.bisq.mobile.presentation.create_payment_account.account_review.ui
+
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
+import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
+import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import network.bisq.mobile.presentation.create_payment_account.account_review.ui.wise.WiseAccountDetailContent
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class WiseAccountDetailContentTest {
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    @Before
+    fun setup() {
+        I18nSupport.setLanguage()
+    }
+
+    private fun setTestContent(account: WiseAccount) {
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalIsTest provides true) {
+                BisqTheme {
+                    WiseAccountDetailContent(account = account)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `when wise review renders then shows base account details`() {
+        setTestContent(sampleAccount())
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onAllNodesWithText("Wise").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("paymentAccounts.holderName".i18n()).assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("Satoshi Nakamoto").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("paymentAccounts.email".i18n()).assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("satoshi@example.com").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("mobile.paymentAccounts.wise.picker.title".i18n()).assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("EUR (Euro), USD (US Dollar)").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("5000.00").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("4 days").assertCountEquals(1)
+    }
+
+    @Test
+    fun `when chargeback risk is present then badge is displayed`() {
+        setTestContent(sampleAccount(chargebackRisk = FiatPaymentMethodChargebackRisk.LOW))
+
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onAllNodesWithText(
+                "paymentAccounts.createAccount.paymentMethod.risk.low".i18n(),
+                substring = true,
+            ).assertCountEquals(1)
+    }
+
+    @Test
+    fun `when chargeback risk is absent then badge is hidden`() {
+        setTestContent(sampleAccount(chargebackRisk = null))
+
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onAllNodesWithText(
+                "paymentAccounts.createAccount.paymentMethod.risk.low".i18n(),
+                substring = true,
+            ).assertCountEquals(0)
+    }
+
+    private fun sampleAccount(
+        chargebackRisk: FiatPaymentMethodChargebackRisk? = null,
+    ): WiseAccount =
+        WiseAccount(
+            accountName = "Wise Main",
+            accountPayload =
+                WiseAccountPayload(
+                    selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")),
+                    holderName = "Satoshi Nakamoto",
+                    email = "satoshi@example.com",
+                    paymentMethodName = "Wise",
+                    chargebackRisk = chargebackRisk,
+                ),
+            tradeLimitInfo = "5000.00",
+            tradeDuration = "4 days",
+        )
+}

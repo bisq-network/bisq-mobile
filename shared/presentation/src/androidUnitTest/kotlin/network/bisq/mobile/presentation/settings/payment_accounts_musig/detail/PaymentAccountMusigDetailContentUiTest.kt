@@ -15,8 +15,11 @@ import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.WiseAccount
+import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.i18n.I18nSupport
@@ -146,6 +149,29 @@ class PaymentAccountMusigDetailContentUiTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("paymentAccounts.userDefined.accountData".i18n())
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when wise account present then shows wise detail labels`() {
+        // Given
+        val uiState = createUiState(paymentAccount = sampleWiseAccount())
+
+        // When
+        setTestContent {
+            PaymentAccountMusigDetailContent(
+                uiState = uiState,
+                onAction = onAction,
+            )
+        }
+
+        // Then
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.holderName".i18n())
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.email".i18n())
             .assertIsDisplayed()
     }
 
@@ -334,6 +360,21 @@ class PaymentAccountMusigDetailContentUiTest {
             creationDate = null,
             tradeLimitInfo = null,
             tradeDuration = null,
+        )
+
+    private fun sampleWiseAccount(): WiseAccount =
+        WiseAccount(
+            accountName = "Wise Main",
+            accountPayload =
+                WiseAccountPayload(
+                    selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")),
+                    holderName = "Satoshi Nakamoto",
+                    email = "satoshi@example.com",
+                    paymentMethodName = "Wise",
+                ),
+            creationDate = null,
+            tradeLimitInfo = "5000.00",
+            tradeDuration = "4 days",
         )
 
     private fun sampleUnsupportedAccount(): PaymentAccount =

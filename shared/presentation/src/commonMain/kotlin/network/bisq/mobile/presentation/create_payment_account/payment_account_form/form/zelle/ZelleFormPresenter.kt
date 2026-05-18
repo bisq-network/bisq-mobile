@@ -68,7 +68,7 @@ open class ZelleFormPresenter(
                 _effect.emit(
                     ZelleFormEffect.NavigateToNextScreen(
                         CreateZelleAccount(
-                            accountName = uniqueAccountNameEntry.value.value.trim(),
+                            accountName = validatedAccountName.value.trim(),
                             accountPayload =
                                 CreateZelleAccountPayload(
                                     holderName =
