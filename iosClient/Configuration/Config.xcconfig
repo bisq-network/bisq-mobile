@@ -4,4 +4,4 @@ APP_NAME=Bisq Connect
 
 // Version - synced from gradle.properties by Gradle task :apps:clientApp:syncIosVersion
 APP_VERSION=0.4.1
-APP_VERSION_CODE=32
+APP_VERSION_CODE=35

@@ -59,6 +59,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // causes the response to be silently dropped by iOS.
         UNUserNotificationCenter.current().delegate = self
 
+        // Register the BGTaskScheduler launch handler synchronously, before this method
+        // returns. Apple requires every permitted BG task identifier to be registered
+        // here — registering later (e.g. from a presenter/coroutine after the user
+        // grants notification permission) raises NSInternalInconsistencyException with
+        // a `-[BGTaskScheduler _unsafe_registerForTaskWithIdentifier:...]` stack and
+        // abort()s the app. See ForegroundServiceControllerImpl.ios.kt for the
+        // identifier-derivation rationale and the matching plist entries.
+        ForegroundServiceControllerImpl.Companion.shared.registerBackgroundTaskHandler()
+
         // Provide Kotlin with a callback to trigger remote notification registration.
         // This replaces the old polling timer approach — Kotlin invokes this directly
         // when it needs a device token, and APNs delivers the result back via the

@@ -4,7 +4,20 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>$(PRODUCT_BUNDLE_IDENTIFIER).background-processing</string>
+		<!--
+		     ForegroundServiceControllerImpl.ios.kt registers BGTaskScheduler with
+		     `${NSBundle.mainBundle.bundleIdentifier}.background-processing` at runtime.
+		     INFOPLIST_PREPROCESS is OFF, so $(PRODUCT_BUNDLE_IDENTIFIER) cannot be
+		     substituted here — we must list every concrete bundle ID the app can run
+		     under, otherwise BGTaskScheduler.register(...) raises
+		     NSInternalInconsistencyException and aborts the app at launch.
+
+		     Source of these values: iosClient/iosClient.xcodeproj/project.pbxproj
+		     • Release + sdk=iphoneos (TestFlight / App Store): bisq.mobile.client.BisqConnect
+		     • Debug (sim or device):                          network.bisq.mobile.ios
+		-->
+		<string>bisq.mobile.client.BisqConnect.background-processing</string>
+		<string>network.bisq.mobile.ios.background-processing</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>

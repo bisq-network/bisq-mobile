@@ -17,17 +17,76 @@ import platform.BackgroundTasks.BGProcessingTaskRequest
 import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSBundle
 import platform.Foundation.NSDate
+import kotlin.concurrent.Volatile
 
 class ForegroundServiceControllerImpl(
     private val notificationController: NotificationController,
 ) : ForegroundServiceController,
     Logging {
     companion object {
+        // BACKGROUND_TASK_ID is `${current bundle id}.background-processing`. The bundle
+        // id varies per build configuration (see iosClient.xcodeproj):
+        //   • Release + sdk=iphoneos (TestFlight / App Store): bisq.mobile.client.BisqConnect
+        //   • Debug (sim or device):                          network.bisq.mobile.ios
+        //
+        // Every value this can resolve to MUST be listed in iosClient/iosClient/Info.plist
+        // under BGTaskSchedulerPermittedIdentifiers, otherwise BGTaskScheduler.register(...)
+        // raises NSInternalInconsistencyException and aborts the app at launch.
+        // If a new build configuration adds another bundle id, add the corresponding
+        // ".background-processing" entry to the plist.
         val BACKGROUND_TASK_ID: String by lazy {
             val base = NSBundle.mainBundle.bundleIdentifier ?: "network.bisq.mobile.ios"
             "$base.background-processing"
         }
         const val CHECK_NOTIFICATIONS_DELAY = 15 * 10000L
+
+        @Volatile
+        private var isBackgroundTaskHandlerRegistered: Boolean = false
+
+        /**
+         * Registers the BGTaskScheduler launch handler for [BACKGROUND_TASK_ID].
+         *
+         * **Must be called from `application(_:didFinishLaunchingWithOptions:)`** on the
+         * main thread, synchronously, before that method returns. iOS asserts this
+         * timing requirement internally and `abort()`s the app via
+         * `NSInternalInconsistencyException` if violated — observed as the
+         * `-[BGTaskScheduler _unsafe_registerForTaskWithIdentifier:usingQueue:launchHandler:]`
+         * crash signature.
+         *
+         * Idempotent. Safe to call multiple times.
+         *
+         * The launch handler intentionally captures no instance state — Koin / DI may
+         * not be initialised yet when this runs.
+         */
+        @OptIn(ExperimentalForeignApi::class)
+        fun registerBackgroundTaskHandler() {
+            if (isBackgroundTaskHandlerRegistered) return
+            runCatching {
+                BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
+                    identifier = BACKGROUND_TASK_ID,
+                    usingQueue = null,
+                ) { task ->
+                    val bgTask = task as BGProcessingTask
+                    bgTask.setTaskCompletedWithSuccess(true)
+                    scheduleBackgroundTaskStatic()
+                }
+                isBackgroundTaskHandlerRegistered = true
+            }.onFailure {
+                // The runCatching only catches Kotlin throwables; Apple raises an
+                // Obj-C NSException that propagates past this and terminates the
+                // process. Logged here for completeness in case Kotlin ever does throw.
+            }
+        }
+
+        @OptIn(ExperimentalForeignApi::class)
+        private fun scheduleBackgroundTaskStatic() {
+            val request =
+                BGProcessingTaskRequest(BACKGROUND_TASK_ID).apply {
+                    requiresNetworkConnectivity = true
+                    earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = 10.0)
+                }
+            BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
+        }
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob())
@@ -35,7 +94,6 @@ class ForegroundServiceControllerImpl(
 
     private var isRunning = false
     private val isRunningMutex = Mutex()
-    private var isBackgroundTaskRegistered = false
     private val logScope = CoroutineScope(Dispatchers.Main)
 
     override fun startService() {
@@ -51,8 +109,11 @@ class ForegroundServiceControllerImpl(
                 logDebug("Starting background service")
                 if (notificationController.hasPermission()) {
                     logDebug("Notification permission granted.")
-                    registerBackgroundTask()
-                    // Once permission is granted, you can start scheduling background tasks
+                    // BGTaskScheduler.register(...) is performed at app launch from
+                    // iosClient.swift's didFinishLaunchingWithOptions via the static
+                    // [registerBackgroundTaskHandler]. Trying to register here (post-launch,
+                    // off the main thread, after coroutine + mutex deferral) raises
+                    // NSInternalInconsistencyException and aborts the app.
                     startBackgroundTaskLoop()
                     logDebug("Background service started")
                 } else {
@@ -112,12 +173,6 @@ class ForegroundServiceControllerImpl(
         serviceScope.cancel()
     }
 
-    private fun handleBackgroundTask(task: BGProcessingTask) {
-        task.setTaskCompletedWithSuccess(true)
-        logDebug("Background task completed successfully")
-        scheduleBackgroundTask()
-    }
-
     private fun startBackgroundTaskLoop() {
         CoroutineScope(Dispatchers.Default).launch {
             while (isRunning) {
@@ -142,29 +197,6 @@ class ForegroundServiceControllerImpl(
         logScope.launch {
             // (Dispatchers.Main)
             log.d { message }
-        }
-    }
-
-    // in iOS this needs to be done on app init or it will throw exception
-    fun registerBackgroundTask() {
-        if (isBackgroundTaskRegistered) {
-            logDebug("Background task is already registered, skipping registration launch")
-            return
-        }
-
-        runCatching {
-            BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
-                identifier = BACKGROUND_TASK_ID,
-                usingQueue = null,
-            ) { task ->
-                handleBackgroundTask(task as BGProcessingTask)
-            }
-
-            isBackgroundTaskRegistered = true
-            logDebug("Background task handler registered")
-        }.onFailure {
-            log.e(it) { "Failed to register background task - notifications won't work" }
-            isBackgroundTaskRegistered = false
         }
     }
 }
