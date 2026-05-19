@@ -213,15 +213,19 @@ private fun DashboardContent(
                 buttonHandler = onOpenTradeGuide,
             )
         }
-        BisqGap.V1()
-        BisqText.SmallRegularGrey(
-            text = "mobile.dashboard.disclaimer".i18n(),
-            textAlign = TextAlign.Start,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = BisqUIConstants.ScreenPadding),
-        )
+        // Apple App Review framing — only shown on iOS so Android users (where the
+        // Play Store doesn't require this clarification) don't see extra disclaimer text.
+        if (getPlatformInfo().type == PlatformType.IOS) {
+            BisqGap.V1()
+            BisqText.SmallRegularGrey(
+                text = "mobile.dashboard.disclaimer".i18n(),
+                textAlign = TextAlign.Start,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = BisqUIConstants.ScreenPadding),
+            )
+        }
         Spacer(modifier = Modifier.fillMaxHeight().weight(0.2f))
     }
 }

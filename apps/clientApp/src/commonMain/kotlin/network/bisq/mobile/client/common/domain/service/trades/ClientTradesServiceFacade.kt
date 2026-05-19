@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Subscription
@@ -16,6 +17,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
 /**
  * Client implementation of TradesServiceFacade with enhanced trade state synchronization.
@@ -40,6 +42,7 @@ class ClientTradesServiceFacade(
     private val apiGateway: TradesApiGateway,
     webSocketClientService: WebSocketClientService,
     json: Json,
+    private val globalUiManager: GlobalUiManager,
 ) : ServiceFacade(),
     TradesServiceFacade {
     companion object {
@@ -109,11 +112,18 @@ class ClientTradesServiceFacade(
         _selectedTrade.value = findOpenTradeItemModel(tradeId)
     }
 
-    override suspend fun rejectTrade(): Result<Unit> = apiGateway.rejectTrade(requireNotNull(tradeId))
+    override suspend fun rejectTrade(): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
+        return apiGateway.rejectTrade(requireNotNull(tradeId))
+    }
 
-    override suspend fun cancelTrade(): Result<Unit> = apiGateway.cancelTrade(requireNotNull(tradeId))
+    override suspend fun cancelTrade(): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
+        return apiGateway.cancelTrade(requireNotNull(tradeId))
+    }
 
     override suspend fun closeTrade(): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         val result = apiGateway.closeTrade(requireNotNull(tradeId))
         if (result.isSuccess) {
             _selectedTrade.value = null
@@ -122,31 +132,37 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         val result = apiGateway.sellerSendsPaymentAccount(requireNotNull(tradeId), paymentAccountData)
         return result
     }
 
     override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         val result = apiGateway.buyerSendBitcoinPaymentData(requireNotNull(tradeId), bitcoinPaymentData)
         return result
     }
 
     override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         val result = apiGateway.sellerConfirmFiatReceipt(requireNotNull(tradeId))
         return result
     }
 
     override suspend fun buyerConfirmFiatSent(): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         val result = apiGateway.buyerConfirmFiatSent(requireNotNull(tradeId))
         return result
     }
 
     override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         val result = apiGateway.sellerConfirmBtcSent(requireNotNull(tradeId), paymentProof)
         return result
     }
 
     override suspend fun btcConfirmed(): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         val result = apiGateway.btcConfirmed(requireNotNull(tradeId))
         return result
     }

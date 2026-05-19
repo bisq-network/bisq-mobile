@@ -246,7 +246,7 @@ class CreateOfferReviewPresenter(
 
     fun onCreateOffer() {
         if (createOfferCoordinator.isDemo) {
-            showSnackbar("mobile.bisqEasy.offerbook.createOfferDisabledInDemonstrationMode".i18n(), type = SnackbarType.ERROR)
+            showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
             return
         }
         _isCreateOfferBtnEnabled.value = false

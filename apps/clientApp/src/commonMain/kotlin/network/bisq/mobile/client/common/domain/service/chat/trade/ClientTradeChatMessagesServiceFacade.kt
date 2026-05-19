@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.data.replicated.chat.CitationVO
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
@@ -20,12 +21,14 @@ import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
 class ClientTradeChatMessagesServiceFacade(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val apiGateway: TradeChatMessagesApiGateway,
     private val json: Json,
+    private val globalUiManager: GlobalUiManager,
 ) : ServiceFacade(),
     TradeChatMessagesServiceFacade {
     // Properties
@@ -156,6 +159,7 @@ class ClientTradeChatMessagesServiceFacade(
         text: String,
         citationVO: CitationVO?,
     ): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->
             val apiResult = apiGateway.sendTextMessage(channelId, text, citationVO)
@@ -171,6 +175,7 @@ class ClientTradeChatMessagesServiceFacade(
         messageId: String,
         reactionEnum: ReactionEnum,
     ): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->
             val apiResult = apiGateway.addChatMessageReaction(channelId, messageId, reactionEnum)
@@ -187,6 +192,7 @@ class ClientTradeChatMessagesServiceFacade(
         messageId: String,
         reactionVO: BisqEasyOpenTradeMessageReactionVO,
     ): Result<Boolean> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(true)
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->
             val apiResult = apiGateway.removeChatMessageReaction(channelId, messageId, reactionVO)

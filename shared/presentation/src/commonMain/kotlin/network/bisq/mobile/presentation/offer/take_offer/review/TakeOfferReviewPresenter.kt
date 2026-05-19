@@ -133,7 +133,7 @@ class TakeOfferReviewPresenter(
         presenterScope.launch {
             try {
                 if (isDemo()) {
-                    showSnackbar("Take offer is disabled in demo mode", type = SnackbarType.ERROR)
+                    showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
                 } else {
                     val (statusFlow, errorFlow) = takeOfferCoordinator.takeOffer()
 

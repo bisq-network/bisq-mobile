@@ -285,12 +285,14 @@ val clientDomainModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         }
 
         single { TradeChatMessagesApiGateway(get(), get()) }
         single<TradeChatMessagesServiceFacade> {
             ClientTradeChatMessagesServiceFacade(
+                get(),
                 get(),
                 get(),
                 get(),
@@ -302,7 +304,7 @@ val clientDomainModule =
         single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }
 
         single { MediationApiGateway(get()) }
-        single<MediationServiceFacade> { ClientMediationServiceFacade(get()) }
+        single<MediationServiceFacade> { ClientMediationServiceFacade(get(), get()) }
 
         single { SettingsApiGateway(get()) }
         single<SettingsServiceFacade> { ClientSettingsServiceFacade(get(), get()) }

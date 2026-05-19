@@ -202,12 +202,24 @@ class WebSocketClientDemoTest {
         }
 
     @Test
-    fun `fakeResponse returns empty array for payment-accounts fiat endpoint`() =
+    fun `fakeResponse returns seeded payment accounts for payment-accounts fiat endpoint`() =
         runTest {
+            // Demo mode seeds a Zelle + custom account so the Settings → Payment Accounts
+            // screen is populated for App Review (was previously returning an empty list).
+            // Assert on account-name fields (always serialized as top-level strings) rather
+            // than on rail discriminator values, which depend on polymorphic serializer
+            // behaviour for the PaymentAccountDto interface.
             val request = createRequest("/api/v1/payment-accounts/fiat")
             val response = demoClient.sendRequestAndAwaitResponse(request) as WebSocketRestApiResponse
             assertEquals(200, response.statusCode)
-            assertEquals("[]", response.body)
+            assertTrue(
+                response.body.contains("My Zelle"),
+                "Expected seeded Zelle account in body, got: ${response.body}",
+            )
+            assertTrue(
+                response.body.contains("Bank transfer"),
+                "Expected seeded custom account in body, got: ${response.body}",
+            )
         }
 
     @Test
@@ -322,14 +334,58 @@ class WebSocketClientDemoTest {
     }
 
     @Test
+    fun `subscribe returns fake data for TRADES topic`() =
+        runTest {
+            // Demo mode seeds open trades so the My Trades tab is populated for App Review.
+            val observer = WebSocketEventObserver()
+            val result = demoClient.subscribe(Topic.TRADES, null, observer)
+            assertNotNull(result)
+            val event = result.webSocketEvent.value
+            assertNotNull(event, "TRADES must emit a payload — My Trades screen depends on it")
+            assertEquals(Topic.TRADES, event.topic)
+            val payload = event.deferredPayload
+            assertNotNull(payload)
+            // Sanity check: seeded list contains a recognisable trade marker.
+            assertTrue(payload.contains("demo-trade-"))
+        }
+
+    @Test
+    fun `subscribe returns fake data for TRADE_CHAT_MESSAGES topic`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            val result = demoClient.subscribe(Topic.TRADE_CHAT_MESSAGES, null, observer)
+            assertNotNull(result)
+            val event = result.webSocketEvent.value
+            assertNotNull(event, "TRADE_CHAT_MESSAGES must emit a payload for the trade-chat surface")
+            assertEquals(Topic.TRADE_CHAT_MESSAGES, event.topic)
+            val payload = event.deferredPayload
+            assertNotNull(payload)
+            assertTrue(payload.contains("demo-chat-"))
+        }
+
+    @Test
+    fun `subscribe returns empty array for TRADE_PROPERTIES topic`() =
+        runTest {
+            // TRADE_PROPERTIES is incremental state; demo trades carry initial state in
+            // BisqEasyTradeDto so we emit "[]" to satisfy the consumer's collect() loop.
+            val observer = WebSocketEventObserver()
+            val result = demoClient.subscribe(Topic.TRADE_PROPERTIES, null, observer)
+            assertNotNull(result)
+            val event = result.webSocketEvent.value
+            assertNotNull(event)
+            assertEquals(Topic.TRADE_PROPERTIES, event.topic)
+            assertEquals("[]", event.deferredPayload)
+        }
+
+    @Test
     fun `subscribe returns observer without event for unsupported topic`() =
         runTest {
             val observer = WebSocketEventObserver()
-            // TRADES topic is not supported in demo mode (returns null payload)
-            val result = demoClient.subscribe(Topic.TRADES, null, observer)
+            // CHAT_REACTIONS is not seeded in demo mode (no fake payload defined).
+            val result = demoClient.subscribe(Topic.CHAT_REACTIONS, null, observer)
             assertNotNull(result)
             // The observer should be returned but without an event set (null payload case)
-            // This covers lines 154-155 in WebSocketClientDemo.kt
+            // This covers the early-return branch in WebSocketClientDemo.getFakeSubscription.
         }
 
     // ========== WebSocketClientDemo basic tests ==========

@@ -403,7 +403,7 @@ open class OfferbookPresenter(
             _showDeleteConfirmation.value = false
             require(selectedOffer.isMyOffer)
             if (isDemo()) {
-                showSnackbar("mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(), type = SnackbarType.ERROR)
+                showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
                 return@runCatching
             }
             presenterScope.launch {
@@ -674,7 +674,7 @@ open class OfferbookPresenter(
         } catch (e: Exception) {
             enableInteractive()
             log.e(e) { "Failed to create offer" }
-            showSnackbar(if (isDemo()) "mobile.bisqEasy.offerbook.createOfferDisabledInDemoMode".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n(), type = SnackbarType.ERROR)
+            showSnackbar(if (isDemo()) "mobile.demo.action.disabled".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n(), type = SnackbarType.ERROR)
         }
     }
 
