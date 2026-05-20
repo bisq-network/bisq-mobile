@@ -138,6 +138,7 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+            implementation(libs.compose.material.icons.extended)
 
             // AndroidX
             implementation(libs.androidx.datastore.okio)
@@ -202,6 +203,7 @@ kotlin {
             implementation(libs.androidx.test.core)
             implementation(libs.androidx.test.espresso.core)
             implementation(libs.androidx.test.junit)
+            implementation(libs.androidx.test.compose.manifest)
 
             // Kotlin
             implementation(libs.kotlin.test.junit)

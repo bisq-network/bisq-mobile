@@ -12,7 +12,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
+import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiAction
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
@@ -321,7 +321,7 @@ class TrustedNodeSetupPresenter(
             sensitiveSettingsRepository.clear()
             pairingQrCode = null
             _uiState.value = TrustedNodeSetupUiState()
-            navigateTo(TrustedNodeSetup()) {
+            navigateTo(ClientNavRoute.TrustedNodeSetup()) {
                 it.popUpTo(NavRoute.TabContainer) { inclusive = true }
             }
         }
@@ -351,7 +351,7 @@ class TrustedNodeSetupPresenter(
             if (restartSucceeded) {
                 // Navigate to Splash to trigger fresh bootstrap attempt
                 navigateTo(NavRoute.Splash()) {
-                    it.popUpTo<TrustedNodeSetup> { inclusive = true }
+                    it.popUpTo<ClientNavRoute.TrustedNodeSetup> { inclusive = true }
                 }
             } else {
                 // Re-show the connection failed dialog so the user can retry

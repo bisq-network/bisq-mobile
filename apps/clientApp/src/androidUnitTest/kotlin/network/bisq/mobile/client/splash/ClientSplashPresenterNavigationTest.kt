@@ -16,7 +16,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
-import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
+import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -171,7 +171,7 @@ class ClientSplashPresenterNavigationTest {
             verify {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                        navRoute is ClientNavRoute.TrustedNodeSetup && navRoute.showConnectionFailed
                     },
                     any(),
                     any(),
@@ -195,7 +195,7 @@ class ClientSplashPresenterNavigationTest {
             verify {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                        navRoute is ClientNavRoute.TrustedNodeSetup && navRoute.showConnectionFailed
                     },
                     any(),
                     any(),
@@ -219,7 +219,7 @@ class ClientSplashPresenterNavigationTest {
             verify {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                        navRoute is ClientNavRoute.TrustedNodeSetup && navRoute.showConnectionFailed
                     },
                     any(),
                     any(),
@@ -289,7 +289,7 @@ class ClientSplashPresenterNavigationTest {
             verify {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                        navRoute is ClientNavRoute.TrustedNodeSetup && navRoute.showConnectionFailed
                     },
                     any(),
                     any(),
@@ -314,7 +314,7 @@ class ClientSplashPresenterNavigationTest {
             verify(exactly = 0) {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup
+                        navRoute is ClientNavRoute.TrustedNodeSetup
                     },
                     any(),
                     any(),
@@ -336,7 +336,7 @@ class ClientSplashPresenterNavigationTest {
             verify {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup && !navRoute.showConnectionFailed
+                        navRoute is ClientNavRoute.TrustedNodeSetup && !navRoute.showConnectionFailed
                     },
                     any(),
                     any(),
@@ -365,7 +365,7 @@ class ClientSplashPresenterNavigationTest {
             verify {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup &&
+                        navRoute is ClientNavRoute.TrustedNodeSetup &&
                             navRoute.showKeystoreError &&
                             !navRoute.showConnectionFailed
                     },
@@ -414,7 +414,7 @@ class ClientSplashPresenterNavigationTest {
             verify {
                 navigationManager.navigate(
                     match { navRoute ->
-                        navRoute is TrustedNodeSetup && navRoute.showSubscriptionsFailed
+                        navRoute is ClientNavRoute.TrustedNodeSetup && navRoute.showSubscriptionsFailed
                     },
                     any(),
                     any(),

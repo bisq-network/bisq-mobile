@@ -7,7 +7,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
-import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
+import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -145,7 +145,7 @@ class ClientSplashPresenter(
         showSubscriptionsFailed: Boolean = false,
     ) {
         navigateTo(
-            TrustedNodeSetup(
+            ClientNavRoute.TrustedNodeSetup(
                 showConnectionFailed = showConnectionFailed,
                 showKeystoreError = showKeystoreError,
                 showSubscriptionsFailed = showSubscriptionsFailed,

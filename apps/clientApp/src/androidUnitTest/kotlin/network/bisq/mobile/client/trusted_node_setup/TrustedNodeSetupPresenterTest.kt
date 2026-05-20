@@ -25,7 +25,7 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
-import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
+import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiAction
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
@@ -810,7 +810,13 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             coVerify { sensitiveSettingsRepository.clear() }
-            verify { navigationManager.navigate(match { navRoute -> navRoute is TrustedNodeSetup && !navRoute.showConnectionFailed }, any(), any()) }
+            verify {
+                navigationManager.navigate(
+                    match { navRoute -> navRoute is ClientNavRoute.TrustedNodeSetup && !navRoute.showConnectionFailed },
+                    any(),
+                    any(),
+                )
+            }
         }
 
     @Test

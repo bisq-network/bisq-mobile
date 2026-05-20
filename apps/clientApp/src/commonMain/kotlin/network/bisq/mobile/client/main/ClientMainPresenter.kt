@@ -1,10 +1,8 @@
 package network.bisq.mobile.client.main
 
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
-import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetup
-import network.bisq.mobile.client.common.presentation.navigation.TrustedNodeSetupSettings
+import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
@@ -64,7 +62,7 @@ open class ClientMainPresenter(
                         type = SnackbarType.ERROR,
                     )
                     connectivityService.acknowledgeRevocation()
-                    navigateTo(TrustedNodeSetup()) { builder ->
+                    navigateTo(ClientNavRoute.TrustedNodeSetup()) { builder ->
                         builder.popUpTo(NavRoute.TabContainer) { inclusive = true }
                     }
                 }
@@ -94,6 +92,6 @@ open class ClientMainPresenter(
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo
 
     fun navigateToTrustedNode() {
-        navigateTo(TrustedNodeSetupSettings)
+        navigateTo(ClientNavRoute.TrustedNodeSetupSettings)
     }
 }

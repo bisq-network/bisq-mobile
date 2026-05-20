@@ -13,12 +13,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
-import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
-import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
-import network.bisq.mobile.presentation.create_payment_account.CreatePaymentAccountScreen
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideOverview
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideProcess
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideSecurity
@@ -41,8 +37,6 @@ import network.bisq.mobile.presentation.offer.take_offer.settlement.TakeOfferSet
 import network.bisq.mobile.presentation.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersScreen
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsScreen
-import network.bisq.mobile.presentation.settings.payment_accounts_musig.PaymentAccountsMusigScreen
-import network.bisq.mobile.presentation.settings.payment_accounts_musig.detail.PaymentAccountMusigDetailScreen
 import network.bisq.mobile.presentation.settings.reputation.ReputationScreen
 import network.bisq.mobile.presentation.settings.resources.ResourcesScreen
 import network.bisq.mobile.presentation.settings.settings.SettingsScreen
@@ -116,21 +110,6 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     addScreen<NavRoute.Reputation> { ReputationScreen() }
     addScreen<NavRoute.UserProfile> { UserProfileScreen() }
     addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
-    addScreen<NavRoute.PaymentAccountsMusig> { PaymentAccountsMusigScreen() }
-    addScreen<NavRoute.PaymentAccountsMusigDetail> { backStackEntry ->
-        val route: NavRoute.PaymentAccountsMusigDetail = backStackEntry.toRoute()
-        PaymentAccountMusigDetailScreen(accountName = route.accountName)
-    }
-    addScreen<NavRoute.CreatePaymentAccount> { backStackEntry ->
-        val route: NavRoute.CreatePaymentAccount = backStackEntry.toRoute()
-        val accountType = runCatching { PaymentAccountType.valueOf(route.accountTypeName) }.getOrNull()
-
-        if (accountType == null) {
-            ErrorState(message = "mobile.error.generic".i18n())
-        } else {
-            CreatePaymentAccountScreen(accountType = accountType)
-        }
-    }
     addScreen<NavRoute.IgnoredUsers> { IgnoredUsersScreen() }
     addScreen<NavRoute.Resources> { ResourcesScreen() }
     addScreen<NavRoute.UserAgreementDisplay> { UserAgreementDisplayScreen() }

@@ -9,11 +9,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.toRoute
 import network.bisq.mobile.client.common.presentation.support.ClientSupportScreen
+import network.bisq.mobile.client.create_payment_account.CreatePaymentAccountScreen
+import network.bisq.mobile.client.settings.payment_accounts_musig.PaymentAccountsMusigScreen
+import network.bisq.mobile.client.settings.payment_accounts_musig.detail.PaymentAccountMusigDetailScreen
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import org.koin.compose.koinInject
@@ -52,13 +58,29 @@ fun NavGraphBuilder.addClientAppRoutes() {
     addScreen<NavRoute.Support> { ClientSupportScreen() }
 
     // Client-specific screens
-    addScreen<TrustedNodeSetupSettings> { TrustedNodeSetupScreen(isWorkflow = false) }
-    addScreen<TrustedNodeSetup> { entry ->
-        val route = entry.toRoute<TrustedNodeSetup>()
+    addScreen<ClientNavRoute.TrustedNodeSetupSettings> { TrustedNodeSetupScreen(isWorkflow = false) }
+    addScreen<ClientNavRoute.TrustedNodeSetup> { entry ->
+        val route = entry.toRoute<ClientNavRoute.TrustedNodeSetup>()
         TrustedNodeSetupScreen(
             showConnectionFailed = route.showConnectionFailed,
             showKeystoreError = route.showKeystoreError,
             showSubscriptionsFailed = route.showSubscriptionsFailed,
         )
+    }
+
+    addScreen<ClientNavRoute.PaymentAccountsMusig> { PaymentAccountsMusigScreen() }
+    addScreen<ClientNavRoute.PaymentAccountsMusigDetail> { backStackEntry ->
+        val route: ClientNavRoute.PaymentAccountsMusigDetail = backStackEntry.toRoute()
+        PaymentAccountMusigDetailScreen(accountName = route.accountName)
+    }
+    addScreen<ClientNavRoute.CreatePaymentAccount> { backStackEntry ->
+        val route: ClientNavRoute.CreatePaymentAccount = backStackEntry.toRoute()
+        val accountType = runCatching { PaymentAccountType.valueOf(route.accountTypeName) }.getOrNull()
+
+        if (accountType == null) {
+            ErrorState(message = "mobile.error.generic".i18n())
+        } else {
+            CreatePaymentAccountScreen(accountType = accountType)
+        }
     }
 }
