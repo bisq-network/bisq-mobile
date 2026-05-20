@@ -105,6 +105,8 @@ class WebSocketClientService(
         _clientRevoked.value = false
     }
 
+    val isTorProxy: Boolean get() = currentClientSettings?.isTorProxy == true
+
     private val clientUpdateMutex = Mutex()
     private val _connectionState =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
