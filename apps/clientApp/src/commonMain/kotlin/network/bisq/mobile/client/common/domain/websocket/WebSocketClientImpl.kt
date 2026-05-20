@@ -124,8 +124,8 @@ class WebSocketClientImpl(
             // the mutex. The lock may have been released by a proactive connect timing
             // out at the exact moment forceClientRecreation() runs:
             //   1. proactiveConnect releases connectionMutex (timeout)
-            //   2. forceClientRecreation() calls prepareForRecreation() → cancels
-            //      clientScope, then calls invalidateUnderlyingSession()
+            //   2. forceClientRecreation() calls dispose() → cancels clientScope,
+            //      then calls invalidateUnderlyingSession()
             //   3. the reconnect coroutine (on cancelled clientScope) acquires the
             //      mutex before Kotlin's cooperative cancellation can propagate
             //   4. without this check, webSocketSession() calls
@@ -165,7 +165,8 @@ class WebSocketClientImpl(
                 val remainingTime = timeout - elapsed
                 session = newSession
                 if (newSession.isActive) {
-                    log.d { "WS connected successfully" }
+                    // Info so iOS Simulator log stream can match harness marker (debug is often omitted).
+                    log.i { "WS connected successfully" }
                     listenerJob =
                         clientScope.launch { startListening(newSession) }
 
@@ -280,6 +281,12 @@ class WebSocketClientImpl(
         reconnectJob = newReconnectJob
         newReconnectJob.invokeOnCompletion {
             if (reconnectJob !== newReconnectJob) {
+                return@invokeOnCompletion
+            }
+            // Defense-in-depth: if the scope was cancelled (e.g. during client
+            // recreation or disposal) do not attempt another reconnect, regardless
+            // of how this job completed.
+            if (!clientScope.isActive) {
                 return@invokeOnCompletion
             }
             reconnectConnectStartMs = 0
@@ -553,39 +560,15 @@ class WebSocketClientImpl(
         }
     }
 
-    @Volatile
-    private var preparedForRecreation = false
-
-    override fun prepareForRecreation() {
-        if (preparedForRecreation) return
-        preparedForRecreation = true
-        val cancellation = CancellationException("WebSocket client preparing for recreation")
-        reconnectJob?.cancel(cancellation)
-        reconnectJob = null
-        clientScope.cancel(cancellation)
-    }
-
     override suspend fun dispose() {
-        // The previous order (disconnect → stopFlow → clientScope.cancel) caused
-        // dispose() to block for up to the connect timeout (≈29s) whenever it ran
-        // while a reconnect attempt was suspended inside
-        //     connectionMutex.withLock { withTimeout(timeout) {
-        //         httpClient.webSocketSession { ... }
-        //     } }
-        // because disconnect() also acquires connectionMutex.
-        //
-        // Cancelling the reconnect path BEFORE calling disconnect() releases the
-        // mutex instantly: the cancellation propagates through withTimeout,
-        // surfaces as CancellationException out of webSocketSession,
-        // and the suspended withLock unwinds.
+        // Cancel reconnect machinery BEFORE calling disconnect(). The cancellation
+        // propagates through withTimeout into webSocketSession(), surfaces as
+        // CancellationException, and the suspended connectionMutex.withLock unwinds
+        // immediately — avoiding the ~30s hang from the connect timeout.
         val cancellation = CancellationException("WebSocket client disposed")
         reconnectJob?.cancel(cancellation)
         reconnectJob = null
         clientScope.cancel(cancellation)
-        // disconnect() may have been short-circuited by an earlier
-        // prepareForRecreation() call (which cancels clientScope). Even so,
-        // calling it again is safe — it simply observes the cancelled state
-        // and unwinds quickly via the connectionMutex coroutine semantics.
         runCatching { disconnect() }
         stopFlow.tryEmit(Unit)
     }

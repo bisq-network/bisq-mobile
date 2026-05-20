@@ -333,7 +333,7 @@ class WebSocketClientService(
                                     serviceScope.launch { attemptSessionRenewal() }
                                 } else if (isIosConnectTimeout(state.error)) {
                                     // iOS connect-timeout leaves a zombie NSURLSessionWebSocketTask
-                                    // alive on the underlying NSURLSession for up to 120s(transaction_duration_ms
+                                    // alive on the underlying NSURLSession for up to 120s.
                                     // Subsequent connect() calls stack additional zombies on the same
                                     // session, poisoning the Tor SOCKS pool until ClientConnectivityService
                                     // fires forceClientRecreation after ~60s (IOS_FORCE_RECREATE_CYCLES=12).
@@ -344,7 +344,13 @@ class WebSocketClientService(
                                         lastIosTimeoutRecreationMs = now
                                         log.e { "iOS WS connect timed out; forcing client recreation early" }
                                         serviceScope.launch { forceClientRecreation() }
-                                    } else if (shouldAttemptReconnect(state.error)) {
+                                    } else {
+                                        // Cooldown is active — always retry regardless of error type.
+                                        // Previously this was gated on shouldAttemptReconnect(), but
+                                        // TimeoutCancellationException is a CancellationException whose
+                                        // cause is null, so shouldAttemptReconnect returned false on iOS,
+                                        // leaving the client stuck with no reconnect until the CCS
+                                        // force-recreation cycle fired 60 s later.
                                         log.e { "iOS WS connect timeout but recreation cooldown active; falling back to reconnect" }
                                         newClient.reconnect()
                                     }
@@ -409,7 +415,16 @@ class WebSocketClientService(
 
             is CancellationException -> {
                 if (getPlatformInfo().type == PlatformType.IOS) {
-                    return error.cause?.message?.contains("Socket is not connected") == true
+                    // On iOS the Darwin network engine wraps many network errors (ECONNRESET,
+                    // "Socket is not connected", EPIPE, etc.) as CancellationException.
+                    // Programmatic cancellations that must NOT trigger reconnect are:
+                    //   - WebSocketIsReconnecting (already excluded above)
+                    //   - dispose() / forceClientRecreation() — stateCollectionJob is
+                    //     cancelled before dispose() is called, so those emissions are
+                    //     never processed here.
+                    // Any CancellationException that reaches this branch on iOS is a
+                    // network-layer signal and should trigger a reconnect.
+                    return true
                 }
                 return false
             }
@@ -558,32 +573,11 @@ class WebSocketClientService(
 
             val oldClient = currentClient.value
 
-            // CRITICAL CRASH FIX: the WebSocketClientImpl's
-            // `reconnectJob` and `clientScope` MUST be cancelled BEFORE we
-            // invalidate the underlying NSURLSession. Otherwise the in-flight
-            // reconnect job's `invokeOnCompletion` receives the
-            // invalidate-triggered `DarwinHttpRequestException("…cancelled")`,
-            // sees `it == null` (the deferred completed *normally* returning
-            // the error), and recursively calls `reconnect()`. That spawns a
-            // fresh `connect()` → `httpClient.webSocketSession { … }` →
-            // `NSURLSession.webSocketTaskForRequest(…)` on the now-invalidated
-            // session, raising the uncatchable
-            //     NSGenericException: 'Task created in a session that has been invalidated'
-            // which crashes the app.
-            //
-            // `prepareForRecreation()` cancels both `reconnectJob` and `clientScope`
-            // It is non-blocking and does NOT acquire `connectionMutex`, so it cannot itself stall on a
-            // doomed `withTimeout(30000) { webSocketSession {…} }`.
-            oldClient?.prepareForRecreation()
-
-            // BEFORE we dispose() the WebSocketClient, forcibly invalidate the iOS
-            // NSURLSession that backs its HttpClient.
-            httpClientService.peekClient()?.invalidateUnderlyingSession()
-
-            // Dispose current client and clear settings so updateWebSocketClient
-            // treats the next call as a fresh configuration.
             currentClient.value = null
             oldClient?.dispose()
+
+            // Safe to invalidate now: the old client's coroutine scope is fully cancelled.
+            httpClientService.peekClient()?.invalidateUnderlyingSession()
             subscriptionMutex.withLock {
                 subscriptionsAreApplied = false
                 requestedSubscriptions.value.forEach { it.value.resetSequence() }
