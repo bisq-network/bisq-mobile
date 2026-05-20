@@ -38,7 +38,15 @@ class ClientSplashPresenter(
     ) {
     companion object {
         private const val CONNECTIVITY_WAIT_TIMEOUT_MS = 15_000L
+
+        // Safety net for clearnet connections: 45 s is generous for a TCP round trip.
         private const val CONNECTIVITY_SAFETY_NET_TIMEOUT_MS = 45_000L
+
+        // Safety net for Tor (.onion) connections: Tor circuit establishment alone takes
+        // 15–60 s; the subsequent WS upgrade and API-version probe add more. Using the
+        // same 45 s budget as clearnet fires the error screen before a slow-but-healthy
+        // Tor circuit even completes its TCP handshake.
+        private const val CONNECTIVITY_SAFETY_NET_TIMEOUT_TOR_MS = 90_000L
     }
 
     private var hasNavigated = false
@@ -91,12 +99,18 @@ class ClientSplashPresenter(
                     }
                 }
 
-                // Safety net: if connectivity is not established within timeout,
-                // redirect to trusted node setup regardless of bootstrap progress.
+                // Safety net: if connectivity is not established within timeout, redirect to
+                // trusted node setup. The budget is host-type-aware: Tor (.onion) circuits
+                // take 15–60 s to establish and the API-version probe adds more on top, so
+                // the 45 s clearnet budget fires before a healthy Tor connection even finishes.
+                val isTorConnection = settings.bisqApiUrl.contains(".onion", ignoreCase = true)
+                val safetyNetTimeoutMs =
+                    if (isTorConnection) CONNECTIVITY_SAFETY_NET_TIMEOUT_TOR_MS
+                    else CONNECTIVITY_SAFETY_NET_TIMEOUT_MS
                 presenterScope.launch {
-                    delay(CONNECTIVITY_SAFETY_NET_TIMEOUT_MS)
+                    delay(safetyNetTimeoutMs)
                     if (!hasNavigated) {
-                        log.d { "Connectivity safety net triggered, navigating to trusted node setup" }
+                        log.d { "Connectivity safety net triggered (${safetyNetTimeoutMs}ms, tor=$isTorConnection), navigating to trusted node setup" }
                         hasNavigated = true
                         navigateToTrustedNodeSetup(showConnectionFailed = true)
                     }
