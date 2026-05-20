@@ -26,6 +26,7 @@ import platform.Foundation.NSURLAuthenticationMethodServerTrust
 import platform.Foundation.NSURLCredential
 import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionAuthChallengeCancelAuthenticationChallenge
+import platform.Foundation.NSURLSessionAuthChallengeDisposition
 import platform.Foundation.NSURLSessionAuthChallengePerformDefaultHandling
 import platform.Foundation.NSURLSessionAuthChallengeUseCredential
 import platform.Foundation.NSURLSessionConfiguration
@@ -155,7 +156,7 @@ private fun buildTlsChallengeHandler(fingerprint: String): (
     NSURLSession,
     platform.Foundation.NSURLSessionTask,
     NSURLAuthenticationChallenge,
-    (Int, NSURLCredential?) -> Unit,
+    (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit,
 ) -> Unit =
     { _, _, challenge, completionHandler ->
         handleTlsChallenge(fingerprint, challenge, completionHandler)
@@ -174,19 +175,19 @@ private fun buildTlsChallengeHandler(fingerprint: String): (
 private fun handleTlsChallenge(
     expectedFingerprint: String,
     challenge: NSURLAuthenticationChallenge,
-    completionHandler: (Int, NSURLCredential?) -> Unit,
+    completionHandler: (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit,
 ) {
     val protectionSpace = challenge.protectionSpace
 
     if (protectionSpace.authenticationMethod != NSURLAuthenticationMethodServerTrust) {
-        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling.toInt(), null)
+        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, null)
         return
     }
 
     val serverTrust = protectionSpace.serverTrust
     if (serverTrust == null) {
         tlsLog.e { "No server trust available" }
-        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge.toInt(), null)
+        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, null)
         return
     }
 
@@ -195,14 +196,14 @@ private fun handleTlsChallenge(
     val cert = SecTrustGetCertificateAtIndex(serverTrust, 0)
     if (cert == null) {
         tlsLog.e { "No leaf certificate in trust chain" }
-        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge.toInt(), null)
+        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, null)
         return
     }
 
     val certDataRef = SecCertificateCopyData(cert)
     if (certDataRef == null) {
         tlsLog.e { "Failed to get DER data from certificate" }
-        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge.toInt(), null)
+        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, null)
         return
     }
 
@@ -222,13 +223,13 @@ private fun handleTlsChallenge(
 
         if (hash.contentEquals(expectedHash)) {
             val credential = NSURLCredential.credentialForTrust(serverTrust)
-            completionHandler(NSURLSessionAuthChallengeUseCredential.toInt(), credential)
+            completionHandler(NSURLSessionAuthChallengeUseCredential, credential)
         } else {
             tlsLog.e { "TLS fingerprint verification failed" }
-            completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge.toInt(), null)
+            completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, null)
         }
     } catch (e: Exception) {
         tlsLog.e { "TLS trust check failed: ${e.message}" }
-        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge.toInt(), null)
+        completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, null)
     }
 }

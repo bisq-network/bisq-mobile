@@ -49,21 +49,5 @@ interface WebSocketClient {
         requestId: String,
     )
 
-    /**
-     * Synchronously cancels the reconnect machinery (reconnect job, internal
-     * coroutine scope) WITHOUT acquiring [connectionMutex] or running the full
-     * [dispose] sequence.
-     *
-     * Must be invoked by the owning service BEFORE it forcibly invalidates the
-     * underlying iOS NSURLSession (e.g. inside `forceClientRecreation`).
-     * Otherwise the in-flight reconnect job's `invokeOnCompletion` may, upon
-     * receiving the invalidate-triggered cancellation, recursively call
-     * [reconnect] → [connect] → `httpClient.webSocketSession { ... }` →
-     * `NSURLSession.webSocketTaskForRequest(...)` on the now-invalidated
-     * session, which raises an uncatchable `NSGenericException: 'Task created
-     * in a session that has been invalidated'` and crashes the app.
-     */
-    fun prepareForRecreation()
-
     suspend fun dispose()
 }

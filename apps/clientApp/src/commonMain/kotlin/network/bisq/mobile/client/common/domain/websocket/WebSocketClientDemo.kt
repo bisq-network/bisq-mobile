@@ -90,10 +90,6 @@ class WebSocketClientDemo(
         // no-op, TODO
     }
 
-    override fun prepareForRecreation() {
-        // Demo mode has no NSURLSession; no recreation race to defend against.
-    }
-
     override suspend fun dispose() {
         // no-op
     }
