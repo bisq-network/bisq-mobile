@@ -83,7 +83,10 @@ class ForegroundServiceControllerImpl(
             val request =
                 BGProcessingTaskRequest(BACKGROUND_TASK_ID).apply {
                     requiresNetworkConnectivity = true
-                    earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = 10.0)
+                    // "now + 10s". timeIntervalSinceReferenceDate(10.0) would yield
+                    // 2001-01-01 00:00:10 UTC — a past date that causes iOS to schedule
+                    // the task immediately (defeating any debounce intent).
+                    earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = NSDate().timeIntervalSinceReferenceDate + 10.0)
                 }
             BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
         }
@@ -187,7 +190,8 @@ class ForegroundServiceControllerImpl(
         val request =
             BGProcessingTaskRequest(BACKGROUND_TASK_ID).apply {
                 requiresNetworkConnectivity = true
-                earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = 10.0)
+                // "now + 10s" — see scheduleBackgroundTaskStatic for the rationale.
+                earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = NSDate().timeIntervalSinceReferenceDate + 10.0)
             }
         BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
         logDebug("Background task scheduled")

@@ -192,7 +192,8 @@ class ClientTradeChatMessagesServiceFacade(
         messageId: String,
         reactionVO: BisqEasyOpenTradeMessageReactionVO,
     ): Result<Boolean> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(true)
+        // Demo mode never actually removes anything → honour the contract by reporting false.
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(false)
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->
             val apiResult = apiGateway.removeChatMessageReaction(channelId, messageId, reactionVO)

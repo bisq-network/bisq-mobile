@@ -709,7 +709,10 @@ object FakeSubscriptionData {
         val directionLabel = if (spec.tradeRole.isBuyer) "Buy" else "Sell"
         val baseFormatted = "${spec.baseSideSats / 100_000_000.0} BTC"
         val quoteFormatted = "${spec.fiatAmount / 100.0} ${spec.quote}"
-        val priceFormatted = "${priceValue / 10_000} ${spec.quote}"
+        // priceValue is stored in 2-decimal minor units (consistent with `fiatAmount` in
+        // TradeSpec): 9_500_000 = 95,000.00 — match that scale here so the formatted
+        // string matches the comments on `pricePerQuoteCurrency` ("≈ 95,000 USD/BTC").
+        val priceFormatted = "${priceValue / 100} ${spec.quote}"
 
         return TradeItemPresentationDto(
             channel = channel,

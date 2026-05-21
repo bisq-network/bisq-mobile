@@ -12,6 +12,7 @@ import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPrese
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class WebSocketClientDemoTest {
@@ -384,8 +385,9 @@ class WebSocketClientDemoTest {
             // CHAT_REACTIONS is not seeded in demo mode (no fake payload defined).
             val result = demoClient.subscribe(Topic.CHAT_REACTIONS, null, observer)
             assertNotNull(result)
-            // The observer should be returned but without an event set (null payload case)
-            // This covers the early-return branch in WebSocketClientDemo.getFakeSubscription.
+            // Covers the early-return branch in WebSocketClientDemo.getFakeSubscription:
+            // when there is no fake payload for the topic, no event must be set on the observer.
+            assertNull(result.webSocketEvent.value)
         }
 
     // ========== WebSocketClientDemo basic tests ==========
