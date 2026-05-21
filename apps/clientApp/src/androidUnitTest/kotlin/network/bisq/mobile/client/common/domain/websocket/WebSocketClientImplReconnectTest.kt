@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
+import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import org.junit.After
 import org.junit.Before
@@ -266,6 +267,35 @@ class WebSocketClientImplReconnectTest {
                 "dispose() must cancel the reconnect-launched connect() (the one that was holding connectionMutex on iOS)",
             )
         }
+
+    @Test
+    fun `reconnect invokes connect when status is stale Connected without session`() =
+        runTest(testDispatcher) {
+            val client = createClient()
+            setConnectionStatus(client, ConnectionState.Connected)
+
+            var connectCalls = 0
+            coEvery { client.connect(any()) } answers {
+                connectCalls++
+                null
+            }
+
+            client.reconnect()
+            testDispatcher.scheduler.advanceTimeBy(WebSocketClientImpl.DELAY_TO_RECONNECT + 100)
+            testDispatcher.scheduler.runCurrent()
+
+            assertEquals(1, connectCalls, "reconnect must call connect() even when status still shows Connected")
+        }
+
+    private fun setConnectionStatus(
+        client: WebSocketClientImpl,
+        state: ConnectionState,
+    ) {
+        val field = WebSocketClientImpl::class.java.getDeclaredField("_webSocketClientStatus")
+        field.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        (field.get(client) as MutableStateFlow<ConnectionState>).value = state
+    }
 
     @Test
     fun `reconnect skips if already reconnecting`() =

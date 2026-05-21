@@ -118,6 +118,12 @@ class WebSocketClientImpl(
 
     override fun isDemo(): Boolean = false
 
+    /** True when the status flow and the underlying Ktor session both indicate live WS. */
+    private fun hasLiveSession(): Boolean {
+        val activeSession = session
+        return isConnected() && activeSession != null && activeSession.isActive
+    }
+
     override suspend fun connect(timeout: Long): Throwable? {
         connectionMutex.withLock {
             // Guard: check the coroutine is still active immediately after acquiring
@@ -135,8 +141,14 @@ class WebSocketClientImpl(
             try {
                 // websocket wont attempt a connect while connecting due to connectionMutex lock
                 // so we always reach here either in connected or disconnected state
-                if (isConnected()) {
+                if (hasLiveSession()) {
                     return null
+                }
+                if (isConnected()) {
+                    // iOS/Darwin can TCP RST (reset) packet the socket without waking session.incoming, leaving
+                    // status Connected while session is null or inactive. Treat as stale.
+                    log.w { "WS status Connected but session inactive; reconnecting" }
+                    _webSocketClientStatus.value = ConnectionState.Disconnected()
                 }
                 doDisconnect() // clean up state
                 log.d { "WS connecting to $apiUrl (timeout=${timeout}ms) ..." }
