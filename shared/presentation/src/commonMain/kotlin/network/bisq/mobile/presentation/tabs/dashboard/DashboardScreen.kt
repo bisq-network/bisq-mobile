@@ -125,6 +125,7 @@ fun DashboardScreen() {
             numConnections = numConnections,
             marketPrice = marketPrice,
             tradeRulesConfirmed = tradeRulesConfirmed,
+            showIosDisclaimer = presenter.isIOS(),
             onNavigateToMarkets = presenter::onNavigateToMarkets,
             onOpenTradeGuide = presenter::onOpenTradeGuide,
         )
@@ -143,6 +144,7 @@ private fun DashboardContent(
     numConnections: Number,
     marketPrice: String,
     tradeRulesConfirmed: Boolean,
+    showIosDisclaimer: Boolean,
     onNavigateToMarkets: () -> Unit,
     onOpenTradeGuide: () -> Unit,
 ) {
@@ -215,7 +217,7 @@ private fun DashboardContent(
         }
         // Apple App Review framing — only shown on iOS so Android users (where the
         // Play Store doesn't require this clarification) don't see extra disclaimer text.
-        if (getPlatformInfo().type == PlatformType.IOS) {
+        if (showIosDisclaimer) {
             BisqGap.V1()
             BisqText.SmallRegularGrey(
                 text = "mobile.dashboard.disclaimer".i18n(),
@@ -297,6 +299,7 @@ fun HomeInfoCard(
 private fun DashboardContentPreview(
     language: String = "en",
     tradeRulesConfirmed: Boolean = true,
+    showIosDisclaimer: Boolean = false,
 ) {
     BisqTheme.Preview(language = language) {
         DashboardContent(
@@ -306,6 +309,7 @@ private fun DashboardContentPreview(
             numConnections = 8,
             marketPrice = "111247.40 BTC/USD",
             tradeRulesConfirmed = tradeRulesConfirmed,
+            showIosDisclaimer = showIosDisclaimer,
             onNavigateToMarkets = {},
             onOpenTradeGuide = {},
         )
@@ -327,3 +331,7 @@ private fun DashboardContent_RuPreview() = DashboardContentPreview("ru", true)
 @Preview
 @Composable
 private fun DashboardContent_RuRulesNotConfirmedPreview() = DashboardContentPreview("ru", false)
+
+@Preview
+@Composable
+private fun DashboardContent_IosDisclaimerPreview() = DashboardContentPreview(tradeRulesConfirmed = true, showIosDisclaimer = true)
