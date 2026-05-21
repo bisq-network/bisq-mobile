@@ -168,9 +168,13 @@ class ClientApplicationLifecycleService(
      * Decides at bootstrap whether to start the local foreground notification service.
      * Two things can suppress it:
      *
-     *  1. The user has opted in to relayed (FCM/APNs) notifications. In that case the
-     *     trusted node delivers via the relay and the local FG service would only burn
-     *     battery and risk a double-notification.
+     *  1. The user has opted in to relayed (FCM/APNs) notifications AND has NOT
+     *     additionally enabled "keep connected in background". In the pure-relayed
+     *     mode the trusted node delivers via FCM and the local FG service would only
+     *     burn battery and risk a double-notification. If the user explicitly opts
+     *     into the power-user combo (relayed ON + keep-connected ON), the FG service
+     *     runs to keep the WebSocket alive while FCM acts as a backstop for killed
+     *     app delivery.
      *  2. The OS-level POST_NOTIFICATIONS permission is denied. The FG service exists
      *     to keep the process alive so we can post trade / chat notifications when in
      *     background — without the permission those `notify(...)` calls are silently
@@ -186,12 +190,17 @@ class ClientApplicationLifecycleService(
      * so awaiting them costs nothing observable.
      */
     private suspend fun maybeLaunchForegroundNotificationService() {
-        val pushNotificationsEnabled = settingsRepository.fetch().pushNotificationsEnabled
+        val settings = settingsRepository.fetch()
+        val pushNotificationsEnabled = settings.pushNotificationsEnabled
+        val keepConnectedInBackground = settings.keepConnectedInBackground
         val notificationPermissionGranted = notificationController.hasPermission()
         if (getPlatformInfo().type == PlatformType.ANDROID) {
             when {
-                pushNotificationsEnabled ->
-                    log.i { "Skipping foreground notification service start (relayed mode is on)" }
+                pushNotificationsEnabled && !keepConnectedInBackground ->
+                    log.i {
+                        "Skipping foreground notification service start " +
+                            "(relayed mode on, keep-connected off)"
+                    }
 
                 !notificationPermissionGranted ->
                     log.i {
@@ -200,7 +209,11 @@ class ClientApplicationLifecycleService(
                     }
 
                 else -> {
-                    log.i { "Starting foreground notification service (local delivery, permission granted)" }
+                    log.i {
+                        "Starting foreground notification service " +
+                            "(relayed=$pushNotificationsEnabled, keepConnected=$keepConnectedInBackground, " +
+                            "permission granted)"
+                    }
                     openTradesNotificationService.startService()
                 }
             }
@@ -210,19 +223,31 @@ class ClientApplicationLifecycleService(
     /**
      * Enables/disables the foreground notification service based on user preferences + permissions.
      *
-     * Two inputs decide whether the local foreground delivery should be suppressed:
+     * Three inputs decide whether the local foreground delivery should be suppressed:
      *  - relayed-push opt-in (from the push-notifications facade)
+     *  - "keep connected in background" sub-setting (from settings; Android-only; only
+     *    meaningful when relayed is on, but read unconditionally — gating happens via the
+     *    truth table below)
      *  - OS POST_NOTIFICATIONS permission (queried directly from the OS each tick)
      *
-     * `settingsRepository.data` is observed only as a "something changed, re-evaluate" trigger —
-     * the persisted `notificationPermissionState` can lag the OS (e.g. user revokes via system
-     * Settings while the app is killed) so we don't trust its value, only the fact that it
-     * emits. The OS query inside the transform is `ContextCompat.checkSelfPermission` on
-     * Android — cheap to call. `distinctUntilChanged` keeps `setLocalDeliverySuppressed`
-     * idempotent.
+     * Truth table (with permission granted):
+     *
+     *   relayed=false, keep=*       → not suppressed (today's default; FG service runs)
+     *   relayed=true,  keep=false   → suppressed (today's relayed mode; FCM-only)
+     *   relayed=true,  keep=true    → not suppressed (power-user combo; FG keeps WS alive,
+     *                                                 FCM is the backstop for killed app)
+     *
+     * Permission denied always suppresses regardless — there's nothing useful to deliver.
+     *
+     * `settingsRepository.data` is observed for two reasons: (a) it carries the
+     * `keepConnectedInBackground` value, (b) it acts as a "something changed, re-evaluate"
+     * trigger for the OS permission re-check. The OS query inside the transform is
+     * `ContextCompat.checkSelfPermission` on Android — cheap to call. `distinctUntilChanged`
+     * keeps `setLocalDeliverySuppressed` idempotent.
      *
      * Catches the runtime transitions the bootstrap gate misses:
      *  - User flips the relayed-push toggle in Settings.
+     *  - User flips the keep-connected sub-toggle in Settings.
      *  - User grants POST_NOTIFICATIONS via the dashboard explainer (the dashboard's
      *    `LaunchedEffect` writes the new state into `settingsRepository`, which triggers a
      *    re-evaluation here that picks up the now-`true` OS truth).
@@ -234,9 +259,10 @@ class ClientApplicationLifecycleService(
             combine(
                 pushNotificationServiceFacade.isPushNotificationsEnabled,
                 settingsRepository.data,
-            ) { relayed, _ ->
+            ) { relayed, settings ->
+                val keepConnected = settings.keepConnectedInBackground
                 val osGranted = notificationController.hasPermission()
-                relayed || !osGranted
+                (relayed && !keepConnected) || !osGranted
             }.distinctUntilChanged()
                 .onEach { suppressed ->
                     openTradesNotificationService.setLocalDeliverySuppressed(suppressed)

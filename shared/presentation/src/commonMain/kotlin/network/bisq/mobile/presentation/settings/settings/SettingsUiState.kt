@@ -27,4 +27,14 @@ data class SettingsUiState(
      */
     val shouldShowPushNotificationsToggle: Boolean = true,
     val pushNotificationsEnabled: Boolean = false,
+    /**
+     * Set by the presenter from the platform — true ONLY on Android Connect.
+     * The "keep connected in background" sub-setting controls the local
+     * foreground service, which is an Android-only concept. iOS has no
+     * equivalent mechanism for keeping the WebSocket alive in background,
+     * so the toggle is suppressed there even though relayed push is supported.
+     * The Node app has no relayed mode so the toggle isn't relevant there either.
+     */
+    val shouldShowKeepConnectedToggle: Boolean = false,
+    val keepConnectedInBackground: Boolean = false,
 )

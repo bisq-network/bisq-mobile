@@ -16,6 +16,7 @@ import network.bisq.mobile.data.utils.setDefaultLocale
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.model.PlatformType
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.i18n.DEFAULT_LANGUAGE_CODE
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -29,6 +30,7 @@ open class SettingsPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
+    private val settingsRepository: SettingsRepository,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _uiState =
@@ -54,6 +56,21 @@ open class SettingsPresenter(
     open val shouldShowPushNotificationsToggle: Boolean
         get() = getPlatformInfo().type == PlatformType.ANDROID
 
+    /**
+     * Whether the "keep connected in background" sub-setting should be shown.
+     *
+     * Android-only by design. The setting controls the local foreground service —
+     * Android's only mechanism for keeping the WebSocket alive in background. iOS
+     * has no equivalent (research concluded that NSURLSessionWebSocketTask + APNs
+     * is the practical ceiling), so the toggle is suppressed there even though
+     * the parent push-notifications toggle could in principle apply.
+     *
+     * Visibility is further gated in the UI by [SettingsUiState.pushNotificationsEnabled] —
+     * keep-connected is a sub-option of relayed and only appears when relayed is on.
+     */
+    open val shouldShowKeepConnectedToggle: Boolean
+        get() = getPlatformInfo().type == PlatformType.ANDROID
+
     // Store original values from fetchSettings for cancel operations (raw numeric values)
     private var originalMaxTradePriceDeviation: Double = DEFAULT_MAX_TRADE_PRICE_DEVIATION
     private var originalNumDaysAfterRedactingTradeData: Int = DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
@@ -63,6 +80,7 @@ open class SettingsPresenter(
         super.onViewAttached()
         fetchSettings()
         observePushNotificationsEnabled()
+        observeKeepConnectedInBackground()
     }
 
     private fun observePushNotificationsEnabled() {
@@ -75,7 +93,23 @@ open class SettingsPresenter(
                     it.copy(
                         pushNotificationsEnabled = enabled,
                         shouldShowPushNotificationsToggle = shouldShowPushNotificationsToggle,
+                        shouldShowKeepConnectedToggle = shouldShowKeepConnectedToggle,
                     )
+                }
+            }
+        }
+    }
+
+    /**
+     * Observe the persisted "keep connected in background" preference. Reflects
+     * any change made elsewhere (e.g. cleared via hide-implies-reset when the
+     * user turns relayed off) directly into the UI state.
+     */
+    private fun observeKeepConnectedInBackground() {
+        presenterScope.launch {
+            settingsRepository.data.collect { settings ->
+                _uiState.update {
+                    it.copy(keepConnectedInBackground = settings.keepConnectedInBackground)
                 }
             }
         }
@@ -111,6 +145,15 @@ open class SettingsPresenter(
             is SettingsUiAction.OnPushNotificationsToggle -> onPushNotificationsToggle(action.enabled)
             SettingsUiAction.OnPushNotificationsLearnMore ->
                 navigateToUrl(BisqLinks.BISQ_CONNECT_PUSH_NOTIFICATIONS_WIKI_URL)
+
+            is SettingsUiAction.OnKeepConnectedInBackgroundToggle ->
+                onKeepConnectedInBackgroundToggle(action.enabled)
+        }
+    }
+
+    private fun onKeepConnectedInBackgroundToggle(enabled: Boolean) {
+        presenterScope.launch {
+            settingsRepository.update { it.copy(keepConnectedInBackground = enabled) }
         }
     }
 
@@ -125,6 +168,13 @@ open class SettingsPresenter(
                 }
             result
                 .onSuccess {
+                    // Hide-implies-reset: when relayed is turned off the keep-connected sub-toggle
+                    // disappears from the UI. Persist the reset so re-enabling relayed later
+                    // starts fresh on the default (OFF) rather than remembering a previously
+                    // chosen power-user combo the user can no longer see or undo.
+                    if (!enabled) {
+                        settingsRepository.update { it.copy(keepConnectedInBackground = false) }
+                    }
                     val msgKey =
                         if (enabled) {
                             "mobile.pushNotifications.registrationSuccess"

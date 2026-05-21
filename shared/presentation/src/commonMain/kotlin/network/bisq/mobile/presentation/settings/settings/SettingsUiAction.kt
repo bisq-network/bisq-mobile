@@ -69,4 +69,15 @@ sealed interface SettingsUiAction {
 
     /** User tapped a "Learn more" affordance in the relayed-push-notifications section. */
     data object OnPushNotificationsLearnMore : SettingsUiAction
+
+    /**
+     * User toggled the "keep connected in background" sub-setting.
+     *
+     * Only emitted when relayed push notifications are already enabled — the toggle
+     * is hidden otherwise. See [shouldShowKeepConnectedToggle] gating in the UiState
+     * for the platform + parent-toggle visibility rules.
+     */
+    data class OnKeepConnectedInBackgroundToggle(
+        val enabled: Boolean,
+    ) : SettingsUiAction
 }

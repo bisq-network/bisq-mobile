@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.DEFAULT_MAX_TRADE_PRICE_DEVIATION
 import network.bisq.mobile.data.replicated.settings.DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
 import network.bisq.mobile.data.replicated.settings.SettingsVO
@@ -25,6 +26,7 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.i18n
@@ -59,6 +61,7 @@ class SettingsPresenterTest {
     private lateinit var settingsServiceFacade: SettingsServiceFacade
     private lateinit var languageServiceFacade: LanguageServiceFacade
     private lateinit var pushNotificationServiceFacade: PushNotificationServiceFacade
+    private lateinit var settingsRepository: SettingsRepository
     private lateinit var mainPresenter: MainPresenter
     private lateinit var globalUiManager: GlobalUiManager
     private lateinit var presenter: SettingsPresenter
@@ -93,6 +96,7 @@ class SettingsPresenterTest {
         settingsServiceFacade = mockk(relaxed = true)
         languageServiceFacade = mockk(relaxed = true)
         pushNotificationServiceFacade = mockk(relaxed = true)
+        settingsRepository = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
 
@@ -114,6 +118,7 @@ class SettingsPresenterTest {
         every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns MutableStateFlow(false)
         every { pushNotificationServiceFacade.isDeviceRegistered } returns MutableStateFlow(false)
         every { pushNotificationServiceFacade.deviceToken } returns MutableStateFlow(null)
+        every { settingsRepository.data } returns MutableStateFlow(Settings())
     }
 
     @AfterTest
@@ -131,6 +136,7 @@ class SettingsPresenterTest {
             settingsServiceFacade,
             languageServiceFacade,
             pushNotificationServiceFacade,
+            settingsRepository,
             mainPresenter,
         )
 

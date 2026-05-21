@@ -131,21 +131,43 @@ class ClientApplicationLifecycleServiceTest {
         }
 
     @Test
-    fun `activate skips foreground notification service start when relayed push notifications are persisted as enabled`() =
+    fun `activate skips foreground notification service start when relayed is on and keep-connected is off`() =
         runTest {
             order.clear()
-            coEvery { settingsRepository.fetch() } returns Settings(pushNotificationsEnabled = true)
+            coEvery { settingsRepository.fetch() } returns
+                Settings(
+                    pushNotificationsEnabled = true,
+                    keepConnectedInBackground = false,
+                )
 
             service.activate()
 
-            // The "notification.start" entry must NOT appear: when the user has
-            // previously opted in to relayed notifications, FCM/APNs is the
-            // delivery path and the local FG service should never even briefly
-            // start (battery + ForegroundServiceDidNotStartInTimeException risk).
+            // Pure-relayed mode: FCM/APNs is the only delivery path. The local FG
+            // service should never even briefly start (battery + risk of
+            // ForegroundServiceDidNotStartInTimeException).
             assertEquals(false, order.contains("notification.start"))
             // Sanity check: the rest of the activation chain still runs.
             assertEquals("apiAccess.activate", order.first())
             assertEquals("push.activate", order.last())
+        }
+
+    @Test
+    fun `activate starts foreground notification service in power-user combo (relayed on AND keep-connected on)`() =
+        runTest {
+            order.clear()
+            coEvery { settingsRepository.fetch() } returns
+                Settings(
+                    pushNotificationsEnabled = true,
+                    keepConnectedInBackground = true,
+                )
+
+            service.activate()
+
+            // Power-user combo: FCM acts as backstop for killed-app delivery AND the
+            // local FG service keeps the WebSocket alive while the app is backgrounded
+            // (snappy reopens, real-time trade chat). FG service MUST start.
+            assertEquals(true, order.contains("notification.start"))
+            assertEquals("notification.start", order.first())
         }
 
     @Test

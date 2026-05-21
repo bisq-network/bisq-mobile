@@ -267,7 +267,20 @@ fun SettingsContent(
                                 },
                         )
 
-                        if (!uiState.pushNotificationsEnabled) {
+                        if (uiState.pushNotificationsEnabled &&
+                            uiState.shouldShowKeepConnectedToggle
+                        ) {
+                            // Sub-setting: only relevant when relayed is on AND the platform
+                            // can keep a WebSocket alive in background (Android FG service).
+                            // V1 gap above gives the dependency relationship room to breathe.
+                            BisqGap.V1()
+                            KeepConnectedSetting(
+                                enabled = uiState.keepConnectedInBackground,
+                                onToggle = { newValue ->
+                                    onAction(SettingsUiAction.OnKeepConnectedInBackgroundToggle(newValue))
+                                },
+                            )
+                        } else if (!uiState.pushNotificationsEnabled) {
                             BisqGap.VHalf()
                             BisqText.SmallLight(
                                 text = "mobile.pushNotifications.settings.disabledWarning".i18n(),
