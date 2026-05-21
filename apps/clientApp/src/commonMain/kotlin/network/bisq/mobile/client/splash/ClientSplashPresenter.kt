@@ -105,8 +105,11 @@ class ClientSplashPresenter(
                 // the 45 s clearnet budget fires before a healthy Tor connection even finishes.
                 val isTorConnection = settings.bisqApiUrl.contains(".onion", ignoreCase = true)
                 val safetyNetTimeoutMs =
-                    if (isTorConnection) CONNECTIVITY_SAFETY_NET_TIMEOUT_TOR_MS
-                    else CONNECTIVITY_SAFETY_NET_TIMEOUT_MS
+                    if (isTorConnection) {
+                        CONNECTIVITY_SAFETY_NET_TIMEOUT_TOR_MS
+                    } else {
+                        CONNECTIVITY_SAFETY_NET_TIMEOUT_MS
+                    }
                 presenterScope.launch {
                     delay(safetyNetTimeoutMs)
                     if (!hasNavigated) {

@@ -32,6 +32,7 @@ open class ClientConnectivityService(
         const val TIMEOUT = 5000L
         const val PERIOD = 5000L // default check every 5 sec
         const val ROUND_TRIP_SLOW_THRESHOLD = 500L
+
         // Tor .onion round trips are typically 1–3 s, so a 500 ms threshold would
         // permanently keep status at REQUESTING_INVENTORY on Tor connections.
         const val ROUND_TRIP_SLOW_THRESHOLD_TOR = 3000L

@@ -139,7 +139,7 @@ class WebSocketClientImpl(
                     return null
                 }
                 doDisconnect() // clean up state
-                log.d { "WS connecting to $apiUrl ..." }
+                log.d { "WS connecting to $apiUrl (timeout=${timeout}ms) ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val wsProtocol =
                     if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
@@ -147,26 +147,32 @@ class WebSocketClientImpl(
                 val wsPort = apiUrl.port
                 val startTime = DateUtils.now()
                 val newSession =
-                    withTimeout(timeout) {
-                        httpClient.webSocketSession {
-                            url {
-                                // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
-                                protocol = wsProtocol
-                                host = wsHost
-                                port = wsPort
-                                path("/websocket")
+                    try {
+                        withTimeout(timeout) {
+                            httpClient.webSocketSession {
+                                url {
+                                    // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
+                                    protocol = wsProtocol
+                                    host = wsHost
+                                    port = wsPort
+                                    path("/websocket")
+                                }
+                                // Send session credentials on upgrade for servers with password auth
+                                sessionId?.let { headers.append(Headers.SESSION_ID, it) }
+                                clientId?.let { headers.append(Headers.CLIENT_ID, it) }
                             }
-                            // Send session credentials on upgrade for servers with password auth
-                            sessionId?.let { headers.append(Headers.SESSION_ID, it) }
-                            clientId?.let { headers.append(Headers.CLIENT_ID, it) }
                         }
+                    } catch (e: Throwable) {
+                        val elapsed = DateUtils.now() - startTime
+                        log.e(e) { "WS TCP/upgrade phase failed after ${elapsed}ms: ${e::class.simpleName}" }
+                        throw e
                     }
                 val elapsed = DateUtils.now() - startTime
                 val remainingTime = timeout - elapsed
                 session = newSession
                 if (newSession.isActive) {
                     // Info so iOS Simulator log stream can match harness marker (debug is often omitted).
-                    log.i { "WS connected successfully" }
+                    log.i { "WS connected successfully (TCP/upgrade in ${elapsed}ms, remaining=${remainingTime}ms)" }
                     listenerJob =
                         clientScope.launch { startListening(newSession) }
 

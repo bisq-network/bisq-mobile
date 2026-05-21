@@ -52,16 +52,20 @@ private val platformLog = getLogger("PlatformAbstractions.ios")
 private val sessionRegistry: MutableMap<HttpClient, NSURLSession> = mutableMapOf()
 private val sessionRegistryLock = SynchronizedObject()
 
-private fun registerSession(client: HttpClient, session: NSURLSession) {
+private fun registerSession(
+    client: HttpClient,
+    session: NSURLSession,
+) {
     synchronized(sessionRegistryLock) {
         sessionRegistry[client] = session
     }
 }
 
 actual fun HttpClient.invalidateUnderlyingSession() {
-    val session = synchronized(sessionRegistryLock) {
-        sessionRegistry.remove(this)
-    }
+    val session =
+        synchronized(sessionRegistryLock) {
+            sessionRegistry.remove(this)
+        }
     if (session == null) {
         platformLog.d { "invalidateUnderlyingSession: no NSURLSession tracked for this HttpClient" }
         return
@@ -71,9 +75,10 @@ actual fun HttpClient.invalidateUnderlyingSession() {
 }
 
 actual fun HttpClient.releaseUnderlyingSessionTracking() {
-    val removed = synchronized(sessionRegistryLock) {
-        sessionRegistry.remove(this) != null
-    }
+    val removed =
+        synchronized(sessionRegistryLock) {
+            sessionRegistry.remove(this) != null
+        }
     if (!removed) {
         platformLog.d { "releaseUnderlyingSessionTracking: no NSURLSession tracked for this HttpClient" }
         return
@@ -96,16 +101,18 @@ actual fun createHttpClient(
     val challengeHandler = tlsFingerprint?.let { fingerprint -> buildTlsChallengeHandler(fingerprint) }
     val delegate = KtorNSURLSessionDelegate(challengeHandler)
 
-    val sessionConfiguration = NSURLSessionConfiguration.defaultSessionConfiguration().apply {
-        setHTTPCookieStorage(null)
-        proxyConfig?.config?.let { applyProxy(it) }
-    }
+    val sessionConfiguration =
+        NSURLSessionConfiguration.defaultSessionConfiguration().apply {
+            setHTTPCookieStorage(null)
+            proxyConfig?.config?.let { applyProxy(it) }
+        }
 
-    val session = NSURLSession.sessionWithConfiguration(
-        configuration = sessionConfiguration,
-        delegate = delegate,
-        delegateQueue = NSOperationQueue(),
-    )
+    val session =
+        NSURLSession.sessionWithConfiguration(
+            configuration = sessionConfiguration,
+            delegate = delegate,
+            delegateQueue = NSOperationQueue(),
+        )
 
     val client =
         HttpClient(Darwin) {
@@ -152,7 +159,9 @@ private fun NSURLSessionConfiguration.applyProxy(proxy: io.ktor.client.engine.Pr
  * that delegates to [handleTlsChallenge]. Extracted so [createHttpClient] stays focused
  * on session wiring.
  */
-private fun buildTlsChallengeHandler(fingerprint: String): (
+private fun buildTlsChallengeHandler(
+    fingerprint: String,
+): (
     NSURLSession,
     platform.Foundation.NSURLSessionTask,
     NSURLAuthenticationChallenge,

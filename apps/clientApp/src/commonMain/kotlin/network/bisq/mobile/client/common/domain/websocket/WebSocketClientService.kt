@@ -254,6 +254,31 @@ class WebSocketClientService(
                 return@withLock
             }
 
+            // Skip recreation when only credentials changed (URL/proxy/TLS identical).
+            // The startup session POST completes while the WS is mid-Tor-handshake (15–60 s);
+            // without this guard the POST would dispose the in-flight connection. WS auth is
+            // handshake-scoped, so the existing connection can finish with its current
+            // credentials. A stale session produces a 401 → attemptSessionRenewal() →
+            // another updateWebSocketClient() call where isAuthFailure is true, bypassing
+            // this guard and recreating the client with fresh credentials.
+            val connectionTopologyUnchanged =
+                previousSettings != null &&
+                    previousSettings.bisqApiUrl == httpClientSettings.bisqApiUrl &&
+                    previousSettings.tlsFingerprint == httpClientSettings.tlsFingerprint &&
+                    previousSettings.externalProxyUrl == httpClientSettings.externalProxyUrl &&
+                    previousSettings.isTorProxy == httpClientSettings.isTorProxy &&
+                    previousSettings.selectedProxyOption == httpClientSettings.selectedProxyOption
+            val isAuthFailure =
+                run {
+                    val s = currentClient.value?.webSocketClientStatus?.value
+                    s is ConnectionState.Disconnected && s.error is UnauthorizedApiAccessException
+                }
+            if (currentClient.value != null && connectionTopologyUnchanged && !isAuthFailure) {
+                currentClientSettings = httpClientSettings
+                log.d { "WebSocket client connection topology unchanged; updating credentials without recreation" }
+                return@withLock
+            }
+
             // Proxy mode transitions (e.g. Tor → clearnet when switching to demo, or
             // back) must not leak state from the previous client's reconnect loop.
             // Cancel state collection BEFORE disposing so dying status emissions can't
@@ -388,7 +413,7 @@ class WebSocketClientService(
      *
      * Two cases are handled:
      *
-     * 1. [TimeoutCancellationException] / "Timed out waiting": The Darwin engine does not
+     * 1. "Timed out waiting": The Darwin engine does not
      *    propagate Kotlin coroutine cancellation to the platform task, so a zombie
      *    NSURLSessionWebSocketTask remains alive after the Kotlin timeout fires.
      *
@@ -439,7 +464,13 @@ class WebSocketClientService(
     }
 
     suspend fun connect(): Throwable? {
-        val client = getWsClient()
+        // Prefer the client snapshot obtained while holding clientUpdateMutex so we
+        // don't race with a concurrent updateWebSocketClient that is in the middle of
+        // disposing the old client.  If we arrive while an update is in progress we
+        // wait for it to finish; once the lock is released currentClient.value already
+        // points to the freshly-created client.  Falling back to getWsClient() handles
+        // the narrow window where the value is still null mid-transition.
+        val client = clientUpdateMutex.withLock { currentClient.value } ?: getWsClient()
         val timeout = WebSocketClient.determineTimeout(client.apiUrl.host)
         return client.connect(timeout)
     }
@@ -628,7 +659,7 @@ class WebSocketClientService(
             throw e
         } catch (e: UnauthorizedApiAccessException) {
             throw e // Propagate so the connection state handler triggers session renewal
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -683,7 +714,7 @@ class WebSocketClientService(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (e: UnauthorizedApiAccessException) {
+        } catch (_: UnauthorizedApiAccessException) {
             // HTTP client validator threw 401 directly (before result wrapping)
             log.e { "Client credentials revoked (exception) — clearing stored pairing data" }
             settingsRepo.update {
