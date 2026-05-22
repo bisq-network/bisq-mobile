@@ -999,4 +999,99 @@ class SettingsPresenterTest {
                 unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
             }
         }
+
+    // ========== Keep-Connected-In-Background Sub-Setting Tests ==========
+
+    /**
+     * Stub `settingsRepository.update { ... }` so the transform lambda is actually
+     * applied to a live `MutableStateFlow<Settings>` rather than discarded. This lets
+     * tests assert on the resulting persisted state.
+     */
+    private fun wireSettingsRepositoryUpdate(initial: Settings = Settings()): MutableStateFlow<Settings> {
+        val flow = MutableStateFlow(initial)
+        every { settingsRepository.data } returns flow
+        coEvery { settingsRepository.update(any()) } coAnswers {
+            val transform = arg<suspend (Settings) -> Settings>(0)
+            flow.value = transform(flow.value)
+        }
+        return flow
+    }
+
+    @Test
+    fun `OnKeepConnectedInBackgroundToggle persists true via settings repository`() =
+        runTest(testDispatcher) {
+            val flow = wireSettingsRepositoryUpdate()
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnKeepConnectedInBackgroundToggle(true))
+            advanceUntilIdle()
+
+            assertTrue(flow.value.keepConnectedInBackground)
+            coVerify { settingsRepository.update(any()) }
+        }
+
+    @Test
+    fun `OnKeepConnectedInBackgroundToggle persists false via settings repository`() =
+        runTest(testDispatcher) {
+            val flow = wireSettingsRepositoryUpdate(Settings(keepConnectedInBackground = true))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnKeepConnectedInBackgroundToggle(false))
+            advanceUntilIdle()
+
+            assertFalse(flow.value.keepConnectedInBackground)
+        }
+
+    @Test
+    fun `repo emissions of keepConnectedInBackground reflect into UI state`() =
+        runTest(testDispatcher) {
+            val flow = wireSettingsRepositoryUpdate()
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Initial: default false.
+            assertFalse(presenter.uiState.value.keepConnectedInBackground)
+
+            // Simulate an external flip (e.g. hide-implies-reset, or another component
+            // writing to the repo) and assert the observer mirrors it into the UI state.
+            flow.value = flow.value.copy(keepConnectedInBackground = true)
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.keepConnectedInBackground)
+
+            flow.value = flow.value.copy(keepConnectedInBackground = false)
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.keepConnectedInBackground)
+        }
+
+    @Test
+    fun `turning relayed off resets keepConnectedInBackground to false (hide-implies-reset)`() =
+        runTest(testDispatcher) {
+            // Power-user combo persisted: relayed on + keep-connected on.
+            val flow = wireSettingsRepositoryUpdate(Settings(keepConnectedInBackground = true))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } returns Result.success(Unit)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // User flips relayed OFF. The sub-toggle is now hidden; the persisted
+            // value must be reset so re-enabling relayed later doesn't silently
+            // restore a no-longer-visible power-user combo.
+            presenter.onAction(SettingsUiAction.OnPushNotificationsToggle(false))
+            advanceUntilIdle()
+
+            assertFalse(flow.value.keepConnectedInBackground)
+        }
 }

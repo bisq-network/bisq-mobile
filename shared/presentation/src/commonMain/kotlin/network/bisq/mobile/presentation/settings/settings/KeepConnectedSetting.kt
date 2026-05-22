@@ -11,6 +11,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 /**
  * The "keep connected in background" sub-setting under push notifications.
@@ -24,6 +25,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
  * and [SettingsUiState.pushNotificationsEnabled] for the parent-toggle gate;
  * both must be true for this to render.
  */
+@ExcludeFromCoverage
 @Composable
 fun KeepConnectedSetting(
     enabled: Boolean,

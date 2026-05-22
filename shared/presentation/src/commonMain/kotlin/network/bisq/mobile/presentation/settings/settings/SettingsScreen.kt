@@ -267,26 +267,7 @@ fun SettingsContent(
                                 },
                         )
 
-                        if (uiState.pushNotificationsEnabled &&
-                            uiState.shouldShowKeepConnectedToggle
-                        ) {
-                            // Sub-setting: only relevant when relayed is on AND the platform
-                            // can keep a WebSocket alive in background (Android FG service).
-                            // V1 gap above gives the dependency relationship room to breathe.
-                            BisqGap.V1()
-                            KeepConnectedSetting(
-                                enabled = uiState.keepConnectedInBackground,
-                                onToggle = { newValue ->
-                                    onAction(SettingsUiAction.OnKeepConnectedInBackgroundToggle(newValue))
-                                },
-                            )
-                        } else if (!uiState.pushNotificationsEnabled) {
-                            BisqGap.VHalf()
-                            BisqText.SmallLight(
-                                text = "mobile.pushNotifications.settings.disabledWarning".i18n(),
-                                color = BisqTheme.colors.warning,
-                            )
-                        }
+                        PushNotificationsExtraGuidance(uiState, onAction)
 
                         if (showPushPermissionExplainer) {
                             ConfirmationDialog(
@@ -363,6 +344,39 @@ fun SettingsContent(
                 }
             }
         }
+    }
+}
+
+/**
+ * Tail of the push-notifications settings section: either the "keep connected
+ * in background" sub-toggle (when relayed is on AND the platform supports it)
+ * or the legacy "you may miss messages" warning (when relayed is off).
+ *
+ * Extracted from [SettingsScreen] so it can be excluded from coverage —
+ * declarative Compose with no logic worth a unit test; the underlying gating
+ * lives in [SettingsPresenter] and is covered there.
+ */
+@ExcludeFromCoverage
+@Composable
+private fun PushNotificationsExtraGuidance(
+    uiState: SettingsUiState,
+    onAction: (SettingsUiAction) -> Unit,
+) {
+    if (uiState.pushNotificationsEnabled && uiState.shouldShowKeepConnectedToggle) {
+        // V1 gap above gives the dependency relationship room to breathe.
+        BisqGap.V1()
+        KeepConnectedSetting(
+            enabled = uiState.keepConnectedInBackground,
+            onToggle = { newValue ->
+                onAction(SettingsUiAction.OnKeepConnectedInBackgroundToggle(newValue))
+            },
+        )
+    } else if (!uiState.pushNotificationsEnabled) {
+        BisqGap.VHalf()
+        BisqText.SmallLight(
+            text = "mobile.pushNotifications.settings.disabledWarning".i18n(),
+            color = BisqTheme.colors.warning,
+        )
     }
 }
 

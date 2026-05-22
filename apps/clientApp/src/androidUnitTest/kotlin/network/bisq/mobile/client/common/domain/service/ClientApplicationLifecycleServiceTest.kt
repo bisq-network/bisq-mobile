@@ -1,7 +1,10 @@
 package network.bisq.mobile.client.common.domain.service
 
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.data.model.Settings
@@ -187,6 +190,78 @@ class ClientApplicationLifecycleServiceTest {
             // Sanity check: the rest of the activation chain still runs.
             assertEquals("apiAccess.activate", order.first())
             assertEquals("push.activate", order.last())
+        }
+
+    /**
+     * Verifies the runtime suppressor job — the [combine]+[onEach] pipeline that
+     * mirrors `relayed × keepConnected × osPermission` into
+     * [OpenTradesNotificationService.setLocalDeliverySuppressed]. The bootstrap-path
+     * tests above only cover the cold-start gate; this one closes the loop on
+     * runtime state changes.
+     *
+     * The suppressor runs on `pushModeScope` (Dispatchers.Default), which is not
+     * controlled by `runTest`'s virtual scheduler, so we use MockK's `coVerify(timeout = …)`
+     * to wait for the side-effect rather than driving virtual time.
+     *
+     * Note: `distinctUntilChanged` means transitions that don't flip the computed
+     * `suppressed` boolean emit nothing — that's a deliberate idempotence guarantee
+     * worth covering, hence the final "no extra emission" assertion.
+     */
+    @Test
+    fun `suppressor job mirrors truth table when relayed and keep-connected change at runtime`() =
+        runTest {
+            order.clear()
+            val relayedFlow = MutableStateFlow(false)
+            val settingsFlow = MutableStateFlow(Settings(keepConnectedInBackground = false))
+            every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns relayedFlow
+            every { settingsRepository.data } returns settingsFlow
+            coEvery { notificationController.hasPermission() } returns true
+            coEvery { settingsRepository.fetch() } returns
+                Settings(pushNotificationsEnabled = false, keepConnectedInBackground = false)
+
+            service.activate()
+
+            // State A: relayed=false → NOT suppressed (today's default, FG service runs).
+            coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(false) }
+
+            // State B: relayed=true, keep=false → suppressed (today's pure relayed mode).
+            relayedFlow.value = true
+            coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(true) }
+
+            // State C: relayed=true, keep=true → NOT suppressed (power-user combo).
+            // This is the second time `false` is emitted (after A), so `exactly = 2`.
+            settingsFlow.value = settingsFlow.value.copy(keepConnectedInBackground = true)
+            coVerify(timeout = 2_000, exactly = 2) {
+                openTradesNotificationService.setLocalDeliverySuppressed(false)
+            }
+
+            // State D: relayed flipped back off while keep is still true. Computed
+            // `suppressed` is still false (same as C), so distinctUntilChanged must
+            // NOT emit again — call count for `false` stays at 2, not 3.
+            relayedFlow.value = false
+            coVerify(timeout = 1_000, exactly = 1) {
+                openTradesNotificationService.setLocalDeliverySuppressed(true)
+            }
+            coVerify(timeout = 1_000, exactly = 2) {
+                openTradesNotificationService.setLocalDeliverySuppressed(false)
+            }
+        }
+
+    @Test
+    fun `suppressor job suppresses local delivery when OS notification permission is revoked`() =
+        runTest {
+            order.clear()
+            val relayedFlow = MutableStateFlow(false)
+            val settingsFlow = MutableStateFlow(Settings(keepConnectedInBackground = false))
+            every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns relayedFlow
+            every { settingsRepository.data } returns settingsFlow
+            // Permission denied: there's nothing useful to deliver locally; suppress regardless
+            // of the relayed/keep-connected combo.
+            coEvery { notificationController.hasPermission() } returns false
+
+            service.activate()
+
+            coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(true) }
         }
 
     @Test
