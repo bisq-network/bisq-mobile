@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
@@ -156,6 +158,26 @@ abstract class BasePresenter(
     // Global UI manager for app-wide UI state (loading dialogs, snackbars, etc.)
     protected val globalUiManager: GlobalUiManager by inject()
 
+    /**
+     * Opt-in analytics (issue #525). KoinComponent injection rather than ctor
+     * parameter to avoid threading it through every BasePresenter subclass
+     * constructor — the service is a single binding shared across the app and
+     * is a no-op when analytics is disabled at build time.
+     */
+    protected val analyticsService: AnalyticsService by inject()
+
+    /**
+     * Override in a subclass to opt INTO automatic screen-view tracking. Default
+     * is `null` — no event is emitted. This is deliberately opt-in per presenter
+     * so the privacy review surface stays small: every screen that ever emits
+     * an event must be explicitly enumerated via [AnalyticsEvent.ScreenViewed].
+     *
+     * When non-null, [onViewAttached] emits the event through [analyticsService],
+     * which is a no-op unless both the build-time AND runtime opt-in gates are
+     * open.
+     */
+    protected open fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed? = null
+
     // Add a flag to track if we've shown the exit warning
     private var exitWarningShown = false
 
@@ -175,6 +197,11 @@ abstract class BasePresenter(
         // In bisq-mobile, userActivityDetected is triggered on every screen navigation,
         // which helps to reset user.publishDate.
         launchUserActivityDetection()
+
+        // Opt-in screen-view tracking. No-op unless the subclass explicitly
+        // overrides analyticsScreenEvent() AND the analytics service is
+        // active (build-time + runtime gates open).
+        analyticsScreenEvent()?.let { analyticsService.track(it) }
     }
 
     @CallSuper

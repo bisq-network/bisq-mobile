@@ -3,6 +3,7 @@ package network.bisq.mobile.node.common.di
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Debug
+import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
@@ -27,6 +28,10 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.AndroidUrlLauncher
 import network.bisq.mobile.data.utils.UrlLauncher
+import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
+import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
+import network.bisq.mobile.domain.analytics.SentryAnalyticsService
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
@@ -107,6 +112,26 @@ val androidNodeDomainModule =
 
         single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
 
+        // Opt-in analytics (issue #525). Same shape as clientApp's binding —
+        // build-time gate selects NoOp vs Sentry; runtime opt-in gates emission
+        // inside SentryAnalyticsService. Node app sends to the
+        // bisq-easy-node-android GlitchTip project (DSN from gradle.properties
+        // / local.properties).
+        single<AnalyticsService> {
+            if (BuildNodeConfig.ANALYTICS_ENABLED) {
+                SentryAnalyticsService()
+            } else {
+                NoOpAnalyticsService
+            }
+        }
+        single<AnalyticsBootstrapConfig> {
+            AnalyticsBootstrapConfig(
+                dsn = BuildNodeConfig.ANALYTICS_DSN,
+                environment = if (BuildNodeConfig.IS_DEBUG) "development" else "production",
+                release = "bisq-easy-node@${BuildNodeConfig.APP_VERSION}",
+            )
+        }
+
         single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
 
         single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
@@ -171,6 +196,8 @@ val androidNodeDomainModule =
                 get(),
                 get(),
                 get(),
+                get(), // analyticsService
+                get(), // analyticsBootstrapConfig
             )
         } bind ApplicationLifecycleService::class
 

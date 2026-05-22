@@ -5,6 +5,8 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.BaseService
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.killProcess
 import network.bisq.mobile.domain.utils.restartProcess
@@ -12,6 +14,8 @@ import network.bisq.mobile.domain.utils.restartProcess
 abstract class ApplicationLifecycleService(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val kmpTorService: KmpTorService,
+    private val analyticsService: AnalyticsService,
+    private val analyticsBootstrapConfig: AnalyticsBootstrapConfig,
 ) : BaseService() {
     private val isTerminating = atomic<Boolean>(false)
 
@@ -30,12 +34,32 @@ abstract class ApplicationLifecycleService(
     fun initialize() {
         log.i { "Initialize core services and Tor" }
 
+        // Init analytics SDK FIRST so the unhandled-exception handler that the
+        // SDK auto-installs is in place before any service work starts. The
+        // service implementation is itself gated (build-time + runtime) so
+        // this is a cheap no-op when analytics is off.
+        bootstrapAnalytics()
+
         serviceScope.launch {
             try {
                 activateServiceFacades()
             } catch (e: Exception) {
                 onUnrecoverableError(e)
             }
+        }
+    }
+
+    private fun bootstrapAnalytics() {
+        try {
+            analyticsService.init(
+                dsn = analyticsBootstrapConfig.dsn,
+                environment = analyticsBootstrapConfig.environment,
+                release = analyticsBootstrapConfig.release,
+            )
+        } catch (e: Exception) {
+            // Never let analytics setup take the app down — if Sentry-KMP's
+            // init throws on a malformed DSN or platform quirk, log and proceed.
+            log.w(e) { "Analytics init failed; continuing without analytics" }
         }
     }
 

@@ -31,6 +31,8 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -60,7 +62,14 @@ class ClientApplicationLifecycleService(
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
     private val settingsRepository: SettingsRepository,
     private val notificationController: NotificationController,
-) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
+    analyticsService: AnalyticsService,
+    analyticsBootstrapConfig: AnalyticsBootstrapConfig,
+) : ApplicationLifecycleService(
+        applicationBootstrapFacade,
+        kmpTorService,
+        analyticsService,
+        analyticsBootstrapConfig,
+    ) {
     /**
      * Dedicated scope for the local-vs-relayed orchestration job. Kept separate
      * from the Koin-injected `serviceScope` so this class stays unit-testable

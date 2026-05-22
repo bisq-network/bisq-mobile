@@ -17,6 +17,26 @@ plugins {
 
 version = project.findProperty("shared.version") as String
 
+// `project.findProperty(...)` reads gradle.properties + -P + env vars but NOT
+// the root-level `local.properties` (that file is reserved for the Android
+// Gradle plugin's SDK paths). To honour the comment "local.properties
+// overrides any property if you need to setup for example local networking"
+// below, we load it once here and prefer it over gradle.properties.
+//
+// Used for: feature.analyticsEnabled, analytics.dsn.*, feature.muSigEnabled,
+// bisq.isDebug, and any future per-developer override. Never commit
+// local.properties — it is gitignored.
+val devLocalProperties: Properties =
+    Properties().apply {
+        val localFile = rootProject.file("local.properties")
+        if (localFile.exists()) {
+            localFile.inputStream().use { load(it) }
+        }
+    }
+
+fun resolveProperty(key: String): String? =
+    devLocalProperties.getProperty(key) ?: project.findProperty(key)?.toString()
+
 val bisqCoreVersion: String by extra {
     findTomlVersion("bisq-core")
 }
@@ -60,6 +80,31 @@ buildConfig {
             "MU_SIG_ENABLED",
             muSigEnabled,
         )
+        // Analytics build-time gate (issue #525). See gradle.properties for the
+        // full opt-in story. Strict parse: refuses anything that isn't a literal
+        // "true"/"false" — silent coercion on a privacy-sensitive switch is a
+        // foot-gun we explicitly want to avoid. Read via resolveProperty so
+        // local.properties takes precedence over gradle.properties.
+        val analyticsEnabled =
+            resolveProperty("feature.analyticsEnabled")
+                ?.let { value ->
+                    value.toBooleanStrictOrNull()
+                        ?: error("feature.analyticsEnabled must be 'true' or 'false', got '$value'")
+                }
+                ?: false
+        buildConfigField("ANALYTICS_ENABLED", analyticsEnabled)
+        // DSNs are public per Sentry's threat model — the public key alone
+        // cannot read data, only post. Empty default = effectively disabled.
+        // Connect's BuildConfig holds both Android + iOS DSNs; the runtime
+        // service picks the right one based on getPlatformInfo().
+        buildConfigField(
+            "ANALYTICS_DSN_ANDROID",
+            resolveProperty("analytics.dsn.connect.android").orEmpty(),
+        )
+        buildConfigField(
+            "ANALYTICS_DSN_IOS",
+            resolveProperty("analytics.dsn.connect.ios").orEmpty(),
+        )
         buildConfigField(
             "IS_DEBUG",
             (
@@ -79,6 +124,22 @@ buildConfig {
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
         // Note: Update when updating kmp-tor lib
         buildConfigField("TOR_VERSION", "0.4.8.17") // is TOR DAEMON version
+        // Analytics build-time gate (issue #525). See client BuildConfig above for
+        // the rationale; the Node app gets its own DSN pointing at GlitchTip
+        // project id=2 (bisq-easy-node-android). Read via resolveProperty so
+        // local.properties takes precedence over gradle.properties.
+        val nodeAnalyticsEnabled =
+            resolveProperty("feature.analyticsEnabled")
+                ?.let { value ->
+                    value.toBooleanStrictOrNull()
+                        ?: error("feature.analyticsEnabled must be 'true' or 'false', got '$value'")
+                }
+                ?: false
+        buildConfigField("ANALYTICS_ENABLED", nodeAnalyticsEnabled)
+        buildConfigField(
+            "ANALYTICS_DSN",
+            resolveProperty("analytics.dsn.node.android").orEmpty(),
+        )
         buildConfigField(
             "IS_DEBUG",
             (
@@ -144,6 +205,13 @@ kotlin {
             implementation(libs.logging.kermit)
             implementation(libs.kphonenumber)
             api(libs.okio) // api to allow platform specific path conversion for kmp-tor
+
+            // Opt-in analytics SDK (issue #525). Always on the classpath so the
+            // DI module can switch between NoOp and Sentry-backed implementations
+            // at runtime based on BuildConfig.ANALYTICS_ENABLED. R8 prunes the
+            // SDK classes from release builds when ANALYTICS_ENABLED=false since
+            // SentryAnalyticsService is then never referenced.
+            implementation(libs.sentry.kotlin.multiplatform)
 
             configurations.all {
                 exclude(group = "org.slf4j", module = "slf4j-api")

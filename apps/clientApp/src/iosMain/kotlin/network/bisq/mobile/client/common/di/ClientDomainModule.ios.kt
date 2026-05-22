@@ -62,6 +62,8 @@ val iosClientDomainModule =
                 get(), // pushNotificationServiceFacade
                 get(), // settingsRepository
                 get(), // notificationController
+                get(), // analyticsService
+                get(), // analyticsBootstrapConfig
             )
         }
         single<UrlLauncher> { IOSUrlLauncher() }

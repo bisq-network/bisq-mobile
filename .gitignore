@@ -46,3 +46,8 @@ apps/clientApp/google-services.json
 
 # i18n generated Resources
 **/i18n/GeneratedResourceBundles_*.kt
+
+# Sentry / GlitchTip auth tokens for mapping upload (issue #525).
+# Templates (sentry.properties.template) ARE committed; the real file with
+# a personal auth.token is per-developer and must not be.
+**/sentry.properties

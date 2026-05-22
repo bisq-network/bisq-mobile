@@ -135,8 +135,9 @@ tasks.register("uploadMappings") {
     val releaseTag = providers.gradleProperty("releaseTag")
 
     doLast {
-        val tag = releaseTag.orNull
-            ?: throw GradleException("Required property 'releaseTag' not set. Usage: -PreleaseTag=connect_0.3.0")
+        val tag =
+            releaseTag.orNull
+                ?: throw GradleException("Required property 'releaseTag' not set. Usage: -PreleaseTag=connect_0.3.0")
 
         val mappingsDir = File(mappingsDirPath)
         if (!mappingsDir.exists() || mappingsDir.listFiles().isNullOrEmpty()) {
@@ -148,12 +149,14 @@ tasks.register("uploadMappings") {
         val zipFile = File(mappingsDir, zipName)
 
         // Create zip from raw mapping files (skip any existing zip)
-        val zipCommand = listOf("zip", "-j", zipFile.absolutePath) +
-            filesToZip.filter { it.name != zipName }.map { it.absolutePath }
+        val zipCommand =
+            listOf("zip", "-j", zipFile.absolutePath) +
+                filesToZip.filter { it.name != zipName }.map { it.absolutePath }
 
-        val zipProcess = ProcessBuilder(zipCommand)
-            .redirectErrorStream(true)
-            .start()
+        val zipProcess =
+            ProcessBuilder(zipCommand)
+                .redirectErrorStream(true)
+                .start()
         val zipOutput = zipProcess.inputStream.bufferedReader().readText()
         val zipExit = zipProcess.waitFor()
         if (zipExit != 0) {
@@ -194,4 +197,132 @@ tasks.register("uploadMappings") {
 tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
     finalizedBy("saveMappingFiles")
     finalizedBy("saveOutputMetadata")
+}
+
+// -----------------------------------------------------------------------------
+// GlitchTip mapping upload (issue #525 — opt-in analytics)
+//
+// Uploads the saved Proguard mapping.txt to the per-app GlitchTip project via
+// sentry-cli, routed through the local Tor SOCKS5 proxy (the GlitchTip server
+// is a Tor onion only). The task is OPT-IN — it skips silently when:
+//   - sentry.properties is absent (no auth token configured), OR
+//   - sentry-cli isn't installed on PATH.
+// This means committers without a sentry.properties never see this task error;
+// it just doesn't run.
+//
+// Usage:
+//   ./gradlew :apps:clientApp:saveMappingFiles  # produces mapping.txt.tar.gz
+//   ./gradlew :apps:clientApp:uploadMappingsToGlitchTip -PreleaseTag=connect_0.4.1
+//
+// Prerequisites:
+//   - sentry-cli installed:   brew install getsentry/tools/sentry-cli
+//   - Tor running locally:    socks5 on 127.0.0.1:9050
+//   - sentry.properties:      copy from sentry.properties.template, add auth.token
+//
+// Why not the Sentry Android Gradle plugin: it auto-uploads on every release
+// build and assumes clearnet. For now wants explicit, Tor-routed, user-invoked
+// uploads. TODO The Gradle plugin can be added when production releases
+// are automated.
+// -----------------------------------------------------------------------------
+tasks.register("uploadMappingsToGlitchTip") {
+    group = "bisq"
+    description = "Upload mapping.txt to GlitchTip via sentry-cli over Tor (issue #525)"
+
+    val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
+    val sentryPropertiesPath = "${project.projectDir}/sentry.properties"
+    val moduleNameForLogging = legacyModuleDirName
+    val releaseTagProperty = providers.gradleProperty("releaseTag")
+
+    doLast {
+        val sentryProperties = File(sentryPropertiesPath)
+        if (!sentryProperties.exists()) {
+            println(
+                "[$moduleNameForLogging] Skipping GlitchTip upload — $sentryPropertiesPath not " +
+                    "present. Copy sentry.properties.template, fill in auth.token, then re-run.",
+            )
+            return@doLast
+        }
+        val releaseTag =
+            releaseTagProperty.orNull
+                ?: throw GradleException(
+                    "Required property 'releaseTag' not set. " +
+                        "Usage: -PreleaseTag=connect_0.4.1",
+                )
+
+        // Check sentry-cli on PATH — soft fail with a helpful message rather
+        // than a stack trace from ProcessBuilder.
+        val whichExit =
+            ProcessBuilder("sh", "-c", "command -v sentry-cli")
+                .redirectErrorStream(true)
+                .start()
+                .waitFor()
+        if (whichExit != 0) {
+            println(
+                "[$moduleNameForLogging] Skipping GlitchTip upload — sentry-cli not on PATH. " +
+                    "Install with: brew install getsentry/tools/sentry-cli",
+            )
+            return@doLast
+        }
+
+        // The saved mapping is gzip-tar from saveMappingFiles. sentry-cli wants
+        // the raw mapping.txt — extract to a temp location.
+        val tarGz = File(mappingsDirPath, "mapping.txt.tar.gz")
+        if (!tarGz.exists()) {
+            throw GradleException(
+                "[$moduleNameForLogging] $tarGz not found. Run saveMappingFiles first " +
+                    "(or assemble/bundleRelease which finalizes on it).",
+            )
+        }
+        val tmpDir = File(layout.buildDirectory.get().asFile, "glitchtip-upload")
+        tmpDir.mkdirs()
+        val extractExit =
+            ProcessBuilder("tar", "-xzf", tarGz.absolutePath, "-C", tmpDir.absolutePath)
+                .redirectErrorStream(true)
+                .start()
+                .waitFor()
+        if (extractExit != 0) {
+            throw GradleException("[$moduleNameForLogging] Failed to extract $tarGz")
+        }
+        val mappingTxt = File(tmpDir, "mapping.txt")
+        if (!mappingTxt.exists()) {
+            throw GradleException("[$moduleNameForLogging] mapping.txt missing in extracted archive")
+        }
+
+        // Invoke sentry-cli through Tor. The HTTPS_PROXY env var works for
+        // sentry-cli's reqwest HTTP client; socks5h:// makes DNS happen via
+        // Tor too, which is required for .onion resolution.
+        val env =
+            mapOf(
+                "HTTPS_PROXY" to "socks5h://127.0.0.1:9050",
+                "HTTP_PROXY" to "socks5h://127.0.0.1:9050",
+                "SENTRY_PROPERTIES" to sentryProperties.absolutePath,
+            )
+
+        // Create release (idempotent), upload proguard mapping, finalize.
+        // sentry-cli's upload-proguard auto-extracts the proguard UUID from the
+        // mapping file header so we don't need to pass it explicitly.
+        val steps =
+            listOf(
+                listOf("sentry-cli", "releases", "new", releaseTag),
+                listOf("sentry-cli", "upload-proguard", mappingTxt.absolutePath),
+                listOf("sentry-cli", "releases", "finalize", releaseTag),
+            )
+
+        for (cmd in steps) {
+            val builder = ProcessBuilder(cmd).redirectErrorStream(true)
+            builder.environment().putAll(env)
+            val proc = builder.start()
+            val output = proc.inputStream.bufferedReader().readText()
+            val exit = proc.waitFor()
+            if (exit != 0) {
+                throw GradleException(
+                    "[$moduleNameForLogging] sentry-cli command failed: ${cmd.joinToString(" ")}\n$output",
+                )
+            }
+            output.lineSequence().filter { it.isNotBlank() }.forEach {
+                println("[$moduleNameForLogging] $it")
+            }
+        }
+        println("[$moduleNameForLogging] Uploaded mapping for release '$releaseTag' to GlitchTip")
+    }
 }

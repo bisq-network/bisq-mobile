@@ -1,0 +1,33 @@
+package network.bisq.mobile.domain.analytics
+
+import kotlin.test.Test
+
+class NoOpAnalyticsServiceTest {
+    private val service: AnalyticsService = NoOpAnalyticsService
+
+    @Test
+    fun `init accepts a real-shaped DSN without throwing`() {
+        service.init(
+            dsn = "http://abc@localhost:8000/3",
+            environment = "development",
+            release = "0.4.1",
+        )
+    }
+
+    @Test
+    fun `init accepts blank DSN without throwing - still a no-op`() {
+        // Blank DSN is meaningless in the SDK-backed impl, but NoOp ignores
+        // everything by design — including bad input.
+        service.init(dsn = "", environment = "", release = "")
+    }
+
+    @Test
+    fun `track accepts any AnalyticsEvent subtype without throwing`() {
+        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+    }
+
+    @Test
+    fun `captureException accepts any Throwable without throwing`() {
+        service.captureException(RuntimeException("boom"))
+    }
+}

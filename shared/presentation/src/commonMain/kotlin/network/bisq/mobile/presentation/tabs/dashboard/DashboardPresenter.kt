@@ -18,6 +18,7 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -40,6 +41,13 @@ open class DashboardPresenter(
     val platformSettingsManager: PlatformSettingsManager,
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
 ) : BasePresenter(mainPresenter) {
+    /**
+     * Opt-in analytics — verification trigger (issue #525).
+     * Emits `screen.dashboard_opened` when the user reaches the Dashboard.
+     * No-op unless both build-time AND runtime analytics gates are open.
+     */
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.Dashboard
+
     private val _offersOnline = MutableStateFlow(0)
     val offersOnline: StateFlow<Int> = _offersOnline.asStateFlow()
 
@@ -93,29 +101,11 @@ open class DashboardPresenter(
 
         mainPresenter.setIsMainContentVisible(true)
 
-        presenterScope.launch {
-            mainPresenter.languageCode.collect {
-                marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
-            }
-        }
-        presenterScope.launch {
-            offersServiceFacade.offerbookMarketItems.collect { items ->
-                val totalOffers = items.sumOf { it.numOffers }
-                _offersOnline.value = totalOffers
-            }
-        }
-        presenterScope.launch {
-            userProfileServiceFacade.numUserProfiles.collect {
-                _publishedProfiles.value = it
-            }
-        }
-        presenterScope.launch {
-            networkServiceFacade.numConnections.collect {
-                // numConnections in networkServiceFacade can be -1 (if no connections present at bootstrap),
-                // but in UI we want to show always >= 0.
-                _numConnections.value = it.coerceAtLeast(0)
-            }
-        }
+        launchLanguageChangeListenerJob()
+        launchTotalOffersListenerJob()
+        launchNumberProfilesListenerJob()
+        launchNumberConnectionsListenerJob()
+        throw RuntimeException("Test crash analytics")
     }
 
     fun onNavigateToMarkets() {
@@ -172,6 +162,41 @@ open class DashboardPresenter(
         } else {
             log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.message}" }
             showSnackbar("mobile.pushNotifications.registrationFailed".i18n(), type = SnackbarType.ERROR)
+        }
+    }
+
+    private fun launchNumberConnectionsListenerJob() {
+        presenterScope.launch {
+            networkServiceFacade.numConnections.collect {
+                // numConnections in networkServiceFacade can be -1 (if no connections present at bootstrap),
+                // but in UI we want to show always >= 0.
+                _numConnections.value = it.coerceAtLeast(0)
+            }
+        }
+    }
+
+    private fun launchNumberProfilesListenerJob() {
+        presenterScope.launch {
+            userProfileServiceFacade.numUserProfiles.collect {
+                _publishedProfiles.value = it
+            }
+        }
+    }
+
+    private fun launchTotalOffersListenerJob() {
+        presenterScope.launch {
+            offersServiceFacade.offerbookMarketItems.collect { items ->
+                val totalOffers = items.sumOf { it.numOffers }
+                _offersOnline.value = totalOffers
+            }
+        }
+    }
+
+    private fun launchLanguageChangeListenerJob() {
+        presenterScope.launch {
+            mainPresenter.languageCode.collect {
+                marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
+            }
         }
     }
 }

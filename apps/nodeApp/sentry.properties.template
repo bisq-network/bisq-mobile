@@ -1,0 +1,15 @@
+# Copy this file to `sentry.properties` (gitignored) and fill in your token to
+# enable Proguard mapping uploads to GlitchTip via `./gradlew uploadMappings`.
+# DO NOT COMMIT `sentry.properties` — it contains an auth token.
+#
+# Issuing a token:
+#   1. Open the GlitchTip onion (see project_glitchtip_deployment.md) over Tor.
+#   2. Account → API tokens → new token with scope `project:write`.
+#
+# The token MUST be uploaded over Tor — run the gradle task with
+# HTTPS_PROXY=socks5h://127.0.0.1:9050 set, or use torsocks.
+
+defaults.url=http://uzlqr4bnoscfifvjvzj3kicoc23ejibefpsynuorcvetjptzqkaqisid.onion
+defaults.org=bisq-mobile
+defaults.project=bisq-easy-node-android
+# auth.token=<your-personal-token-here>

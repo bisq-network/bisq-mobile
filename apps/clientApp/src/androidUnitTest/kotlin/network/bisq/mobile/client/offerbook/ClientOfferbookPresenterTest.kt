@@ -94,6 +94,12 @@ class ClientOfferbookPresenterTest {
             object : ApplicationLifecycleService(
                 mockk<ApplicationBootstrapFacade>(relaxed = true),
                 mockk<KmpTorService>(relaxed = true),
+                network.bisq.mobile.domain.analytics.NoOpAnalyticsService,
+                network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig(
+                    dsn = "",
+                    environment = "test",
+                    release = "test",
+                ),
             ) {
                 override suspend fun activateServiceFacades() {}
 
