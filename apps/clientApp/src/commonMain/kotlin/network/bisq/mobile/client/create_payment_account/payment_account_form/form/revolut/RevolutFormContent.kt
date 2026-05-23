@@ -1,7 +1,6 @@
-package network.bisq.mobile.client.create_payment_account.payment_account_form.form.wise
+package network.bisq.mobile.client.create_payment_account.payment_account_form.form.revolut
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -10,12 +9,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.create_payment_account.core.ui.CurrencyPickerBottomSheet
 import network.bisq.mobile.client.create_payment_account.core.ui.CurrencyPickerItem
 import network.bisq.mobile.client.create_payment_account.core.ui.CurrencySummaryRow
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.WiseFormUiAction
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.RevolutFormUiAction
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.i18n.i18n
@@ -28,8 +26,8 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 @ExcludeFromCoverage
 @Composable
-fun WiseFormContent(
-    presenter: WiseFormPresenter,
+fun RevolutFormContent(
+    presenter: RevolutFormPresenter,
     onNavigateToNextScreen: (CreatePaymentAccount) -> Unit,
     paymentMethod: FiatPaymentMethod,
     modifier: Modifier = Modifier,
@@ -44,12 +42,12 @@ fun WiseFormContent(
     LaunchedEffect(presenter) {
         presenter.effect.collect { effect ->
             when (effect) {
-                is WiseFormEffect.NavigateToNextScreen -> currentOnNavigate(effect.account)
+                is RevolutFormEffect.NavigateToNextScreen -> currentOnNavigate(effect.account)
             }
         }
     }
 
-    WiseFormContent(
+    RevolutFormContent(
         uiState = uiState,
         onAction = presenter::onAction,
         modifier = modifier,
@@ -58,8 +56,8 @@ fun WiseFormContent(
 
 @ExcludeFromCoverage
 @Composable
-private fun WiseFormContent(
-    uiState: WiseFormUiState,
+private fun RevolutFormContent(
+    uiState: RevolutFormUiState,
     onAction: (AccountFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -73,29 +71,15 @@ private fun WiseFormContent(
 
     Column(modifier = modifier) {
         BisqTextFieldV0(
-            value = uiState.holderNameEntry.value,
-            onValueChange = { onAction(WiseFormUiAction.OnHolderNameChange(it)) },
-            label = "paymentAccounts.holderName".i18n(),
+            value = uiState.userNameEntry.value,
+            onValueChange = { onAction(RevolutFormUiAction.OnUserNameChange(it)) },
+            label = "paymentAccounts.userName".i18n(),
             placeholder =
                 "paymentAccounts.createAccount.prompt".i18n(
-                    "paymentAccounts.holderName".i18n().lowercase(),
+                    "paymentAccounts.userName".i18n().lowercase(),
                 ),
-            isError = uiState.holderNameEntry.errorMessage != null,
-            bottomMessage = uiState.holderNameEntry.errorMessage,
-            singleLine = true,
-        )
-
-        BisqTextFieldV0(
-            modifier = Modifier.padding(top = 12.dp),
-            value = uiState.emailEntry.value,
-            onValueChange = { onAction(WiseFormUiAction.OnEmailChange(it)) },
-            label = "paymentAccounts.email".i18n(),
-            placeholder =
-                "paymentAccounts.createAccount.prompt".i18n(
-                    "paymentAccounts.email".i18n().lowercase(),
-                ),
-            isError = uiState.emailEntry.errorMessage != null,
-            bottomMessage = uiState.emailEntry.errorMessage,
+            isError = uiState.userNameEntry.errorMessage != null,
+            bottomMessage = uiState.userNameEntry.errorMessage,
             singleLine = true,
         )
 
@@ -105,7 +89,7 @@ private fun WiseFormContent(
             selectedCount = uiState.selectedCurrencyCodes.size,
             totalCount = uiState.availableCurrencies.size,
             isError = uiState.currencyErrorMessage != null,
-            onClick = { onAction(WiseFormUiAction.OnOpenCurrencyPicker) },
+            onClick = { onAction(RevolutFormUiAction.OnOpenCurrencyPicker) },
         )
 
         uiState.currencyErrorMessage?.let { errorMessage ->
@@ -124,11 +108,11 @@ private fun WiseFormContent(
             searchQuery = uiState.currencySearchQuery,
             selectedCount = uiState.selectedCurrencyCodes.size,
             totalCount = uiState.availableCurrencies.size,
-            onSearchChange = { onAction(WiseFormUiAction.OnCurrencySearchChange(it)) },
-            onToggle = { code -> onAction(WiseFormUiAction.OnCurrencyToggle(code)) },
-            onSelectAll = { onAction(WiseFormUiAction.OnSelectAllCurrencies) },
-            onClearAll = { onAction(WiseFormUiAction.OnClearAllCurrencies) },
-            onDismiss = { onAction(WiseFormUiAction.OnCloseCurrencyPicker) },
+            onSearchChange = { onAction(RevolutFormUiAction.OnCurrencySearchChange(it)) },
+            onToggle = { code -> onAction(RevolutFormUiAction.OnCurrencyToggle(code)) },
+            onSelectAll = { onAction(RevolutFormUiAction.OnSelectAllCurrencies) },
+            onClearAll = { onAction(RevolutFormUiAction.OnClearAllCurrencies) },
+            onDismiss = { onAction(RevolutFormUiAction.OnCloseCurrencyPicker) },
         )
     }
 }
@@ -149,13 +133,12 @@ private fun filterCurrencies(
 
 @Preview
 @Composable
-private fun WiseFormContentPreview_DefaultPreview() {
+private fun RevolutFormContentPreview_DefaultPreview() {
     BisqTheme.Preview {
-        WiseFormContent(
+        RevolutFormContent(
             uiState =
-                WiseFormUiState(
-                    holderNameEntry = DataEntry(value = "Satoshi Nakamoto"),
-                    emailEntry = DataEntry(value = "satoshi@example.com"),
+                RevolutFormUiState(
+                    userNameEntry = DataEntry(value = "satoshi"),
                     availableCurrencies =
                         listOf(
                             CurrencyPickerItem("USD", "USD (US Dollar)"),
@@ -171,13 +154,12 @@ private fun WiseFormContentPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun WiseFormContentPreview_ErrorPreview() {
+private fun RevolutFormContentPreview_ErrorPreview() {
     BisqTheme.Preview {
-        WiseFormContent(
+        RevolutFormContent(
             uiState =
-                WiseFormUiState(
-                    holderNameEntry = DataEntry(value = "a", errorMessage = "validation.tooShortOrTooLong".i18n(3, 100)),
-                    emailEntry = DataEntry(value = "bad-email", errorMessage = "validation.invalidEmail".i18n()),
+                RevolutFormUiState(
+                    userNameEntry = DataEntry(value = "a", errorMessage = "validation.tooShortOrTooLong".i18n(2, 70)),
                     availableCurrencies =
                         listOf(
                             CurrencyPickerItem("USD", "USD (US Dollar)"),

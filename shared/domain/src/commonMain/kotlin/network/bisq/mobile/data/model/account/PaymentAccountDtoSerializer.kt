@@ -9,6 +9,7 @@ import network.bisq.mobile.data.model.account.crypto.CryptoPaymentRailDto
 import network.bisq.mobile.data.model.account.crypto.MoneroAccountDto
 import network.bisq.mobile.data.model.account.crypto.OtherCryptoAssetAccountDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentRailDto
+import network.bisq.mobile.data.model.account.fiat.RevolutAccountDto
 import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.WiseAccountDto
 import network.bisq.mobile.data.model.account.fiat.ZelleAccountDto
@@ -28,6 +29,7 @@ object PaymentAccountDtoSerializer : JsonContentPolymorphicSerializer<PaymentAcc
             FiatPaymentRailDto.CUSTOM.name -> UserDefinedFiatAccountDto.serializer()
             FiatPaymentRailDto.ZELLE.name -> ZelleAccountDto.serializer()
             FiatPaymentRailDto.WISE.name -> WiseAccountDto.serializer()
+            FiatPaymentRailDto.REVOLUT.name -> RevolutAccountDto.serializer()
             // Crypto
             CryptoPaymentRailDto.MONERO.name -> MoneroAccountDto.serializer()
             CryptoPaymentRailDto.OTHER_CRYPTO_ASSET.name -> OtherCryptoAssetAccountDto.serializer()

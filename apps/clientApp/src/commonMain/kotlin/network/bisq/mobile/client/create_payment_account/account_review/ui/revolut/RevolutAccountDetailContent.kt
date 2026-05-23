@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.create_payment_account.account_review.ui.wise
+package network.bisq.mobile.client.create_payment_account.account_review.ui.revolut
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,8 +21,8 @@ import network.bisq.mobile.client.create_payment_account.account_review.ui.core.
 import network.bisq.mobile.client.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.model.account.fiat.WiseAccount
-import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccountPayload
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -30,10 +30,10 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
-fun WiseAccountDetailContent(
-    account: WiseAccount,
+fun RevolutAccountDetailContent(
+    account: RevolutAccount,
 ) {
-    val wiseDetail = remember(account) { account.toDetailVO() }
+    val revolutDetail = remember(account) { account.toDetailVO() }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -51,7 +51,7 @@ fun WiseAccountDetailContent(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
                 PaymentAccountTypeIcon(
-                    paymentType = PaymentTypeVO.WISE,
+                    paymentType = PaymentTypeVO.REVOLUT,
                     size = BisqUIConstants.ScreenPadding2X,
                 )
                 Column {
@@ -64,18 +64,13 @@ fun WiseAccountDetailContent(
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
                 AccountDetailFieldRow(
-                    label = "paymentAccounts.holderName".i18n(),
-                    value = account.accountPayload.holderName,
-                )
-
-                AccountDetailFieldRow(
-                    label = "paymentAccounts.email".i18n(),
-                    value = account.accountPayload.email,
+                    label = "paymentAccounts.userName".i18n(),
+                    value = account.accountPayload.userName,
                 )
 
                 ExpandableAccountDetailFieldRow(
                     label = "mobile.paymentAccounts.currencyPicker.title".i18n(),
-                    value = wiseDetail.selectedCurrencies,
+                    value = revolutDetail.selectedCurrencies,
                 )
 
                 AccountDetailDetailsSection(
@@ -84,7 +79,7 @@ fun WiseAccountDetailContent(
                     tradeDuration = account.tradeDuration,
                 )
 
-                wiseDetail.chargebackRisk?.let { risk ->
+                revolutDetail.chargebackRisk?.let { risk ->
                     BisqGap.VQuarter()
                     FiatChargebackRiskBadge(risk = risk)
                 }
@@ -94,14 +89,13 @@ fun WiseAccountDetailContent(
 }
 
 private val previewAccount =
-    WiseAccount(
-        accountName = "Wise Main",
+    RevolutAccount(
+        accountName = "Revolut Main",
         accountPayload =
-            WiseAccountPayload(
+            RevolutAccountPayload(
                 selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US dollar"), FiatCurrency(code = "EUR", name = "Euro")),
-                holderName = "Satoshi Nakamoto",
-                email = "satoshi@example.com",
-                paymentMethodName = "Wise",
+                userName = "satoshi",
+                paymentMethodName = "Revolut",
                 chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
             ),
         tradeDuration = "4 days",
@@ -111,8 +105,8 @@ private val previewAccount =
 
 @Preview
 @Composable
-private fun WiseAccountDetailContentPreview() {
+private fun RevolutAccountDetailContentPreview() {
     BisqTheme.Preview {
-        WiseAccountDetailContent(account = previewAccount)
+        RevolutAccountDetailContent(account = previewAccount)
     }
 }

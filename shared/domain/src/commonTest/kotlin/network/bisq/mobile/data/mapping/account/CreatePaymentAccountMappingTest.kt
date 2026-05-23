@@ -2,6 +2,7 @@ package network.bisq.mobile.data.mapping.account
 
 import network.bisq.mobile.data.model.account.crypto.create.CreateMoneroAccountDto
 import network.bisq.mobile.data.model.account.crypto.create.CreateOtherCryptoAssetAccountDto
+import network.bisq.mobile.data.model.account.fiat.create.CreateRevolutAccountDto
 import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.create.CreateWiseAccountDto
 import network.bisq.mobile.data.model.account.fiat.create.CreateZelleAccountDto
@@ -10,6 +11,8 @@ import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccoun
 import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccountPayload
 import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccountPayload
+import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccountPayload
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccount
@@ -28,6 +31,9 @@ class CreatePaymentAccountMappingTest {
         )
         assertIs<CreateWiseAccountDto>(
             createWiseAccount().toDto(),
+        )
+        assertIs<CreateRevolutAccountDto>(
+            createRevolutAccount().toDto(),
         )
         assertIs<CreateUserDefinedFiatAccountDto>(
             createUserDefinedFiatAccount().toDto(),
@@ -54,6 +60,12 @@ class CreatePaymentAccountMappingTest {
         CreateWiseAccount(
             accountName = "Wise Main",
             accountPayload = CreateWiseAccountPayload(selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")), holderName = "Alice", email = "alice@example.com"),
+        )
+
+    private fun createRevolutAccount(): CreatePaymentAccount =
+        CreateRevolutAccount(
+            accountName = "Revolut Main",
+            accountPayload = CreateRevolutAccountPayload(userName = "alice", selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro"))),
         )
 
     private fun createUserDefinedFiatAccount(): CreatePaymentAccount =

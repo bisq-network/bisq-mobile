@@ -34,6 +34,8 @@ import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccoun
 import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccountPayload
 import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccountPayload
+import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccountPayload
 import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccount
 import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
@@ -155,6 +157,7 @@ class PaymentAccountReviewScreenTest {
 
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithText("mobile.user.paymentAccounts.review".i18n()).assertIsDisplayed()
+            composeTestRule.onNodeWithText("Zelle").assertIsDisplayed()
             composeTestRule
                 .onNodeWithText("paymentAccounts.summary.accountNameOverlay.accountName.description".i18n())
                 .assertIsDisplayed()
@@ -162,6 +165,27 @@ class PaymentAccountReviewScreenTest {
             composeTestRule.onNodeWithText("paymentAccounts.holderName".i18n()).assertIsDisplayed()
             composeTestRule
                 .onNodeWithText("paymentAccounts.emailOrMobileNr".i18n())
+                .performScrollTo()
+                .assertIsDisplayed()
+            composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).assertIsDisplayed()
+        }
+
+    @Test
+    fun `when revolut account rendered then revolut specific fields are shown`() =
+        runTest(testDispatcher) {
+            setTestContent(
+                createPaymentAccount = sampleCreateRevolutAccount(),
+                paymentMethod = sampleRevolutPaymentMethod(),
+            )
+            advanceUntilIdle()
+
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithText("mobile.user.paymentAccounts.review".i18n()).assertIsDisplayed()
+            composeTestRule.onNodeWithText("Revolut").assertIsDisplayed()
+            composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).assertIsDisplayed()
+            composeTestRule.onNodeWithText("satoshi").assertIsDisplayed()
+            composeTestRule
+                .onNodeWithText("mobile.paymentAccounts.currencyPicker.title".i18n())
                 .performScrollTo()
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).assertIsDisplayed()
@@ -177,6 +201,8 @@ class PaymentAccountReviewScreenTest {
             advanceUntilIdle()
 
             composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithText("XMR").assertIsDisplayed()
+            composeTestRule.onNodeWithText("Monero").assertIsDisplayed()
             composeTestRule.onNodeWithText("paymentAccounts.crypto.address.address".i18n()).assertIsDisplayed()
             composeTestRule
                 .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
@@ -247,6 +273,16 @@ class PaymentAccountReviewScreenTest {
                 ),
         )
 
+    private fun sampleCreateRevolutAccount(accountName: String = "Revolut Personal"): CreateRevolutAccount =
+        CreateRevolutAccount(
+            accountName = accountName,
+            accountPayload =
+                CreateRevolutAccountPayload(
+                    userName = "satoshi",
+                    selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")),
+                ),
+        )
+
     private fun sampleCreateMoneroAccount(): CreateMoneroAccount =
         CreateMoneroAccount(
             accountName = "Monero Main",
@@ -275,6 +311,18 @@ class PaymentAccountReviewScreenTest {
             name = "Zelle",
             supportedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar")),
             supportedCountries = listOf(Country(code = "US", name = "United States")),
+            matchesAllCountries = false,
+            chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
+            tradeLimitInfo = "5000.00 USD",
+            tradeDuration = "1 day",
+        )
+
+    private fun sampleRevolutPaymentMethod(): FiatPaymentMethod =
+        FiatPaymentMethod(
+            paymentRail = FiatPaymentRail.REVOLUT,
+            name = "Revolut",
+            supportedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")),
+            supportedCountries = listOf(Country(code = "GB", name = "United Kingdom")),
             matchesAllCountries = false,
             chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
             tradeLimitInfo = "5000.00 USD",

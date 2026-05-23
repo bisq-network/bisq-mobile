@@ -6,11 +6,11 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.client.create_payment_account.account_review.ui.wise.WiseAccountDetailContent
+import network.bisq.mobile.client.create_payment_account.account_review.ui.revolut.RevolutAccountDetailContent
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.model.account.fiat.WiseAccount
-import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccountPayload
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -23,7 +23,7 @@ import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
 @RunWith(AndroidJUnit4::class)
-class WiseAccountDetailContentTest {
+class RevolutAccountDetailContentTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -32,26 +32,24 @@ class WiseAccountDetailContentTest {
         I18nSupport.setLanguage()
     }
 
-    private fun setTestContent(account: WiseAccount) {
+    private fun setTestContent(account: RevolutAccount) {
         composeTestRule.setContent {
             CompositionLocalProvider(LocalIsTest provides true) {
                 BisqTheme {
-                    WiseAccountDetailContent(account = account)
+                    RevolutAccountDetailContent(account = account)
                 }
             }
         }
     }
 
     @Test
-    fun `when wise review renders then shows base account details`() {
+    fun `when revolut review renders then shows base account details`() {
         setTestContent(sampleAccount())
 
         composeTestRule.waitForIdle()
-        composeTestRule.onAllNodesWithText("Wise").assertCountEquals(1)
-        composeTestRule.onAllNodesWithText("paymentAccounts.holderName".i18n()).assertCountEquals(1)
-        composeTestRule.onAllNodesWithText("Satoshi Nakamoto").assertCountEquals(1)
-        composeTestRule.onAllNodesWithText("paymentAccounts.email".i18n()).assertCountEquals(1)
-        composeTestRule.onAllNodesWithText("satoshi@example.com").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("Revolut").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("paymentAccounts.userName".i18n()).assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("satoshi").assertCountEquals(1)
         composeTestRule.onAllNodesWithText("mobile.paymentAccounts.currencyPicker.title".i18n()).assertCountEquals(1)
         composeTestRule.onAllNodesWithText("EUR (Euro), USD (US Dollar)").assertCountEquals(1)
         composeTestRule.onAllNodesWithText("5000.00").assertCountEquals(1)
@@ -84,15 +82,14 @@ class WiseAccountDetailContentTest {
 
     private fun sampleAccount(
         chargebackRisk: FiatPaymentMethodChargebackRisk? = null,
-    ): WiseAccount =
-        WiseAccount(
-            accountName = "Wise Main",
+    ): RevolutAccount =
+        RevolutAccount(
+            accountName = "Revolut Main",
             accountPayload =
-                WiseAccountPayload(
+                RevolutAccountPayload(
                     selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")),
-                    holderName = "Satoshi Nakamoto",
-                    email = "satoshi@example.com",
-                    paymentMethodName = "Wise",
+                    userName = "satoshi",
+                    paymentMethodName = "Revolut",
                     chargebackRisk = chargebackRisk,
                 ),
             tradeLimitInfo = "5000.00",

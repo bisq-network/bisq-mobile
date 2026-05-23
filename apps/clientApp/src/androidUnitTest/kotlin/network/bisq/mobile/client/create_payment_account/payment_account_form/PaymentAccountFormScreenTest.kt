@@ -24,6 +24,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormPresenter
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.revolut.RevolutFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
@@ -92,6 +93,7 @@ class PaymentAccountFormScreenTest {
                         factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
                         single<GlobalUiManager> { mockk(relaxed = true) }
                         factory { ZelleFormPresenter(mainPresenter) }
+                        factory { RevolutFormPresenter(mainPresenter) }
                         factory { MoneroFormPresenter(mainPresenter) }
                         factory { OtherCryptoFormPresenter(mainPresenter) }
                     },
@@ -179,6 +181,20 @@ class PaymentAccountFormScreenTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText("Zelle").assertIsDisplayed()
         composeTestRule.onNodeWithText("action.next".i18n()).assertIsDisplayed().assertIsEnabled()
+    }
+
+    @Test
+    fun `when revolut payment method rendered then revolut form content is shown`() {
+        paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.REVOLUT, "Revolut")
+        setTestContent()
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Revolut").assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3))
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test

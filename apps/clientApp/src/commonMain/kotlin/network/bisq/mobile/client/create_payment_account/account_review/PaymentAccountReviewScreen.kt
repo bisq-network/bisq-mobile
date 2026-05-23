@@ -18,6 +18,7 @@ import network.bisq.mobile.client.create_payment_account.account_review.ui.Moner
 import network.bisq.mobile.client.create_payment_account.account_review.ui.OtherCryptoAssetAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.account_review.ui.ZelleAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.account_review.ui.core.AccountDetailFieldRow
+import network.bisq.mobile.client.create_payment_account.account_review.ui.revolut.RevolutAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.account_review.ui.wise.WiseAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.ui.UnsupportedAccountState
 import network.bisq.mobile.domain.model.account.PaymentAccount
@@ -25,6 +26,7 @@ import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
 import network.bisq.mobile.domain.model.account.fiat.WiseAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
@@ -114,6 +116,9 @@ private fun PaymentAccountReviewContent(
 
                 is WiseAccount ->
                     WiseAccountDetailContent(paymentAccount)
+
+                is RevolutAccount ->
+                    RevolutAccountDetailContent(paymentAccount)
 
                 else -> UnsupportedAccountState(modifier = Modifier.fillMaxWidth())
             }

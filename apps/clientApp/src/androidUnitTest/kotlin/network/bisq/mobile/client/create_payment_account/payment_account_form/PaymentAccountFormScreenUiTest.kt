@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormPresenter
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.revolut.RevolutFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.wise.WiseFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
@@ -77,6 +78,7 @@ class PaymentAccountFormScreenUiTest {
                     single<GlobalUiManager> { mockk(relaxed = true) }
                     factory { ZelleFormPresenter(mainPresenter) }
                     factory { WiseFormPresenter(mainPresenter) }
+                    factory { RevolutFormPresenter(mainPresenter) }
                     factory { MoneroFormPresenter(mainPresenter) }
                     factory { OtherCryptoFormPresenter(mainPresenter) }
                 },
@@ -125,15 +127,21 @@ class PaymentAccountFormScreenUiTest {
         composeTestRule.onNodeWithText("Wise").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.email".i18n()).performScrollTo().assertIsDisplayed()
         composeTestRule
-            .onNodeWithText("mobile.paymentAccounts.wise.currencies.allSelected".i18n(3))
+            .onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3))
             .performScrollTo()
             .assertIsDisplayed()
         composeTestRule
-            .onNodeWithText("mobile.paymentAccounts.wise.currencies.allSelected".i18n(3))
+            .onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3))
             .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("mobile.paymentAccounts.wise.picker.title".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.title".i18n()).assertIsDisplayed()
+
+        paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.REVOLUT, "Revolut")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Revolut").assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3)).performScrollTo().assertIsDisplayed()
 
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SEPA, "SEPA")
         composeTestRule.waitForIdle()

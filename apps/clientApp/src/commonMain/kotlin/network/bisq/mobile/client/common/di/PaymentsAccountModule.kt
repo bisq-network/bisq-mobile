@@ -4,6 +4,7 @@ import network.bisq.mobile.client.create_payment_account.CreatePaymentAccountPre
 import network.bisq.mobile.client.create_payment_account.account_review.PaymentAccountReviewPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormPresenter
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.revolut.RevolutFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.wise.WiseFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.client.create_payment_account.select_payment_method.crypto.SelectCryptoPaymentMethodPresenter
@@ -26,6 +27,7 @@ val paymentsAccountModule =
 
         factory { ZelleFormPresenter(get()) }
         factory { WiseFormPresenter(get()) }
+        factory { RevolutFormPresenter(get()) }
         factory { MoneroFormPresenter(get()) }
         factory { OtherCryptoFormPresenter(get()) }
     }

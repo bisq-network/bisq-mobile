@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentCountryBasedAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentSingleCurrencyAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.WiseAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
@@ -27,6 +28,7 @@ fun FiatPaymentAccount.toVO(): FiatAccountVO? {
         when (this) {
             is ZelleAccount -> PaymentTypeVO.ZELLE
             is WiseAccount -> PaymentTypeVO.WISE
+            is RevolutAccount -> PaymentTypeVO.REVOLUT
             is UserDefinedFiatAccount -> PaymentTypeVO.CUSTOM
             else -> return null
         }

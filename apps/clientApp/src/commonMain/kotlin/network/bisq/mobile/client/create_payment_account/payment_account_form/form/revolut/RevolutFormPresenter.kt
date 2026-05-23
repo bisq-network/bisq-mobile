@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.create_payment_account.payment_account_form.form.wise
+package network.bisq.mobile.client.create_payment_account.payment_account_form.form.revolut
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,32 +12,37 @@ import network.bisq.mobile.client.create_payment_account.core.ui.CurrencyPickerI
 import network.bisq.mobile.client.create_payment_account.core.util.fiatCurrencyCodeNameToDisplayStringFormat
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.AccountFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.WiseFormUiAction
-import network.bisq.mobile.data.replicated.common.validation.EmailValidation
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.RevolutFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
-import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccount
-import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccountPayload
+import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter
 
-open class WiseFormPresenter(
+open class RevolutFormPresenter(
     mainPresenter: MainPresenter,
 ) : AccountFormPresenter(mainPresenter) {
-    private val _uiState = MutableStateFlow(WiseFormUiState())
-    override val uiState: StateFlow<WiseFormUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(RevolutFormUiState())
+    override val uiState: StateFlow<RevolutFormUiState> = _uiState.asStateFlow()
 
-    private val _effect = MutableSharedFlow<WiseFormEffect>()
+    private val _effect = MutableSharedFlow<RevolutFormEffect>()
     val effect = _effect.asSharedFlow()
 
     private var supportedCurrencies: HashSet<FiatCurrency> = HashSet()
 
     fun initialize(paymentMethod: FiatPaymentMethod) {
         supportedCurrencies = paymentMethod.supportedCurrencies.toHashSet()
-        _uiState.update { currentState ->
-            currentState.copy(
-                availableCurrencies = supportedCurrencies.sortedBy { currency -> currency.code }.map { currency -> CurrencyPickerItem(currency.code, fiatCurrencyCodeNameToDisplayStringFormat(currency.code, currency.name)) },
+        _uiState.update {
+            it.copy(
+                availableCurrencies =
+                    supportedCurrencies.sortedBy { currency -> currency.code }.map { currency ->
+                        CurrencyPickerItem(
+                            code = currency.code,
+                            displayName = fiatCurrencyCodeNameToDisplayStringFormat(currency.code, currency.name),
+                        )
+                    },
                 selectedCurrencyCodes = supportedCurrencies.map { currency -> currency.code }.toSet(),
             )
         }
@@ -45,31 +50,17 @@ open class WiseFormPresenter(
 
     override fun onCustomAction(action: AccountFormUiAction) {
         when (action) {
-            is WiseFormUiAction.OnHolderNameChange -> {
+            is RevolutFormUiAction.OnUserNameChange -> {
                 _uiState.update {
-                    it.copy(
-                        holderNameEntry = it.holderNameEntry.updateValue(action.value),
-                    )
+                    it.copy(userNameEntry = it.userNameEntry.updateValue(action.value))
                 }
             }
 
-            is WiseFormUiAction.OnEmailChange -> {
-                _uiState.update {
-                    it.copy(
-                        emailEntry = it.emailEntry.updateValue(action.value),
-                    )
-                }
+            RevolutFormUiAction.OnOpenCurrencyPicker -> {
+                _uiState.update { it.copy(isCurrencyPickerOpen = true) }
             }
 
-            WiseFormUiAction.OnOpenCurrencyPicker -> {
-                _uiState.update {
-                    it.copy(
-                        isCurrencyPickerOpen = true,
-                    )
-                }
-            }
-
-            WiseFormUiAction.OnCloseCurrencyPicker -> {
+            RevolutFormUiAction.OnCloseCurrencyPicker -> {
                 _uiState.update {
                     it.copy(
                         isCurrencyPickerOpen = false,
@@ -78,15 +69,11 @@ open class WiseFormPresenter(
                 }
             }
 
-            is WiseFormUiAction.OnCurrencySearchChange -> {
-                _uiState.update {
-                    it.copy(
-                        currencySearchQuery = action.value,
-                    )
-                }
+            is RevolutFormUiAction.OnCurrencySearchChange -> {
+                _uiState.update { it.copy(currencySearchQuery = action.value) }
             }
 
-            is WiseFormUiAction.OnCurrencyToggle -> {
+            is RevolutFormUiAction.OnCurrencyToggle -> {
                 _uiState.update { current ->
                     val updatedSelection =
                         if (current.selectedCurrencyCodes.contains(action.code)) {
@@ -102,7 +89,7 @@ open class WiseFormPresenter(
                 }
             }
 
-            WiseFormUiAction.OnSelectAllCurrencies -> {
+            RevolutFormUiAction.OnSelectAllCurrencies -> {
                 _uiState.update {
                     it.copy(
                         selectedCurrencyCodes = it.availableCurrencies.map { item -> item.code }.toSet(),
@@ -111,12 +98,8 @@ open class WiseFormPresenter(
                 }
             }
 
-            WiseFormUiAction.OnClearAllCurrencies -> {
-                _uiState.update {
-                    it.copy(
-                        selectedCurrencyCodes = emptySet(),
-                    )
-                }
+            RevolutFormUiAction.OnClearAllCurrencies -> {
+                _uiState.update { it.copy(selectedCurrencyCodes = emptySet()) }
             }
 
             else -> Unit
@@ -133,8 +116,7 @@ open class WiseFormPresenter(
                         .sortedBy { currency -> currency.code }
 
                 it.copy(
-                    holderNameEntry = it.holderNameEntry.validate(),
-                    emailEntry = it.emailEntry.validate(),
+                    userNameEntry = it.userNameEntry.validate(),
                     currencyErrorMessage = validateSelectedCurrencies(selectedCurrencies),
                 )
             }
@@ -142,8 +124,7 @@ open class WiseFormPresenter(
         val validatedAccountName = validateUniqueAccountNameEntry()
 
         val isValid =
-            validatedState.holderNameEntry.isValid &&
-                validatedState.emailEntry.isValid &&
+            validatedState.userNameEntry.isValid &&
                 validatedState.currencyErrorMessage == null &&
                 validatedAccountName.isValid
 
@@ -153,14 +134,13 @@ open class WiseFormPresenter(
 
         presenterScope.launch {
             _effect.emit(
-                WiseFormEffect.NavigateToNextScreen(
-                    CreateWiseAccount(
+                RevolutFormEffect.NavigateToNextScreen(
+                    CreateRevolutAccount(
                         accountName = validatedAccountName.value.trim(),
                         accountPayload =
-                            CreateWiseAccountPayload(
+                            CreateRevolutAccountPayload(
+                                userName = validatedState.userNameEntry.value.trim(),
                                 selectedCurrencies = selectedCurrencies,
-                                holderName = validatedState.holderNameEntry.value.trim(),
-                                email = validatedState.emailEntry.value.trim(),
                             ),
                     ),
                 ),
@@ -169,7 +149,7 @@ open class WiseFormPresenter(
     }
 }
 
-internal fun validateHolderName(value: String): String? {
+internal fun validateUserName(value: String): String? {
     val trimmed = value.trim()
 
     try {
@@ -183,13 +163,6 @@ internal fun validateHolderName(value: String): String? {
 
     return null
 }
-
-internal fun validateEmail(value: String): String? =
-    if (EmailValidation.isValid(value.trim())) {
-        null
-    } else {
-        "validation.invalidEmail".i18n()
-    }
 
 internal fun validateSelectedCurrencies(selectedCurrencies: List<FiatCurrency>): String? =
     if (selectedCurrencies.isEmpty()) {

@@ -18,6 +18,8 @@ import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
+import network.bisq.mobile.domain.model.account.fiat.RevolutAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.WiseAccount
@@ -178,6 +180,30 @@ class PaymentAccountMusigDetailContentUiTest {
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithText("paymentAccounts.email".i18n())
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when revolut account present then shows revolut detail labels`() {
+        // Given
+        val uiState = createUiState(paymentAccount = sampleRevolutAccount())
+
+        // When
+        setTestContent {
+            PaymentAccountMusigDetailContent(
+                uiState = uiState,
+                onAction = onAction,
+            )
+        }
+
+        // Then
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.userName".i18n())
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("mobile.paymentAccounts.currencyPicker.title".i18n())
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -377,6 +403,20 @@ class PaymentAccountMusigDetailContentUiTest {
                     holderName = "Satoshi Nakamoto",
                     email = "satoshi@example.com",
                     paymentMethodName = "Wise",
+                ),
+            creationDate = null,
+            tradeLimitInfo = "5000.00",
+            tradeDuration = "4 days",
+        )
+
+    private fun sampleRevolutAccount(): RevolutAccount =
+        RevolutAccount(
+            accountName = "Revolut Main",
+            accountPayload =
+                RevolutAccountPayload(
+                    selectedCurrencies = listOf(FiatCurrency(code = "USD", name = "US Dollar"), FiatCurrency(code = "EUR", name = "Euro")),
+                    userName = "satoshi",
+                    paymentMethodName = "Revolut",
                 ),
             creationDate = null,
             tradeLimitInfo = "5000.00",

@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.create_payment_account.payment_account_form.form.wise
+package network.bisq.mobile.client.create_payment_account.payment_account_form.form.revolut
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
@@ -19,11 +19,11 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.WiseFormUiAction
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.RevolutFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
-import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccount
+import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccount
 import network.bisq.mobile.domain.model.account.fiat.Country
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
@@ -51,7 +51,7 @@ import kotlin.test.assertNotNull
 @Config(application = TestApplication::class)
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class WiseFormContentTest {
+class RevolutFormContentTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -86,14 +86,14 @@ class WiseFormContentTest {
     }
 
     private fun setTestContent(
-        presenter: WiseFormPresenter = WiseFormPresenter(mainPresenter),
+        presenter: RevolutFormPresenter = RevolutFormPresenter(mainPresenter),
         paymentMethod: FiatPaymentMethod = samplePaymentMethod(),
         onNavigateToNextScreen: (CreatePaymentAccount) -> Unit = {},
     ) {
         composeTestRule.setContent {
             CompositionLocalProvider(LocalIsTest provides true) {
                 BisqTheme {
-                    WiseFormContent(
+                    RevolutFormContent(
                         presenter = presenter,
                         onNavigateToNextScreen = onNavigateToNextScreen,
                         paymentMethod = paymentMethod,
@@ -104,47 +104,29 @@ class WiseFormContentTest {
     }
 
     @Test
-    fun `when rendered then wise form fields and currency summary are shown`() {
+    fun `when rendered then revolut form fields and currency summary are shown`() {
         setTestContent()
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("paymentAccounts.holderName".i18n()).assertIsDisplayed()
-        composeTestRule.onNodeWithText("paymentAccounts.email".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3)).assertIsDisplayed()
     }
 
     @Test
-    fun `when holder name field typed then visible input updates through presenter`() {
-        val holderName = "Alice Doe"
+    fun `when username field typed then visible input updates through presenter`() {
+        val userName = "satoshi"
         setTestContent()
 
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText(
                 "paymentAccounts.createAccount.prompt".i18n(
-                    "paymentAccounts.holderName".i18n().lowercase(),
+                    "paymentAccounts.userName".i18n().lowercase(),
                 ),
-            ).performTextInput(holderName)
+            ).performTextInput(userName)
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(holderName).assertIsDisplayed()
-    }
-
-    @Test
-    fun `when email field typed then visible input updates through presenter`() {
-        val email = "alice@example.com"
-        setTestContent()
-
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onNodeWithText(
-                "paymentAccounts.createAccount.prompt".i18n(
-                    "paymentAccounts.email".i18n().lowercase(),
-                ),
-            ).performTextInput(email)
-
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(email).assertIsDisplayed()
+        composeTestRule.onNodeWithText(userName).assertIsDisplayed()
     }
 
     @Test
@@ -162,7 +144,7 @@ class WiseFormContentTest {
         composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.clearAll".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.searchHint".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText("EUR (Euro)").assertIsDisplayed()
-        composeTestRule.onNodeWithText("GBP (British Pound)").assertIsDisplayed()
+        composeTestRule.onNodeWithText("GBP (Pound Sterling)").assertIsDisplayed()
         composeTestRule.onNodeWithText("USD (US Dollar)").assertIsDisplayed()
     }
 
@@ -190,7 +172,7 @@ class WiseFormContentTest {
         composeTestRule
             .onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3))
             .performClick()
-        composeTestRule.onNodeWithText("GBP (British Pound)").performClick()
+        composeTestRule.onNodeWithText("GBP (Pound Sterling)").performClick()
 
         composeTestRule.waitForIdle()
         composeTestRule
@@ -210,7 +192,7 @@ class WiseFormContentTest {
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("EUR (Euro)").assertIsDisplayed()
-        composeTestRule.onAllNodesWithText("GBP (British Pound)").assertCountEquals(0)
+        composeTestRule.onAllNodesWithText("GBP (Pound Sterling)").assertCountEquals(0)
         composeTestRule.onAllNodesWithText("USD (US Dollar)").assertCountEquals(0)
     }
 
@@ -232,7 +214,7 @@ class WiseFormContentTest {
     @Test
     fun `when presenter emits navigate effect then navigation callback receives account`() =
         runTest(testDispatcher) {
-            val presenter = WiseFormPresenter(mainPresenter)
+            val presenter = RevolutFormPresenter(mainPresenter)
             var navigatedAccount: CreatePaymentAccount? = null
 
             setTestContent(
@@ -241,32 +223,30 @@ class WiseFormContentTest {
             )
             composeTestRule.waitForIdle()
 
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
-            presenter.onAction(WiseFormUiAction.OnHolderNameChange("John Doe"))
-            presenter.onAction(WiseFormUiAction.OnEmailChange("john@example.com"))
-            presenter.onAction(WiseFormUiAction.OnCurrencyToggle("GBP"))
+            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Revolut Personal"))
+            presenter.onAction(RevolutFormUiAction.OnUserNameChange("satoshi"))
+            presenter.onAction(RevolutFormUiAction.OnCurrencyToggle("GBP"))
             presenter.onAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             composeTestRule.waitForIdle()
-            val account = assertNotNull(navigatedAccount) as CreateWiseAccount
-            assertEquals("Wise Personal", account.accountName)
-            assertEquals("John Doe", account.accountPayload.holderName)
-            assertEquals("john@example.com", account.accountPayload.email)
+            val account = assertNotNull(navigatedAccount) as CreateRevolutAccount
+            assertEquals("Revolut Personal", account.accountName)
+            assertEquals("satoshi", account.accountPayload.userName)
             assertEquals(listOf("EUR", "USD"), account.accountPayload.selectedCurrencies.map { currency -> currency.code })
         }
 
     private fun samplePaymentMethod(): FiatPaymentMethod =
         FiatPaymentMethod(
-            paymentRail = FiatPaymentRail.WISE,
-            name = "Wise",
+            paymentRail = FiatPaymentRail.REVOLUT,
+            name = "Revolut",
             supportedCurrencies =
                 listOf(
                     FiatCurrency(code = "USD", name = "US Dollar"),
                     FiatCurrency(code = "EUR", name = "Euro"),
-                    FiatCurrency(code = "GBP", name = "British Pound"),
+                    FiatCurrency(code = "GBP", name = "Pound Sterling"),
                 ),
-            supportedCountries = listOf(Country(code = "US", name = "United States")),
+            supportedCountries = listOf(Country(code = "GB", name = "United Kingdom")),
             matchesAllCountries = false,
             chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
             tradeLimitInfo = "5000.00",
