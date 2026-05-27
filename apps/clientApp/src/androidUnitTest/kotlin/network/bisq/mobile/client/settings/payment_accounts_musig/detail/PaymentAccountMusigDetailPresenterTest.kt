@@ -13,6 +13,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail.PaymentAccountMusigDetailPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail.PaymentAccountMusigDetailUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount

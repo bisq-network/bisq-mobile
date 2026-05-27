@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.ui.PaymentAccountTypeIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import org.junit.Rule

@@ -15,8 +15,12 @@ import io.mockk.verify
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.client.settings.payment_accounts_musig.model.CryptoAccountVO
-import network.bisq.mobile.client.settings.payment_accounts_musig.model.FiatAccountVO
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountTab
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountsMusigContent
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountsMusigUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountsMusigUiState
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.CryptoAccountVO
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.FiatAccountVO
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme

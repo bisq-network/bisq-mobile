@@ -13,6 +13,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail.PaymentAccountMusigDetailContent
+import network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail.PaymentAccountMusigDetailUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail.PaymentAccountMusigDetailUiState
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount

@@ -11,7 +11,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.client.settings.payment_accounts_musig.model.FiatAccountVO
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.FiatAccountVO
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.ui.FiatPaymentAccountCard
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest

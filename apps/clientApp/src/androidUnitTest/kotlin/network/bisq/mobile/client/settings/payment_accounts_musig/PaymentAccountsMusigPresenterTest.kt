@@ -14,6 +14,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountTab
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountsMusigPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountsMusigUiAction
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount

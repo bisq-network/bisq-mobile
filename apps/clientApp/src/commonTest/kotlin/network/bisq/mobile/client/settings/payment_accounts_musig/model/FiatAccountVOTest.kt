@@ -2,6 +2,7 @@ package network.bisq.mobile.client.settings.payment_accounts_musig.model
 
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
+import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.toVO
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.Country
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
