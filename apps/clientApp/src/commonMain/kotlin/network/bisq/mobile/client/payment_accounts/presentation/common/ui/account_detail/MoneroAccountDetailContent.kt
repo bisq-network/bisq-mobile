@@ -10,13 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAccountDetailHeader
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAutoConfDetailRows
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoCommonDetailRows
-import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
-import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants

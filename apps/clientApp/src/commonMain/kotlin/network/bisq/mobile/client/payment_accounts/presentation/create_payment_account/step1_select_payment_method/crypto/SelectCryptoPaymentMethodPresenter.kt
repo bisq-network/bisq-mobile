@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.presentation.model.account.CryptoPaymentMethodVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
-import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType

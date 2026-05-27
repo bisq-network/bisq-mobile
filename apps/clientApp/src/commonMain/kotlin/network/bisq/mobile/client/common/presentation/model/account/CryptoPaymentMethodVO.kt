@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.common.presentation.model.account
 
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
 
 data class CryptoPaymentMethodVO(
     override val paymentType: PaymentTypeVO,

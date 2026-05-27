@@ -2,8 +2,8 @@ package network.bisq.mobile.client.payment_accounts.presentation.common.ui.accou
 
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.WiseAccount
 import network.bisq.mobile.client.payment_accounts.presentation.common.util.toDisplayString
-import network.bisq.mobile.domain.model.account.fiat.WiseAccount
 
 data class WiseAccountDetailVO(
     val chargebackRisk: FiatPaymentMethodChargebackRiskVO?,

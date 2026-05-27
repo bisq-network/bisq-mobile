@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.common.presentation.model.account
 
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.i18n.i18n
 

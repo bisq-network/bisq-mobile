@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.CreateOtherCryptoAssetAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.CreateOtherCryptoAssetAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiState
-import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccount
-import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccountPayload
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
 
 open class OtherCryptoFormPresenter(

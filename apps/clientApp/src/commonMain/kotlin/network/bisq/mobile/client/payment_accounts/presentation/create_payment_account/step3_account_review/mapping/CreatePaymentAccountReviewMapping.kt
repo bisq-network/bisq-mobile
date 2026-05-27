@@ -1,16 +1,16 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.mapping
 
+import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.CreateMoneroAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.CreateOtherCryptoAssetAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.CreateRevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccount
 import network.bisq.mobile.domain.model.account.PaymentAccount
-import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
-import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccount
-import network.bisq.mobile.domain.model.account.create.crypto.CreateOtherCryptoAssetAccount
-import network.bisq.mobile.domain.model.account.create.fiat.CreateCashDepositAccount
-import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccount
-import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccount
-import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccount
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 
 fun CreatePaymentAccount.toReviewPaymentAccount(paymentMethod: PaymentMethod): PaymentAccount? =
     when {

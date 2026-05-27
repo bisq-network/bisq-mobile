@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountNameAlreadyExistsException
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.mapping.toReviewPaymentAccount
-import network.bisq.mobile.data.service.accounts.PaymentAccountNameAlreadyExistsException
-import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
-import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter

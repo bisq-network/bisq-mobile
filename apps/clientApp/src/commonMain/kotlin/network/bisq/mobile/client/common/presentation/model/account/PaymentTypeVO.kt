@@ -44,9 +44,9 @@ import bisqapps.shared.presentation.generated.resources.payment_icon_wise
 import bisqapps.shared.presentation.generated.resources.payment_icon_wise_us
 import bisqapps.shared.presentation.generated.resources.payment_icon_xmr
 import bisqapps.shared.presentation.generated.resources.payment_icon_zelle
-import network.bisq.mobile.domain.model.account.PaymentMethod
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.utils.getLogger
 import org.jetbrains.compose.resources.DrawableResource
 

@@ -1,0 +1,24 @@
+package network.bisq.mobile.client.payment_accounts.data.model.fiat.common
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class BankAccountCountryDetailsDto(
+    val country: CountryDto,
+    val bankAccountValidationSupported: Boolean = false,
+    val holderIdRequired: Boolean,
+    val holderIdDescription: String,
+    val holderIdDescriptionShort: String,
+    val bankAccountTypeRequired: Boolean,
+    val bankNameRequired: Boolean,
+    val bankIdRequired: Boolean,
+    val bankIdDescription: String,
+    val bankIdDescriptionShort: String,
+    val branchIdRequired: Boolean,
+    val branchIdDescription: String,
+    val branchIdDescriptionShort: String,
+    val accountNrDescription: String,
+    val nationalAccountIdRequired: Boolean,
+    val nationalAccountIdDescription: String,
+    val nationalAccountIdDescriptionShort: String,
+)

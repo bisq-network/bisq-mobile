@@ -3,16 +3,16 @@ package network.bisq.mobile.client.payment_accounts.presentation.payment_account
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
-import network.bisq.mobile.domain.model.account.fiat.CashDepositAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.FiatPaymentCountryBasedAccountPayload
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatPaymentSingleCurrencyAccountPayload
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.WiseAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccountPayload
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentCountryBasedAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentSingleCurrencyAccountPayload
-import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
-import network.bisq.mobile.domain.model.account.fiat.WiseAccount
-import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 
 data class FiatAccountVO(

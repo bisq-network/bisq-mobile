@@ -20,8 +20,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.common.presentation.model.account.CryptoPaymentMethodVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
+import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step1_select_payment_method.ui.CryptoPaymentMethodCard
-import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.components.LoadingState

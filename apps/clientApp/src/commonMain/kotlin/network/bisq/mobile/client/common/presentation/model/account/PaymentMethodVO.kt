@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.presentation.model.account
 
-import network.bisq.mobile.domain.model.account.PaymentMethod
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 
 interface PaymentMethodVO {
     val paymentType: PaymentTypeVO

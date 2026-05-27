@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.mapping
 
-import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccount
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
-import network.bisq.mobile.domain.model.account.fiat.WiseAccount
-import network.bisq.mobile.domain.model.account.fiat.WiseAccountPayload
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.WiseAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.WiseAccountPayload
 
 internal fun CreateWiseAccount.toReviewPaymentAccount(paymentMethod: FiatPaymentMethod): WiseAccount =
     WiseAccount(

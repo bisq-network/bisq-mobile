@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.mapping
 
-import network.bisq.mobile.domain.model.account.create.fiat.CreateRevolutAccount
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
-import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
-import network.bisq.mobile.domain.model.account.fiat.RevolutAccountPayload
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.CreateRevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccountPayload
 
 internal fun CreateRevolutAccount.toReviewPaymentAccount(paymentMethod: FiatPaymentMethod): RevolutAccount =
     RevolutAccount(

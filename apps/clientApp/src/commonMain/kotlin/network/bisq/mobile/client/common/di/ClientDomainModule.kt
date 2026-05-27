@@ -17,8 +17,6 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryImpl
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
-import network.bisq.mobile.client.common.domain.service.accounts.all.ClientPaymentAccountsServiceFacade
-import network.bisq.mobile.client.common.domain.service.accounts.all.PaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.accounts.user_defined.ClientUserDefinedAccountsServiceFacade
 import network.bisq.mobile.client.common.domain.service.accounts.user_defined.UserDefinedPaymentAccountsApiGateway
 import network.bisq.mobile.client.common.domain.service.alert.AlertNotificationsApiGateway
@@ -58,6 +56,9 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEven
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.client.payment_accounts.data.service.ClientPaymentAccountsServiceFacade
+import network.bisq.mobile.client.payment_accounts.data.service.PaymentAccountsApiGateway
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
 import network.bisq.mobile.data.datastore.createDataStore
@@ -79,7 +80,6 @@ import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade

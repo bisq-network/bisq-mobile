@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.mapping
 
-import network.bisq.mobile.domain.model.account.create.fiat.CreateZelleAccount
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
-import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
-import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccountPayload
 
 internal fun CreateZelleAccount.toReviewPaymentAccount(paymentMethod: FiatPaymentMethod): ZelleAccount =
     ZelleAccount(

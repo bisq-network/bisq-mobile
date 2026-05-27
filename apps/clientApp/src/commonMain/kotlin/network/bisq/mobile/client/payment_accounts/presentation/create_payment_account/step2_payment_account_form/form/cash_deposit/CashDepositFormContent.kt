@@ -16,15 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.presentation.common.util.toDisplayString
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CashDepositFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.ui.PaymentMethodBackgroundInformationDialog
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
-import network.bisq.mobile.domain.model.account.fiat.BankAccountType
-import network.bisq.mobile.domain.model.account.fiat.Country
-import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.components.LoadingState
@@ -285,12 +285,6 @@ private fun CashDepositTextField(
         minLines = minLines,
     )
 }
-
-private fun BankAccountType.toDisplayString(): String =
-    when (this) {
-        BankAccountType.CHECKING -> "paymentAccounts.bank.bankAccountType.CHECKINGS".i18n()
-        BankAccountType.SAVINGS -> "paymentAccounts.bank.bankAccountType.SAVINGS".i18n()
-    }
 
 @Preview
 @Composable

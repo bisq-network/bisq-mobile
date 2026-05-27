@@ -19,8 +19,6 @@ import org.koin.dsl.module
 
 val clientPresentationModule =
     module {
-        includes(paymentsAccountModule)
-
         single<MainPresenter> {
             ClientMainPresenter(
                 get(),

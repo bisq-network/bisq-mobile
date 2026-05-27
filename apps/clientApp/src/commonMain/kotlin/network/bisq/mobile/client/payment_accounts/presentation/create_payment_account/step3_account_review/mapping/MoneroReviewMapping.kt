@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.mapping
 
-import network.bisq.mobile.domain.model.account.create.crypto.CreateMoneroAccount
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
-import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
-import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.CreateMoneroAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccountPayload
 
 internal fun CreateMoneroAccount.toReviewPaymentAccount(paymentMethod: CryptoPaymentMethod): MoneroAccount =
     MoneroAccount(

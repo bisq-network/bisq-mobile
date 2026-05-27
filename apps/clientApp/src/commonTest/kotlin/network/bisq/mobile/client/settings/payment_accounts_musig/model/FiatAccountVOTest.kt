@@ -2,16 +2,16 @@ package network.bisq.mobile.client.settings.payment_accounts_musig.model
 
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.toVO
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
-import network.bisq.mobile.domain.model.account.fiat.Country
-import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
-import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
-import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import kotlin.test.Test
 import kotlin.test.assertEquals

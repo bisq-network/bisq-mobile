@@ -13,11 +13,11 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRest
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.data.model.account.PaymentAccountDto
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
-import network.bisq.mobile.data.model.account.fiat.ZelleAccountDto
-import network.bisq.mobile.data.model.account.fiat.ZelleAccountPayloadDto
+import network.bisq.mobile.client.payment_accounts.data.model.PaymentAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.user_defined.UserDefinedFiatAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.user_defined.UserDefinedFiatAccountPayloadDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.zelle.ZelleAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.zelle.ZelleAccountPayloadDto
 import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelDto

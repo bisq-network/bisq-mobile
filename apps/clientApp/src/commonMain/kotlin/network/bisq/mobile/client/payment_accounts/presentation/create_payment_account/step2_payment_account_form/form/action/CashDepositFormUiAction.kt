@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action
 
-import network.bisq.mobile.domain.model.account.fiat.BankAccountType
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 
 sealed interface CashDepositFormUiAction : AccountFormUiAction {
     data class OnCountrySelect(

@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentAccount
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.toVO
-import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccount
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.types.PaymentAccountType

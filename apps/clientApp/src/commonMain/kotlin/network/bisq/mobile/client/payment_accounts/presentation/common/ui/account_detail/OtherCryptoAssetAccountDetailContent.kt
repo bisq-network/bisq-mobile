@@ -11,12 +11,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.client.common.presentation.model.account.getPaymentTypeVOFromCryptoCurrencyCode
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAccountDetailHeader
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAutoConfDetailRows
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoCommonDetailRows
-import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
-import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccountPayload
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 

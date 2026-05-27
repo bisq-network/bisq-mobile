@@ -9,15 +9,11 @@ import network.bisq.mobile.data.datastore.serializer.UserSerializer
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.model.User
-import network.bisq.mobile.data.model.account.bank_account.BankAccountCountryDetailsCache
-import network.bisq.mobile.data.model.account.bank_account.BankAccountCountryDetailsCacheSerializer
-import network.bisq.mobile.data.repository.BankAccountCountryDetailsRepositoryImpl
 import network.bisq.mobile.data.repository.SettingsRepositoryImpl
 import network.bisq.mobile.data.repository.TradeReadStateRepositoryImpl
 import network.bisq.mobile.data.repository.UserRepositoryImpl
 import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.data.utils.getStorageDir
-import network.bisq.mobile.domain.repository.BankAccountCountryDetailsRepository
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.repository.UserRepository
@@ -59,22 +55,10 @@ val dataModule =
             )
         }
 
-        single<DataStore<BankAccountCountryDetailsCache>>(named("BankAccountCountryDetailsCache")) {
-            createDataStore(
-                "BankAccountCountryDetailsCache",
-                getStorageDir(),
-                BankAccountCountryDetailsCacheSerializer,
-                ReplaceFileCorruptionHandler { BankAccountCountryDetailsCache() },
-            )
-        }
-
         // Repositories
         single<SettingsRepository> { SettingsRepositoryImpl(get(named("Settings"))) }
         single<UserRepository> { UserRepositoryImpl(get(named("User"))) }
         single<TradeReadStateRepository> { TradeReadStateRepositoryImpl(get(named("TradeReadStateMap"))) }
-        single<BankAccountCountryDetailsRepository> {
-            BankAccountCountryDetailsRepositoryImpl(get(named("BankAccountCountryDetailsCache")))
-        }
 
         // Exception handler setup - singleton to ensure consistent setup
         single<CoroutineExceptionHandlerSetup> { CoroutineExceptionHandlerSetup() }

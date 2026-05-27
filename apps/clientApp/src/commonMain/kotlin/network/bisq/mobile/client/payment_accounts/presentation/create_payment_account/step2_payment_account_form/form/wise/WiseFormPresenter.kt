@@ -8,6 +8,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.util.toDisplayString
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CurrencyPickerItem
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
@@ -15,10 +19,6 @@ import network.bisq.mobile.client.payment_accounts.presentation.create_payment_a
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.WiseFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.EmailValidation
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
-import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccount
-import network.bisq.mobile.domain.model.account.create.fiat.CreateWiseAccountPayload
-import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
-import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter
 

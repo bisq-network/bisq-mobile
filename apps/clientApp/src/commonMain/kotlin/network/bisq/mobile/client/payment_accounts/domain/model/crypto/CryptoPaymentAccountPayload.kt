@@ -1,0 +1,15 @@
+package network.bisq.mobile.client.payment_accounts.domain.model.crypto
+
+import network.bisq.mobile.domain.model.account.PaymentAccountPayload
+
+interface CryptoPaymentAccountPayload : PaymentAccountPayload {
+    val currencyCode: String
+    val currencyName: String
+    val address: String
+    val isInstant: Boolean
+    val isAutoConf: Boolean?
+    val autoConfNumConfirmations: Int?
+    val autoConfMaxTradeAmount: Long?
+    val autoConfExplorerUrls: String?
+    val supportAutoConf: Boolean
+}

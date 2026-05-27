@@ -1,10 +1,10 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit
 
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiState
-import network.bisq.mobile.domain.model.account.fiat.BankAccountCountryDetails
-import network.bisq.mobile.domain.model.account.fiat.BankAccountType
-import network.bisq.mobile.domain.model.account.fiat.Country
-import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 
 private const val NO_SELECTION_INDEX = -1

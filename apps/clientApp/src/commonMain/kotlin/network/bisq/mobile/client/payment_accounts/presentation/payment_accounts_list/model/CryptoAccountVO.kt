@@ -2,9 +2,9 @@ package network.bisq.mobile.client.payment_accounts.presentation.payment_account
 
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.presentation.model.account.getPaymentTypeVOFromCryptoCurrencyCode
-import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentAccount
-import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
-import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccount
 
 data class CryptoAccountVO(
     val accountName: String,

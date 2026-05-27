@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.common.domain.service.accounts.user_defined
 
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.user_defined.CreateUserDefinedFiatAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.user_defined.UserDefinedFiatAccountDto
 import network.bisq.mobile.data.utils.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
 

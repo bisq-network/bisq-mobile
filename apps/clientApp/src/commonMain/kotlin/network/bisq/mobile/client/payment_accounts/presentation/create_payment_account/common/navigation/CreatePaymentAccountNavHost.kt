@@ -6,11 +6,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step1_select_payment_method.crypto.SelectCryptoPaymentMethodScreen
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step1_select_payment_method.fiat.SelectFiatPaymentMethodScreen
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.PaymentAccountFormScreen
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.PaymentAccountReviewScreen
-import network.bisq.mobile.domain.model.account.PaymentMethod
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState

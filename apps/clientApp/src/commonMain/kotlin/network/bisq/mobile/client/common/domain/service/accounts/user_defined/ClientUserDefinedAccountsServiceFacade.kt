@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.accounts.user_defined
 
-import network.bisq.mobile.data.mapping.account.fiat.toDomain
-import network.bisq.mobile.data.mapping.account.fiat.toDto
+import network.bisq.mobile.client.payment_accounts.data.mapping.fiat.toDomain
+import network.bisq.mobile.client.payment_accounts.data.mapping.fiat.toDto
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
