@@ -28,6 +28,8 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPay
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.UnsupportedAccountState
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer.AchTransferFormContent
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer.AchTransferFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit.CashDepositFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit.CashDepositFormPresenter
@@ -180,6 +182,19 @@ private fun PaymentMethodFormContent(
     when (paymentMethod) {
         is FiatPaymentMethod -> {
             when (paymentMethod.paymentRail) {
+                FiatPaymentRail.ACH_TRANSFER -> {
+                    val presenter = methodPresenter as? AchTransferFormPresenter
+                    if (presenter != null) {
+                        AchTransferFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
                 FiatPaymentRail.CASH_DEPOSIT -> {
                     val presenter = methodPresenter as? CashDepositFormPresenter
                     if (presenter != null) {
@@ -334,6 +349,7 @@ private fun PaymentAccountFormContentPreview_ErrorPreview() {
 @Composable
 private fun rememberMethodPresenter(paymentType: PaymentTypeVO?): AccountFormPresenter? =
     when (paymentType) {
+        PaymentTypeVO.ACH_TRANSFER -> RememberPresenterLifecycleBackStackAware<AchTransferFormPresenter>()
         PaymentTypeVO.CASH_DEPOSIT -> RememberPresenterLifecycleBackStackAware<CashDepositFormPresenter>()
         PaymentTypeVO.ZELLE -> RememberPresenterLifecycleBackStackAware<ZelleFormPresenter>()
         PaymentTypeVO.XMR -> RememberPresenterLifecycleBackStackAware<MoneroFormPresenter>()

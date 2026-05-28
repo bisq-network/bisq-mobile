@@ -8,6 +8,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import network.bisq.mobile.client.payment_accounts.data.model.crypto.CryptoPaymentRailDto
 import network.bisq.mobile.client.payment_accounts.data.model.crypto.monero.MoneroAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.crypto.other_crypto.OtherCryptoAssetAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.AchTransferAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.CashDepositAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.FiatPaymentRailDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.revolut.RevolutAccountDto
@@ -28,6 +29,7 @@ object PaymentAccountDtoSerializer : JsonContentPolymorphicSerializer<PaymentAcc
         return when (paymentRailValue) {
             // Fiat
             FiatPaymentRailDto.CUSTOM.name -> UserDefinedFiatAccountDto.serializer()
+            FiatPaymentRailDto.ACH_TRANSFER.name -> AchTransferAccountDto.serializer()
             FiatPaymentRailDto.CASH_DEPOSIT.name -> CashDepositAccountDto.serializer()
             FiatPaymentRailDto.ZELLE.name -> ZelleAccountDto.serializer()
             FiatPaymentRailDto.WISE.name -> WiseAccountDto.serializer()

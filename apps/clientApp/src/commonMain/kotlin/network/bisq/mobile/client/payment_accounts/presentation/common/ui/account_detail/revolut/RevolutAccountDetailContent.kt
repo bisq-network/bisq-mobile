@@ -2,16 +2,13 @@ package network.bisq.mobile.client.payment_accounts.presentation.common.ui.accou
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
@@ -19,12 +16,11 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.Rev
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailHeader
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.ExpandableAccountDetailFieldRow
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.FiatChargebackRiskBadge
-import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.ui.PaymentAccountTypeIcon
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -41,23 +37,10 @@ fun RevolutAccountDetailContent(
         color = BisqTheme.colors.dark_grey40,
     ) {
         Column {
-            Row(
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-                        .padding(BisqUIConstants.ScreenPadding)
-                        .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-            ) {
-                PaymentAccountTypeIcon(
-                    paymentType = PaymentTypeVO.REVOLUT,
-                    size = BisqUIConstants.ScreenPadding2X,
-                )
-                Column {
-                    BisqText.BaseRegular(account.accountPayload.paymentMethodName)
-                }
-            }
+            AccountDetailHeader(
+                paymentType = PaymentTypeVO.REVOLUT,
+                primaryText = account.accountPayload.paymentMethodName,
+            )
 
             Column(
                 modifier = Modifier.padding(BisqUIConstants.ScreenPadding),

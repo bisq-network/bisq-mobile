@@ -56,8 +56,9 @@ class ZelleAccountDetailContentUiTest {
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Zelle").assertIsDisplayed()
-        composeTestRule.onNodeWithText("USD").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.country".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.currency".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("USD (US Dollar)").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.holderName".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.emailOrMobileNr".i18n()).assertIsDisplayed()
     }

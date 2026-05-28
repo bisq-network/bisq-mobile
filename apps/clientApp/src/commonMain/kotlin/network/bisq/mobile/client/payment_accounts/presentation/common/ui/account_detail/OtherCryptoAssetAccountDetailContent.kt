@@ -14,7 +14,7 @@ import network.bisq.mobile.client.common.presentation.model.account.getPaymentTy
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
-import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAccountDetailHeader
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailHeader
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAutoConfDetailRows
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoCommonDetailRows
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -33,10 +33,10 @@ fun OtherCryptoAssetAccountDetailContent(
         color = BisqTheme.colors.dark_grey40,
     ) {
         Column {
-            CryptoAccountDetailHeader(
+            AccountDetailHeader(
                 paymentType = paymentType,
-                currencyName = payload.currencyName,
-                currencyCode = payload.currencyCode,
+                primaryText = payload.currencyCode,
+                secondaryText = payload.currencyName,
             )
 
             Column(

@@ -3,7 +3,6 @@ package network.bisq.mobile.client.payment_accounts.presentation.common.ui.accou
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,9 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
@@ -26,15 +23,14 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.coun
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailHeader
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.ExpandableAccountDetailFieldRow
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.FiatChargebackRiskBadge
 import network.bisq.mobile.client.payment_accounts.presentation.common.util.toDisplayString
-import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.ui.PaymentAccountTypeIcon
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.components.LoadingState
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -68,23 +64,10 @@ private fun CashDepositAccountDetailContent(
         color = BisqTheme.colors.dark_grey40,
     ) {
         Column {
-            Row(
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-                        .padding(BisqUIConstants.ScreenPadding)
-                        .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-            ) {
-                PaymentAccountTypeIcon(
-                    paymentType = PaymentTypeVO.CASH_DEPOSIT,
-                    size = BisqUIConstants.ScreenPadding2X,
-                )
-                Column {
-                    BisqText.BaseRegular(account.accountPayload.paymentMethodName)
-                }
-            }
+            AccountDetailHeader(
+                paymentType = PaymentTypeVO.CASH_DEPOSIT,
+                primaryText = account.accountPayload.paymentMethodName,
+            )
 
             Column(
                 modifier = Modifier.padding(BisqUIConstants.ScreenPadding),

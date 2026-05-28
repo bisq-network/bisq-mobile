@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail
+package network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.ach_transfer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,15 +7,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.AchTransferAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.AchTransferAccountPayload
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
-import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccount
-import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailHeader
@@ -28,14 +28,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
-fun ZelleAccountDetailContent(
-    account: ZelleAccount,
-) {
-    val chargebackRisk =
-        remember(account.accountPayload.chargebackRisk) {
-            account.accountPayload.chargebackRisk?.toVO()
-        }
-
+fun AchTransferAccountDetailContent(account: AchTransferAccount) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
@@ -43,7 +36,7 @@ fun ZelleAccountDetailContent(
     ) {
         Column {
             AccountDetailHeader(
-                paymentType = PaymentTypeVO.ZELLE,
+                paymentType = PaymentTypeVO.ACH_TRANSFER,
                 primaryText = account.accountPayload.paymentMethodName,
             )
 
@@ -51,28 +44,37 @@ fun ZelleAccountDetailContent(
                 modifier = Modifier.padding(BisqUIConstants.ScreenPadding),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
-                if (account.accountPayload.country.name
-                        .isNotBlank()
-                ) {
-                    AccountDetailFieldRow(
-                        label = "paymentAccounts.country".i18n(),
-                        value = account.accountPayload.country.name,
-                    )
-                }
-
+                AccountDetailFieldRow(
+                    label = "paymentAccounts.country".i18n(),
+                    value = account.accountPayload.country.name,
+                )
                 AccountDetailFieldRow(
                     label = "paymentAccounts.currency".i18n(),
                     value = account.accountPayload.currency.toDisplayString(),
                 )
-
                 AccountDetailFieldRow(
                     label = "paymentAccounts.holderName".i18n(),
                     value = account.accountPayload.holderName,
                 )
-
                 AccountDetailFieldRow(
-                    label = "paymentAccounts.emailOrMobileNr".i18n(),
-                    value = account.accountPayload.emailOrMobileNr,
+                    label = "paymentAccounts.holderAddress".i18n(),
+                    value = account.accountPayload.holderAddress,
+                )
+                AccountDetailFieldRow(
+                    label = "paymentAccounts.bank.bankName".i18n(),
+                    value = account.accountPayload.bankName,
+                )
+                AccountDetailFieldRow(
+                    label = "paymentAccounts.achTransfer.routingNr".i18n(),
+                    value = account.accountPayload.routingNr,
+                )
+                AccountDetailFieldRow(
+                    label = "paymentAccounts.accountNr".i18n(),
+                    value = account.accountPayload.accountNr,
+                )
+                AccountDetailFieldRow(
+                    label = "paymentAccounts.bank.bankAccountType".i18n(),
+                    value = account.accountPayload.bankAccountType.toDisplayString(),
                 )
 
                 AccountDetailDetailsSection(
@@ -81,9 +83,9 @@ fun ZelleAccountDetailContent(
                     tradeDuration = account.tradeDuration,
                 )
 
-                chargebackRisk?.let { risk ->
+                account.accountPayload.chargebackRisk?.let { risk ->
                     BisqGap.VQuarter()
-                    FiatChargebackRiskBadge(risk = risk)
+                    risk.toVO()?.let { riskVO -> FiatChargebackRiskBadge(risk = riskVO) }
                 }
             }
         }
@@ -91,28 +93,30 @@ fun ZelleAccountDetailContent(
 }
 
 private val previewAccount =
-    ZelleAccount(
-        accountName = "Alice Doe",
+    AchTransferAccount(
+        accountName = "ACH Main",
         accountPayload =
-            ZelleAccountPayload(
-                holderName = "Alice Doe",
-                emailOrMobileNr = "alice@example.com",
-                paymentMethodName = "Zelle",
-                currency = FiatCurrency(code = "USD", name = "US Dollar"),
-                country = Country(code = "US", name = "United States"),
+            AchTransferAccountPayload(
                 chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
+                paymentMethodName = "ACH",
+                currency = FiatCurrency("USD", "US Dollar"),
+                country = Country("US", "United States"),
+                holderName = "Alice Doe",
+                holderAddress = "123 Main St",
+                bankName = "Bisq Bank",
+                routingNr = "123456789",
+                accountNr = "000123456789",
+                bankAccountType = BankAccountType.CHECKING,
             ),
-        tradeDuration = "8 days",
-        tradeLimitInfo = "1000 USD",
         creationDate = "Apr 3, 2026",
+        tradeLimitInfo = "5000.00 USD",
+        tradeDuration = "5 days",
     )
 
 @Preview
 @Composable
-private fun ZelleAccountDetailContentPreview() {
+private fun AchTransferAccountDetailContentPreview() {
     BisqTheme.Preview {
-        ZelleAccountDetailContent(
-            account = previewAccount,
-        )
+        AchTransferAccountDetailContent(previewAccount)
     }
 }

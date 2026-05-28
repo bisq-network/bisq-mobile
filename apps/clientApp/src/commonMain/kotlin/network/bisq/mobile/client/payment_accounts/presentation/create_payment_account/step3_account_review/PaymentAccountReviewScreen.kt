@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.AchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
@@ -28,6 +29,7 @@ import network.bisq.mobile.client.payment_accounts.presentation.common.ui.Unsupp
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.MoneroAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.OtherCryptoAssetAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.ZelleAccountDetailContent
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.ach_transfer.AchTransferAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.cash_deposit.CashDepositAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.revolut.RevolutAccountDetailContent
@@ -109,6 +111,9 @@ private fun PaymentAccountReviewContent(
                     .verticalScroll(rememberScrollState()),
         ) {
             when (paymentAccount) {
+                is AchTransferAccount ->
+                    AchTransferAccountDetailContent(paymentAccount)
+
                 is CashDepositAccount ->
                     CashDepositAccountDetailContent(paymentAccount)
 

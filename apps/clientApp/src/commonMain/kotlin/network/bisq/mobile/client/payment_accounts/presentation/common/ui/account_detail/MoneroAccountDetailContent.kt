@@ -14,7 +14,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.Mo
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
-import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAccountDetailHeader
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailHeader
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoAutoConfDetailRows
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.CryptoCommonDetailRows
 import network.bisq.mobile.i18n.i18n
@@ -33,10 +33,10 @@ fun MoneroAccountDetailContent(
         color = BisqTheme.colors.dark_grey40,
     ) {
         Column {
-            CryptoAccountDetailHeader(
+            AccountDetailHeader(
                 paymentType = PaymentTypeVO.XMR,
-                currencyName = payload.currencyName,
-                currencyCode = payload.currencyCode,
+                primaryText = payload.currencyCode,
+                secondaryText = payload.currencyName,
             )
 
             Column(

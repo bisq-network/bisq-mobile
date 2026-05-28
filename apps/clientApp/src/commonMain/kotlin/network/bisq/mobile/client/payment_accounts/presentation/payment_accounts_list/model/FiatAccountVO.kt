@@ -3,6 +3,7 @@ package network.bisq.mobile.client.payment_accounts.presentation.payment_account
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.AchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.FiatPaymentCountryBasedAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatPaymentSingleCurrencyAccountPayload
@@ -27,6 +28,7 @@ data class FiatAccountVO(
 fun FiatPaymentAccount.toVO(): FiatAccountVO? {
     val paymentMethod =
         when (this) {
+            is AchTransferAccount -> PaymentTypeVO.ACH_TRANSFER
             is CashDepositAccount -> PaymentTypeVO.CASH_DEPOSIT
             is ZelleAccount -> PaymentTypeVO.ZELLE
             is WiseAccount -> PaymentTypeVO.WISE

@@ -18,10 +18,10 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 @Composable
-fun CryptoAccountDetailHeader(
+fun AccountDetailHeader(
     paymentType: PaymentTypeVO?,
-    currencyName: String,
-    currencyCode: String,
+    primaryText: String,
+    secondaryText: String? = null,
 ) {
     Row(
         modifier =
@@ -39,32 +39,45 @@ fun CryptoAccountDetailHeader(
             )
         }
         Column {
-            BisqText.BaseRegular(currencyCode)
-            BisqText.BaseRegularGrey(currencyName)
+            BisqText.BaseRegular(primaryText)
+            secondaryText
+                ?.takeIf { it.isNotBlank() }
+                ?.let { BisqText.BaseRegularGrey(it) }
         }
     }
 }
 
 @Preview
 @Composable
-private fun CryptoAccountDetailHeader_WithIconPreview() {
+private fun AccountDetailHeaderWithIconAndSecondaryTextPreview() {
     BisqTheme.Preview {
-        CryptoAccountDetailHeader(
+        AccountDetailHeader(
             paymentType = PaymentTypeVO.XMR,
-            currencyName = "Monero",
-            currencyCode = "XMR",
+            primaryText = "XMR",
+            secondaryText = "Monero",
         )
     }
 }
 
 @Preview
 @Composable
-private fun CryptoAccountDetailHeader_WithoutIconPreview() {
+private fun AccountDetailHeaderWithIconOnlyPreview() {
     BisqTheme.Preview {
-        CryptoAccountDetailHeader(
+        AccountDetailHeader(
+            paymentType = PaymentTypeVO.WISE,
+            primaryText = "Wise",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun AccountDetailHeaderWithoutIconPreview() {
+    BisqTheme.Preview {
+        AccountDetailHeader(
             paymentType = null,
-            currencyName = "Ethereum",
-            currencyCode = "ETH",
+            primaryText = "ETH",
+            secondaryText = "Ethereum",
         )
     }
 }

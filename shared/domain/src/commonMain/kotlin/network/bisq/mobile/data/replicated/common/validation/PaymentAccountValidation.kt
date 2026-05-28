@@ -24,6 +24,10 @@ object PaymentAccountValidation {
     const val NATIONAL_ACCOUNT_ID_MIN_LENGTH: Int = 1
     const val NATIONAL_ACCOUNT_ID_MAX_LENGTH: Int = 50
 
+    // Values taken from bisq2 bisq.account.accounts.fiat.AchTransferAccountPayload
+    const val HOLDER_ADDRESS_MIN_LENGTH: Int = 5
+    const val HOLDER_ADDRESS_MAX_LENGTH: Int = 150
+
     // Value taken from bisq2 bisq.account.accounts.fiat.CashDepositAccountPayload
     const val CASH_DEPOSIT_REQUIREMENTS_MAX_LENGTH: Int = 150
 
