@@ -146,6 +146,7 @@ class PaymentAccountsApiGatewayTest {
                         [
                           {
                             "country": {"code": "DE", "name": "Germany"},
+                            "bankAccountValidationSupported": true,
                             "holderIdRequired": false,
                             "holderIdDescription": "Holder ID",
                             "holderIdDescriptionShort": "ID",
@@ -176,6 +177,7 @@ class PaymentAccountsApiGatewayTest {
             val details = result.getOrThrow().single()
             assertEquals("DE", details.country.code)
             assertEquals("Germany", details.country.name)
+            assertTrue(details.bankAccountValidationSupported)
             assertTrue(details.bankNameRequired)
         }
 

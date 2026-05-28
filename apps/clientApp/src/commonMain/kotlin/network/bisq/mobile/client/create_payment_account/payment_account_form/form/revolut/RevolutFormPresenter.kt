@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.create_payment_account.core.ui.CurrencyPickerItem
-import network.bisq.mobile.client.create_payment_account.core.util.fiatCurrencyCodeNameToDisplayStringFormat
+import network.bisq.mobile.client.create_payment_account.core.util.toDisplayString
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.AccountFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.RevolutFormUiAction
@@ -40,7 +40,7 @@ open class RevolutFormPresenter(
                     supportedCurrencies.sortedBy { currency -> currency.code }.map { currency ->
                         CurrencyPickerItem(
                             code = currency.code,
-                            displayName = fiatCurrencyCodeNameToDisplayStringFormat(currency.code, currency.name),
+                            displayName = currency.toDisplayString(),
                         )
                     },
                 selectedCurrencyCodes = supportedCurrencies.map { currency -> currency.code }.toSet(),

@@ -17,6 +17,7 @@ import network.bisq.mobile.client.create_payment_account.account_review.ui.Moner
 import network.bisq.mobile.client.create_payment_account.account_review.ui.OtherCryptoAssetAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.account_review.ui.UserDefinedAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.account_review.ui.ZelleAccountDetailContent
+import network.bisq.mobile.client.create_payment_account.account_review.ui.cash_deposit.CashDepositAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.account_review.ui.core.AccountDetailFieldRow
 import network.bisq.mobile.client.create_payment_account.account_review.ui.revolut.RevolutAccountDetailContent
 import network.bisq.mobile.client.create_payment_account.account_review.ui.wise.WiseAccountDetailContent
@@ -27,6 +28,8 @@ import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccount
 import network.bisq.mobile.domain.model.account.crypto.OtherCryptoAssetAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.CashDepositAccount
+import network.bisq.mobile.domain.model.account.fiat.Country
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
@@ -105,6 +108,9 @@ fun PaymentAccountMusigDetailContent(
                                 .verticalScroll(rememberScrollState()),
                     ) {
                         when (paymentAccount) {
+                            is CashDepositAccount ->
+                                CashDepositAccountDetailContent(paymentAccount)
+
                             is ZelleAccount ->
                                 ZelleAccountDetailContent(paymentAccount)
 
@@ -169,8 +175,8 @@ private val previewZelleAccount =
                 holderName = "Alice Doe",
                 emailOrMobileNr = "alice@example.com",
                 paymentMethodName = "Zelle",
-                currency = "USD",
-                country = "US",
+                currency = FiatCurrency(code = "USD", name = "US Dollar"),
+                country = Country(code = "US", name = "United States"),
             ),
         creationDate = null,
         tradeLimitInfo = "1000 USD",

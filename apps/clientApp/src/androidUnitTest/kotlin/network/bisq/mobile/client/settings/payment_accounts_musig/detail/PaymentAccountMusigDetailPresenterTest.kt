@@ -16,6 +16,8 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
+import network.bisq.mobile.domain.model.account.fiat.Country
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
@@ -235,8 +237,8 @@ class PaymentAccountMusigDetailPresenterTest {
                     emailOrMobileNr = "alice@example.com",
                     chargebackRisk = FiatPaymentMethodChargebackRisk.LOW,
                     paymentMethodName = "Zelle",
-                    currency = "USD",
-                    country = "United States",
+                    currency = FiatCurrency(code = "USD", name = "US Dollar"),
+                    country = Country(code = "US", name = "United States"),
                 ),
             creationDate = null,
             tradeLimitInfo = null,

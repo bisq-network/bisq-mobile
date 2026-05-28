@@ -3,6 +3,8 @@ package network.bisq.mobile.client.settings.payment_accounts_musig.model
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.Country
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
@@ -30,7 +32,7 @@ class FiatAccountVOTest {
         assertEquals(FiatPaymentMethodChargebackRiskVO.LOW, result.chargebackRisk)
         assertEquals(PaymentTypeVO.ZELLE, result.paymentType)
         assertEquals("Zelle", result.paymentMethodName)
-        assertEquals("US", result.country)
+        assertEquals("United States", result.country)
         assertEquals("USD", result.currency)
     }
 
@@ -89,8 +91,8 @@ class FiatAccountVOTest {
                     emailOrMobileNr = "alice@example.com",
                     chargebackRisk = FiatPaymentMethodChargebackRisk.LOW,
                     paymentMethodName = "Zelle",
-                    currency = "USD",
-                    country = "US",
+                    currency = FiatCurrency(code = "USD", name = "US Dollar"),
+                    country = Country(code = "US", name = "United States"),
                 ),
             creationDate = null,
             tradeLimitInfo = null,
@@ -105,9 +107,9 @@ class FiatAccountVOTest {
                     holderName = "Alice Doe",
                     emailOrMobileNr = "alice@example.com",
                     chargebackRisk = null,
-                    country = "United States",
+                    country = Country(code = "US", name = "United States"),
                     paymentMethodName = "Zelle",
-                    currency = "USD",
+                    currency = FiatCurrency(code = "USD", name = "US Dollar"),
                 ),
             creationDate = null,
             tradeLimitInfo = null,

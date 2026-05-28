@@ -1,5 +1,5 @@
 package network.bisq.mobile.domain.model.account.fiat
 
 interface FiatPaymentSingleCurrencyAccountPayload {
-    val currency: String
+    val currency: FiatCurrency
 }

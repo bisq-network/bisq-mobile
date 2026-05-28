@@ -146,6 +146,7 @@ class BankAccountCountryDetailsRepositoryImplTest {
     ): BankAccountCountryDetailsDto =
         BankAccountCountryDetailsDto(
             country = CountryDto(code = code, name = name),
+            bankAccountValidationSupported = true,
             holderIdRequired = false,
             holderIdDescription = "Holder ID",
             holderIdDescriptionShort = "ID",

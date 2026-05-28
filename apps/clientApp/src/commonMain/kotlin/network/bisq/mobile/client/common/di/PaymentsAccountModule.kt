@@ -2,6 +2,8 @@ package network.bisq.mobile.client.common.di
 
 import network.bisq.mobile.client.create_payment_account.CreatePaymentAccountPresenter
 import network.bisq.mobile.client.create_payment_account.account_review.PaymentAccountReviewPresenter
+import network.bisq.mobile.client.create_payment_account.account_review.ui.cash_deposit.CashDepositAccountDetailPresenter
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.cash_deposit.CashDepositFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.revolut.RevolutFormPresenter
@@ -24,7 +26,9 @@ val paymentsAccountModule =
         factory { SelectFiatPaymentMethodPresenter(get(), get()) }
 
         factory { PaymentAccountReviewPresenter(get(), get()) }
+        factory { CashDepositAccountDetailPresenter(get(), get()) }
 
+        factory { CashDepositFormPresenter(get(), get()) }
         factory { ZelleFormPresenter(get()) }
         factory { WiseFormPresenter(get()) }
         factory { RevolutFormPresenter(get()) }

@@ -25,6 +25,8 @@ import network.bisq.mobile.client.common.presentation.model.account.getPaymentTy
 import network.bisq.mobile.client.common.presentation.model.account.toVO
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.AccountFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.AccountFormUiAction
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.cash_deposit.CashDepositFormContent
+import network.bisq.mobile.client.create_payment_account.payment_account_form.form.cash_deposit.CashDepositFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.monero.MoneroFormContent
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.other_crypto.OtherCryptoFormContent
@@ -178,6 +180,20 @@ private fun PaymentMethodFormContent(
     when (paymentMethod) {
         is FiatPaymentMethod -> {
             when (paymentMethod.paymentRail) {
+                FiatPaymentRail.CASH_DEPOSIT -> {
+                    val presenter = methodPresenter as? CashDepositFormPresenter
+                    if (presenter != null) {
+                        CashDepositFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            paymentMethod = paymentMethod,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
                 FiatPaymentRail.ZELLE -> {
                     val presenter = methodPresenter as? ZelleFormPresenter
                     if (presenter != null) {
@@ -318,6 +334,7 @@ private fun PaymentAccountFormContentPreview_ErrorPreview() {
 @Composable
 private fun rememberMethodPresenter(paymentType: PaymentTypeVO?): AccountFormPresenter? =
     when (paymentType) {
+        PaymentTypeVO.CASH_DEPOSIT -> RememberPresenterLifecycleBackStackAware<CashDepositFormPresenter>()
         PaymentTypeVO.ZELLE -> RememberPresenterLifecycleBackStackAware<ZelleFormPresenter>()
         PaymentTypeVO.XMR -> RememberPresenterLifecycleBackStackAware<MoneroFormPresenter>()
         PaymentTypeVO.WISE -> RememberPresenterLifecycleBackStackAware<WiseFormPresenter>()

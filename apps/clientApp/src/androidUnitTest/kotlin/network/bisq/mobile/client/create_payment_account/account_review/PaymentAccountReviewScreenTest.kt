@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.client.create_payment_account.account_review.ui.cash_deposit.CashDepositAccountDetailPresenter
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.service.accounts.PaymentAccountsServiceFacade
@@ -106,6 +107,7 @@ class PaymentAccountReviewScreenTest {
                         factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
                         single<GlobalUiManager> { globalUiManager }
                         factory { PaymentAccountReviewPresenter(paymentAccountsServiceFacade, mainPresenter) }
+                        factory { CashDepositAccountDetailPresenter(paymentAccountsServiceFacade, mainPresenter) }
                     },
                 )
             }

@@ -307,6 +307,7 @@ class ClientPaymentAccountsServiceFacadeTest {
             assertIs<BankAccountCountryDetails>(details)
             assertEquals(germany.country.code, details.country.code)
             assertEquals(germany.country.name, details.country.name)
+            assertEquals(germany.bankAccountValidationSupported, details.bankAccountValidationSupported)
             assertEquals(germany.bankNameRequired, details.bankNameRequired)
             coVerify(exactly = 1) { bankAccountCountryDetailsRepository.get("DE", any()) }
             coVerify(exactly = 1) { apiGateway.getBankAccountCountryDetails() }
@@ -350,6 +351,7 @@ class ClientPaymentAccountsServiceFacadeTest {
     private fun sampleGermanBankAccountCountryDetails(): BankAccountCountryDetailsDto =
         BankAccountCountryDetailsDto(
             country = CountryDto(code = "DE", name = "Germany"),
+            bankAccountValidationSupported = true,
             holderIdRequired = false,
             holderIdDescription = "Holder ID",
             holderIdDescriptionShort = "ID",

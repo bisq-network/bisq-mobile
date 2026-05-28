@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BankAccountCountryDetailsDto(
     val country: CountryDto,
+    val bankAccountValidationSupported: Boolean = false,
     val holderIdRequired: Boolean,
     val holderIdDescription: String,
     val holderIdDescriptionShort: String,

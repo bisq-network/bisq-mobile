@@ -2,7 +2,7 @@ package network.bisq.mobile.client.create_payment_account.account_review.ui.revo
 
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
-import network.bisq.mobile.client.create_payment_account.core.util.fiatCurrencyCodeNameToDisplayStringFormat
+import network.bisq.mobile.client.create_payment_account.core.util.toDisplayString
 import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
 
 data class RevolutAccountDetailVO(
@@ -13,5 +13,5 @@ data class RevolutAccountDetailVO(
 fun RevolutAccount.toDetailVO(): RevolutAccountDetailVO =
     RevolutAccountDetailVO(
         chargebackRisk = accountPayload.chargebackRisk?.toVO(),
-        selectedCurrencies = accountPayload.selectedCurrencies.sortedBy { it.code }.joinToString { fiatCurrencyCodeNameToDisplayStringFormat(it.code, it.name) },
+        selectedCurrencies = accountPayload.selectedCurrencies.sortedBy { it.code }.joinToString { it.toDisplayString() },
     )

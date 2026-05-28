@@ -3,6 +3,7 @@ package network.bisq.mobile.client.settings.payment_accounts_musig.model
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
+import network.bisq.mobile.domain.model.account.fiat.CashDepositAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentCountryBasedAccountPayload
@@ -26,6 +27,7 @@ data class FiatAccountVO(
 fun FiatPaymentAccount.toVO(): FiatAccountVO? {
     val paymentMethod =
         when (this) {
+            is CashDepositAccount -> PaymentTypeVO.CASH_DEPOSIT
             is ZelleAccount -> PaymentTypeVO.ZELLE
             is WiseAccount -> PaymentTypeVO.WISE
             is RevolutAccount -> PaymentTypeVO.REVOLUT
@@ -51,29 +53,29 @@ private fun FiatPaymentAccount.toFiatAccountVO(paymentMethod: PaymentTypeVO): Fi
 }
 
 private fun FiatPaymentAccountPayload.toFiatPayloadValues(): FiatPayloadValues =
-    when {
-        this is FiatPaymentCountryBasedAccountPayload && this is FiatPaymentSingleCurrencyAccountPayload ->
+    when (this) {
+        is FiatPaymentCountryBasedAccountPayload if this is FiatPaymentSingleCurrencyAccountPayload ->
             FiatPayloadValues(
                 chargebackRisk = chargebackRisk,
                 paymentMethodName = paymentMethodName,
-                country = country,
-                currency = currency,
+                country = country.name,
+                currency = currency.code,
             )
 
-        this is FiatPaymentCountryBasedAccountPayload ->
+        is FiatPaymentCountryBasedAccountPayload ->
             FiatPayloadValues(
                 chargebackRisk = chargebackRisk,
                 paymentMethodName = paymentMethodName,
-                country = country,
+                country = country.name,
                 currency = EMPTY_STRING,
             )
 
-        this is FiatPaymentSingleCurrencyAccountPayload ->
+        is FiatPaymentSingleCurrencyAccountPayload ->
             FiatPayloadValues(
                 chargebackRisk = chargebackRisk,
                 paymentMethodName = paymentMethodName,
                 country = EMPTY_STRING,
-                currency = currency,
+                currency = currency.code,
             )
 
         else ->

@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccount
 import network.bisq.mobile.domain.model.account.crypto.MoneroAccountPayload
+import network.bisq.mobile.domain.model.account.fiat.Country
 import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.RevolutAccount
 import network.bisq.mobile.domain.model.account.fiat.RevolutAccountPayload
@@ -356,8 +357,8 @@ class PaymentAccountMusigDetailContentUiTest {
                     holderName = "Alice Doe",
                     emailOrMobileNr = "alice@example.com",
                     paymentMethodName = "Zelle",
-                    currency = "USD",
-                    country = "United States",
+                    currency = FiatCurrency(code = "USD", name = "US Dollar"),
+                    country = Country(code = "US", name = "United States"),
                 ),
             creationDate = null,
             tradeLimitInfo = null,

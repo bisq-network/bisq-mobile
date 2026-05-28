@@ -10,6 +10,23 @@ object PaymentAccountValidation {
     const val ACCOUNT_NAME_MIN_LENGTH: Int = 2
     const val ACCOUNT_NAME_MAX_LENGTH: Int = 50
 
+    // Values taken from bisq2 bisq.account.accounts.fiat.BankAccountPayload
+    const val HOLDER_ID_MIN_LENGTH: Int = 2
+    const val HOLDER_ID_MAX_LENGTH: Int = 50
+    const val BANK_NAME_MIN_LENGTH: Int = 2
+    const val BANK_NAME_MAX_LENGTH: Int = 70
+    const val BANK_ID_MIN_LENGTH: Int = 1
+    const val BANK_ID_MAX_LENGTH: Int = 50
+    const val BRANCH_ID_MIN_LENGTH: Int = 1
+    const val BRANCH_ID_MAX_LENGTH: Int = 50
+    const val ACCOUNT_NR_MIN_LENGTH: Int = 1
+    const val ACCOUNT_NR_MAX_LENGTH: Int = 50
+    const val NATIONAL_ACCOUNT_ID_MIN_LENGTH: Int = 1
+    const val NATIONAL_ACCOUNT_ID_MAX_LENGTH: Int = 50
+
+    // Value taken from bisq2 bisq.account.accounts.fiat.CashDepositAccountPayload
+    const val CASH_DEPOSIT_REQUIREMENTS_MAX_LENGTH: Int = 150
+
     fun validateHolderName(name: String) {
         val trimmed = name.trim()
         require(trimmed.length in HOLDER_NAME_MIN_LENGTH..HOLDER_NAME_MAX_LENGTH) {

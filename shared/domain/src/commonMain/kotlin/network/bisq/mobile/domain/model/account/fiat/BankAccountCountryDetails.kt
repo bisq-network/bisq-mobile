@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.model.account.fiat
 
 data class BankAccountCountryDetails(
     val country: Country,
+    val bankAccountValidationSupported: Boolean,
     val holderIdRequired: Boolean,
     val holderIdDescription: String,
     val holderIdDescriptionShort: String,

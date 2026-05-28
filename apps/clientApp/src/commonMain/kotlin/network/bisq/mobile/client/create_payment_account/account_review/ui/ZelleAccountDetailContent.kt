@@ -19,6 +19,8 @@ import network.bisq.mobile.client.create_payment_account.account_review.ui.core.
 import network.bisq.mobile.client.create_payment_account.account_review.ui.core.AccountDetailFieldRow
 import network.bisq.mobile.client.create_payment_account.account_review.ui.core.FiatChargebackRiskBadge
 import network.bisq.mobile.client.settings.payment_accounts_musig.ui.PaymentAccountTypeIcon
+import network.bisq.mobile.domain.model.account.fiat.Country
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
@@ -58,7 +60,7 @@ fun ZelleAccountDetailContent(
                 )
                 Column {
                     BisqText.BaseRegular(account.accountPayload.paymentMethodName)
-                    BisqText.BaseRegularGrey(account.accountPayload.currency)
+                    BisqText.BaseRegularGrey(account.accountPayload.currency.code)
                 }
             }
 
@@ -66,10 +68,12 @@ fun ZelleAccountDetailContent(
                 modifier = Modifier.padding(BisqUIConstants.ScreenPadding),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
-                if (account.accountPayload.country.isNotBlank()) {
+                if (account.accountPayload.country.name
+                        .isNotBlank()
+                ) {
                     AccountDetailFieldRow(
                         label = "paymentAccounts.country".i18n(),
-                        value = account.accountPayload.country,
+                        value = account.accountPayload.country.name,
                     )
                 }
 
@@ -106,8 +110,8 @@ private val previewAccount =
                 holderName = "Alice Doe",
                 emailOrMobileNr = "alice@example.com",
                 paymentMethodName = "Zelle",
-                currency = "USD",
-                country = "United States",
+                currency = FiatCurrency(code = "USD", name = "US Dollar"),
+                country = Country(code = "US", name = "United States"),
                 chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE,
             ),
         tradeDuration = "8 days",

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.create_payment_account.core.ui.CurrencyPickerItem
-import network.bisq.mobile.client.create_payment_account.core.util.fiatCurrencyCodeNameToDisplayStringFormat
+import network.bisq.mobile.client.create_payment_account.core.util.toDisplayString
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.AccountFormPresenter
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.client.create_payment_account.payment_account_form.form.action.WiseFormUiAction
@@ -37,7 +37,7 @@ open class WiseFormPresenter(
         supportedCurrencies = paymentMethod.supportedCurrencies.toHashSet()
         _uiState.update { currentState ->
             currentState.copy(
-                availableCurrencies = supportedCurrencies.sortedBy { currency -> currency.code }.map { currency -> CurrencyPickerItem(currency.code, fiatCurrencyCodeNameToDisplayStringFormat(currency.code, currency.name)) },
+                availableCurrencies = supportedCurrencies.sortedBy { currency -> currency.code }.map { currency -> CurrencyPickerItem(currency.code, currency.toDisplayString()) },
                 selectedCurrencyCodes = supportedCurrencies.map { currency -> currency.code }.toSet(),
             )
         }

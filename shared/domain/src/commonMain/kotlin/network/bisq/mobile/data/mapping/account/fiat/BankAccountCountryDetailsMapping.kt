@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.model.account.fiat.Country
 fun BankAccountCountryDetailsDto.toDomain(): BankAccountCountryDetails =
     BankAccountCountryDetails(
         country = Country(code = country.code, name = country.name),
+        bankAccountValidationSupported = bankAccountValidationSupported,
         holderIdRequired = holderIdRequired,
         holderIdDescription = holderIdDescription,
         holderIdDescriptionShort = holderIdDescriptionShort,

@@ -2,7 +2,7 @@ package network.bisq.mobile.client.create_payment_account.account_review.ui.wise
 
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
-import network.bisq.mobile.client.create_payment_account.core.util.fiatCurrencyCodeNameToDisplayStringFormat
+import network.bisq.mobile.client.create_payment_account.core.util.toDisplayString
 import network.bisq.mobile.domain.model.account.fiat.WiseAccount
 
 data class WiseAccountDetailVO(
@@ -13,5 +13,5 @@ data class WiseAccountDetailVO(
 fun WiseAccount.toDetailVO(): WiseAccountDetailVO =
     WiseAccountDetailVO(
         chargebackRisk = accountPayload.chargebackRisk?.toVO(),
-        selectedCurrencies = accountPayload.selectedCurrencies.sortedBy { it.code }.joinToString { fiatCurrencyCodeNameToDisplayStringFormat(it.code, it.name) },
+        selectedCurrencies = accountPayload.selectedCurrencies.sortedBy { it.code }.joinToString { it.toDisplayString() },
     )

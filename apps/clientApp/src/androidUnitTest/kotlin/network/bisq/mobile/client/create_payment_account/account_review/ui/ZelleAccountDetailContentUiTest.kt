@@ -9,6 +9,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.domain.model.account.fiat.Country
+import network.bisq.mobile.domain.model.account.fiat.FiatCurrency
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccount
 import network.bisq.mobile.domain.model.account.fiat.ZelleAccountPayload
@@ -97,8 +99,8 @@ class ZelleAccountDetailContentUiTest {
                 ZelleAccountPayload(
                     holderName = "Alice Doe",
                     emailOrMobileNr = "alice@example.com",
-                    country = "United States",
-                    currency = "USD",
+                    country = Country(code = "US", name = "United States"),
+                    currency = FiatCurrency(code = "USD", name = "US Dollar"),
                     paymentMethodName = "Zelle",
                     chargebackRisk = chargebackRisk,
                 ),
