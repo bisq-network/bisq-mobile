@@ -8,6 +8,7 @@ import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.BankAccountCountryDetails
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 
 abstract class PaymentAccountsServiceFacade : ServiceFacade() {
@@ -25,6 +26,8 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
     protected abstract suspend fun executeGetFiatPaymentMethods(): Result<List<FiatPaymentMethod>>
 
     protected abstract suspend fun executeGetCryptoPaymentMethods(): Result<List<CryptoPaymentMethod>>
+
+    protected abstract suspend fun executeGetBankAccountCountryDetails(countryCode: String): Result<BankAccountCountryDetails>
 
     // Concrete implementations with shared business logic
     suspend fun getAccounts(): Result<Unit> =
@@ -61,6 +64,11 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
     suspend fun getCryptoPaymentMethods(): Result<List<CryptoPaymentMethod>> =
         runCatching {
             executeGetCryptoPaymentMethods().getOrThrow()
+        }
+
+    suspend fun getBankAccountCountryDetails(countryCode: String): Result<BankAccountCountryDetails> =
+        runCatching {
+            executeGetBankAccountCountryDetails(countryCode).getOrThrow()
         }
 
     // Protected helper methods

@@ -319,7 +319,7 @@ val clientDomainModule =
         single<UserDefinedAccountsServiceFacade> { ClientUserDefinedAccountsServiceFacade(get()) }
 
         single { PaymentAccountsApiGateway(get()) }
-        single<PaymentAccountsServiceFacade> { ClientPaymentAccountsServiceFacade(get()) }
+        single<PaymentAccountsServiceFacade> { ClientPaymentAccountsServiceFacade(get(), get()) }
 
         single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
 

@@ -7,6 +7,7 @@ import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApi
 import network.bisq.mobile.data.model.account.PaymentAccountDto
 import network.bisq.mobile.data.model.account.create.CreatePaymentAccountDto
 import network.bisq.mobile.data.model.account.crypto.CryptoPaymentMethodDto
+import network.bisq.mobile.data.model.account.fiat.BankAccountCountryDetailsDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodDto
 import network.bisq.mobile.data.utils.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
@@ -34,6 +35,8 @@ class PaymentAccountsApiGateway(
     }
 
     suspend fun getFiatPaymentMethods(): Result<List<FiatPaymentMethodDto>> = webSocketApiClient.get("$paymentMethodsBasePath/fiat")
+
+    suspend fun getBankAccountCountryDetails(): Result<List<BankAccountCountryDetailsDto>> = webSocketApiClient.get("$basePath/bank-account-country-details")
 
     suspend fun getCryptoPaymentMethods(): Result<List<CryptoPaymentMethodDto>> = webSocketApiClient.get("$paymentMethodsBasePath/crypto")
 

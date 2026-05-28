@@ -15,8 +15,6 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountDto
-import network.bisq.mobile.data.model.account.fiat.UserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountDto
 import network.bisq.mobile.data.model.account.fiat.create.CreateUserDefinedFiatAccountPayloadDto
 import network.bisq.mobile.data.utils.encodeURIParam
@@ -133,6 +131,55 @@ class PaymentAccountsApiGatewayTest {
         }
 
     @Test
+    fun `when getBankAccountCountryDetails then delegates GET request to bank account country details endpoint`() =
+        runTest {
+            // Given
+            val requestSlot = slot<WebSocketRestApiRequest>()
+            coEvery {
+                webSocketClientService.sendRequestAndAwaitResponse(capture(requestSlot))
+            } returns
+                WebSocketRestApiResponse(
+                    requestId = "request-1",
+                    statusCode = HttpStatusCode.OK.value,
+                    body =
+                        """
+                        [
+                          {
+                            "country": {"code": "DE", "name": "Germany"},
+                            "holderIdRequired": false,
+                            "holderIdDescription": "Holder ID",
+                            "holderIdDescriptionShort": "ID",
+                            "bankAccountTypeRequired": false,
+                            "bankNameRequired": true,
+                            "bankIdRequired": true,
+                            "bankIdDescription": "Bank ID",
+                            "bankIdDescriptionShort": "BIC",
+                            "branchIdRequired": false,
+                            "branchIdDescription": "Branch ID",
+                            "branchIdDescriptionShort": "Branch",
+                            "accountNrDescription": "IBAN",
+                            "nationalAccountIdRequired": false,
+                            "nationalAccountIdDescription": "National Account ID",
+                            "nationalAccountIdDescriptionShort": "National ID"
+                          }
+                        ]
+                        """.trimIndent(),
+                )
+
+            // When
+            val result = gateway.getBankAccountCountryDetails()
+
+            // Then
+            assertTrue(result.isSuccess)
+            assertEquals("GET", requestSlot.captured.method)
+            assertEquals("/api/v1/payment-accounts/bank-account-country-details", requestSlot.captured.path)
+            val details = result.getOrThrow().single()
+            assertEquals("DE", details.country.code)
+            assertEquals("Germany", details.country.name)
+            assertTrue(details.bankNameRequired)
+        }
+
+    @Test
     fun `when getCryptoPaymentMethods then delegates GET request to crypto payment methods endpoint`() =
         runTest {
             // Given
@@ -149,16 +196,4 @@ class PaymentAccountsApiGatewayTest {
             assertEquals("GET", requestSlot.captured.method)
             assertEquals("/api/v1/payment-accounts/payment-methods/crypto", requestSlot.captured.path)
         }
-
-    private fun sampleAccountDto(
-        accountName: String,
-        accountData: String,
-    ): UserDefinedFiatAccountDto =
-        UserDefinedFiatAccountDto(
-            accountName = accountName,
-            accountPayload =
-                UserDefinedFiatAccountPayloadDto(
-                    accountData = accountData,
-                ),
-        )
 }

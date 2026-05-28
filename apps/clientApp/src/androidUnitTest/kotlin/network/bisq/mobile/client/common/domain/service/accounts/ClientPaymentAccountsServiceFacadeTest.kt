@@ -12,6 +12,7 @@ import network.bisq.mobile.client.common.domain.service.accounts.all.PaymentAcco
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.data.model.account.PaymentAccountDto
 import network.bisq.mobile.data.model.account.crypto.CryptoPaymentMethodDto
+import network.bisq.mobile.data.model.account.fiat.BankAccountCountryDetailsDto
 import network.bisq.mobile.data.model.account.fiat.CountryDto
 import network.bisq.mobile.data.model.account.fiat.FiatCurrencyDto
 import network.bisq.mobile.data.model.account.fiat.FiatPaymentMethodChargebackRiskDto
@@ -23,8 +24,10 @@ import network.bisq.mobile.data.service.accounts.PaymentAccountNameAlreadyExists
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccountPayload
 import network.bisq.mobile.domain.model.account.crypto.CryptoPaymentMethod
+import network.bisq.mobile.domain.model.account.fiat.BankAccountCountryDetails
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethod
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.repository.BankAccountCountryDetailsRepository
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -34,7 +37,8 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientPaymentAccountsServiceFacadeTest {
     private val apiGateway: PaymentAccountsApiGateway = mockk(relaxed = true)
-    private val facade = ClientPaymentAccountsServiceFacade(apiGateway)
+    private val bankAccountCountryDetailsRepository: BankAccountCountryDetailsRepository = mockk()
+    private val facade = ClientPaymentAccountsServiceFacade(apiGateway, bankAccountCountryDetailsRepository)
 
     @Test
     fun `when getAccounts succeeds then maps and updates sorted state`() =
@@ -282,6 +286,47 @@ class ClientPaymentAccountsServiceFacadeTest {
             assertEquals(exception, result.exceptionOrNull())
         }
 
+    @Test
+    fun `when getBankAccountCountryDetails succeeds then delegates to repository with backend refresh`() =
+        runTest {
+            // Given
+            val germany = sampleGermanBankAccountCountryDetails()
+            coEvery {
+                bankAccountCountryDetailsRepository.get("DE", any())
+            } coAnswers {
+                secondArg<suspend () -> List<BankAccountCountryDetailsDto>>().invoke().single()
+            }
+            coEvery { apiGateway.getBankAccountCountryDetails() } returns Result.success(listOf(germany))
+
+            // When
+            val result = facade.getBankAccountCountryDetails("DE")
+
+            // Then
+            assertTrue(result.isSuccess)
+            val details = result.getOrThrow()
+            assertIs<BankAccountCountryDetails>(details)
+            assertEquals(germany.country.code, details.country.code)
+            assertEquals(germany.country.name, details.country.name)
+            assertEquals(germany.bankNameRequired, details.bankNameRequired)
+            coVerify(exactly = 1) { bankAccountCountryDetailsRepository.get("DE", any()) }
+            coVerify(exactly = 1) { apiGateway.getBankAccountCountryDetails() }
+        }
+
+    @Test
+    fun `when getBankAccountCountryDetails repository fails then returns failure`() =
+        runTest {
+            // Given
+            val exception = IllegalStateException("missing country")
+            coEvery { bankAccountCountryDetailsRepository.get("US", any()) } throws exception
+
+            // When
+            val result = facade.getBankAccountCountryDetails("US")
+
+            // Then
+            assertTrue(result.isFailure)
+            assertEquals(exception, result.exceptionOrNull())
+        }
+
     private suspend fun currentAccountNames(): List<String> = facade.accountsFlow.first().map { it.accountName }
 
     private fun sampleCreateAccountB(): CreateUserDefinedFiatAccount =
@@ -300,5 +345,25 @@ class ClientPaymentAccountsServiceFacadeTest {
                 UserDefinedFiatAccountPayloadDto(
                     accountData = "account-data",
                 ),
+        )
+
+    private fun sampleGermanBankAccountCountryDetails(): BankAccountCountryDetailsDto =
+        BankAccountCountryDetailsDto(
+            country = CountryDto(code = "DE", name = "Germany"),
+            holderIdRequired = false,
+            holderIdDescription = "Holder ID",
+            holderIdDescriptionShort = "ID",
+            bankAccountTypeRequired = false,
+            bankNameRequired = true,
+            bankIdRequired = true,
+            bankIdDescription = "Bank ID",
+            bankIdDescriptionShort = "BIC",
+            branchIdRequired = false,
+            branchIdDescription = "Branch ID",
+            branchIdDescriptionShort = "Branch",
+            accountNrDescription = "IBAN",
+            nationalAccountIdRequired = false,
+            nationalAccountIdDescription = "National Account ID",
+            nationalAccountIdDescriptionShort = "National ID",
         )
 }
