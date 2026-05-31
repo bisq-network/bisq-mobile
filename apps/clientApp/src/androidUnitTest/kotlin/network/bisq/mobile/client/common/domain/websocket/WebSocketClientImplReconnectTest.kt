@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
@@ -18,7 +19,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
-import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
 import org.junit.After
 import org.junit.Before
@@ -296,6 +296,25 @@ class WebSocketClientImplReconnectTest {
         @Suppress("UNCHECKED_CAST")
         (field.get(client) as MutableStateFlow<ConnectionState>).value = state
     }
+
+    @Test
+    fun `reconnect clears stale Connected status before calling connect`() =
+        runTest(testDispatcher) {
+            val client = createClient()
+            setConnectionStatus(client, ConnectionState.Connected)
+
+            var connectCalls = 0
+            coEvery { client.connect(any()) } answers {
+                connectCalls++
+                null
+            }
+
+            client.reconnect()
+            testDispatcher.scheduler.advanceTimeBy(WebSocketClientImpl.DELAY_TO_RECONNECT + 100)
+            testDispatcher.scheduler.runCurrent()
+
+            assertEquals(1, connectCalls)
+        }
 
     @Test
     fun `reconnect skips if already reconnecting`() =

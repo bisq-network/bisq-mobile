@@ -628,6 +628,55 @@ class ClientConnectivityServiceTest {
         }
 
     @Test
+    fun `health check 401 keeps RECONNECTING when session renewal throws`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } throws UnauthorizedApiAccessException()
+            coEvery { webSocketClientService.attemptSessionRenewal() } throws RuntimeException("renewal failed")
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+            coVerify(atLeast = 1) { webSocketClientService.attemptSessionRenewal() }
+        }
+
+    @Test
+    fun `checkConnectivity sets DISCONNECTED when monitoring throws unexpectedly`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } throws RuntimeException("unexpected failure")
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.DISCONNECTED, clientConnectivityService.status.value)
+        }
+
+    @Test
+    fun `isSlow uses Tor threshold when websocket client uses Tor proxy`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+            every { webSocketClientService.isTorProxy } returns true
+
+            for (i in 0 until ClientConnectivityService.MIN_REQUESTS_TO_ASSESS_SPEED + 1) {
+                ClientConnectivityService.newRequestRoundTripTime(
+                    ClientConnectivityService.ROUND_TRIP_SLOW_THRESHOLD + 100,
+                )
+            }
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
+                clientConnectivityService.status.value,
+            )
+        }
+
+    @Test
     fun `pending blocks run when connection recovers from DISCONNECTED after RECONNECTING timeout`() =
         runBlocking {
             var connected = false

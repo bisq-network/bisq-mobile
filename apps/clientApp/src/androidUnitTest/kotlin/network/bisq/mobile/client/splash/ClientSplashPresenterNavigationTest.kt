@@ -280,12 +280,49 @@ class ClientSplashPresenterNavigationTest {
             val presenter = createPresenter()
             presenter.onViewAttached()
 
-            // When: CONNECTIVITY_SAFETY_NET_TIMEOUT_MS (40s) elapses
+            // When: CONNECTIVITY_SAFETY_NET_TIMEOUT_MS (45s) elapses
             // Use advanceUntilIdle to ensure all coroutines complete
             advanceTimeBy(45_000)
             advanceUntilIdle()
 
             // Then: should navigate to trusted node setup with showConnectionFailed = true
+            verify {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is TrustedNodeSetup && navRoute.showConnectionFailed
+                    },
+                    any(),
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `Tor safety net waits longer before redirecting to trusted node setup`() =
+        runTest(testDispatcher) {
+            coEvery { sensitiveSettingsRepository.fetch() } returns
+                SensitiveSettings(
+                    bisqApiUrl = "http://abcdefghijklmnop.onion:8090",
+                    clientId = "test-client-id",
+                    clientSecret = "test-client-secret",
+                )
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            advanceTimeBy(89_000)
+            testScheduler.runCurrent()
+            verify(exactly = 0) {
+                navigationManager.navigate(
+                    match { navRoute -> navRoute is TrustedNodeSetup },
+                    any(),
+                    any(),
+                )
+            }
+
+            advanceTimeBy(2_000)
+            advanceUntilIdle()
             verify {
                 navigationManager.navigate(
                     match { navRoute ->

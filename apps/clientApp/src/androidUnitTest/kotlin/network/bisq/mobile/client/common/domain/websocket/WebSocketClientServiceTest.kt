@@ -34,6 +34,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -471,8 +472,9 @@ class WebSocketClientServiceTest {
             webSocketClientService.deactivate()
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Then - client should have been disconnected
-            coVerify { mockWsClient.disconnect() }
+            // Then - client should have been disposed (not just disconnected) so
+            // reconnect jobs and clientScope are fully cancelled on deactivation
+            coVerify { mockWsClient.dispose() }
             // Connection state should be Disconnected
             assertTrue(webSocketClientService.connectionState.value is ConnectionState.Disconnected)
             // isConnected should return false
@@ -1015,5 +1017,249 @@ class WebSocketClientServiceTest {
 
             // When/Then - service should work without session renewal capability
             assertTrue(serviceWithoutSession.connectionState.value is ConnectionState.Disconnected)
+        }
+
+    @Test
+    fun `isTorProxy reflects current client settings`() =
+        runTest(testDispatcher) {
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertFalse(webSocketClientService.isTorProxy)
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://abc.onion:8090",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    externalProxyUrl = "127.0.0.1:9050",
+                    isTorProxy = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(webSocketClientService.isTorProxy)
+        }
+
+    @Test
+    fun `credential-only settings update skips websocket client recreation`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val baseSettings =
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                )
+            httpClientChangedFlow.emit(baseSettings)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                baseSettings.copy(sessionId = "updated-session-id"),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify(exactly = 1) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { mockWsClient.dispose() }
+        }
+
+    @Test
+    fun `connect delegates to current websocket client`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            coEvery { mockWsClient.connect(any()) } returns null
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertNull(webSocketClientService.connect())
+            coVerify { mockWsClient.connect(any()) }
+        }
+
+    @Test
+    fun `triggerReconnect with force calls reconnect even when connected`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.reconnect() } just Runs
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.triggerReconnect(force = true)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify { mockWsClient.reconnect() }
+        }
+
+    @Test
+    fun `session renewal clears credentials when server rejects client`() =
+        runTest(testDispatcher) {
+            val currentSettings =
+                SensitiveSettings(
+                    clientId = "client-id",
+                    clientSecret = "client-secret",
+                    sessionId = "old-session-id",
+                )
+            val mockSettingsFlow = MutableStateFlow(currentSettings)
+            every { sensitiveSettingsRepository.data } returns mockSettingsFlow
+            coEvery { sensitiveSettingsRepository.fetch() } returns currentSettings
+            coEvery { sensitiveSettingsRepository.update(any()) } coAnswers {
+                val transform = arg<suspend (SensitiveSettings) -> SensitiveSettings>(0)
+                mockSettingsFlow.value = transform(mockSettingsFlow.value)
+            }
+            coEvery { sessionService.requestSession(any(), any()) } returns
+                Result.failure(UnauthorizedApiAccessException())
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.attemptSessionRenewal()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { sensitiveSettingsRepository.update(any()) }
+            coVerify { httpClientService.disposeClient() }
+            assertTrue(webSocketClientService.clientRevoked.value)
+            assertEquals(null, mockSettingsFlow.value.clientId)
+            assertEquals(null, mockSettingsFlow.value.sessionId)
+        }
+
+    @Test
+    fun `session renewal clears credentials when requestSession throws unauthorized`() =
+        runTest(testDispatcher) {
+            val currentSettings =
+                SensitiveSettings(
+                    clientId = "client-id",
+                    clientSecret = "client-secret",
+                    sessionId = "old-session-id",
+                )
+            val mockSettingsFlow = MutableStateFlow(currentSettings)
+            every { sensitiveSettingsRepository.data } returns mockSettingsFlow
+            coEvery { sensitiveSettingsRepository.fetch() } returns currentSettings
+            coEvery { sensitiveSettingsRepository.update(any()) } coAnswers {
+                val transform = arg<suspend (SensitiveSettings) -> SensitiveSettings>(0)
+                mockSettingsFlow.value = transform(mockSettingsFlow.value)
+            }
+            coEvery { sessionService.requestSession(any(), any()) } throws UnauthorizedApiAccessException()
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.attemptSessionRenewal()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(webSocketClientService.clientRevoked.value)
+            assertEquals(null, mockSettingsFlow.value.clientSecret)
+        }
+
+    @Test
+    fun `testConnection cleans up ephemeral websocket and http clients`() =
+        runTest(testDispatcher) {
+            val ephemeralHttpClient = mockk<io.ktor.client.HttpClient>(relaxed = true)
+            val ephemeralWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { ephemeralWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            coEvery { ephemeralWsClient.connect(any()) } returns null
+            coEvery { httpClientService.createNewInstance(any()) } returns ephemeralHttpClient
+            every {
+                webSocketClientFactory.createNewClient(
+                    httpClient = ephemeralHttpClient,
+                    apiUrl = any(),
+                    clientId = any(),
+                    sessionId = any(),
+                )
+            } returns ephemeralWsClient
+
+            val error =
+                webSocketClientService.testConnection(
+                    apiUrl = io.ktor.http.Url("http://localhost:8080"),
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                )
+
+            assertEquals(null, error)
+            coVerify { ephemeralWsClient.dispose() }
+            verify { ephemeralHttpClient.close() }
+        }
+
+    @Test
+    fun `forceClientRecreation invalidates underlying http session before recreation`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+            every { httpClientService.peekClient() } returns mockk(relaxed = true)
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.forceClientRecreation()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify { httpClientService.peekClient() }
+            coVerify { httpClientService.recreateClient() }
         }
 }

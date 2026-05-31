@@ -19,14 +19,14 @@ import javax.net.ssl.SSLContext
  * called by `HttpClient.close()` and the connection pool is per-OkHttpClient.
  */
 actual fun HttpClient.invalidateUnderlyingSession() {
-    // intentionally empty
+    Unit
 }
 
 /**
  * ios specific function
  */
 actual fun HttpClient.releaseUnderlyingSessionTracking() {
-    // intentionally empty
+    Unit
 }
 
 actual fun createHttpClient(

@@ -17,7 +17,9 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -178,5 +180,22 @@ class HttpClientServiceAwaitClientReadyTest : KoinIntegrationTestBase() {
             job.join()
             service.deactivate()
             assertTrue(result)
+        }
+
+    @Test
+    fun `peekClient returns current client without suspending`() =
+        runBlocking {
+            val service = createService()
+
+            assertEquals(null, service.peekClient())
+
+            service.activate()
+            settingsRepository.update {
+                it.copy(bisqApiUrl = "http://127.0.0.1:8090")
+            }
+            delay(200)
+
+            assertNotNull(service.peekClient())
+            service.deactivate()
         }
 }
