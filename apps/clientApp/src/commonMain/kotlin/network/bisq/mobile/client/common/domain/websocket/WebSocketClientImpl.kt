@@ -73,8 +73,8 @@ class WebSocketClientImpl(
     private val httpClient: HttpClient,
     private val json: Json,
     override val apiUrl: Url,
-    val sessionId: String?,
-    val clientId: String?,
+    private val sessionId: String?,
+    private val clientId: String?,
     private val clientScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : WebSocketClient,
     Logging {

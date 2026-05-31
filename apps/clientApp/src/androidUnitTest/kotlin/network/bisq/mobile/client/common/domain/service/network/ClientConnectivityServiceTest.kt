@@ -262,7 +262,7 @@ class ClientConnectivityServiceTest {
             every { webSocketClientService.isConnected() } returns true
             every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(setOf(Topic.NUM_OFFERS))
             coEvery { webSocketClientService.sendHealthCheck() } answers { healthCheckPasses }
-            coEvery { webSocketClientService.forceReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect(force = true) } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
@@ -305,32 +305,32 @@ class ClientConnectivityServiceTest {
         }
 
     @Test
-    fun `health check failure triggers forceReconnect and RECONNECTING status`() =
+    fun `health check failure triggers forced reconnect and RECONNECTING status`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns true
             coEvery { webSocketClientService.sendHealthCheck() } returns false
-            coEvery { webSocketClientService.forceReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect(force = true) } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
             delay(300)
 
             assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
-            coVerify(atLeast = 1) { webSocketClientService.forceReconnect() }
+            coVerify(atLeast = 1) { webSocketClientService.triggerReconnect(force = true) }
         }
 
     @Test
-    fun `health check exception triggers forceReconnect`() =
+    fun `health check exception triggers forced reconnect`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns true
             coEvery { webSocketClientService.sendHealthCheck() } throws RuntimeException("connection dead")
-            coEvery { webSocketClientService.forceReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect(force = true) } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
             delay(300)
 
-            coVerify(atLeast = 1) { webSocketClientService.forceReconnect() }
+            coVerify(atLeast = 1) { webSocketClientService.triggerReconnect(force = true) }
         }
 
     @Test
@@ -400,7 +400,7 @@ class ClientConnectivityServiceTest {
             var healthCheckPasses = false
             every { webSocketClientService.isConnected() } returns true
             coEvery { webSocketClientService.sendHealthCheck() } answers { healthCheckPasses }
-            coEvery { webSocketClientService.forceReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect(force = true) } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
@@ -488,7 +488,7 @@ class ClientConnectivityServiceTest {
             // but server never responds to health checks
             every { webSocketClientService.isConnected() } returns true
             coEvery { webSocketClientService.sendHealthCheck() } returns false
-            coEvery { webSocketClientService.forceReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect(force = true) } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
@@ -506,8 +506,8 @@ class ClientConnectivityServiceTest {
                 "Should remain RECONNECTING when health checks keep failing on half-open connection",
             )
 
-            // Verify forceReconnect was called multiple times (not just once)
-            coVerify(atLeast = 3) { webSocketClientService.forceReconnect() }
+            // Verify triggerReconnect(force=true) was called multiple times (not just once)
+            coVerify(atLeast = 3) { webSocketClientService.triggerReconnect(force = true) }
         }
 
     // ///////////////////////////////////////////////////////////////////////////
@@ -633,7 +633,7 @@ class ClientConnectivityServiceTest {
             var connected = false
             every { webSocketClientService.isConnected() } answers { connected }
             coEvery { webSocketClientService.triggerReconnect() } just Runs
-            coEvery { webSocketClientService.forceReconnect() } just Runs
+            coEvery { webSocketClientService.triggerReconnect(force = true) } just Runs
 
             val service =
                 TestClientConnectivityService(

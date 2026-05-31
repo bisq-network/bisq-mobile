@@ -182,7 +182,7 @@ open class ClientConnectivityService(
                                     webSocketClientService.forceClientRecreation()
                                     consecutiveReconnectingCycles = 0
                                 } else {
-                                    webSocketClientService.forceReconnect()
+                                    webSocketClientService.triggerReconnect(force = true)
                                 }
                                 ConnectivityStatus.RECONNECTING
                             }
@@ -199,7 +199,7 @@ open class ClientConnectivityService(
                         if (!alive) {
                             log.d { "Health check failed, marking connection as untrusted" }
                             connectionUntrusted = true
-                            webSocketClientService.forceReconnect()
+                            webSocketClientService.triggerReconnect(force = true)
                             ConnectivityStatus.RECONNECTING
                         } else {
                             val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
@@ -225,8 +225,8 @@ open class ClientConnectivityService(
             // Session expired — the WebSocket is alive but the server rejects our session.
             // Renew the session first (gets new sessionId), which triggers httpClientChangedFlow
             // → updateWebSocketClient() → fresh WebSocket with valid credentials.
-            // We must NOT call forceReconnect() here because that reconnects with the stale
-            // sessionId, which the server immediately rejects.
+            // We must NOT call triggerReconnect(force=true) here because that reconnects
+            // with the stale sessionId, which the server immediately rejects.
             log.i { "Session expired (401 from health check), attempting session renewal" }
             setConnectivityStatus(ConnectivityStatus.RECONNECTING)
             connectionUntrusted = true

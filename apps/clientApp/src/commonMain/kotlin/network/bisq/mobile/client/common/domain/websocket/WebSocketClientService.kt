@@ -177,6 +177,32 @@ class WebSocketClientService(
         _failedSubscriptions.update { it + subscriptionType }
     }
 
+    /**
+     * Resets subscription state for a recovery/reconnect scenario.
+     * Preserves [requestedSubscriptions] so they are re-applied on the next connection.
+     */
+    private suspend fun resetSubscriptionsForReconnect() {
+        subscriptionMutex.withLock {
+            subscriptionsAreApplied = false
+            requestedSubscriptions.value.forEach { it.value.resetSequence() }
+            clearFailedSubscriptions()
+        }
+    }
+
+    /**
+     * Clears all subscription state for a full shutdown.
+     * Also removes [requestedSubscriptions] entries — callers must re-subscribe after
+     * the next [activate].
+     */
+    private suspend fun clearAllSubscriptions() {
+        subscriptionMutex.withLock {
+            subscriptionsAreApplied = false
+            requestedSubscriptions.value.forEach { it.value.resetSequence() }
+            requestedSubscriptions.value = LinkedHashMap()
+            clearFailedSubscriptions()
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun activate() {
         super.activate()
@@ -193,22 +219,18 @@ class WebSocketClientService(
     override suspend fun deactivate() {
         stopFlow.tryEmit(Unit)
 
-        // Disconnect the WebSocket and reset subscription state so that
-        // a subsequent activate() starts with a clean slate.
-        // Without this, subscriptionsAreApplied stays true and the
-        // stateCollectionJob (which calls applySubscriptions on connect)
-        // is dead — leaving subscriptions registered but uncollected.
+        // dispose() (not disconnect()) so the old client's reconnectJob and clientScope
+        // are fully cancelled — otherwise the reconnect loop survives deactivation as
+        // an orphaned coroutine on Dispatchers.Default.
+        // Subscription state is also reset so a subsequent activate() starts clean:
+        // without this, subscriptionsAreApplied stays true and stateCollectionJob
+        // (which calls applySubscriptions on connect) would skip re-subscription.
         stateCollectionJob?.cancel()
         stateCollectionJob = null
-        currentClient.value?.disconnect()
+        currentClient.value?.dispose()
         currentClient.value = null
         currentClientSettings = null
-        subscriptionMutex.withLock {
-            subscriptionsAreApplied = false
-            requestedSubscriptions.value.forEach { it.value.resetSequence() }
-            requestedSubscriptions.value = LinkedHashMap()
-            clearFailedSubscriptions()
-        }
+        clearAllSubscriptions()
         _connectionState.value = ConnectionState.Disconnected()
 
         super.deactivate()
@@ -231,10 +253,7 @@ class WebSocketClientService(
             currentClient.value = null
             currentClientSettings = null
             _connectionState.value = ConnectionState.Disconnected()
-            requestedSubscriptions.value.forEach { entry ->
-                entry.value.resetSequence()
-            }
-            clearFailedSubscriptions()
+            resetSubscriptionsForReconnect()
         }
     }
 
@@ -346,14 +365,7 @@ class WebSocketClientService(
                     newClient.webSocketClientStatus.collect { state ->
                         _connectionState.value = state
                         if (state is ConnectionState.Disconnected) {
-                            subscriptionMutex.withLock {
-                                // connection is lost, we need to apply subscriptions again
-                                subscriptionsAreApplied = false
-                                requestedSubscriptions.value.forEach { entry ->
-                                    entry.value.resetSequence()
-                                }
-                                clearFailedSubscriptions()
-                            }
+                            resetSubscriptionsForReconnect()
                             if (state.error != null) {
                                 if (state.error is UnauthorizedApiAccessException) {
                                     // Session expired — renew and reconnect with fresh credentials
@@ -551,30 +563,21 @@ class WebSocketClientService(
 
     /**
      * Triggers a reconnection attempt on the current client.
-     * Used by [ClientConnectivityService] to recover from max-retry exhaustion
-     * when network connectivity returns.
+     * Used by [ClientConnectivityService] to recover from disconnections.
+     *
+     * When [force] is false (default), the reconnect is skipped if already connected.
+     * When [force] is true, the reconnect is issued unconditionally — used when a
+     * health check fails on a connection that still reports as connected (stale TCP on iOS).
      *
      * Acquires [clientUpdateMutex] to prevent TOCTOU race with [updateWebSocketClient]
      * that could swap/dispose the client between the null-check and reconnect call.
      */
-    suspend fun triggerReconnect() {
+    suspend fun triggerReconnect(force: Boolean = false) {
         clientUpdateMutex.withLock {
             val client = currentClient.value ?: return@withLock
-            if (!isConnected()) {
+            if (force || !isConnected()) {
                 client.reconnect()
             }
-        }
-    }
-
-    /**
-     * Forces a reconnection regardless of current connection state.
-     * Used by [ClientConnectivityService] when a health check fails on a
-     * connection that still reports as connected (stale TCP on iOS).
-     */
-    internal suspend fun forceReconnect() {
-        clientUpdateMutex.withLock {
-            val client = currentClient.value ?: return@withLock
-            client.reconnect()
         }
     }
 
@@ -611,11 +614,7 @@ class WebSocketClientService(
 
             // Safe to invalidate now: the old client's coroutine scope is fully cancelled.
             httpClientService.peekClient()?.invalidateUnderlyingSession()
-            subscriptionMutex.withLock {
-                subscriptionsAreApplied = false
-                requestedSubscriptions.value.forEach { it.value.resetSequence() }
-                clearFailedSubscriptions()
-            }
+            resetSubscriptionsForReconnect()
             _connectionState.value = ConnectionState.Disconnected()
             currentClientSettings = null
             // Re-trigger with same settings — this creates fresh httpClient + wsClient
@@ -664,6 +663,23 @@ class WebSocketClientService(
         }
     }
 
+    /**
+     * Clears stored pairing credentials, disposes the stale HTTP client, and raises the
+     * [clientRevoked] flag so the UI can navigate the user back to the pairing screen.
+     *
+     * Called whenever the server confirms our credentials are permanently invalid (401/403).
+     */
+    private suspend fun handleClientRevocation(settingsRepo: SensitiveSettingsRepository) {
+        log.e { "Client credentials revoked — clearing stored pairing data" }
+        settingsRepo.update {
+            it.copy(clientId = null, clientSecret = null, sessionId = null)
+        }
+        // Dispose the HTTP client so re-pairing creates a fresh one
+        // (the old client has stale TLS settings that cause connection reset).
+        httpClientService.disposeClient()
+        _clientRevoked.value = true
+    }
+
     @ExcludeFromCoverage
     internal suspend fun attemptSessionRenewal() {
         val sessionSvc = sessionService ?: return
@@ -697,17 +713,7 @@ class WebSocketClientService(
             } else {
                 val error = result.exceptionOrNull()
                 if (error is UnauthorizedApiAccessException) {
-                    // Server rejected our credentials — client profile was revoked.
-                    // Clear stored credentials, dispose stale HTTP/WS clients, and
-                    // signal the UI to navigate to re-pairing.
-                    log.e { "Client credentials revoked — clearing stored pairing data" }
-                    settingsRepo.update {
-                        it.copy(clientId = null, clientSecret = null, sessionId = null)
-                    }
-                    // Dispose the HTTP client so re-pairing creates a fresh one
-                    // (the old client has stale TLS settings that cause connection reset)
-                    httpClientService.disposeClient()
-                    _clientRevoked.value = true
+                    handleClientRevocation(settingsRepo)
                 } else {
                     log.w { "Session renewal failed: ${error?.message}" }
                 }
@@ -716,12 +722,7 @@ class WebSocketClientService(
             throw e
         } catch (_: UnauthorizedApiAccessException) {
             // HTTP client validator threw 401 directly (before result wrapping)
-            log.e { "Client credentials revoked (exception) — clearing stored pairing data" }
-            settingsRepo.update {
-                it.copy(clientId = null, clientSecret = null, sessionId = null)
-            }
-            httpClientService.disposeClient()
-            _clientRevoked.value = true
+            handleClientRevocation(settingsRepo)
         } catch (e: Exception) {
             log.e(e) { "Session renewal failed with exception" }
         }
