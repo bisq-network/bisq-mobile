@@ -50,4 +50,13 @@ interface WebSocketClient {
     )
 
     suspend fun dispose()
+
+    /**
+     * Updates the session credentials used for subsequent requests without recreating
+     * the connection. The default no-op is sufficient for demo and test implementations.
+     */
+    fun updateCredentials(
+        sessionId: String?,
+        clientId: String?,
+    ) {}
 }

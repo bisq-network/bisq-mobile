@@ -13,7 +13,7 @@ HTTP → WebSocket → health-monitor stack. **Source of truth is the code** —
 | `service/network/ClientConnectivityService.kt` | Health polling, UI `ConnectivityStatus`, pending blocks |
 | `data/.../ConnectivityService.kt` | Base status enum + 3 min RECONNECTING timeout |
 
-```
+```text
 Settings + Tor ──► HttpClientService ──► httpClientChangedFlow
                               │
                               ▼
@@ -29,7 +29,7 @@ Settings + Tor ──► HttpClientService ──► httpClientChangedFlow
 
 How a paired client gets a live WebSocket.
 
-```
+```text
 Settings / Tor port change
         │
         ▼
@@ -65,7 +65,7 @@ Connected ──► applySubscriptions()
 
 `ClientConnectivityService` keeps UI status honest, especially on iOS where dead TCP can look connected.
 
-```
+```text
 checkConnectivity() every 5s (first check after 5s delay)
         │
         ├─ !isConnected()
@@ -94,7 +94,7 @@ Health check = `GET /api/v1/settings/version` over the WS REST proxy (`ClientCon
 
 ## Flow 3 — Reconnect & iOS force recreation
 
-```
+```text
 reconnect()  [WCS on disconnect | CCS triggerReconnect | iOS fallback]
         │
         ├─ already reconnecting + stuck > ~35s ──► cancel job, retry
@@ -124,7 +124,7 @@ Connect timeouts: 15s clearnet / 60s Tor (`WebSocketClient`). Max reconnect atte
 
 Both 401 and 403 from the health check or API version probe surface as `UnauthorizedApiAccessException`. **Do not** `triggerReconnect(force=true)` on 401 — that reuses a stale `sessionId`.
 
-```
+```text
 401 or 403 from health check / version probe
         ▼
 attemptSessionRenewal() [30s cooldown]

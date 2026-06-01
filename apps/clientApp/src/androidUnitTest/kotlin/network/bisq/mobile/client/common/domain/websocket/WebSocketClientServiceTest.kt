@@ -1043,7 +1043,7 @@ class WebSocketClientServiceTest {
         }
 
     @Test
-    fun `credential-only settings update skips websocket client recreation`() =
+    fun `credential-only settings update skips websocket client recreation and pushes credentials`() =
         runTest(testDispatcher) {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
@@ -1072,8 +1072,11 @@ class WebSocketClientServiceTest {
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
+            // Client must not be recreated
             verify(exactly = 1) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
             coVerify(exactly = 0) { mockWsClient.dispose() }
+            // Fresh credentials must be pushed into the live client immediately
+            verify { mockWsClient.updateCredentials("updated-session-id", "client-id") }
         }
 
     @Test

@@ -73,8 +73,8 @@ class WebSocketClientImpl(
     private val httpClient: HttpClient,
     private val json: Json,
     override val apiUrl: Url,
-    private val sessionId: String?,
-    private val clientId: String?,
+    @Volatile private var sessionId: String?,
+    @Volatile private var clientId: String?,
     private val clientScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : WebSocketClient,
     Logging {
@@ -86,6 +86,14 @@ class WebSocketClientImpl(
         const val API_VERSION_PROBE_TIMEOUT = 5_000L
         const val HEALTH_CHECK_PATH = "/api/v1/settings/version"
         const val STALE_RECONNECT_THRESHOLD_MS = 30_000L // cancel reconnect if stuck this long
+    }
+
+    override fun updateCredentials(
+        sessionId: String?,
+        clientId: String?,
+    ) {
+        this.sessionId = sessionId
+        this.clientId = clientId
     }
 
     private var reconnectAttempts = 0

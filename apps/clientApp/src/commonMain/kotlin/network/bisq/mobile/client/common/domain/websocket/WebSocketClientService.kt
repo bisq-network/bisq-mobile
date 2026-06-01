@@ -275,11 +275,10 @@ class WebSocketClientService(
 
             // Skip recreation when only credentials changed (URL/proxy/TLS identical).
             // The startup session POST completes while the WS is mid-Tor-handshake (15–60 s);
-            // without this guard the POST would dispose the in-flight connection. WS auth is
-            // handshake-scoped, so the existing connection can finish with its current
-            // credentials. A stale session produces a 401 → attemptSessionRenewal() →
-            // another updateWebSocketClient() call where isAuthFailure is true, bypassing
-            // this guard and recreating the client with fresh credentials.
+            // without this guard the POST would dispose the in-flight connection.
+            // Instead of recreating, we push the fresh credentials directly into the live
+            // client so every subsequent WebSocketRestApiRequest and the next connect()
+            // call (reconnect) will use them immediately — no stale-header window.
             val connectionTopologyUnchanged =
                 previousSettings != null &&
                     previousSettings.bisqApiUrl == httpClientSettings.bisqApiUrl &&
@@ -294,6 +293,7 @@ class WebSocketClientService(
                 }
             if (currentClient.value != null && connectionTopologyUnchanged && !isAuthFailure) {
                 currentClientSettings = httpClientSettings
+                currentClient.value?.updateCredentials(httpClientSettings.sessionId, httpClientSettings.clientId)
                 log.d { "WebSocket client connection topology unchanged; updating credentials without recreation" }
                 return@withLock
             }

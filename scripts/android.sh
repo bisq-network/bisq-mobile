@@ -15,9 +15,9 @@ set -euo pipefail
 #   APP_PATH              Bisq2.app bundle (default /Applications/Bisq2.app)
 #   BISQ_LOG              Desktop bisq log file to tail for "ApplicationService initialized"
 #   OUT_DIR               Output directory (default ./debug/reconnect-round-logs-<timestamp>)
-#   SLEEP_BEFORE_OPEN     Seconds between kill and reopen (default 45)
+#   SLEEP_BEFORE_OPEN     Seconds between kill and reopen (default 5)
 #   SLEEP_AFTER_CONNECT_SEC  After WS connect succeeds, seconds to wait before the next round
-#                            when more rounds remain (default 30; set 0 to skip)
+#                            when more rounds remain (default 5; set 0 to skip)
 #   BISQ_INIT_TIMEOUT_SEC Seconds to wait for desktop init marker (default 180)
 #   ADB_CONNECT_TIMEOUT_SEC  Seconds to wait for "WS connected successfully" in logcat (default 300)
 #   ANDROID_SERIAL        When multiple adb devices exist, set to the target UDID (adb devices).
@@ -36,8 +36,8 @@ unset _SCRIPT_DIR _REPO_ROOT
 ROUNDS="${1:-1}"
 APP_PATH="${APP_PATH:-/Applications/Bisq2.app}"
 BISQ_LOG="${BISQ_LOG:-$HOME/Library/Application Support/Bisq2/bisq.log}"
-SLEEP_BEFORE_OPEN="${SLEEP_BEFORE_OPEN:-45}"
-SLEEP_AFTER_CONNECT_SEC="${SLEEP_AFTER_CONNECT_SEC:-30}"
+SLEEP_BEFORE_OPEN="${SLEEP_BEFORE_OPEN:-5}"
+SLEEP_AFTER_CONNECT_SEC="${SLEEP_AFTER_CONNECT_SEC:-5}"
 BISQ_INIT_TIMEOUT_SEC="${BISQ_INIT_TIMEOUT_SEC:-180}"
 ADB_CONNECT_TIMEOUT_SEC="${ADB_CONNECT_TIMEOUT_SEC:-300}"
 OUT_DIR="${OUT_DIR:-$PWD/debug/reconnect-round-logs-$(date +%Y%m%d-%H%M%S)}"
@@ -111,7 +111,7 @@ SUMMARY_CSV="$OUT_DIR/summary.csv"
 echo "round,node_start_timestamp,app_connect_timestamp,duration_seconds,status" > "$SUMMARY_CSV"
 
 log_step() {
-  echo "[$(date '+%H:%M:%S')] $*" >&2
+  echo "[$(date '+%H:%M:%S')] $*"
 }
 
 cleanup_adb_tail() {

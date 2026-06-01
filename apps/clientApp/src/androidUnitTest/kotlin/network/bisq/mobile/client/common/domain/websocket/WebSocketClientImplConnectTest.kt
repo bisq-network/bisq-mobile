@@ -93,4 +93,20 @@ class WebSocketClientImplConnectTest {
 
             assertTrue(client.webSocketClientStatus.value is ConnectionState.Disconnected)
         }
+
+    @Test
+    fun `updateCredentials replaces sessionId and clientId used for subsequent requests`() =
+        runTest(testDispatcher) {
+            val httpClient = mockk<HttpClient>(relaxed = true)
+            val client = createClient(httpClient)
+
+            client.updateCredentials("new-session", "new-client")
+
+            val sessionField = WebSocketClientImpl::class.java.getDeclaredField("sessionId")
+            sessionField.isAccessible = true
+            val clientField = WebSocketClientImpl::class.java.getDeclaredField("clientId")
+            clientField.isAccessible = true
+            kotlin.test.assertEquals("new-session", sessionField.get(client))
+            kotlin.test.assertEquals("new-client", clientField.get(client))
+        }
 }

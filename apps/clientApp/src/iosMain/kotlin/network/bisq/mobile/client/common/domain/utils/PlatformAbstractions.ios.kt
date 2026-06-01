@@ -4,6 +4,7 @@ package network.bisq.mobile.client.common.domain.utils
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.darwin.ChallengeHandler
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.engine.darwin.KtorNSURLSessionDelegate
 import io.ktor.client.plugins.websocket.WebSockets
@@ -30,6 +31,7 @@ import platform.Foundation.NSURLSessionAuthChallengeDisposition
 import platform.Foundation.NSURLSessionAuthChallengePerformDefaultHandling
 import platform.Foundation.NSURLSessionAuthChallengeUseCredential
 import platform.Foundation.NSURLSessionConfiguration
+import platform.Foundation.NSURLSessionTask
 import platform.Foundation.credentialForTrust
 import platform.Foundation.serverTrust
 import platform.Security.SecCertificateCopyData
@@ -98,8 +100,10 @@ actual fun createHttpClient(
     // Build the NSURLSession ourselves so we hold the only Kotlin-side reference
     // and can invalidateAndCancel later. Mirrors Ktor's own DarwinSession.createSession
     // wiring (default config, no cookie storage, proxy via connectionProxyDictionary).
-    val challengeHandler = tlsFingerprint?.let { fingerprint -> buildTlsChallengeHandler(fingerprint) }
-    val delegate = KtorNSURLSessionDelegate(challengeHandler)
+    val delegate =
+        KtorNSURLSessionDelegate(
+            tlsFingerprint?.let { fingerprint -> buildTlsChallengeHandler(fingerprint) },
+        )
 
     val sessionConfiguration =
         NSURLSessionConfiguration.defaultSessionConfiguration().apply {
@@ -115,23 +119,35 @@ actual fun createHttpClient(
         )
 
     val client =
-        HttpClient(Darwin) {
-            config(this)
-            install(WebSockets) {
-                pingIntervalMillis = 15_000 // not supported by okhttp engine
+        try {
+            HttpClient(Darwin) {
+                config(this)
+                install(WebSockets) {
+                    pingIntervalMillis = 15_000 // not supported by okhttp engine
+                }
+                engine {
+                    usePreconfiguredSession(session, delegate)
+                }
             }
-            engine {
-                usePreconfiguredSession(session, delegate)
-            }
+        } catch (e: Throwable) {
+            // HttpClient construction failed (e.g. exception inside config lambda).
+            // The NSURLSession was already created above and will never be registered,
+            // so we must invalidate it here to release the session's delegate reference
+            // and any open SOCKS slots it holds.
+            session.invalidateAndCancel()
+            throw e
         }
     registerSession(client, session)
     return client
 }
 
 /**
- * Mirrors Ktor's [`io.ktor.client.engine.darwin.setupProxy`] (internal API) so we can
- * configure proxy parameters on the [NSURLSessionConfiguration] we own. Kept in sync
- * with the Ktor source — if upstream gains a new protocol, update here.
+ * Mirrors Ktor's [`io.ktor.client.engine.darwin.setupProxy`] (internal, Ktor 3.4.3) so
+ * we can configure proxy parameters on the [NSURLSessionConfiguration] we own.
+ *
+ * When upgrading Ktor, diff against:
+ * https://github.com/ktorio/ktor/blob/3.4.3/ktor-client/ktor-client-darwin/darwin/src/io/ktor/client/engine/darwin/ProxySupportCommon.kt
+ * and re-verify the [connectionProxyDictionary] keys match the new version.
  */
 private fun NSURLSessionConfiguration.applyProxy(proxy: io.ktor.client.engine.ProxyConfig) {
     val url: Url = proxy.url
@@ -155,21 +171,22 @@ private fun NSURLSessionConfiguration.applyProxy(proxy: io.ktor.client.engine.Pr
 }
 
 /**
- * Builds the Ktor [`ChallengeHandler`](io.ktor.client.engine.darwin.ChallengeHandler)
- * that delegates to [handleTlsChallenge]. Extracted so [createHttpClient] stays focused
- * on session wiring.
+ * Bridges platform TLS challenge types to Ktor's [ChallengeHandler]. Ktor's typealias
+ * uses `@UnsafeNumber` and maps the disposition to [Int], while NSURLSession passes
+ * [NSURLSessionAuthChallengeDisposition]; the cast is safe at runtime.
  */
-private fun buildTlsChallengeHandler(
-    fingerprint: String,
-): (
-    NSURLSession,
-    platform.Foundation.NSURLSessionTask,
-    NSURLAuthenticationChallenge,
-    (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit,
-) -> Unit =
-    { _, _, challenge, completionHandler ->
+@Suppress("UNCHECKED_CAST")
+private fun buildTlsChallengeHandler(fingerprint: String): ChallengeHandler {
+    val handler: (
+        NSURLSession,
+        NSURLSessionTask,
+        NSURLAuthenticationChallenge,
+        (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit,
+    ) -> Unit = { _, _, challenge, completionHandler ->
         handleTlsChallenge(fingerprint, challenge, completionHandler)
     }
+    return handler as ChallengeHandler
+}
 
 /**
  * Custom TLS challenge handler that validates the server certificate by comparing

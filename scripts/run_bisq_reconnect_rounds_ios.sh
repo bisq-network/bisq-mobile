@@ -101,7 +101,7 @@ SUMMARY_CSV="$OUT_DIR/summary.csv"
 echo "round,node_start_timestamp,app_connect_timestamp,duration_seconds,status" > "$SUMMARY_CSV"
 
 log_step() {
-  echo "[$(date '+%H:%M:%S')] $*"
+  echo "[$(date '+%H:%M:%S')] $*" >&2
 }
 
 cleanup_ios_tail() {

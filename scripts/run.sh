@@ -32,8 +32,8 @@ unset _SCRIPT_DIR _REPO_ROOT
 ROUNDS="${1:-1}"
 APP_PATH="${APP_PATH:-/Applications/Bisq2.app}"
 BISQ_LOG="${BISQ_LOG:-$HOME/Library/Application Support/Bisq2/bisq.log}"
-SLEEP_BEFORE_OPEN="${SLEEP_BEFORE_OPEN:-45}"
-SLEEP_AFTER_CONNECT_SEC="${SLEEP_AFTER_CONNECT_SEC:-30}"
+SLEEP_BEFORE_OPEN="${SLEEP_BEFORE_OPEN:-5}"
+SLEEP_AFTER_CONNECT_SEC="${SLEEP_AFTER_CONNECT_SEC:-5}"
 BISQ_INIT_TIMEOUT_SEC="${BISQ_INIT_TIMEOUT_SEC:-180}"
 CONNECT_TIMEOUT_SEC="${CONNECT_TIMEOUT_SEC:-300}"
 IOS_WS_MARKER="${IOS_WS_MARKER:-WS connected successfully}"
@@ -118,7 +118,7 @@ SUMMARY_CSV="$OUT_DIR/summary.csv"
 echo "round,t1_bisq_initialized,t2_android_ws,t2_ios_ws,android_duration_seconds,ios_duration_seconds,status" > "$SUMMARY_CSV"
 
 log_step() {
-  echo "[$(date '+%H:%M:%S')] $*" >&2
+  echo "[$(date '+%H:%M:%S')] $*"
 }
 
 cleanup_pid() {
