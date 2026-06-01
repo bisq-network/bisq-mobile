@@ -1,7 +1,20 @@
 import com.google.protobuf.gradle.proto
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.api.artifacts.transform.InputArtifact
+import org.gradle.api.artifacts.transform.TransformAction
+import org.gradle.api.artifacts.transform.TransformOutputs
+import org.gradle.api.artifacts.transform.TransformParameters
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE
+import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.AttributeCompatibilityRule
+import org.gradle.api.attributes.CompatibilityCheckDetails
+import org.gradle.api.file.FileSystemLocation
+import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -286,10 +299,77 @@ protobuf {
 }
 
 // -------------------- Dependencies --------------------
-// Exclude conflicting jsocks fork from bisq-network to avoid duplicate class errors
-// We use com.github.chimp1984:jsocks instead
+// Exclude conflicting jsocks fork from bisq-network. The canonical jsocks classes are
+// provided transitively via bisq2's tor:jsocks subproject (pulled in by bisq.core.network.network).
 configurations.all {
     exclude(group = "com.github.bisq-network", module = "jsocks")
+}
+
+// net.i2p:router 2.12.0 added post-quantum (MLKEM) support and ships a shaded copy of 60
+// org/bouncycastle/* classes inside its jar. Mobile pulls clean bcprov-jdk18on directly,
+// and Android's R8 fails the build on the duplicate classes. Mobile only enables TOR
+// transport at runtime (see android.conf: supportedTransportTypes = ["TOR"]), so the
+// shaded BC classes are dead code on this platform. Strip them at consume time via a
+// Gradle artifact transform; bisq2 desktop avoids this because the JVM tolerates
+// duplicate classpath classes (first-found wins) where R8 doesn't.
+abstract class StripShadedBouncyCastle : TransformAction<TransformParameters.None> {
+    @get:InputArtifact
+    abstract val inputArtifact: Provider<FileSystemLocation>
+
+    override fun transform(outputs: TransformOutputs) {
+        val input = inputArtifact.get().asFile
+        // Pass through everything except net.i2p:router. Use the Provider-based outputs.file
+        // overload so Gradle wires the input file as the output without copying or relocating.
+        if (!input.name.startsWith("router-")) {
+            outputs.file(inputArtifact)
+            return
+        }
+        val output = outputs.file(input.nameWithoutExtension + "-no-bc.jar")
+        JarOutputStream(output.outputStream().buffered()).use { jos ->
+            JarFile(input).use { jf ->
+                jf.entries().asSequence()
+                    .filterNot { it.name.startsWith("org/bouncycastle/") }
+                    .forEach { entry ->
+                        jos.putNextEntry(JarEntry(entry.name))
+                        if (!entry.isDirectory) {
+                            jf.getInputStream(entry).use { it.copyTo(jos) }
+                        }
+                        jos.closeEntry()
+                    }
+            }
+        }
+    }
+}
+
+val stripShadedBcAttribute = Attribute.of("stripShadedBc", Boolean::class.javaObjectType)
+
+// Producers that don't declare the attribute (e.g. project-local artifacts from Android/Kotlin
+// compile tasks) must remain compatible with consumers that request stripShadedBc = true.
+// Without this rule, requesting the attribute on a classpath silently excludes project artifacts
+// and tests fail with NoClassDefFoundError on the project's own classes.
+class StripShadedBcCompatibility : AttributeCompatibilityRule<Boolean> {
+    override fun execute(details: CompatibilityCheckDetails<Boolean>) {
+        if (details.producerValue == null || details.producerValue == details.consumerValue) {
+            details.compatible()
+        }
+        // Else (producer=false, consumer=true) leave unset so Gradle picks the registered transform.
+    }
+}
+
+// Only the APK runtime/compile classpaths need the transform — that's where R8/D8 enforces
+// no-duplicate-classes. JVM unit tests tolerate duplicate classes (first-found wins), and
+// stamping the attribute on test classpaths excludes project-local artifacts even with a
+// compatibility rule in place (NoClassDefFoundError on the project's own Kotlin output).
+val apkClasspathNames = setOf(
+    "debugCompileClasspath",
+    "debugRuntimeClasspath",
+    "releaseCompileClasspath",
+    "releaseRuntimeClasspath",
+    "profileCompileClasspath",
+    "profileRuntimeClasspath",
+)
+configurations.matching { it.isCanBeResolved && it.name in apkClasspathNames }.configureEach {
+    attributes.attribute(stripShadedBcAttribute, true)
 }
 
 // Force Bisq2 core dependency versions in unit tests to match production
@@ -303,6 +383,20 @@ configurations.matching { it.name.contains("UnitTest") }.configureEach {
 }
 
 dependencies {
+    // Register the BC-strip artifact transform (definition + producer/consumer attribute setup)
+    attributesSchema {
+        attribute(stripShadedBcAttribute) {
+            compatibilityRules.add(StripShadedBcCompatibility::class.java)
+        }
+    }
+    artifactTypes.getByName("jar") {
+        attributes.attribute(stripShadedBcAttribute, false)
+    }
+    registerTransform(StripShadedBouncyCastle::class.java) {
+        from.attribute(stripShadedBcAttribute, false).attribute(ARTIFACT_TYPE_ATTRIBUTE, "jar")
+        to.attribute(stripShadedBcAttribute, true).attribute(ARTIFACT_TYPE_ATTRIBUTE, "jar")
+    }
+
     // Project modules
     implementation(project(sharedPresentationModule))
     implementation(project(sharedDomainModule))
@@ -350,7 +444,8 @@ dependencies {
     implementation(libs.bisq.core.network.network.identity)
     implementation(libs.bisq.core.network.socks5.socket.channel)
     implementation(libs.bisq.core.network.i2p)
-    implementation(libs.chimp.jsocks)
+    // jsocks classes are provided transitively by bisq.core.network.network (which depends
+    // on tor:jsocks). Adding com.github.chimp1984:jsocks would duplicate them.
     implementation(libs.failsafe)
     implementation(libs.apache.httpcomponents.httpclient)
 
