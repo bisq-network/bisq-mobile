@@ -187,6 +187,7 @@ class AndroidApplicationService(
             identityService,
             networkService,
             bondedRolesService,
+            UserService.Config.from(getConfig("user")),
         )
     val accountService = AccountService(persistenceService, networkService, userService, bondedRolesService)
     val chatService: ChatService
@@ -269,7 +270,7 @@ class AndroidApplicationService(
         alertNotificationsService =
             AlertNotificationsService(settingsService, bondedRolesService.alertService, AppType.MOBILE_NODE)
 
-        favouriteMarketsService = FavouriteMarketsService(settingsService)
+        favouriteMarketsService = settingsService.favouriteMarketsService
 
         dontShowAgainService = DontShowAgainService(settingsService)
 
@@ -322,7 +323,6 @@ class AndroidApplicationService(
             .thenCompose { result: Boolean? -> supportService.initialize() }
             .thenCompose { result: Boolean? -> tradeService.initialize() }
             .thenCompose { result: Boolean? -> alertNotificationsService.initialize() }
-            .thenCompose { result: Boolean? -> favouriteMarketsService.initialize() }
             .thenCompose { result: Boolean? -> dontShowAgainService.initialize() }
             .orTimeout(STARTUP_TIMEOUT_SEC, TimeUnit.SECONDS)
             .handle { result: Boolean?, throwable: Throwable? ->
@@ -354,10 +354,6 @@ class AndroidApplicationService(
                 .shutdown()
                 .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 .thenCompose { result: Boolean? ->
-                    favouriteMarketsService
-                        .shutdown()
-                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
-                }.thenCompose { result: Boolean? ->
                     alertNotificationsService
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
