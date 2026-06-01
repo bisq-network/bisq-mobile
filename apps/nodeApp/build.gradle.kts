@@ -327,7 +327,9 @@ abstract class StripShadedBouncyCastle : TransformAction<TransformParameters.Non
         val output = outputs.file(input.nameWithoutExtension + "-no-bc.jar")
         JarOutputStream(output.outputStream().buffered()).use { jos ->
             JarFile(input).use { jf ->
-                jf.entries().asSequence()
+                jf
+                    .entries()
+                    .asSequence()
                     .filterNot { it.name.startsWith("org/bouncycastle/") }
                     .forEach { entry ->
                         jos.putNextEntry(JarEntry(entry.name))
@@ -360,14 +362,15 @@ class StripShadedBcCompatibility : AttributeCompatibilityRule<Boolean> {
 // no-duplicate-classes. JVM unit tests tolerate duplicate classes (first-found wins), and
 // stamping the attribute on test classpaths excludes project-local artifacts even with a
 // compatibility rule in place (NoClassDefFoundError on the project's own Kotlin output).
-val apkClasspathNames = setOf(
-    "debugCompileClasspath",
-    "debugRuntimeClasspath",
-    "releaseCompileClasspath",
-    "releaseRuntimeClasspath",
-    "profileCompileClasspath",
-    "profileRuntimeClasspath",
-)
+val apkClasspathNames =
+    setOf(
+        "debugCompileClasspath",
+        "debugRuntimeClasspath",
+        "releaseCompileClasspath",
+        "releaseRuntimeClasspath",
+        "profileCompileClasspath",
+        "profileRuntimeClasspath",
+    )
 configurations.matching { it.isCanBeResolved && it.name in apkClasspathNames }.configureEach {
     attributes.attribute(stripShadedBcAttribute, true)
 }
