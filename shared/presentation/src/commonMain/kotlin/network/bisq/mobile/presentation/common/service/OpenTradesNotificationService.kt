@@ -91,56 +91,81 @@ class OpenTradesNotificationService(
      * Starts the foreground service immediately. Should be called during app initialization
      * before any heavy work to avoid ForegroundServiceDidNotStartInTimeException.
      *
-     * No-op when local delivery is suppressed (relayed notifications enabled, or OS
-     * notification permission denied). Keeping the service alive in those cases would
-     * either compete with the relayed path or run with no user-visible effect.
+     * Thin alias for [setKeepProcessAlive] with `true` — kept for backward compatibility
+     * with callers (e.g. the nodeApp lifecycle service) that don't differentiate between
+     * "keep process alive" and "post local notifications", which are independent on the
+     * client app.
      */
     fun startService() {
-        if (isLocalDeliverySuppressed) {
-            log.d { "Local delivery is suppressed — skipping local foreground service start" }
-            return
-        }
-        if (!isServiceStarted) {
-            log.i { "Starting foreground service on app initialization" }
+        setKeepProcessAlive(true)
+    }
+
+    /**
+     * Controls whether the Android foreground service is running, independent of whether
+     * local notifications should post. Decoupled from [setLocalDeliverySuppressed]
+     * because the foreground service has two distinct purposes:
+     *
+     *  1. Keep the process (and the WebSocket connection) alive while the app is
+     *     backgrounded — useful for "keep-connected-in-background" even when the
+     *     relayed (FCM/APNs) path is the sole notification channel.
+     *  2. Host the [registerObservers] background flow observers that fire
+     *     `notify(...)` calls for local trade-state / chat events.
+     *
+     * On the client app, purpose 1 may apply WITHOUT purpose 2 (relayed mode + keep
+     * connected on). On the nodeApp both apply together since there's no relay.
+     *
+     *  - `true`  → starts the FG service if not already running.
+     *  - `false` → stops the FG service AND unregisters observers (no process means
+     *              no observers can run usefully). Used when the user opts into pure
+     *              relayed mode (no keep-connected) or has revoked notification
+     *              permission entirely.
+     *
+     * Idempotent.
+     */
+    fun setKeepProcessAlive(keepAlive: Boolean) {
+        if (isServiceStarted == keepAlive) return
+        if (keepAlive) {
+            log.i { "Starting foreground service (keep process alive)" }
             foregroundServiceController.startService()
             isServiceStarted = true
         } else {
-            log.d { "Foreground service already started" }
+            log.i { "Stopping foreground service — process no longer needs to stay alive" }
+            scope.launch { unregisterObservers() }
+            foregroundServiceController.stopService()
+            isServiceStarted = false
         }
     }
 
     /**
-     * Suppresses or resumes the local foreground delivery path. Drives mutual
-     * exclusivity between local and relayed (FCM/APNs) modes, and is also
-     * called when the OS-level notification permission flips so that we don't
-     * keep the FG service running with no permission to post notifications.
+     * Suppresses or resumes local notification posting. Controls observer
+     * registration (so peer-chat / trade-state observers don't fire `notify(...)`
+     * calls that would duplicate the relayed path) but does NOT touch the
+     * foreground service lifecycle — that's [setKeepProcessAlive]'s job.
      *
-     *  - `true`  → stops the local foreground service and prevents the
-     *              lifecycle observer from re-arming background flow
-     *              observers. Used when the relayed path handles delivery, or
-     *              when the OS has revoked / not granted POST_NOTIFICATIONS.
-     *  - `false` → starts the local foreground service. Used when the user
-     *              has the default (local) mode AND has granted notification
-     *              permission.
+     *  - `true`  → unregisters observers and prevents the lifecycle observer
+     *              from re-arming them on the next background transition. Used
+     *              when the relayed path handles delivery, or when the OS has
+     *              revoked / not granted POST_NOTIFICATIONS.
+     *  - `false` → flag-flip only. The lifecycle observer will register
+     *              observers on the next background transition.
      *
-     * Idempotent — repeated calls with the same value are a no-op.
+     * Idempotent. Safe to call independently of [setKeepProcessAlive]:
+     *  - keep=true,  suppressed=true  → FG runs (WS alive), no local notifications.
+     *  - keep=true,  suppressed=false → FG runs, observers post locally (default).
+     *  - keep=false, suppressed=true  → fully off (pure relayed mode without
+     *                                   keep-connected, or permission denied).
+     *  - keep=false, suppressed=false → not a meaningful combination — without
+     *                                   FG, observers can't outlive the process,
+     *                                   so the suppression flag has no effect.
      */
     fun setLocalDeliverySuppressed(suppressed: Boolean) {
         if (isLocalDeliverySuppressed == suppressed) return
         isLocalDeliverySuppressed = suppressed
         if (suppressed) {
-            log.i { "Suppressing local foreground delivery — stopping foreground service" }
+            log.i { "Suppressing local notification posting — unregistering observers" }
             scope.launch { unregisterObservers() }
-            foregroundServiceController.stopService()
-            isServiceStarted = false
         } else {
-            log.i { "Resuming local foreground delivery — starting foreground service" }
-            if (!isServiceStarted) {
-                foregroundServiceController.startService()
-                isServiceStarted = true
-            }
-            // The lifecycle observer will (re-)register flow observers next time
-            // the app moves to background — no need to register them here.
+            log.i { "Resuming local notification posting — observers will re-arm on next background transition" }
         }
     }
 

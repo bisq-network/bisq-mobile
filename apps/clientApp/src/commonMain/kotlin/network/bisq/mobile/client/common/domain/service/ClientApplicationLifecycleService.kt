@@ -195,63 +195,83 @@ class ClientApplicationLifecycleService(
         val keepConnectedInBackground = settings.keepConnectedInBackground
         val notificationPermissionGranted = notificationController.hasPermission()
         if (getPlatformInfo().type == PlatformType.ANDROID) {
-            when {
-                pushNotificationsEnabled && !keepConnectedInBackground ->
-                    log.i {
-                        "Skipping foreground notification service start " +
-                            "(relayed mode on, keep-connected off)"
-                    }
+            // The foreground service has two independent purposes (see
+            // [OpenTradesNotificationService.setKeepProcessAlive] kdoc):
+            //   1. Keep the process + WS alive in background (driven by
+            //      `keepConnectedInBackground`, useful even in pure-relayed mode).
+            //   2. Host the local-delivery observers that post trade-state /
+            //      chat notifications via `notify(...)`.
+            // Suppression (purpose 2) is now separate from FG-service start
+            // (purpose 1) — see [launchForegroundNotificationServiceSuppressorJob].
+            val keepProcessAlive =
+                notificationPermissionGranted && (!pushNotificationsEnabled || keepConnectedInBackground)
+            val localDeliverySuppressed = pushNotificationsEnabled || !notificationPermissionGranted
 
-                !notificationPermissionGranted ->
-                    log.i {
-                        "Skipping foreground notification service start " +
-                            "(POST_NOTIFICATIONS permission not granted — nothing useful to deliver)"
-                    }
+            // Set suppression first so that if the FG service starts and the
+            // app transitions straight to background, observers see the
+            // correct suppressed flag at registration time.
+            openTradesNotificationService.setLocalDeliverySuppressed(localDeliverySuppressed)
 
-                else -> {
-                    log.i {
-                        "Starting foreground notification service " +
-                            "(relayed=$pushNotificationsEnabled, keepConnected=$keepConnectedInBackground, " +
-                            "permission granted)"
-                    }
-                    openTradesNotificationService.startService()
+            if (keepProcessAlive) {
+                log.i {
+                    "Starting foreground notification service " +
+                        "(relayed=$pushNotificationsEnabled, keepConnected=$keepConnectedInBackground, " +
+                        "suppressed=$localDeliverySuppressed)"
+                }
+                openTradesNotificationService.setKeepProcessAlive(true)
+            } else {
+                log.i {
+                    "Skipping foreground notification service start " +
+                        "(relayed=$pushNotificationsEnabled, keepConnected=$keepConnectedInBackground, " +
+                        "permission=$notificationPermissionGranted) — nothing for the FG service to do"
                 }
             }
         }
     }
 
     /**
-     * Enables/disables the foreground notification service based on user preferences + permissions.
+     * Orchestrates two independent decisions on every relevant settings/permission change:
      *
-     * Three inputs decide whether the local foreground delivery should be suppressed:
+     *  1. **Foreground service** ([OpenTradesNotificationService.setKeepProcessAlive]) —
+     *     should the Android FG service run? The FG service keeps the process + WS alive
+     *     in background, and hosts the local-delivery observers when those are active.
+     *  2. **Local notification posting** ([OpenTradesNotificationService.setLocalDeliverySuppressed]) —
+     *     should the local observers post `notify(...)` calls? Suppressed when the relay
+     *     handles delivery, to avoid duplicate notifications. See bisq-mobile#1450.
+     *
+     * Three inputs drive both decisions:
      *  - relayed-push opt-in (from the push-notifications facade)
-     *  - "keep connected in background" sub-setting (from settings; Android-only; only
-     *    meaningful when relayed is on, but read unconditionally — gating happens via the
-     *    truth table below)
+     *  - "keep connected in background" sub-setting (Android-only; only user-visible when
+     *    relayed is on, but read unconditionally)
      *  - OS POST_NOTIFICATIONS permission (queried directly from the OS each tick)
      *
-     * Truth table (with permission granted):
+     * Truth table:
      *
-     *   relayed=false, keep=*       → not suppressed (today's default; FG service runs)
-     *   relayed=true,  keep=false   → suppressed (today's relayed mode; FCM-only)
-     *   relayed=true,  keep=true    → not suppressed (power-user combo; FG keeps WS alive,
-     *                                                 FCM is the backstop for killed app)
+     *   relayed  keep  perm |  FG service  |  local delivery
+     *   -------- ----- ---- |  ----------- |  --------------
+     *   off      *     yes  |  RUN         |  post (default mode)
+     *   off      *     no   |  off         |  suppressed (nothing to deliver)
+     *   on       off   yes  |  off         |  suppressed (pure relayed mode)
+     *   on       off   no   |  off         |  suppressed
+     *   on       on    yes  |  RUN         |  suppressed (FG keeps WS alive; relay posts)
+     *   on       on    no   |  off         |  suppressed (no permission overrides keep)
      *
-     * Permission denied always suppresses regardless — there's nothing useful to deliver.
+     * `keepConnected` no longer doubles notification delivery — the relay (bisq-relay
+     * → FCM/APNs) has no awareness of the client's WS state and pushes for every mobile-
+     * eligible event regardless. If `keepConnected=true` also armed the local observers,
+     * every event would fire twice: rich local notification + generic relay notification.
+     * `keepConnected` retains its WS-lifecycle role (FG service runs) but the local
+     * observers stay suppressed.
      *
-     * `settingsRepository.data` is observed for two reasons: (a) it carries the
-     * `keepConnectedInBackground` value, (b) it acts as a "something changed, re-evaluate"
-     * trigger for the OS permission re-check. The OS query inside the transform is
-     * `ContextCompat.checkSelfPermission` on Android — cheap to call. `distinctUntilChanged`
-     * keeps `setLocalDeliverySuppressed` idempotent.
+     * Suppression is set BEFORE keep-alive on each emission so that observers see the
+     * correct flag at registration time when the FG service is being started fresh.
      *
      * Catches the runtime transitions the bootstrap gate misses:
      *  - User flips the relayed-push toggle in Settings.
      *  - User flips the keep-connected sub-toggle in Settings.
-     *  - User grants POST_NOTIFICATIONS via the dashboard explainer (the dashboard's
-     *    `LaunchedEffect` writes the new state into `settingsRepository`, which triggers a
-     *    re-evaluation here that picks up the now-`true` OS truth).
-     *  - User revokes permission via system Settings and returns to the dashboard; same path.
+     *  - User grants/revokes POST_NOTIFICATIONS — the dashboard's `LaunchedEffect` writes
+     *    the new state into `settingsRepository`, which triggers a re-evaluation here that
+     *    picks up the now-current OS truth.
      */
     private fun launchForegroundNotificationServiceSuppressorJob() {
         pushModeOrchestrationJob?.cancel()
@@ -262,10 +282,19 @@ class ClientApplicationLifecycleService(
             ) { relayed, settings ->
                 val keepConnected = settings.keepConnectedInBackground
                 val osGranted = notificationController.hasPermission()
-                (relayed && !keepConnected) || !osGranted
+                PushOrchestrationState(
+                    keepProcessAlive = osGranted && (!relayed || keepConnected),
+                    localDeliverySuppressed = relayed || !osGranted,
+                )
             }.distinctUntilChanged()
-                .onEach { suppressed ->
-                    openTradesNotificationService.setLocalDeliverySuppressed(suppressed)
+                .onEach { state ->
+                    openTradesNotificationService.setLocalDeliverySuppressed(state.localDeliverySuppressed)
+                    openTradesNotificationService.setKeepProcessAlive(state.keepProcessAlive)
                 }.launchIn(pushModeScope)
     }
+
+    private data class PushOrchestrationState(
+        val keepProcessAlive: Boolean,
+        val localDeliverySuppressed: Boolean,
+    )
 }

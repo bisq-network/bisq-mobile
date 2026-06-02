@@ -156,6 +156,53 @@ class BisqFirebaseMessagingServiceTest {
     }
 
     @Test
+    fun `fromPayload classifies trade-private chat titles as CHAT_MESSAGE when backend sets explicit category`() {
+        // Regression for bisq-mobile#1450 categorisation bug. The bisq2
+        // `ChatNotificationService#createNotification` builds trade-private chat
+        // titles as `"{userName} ({channelNavigationPath})"` where the path is
+        // e.g. `"Bisq Easy → Open Trades → {peer}"`. That string matches the
+        // "trade" / "open trades" keywords in `fromTitle` but contains NO chat
+        // keyword to grab onto — so a title-only heuristic genuinely cannot
+        // disambiguate a peer's chat from a trade-state push.
+        //
+        // The fix is the explicit `category` field populated by bisq2's
+        // `ChatNotification#getCategory` returning `chat_message`, which the
+        // `fromPayload` path prefers over the title heuristic.
+        listOf(
+            "Alice (Bisq Easy → Open Trades → Bob)",
+            "alice (bisq easy - open trades - bob)",
+        ).forEach { title ->
+            val payload =
+                BisqFirebaseMessagingService.NotificationPayload(
+                    id = "channel.msg",
+                    title = title,
+                    message = "hello",
+                    category = "chat_message",
+                )
+            assertEquals(
+                BisqFirebaseMessagingService.NotificationCategory.CHAT_MESSAGE,
+                BisqFirebaseMessagingService.NotificationCategory.fromPayload(payload),
+                "trade-private chat with explicit category should resolve to CHAT_MESSAGE: $title",
+            )
+        }
+    }
+
+    @Test
+    fun `fromTitle returns TRADE_UPDATE for trade-private chat titles when category is absent (backward compat with old nodes)`() {
+        // Documents the genuine limitation of the title heuristic for the chat
+        // case described above — kept as a regression so anyone tightening the
+        // heuristic in the future understands why the backend `category` field
+        // is the only reliable signal. Older trusted nodes (pre-#1450) that
+        // don't populate `category` will still mislabel chats as TRADE_UPDATE
+        // — that's the cost of backward compat; the route deep-link still
+        // lands the user on the trade list either way.
+        assertEquals(
+            BisqFirebaseMessagingService.NotificationCategory.TRADE_UPDATE,
+            BisqFirebaseMessagingService.NotificationCategory.fromTitle("Alice (Bisq Easy → Open Trades → Bob)"),
+        )
+    }
+
+    @Test
     fun `fromTitle classifies offer keyword as OFFER_UPDATE`() {
         assertEquals(
             BisqFirebaseMessagingService.NotificationCategory.OFFER_UPDATE,

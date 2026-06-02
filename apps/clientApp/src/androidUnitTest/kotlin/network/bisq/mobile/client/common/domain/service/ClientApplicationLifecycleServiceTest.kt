@@ -155,7 +155,7 @@ class ClientApplicationLifecycleServiceTest {
         }
 
     @Test
-    fun `activate starts foreground notification service in power-user combo (relayed on AND keep-connected on)`() =
+    fun `activate starts FG service and suppresses local delivery in power-user combo (relayed on AND keep-connected on)`() =
         runTest {
             order.clear()
             coEvery { settingsRepository.fetch() } returns
@@ -166,11 +166,16 @@ class ClientApplicationLifecycleServiceTest {
 
             service.activate()
 
-            // Power-user combo: FCM acts as backstop for killed-app delivery AND the
-            // local FG service keeps the WebSocket alive while the app is backgrounded
-            // (snappy reopens, real-time trade chat). FG service MUST start.
+            // Power-user combo: FG service MUST run to keep the WS connection alive
+            // in background (this is the whole point of the keep-connected toggle —
+            // fast app resumes, live trade chat). The FG service is decoupled from
+            // local notification posting: local delivery is SUPPRESSED because the
+            // relay (FCM/APNs) handles user-facing notifications, so the FG service
+            // hosts only the WS without arming the notification observers. See
+            // bisq-mobile#1450.
             assertEquals(true, order.contains("notification.start"))
             assertEquals("notification.start", order.first())
+            io.mockk.coVerify { openTradesNotificationService.setLocalDeliverySuppressed(true) }
         }
 
     @Test
@@ -193,22 +198,23 @@ class ClientApplicationLifecycleServiceTest {
         }
 
     /**
-     * Verifies the runtime suppressor job — the [combine]+[onEach] pipeline that
-     * mirrors `relayed × keepConnected × osPermission` into
-     * [OpenTradesNotificationService.setLocalDeliverySuppressed]. The bootstrap-path
-     * tests above only cover the cold-start gate; this one closes the loop on
-     * runtime state changes.
+     * Verifies the runtime orchestrator job — the [combine]+[onEach] pipeline that
+     * mirrors `relayed × keepConnected × osPermission` into TWO independent
+     * decisions:
+     *  - [OpenTradesNotificationService.setKeepProcessAlive] (FG service lifecycle)
+     *  - [OpenTradesNotificationService.setLocalDeliverySuppressed] (notification posting)
      *
-     * The suppressor runs on `pushModeScope` (Dispatchers.Default), which is not
+     * The orchestrator runs on `pushModeScope` (Dispatchers.Default), which is not
      * controlled by `runTest`'s virtual scheduler, so we use MockK's `coVerify(timeout = …)`
      * to wait for the side-effect rather than driving virtual time.
      *
-     * Note: `distinctUntilChanged` means transitions that don't flip the computed
-     * `suppressed` boolean emit nothing — that's a deliberate idempotence guarantee
-     * worth covering, hence the final "no extra emission" assertion.
+     * `distinctUntilChanged` operates on the whole [ClientApplicationLifecycleService.PushOrchestrationState]
+     * pair, so when *either* component changes, BOTH method calls fire (the orchestrator
+     * is idempotent per-method, so a no-op call is fine). State C is the regression we
+     * fixed: relayed=true + keep=true now correctly keeps FG alive.
      */
     @Test
-    fun `suppressor job mirrors truth table when relayed and keep-connected change at runtime`() =
+    fun `orchestrator mirrors truth table when relayed and keep-connected change at runtime`() =
         runTest {
             order.clear()
             val relayedFlow = MutableStateFlow(false)
@@ -221,47 +227,78 @@ class ClientApplicationLifecycleServiceTest {
 
             service.activate()
 
-            // State A: relayed=false → NOT suppressed (today's default, FG service runs).
-            coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(false) }
-
-            // State B: relayed=true, keep=false → suppressed (today's pure relayed mode).
-            relayedFlow.value = true
-            coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(true) }
-
-            // State C: relayed=true, keep=true → NOT suppressed (power-user combo).
-            // This is the second time `false` is emitted (after A), so `exactly = 2`.
-            settingsFlow.value = settingsFlow.value.copy(keepConnectedInBackground = true)
+            // State A: relayed=false → FG ON, NOT suppressed (default mode, local posts).
+            // Note: BOTH the bootstrap path (`maybeLaunchForegroundNotificationService`)
+            // AND the orchestrator's initial combine emission fire with the same values
+            // on activate(), so each method is called TWICE at State A. The service
+            // methods are idempotent so the double-call is a no-op past the first one.
             coVerify(timeout = 2_000, exactly = 2) {
                 openTradesNotificationService.setLocalDeliverySuppressed(false)
             }
+            coVerify(timeout = 2_000, exactly = 2) {
+                openTradesNotificationService.setKeepProcessAlive(true)
+            }
 
-            // State D: relayed flipped back off while keep is still true. Computed
-            // `suppressed` is still false (same as C), so distinctUntilChanged must
-            // NOT emit again — call count for `false` stays at 2, not 3.
-            relayedFlow.value = false
-            coVerify(timeout = 1_000, exactly = 1) {
+            // State B: relayed=true, keep=false → FG OFF, suppressed (pure relayed mode).
+            relayedFlow.value = true
+            coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(true) }
+            coVerify(timeout = 2_000) { openTradesNotificationService.setKeepProcessAlive(false) }
+
+            // State C: relayed=true, keep=true → FG ON (regression fix — was OFF before
+            // bisq-mobile#1450 follow-up). Local delivery stays suppressed because the
+            // relay handles user-facing notifications, but the FG service runs to keep
+            // the WS alive in background for fast resume and live trade chat.
+            // The orchestrator's `distinctUntilChanged` operates on the whole
+            // `PushOrchestrationState` data class — when ONE component changes (keep
+            // here) BOTH method calls fire, even though setLocalDeliverySuppressed(true)
+            // matches state B's value. Cumulative counts from A+B+C:
+            //   setLocalDeliverySuppressed(true): 2 (B + C)
+            //   setKeepProcessAlive(true):        3 (2× A + C)
+            settingsFlow.value = settingsFlow.value.copy(keepConnectedInBackground = true)
+            coVerify(timeout = 2_000, exactly = 3) {
+                openTradesNotificationService.setKeepProcessAlive(true)
+            }
+            coVerify(timeout = 2_000, exactly = 2) {
                 openTradesNotificationService.setLocalDeliverySuppressed(true)
             }
-            coVerify(timeout = 1_000, exactly = 2) {
+
+            // State D: relayed=false, keep=true → FG ON, NOT suppressed (back to default
+            // local mode; the keep-connected toggle is hidden in UI when relayed is off
+            // but the stored value stays). Same FG/suppression VALUES as State A but
+            // distinctUntilChanged fires because the data class differs from State C.
+            // Cumulative counts after A+B+C+D:
+            //   setLocalDeliverySuppressed(false): 3 (2× A + D)
+            //   setKeepProcessAlive(true):        4 (2× A + C + D)
+            //   setKeepProcessAlive(false):       1 (B only — sanity-check the
+            //                                        "stop FG" path stayed scoped to State B)
+            relayedFlow.value = false
+            coVerify(timeout = 2_000, exactly = 3) {
                 openTradesNotificationService.setLocalDeliverySuppressed(false)
+            }
+            coVerify(timeout = 2_000, exactly = 4) {
+                openTradesNotificationService.setKeepProcessAlive(true)
+            }
+            coVerify(timeout = 1_000, exactly = 1) {
+                openTradesNotificationService.setKeepProcessAlive(false)
             }
         }
 
     @Test
-    fun `suppressor job suppresses local delivery when OS notification permission is revoked`() =
+    fun `orchestrator stops FG and suppresses local delivery when OS notification permission is revoked`() =
         runTest {
             order.clear()
             val relayedFlow = MutableStateFlow(false)
             val settingsFlow = MutableStateFlow(Settings(keepConnectedInBackground = false))
             every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns relayedFlow
             every { settingsRepository.data } returns settingsFlow
-            // Permission denied: there's nothing useful to deliver locally; suppress regardless
-            // of the relayed/keep-connected combo.
+            // Permission denied: there's nothing useful to deliver locally; suppress AND
+            // shut FG down regardless of the relayed/keep-connected combo.
             coEvery { notificationController.hasPermission() } returns false
 
             service.activate()
 
             coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(true) }
+            coVerify(timeout = 2_000) { openTradesNotificationService.setKeepProcessAlive(false) }
         }
 
     @Test
@@ -337,6 +374,12 @@ class ClientApplicationLifecycleServiceTest {
         }
 
     private fun configureActivationTracking() {
+        // The bootstrap path now calls `setKeepProcessAlive(true)` directly (see
+        // `ClientApplicationLifecycleService.maybeLaunchForegroundNotificationService`)
+        // instead of the legacy `startService()` alias. Track that call. Only the
+        // `true` argument is recorded — `false` is the "skip" case and is asserted
+        // via `order.contains("notification.start") == false`.
+        io.mockk.every { openTradesNotificationService.setKeepProcessAlive(true) } answers { order += "notification.start" }
         io.mockk.every { openTradesNotificationService.startService() } answers { order += "notification.start" }
         coEvery { apiAccessService.activate() } answers { order += "apiAccess.activate" }
         coEvery { applicationBootstrapFacade.activate() } answers { order += "bootstrap.activate" }

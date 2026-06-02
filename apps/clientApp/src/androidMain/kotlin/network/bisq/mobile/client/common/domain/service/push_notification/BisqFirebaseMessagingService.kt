@@ -318,9 +318,19 @@ class BisqFirebaseMessagingService :
 
             internal fun fromTitle(title: String): NotificationCategory {
                 val lower = title.lowercase()
+                // Chat is checked first because trade-private chat titles (built by
+                // bisq2 `ChatNotificationService#createNotification`) embed the
+                // channel navigation path e.g. "Alice (Bisq Easy → Open Trades → Bob)"
+                // — they match BOTH "chat" / "message" semantics and "trade" /
+                // "open trades" keywords. Without this ordering, trade-private chats
+                // were mislabelled as `TRADE_UPDATE` and shared the generic banner
+                // with actual state-transition pushes.
+                // The explicit `payload.category` (set by bisq2 since #1450) bypasses
+                // this entirely; the heuristic is only the backward-compat fallback
+                // for older trusted nodes that don't populate `category` yet.
                 return when {
+                    lower.contains("chat") || lower.contains("message") -> CHAT_MESSAGE
                     lower.contains("trade") || lower.contains("payment") || lower.contains("btc") -> TRADE_UPDATE
-                    lower.contains("message") || lower.contains("chat") -> CHAT_MESSAGE
                     lower.contains("offer") -> OFFER_UPDATE
                     else -> GENERAL
                 }
