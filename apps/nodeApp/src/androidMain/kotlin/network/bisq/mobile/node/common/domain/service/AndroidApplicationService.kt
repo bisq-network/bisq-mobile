@@ -180,6 +180,24 @@ class AndroidApplicationService(
     val burningManService = BurningmanService(authorizedBondedRolesService)
     val offerService = OfferService(networkService, identityService, persistenceService)
     val contractService = ContractService(securityService)
+
+    // FIXME: UserService + FavouriteMarketsService use the v2.1.10-era API here
+    // because the bisq2 jars come from `for-mobile-based-on-2.1.11`, whose
+    // PR #4789 cherry-picks reverted these classes to their older shape.
+    // On main:
+    //   - UserService takes a `UserService.Config` (rate limiting) read from
+    //     the `user { rateLimitEnabled = ... }` block in android.conf.
+    //   - SettingsService owns FavouriteMarketsService — we'd access it via
+    //     `settingsService.favouriteMarketsService` and not call its
+    //     initialize()/shutdown() ourselves (SettingsService manages the
+    //     lifecycle, see SettingsService:138/151 on main).
+    //
+    // If the mobile branch realigns with main on these classes (upstream
+    // sync of the user/ + settings/ packages, or a v2.1.12 cut from main),
+    // flip both wirings and remove the favouriteMarketsService init/shutdown
+    // calls in the chains below. The `user` config block in android.conf is
+    // intentionally preserved here for the same reason — it's dead config
+    // today, but the right shape for when this realigns.
     val userService =
         UserService(
             persistenceService,
@@ -187,7 +205,6 @@ class AndroidApplicationService(
             identityService,
             networkService,
             bondedRolesService,
-            UserService.Config.from(getConfig("user")),
         )
     val accountService = AccountService(persistenceService, networkService, userService, bondedRolesService)
     val chatService: ChatService
@@ -270,7 +287,7 @@ class AndroidApplicationService(
         alertNotificationsService =
             AlertNotificationsService(settingsService, bondedRolesService.alertService, AppType.MOBILE_NODE)
 
-        favouriteMarketsService = settingsService.favouriteMarketsService
+        favouriteMarketsService = FavouriteMarketsService(settingsService)
 
         dontShowAgainService = DontShowAgainService(settingsService)
 
@@ -323,6 +340,7 @@ class AndroidApplicationService(
             .thenCompose { result: Boolean? -> supportService.initialize() }
             .thenCompose { result: Boolean? -> tradeService.initialize() }
             .thenCompose { result: Boolean? -> alertNotificationsService.initialize() }
+            .thenCompose { result: Boolean? -> favouriteMarketsService.initialize() }
             .thenCompose { result: Boolean? -> dontShowAgainService.initialize() }
             .orTimeout(STARTUP_TIMEOUT_SEC, TimeUnit.SECONDS)
             .handle { result: Boolean?, throwable: Throwable? ->
@@ -354,6 +372,10 @@ class AndroidApplicationService(
                 .shutdown()
                 .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 .thenCompose { result: Boolean? ->
+                    favouriteMarketsService
+                        .shutdown()
+                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
+                }.thenCompose { result: Boolean? ->
                     alertNotificationsService
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
