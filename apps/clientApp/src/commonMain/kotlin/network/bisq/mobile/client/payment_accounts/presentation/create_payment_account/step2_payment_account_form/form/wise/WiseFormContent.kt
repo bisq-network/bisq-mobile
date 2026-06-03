@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -63,14 +62,6 @@ private fun WiseFormContent(
     onAction: (AccountFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val filteredCurrencies =
-        remember(uiState.availableCurrencies, uiState.currencySearchQuery) {
-            filterCurrencies(
-                uiState.availableCurrencies,
-                uiState.currencySearchQuery,
-            )
-        }
-
     Column(modifier = modifier) {
         BisqTextFieldV0(
             value = uiState.holderNameEntry.value,
@@ -120,7 +111,7 @@ private fun WiseFormContent(
     if (uiState.isCurrencyPickerOpen) {
         CurrencyPickerBottomSheet(
             selectedCurrencyCodes = uiState.selectedCurrencyCodes,
-            currencies = filteredCurrencies,
+            currencies = uiState.availableCurrencies,
             searchQuery = uiState.currencySearchQuery,
             selectedCount = uiState.selectedCurrencyCodes.size,
             totalCount = uiState.availableCurrencies.size,
@@ -133,23 +124,9 @@ private fun WiseFormContent(
     }
 }
 
-private fun filterCurrencies(
-    currencies: List<CurrencyPickerItem>,
-    query: String,
-): List<CurrencyPickerItem> {
-    if (query.isBlank()) {
-        return currencies
-    }
-
-    return currencies.filter { currency ->
-        currency.code.contains(query, ignoreCase = true) ||
-            currency.displayName.contains(query, ignoreCase = true)
-    }
-}
-
 @Preview
 @Composable
-private fun WiseFormContentPreview_DefaultPreview() {
+private fun WiseFormContent_DefaultPreview() {
     BisqTheme.Preview {
         WiseFormContent(
             uiState =
@@ -171,7 +148,7 @@ private fun WiseFormContentPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun WiseFormContentPreview_ErrorPreview() {
+private fun WiseFormContent_ErrorPreview() {
     BisqTheme.Preview {
         WiseFormContent(
             uiState =

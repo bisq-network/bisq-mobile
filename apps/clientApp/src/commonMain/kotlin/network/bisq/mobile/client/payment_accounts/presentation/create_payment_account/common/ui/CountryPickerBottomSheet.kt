@@ -25,13 +25,13 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.inputfiel
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
-data class CurrencyPickerItem(
+data class CountryPickerItem(
     val code: String,
     val displayName: String,
 )
 
 @Composable
-fun CurrencySummaryRow(
+fun CountrySummaryRow(
     selectedCount: Int,
     totalCount: Int,
     isError: Boolean,
@@ -39,9 +39,9 @@ fun CurrencySummaryRow(
 ) {
     val summaryText =
         if (selectedCount == totalCount && totalCount > 0) {
-            "mobile.paymentAccounts.currencyPicker.allSelected".i18n(totalCount)
+            "mobile.paymentAccounts.countryPicker.allSelected".i18n(totalCount)
         } else {
-            "mobile.paymentAccounts.currencyPicker.summary".i18n(selectedCount, totalCount)
+            "mobile.paymentAccounts.countryPicker.summary".i18n(selectedCount, totalCount)
         }
 
     Surface(
@@ -67,9 +67,9 @@ fun CurrencySummaryRow(
 }
 
 @Composable
-fun CurrencyPickerBottomSheet(
-    selectedCurrencyCodes: Set<String>,
-    currencies: List<CurrencyPickerItem>,
+fun CountryPickerBottomSheet(
+    selectedCountryCodes: Set<String>,
+    countries: List<CountryPickerItem>,
     searchQuery: String,
     selectedCount: Int,
     totalCount: Int,
@@ -79,10 +79,10 @@ fun CurrencyPickerBottomSheet(
     onClearAll: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val filteredCurrencies =
-        remember(currencies, searchQuery) {
-            filterCurrencies(
-                currencies = currencies,
+    val filteredCountries =
+        remember(countries, searchQuery) {
+            filterCountries(
+                countries = countries,
                 query = searchQuery,
             )
         }
@@ -91,7 +91,7 @@ fun CurrencyPickerBottomSheet(
         Column(
             modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding),
         ) {
-            BisqText.H5Regular("mobile.paymentAccounts.currencyPicker.title".i18n())
+            BisqText.H5Regular("paymentAccounts.createAccount.accountData.sepa.acceptCountries".i18n())
             BisqGap.VHalf()
 
             Column(
@@ -120,7 +120,7 @@ fun CurrencyPickerBottomSheet(
                 }
 
                 BisqText.SmallLight(
-                    text = "mobile.paymentAccounts.currencyPicker.summary".i18n(selectedCount, totalCount),
+                    text = "mobile.paymentAccounts.countryPicker.summary".i18n(selectedCount, totalCount),
                     color = BisqTheme.colors.mid_grey20,
                 )
             }
@@ -130,15 +130,15 @@ fun CurrencyPickerBottomSheet(
             BisqSearchField(
                 value = searchQuery,
                 onValueChange = onSearchChange,
-                placeholder = "mobile.paymentAccounts.currencyPicker.searchHint".i18n(),
+                placeholder = "mobile.paymentAccounts.countryPicker.searchHint".i18n(),
             )
 
             BisqGap.V1()
 
-            if (filteredCurrencies.isEmpty()) {
+            if (filteredCountries.isEmpty()) {
                 BisqText.BaseLight(
                     modifier = Modifier.fillMaxSize(),
-                    text = "mobile.paymentAccounts.currencyPicker.noResults".i18n(),
+                    text = "mobile.paymentAccounts.countryPicker.noResults".i18n(),
                     color = BisqTheme.colors.mid_grey20,
                 )
             } else {
@@ -146,15 +146,15 @@ fun CurrencyPickerBottomSheet(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter),
                 ) {
-                    items(filteredCurrencies, key = { it.code }) { currency ->
+                    items(filteredCountries, key = { it.code }) { country ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             BisqCheckbox(
-                                checked = selectedCurrencyCodes.contains(currency.code),
-                                label = currency.displayName,
-                                onCheckedChange = { onToggle(currency.code) },
+                                checked = selectedCountryCodes.contains(country.code),
+                                label = country.displayName,
+                                onCheckedChange = { onToggle(country.code) },
                             )
                         }
                     }
@@ -164,25 +164,25 @@ fun CurrencyPickerBottomSheet(
     }
 }
 
-private fun filterCurrencies(
-    currencies: List<CurrencyPickerItem>,
+private fun filterCountries(
+    countries: List<CountryPickerItem>,
     query: String,
-): List<CurrencyPickerItem> {
+): List<CountryPickerItem> {
     if (query.isBlank()) {
-        return currencies
+        return countries
     }
 
-    return currencies.filter { currency ->
-        currency.code.contains(query, ignoreCase = true) ||
-            currency.displayName.contains(query, ignoreCase = true)
+    return countries.filter { country ->
+        country.code.contains(query, ignoreCase = true) ||
+            country.displayName.contains(query, ignoreCase = true)
     }
 }
 
 @Preview
 @Composable
-private fun CurrencySummaryRowPreview() {
+private fun CountrySummaryRowPreview() {
     BisqTheme.Preview {
-        CurrencySummaryRow(
+        CountrySummaryRow(
             selectedCount = 2,
             totalCount = 4,
             isError = false,
@@ -193,29 +193,16 @@ private fun CurrencySummaryRowPreview() {
 
 @Preview
 @Composable
-private fun CurrencySummaryRowErrorPreview() {
+private fun CountryPickerBottomSheetPreview() {
     BisqTheme.Preview {
-        CurrencySummaryRow(
-            selectedCount = 0,
-            totalCount = 4,
-            isError = true,
-            onClick = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun CurrencyPickerBottomSheetPreview() {
-    BisqTheme.Preview {
-        CurrencyPickerBottomSheet(
-            selectedCurrencyCodes = setOf("USD", "EUR"),
-            currencies =
+        CountryPickerBottomSheet(
+            selectedCountryCodes = setOf("DE", "FR"),
+            countries =
                 listOf(
-                    CurrencyPickerItem("USD", "USD (US Dollar)"),
-                    CurrencyPickerItem("EUR", "EUR (Euro)"),
-                    CurrencyPickerItem("GBP", "GBP (British Pound)"),
-                    CurrencyPickerItem("CAD", "CAD (Canadian Dollar)"),
+                    CountryPickerItem("DE", "Germany"),
+                    CountryPickerItem("FR", "France"),
+                    CountryPickerItem("ES", "Spain"),
+                    CountryPickerItem("NL", "Netherlands"),
                 ),
             searchQuery = "",
             selectedCount = 2,

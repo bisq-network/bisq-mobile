@@ -22,9 +22,13 @@ class SepaPaymentAccountValidationTest {
     }
 
     @Test
-    fun `test iban with invalid checksum still passes format validation`() {
+    fun `test iban with invalid checksum should fail`() {
         val invalidChecksumIban = "DE89370400440532013001"
-        SepaPaymentAccountValidation.validateIban(invalidChecksumIban)
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                SepaPaymentAccountValidation.validateIban(invalidChecksumIban)
+            }
+        assertEquals(true, exception.message?.contains("checksum"))
     }
 
     @Test
@@ -48,12 +52,18 @@ class SepaPaymentAccountValidationTest {
     }
 
     @Test
-    fun `test empty iban should fail`() {
-        val exception =
+    fun `test null or empty iban should fail`() {
+        val nullException =
+            assertFailsWith<IllegalArgumentException> {
+                SepaPaymentAccountValidation.validateIban(null)
+            }
+        assertEquals(true, nullException.message?.contains("must not be null or empty"))
+
+        val emptyException =
             assertFailsWith<IllegalArgumentException> {
                 SepaPaymentAccountValidation.validateIban("")
             }
-        assertEquals(true, exception.message?.contains("must not be empty"))
+        assertEquals(true, emptyException.message?.contains("must not be null or empty"))
     }
 
     @Test
@@ -67,10 +77,27 @@ class SepaPaymentAccountValidationTest {
     }
 
     @Test
+    fun `test iban with spaces should fail like backend validator`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                SepaPaymentAccountValidation.validateIban("DE89 3704 0044 0532 0130 00")
+            }
+        assertEquals(true, exception.message?.contains("Invalid IBAN format"))
+    }
+
+    @Test
     fun `test valid sepa iban should pass`() {
         SepaPaymentAccountValidation.validateSepaIban(
             iban = "DE89370400440532013000",
-            sepaCountryCodes = listOf("DE", "FR", "ES", "IT"),
+            sepaCountryCodes = setOf("DE", "FR", "ES", "IT"),
+        )
+    }
+
+    @Test
+    fun `test valid sepa iban with spaces and lowercase should pass`() {
+        SepaPaymentAccountValidation.validateSepaIban(
+            iban = "de89 3704 0044 0532 0130 00",
+            sepaCountryCodes = setOf("DE", "FR", "ES", "IT"),
         )
     }
 
@@ -80,7 +107,7 @@ class SepaPaymentAccountValidationTest {
             assertFailsWith<IllegalArgumentException> {
                 SepaPaymentAccountValidation.validateSepaIban(
                     iban = "GB29NWBK60161331926819",
-                    sepaCountryCodes = listOf("DE", "FR", "ES", "IT"),
+                    sepaCountryCodes = setOf("DE", "FR", "ES", "IT"),
                 )
             }
         assertEquals(true, exception.message?.contains("is not a SEPA member country"))
@@ -107,7 +134,34 @@ class SepaPaymentAccountValidationTest {
             assertFailsWith<IllegalArgumentException> {
                 SepaPaymentAccountValidation.validateBic("DEUT12FF")
             }
-        assertEquals(true, exception.message?.contains("Invalid BIC format"))
+        assertEquals(true, exception.message?.contains("Invalid BIC/SWIFT format"))
+    }
+
+    @Test
+    fun `test bic location code starting with reserved digit should fail`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                SepaPaymentAccountValidation.validateBic("DEUTDE0F")
+            }
+        assertEquals(true, exception.message?.contains("cannot start with 0 or 1"))
+    }
+
+    @Test
+    fun `test bic location code ending with O should fail`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                SepaPaymentAccountValidation.validateBic("DEUTDEFO")
+            }
+        assertEquals(true, exception.message?.contains("cannot end with letter O"))
+    }
+
+    @Test
+    fun `test bic branch code starting with x must be xxx`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                SepaPaymentAccountValidation.validateBic("DEUTDEFFX01")
+            }
+        assertEquals(true, exception.message?.contains("starting with X must be XXX"))
     }
 
     @Test
@@ -123,7 +177,7 @@ class SepaPaymentAccountValidationTest {
     fun `test iban country code match should pass`() {
         SepaPaymentAccountValidation.validateIbanMatchesCountryCode(
             iban = "DE89370400440532013000",
-            countryCode = "de",
+            countryCode = "DE",
         )
     }
 

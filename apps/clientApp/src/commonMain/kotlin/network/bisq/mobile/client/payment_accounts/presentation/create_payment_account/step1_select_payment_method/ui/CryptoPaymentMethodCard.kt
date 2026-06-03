@@ -72,7 +72,7 @@ private fun previewCryptoPaymentMethod(
 
 @Preview
 @Composable
-private fun CryptoPaymentMethodCardPreview_XmrPreview() {
+private fun CryptoPaymentMethodCard_XmrPreview() {
     BisqTheme.Preview {
         CryptoPaymentMethodCard(
             paymentMethod = previewCryptoPaymentMethod(),
@@ -82,7 +82,7 @@ private fun CryptoPaymentMethodCardPreview_XmrPreview() {
 
 @Preview
 @Composable
-private fun CryptoPaymentMethodCardPreview_LightningBtcPreview() {
+private fun CryptoPaymentMethodCard_LightningBtcPreview() {
     BisqTheme.Preview {
         CryptoPaymentMethodCard(
             paymentMethod =

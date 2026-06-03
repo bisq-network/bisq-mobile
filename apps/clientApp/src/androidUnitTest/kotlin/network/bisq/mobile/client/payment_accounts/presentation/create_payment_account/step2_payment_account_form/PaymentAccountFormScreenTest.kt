@@ -30,6 +30,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.curr
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
@@ -94,6 +95,7 @@ class PaymentAccountFormScreenTest {
                         single<GlobalUiManager> { mockk(relaxed = true) }
                         factory { ZelleFormPresenter(mainPresenter) }
                         factory { RevolutFormPresenter(mainPresenter) }
+                        factory { SepaFormPresenter(mainPresenter) }
                         factory { MoneroFormPresenter(mainPresenter) }
                         factory { OtherCryptoFormPresenter(mainPresenter) }
                     },
@@ -138,11 +140,11 @@ class PaymentAccountFormScreenTest {
 
     @Test
     fun `when unsupported fiat payment method rendered then method name and unsupported state are shown`() {
-        paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SEPA, "SEPA")
+        paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SEPA_INSTANT, "SEPA Instant")
         setTestContent()
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("SEPA").assertIsDisplayed()
+        composeTestRule.onNodeWithText("SEPA Instant").assertIsDisplayed()
         composeTestRule.onNodeWithText("mobile.user.paymentAccounts.unsupported".i18n()).assertIsDisplayed()
     }
 
@@ -193,6 +195,23 @@ class PaymentAccountFormScreenTest {
         composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).assertIsDisplayed()
         composeTestRule
             .onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when sepa payment method rendered then sepa form content is shown`() {
+        paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SEPA, "SEPA")
+        setTestContent()
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("SEPA").assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country".i18n()).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.holderName".i18n()).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.sepa.iban".i18n()).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.sepa.bic".i18n()).performScrollTo().assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.createAccount.accountData.sepa.acceptCountries".i18n())
             .performScrollTo()
             .assertIsDisplayed()
     }

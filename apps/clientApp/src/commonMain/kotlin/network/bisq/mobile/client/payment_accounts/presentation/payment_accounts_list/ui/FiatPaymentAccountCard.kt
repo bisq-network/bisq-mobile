@@ -169,7 +169,7 @@ private fun previewFiatAccount(
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_LowRiskPreview() {
+private fun FiatPaymentAccountCard_LowRiskPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account = previewFiatAccount(),
@@ -179,7 +179,7 @@ private fun FiatPaymentAccountCardPreview_LowRiskPreview() {
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_NoCurrencyAndNoCountryPreview() {
+private fun FiatPaymentAccountCard_NoCurrencyAndNoCountryPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account =
@@ -196,7 +196,7 @@ private fun FiatPaymentAccountCardPreview_NoCurrencyAndNoCountryPreview() {
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_ModerateRiskLongNamesPreview() {
+private fun FiatPaymentAccountCard_ModerateRiskLongNamesPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account =
@@ -212,7 +212,7 @@ private fun FiatPaymentAccountCardPreview_ModerateRiskLongNamesPreview() {
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_VeryLowRiskPreview() {
+private fun FiatPaymentAccountCard_VeryLowRiskPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account =
@@ -228,7 +228,7 @@ private fun FiatPaymentAccountCardPreview_VeryLowRiskPreview() {
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_MediumRiskPreview() {
+private fun FiatPaymentAccountCard_MediumRiskPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account =
@@ -244,7 +244,7 @@ private fun FiatPaymentAccountCardPreview_MediumRiskPreview() {
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_CustomPaymentMethodFallbackIconPreview() {
+private fun FiatPaymentAccountCard_CustomPaymentMethodFallbackIconPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account =
@@ -261,7 +261,7 @@ private fun FiatPaymentAccountCardPreview_CustomPaymentMethodFallbackIconPreview
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_CountryOnlyPreview() {
+private fun FiatPaymentAccountCard_CountryOnlyPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account =
@@ -278,7 +278,7 @@ private fun FiatPaymentAccountCardPreview_CountryOnlyPreview() {
 
 @Preview
 @Composable
-private fun FiatPaymentAccountCardPreview_LongCurrencyClickableHintPreview() {
+private fun FiatPaymentAccountCard_LongCurrencyClickableHintPreview() {
     BisqTheme.Preview {
         FiatPaymentAccountCard(
             account =

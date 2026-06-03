@@ -10,7 +10,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposi
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
-import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 
 fun CashDepositAccountDto.toDomain(): CashDepositAccount =
     CashDepositAccount(
@@ -26,7 +25,7 @@ fun CashDepositAccountPayloadDto.toDomain(): CashDepositAccountPayload =
         chargebackRisk = chargebackRisk?.toDomain(),
         paymentMethodName = paymentMethodName,
         currency = currency.toDomain(),
-        country = Country(code = country.code, name = country.name),
+        country = country.toDomain(),
         holderName = holderName,
         holderId = holderId,
         bankName = bankName,

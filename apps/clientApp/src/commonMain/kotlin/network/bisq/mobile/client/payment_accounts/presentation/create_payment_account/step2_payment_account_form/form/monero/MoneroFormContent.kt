@@ -147,7 +147,7 @@ fun previewPaymentMethod(): CryptoPaymentMethod =
 
 @Preview
 @Composable
-private fun MoneroFormContentPreview_DefaultPreview() {
+private fun MoneroFormContent_DefaultPreview() {
     BisqTheme.Preview {
         MoneroFormContent(
             uiState =
@@ -168,7 +168,7 @@ private fun MoneroFormContentPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun MoneroFormContentPreview_SubAddressEnabledPreview() {
+private fun MoneroFormContent_SubAddressEnabledPreview() {
     BisqTheme.Preview {
         MoneroFormContent(
             uiState =
@@ -188,7 +188,7 @@ private fun MoneroFormContentPreview_SubAddressEnabledPreview() {
 
 @Preview
 @Composable
-private fun MoneroFormContentPreview_ErrorPreview() {
+private fun MoneroFormContent_ErrorPreview() {
     BisqTheme.Preview {
         MoneroFormContent(
             uiState =

@@ -15,6 +15,7 @@ import network.bisq.mobile.client.payment_accounts.presentation.create_payment_a
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.wise.WiseFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review.PaymentAccountReviewPresenter
@@ -43,6 +44,7 @@ val paymentsAccountsModule =
         factory { ZelleFormPresenter(get()) }
         factory { WiseFormPresenter(get()) }
         factory { RevolutFormPresenter(get()) }
+        factory { SepaFormPresenter(get()) }
         factory { MoneroFormPresenter(get()) }
         factory { OtherCryptoFormPresenter(get()) }
 

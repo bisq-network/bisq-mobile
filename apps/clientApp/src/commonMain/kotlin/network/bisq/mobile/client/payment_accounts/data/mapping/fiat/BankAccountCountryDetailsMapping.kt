@@ -2,11 +2,10 @@ package network.bisq.mobile.client.payment_accounts.data.mapping.fiat
 
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.BankAccountCountryDetailsDto
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
-import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 
 fun BankAccountCountryDetailsDto.toDomain(): BankAccountCountryDetails =
     BankAccountCountryDetails(
-        country = Country(code = country.code, name = country.name),
+        country = country.toDomain(),
         bankAccountValidationSupported = bankAccountValidationSupported,
         holderIdRequired = holderIdRequired,
         holderIdDescription = holderIdDescription,

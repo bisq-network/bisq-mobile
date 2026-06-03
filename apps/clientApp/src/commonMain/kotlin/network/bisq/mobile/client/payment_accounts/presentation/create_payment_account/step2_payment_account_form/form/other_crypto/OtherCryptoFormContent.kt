@@ -77,7 +77,7 @@ private fun previewPaymentMethod(
 
 @Preview
 @Composable
-private fun OtherCryptoFormContentPreview_DefaultPreview() {
+private fun OtherCryptoFormContent_DefaultPreview() {
     BisqTheme.Preview {
         OtherCryptoFormContent(
             uiState =
@@ -97,7 +97,7 @@ private fun OtherCryptoFormContentPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun OtherCryptoFormContentPreview_AutoConfEnabledPreview() {
+private fun OtherCryptoFormContent_AutoConfEnabledPreview() {
     BisqTheme.Preview {
         OtherCryptoFormContent(
             uiState =

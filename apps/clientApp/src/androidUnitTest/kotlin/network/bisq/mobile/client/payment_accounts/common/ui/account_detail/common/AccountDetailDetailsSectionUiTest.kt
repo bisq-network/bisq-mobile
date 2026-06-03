@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail.common
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -38,11 +39,13 @@ class AccountDetailDetailsSectionUiTest {
         composeTestRule.setContent {
             CompositionLocalProvider(LocalIsTest provides true) {
                 BisqTheme {
-                    AccountDetailDetailsSection(
-                        creationDate = creationDate,
-                        tradeLimitInfo = tradeLimitInfo,
-                        tradeDuration = tradeDuration,
-                    )
+                    Column {
+                        AccountDetailDetailsSection(
+                            creationDate = creationDate,
+                            tradeLimitInfo = tradeLimitInfo,
+                            tradeDuration = tradeDuration,
+                        )
+                    }
                 }
             }
         }

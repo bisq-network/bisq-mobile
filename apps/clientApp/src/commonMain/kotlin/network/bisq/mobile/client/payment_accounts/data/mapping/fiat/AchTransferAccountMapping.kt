@@ -10,7 +10,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfe
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
-import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 
 fun AchTransferAccountDto.toDomain(): AchTransferAccount =
     AchTransferAccount(
@@ -26,7 +25,7 @@ fun AchTransferAccountPayloadDto.toDomain(): AchTransferAccountPayload =
         chargebackRisk = chargebackRisk?.toDomain(),
         paymentMethodName = paymentMethodName,
         currency = currency.toDomain(),
-        country = Country(code = country.code, name = country.name),
+        country = country.toDomain(),
         holderName = holderName,
         holderAddress = holderAddress,
         bankName = bankName,

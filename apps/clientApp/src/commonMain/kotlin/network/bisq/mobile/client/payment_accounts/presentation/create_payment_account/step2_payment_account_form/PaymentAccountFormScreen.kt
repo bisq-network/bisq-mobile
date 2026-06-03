@@ -39,6 +39,8 @@ import network.bisq.mobile.client.payment_accounts.presentation.create_payment_a
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormContent
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.wise.WiseFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.wise.WiseFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.zelle.ZelleFormContent
@@ -250,6 +252,20 @@ private fun PaymentMethodFormContent(
                     }
                 }
 
+                FiatPaymentRail.SEPA -> {
+                    val presenter = methodPresenter as? SepaFormPresenter
+                    if (presenter != null) {
+                        SepaFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            paymentMethod = paymentMethod,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
                 else -> UnsupportedAccountState(modifier = modifier.fillMaxWidth())
             }
         }
@@ -308,7 +324,7 @@ private fun previewPaymentMethodVO(): PaymentMethodVO =
 
 @Preview
 @Composable
-private fun PaymentAccountFormContentPreview_DefaultPreview() {
+private fun PaymentAccountFormContent_DefaultPreview() {
     BisqTheme.Preview {
         PaymentAccountFormContent(
             paymentMethod = previewPaymentMethodVO(),
@@ -326,7 +342,7 @@ private fun PaymentAccountFormContentPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun PaymentAccountFormContentPreview_ErrorPreview() {
+private fun PaymentAccountFormContent_ErrorPreview() {
     BisqTheme.Preview {
         PaymentAccountFormContent(
             paymentMethod = previewPaymentMethodVO(),
@@ -355,6 +371,7 @@ private fun rememberMethodPresenter(paymentType: PaymentTypeVO?): AccountFormPre
         PaymentTypeVO.XMR -> RememberPresenterLifecycleBackStackAware<MoneroFormPresenter>()
         PaymentTypeVO.WISE -> RememberPresenterLifecycleBackStackAware<WiseFormPresenter>()
         PaymentTypeVO.REVOLUT -> RememberPresenterLifecycleBackStackAware<RevolutFormPresenter>()
+        PaymentTypeVO.SEPA -> RememberPresenterLifecycleBackStackAware<SepaFormPresenter>()
         PaymentTypeVO.BSQ,
         PaymentTypeVO.LTC,
         PaymentTypeVO.ETH,

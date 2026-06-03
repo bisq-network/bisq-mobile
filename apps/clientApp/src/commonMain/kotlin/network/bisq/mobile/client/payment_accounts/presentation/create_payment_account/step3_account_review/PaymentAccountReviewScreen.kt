@@ -22,6 +22,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposi
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.sepa.SepaAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.WiseAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccountPayload
@@ -33,6 +34,7 @@ import network.bisq.mobile.client.payment_accounts.presentation.common.ui.accoun
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.cash_deposit.CashDepositAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.revolut.RevolutAccountDetailContent
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.sepa.SepaAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.wise.WiseAccountDetailContent
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
@@ -131,6 +133,9 @@ private fun PaymentAccountReviewContent(
 
                 is RevolutAccount ->
                     RevolutAccountDetailContent(paymentAccount)
+
+                is SepaAccount ->
+                    SepaAccountDetailContent(paymentAccount)
 
                 else -> UnsupportedAccountState(modifier = Modifier.fillMaxWidth())
             }

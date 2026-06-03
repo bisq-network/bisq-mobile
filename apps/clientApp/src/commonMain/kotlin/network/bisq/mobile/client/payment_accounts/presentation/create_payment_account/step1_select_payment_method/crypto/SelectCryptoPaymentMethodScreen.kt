@@ -184,7 +184,7 @@ private fun EmptyPaymentMethodsState(
 
 @Preview
 @Composable
-private fun SelectPaymentMethodContentPreview_LoadingPreview() {
+private fun SelectPaymentMethodContent_LoadingPreview() {
     BisqTheme.Preview {
         SelectCryptoPaymentMethodContent(
             uiState = SelectCryptoPaymentMethodUiState(isLoading = true),
@@ -195,7 +195,7 @@ private fun SelectPaymentMethodContentPreview_LoadingPreview() {
 
 @Preview
 @Composable
-private fun SelectPaymentMethodContentPreview_ErrorPreview() {
+private fun SelectPaymentMethodContent_ErrorPreview() {
     BisqTheme.Preview {
         SelectCryptoPaymentMethodContent(
             uiState = SelectCryptoPaymentMethodUiState(isError = true),
@@ -206,7 +206,7 @@ private fun SelectPaymentMethodContentPreview_ErrorPreview() {
 
 @Preview
 @Composable
-private fun SelectPaymentMethodContentPreview_CryptoLoadedPreview() {
+private fun SelectPaymentMethodContent_CryptoLoadedPreview() {
     BisqTheme.Preview {
         SelectCryptoPaymentMethodContent(
             uiState =
@@ -221,7 +221,7 @@ private fun SelectPaymentMethodContentPreview_CryptoLoadedPreview() {
 
 @Preview
 @Composable
-private fun SelectPaymentMethodContentPreview_CryptoEmptyLoadedPreview() {
+private fun SelectPaymentMethodContent_CryptoEmptyLoadedPreview() {
     BisqTheme.Preview {
         SelectCryptoPaymentMethodContent(
             uiState = SelectCryptoPaymentMethodUiState(),

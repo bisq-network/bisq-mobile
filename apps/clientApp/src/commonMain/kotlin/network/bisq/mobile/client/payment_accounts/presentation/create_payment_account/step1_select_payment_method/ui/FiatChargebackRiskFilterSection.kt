@@ -102,7 +102,7 @@ private fun RiskFilterChip(
 
 @Preview
 @Composable
-private fun FiatChargebackRiskFilterSectionPreview_AllSelectedPreview() {
+private fun FiatChargebackRiskFilterSection_AllSelectedPreview() {
     BisqTheme.Preview {
         FiatChargebackRiskFilterSection(
             activeRiskFilter = null,
@@ -113,7 +113,7 @@ private fun FiatChargebackRiskFilterSectionPreview_AllSelectedPreview() {
 
 @Preview
 @Composable
-private fun FiatChargebackRiskFilterSectionPreview_LowSelectedPreview() {
+private fun FiatChargebackRiskFilterSection_LowSelectedPreview() {
     BisqTheme.Preview {
         FiatChargebackRiskFilterSection(
             activeRiskFilter = FiatPaymentMethodChargebackRiskVO.LOW,

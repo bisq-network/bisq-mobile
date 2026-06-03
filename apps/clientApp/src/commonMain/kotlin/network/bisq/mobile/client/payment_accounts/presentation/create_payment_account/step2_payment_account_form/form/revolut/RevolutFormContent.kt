@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,14 +60,6 @@ private fun RevolutFormContent(
     onAction: (AccountFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val filteredCurrencies =
-        remember(uiState.availableCurrencies, uiState.currencySearchQuery) {
-            filterCurrencies(
-                uiState.availableCurrencies,
-                uiState.currencySearchQuery,
-            )
-        }
-
     Column(modifier = modifier) {
         BisqTextFieldV0(
             value = uiState.userNameEntry.value,
@@ -104,7 +95,7 @@ private fun RevolutFormContent(
     if (uiState.isCurrencyPickerOpen) {
         CurrencyPickerBottomSheet(
             selectedCurrencyCodes = uiState.selectedCurrencyCodes,
-            currencies = filteredCurrencies,
+            currencies = uiState.availableCurrencies,
             searchQuery = uiState.currencySearchQuery,
             selectedCount = uiState.selectedCurrencyCodes.size,
             totalCount = uiState.availableCurrencies.size,
@@ -117,23 +108,9 @@ private fun RevolutFormContent(
     }
 }
 
-private fun filterCurrencies(
-    currencies: List<CurrencyPickerItem>,
-    query: String,
-): List<CurrencyPickerItem> {
-    if (query.isBlank()) {
-        return currencies
-    }
-
-    return currencies.filter { currency ->
-        currency.code.contains(query, ignoreCase = true) ||
-            currency.displayName.contains(query, ignoreCase = true)
-    }
-}
-
 @Preview
 @Composable
-private fun RevolutFormContentPreview_DefaultPreview() {
+private fun RevolutFormContent_DefaultPreview() {
     BisqTheme.Preview {
         RevolutFormContent(
             uiState =
@@ -154,7 +131,7 @@ private fun RevolutFormContentPreview_DefaultPreview() {
 
 @Preview
 @Composable
-private fun RevolutFormContentPreview_ErrorPreview() {
+private fun RevolutFormContent_ErrorPreview() {
     BisqTheme.Preview {
         RevolutFormContent(
             uiState =

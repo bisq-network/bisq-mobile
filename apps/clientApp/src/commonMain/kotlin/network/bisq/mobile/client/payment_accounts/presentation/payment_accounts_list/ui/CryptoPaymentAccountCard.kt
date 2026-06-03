@@ -86,7 +86,7 @@ private fun previewCryptoAccount(
 
 @Preview
 @Composable
-private fun CryptoPaymentAccountCardPreview_MoneroPreview() {
+private fun CryptoPaymentAccountCard_MoneroPreview() {
     BisqTheme.Preview {
         CryptoPaymentAccountCard(
             account = previewCryptoAccount(),
@@ -96,7 +96,7 @@ private fun CryptoPaymentAccountCardPreview_MoneroPreview() {
 
 @Preview
 @Composable
-private fun CryptoPaymentAccountCardPreview_LitecoinLongNamePreview() {
+private fun CryptoPaymentAccountCard_LitecoinLongNamePreview() {
     BisqTheme.Preview {
         CryptoPaymentAccountCard(
             account =

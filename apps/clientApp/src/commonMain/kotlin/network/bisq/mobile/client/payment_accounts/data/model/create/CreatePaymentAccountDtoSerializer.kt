@@ -12,6 +12,7 @@ import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.CreateCashDepositAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.FiatPaymentRailDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.revolut.CreateRevolutAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.sepa.CreateSepaAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.user_defined.CreateUserDefinedFiatAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.wise.CreateWiseAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.zelle.CreateZelleAccountDto
@@ -33,6 +34,7 @@ object CreatePaymentAccountDtoSerializer : JsonContentPolymorphicSerializer<Crea
             FiatPaymentRailDto.ZELLE.name -> CreateZelleAccountDto.serializer()
             FiatPaymentRailDto.WISE.name -> CreateWiseAccountDto.serializer()
             FiatPaymentRailDto.REVOLUT.name -> CreateRevolutAccountDto.serializer()
+            FiatPaymentRailDto.SEPA.name -> CreateSepaAccountDto.serializer()
             CryptoPaymentRailDto.MONERO.name -> CreateMoneroAccountDto.serializer()
             CryptoPaymentRailDto.OTHER_CRYPTO_ASSET.name -> CreateOtherCryptoAssetAccountDto.serializer()
             else -> throw IllegalArgumentException(

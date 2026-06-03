@@ -149,7 +149,7 @@ private fun PaymentMethodBackgroundInformationDialogPreview() {
 
 @Preview
 @Composable
-private fun PaymentMethodBackgroundInformationDialogPreview_LongBodyPreview() {
+private fun PaymentMethodBackgroundInformationDialog_LongBodyPreview() {
     BisqTheme.Preview {
         PaymentMethodBackgroundInformationDialog(
             bodyText =

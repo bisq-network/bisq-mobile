@@ -158,8 +158,8 @@ class WiseFormContentTest {
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.title".i18n()).assertIsDisplayed()
-        composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.selectAll".i18n()).assertIsDisplayed()
-        composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.clearAll".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.picker.selectAll".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.picker.clearAll".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.searchHint".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText("EUR (Euro)").assertIsDisplayed()
         composeTestRule.onNodeWithText("GBP (British Pound)").assertIsDisplayed()
@@ -174,7 +174,7 @@ class WiseFormContentTest {
         composeTestRule
             .onNodeWithText("mobile.paymentAccounts.currencyPicker.allSelected".i18n(3))
             .performClick()
-        composeTestRule.onNodeWithText("mobile.paymentAccounts.currencyPicker.clearAll".i18n()).performClick()
+        composeTestRule.onNodeWithText("mobile.paymentAccounts.picker.clearAll".i18n()).performClick()
 
         composeTestRule.waitForIdle()
         composeTestRule

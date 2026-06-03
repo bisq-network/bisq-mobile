@@ -8,6 +8,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_cry
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.CreateRevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.sepa.CreateSepaAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
@@ -21,6 +22,7 @@ fun CreatePaymentAccount.toDto(): CreatePaymentAccountDto =
         is CreateZelleAccount -> toDto()
         is CreateWiseAccount -> toDto()
         is CreateRevolutAccount -> toDto()
+        is CreateSepaAccount -> toDto()
         is CreateMoneroAccount -> toDto()
         is CreateOtherCryptoAssetAccount -> toDto()
         else -> error("Unsupported create payment account type: ${this::class.simpleName}")

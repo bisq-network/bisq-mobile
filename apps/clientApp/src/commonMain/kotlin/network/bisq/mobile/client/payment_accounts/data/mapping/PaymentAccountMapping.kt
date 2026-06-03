@@ -8,6 +8,7 @@ import network.bisq.mobile.client.payment_accounts.data.model.crypto.other_crypt
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.AchTransferAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.CashDepositAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.revolut.RevolutAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.sepa.SepaAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.user_defined.UserDefinedFiatAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.wise.WiseAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.zelle.ZelleAccountDto
@@ -22,6 +23,7 @@ fun PaymentAccountDto.toDomain(): PaymentAccount =
         is ZelleAccountDto -> toDomain()
         is WiseAccountDto -> toDomain()
         is RevolutAccountDto -> toDomain()
+        is SepaAccountDto -> toDomain()
         // Crypto
         is MoneroAccountDto -> toDomain()
         is OtherCryptoAssetAccountDto -> toDomain()
