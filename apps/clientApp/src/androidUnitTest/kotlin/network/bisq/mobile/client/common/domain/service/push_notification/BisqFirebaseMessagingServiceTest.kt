@@ -156,6 +156,31 @@ class BisqFirebaseMessagingServiceTest {
     }
 
     @Test
+    fun `fromTitle prefers chat over trade keywords when both are present`() {
+        // Pins the defensive keyword ordering in `fromTitle`: titles that match
+        // BOTH the chat/message bucket and the trade/payment/btc bucket must
+        // resolve to CHAT_MESSAGE. If the order is ever flipped back (trade-first),
+        // this test fails — a chat in a trade context would silently be labelled
+        // as a generic trade update again, recreating the bisq-mobile#1450 symptom
+        // for older trusted nodes that don't yet populate `category`.
+        //
+        // The explicit-category path (`fromPayload`) is the real fix for the
+        // production trade-private chat title pattern; this ordering hygiene is
+        // for backward-compat with older bisq2 versions that don't set category.
+        listOf(
+            "Trade chat update",
+            "Payment message received",
+            "BTC chat from peer",
+        ).forEach { title ->
+            assertEquals(
+                BisqFirebaseMessagingService.NotificationCategory.CHAT_MESSAGE,
+                BisqFirebaseMessagingService.NotificationCategory.fromTitle(title),
+                "chat keyword must win over trade keyword for title: $title",
+            )
+        }
+    }
+
+    @Test
     fun `fromPayload classifies trade-private chat titles as CHAT_MESSAGE when backend sets explicit category`() {
         // Regression for bisq-mobile#1450 categorisation bug. The bisq2
         // `ChatNotificationService#createNotification` builds trade-private chat
