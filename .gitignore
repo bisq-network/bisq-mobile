@@ -8,6 +8,7 @@ captures
 .cxx
 local.properties
 xcuserdata
+debug/
 
 spot.xml
 hs_err_pid*
