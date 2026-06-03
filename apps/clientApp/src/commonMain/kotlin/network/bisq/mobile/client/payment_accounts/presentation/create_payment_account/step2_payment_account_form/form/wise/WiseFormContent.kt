@@ -14,8 +14,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPayment
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CurrencyPickerBottomSheet
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CurrencyPickerItem
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CurrencySummaryRow
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.WiseFormUiAction
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -59,7 +57,7 @@ fun WiseFormContent(
 @Composable
 private fun WiseFormContent(
     uiState: WiseFormUiState,
-    onAction: (AccountFormUiAction) -> Unit,
+    onAction: (WiseFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {

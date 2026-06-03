@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.CreateMoneroAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.CreateMoneroAccountPayload
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.MoneroFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiState
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.validateOptionalIntInRange
@@ -38,7 +36,7 @@ open class MoneroFormPresenter(
         _uiState.update { it.copy(crypto = transform(it.crypto)) }
     }
 
-    override fun onCryptoCustomAction(action: AccountFormUiAction) {
+    fun onAction(action: MoneroFormUiAction) {
         when (action) {
             is MoneroFormUiAction.OnUseSubAddressesChange -> {
                 _uiState.update {
@@ -105,8 +103,6 @@ open class MoneroFormPresenter(
                     )
                 }
             }
-
-            else -> Unit
         }
     }
 

@@ -13,8 +13,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.WiseFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
@@ -118,13 +117,13 @@ class WiseFormPresenterTest {
     @Test
     fun `when next clicked with invalid fields then no effect and errors are set`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("a"))
             presenter.onAction(WiseFormUiAction.OnEmailChange("invalid"))
             presenter.onAction(WiseFormUiAction.OnClearAllCurrencies)
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             assertFalse(effectDeferred.isCompleted)
@@ -138,14 +137,14 @@ class WiseFormPresenterTest {
     @Test
     fun `when next clicked with only unsupported selected currency codes then no effect and currency error is set`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("John Doe"))
             presenter.onAction(WiseFormUiAction.OnEmailChange("john@example.com"))
             presenter.onAction(WiseFormUiAction.OnClearAllCurrencies)
             presenter.onAction(WiseFormUiAction.OnCurrencyToggle("UNSUPPORTED"))
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             assertFalse(effectDeferred.isCompleted)
@@ -156,7 +155,7 @@ class WiseFormPresenterTest {
     @Test
     fun `when next clicked with valid fields then emits Wise account payload`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("John Doe"))
             presenter.onAction(WiseFormUiAction.OnEmailChange("john@example.com"))
             presenter.onAction(WiseFormUiAction.OnClearAllCurrencies)
@@ -164,7 +163,7 @@ class WiseFormPresenterTest {
             presenter.onAction(WiseFormUiAction.OnCurrencyToggle("EUR"))
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             val effect = effectDeferred.await()

@@ -21,8 +21,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.presentation.common.util.toDisplayString
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CashDepositFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.ui.PaymentMethodBackgroundInformationDialog
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.i18n.i18n
@@ -71,7 +69,7 @@ fun CashDepositFormContent(
 @Composable
 private fun CashDepositFormContent(
     uiState: CashDepositFormUiState,
-    onAction: (AccountFormUiAction) -> Unit,
+    onAction: (CashDepositFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isInPreview = LocalInspectionMode.current

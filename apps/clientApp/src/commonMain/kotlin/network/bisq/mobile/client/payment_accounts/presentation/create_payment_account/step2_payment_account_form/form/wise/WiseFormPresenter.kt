@@ -15,8 +15,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.Create
 import network.bisq.mobile.client.payment_accounts.presentation.common.util.toDisplayString
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CurrencyPickerItem
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.WiseFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.EmailValidation
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.i18n.i18n
@@ -31,10 +29,11 @@ open class WiseFormPresenter(
     private val _effect = MutableSharedFlow<WiseFormEffect>()
     val effect = _effect.asSharedFlow()
 
-    private var supportedCurrencies: HashSet<FiatCurrency> = HashSet()
+    private var supportedCurrenciesMap: Map<String, FiatCurrency> = emptyMap()
 
     fun initialize(paymentMethod: FiatPaymentMethod) {
-        supportedCurrencies = paymentMethod.supportedCurrencies.toHashSet()
+        supportedCurrenciesMap = paymentMethod.supportedCurrencies.associateBy { it.code }
+        val supportedCurrencies = paymentMethod.supportedCurrencies
         _uiState.update { currentState ->
             currentState.copy(
                 availableCurrencies = supportedCurrencies.sortedBy { currency -> currency.code }.map { currency -> CurrencyPickerItem(currency.code, currency.toDisplayString()) },
@@ -43,7 +42,7 @@ open class WiseFormPresenter(
         }
     }
 
-    override fun onCustomAction(action: AccountFormUiAction) {
+    fun onAction(action: WiseFormUiAction) {
         when (action) {
             is WiseFormUiAction.OnHolderNameChange -> {
                 _uiState.update {
@@ -128,8 +127,8 @@ open class WiseFormPresenter(
         val validatedState =
             _uiState.updateAndGet {
                 selectedCurrencies =
-                    supportedCurrencies
-                        .filter { currency -> it.selectedCurrencyCodes.contains(currency.code) }
+                    it.selectedCurrencyCodes
+                        .mapNotNull { code -> supportedCurrenciesMap[code] }
                         .sortedBy { currency -> currency.code }
 
                 it.copy(

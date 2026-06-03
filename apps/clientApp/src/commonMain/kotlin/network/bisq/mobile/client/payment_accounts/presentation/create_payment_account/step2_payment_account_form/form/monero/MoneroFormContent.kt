@@ -11,9 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.MoneroFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CommonCryptoFormSection
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiState
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.i18n.i18n
@@ -49,6 +48,7 @@ fun MoneroFormContent(
         uiState = uiState,
         paymentMethod = paymentMethod,
         onAction = presenter::onAction,
+        onCommonAction = presenter::onCryptoCommonAction,
         modifier = modifier,
     )
 }
@@ -57,13 +57,14 @@ fun MoneroFormContent(
 private fun MoneroFormContent(
     uiState: MoneroFormUiState,
     paymentMethod: CryptoPaymentMethod,
-    onAction: (AccountFormUiAction) -> Unit,
+    onAction: (MoneroFormUiAction) -> Unit,
+    onCommonAction: (CryptoAccountFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         CommonCryptoFormSection(
             cryptoUiState = uiState.crypto,
-            onAction = onAction,
+            onAction = onCommonAction,
             showAddress = !uiState.useSubAddresses,
             showAutoConf = moneroSubAddressesEnabled && paymentMethod.supportAutoConf,
         )
@@ -162,6 +163,7 @@ private fun MoneroFormContent_DefaultPreview() {
                 ),
             paymentMethod = previewPaymentMethod(),
             onAction = {},
+            onCommonAction = {},
         )
     }
 }
@@ -182,6 +184,7 @@ private fun MoneroFormContent_SubAddressEnabledPreview() {
                 ),
             paymentMethod = previewPaymentMethod(),
             onAction = {},
+            onCommonAction = {},
         )
     }
 }
@@ -228,6 +231,7 @@ private fun MoneroFormContent_ErrorPreview() {
                 ),
             paymentMethod = previewPaymentMethod(),
             onAction = {},
+            onCommonAction = {},
         )
     }
 }

@@ -1,8 +1,6 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto
 
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CryptoAccountFormUiAction
 import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class CryptoAccountFormPresenter(
@@ -10,15 +8,7 @@ abstract class CryptoAccountFormPresenter(
 ) : AccountFormPresenter(mainPresenter) {
     protected abstract fun updateCryptoUiState(transform: (CryptoAccountFormUiState) -> CryptoAccountFormUiState)
 
-    override fun onCustomAction(action: AccountFormUiAction) {
-        if (!handleCryptoAction(action)) {
-            onCryptoCustomAction(action)
-        }
-    }
-
-    protected open fun onCryptoCustomAction(action: AccountFormUiAction) = Unit
-
-    private fun handleCryptoAction(action: AccountFormUiAction): Boolean =
+    fun onCryptoCommonAction(action: CryptoAccountFormUiAction) {
         when (action) {
             is CryptoAccountFormUiAction.OnAddressChange -> {
                 updateCryptoUiState {
@@ -26,17 +16,14 @@ abstract class CryptoAccountFormPresenter(
                         addressEntry = it.addressEntry.updateValue(action.value),
                     )
                 }
-                true
             }
 
             is CryptoAccountFormUiAction.OnIsInstantChange -> {
                 updateCryptoUiState { it.copy(isInstant = action.value) }
-                true
             }
 
             is CryptoAccountFormUiAction.OnIsAutoConfChange -> {
                 updateCryptoUiState { it.copy(isAutoConf = action.value) }
-                true
             }
 
             is CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange -> {
@@ -46,7 +33,6 @@ abstract class CryptoAccountFormPresenter(
                             it.autoConfNumConfirmationsEntry.updateValue(action.value),
                     )
                 }
-                true
             }
 
             is CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange -> {
@@ -56,7 +42,6 @@ abstract class CryptoAccountFormPresenter(
                             it.autoConfMaxTradeAmountEntry.updateValue(action.value),
                     )
                 }
-                true
             }
 
             is CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange -> {
@@ -66,11 +51,9 @@ abstract class CryptoAccountFormPresenter(
                             it.autoConfExplorerUrlsEntry.updateValue(action.value),
                     )
                 }
-                true
             }
-
-            else -> false
         }
+    }
 
     protected fun validateCryptoAutoConfState(current: CryptoAccountFormUiState): CryptoAccountFormUiState =
         current.copy(

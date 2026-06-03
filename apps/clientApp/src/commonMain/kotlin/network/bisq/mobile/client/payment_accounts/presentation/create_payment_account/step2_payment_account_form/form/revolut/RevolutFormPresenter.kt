@@ -15,8 +15,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.Cre
 import network.bisq.mobile.client.payment_accounts.presentation.common.util.toDisplayString
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CurrencyPickerItem
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.RevolutFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -30,10 +28,11 @@ open class RevolutFormPresenter(
     private val _effect = MutableSharedFlow<RevolutFormEffect>()
     val effect = _effect.asSharedFlow()
 
-    private var supportedCurrencies: HashSet<FiatCurrency> = HashSet()
+    private var supportedCurrenciesMap: Map<String, FiatCurrency> = emptyMap()
 
     fun initialize(paymentMethod: FiatPaymentMethod) {
-        supportedCurrencies = paymentMethod.supportedCurrencies.toHashSet()
+        val supportedCurrencies = paymentMethod.supportedCurrencies
+        supportedCurrenciesMap = supportedCurrencies.associateBy { it.code }
         _uiState.update {
             it.copy(
                 availableCurrencies =
@@ -48,7 +47,7 @@ open class RevolutFormPresenter(
         }
     }
 
-    override fun onCustomAction(action: AccountFormUiAction) {
+    fun onAction(action: RevolutFormUiAction) {
         when (action) {
             is RevolutFormUiAction.OnUserNameChange -> {
                 _uiState.update {
@@ -101,8 +100,6 @@ open class RevolutFormPresenter(
             RevolutFormUiAction.OnClearAllCurrencies -> {
                 _uiState.update { it.copy(selectedCurrencyCodes = emptySet()) }
             }
-
-            else -> Unit
         }
     }
 
@@ -111,8 +108,8 @@ open class RevolutFormPresenter(
         val validatedState =
             _uiState.updateAndGet {
                 selectedCurrencies =
-                    supportedCurrencies
-                        .filter { currency -> it.selectedCurrencyCodes.contains(currency.code) }
+                    it.selectedCurrencyCodes
+                        .mapNotNull { code -> supportedCurrenciesMap[code] }
                         .sortedBy { currency -> currency.code }
 
                 it.copy(

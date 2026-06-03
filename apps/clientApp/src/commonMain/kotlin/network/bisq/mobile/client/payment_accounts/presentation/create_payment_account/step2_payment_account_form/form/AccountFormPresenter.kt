@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -19,7 +18,7 @@ abstract class AccountFormPresenter(
 
     abstract val uiState: StateFlow<AccountFormUiState>
 
-    fun onAction(action: AccountFormUiAction) {
+    fun onCommonAction(action: AccountFormUiAction) {
         when (action) {
             is AccountFormUiAction.OnUniqueAccountNameChange -> {
                 _uniqueAccountNameEntry.update {
@@ -28,7 +27,6 @@ abstract class AccountFormPresenter(
             }
 
             AccountFormUiAction.OnNextClick -> onNextClick()
-            else -> onCustomAction(action)
         }
     }
 
@@ -37,8 +35,6 @@ abstract class AccountFormPresenter(
         _uniqueAccountNameEntry.value = validated
         return validated
     }
-
-    protected open fun onCustomAction(action: AccountFormUiAction) = Unit
 
     protected abstract fun onNextClick()
 }

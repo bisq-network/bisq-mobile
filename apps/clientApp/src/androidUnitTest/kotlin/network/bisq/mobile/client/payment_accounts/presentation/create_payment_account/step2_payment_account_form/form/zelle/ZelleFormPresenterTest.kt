@@ -10,8 +10,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.ZelleFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -87,13 +86,13 @@ class ZelleFormPresenterTest {
     fun `when next clicked with invalid entries then no navigation effect is emitted and errors are set`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(ZelleFormUiAction.OnHolderNameChange("a"))
             presenter.onAction(ZelleFormUiAction.OnEmailOrMobileNrChange("invalid"))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -110,13 +109,13 @@ class ZelleFormPresenterTest {
     fun `when next clicked with valid email flow then emits account payload`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Zelle Personal"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Zelle Personal"))
             presenter.onAction(ZelleFormUiAction.OnHolderNameChange("John Doe"))
             presenter.onAction(ZelleFormUiAction.OnEmailOrMobileNrChange("user@example.com"))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -132,13 +131,13 @@ class ZelleFormPresenterTest {
     fun `when next clicked with valid us mobile flow then emits account payload`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Zelle Mobile"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Zelle Mobile"))
             presenter.onAction(ZelleFormUiAction.OnHolderNameChange("Jane Doe"))
             presenter.onAction(ZelleFormUiAction.OnEmailOrMobileNrChange("+1 202-555-0171"))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then

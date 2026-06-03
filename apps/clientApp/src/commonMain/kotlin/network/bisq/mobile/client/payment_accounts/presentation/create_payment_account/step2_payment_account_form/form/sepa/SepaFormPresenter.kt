@@ -14,8 +14,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.sepa.Create
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.sepa.CreateSepaAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CountryPickerItem
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.SepaFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.data.replicated.common.validation.SepaPaymentAccountValidation
 import network.bisq.mobile.i18n.i18n
@@ -49,7 +47,7 @@ open class SepaFormPresenter(
         }
     }
 
-    override fun onCustomAction(action: AccountFormUiAction) {
+    fun onAction(action: SepaFormUiAction) {
         when (action) {
             is SepaFormUiAction.OnCountrySelect -> {
                 _uiState.update {
@@ -110,8 +108,6 @@ open class SepaFormPresenter(
             SepaFormUiAction.OnClearAllAcceptedCountries -> {
                 _uiState.update { it.copy(selectedAcceptedCountryCodes = emptySet()) }
             }
-
-            else -> Unit
         }
     }
 

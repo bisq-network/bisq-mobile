@@ -22,8 +22,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPayment
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccount
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.WiseFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
@@ -241,11 +240,11 @@ class WiseFormContentTest {
             )
             composeTestRule.waitForIdle()
 
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("John Doe"))
             presenter.onAction(WiseFormUiAction.OnEmailChange("john@example.com"))
             presenter.onAction(WiseFormUiAction.OnCurrencyToggle("GBP"))
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             composeTestRule.waitForIdle()

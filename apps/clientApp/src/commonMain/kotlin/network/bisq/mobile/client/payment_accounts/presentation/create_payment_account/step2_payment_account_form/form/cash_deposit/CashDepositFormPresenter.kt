@@ -18,8 +18,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.coun
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CashDepositFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.NetworkDataValidation
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.i18n.i18n
@@ -47,7 +45,7 @@ open class CashDepositFormPresenter(
         }
     }
 
-    override fun onCustomAction(action: AccountFormUiAction) {
+    fun onAction(action: CashDepositFormUiAction) {
         when (action) {
             is CashDepositFormUiAction.OnCountrySelect -> onCountrySelect(action.index)
             is CashDepositFormUiAction.OnCurrencySelect -> onCurrencySelect(action.index)
@@ -62,7 +60,6 @@ open class CashDepositFormPresenter(
             }
             is CashDepositFormUiAction.OnNationalAccountIdChange -> updateEntry { it.copy(nationalAccountIdEntry = it.nationalAccountIdEntry.updateValue(action.value)) }
             is CashDepositFormUiAction.OnRequirementsChange -> updateEntry { it.copy(requirementsEntry = it.requirementsEntry.updateValue(action.value)) }
-            else -> Unit
         }
     }
 

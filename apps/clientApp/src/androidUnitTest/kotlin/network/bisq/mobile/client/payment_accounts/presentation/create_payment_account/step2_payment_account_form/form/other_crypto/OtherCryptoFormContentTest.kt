@@ -20,8 +20,8 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.CreateOtherCryptoAssetAccount
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CryptoAccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -203,9 +203,9 @@ class OtherCryptoFormContentTest {
             )
             composeTestRule.waitForIdle()
 
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH Account"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("0xABC123"))
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH Account"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("0xABC123"))
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             composeTestRule.waitForIdle()

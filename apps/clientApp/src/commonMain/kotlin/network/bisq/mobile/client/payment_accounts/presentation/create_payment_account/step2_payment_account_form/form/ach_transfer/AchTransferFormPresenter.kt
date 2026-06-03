@@ -12,8 +12,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfe
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AchTransferFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.NetworkDataValidation
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.i18n.i18n
@@ -28,7 +26,7 @@ open class AchTransferFormPresenter(
     private val _effect = MutableSharedFlow<AchTransferFormEffect>()
     val effect = _effect.asSharedFlow()
 
-    override fun onCustomAction(action: AccountFormUiAction) {
+    fun onAction(action: AchTransferFormUiAction) {
         when (action) {
             is AchTransferFormUiAction.OnHolderNameChange -> updateEntry { it.copy(holderNameEntry = it.holderNameEntry.updateValue(action.value)) }
             is AchTransferFormUiAction.OnHolderAddressChange -> updateEntry { it.copy(holderAddressEntry = it.holderAddressEntry.updateValue(action.value)) }
@@ -38,7 +36,6 @@ open class AchTransferFormPresenter(
             is AchTransferFormUiAction.OnBankAccountTypeSelect -> {
                 _uiState.update { it.copy(selectedBankAccountType = action.type, bankAccountTypeErrorMessage = null) }
             }
-            else -> Unit
         }
     }
 

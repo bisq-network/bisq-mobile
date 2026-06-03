@@ -28,9 +28,9 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPay
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.UnsupportedAccountState
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer.AchTransferFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer.AchTransferFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit.CashDepositFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit.CashDepositFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero.MoneroFormContent
@@ -77,7 +77,7 @@ fun PaymentAccountFormScreen(
             paymentMethod = paymentMethodVO,
             accountNameEntry = accountNameEntryState?.value ?: DataEntry(),
             onAction = { action ->
-                methodPresenter?.onAction(action)
+                methodPresenter?.onCommonAction(action)
             },
             isNextEnabled = methodPresenter != null,
             formContent = {

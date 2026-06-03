@@ -26,8 +26,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CashDepositFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
@@ -249,7 +248,7 @@ class CashDepositFormContentTest {
             presenter.onAction(CashDepositFormUiAction.OnCountrySelect(2))
             advanceUntilIdle()
             presenter.onAction(CashDepositFormUiAction.OnCurrencySelect(1))
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Cash Deposit Main"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Cash Deposit Main"))
             presenter.onAction(CashDepositFormUiAction.OnHolderNameChange(" Alice Doe "))
             presenter.onAction(CashDepositFormUiAction.OnHolderIdChange(" ID-123 "))
             presenter.onAction(CashDepositFormUiAction.OnBankNameChange(" Bisq Bank "))
@@ -259,7 +258,7 @@ class CashDepositFormContentTest {
             presenter.onAction(CashDepositFormUiAction.OnBankAccountTypeSelect(BankAccountType.CHECKING))
             presenter.onAction(CashDepositFormUiAction.OnNationalAccountIdChange(" NAT-123 "))
             presenter.onAction(CashDepositFormUiAction.OnRequirementsChange(" Bring receipt "))
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
             composeTestRule.waitForIdle()
 

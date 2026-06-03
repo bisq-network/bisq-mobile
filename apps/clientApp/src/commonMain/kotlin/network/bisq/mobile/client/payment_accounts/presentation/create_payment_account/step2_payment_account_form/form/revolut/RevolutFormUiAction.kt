@@ -1,6 +1,6 @@
-package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action
+package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut
 
-sealed interface RevolutFormUiAction : AccountFormUiAction {
+sealed interface RevolutFormUiAction {
     data class OnUserNameChange(
         val value: String,
     ) : RevolutFormUiAction

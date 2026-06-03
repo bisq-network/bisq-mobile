@@ -11,8 +11,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AchTransferFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -102,7 +101,7 @@ class AchTransferFormPresenterTest {
     @Test
     fun `when bank account type selected then updates selection and clears error`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             assertNotNull(presenter.uiState.value.bankAccountTypeErrorMessage)
 
             presenter.onAction(AchTransferFormUiAction.OnBankAccountTypeSelect(BankAccountType.CHECKING))
@@ -114,7 +113,7 @@ class AchTransferFormPresenterTest {
     @Test
     fun `when next clicked with invalid fields then no effect and errors are set`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(AchTransferFormUiAction.OnHolderNameChange("a"))
             presenter.onAction(AchTransferFormUiAction.OnHolderAddressChange("a"))
             presenter.onAction(AchTransferFormUiAction.OnBankNameChange("a"))
@@ -122,7 +121,7 @@ class AchTransferFormPresenterTest {
             presenter.onAction(AchTransferFormUiAction.OnAccountNrChange(""))
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             assertFalse(effectDeferred.isCompleted)
@@ -139,7 +138,7 @@ class AchTransferFormPresenterTest {
     @Test
     fun `when next clicked with valid fields then emits ACH transfer account payload`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("ACH Main"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ACH Main"))
             presenter.onAction(AchTransferFormUiAction.OnHolderNameChange(" John Doe "))
             presenter.onAction(AchTransferFormUiAction.OnHolderAddressChange(" 123 Main St "))
             presenter.onAction(AchTransferFormUiAction.OnBankNameChange(" Bisq Bank "))
@@ -148,7 +147,7 @@ class AchTransferFormPresenterTest {
             presenter.onAction(AchTransferFormUiAction.OnBankAccountTypeSelect(BankAccountType.CHECKING))
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             val effect = effectDeferred.await()

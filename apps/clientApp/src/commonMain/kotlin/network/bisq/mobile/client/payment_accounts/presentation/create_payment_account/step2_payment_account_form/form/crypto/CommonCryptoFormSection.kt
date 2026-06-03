@@ -6,8 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CryptoAccountFormUiAction
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqSwitch
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
@@ -17,7 +15,7 @@ import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 @Composable
 fun CommonCryptoFormSection(
     cryptoUiState: CryptoAccountFormUiState,
-    onAction: (AccountFormUiAction) -> Unit,
+    onAction: (CryptoAccountFormUiAction) -> Unit,
     showAddress: Boolean,
     showAutoConf: Boolean,
     modifier: Modifier = Modifier,

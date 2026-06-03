@@ -1,8 +1,8 @@
-package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action
+package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer
 
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 
-sealed interface AchTransferFormUiAction : AccountFormUiAction {
+sealed interface AchTransferFormUiAction {
     data class OnHolderNameChange(
         val value: String,
     ) : AchTransferFormUiAction

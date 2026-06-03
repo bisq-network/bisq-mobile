@@ -24,8 +24,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AchTransferFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -169,7 +168,7 @@ class AchTransferFormContentTest {
             setTestContent(presenter = presenter)
             composeTestRule.waitForIdle()
 
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
             composeTestRule.waitForIdle()
 
@@ -191,14 +190,14 @@ class AchTransferFormContentTest {
             )
             composeTestRule.waitForIdle()
 
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("ACH Main"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ACH Main"))
             presenter.onAction(AchTransferFormUiAction.OnHolderNameChange(" Alice Doe "))
             presenter.onAction(AchTransferFormUiAction.OnHolderAddressChange(" 123 Main St "))
             presenter.onAction(AchTransferFormUiAction.OnBankNameChange(" Bisq Bank "))
             presenter.onAction(AchTransferFormUiAction.OnRoutingNrChange(" 021000021 "))
             presenter.onAction(AchTransferFormUiAction.OnAccountNrChange(" 123456789 "))
             presenter.onAction(AchTransferFormUiAction.OnBankAccountTypeSelect(BankAccountType.CHECKING))
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
             composeTestRule.waitForIdle()
 

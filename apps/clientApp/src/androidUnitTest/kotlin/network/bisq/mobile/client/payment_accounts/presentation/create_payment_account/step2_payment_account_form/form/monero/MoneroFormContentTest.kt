@@ -20,8 +20,8 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.CreateMoneroAccount
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CryptoAccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -198,9 +198,9 @@ class MoneroFormContentTest {
             )
             composeTestRule.waitForIdle()
 
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Account"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("48A_DIRECT_ADDRESS"))
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Account"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("48A_DIRECT_ADDRESS"))
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             composeTestRule.waitForIdle()

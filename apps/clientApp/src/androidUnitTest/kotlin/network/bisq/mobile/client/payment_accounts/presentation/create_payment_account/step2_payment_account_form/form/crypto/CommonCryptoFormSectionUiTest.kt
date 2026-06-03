@@ -10,8 +10,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CryptoAccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -39,7 +38,7 @@ class CommonCryptoFormSectionUiTest {
         cryptoUiState: CryptoAccountFormUiState,
         showAddress: Boolean,
         showAutoConf: Boolean,
-        onAction: (AccountFormUiAction) -> Unit = {},
+        onAction: (CryptoAccountFormUiAction) -> Unit = {},
     ) {
         composeTestRule.setContent {
             CompositionLocalProvider(LocalIsTest provides true) {
@@ -126,7 +125,7 @@ class CommonCryptoFormSectionUiTest {
     @Test
     fun `when address typed then emits address change action`() {
         val typedAddress = "0xABCDEF"
-        var capturedAction: AccountFormUiAction? = null
+        var capturedAction: CryptoAccountFormUiAction? = null
 
         setTestContent(
             cryptoUiState = sampleCryptoUiState(),
@@ -146,7 +145,7 @@ class CommonCryptoFormSectionUiTest {
 
     @Test
     fun `when instant clicked then emits instant toggle action`() {
-        var capturedAction: AccountFormUiAction? = null
+        var capturedAction: CryptoAccountFormUiAction? = null
 
         setTestContent(
             cryptoUiState = sampleCryptoUiState(isInstant = false),
@@ -166,7 +165,7 @@ class CommonCryptoFormSectionUiTest {
 
     @Test
     fun `when auto conf clicked then emits auto conf toggle action`() {
-        var capturedAction: AccountFormUiAction? = null
+        var capturedAction: CryptoAccountFormUiAction? = null
 
         setTestContent(
             cryptoUiState = sampleCryptoUiState(isAutoConf = false),

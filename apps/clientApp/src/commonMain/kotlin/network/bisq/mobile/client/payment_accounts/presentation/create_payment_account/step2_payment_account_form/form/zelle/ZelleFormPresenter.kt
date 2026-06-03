@@ -11,8 +11,6 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormPresenter
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.ZelleFormUiAction
 import network.bisq.mobile.data.replicated.common.validation.EmailValidation
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.data.replicated.common.validation.PhoneNumberValidation
@@ -31,7 +29,7 @@ open class ZelleFormPresenter(
     private val _effect = MutableSharedFlow<ZelleFormEffect>()
     val effect = _effect.asSharedFlow()
 
-    override fun onCustomAction(action: AccountFormUiAction) {
+    fun onAction(action: ZelleFormUiAction) {
         when (action) {
             is ZelleFormUiAction.OnHolderNameChange -> {
                 _uiState.update {
@@ -48,8 +46,6 @@ open class ZelleFormPresenter(
                     )
                 }
             }
-
-            else -> Unit
         }
     }
 

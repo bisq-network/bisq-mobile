@@ -9,8 +9,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CommonCryptoFormSection
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiState
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -42,7 +42,7 @@ fun OtherCryptoFormContent(
     OtherCryptoFormContent(
         uiState = uiState,
         paymentMethod = paymentMethod,
-        onAction = presenter::onAction,
+        onAction = presenter::onCryptoCommonAction,
         modifier = modifier,
     )
 }
@@ -51,7 +51,7 @@ fun OtherCryptoFormContent(
 private fun OtherCryptoFormContent(
     uiState: OtherCryptoFormUiState,
     paymentMethod: CryptoPaymentMethod,
-    onAction: (AccountFormUiAction) -> Unit,
+    onAction: (CryptoAccountFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {

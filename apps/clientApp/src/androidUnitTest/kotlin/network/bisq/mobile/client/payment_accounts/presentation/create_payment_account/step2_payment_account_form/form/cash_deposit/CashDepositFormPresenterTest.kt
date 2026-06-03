@@ -16,8 +16,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CashDepositFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
@@ -76,7 +75,7 @@ class CashDepositFormPresenterTest {
             fillCommonRequiredFields()
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             assertFalse(effectDeferred.isCompleted)
@@ -99,7 +98,7 @@ class CashDepositFormPresenterTest {
             fillCommonRequiredFields()
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             effectDeferred.await()
@@ -171,7 +170,7 @@ class CashDepositFormPresenterTest {
     }
 
     private fun fillCommonRequiredFields() {
-        presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Cash Deposit"))
+        presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Cash Deposit"))
         presenter.onAction(CashDepositFormUiAction.OnCurrencySelect(0))
         presenter.onAction(CashDepositFormUiAction.OnHolderNameChange("Alice Doe"))
         presenter.onAction(CashDepositFormUiAction.OnHolderIdChange("ID-123"))

@@ -13,8 +13,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.RevolutFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
@@ -124,12 +123,12 @@ class RevolutFormPresenterTest {
     @Test
     fun `when next clicked with invalid fields then no effect and errors are set`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(RevolutFormUiAction.OnUserNameChange("a"))
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             assertFalse(effectDeferred.isCompleted)
@@ -142,13 +141,13 @@ class RevolutFormPresenterTest {
     @Test
     fun `when next clicked with only unsupported selected currency codes then no effect and currency error is set`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Revolut Personal"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Revolut Personal"))
             presenter.onAction(RevolutFormUiAction.OnUserNameChange("satoshi"))
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)
             presenter.onAction(RevolutFormUiAction.OnCurrencyToggle("UNSUPPORTED"))
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             assertFalse(effectDeferred.isCompleted)
@@ -159,14 +158,14 @@ class RevolutFormPresenterTest {
     @Test
     fun `when next clicked with valid fields then emits Revolut account payload`() =
         runTest(testDispatcher) {
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Revolut Personal"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Revolut Personal"))
             presenter.onAction(RevolutFormUiAction.OnUserNameChange("  satoshi  "))
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)
             presenter.onAction(RevolutFormUiAction.OnCurrencyToggle("USD"))
             presenter.onAction(RevolutFormUiAction.OnCurrencyToggle("EUR"))
 
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             val effect = effectDeferred.await()

@@ -10,9 +10,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CryptoAccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.MoneroFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -173,7 +172,7 @@ class MoneroFormPresenterTest {
     fun `when next clicked with invalid entries then no navigation effect is emitted`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(
+            presenter.onCommonAction(
                 AccountFormUiAction.OnUniqueAccountNameChange(
                     "a",
                 ),
@@ -206,7 +205,7 @@ class MoneroFormPresenterTest {
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -225,7 +224,7 @@ class MoneroFormPresenterTest {
     fun `when next clicked with valid non subaddress form then emits account with trimmed direct address`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(
+            presenter.onCommonAction(
                 AccountFormUiAction.OnUniqueAccountNameChange(
                     "  Monero Account  ",
                 ),
@@ -235,12 +234,12 @@ class MoneroFormPresenterTest {
                     false,
                 ),
             )
-            presenter.onAction(
+            presenter.onCryptoCommonAction(
                 CryptoAccountFormUiAction.OnIsInstantChange(
                     true,
                 ),
             )
-            presenter.onAction(
+            presenter.onCryptoCommonAction(
                 CryptoAccountFormUiAction.OnAddressChange(
                     "  48A_DIRECT_ADDRESS  ",
                 ),
@@ -248,7 +247,7 @@ class MoneroFormPresenterTest {
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -276,17 +275,17 @@ class MoneroFormPresenterTest {
     fun `when next clicked with auto conf enabled then emits parsed auto conf payload fields`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero AutoConf"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero AutoConf"))
             presenter.onAction(MoneroFormUiAction.OnUseSubAddressesChange(false))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("48A_AUTOCONF_ADDRESS"))
-            presenter.onAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange(" 2 "))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange(" 1 "))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("  https://xmr.explorer  "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("48A_AUTOCONF_ADDRESS"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange(" 2 "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange(" 1 "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("  https://xmr.explorer  "))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -306,7 +305,7 @@ class MoneroFormPresenterTest {
     fun `when next clicked with valid subaddress form then emits account using main address and parsed indexes`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Subaddresses"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Subaddresses"))
             presenter.onAction(MoneroFormUiAction.OnUseSubAddressesChange(true))
             presenter.onAction(MoneroFormUiAction.OnMainAddressChange("  48A_MAIN_ADDRESS_123  "))
             presenter.onAction(MoneroFormUiAction.OnPrivateViewKeyChange("  PRIVATE_VIEW_KEY_123  "))
@@ -315,7 +314,7 @@ class MoneroFormPresenterTest {
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -337,18 +336,18 @@ class MoneroFormPresenterTest {
     fun `when toggling from subaddress mode to direct mode then stale subaddress mode fields are not included in payload`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Toggle"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Toggle"))
             presenter.onAction(MoneroFormUiAction.OnUseSubAddressesChange(true))
             presenter.onAction(MoneroFormUiAction.OnMainAddressChange("  48A_STALE_MAIN_ADDRESS  "))
             presenter.onAction(MoneroFormUiAction.OnPrivateViewKeyChange("  STALE_PRIVATE_VIEW_KEY  "))
             presenter.onAction(MoneroFormUiAction.OnAccountIndexChange(" 17 "))
             presenter.onAction(MoneroFormUiAction.OnInitialSubAddressIndexChange(" 19 "))
             presenter.onAction(MoneroFormUiAction.OnUseSubAddressesChange(false))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("  48A_DIRECT_AFTER_TOGGLE  "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("  48A_DIRECT_AFTER_TOGGLE  "))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then

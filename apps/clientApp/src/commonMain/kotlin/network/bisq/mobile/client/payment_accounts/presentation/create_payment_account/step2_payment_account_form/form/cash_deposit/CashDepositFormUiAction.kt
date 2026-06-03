@@ -1,8 +1,8 @@
-package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action
+package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit
 
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 
-sealed interface CashDepositFormUiAction : AccountFormUiAction {
+sealed interface CashDepositFormUiAction {
     data class OnCountrySelect(
         val index: Int,
     ) : CashDepositFormUiAction

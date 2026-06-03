@@ -16,8 +16,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.coun
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CountryPickerBottomSheet
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CountryPickerItem
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.common.ui.CountrySummaryRow
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.SepaFormUiAction
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqDropdownSearchable
@@ -62,7 +60,7 @@ fun SepaFormContent(
 @Composable
 private fun SepaFormContent(
     uiState: SepaFormUiState,
-    onAction: (AccountFormUiAction) -> Unit,
+    onAction: (SepaFormUiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {

@@ -11,8 +11,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.AccountFormUiAction
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.action.CryptoAccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -68,12 +68,12 @@ class OtherCryptoFormPresenterTest {
     fun `when crypto actions are dispatched then crypto ui state updates`() =
         runTest(testDispatcher) {
             // When
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("0xABCDEF"))
-            presenter.onAction(CryptoAccountFormUiAction.OnIsInstantChange(true))
-            presenter.onAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange("2"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange("1"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("https://explorer.eth"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("0xABCDEF"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsInstantChange(true))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange("2"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange("1"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("https://explorer.eth"))
 
             // Then
             val state = presenter.uiState.value.crypto
@@ -89,12 +89,12 @@ class OtherCryptoFormPresenterTest {
     fun `when next clicked before initialize then no effect is emitted`() =
         runTest(testDispatcher) {
             // Given
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH Account"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("0x123456"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH Account"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("0x123456"))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -107,16 +107,16 @@ class OtherCryptoFormPresenterTest {
         runTest(testDispatcher) {
             // Given
             presenter.initialize(samplePaymentMethod())
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("   "))
-            presenter.onAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange("0"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange("0"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("x"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("   "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange("0"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange("0"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("x"))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -136,17 +136,17 @@ class OtherCryptoFormPresenterTest {
         runTest(testDispatcher) {
             // Given
             presenter.initialize(samplePaymentMethod())
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("  ETH Account  "))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("  0xABC123  "))
-            presenter.onAction(CryptoAccountFormUiAction.OnIsInstantChange(true))
-            presenter.onAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange(" 2 "))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange(" 1 "))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("  https://explorer.eth  "))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("  ETH Account  "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("  0xABC123  "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsInstantChange(true))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsAutoConfChange(true))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange(" 2 "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange(" 1 "))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("  https://explorer.eth  "))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
@@ -170,16 +170,16 @@ class OtherCryptoFormPresenterTest {
         runTest(testDispatcher) {
             // Given
             presenter.initialize(samplePaymentMethod())
-            presenter.onAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH No AutoConf"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAddressChange("0xNOAUTO"))
-            presenter.onAction(CryptoAccountFormUiAction.OnIsAutoConfChange(false))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange("2"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange("1"))
-            presenter.onAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("https://ignored.explorer"))
+            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH No AutoConf"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("0xNOAUTO"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsAutoConfChange(false))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfNumConfirmationsChange("2"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfMaxTradeAmountChange("1"))
+            presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAutoConfExplorerUrlsChange("https://ignored.explorer"))
 
             // When
             val effectDeferred = async { presenter.effect.first() }
-            presenter.onAction(AccountFormUiAction.OnNextClick)
+            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             advanceUntilIdle()
 
             // Then
