@@ -92,7 +92,7 @@ class ClientConnectivityService(
     }
 
     /**
-     * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
+     * Starts monitoring connectivity every given period (ms). Default is 5 seconds ([PERIOD]).
      * @param period of time in ms to check connectivity
      * @param startDelay to delay the first check, default to 5 secs
      */
