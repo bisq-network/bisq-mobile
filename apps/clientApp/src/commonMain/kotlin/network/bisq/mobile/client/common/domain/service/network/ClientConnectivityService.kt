@@ -23,7 +23,7 @@ import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 
-class ClientConnectivityService(
+open class ClientConnectivityService(
     private val webSocketClientService: WebSocketClientService,
     private val platformInfo: PlatformInfo = getPlatformInfo(),
 ) : ConnectivityService(),
@@ -83,11 +83,15 @@ class ClientConnectivityService(
 
     override suspend fun activate() {
         super.activate()
+        consecutiveReconnectingCycles = 0
+        connectionUntrusted = false
         startMonitoring()
     }
 
     override suspend fun deactivate() {
         stopMonitoring()
+        consecutiveReconnectingCycles = 0
+        connectionUntrusted = false
         super.deactivate()
     }
 
@@ -126,11 +130,11 @@ class ClientConnectivityService(
     }
 
     private suspend fun checkConnectivity() {
+        val previousStatus = status.value
         try {
-            val previousStatus = _status.value
             val connected = isConnected()
             log.d { "Health cycle: isConnected=$connected, connectionUntrusted=$connectionUntrusted, previousStatus=$previousStatus" }
-            val newStatus =
+            val rawStatus =
                 when {
                     !connected || connectionUntrusted -> {
                         // When connectionUntrusted is true, we don't trust isConnected()
@@ -204,10 +208,11 @@ class ClientConnectivityService(
                         }
                     }
                 }
-            _status.value = newStatus
+            setConnectivityStatus(rawStatus)
+            val newStatus = status.value
             if (previousStatus != newStatus) {
                 log.d { "Connectivity transition from $previousStatus to $newStatus" }
-                if (previousStatus == ConnectivityStatus.RECONNECTING) {
+                if (!previousStatus.isConnected() && newStatus.isConnected()) {
                     runPendingBlocks()
                 }
             }
@@ -218,14 +223,18 @@ class ClientConnectivityService(
             // We must NOT call forceReconnect() here because that reconnects with the stale
             // sessionId, which the server immediately rejects.
             log.i { "Session expired (401 from health check), attempting session renewal" }
+            setConnectivityStatus(ConnectivityStatus.RECONNECTING)
             connectionUntrusted = true
-            webSocketClientService.attemptSessionRenewal()
-            _status.value = ConnectivityStatus.RECONNECTING
+            try {
+                webSocketClientService.attemptSessionRenewal()
+            } catch (renewalError: Exception) {
+                log.e(renewalError) { "Session renewal failed" }
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             log.e(e) { "Failed checking connectivity" }
-            _status.value = ConnectivityStatus.DISCONNECTED
+            setConnectivityStatus(ConnectivityStatus.DISCONNECTED)
         }
     }
 

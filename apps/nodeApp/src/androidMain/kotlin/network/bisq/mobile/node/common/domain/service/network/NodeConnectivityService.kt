@@ -13,6 +13,7 @@ class NodeConnectivityService(
 
     // Activated after application service is initialized.
     override suspend fun activate() {
+        super.activate()
         collectJob?.cancel()
         collectJob =
             serviceScope.launch {
@@ -29,21 +30,23 @@ class NodeConnectivityService(
                         hasOnceReceivedAllData = true
                     }
 
-                    if (numConnections < 0) {
-                        _status.value = ConnectivityStatus.BOOTSTRAPPING
-                    } else if (numConnections == 0) {
-                        if (hasOnceReceivedAllData) {
-                            _status.value = ConnectivityStatus.RECONNECTING
+                    val rawStatus =
+                        if (numConnections < 0) {
+                            ConnectivityStatus.BOOTSTRAPPING
+                        } else if (numConnections == 0) {
+                            if (hasOnceReceivedAllData) {
+                                ConnectivityStatus.RECONNECTING
+                            } else {
+                                ConnectivityStatus.DISCONNECTED
+                            }
                         } else {
-                            _status.value = ConnectivityStatus.DISCONNECTED
+                            if (allDataReceived) {
+                                ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+                            } else {
+                                ConnectivityStatus.REQUESTING_INVENTORY
+                            }
                         }
-                    } else {
-                        if (allDataReceived) {
-                            _status.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-                        } else {
-                            _status.value = ConnectivityStatus.REQUESTING_INVENTORY
-                        }
-                    }
+                    setConnectivityStatus(rawStatus)
                 }
             }
     }
@@ -51,5 +54,6 @@ class NodeConnectivityService(
     override suspend fun deactivate() {
         collectJob?.cancel()
         collectJob = null
+        super.deactivate()
     }
 }

@@ -367,6 +367,8 @@ class TrustedNodeSetupPresenter(
     private fun settingsLabelForConnectivity(connectivity: ConnectivityService.ConnectivityStatus): TrustedNodeConnectionStatus =
         if (connectivity.isConnected()) {
             TrustedNodeConnectionStatus.Connected
+        } else if (connectivity == ConnectivityService.ConnectivityStatus.RECONNECTING) {
+            TrustedNodeConnectionStatus.Reconnecting
         } else {
             TrustedNodeConnectionStatus.Failed("mobile.trustedNodeSetup.status.notConnected")
         }

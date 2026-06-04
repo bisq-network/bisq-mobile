@@ -175,6 +175,30 @@ class TrustedNodeSetupContentUiTest {
     }
 
     @Test
+    fun `when reconnecting state renders then shows reconnecting status in bottom bar`() {
+        // Given
+        val uiState =
+            TrustedNodeSetupUiState(
+                status = TrustedNodeConnectionStatus.Reconnecting,
+                pairingCodeEntry = DataEntry(validPairingCode),
+            )
+
+        // When
+        setTestContent {
+            TrustedNodeSetupContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+            )
+        }
+
+        // Then
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText(TrustedNodeConnectionStatus.Reconnecting.displayString, useUnmergedTree = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun `when connecting with timeout renders then shows timeout counter in bottom bar`() {
         // Given
         val uiState =

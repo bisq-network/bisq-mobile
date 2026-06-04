@@ -14,8 +14,8 @@ Source of truth is the code. Update this file whenever connectivity behaviour ch
 | `websocket/WebSocketClientService.kt` | WS factory, subscriptions, reconnect/recreate orchestration |
 | `websocket/WebSocketClientImpl.kt` | Connect, listen, request/response, reconnect backoff |
 | `websocket/WebSocketClient.kt` | Connect timeouts: 15s clearnet / 60s `.onion` |
-| `service/network/ClientConnectivityService.kt` | Health polling, UI `ConnectivityStatus` |
-| `data/.../ConnectivityService.kt` | Shared `ConnectivityStatus` enum (status values only) |
+| `service/network/ClientConnectivityService.kt` | Health polling, derives raw status, calls `setConnectivityStatus()` |
+| `data/.../ConnectivityService.kt` | Shared `ConnectivityStatus` enum, `setConnectivityStatus()`, RECONNECTING timeout |
 
 ```text
 Settings + Tor ──► HttpClientService ──► httpClientChangedFlow
@@ -102,12 +102,45 @@ Status derivation (when health check passes):
         avg RTT > 500ms (≥4 samples) ──► REQUESTING_INVENTORY
         else ──► CONNECTED_AND_DATA_RECEIVED
 
-On unhandled errors in checkConnectivity ──► DISCONNECTED
+        ▼
+setConnectivityStatus(rawStatus)   // base class applies RECONNECTING rules (Flow 2b)
+        ▼
+(log transition if status changed)
+
+On unhandled errors in checkConnectivity ──► setConnectivityStatus(DISCONNECTED)
 ```
 
 Health check = `GET /api/v1/settings/version` via WS REST proxy (`sendHealthCheck`, `TIMEOUT` = 5s). Sent with `awaitConnection = false`: if the WS is already disconnected the check returns `false` immediately without waiting for reconnect. 401/403 in the response body throw `UnauthorizedApiAccessException` (Flow 4).
 
-The base `ConnectivityService` does not time out `RECONNECTING`; `ClientConnectivityService` and error handling move status when connectivity is restored or lost.
+Subclasses must publish status via `setConnectivityStatus()` (not `_status` directly). `NodeConnectivityService` does the same when mapping inventory/connection state.
+
+---
+
+## Flow 2b — RECONNECTING status & 3-minute timeout (`ConnectivityService`)
+
+Added in `ConnectivityService`: UI can stay in `RECONNECTING` while the WS stack keeps retrying, but prolonged reconnecting is capped.
+
+```text
+setConnectivityStatus(RECONNECTING)
+        │
+        ├─ isReconnectingTimedOut already true
+        │       └─► keep / set DISCONNECTED (ignore repeated RECONNECTING from monitor)
+        │
+        ├─ already RECONNECTING (no change)
+        │       └─► return (timeout job keeps running)
+        │
+        ▼
+_status = RECONNECTING; start serviceScope job: delay(maxReconnectingDurationMs)
+        │
+        ├─ any non-RECONNECTING setConnectivityStatus before delay ends
+        │       └─► cancel job; clear isReconnectingTimedOut; apply new status
+        │
+        └─ still RECONNECTING after delay (default 3 min, MAX_RECONNECTING_DURATION_MS)
+                └─► isReconnectingTimedOut = true; _status = DISCONNECTED
+                    (WS may still retry; UI shows disconnected / “unable to connect”)
+```
+
+After timeout, health polls may still compute `rawStatus = RECONNECTING`, but `setConnectivityStatus` maps those calls to `DISCONNECTED` until a non-`RECONNECTING` status is set (e.g. health succeeds → `CONNECTED_AND_DATA_RECEIVED`).
 
 ---
 
