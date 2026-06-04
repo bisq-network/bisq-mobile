@@ -32,14 +32,14 @@ abstract class ApplicationLifecycleService(
     }
 
     fun initialize() {
-        log.i { "Initialize core services and Tor" }
-
         // Init analytics SDK FIRST so the unhandled-exception handler that the
         // SDK auto-installs is in place before any service work starts. The
         // service implementation is itself gated (build-time + runtime) so
         // this is a cheap no-op when analytics is off.
+        log.i { "Maybe initialize analytics" }
         bootstrapAnalytics()
 
+        log.i { "Initialize core services and Tor" }
         serviceScope.launch {
             try {
                 activateServiceFacades()
