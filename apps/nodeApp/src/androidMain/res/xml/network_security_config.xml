@@ -3,5 +3,10 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">172.86.75.7</domain>
+        <!-- 10.0.2.2 = Android emulator's loopback to the host machine.
+             Used in Phase 0 analytics dev to reach the GlitchTip instance
+             via SSH tunnel on the host. Phase 2 will route over Tor onion
+             instead, at which point this entry can be removed. -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
     </domain-config>
 </network-security-config>

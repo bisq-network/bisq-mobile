@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
-    <!-- This is insecure but because we want to allow clear connection to local networks and onion domains which are encrypted on tor -->
-    <!-- And this file does not support wild cards -->
-    <base-config cleartextTrafficPermitted="true"
-        tools:ignore="InsecureBaseConfiguration" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">172.86.75.7</domain>
+        <!-- 10.0.2.2 = Android emulator's loopback to the host machine.
+             Used in Phase 0 analytics dev to reach the GlitchTip instance
+             via SSH tunnel on the host. Phase 2 will route over Tor onion
+             instead, at which point this entry can be removed. -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
 </network-security-config>
