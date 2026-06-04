@@ -9,6 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/ClientApp.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '16.0'
+    spec.dependency 'Sentry', '8.58.2'
     if !Dir.exist?('build/cocoapods/framework/ClientApp.framework') || Dir.empty?('build/cocoapods/framework/ClientApp.framework')
         raise "
         Kotlin framework 'ClientApp' doesn't exist yet, so a proper Xcode project can't be generated.

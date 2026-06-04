@@ -1,15 +1,24 @@
 PODS:
-  - clientApp (0.5.1)
+  - clientApp (0.5.1):
+    - Sentry (= 8.58.2)
+  - Sentry (8.58.2):
+    - Sentry/Core (= 8.58.2)
+  - Sentry/Core (8.58.2)
 
 DEPENDENCIES:
   - clientApp (from `../apps/clientApp`)
+
+SPEC REPOS:
+  trunk:
+    - Sentry
 
 EXTERNAL SOURCES:
   clientApp:
     :path: "../apps/clientApp"
 
 SPEC CHECKSUMS:
-  clientApp: 94e9cb6f60a6505ea3507edd4a319cd790a0873f
+  clientApp: 5c9d70589927062bc5e7589be2aceedd2af2ee39
+  Sentry: de29b881e83bd91cf99a927f82f1fd86bfb39db2
 
 PODFILE CHECKSUM: ec5b5b69704747770d600d7bd4f638a5cf9a33c8
 

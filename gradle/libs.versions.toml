@@ -296,3 +296,9 @@ kmp-tor-resource-frameworks = { id = "io.matthewnelson.kmp.tor.resource-framewor
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services-plugin" }
+# Sentry-KMP gradle plugin — auto-installs the Sentry Cocoa pod with the correct
+# cinterop config (`-fmodules`, version pin matching the SDK). Without this
+# plugin, manually adding `pod("Sentry")` in the cocoapods{} block crashes
+# cinterop with `SentryMechanismMeta declared twice`. Version must match
+# `sentry-kotlin-multiplatform` above.
+sentry-kotlin-multiplatform = { id = "io.sentry.kotlin.multiplatform.gradle", version.ref = "sentry-kotlin-multiplatform" }
