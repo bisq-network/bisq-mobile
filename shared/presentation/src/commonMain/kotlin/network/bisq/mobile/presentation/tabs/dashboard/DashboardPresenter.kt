@@ -105,7 +105,6 @@ open class DashboardPresenter(
         launchTotalOffersListenerJob()
         launchNumberProfilesListenerJob()
         launchNumberConnectionsListenerJob()
-        throw RuntimeException("Test crash analytics")
     }
 
     fun onNavigateToMarkets() {

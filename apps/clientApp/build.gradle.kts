@@ -143,6 +143,20 @@ kotlin {
         // `-fmodules` enables Objective-C module imports during cinterop —
         // required, otherwise cinterop crashes with
         //   IllegalArgumentException: 'SentryMechanismMeta' is going to be declared twice
+        //
+        // TODO: revisit iOS Sentry Cocoa pruning. Unlike Android (where
+        // R8 const-folds `if (BuildConfig.ANALYTICS_ENABLED)` and prunes the
+        // SDK from release builds with the flag off), this pod() declaration
+        // statically links Sentry.framework into the iOS binary regardless of
+        // whether any Kotlin code references it. ~few-hundred-KB binary cost
+        // when analyticsEnabled=false. Options when Phase 2 ships:
+        //   1. Gate this declaration on resolveProperty("feature.analyticsEnabled")
+        //      (cleanest, but requires gating the Sentry-KMP dependency too so
+        //      cinterop bindings don't try to compile against missing types)
+        //   2. Move SentryAnalyticsService.kt into a separate source set
+        //      that's only included when the flag is on
+        //   3. Accept as cost-of-iOS — events go over Tor anyway,
+        //      so the binary surface is exercised in production if user opts in.
         pod("Sentry") {
             version = "8.58.2"
             extraOpts += listOf("-compiler-option", "-fmodules")

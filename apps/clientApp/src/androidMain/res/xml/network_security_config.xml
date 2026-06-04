@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">172.86.75.7</domain>
-        <!-- TODO 10.0.2.2 = Android emulator's loopback to the host machine.
-             used for ssh tunneling - will route over Tor onion
-             instead, at which point this entry can be removed / commented. -->
-        <domain includeSubdomains="true">10.0.2.2</domain>
-    </domain-config>
+    <!-- This is insecure but because we want to allow clear connection to local networks and onion domains which are encrypted on tor -->
+    <!-- And this file does not support wild cards -->
+    <!-- DO NOT switch this to a domain-restricted <domain-config> — .onion hosts
+         present as plain HTTP at the OkHttp/OS layer (Tor does encryption below
+         that), so a domain allow-list would block every trusted-node Tor
+         connection (UnknownServiceException: CLEARTEXT communication to *.onion
+         not permitted by network security policy). nodeApp's config can be
+         domain-restricted because its embedded bisq2 routes Tor through its own
+         SOCKS proxy, but clientApp talks to the trusted node via OkHttp directly
+         and this config applies. -->
+    <base-config cleartextTrafficPermitted="true"
+        tools:ignore="InsecureBaseConfiguration" />
 </network-security-config>
