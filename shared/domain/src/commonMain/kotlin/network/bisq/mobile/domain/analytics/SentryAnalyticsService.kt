@@ -16,32 +16,53 @@ import network.bisq.mobile.domain.utils.Logging
  *     and beyond. A blank DSN is also a no-op (rather than dialing nowhere /
  *     a typo destination).
  *  2. **Runtime opt-in gate.** Every emit checks [runtimeOptInProvider]
- *     immediately before calling into the SDK. for now it is harcoded to
- *     `true` (so dev-mode opt-in via `feature.analyticsEnabled` is enough to
- *     verify ingestion end-to-end). TODO: swap in a provider that reads `SettingsRepository.analyticsEnabled`.
+ *     immediately before calling into the SDK. **Defaults to `{ false }` —
+ *     callers MUST pass a provider explicitly to enable emission.** This is
+ *     defence in depth: the DI module's build-time check already gates
+ *     construction, and the secure-by-default lambda here ensures any future
+ *     bypass of that gate (a refactor, a test fixture, a new platform binding)
+ *     can't silently start emitting events. Initial work wires the DI modules to
+ *     pass `{ BuildConfig.ANALYTICS_ENABLED }` — same source as the build-time
+ *     gate, doubly-locked. TODO swap that for
+ *     `{ settingsRepository.analyticsEnabled.value }` once the Settings UI
+ *     toggle ships.
  *
  * @param sentryClient Indirection over Sentry-KMP for test substitution. See
  *  [DefaultSentryClient] for the production wiring.
  * @param redactor Defence-in-depth scrubber applied via `beforeSend` in the
  *  SDK init. Tested separately at [AnalyticsRedactorTest].
  * @param runtimeOptInProvider Cheap function returning the user's current
- *  consent state. Called on every emit — must NOT block.
+ *  consent state. Called on every emit — must NOT block. Defaults to
+ *  `{ false }` (no emission) — see "Runtime opt-in gate" above.
  */
 class SentryAnalyticsService internal constructor(
     private val sentryClient: SentryClient = DefaultSentryClient,
     private val redactor: AnalyticsRedactor = AnalyticsRedactor(),
-    private val runtimeOptInProvider: () -> Boolean = { true },
+    private val runtimeOptInProvider: () -> Boolean = { false },
 ) : AnalyticsService,
     Logging {
     /**
-     * Public constructor for production use. Tests use the internal
-     * constructor to inject a fake [SentryClient] / fixed opt-in provider.
+     * Public no-arg constructor. **Will not emit** — `runtimeOptInProvider`
+     * defaults to `{ false }`. Kept as a safe-default fallback; DI modules
+     * should prefer the [runtimeOptInProvider] overload below.
      *
-     * `runtimeOptInProvider` defaults to permissive — Phase 0 verifies
-     * ingestion end-to-end with build-time opt-in alone. Phase 1 will pass
-     * a real provider reading `SettingsRepository.analyticsEnabled`.
+     * Tests use the [internal] primary constructor to inject a fake
+     * [SentryClient] alongside a fixed opt-in provider.
      */
     constructor() : this(sentryClient = DefaultSentryClient)
+
+    /**
+     * Public constructor for DI modules. Takes the runtime opt-in source
+     * explicitly so the caller's intent (and what gates emission) is visible
+     * at the binding site. Initial work wires this to
+     * `{ BuildConfig.ANALYTICS_ENABLED }`; TODO swap to
+     * `{ settingsRepository.analyticsEnabled.value }`.
+     */
+    constructor(runtimeOptInProvider: () -> Boolean) : this(
+        sentryClient = DefaultSentryClient,
+        redactor = AnalyticsRedactor(),
+        runtimeOptInProvider = runtimeOptInProvider,
+    )
 
     private val initialized = atomic(false)
 

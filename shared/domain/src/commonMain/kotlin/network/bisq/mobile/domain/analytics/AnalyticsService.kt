@@ -10,7 +10,7 @@ package network.bisq.mobile.domain.analytics
  *     Production builds ship with this OFF. A contributor's fresh clone sends
  *     nothing.
  *  2. **Runtime gate** — the user's explicit opt-in (Phase 1 will wire this to
- *     `SettingsRepository.analyticsEnabled`; Phase 0 hardcodes `true` purely
+ *     `SettingsRepository.analyticsEnabled`;Initial work hardcodes `true` purely
  *     to verify ingestion end-to-end during dev). Default at the user level
  *     is OFF.
  *
@@ -24,8 +24,8 @@ package network.bisq.mobile.domain.analytics
  *  - [captureException] is for crash reports; the redactor scrubs message and
  *    stack frames before send.
  *
- * Transport in Phase 0 is plain HTTP to localhost:8000 via an SSH tunnel
- * (developer machines only). Tor routing for shipped builds is Phase 2.
+ * Transport in first tests is plain HTTP to localhost:8000 via an SSH tunnel
+ * (developer machines only). TODO Tor routing for complete feature impl .
  */
 interface AnalyticsService {
     /**

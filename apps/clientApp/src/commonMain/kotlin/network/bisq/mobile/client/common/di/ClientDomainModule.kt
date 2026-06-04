@@ -202,13 +202,20 @@ val clientDomainModule =
             )
         }
 
-        // Opt-in analytics (issue #525). Build-time gate selects the
-        // implementation; runtime opt-in still gates actual emission inside
-        // SentryAnalyticsService. With ANALYTICS_ENABLED=false, the SDK is on
-        // the classpath but unreferenced — R8 prunes it from release builds.
+        // Opt-in analytics (issue #525). Two locks gate emission:
+        //  1. Build-time: ANALYTICS_ENABLED=false → NoOpAnalyticsService is
+        //     bound and R8 prunes Sentry-KMP from release artifacts entirely.
+        //  2. Runtime: `runtimeOptInProvider` below is checked on every emit.
+        //     For first tests we tie it to the same BuildConfig flag — double-lock,
+        //     no information leakage if (1) ever gets bypassed by a refactor.
+        //     TODO swap `{ BuildConfig.ANALYTICS_ENABLED }` for
+        //     `{ get<SettingsRepository>().analyticsEnabled.value }` once the
+        //     Settings UI toggle ships.
         single<AnalyticsService> {
             if (BuildConfig.ANALYTICS_ENABLED) {
-                SentryAnalyticsService()
+                SentryAnalyticsService(
+                    runtimeOptInProvider = { BuildConfig.ANALYTICS_ENABLED },
+                )
             } else {
                 NoOpAnalyticsService
             }
@@ -217,7 +224,7 @@ val clientDomainModule =
         // separate GlitchTip project for Android (id=3) and iOS (id=4); the
         // right DSN is selected at runtime from the platform. `IS_DEBUG`
         // splits debug-mode opt-in events (tagged "development") from any
-        // future production rollout ("production"). For Phase 0 only debug
+        // future production rollout ("production"). For intial work only debug
         // builds with `feature.analyticsEnabled=true` in local.properties
         // emit anything.
         single<AnalyticsBootstrapConfig> {

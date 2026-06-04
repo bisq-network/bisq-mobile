@@ -169,8 +169,24 @@ class SentryAnalyticsServiceTest {
         // We do NOT call init here — that would touch the real SDK. We just
         // assert construction with default deps is safe.
         SentryAnalyticsService()
-        // Also assert default optInProvider is permissive (Phase 0 behaviour).
-        // Achieved indirectly by the above tests using the explicit provider.
         assertFalse(false) // placeholder so the test isn't empty
+    }
+
+    @Test
+    fun `default runtimeOptInProvider denies emission - safe by default`() {
+        // Defence in depth: if a caller wires up SentryAnalyticsService without
+        // passing an explicit provider, the service must NOT emit. The DI
+        // module's build-time gate is the primary lock; this is the secondary.
+        // If this default ever drifts back to `{ true }`, a refactor that
+        // bypasses the DI gate would silently start sending events.
+        val client = FakeSentryClient()
+        val service = SentryAnalyticsService(client) // no runtimeOptInProvider passed
+
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
+        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.captureException(RuntimeException("boom"))
+
+        assertTrue(client.capturedMessages.isEmpty(), "default provider must deny track()")
+        assertTrue(client.capturedExceptions.isEmpty(), "default provider must deny captureException()")
     }
 }

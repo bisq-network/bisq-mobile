@@ -113,13 +113,14 @@ val androidNodeDomainModule =
         single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
 
         // Opt-in analytics (issue #525). Same shape as clientApp's binding —
-        // build-time gate selects NoOp vs Sentry; runtime opt-in gates emission
-        // inside SentryAnalyticsService. Node app sends to the
-        // bisq-easy-node-android GlitchTip project (DSN from gradle.properties
-        // / local.properties).
+        // see ClientDomainModule for the full double-lock rationale.
+        // Node app sends to the bisq-easy-node-android GlitchTip project (DSN
+        // from gradle.properties / local.properties).
         single<AnalyticsService> {
             if (BuildNodeConfig.ANALYTICS_ENABLED) {
-                SentryAnalyticsService()
+                SentryAnalyticsService(
+                    runtimeOptInProvider = { BuildNodeConfig.ANALYTICS_ENABLED },
+                )
             } else {
                 NoOpAnalyticsService
             }

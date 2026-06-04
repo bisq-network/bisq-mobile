@@ -31,8 +31,9 @@ sealed class AnalyticsEvent(
      * individual presenter overrides `analyticsScreenEvent()`.
      *
      * Default in [BasePresenter] is `null` — auto-tracking everything would
-     * make the audit surface unbounded; we opt-in per screen. Phase 0
+     * make the audit surface unbounded; we opt-in per screen. First test of sentry-lib
      * registers exactly one ([Dashboard]) to verify ingestion end-to-end.
+     * TODO: add the rest of the screen views events
      */
     sealed class ScreenViewed(
         name: String,

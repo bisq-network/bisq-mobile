@@ -34,8 +34,35 @@ val devLocalProperties: Properties =
         }
     }
 
-fun resolveProperty(key: String): String? =
-    devLocalProperties.getProperty(key) ?: project.findProperty(key)?.toString()
+fun resolveProperty(key: String): String? = devLocalProperties.getProperty(key) ?: project.findProperty(key)?.toString()
+
+/**
+ * Resolves whether the current build is a Debug build, used by `BuildConfig.IS_DEBUG`
+ * and `BuildNodeConfig.IS_DEBUG`.
+ *
+ * Three detection sources (manual override wins; else any of the auto-detects):
+ *  1. **`bisq.isDebug` gradle property** — explicit manual override
+ *  2. **Gradle task names containing "debug"** — matches Android Studio invocations
+ *     like `:apps:clientApp:assembleDebug`, `installDebug`, etc.
+ *  3. **Xcode env vars `CONFIGURATION` / `KOTLIN_FRAMEWORK_BUILD_TYPE`** — required
+ *     for iOS builds: Xcode invokes gradle as `embedAndSignAppleFrameworkForXcode`
+ *     (always that task name regardless of config), and passes the actual
+ *     configuration via env vars set in the build phase. Without this, iOS Debug
+ *     builds were incorrectly reporting `IS_DEBUG=false` → `environment=production`
+ *     to GlitchTip (analytics phase 0 issue surfaced 2026-06-04).
+ *
+ * The KMP CocoaPods plugin sets `KOTLIN_FRAMEWORK_BUILD_TYPE` to "DEBUG"/"RELEASE"
+ * (uppercase); Xcode itself sets `CONFIGURATION` to "Debug"/"Release". Both are
+ * checked for resilience against future plugin / Xcode-version changes.
+ */
+val isDebugBuild: Boolean =
+    project.findProperty("bisq.isDebug")?.toString()?.toBoolean()
+        ?: (
+            project.gradle.startParameter.taskNames
+                .any { it.contains("debug", ignoreCase = true) } ||
+                System.getenv("CONFIGURATION").equals("Debug", ignoreCase = true) ||
+                System.getenv("KOTLIN_FRAMEWORK_BUILD_TYPE").equals("DEBUG", ignoreCase = true)
+        )
 
 val bisqCoreVersion: String by extra {
     findTomlVersion("bisq-core")
@@ -105,14 +132,7 @@ buildConfig {
             "ANALYTICS_DSN_IOS",
             resolveProperty("analytics.dsn.connect.ios").orEmpty(),
         )
-        buildConfigField(
-            "IS_DEBUG",
-            (
-                project.findProperty("bisq.isDebug")?.toString()?.toBoolean()
-                    ?: project.gradle.startParameter.taskNames
-                        .any { it.contains("debug", ignoreCase = true) }
-            ),
-        )
+        buildConfigField("IS_DEBUG", isDebugBuild)
     }
     forClass("network.bisq.mobile.android.node", className = "BuildNodeConfig") {
         buildConfigField("APP_NAME", project.findProperty("node.name").toString())
@@ -140,14 +160,7 @@ buildConfig {
             "ANALYTICS_DSN",
             resolveProperty("analytics.dsn.node.android").orEmpty(),
         )
-        buildConfigField(
-            "IS_DEBUG",
-            (
-                project.findProperty("bisq.isDebug")?.toString()?.toBoolean()
-                    ?: project.gradle.startParameter.taskNames
-                        .any { it.contains("debug", ignoreCase = true) }
-            ),
-        )
+        buildConfigField("IS_DEBUG", isDebugBuild)
     }
 //    buildConfigField("APP_SECRET", "Z3JhZGxlLWphdmEtYnVpbGRjb25maWctcGx1Z2lu")
 //    buildConfigField<String>("OPTIONAL", null)
