@@ -14,14 +14,25 @@ package network.bisq.mobile.domain.analytics
  * call site and keeps the contract identical between gated and ungated builds.
  */
 object NoOpAnalyticsService : AnalyticsService {
+    // Each body has an explicit `Unit` statement so kover sees at least one
+    // tracked instruction per method. With `= Unit` shorthand OR comment-only
+    // bodies the Kotlin compiler can lower the body to zero instructions,
+    // which kover reports as "0 lines covered" even when tests do call the
+    // method — making the diff coverage gate red for no real testing reason.
     override fun init(
         dsn: String,
         environment: String,
         release: String,
         isDebug: Boolean,
-    ) = Unit
+    ) {
+        Unit // build-time gate selected NoOp, so there's nothing to dial
+    }
 
-    override fun track(event: AnalyticsEvent) = Unit
+    override fun track(event: AnalyticsEvent) {
+        Unit // build-time gate selected NoOp, so there's nothing to track
+    }
 
-    override fun captureException(throwable: Throwable) = Unit
+    override fun captureException(throwable: Throwable) {
+        Unit // build-time gate selected NoOp, so there's nothing to capture
+    }
 }
