@@ -163,6 +163,18 @@ class ClientConnectivityServiceTest {
         }
 
     @Test
+    fun `monitoringStartDelay is 5s for non-Tor connections`() {
+        every { webSocketClientService.isTorProxy } returns false
+        assertEquals(ClientConnectivityService.START_DELAY, clientConnectivityService.monitoringStartDelay())
+    }
+
+    @Test
+    fun `monitoringStartDelay is 20s for Tor connections`() {
+        every { webSocketClientService.isTorProxy } returns true
+        assertEquals(ClientConnectivityService.START_DELAY_TOR, clientConnectivityService.monitoringStartDelay())
+    }
+
+    @Test
     fun `startMonitoring calls checkConnectivity periodically`() =
         runBlocking {
             var healthCheckCount = 0

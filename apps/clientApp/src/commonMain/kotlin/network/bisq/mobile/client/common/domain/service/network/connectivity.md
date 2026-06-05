@@ -79,7 +79,7 @@ External callers (`ClientApplicationBootstrapFacade`, `TrustedNodeSetupUseCase`)
 
 ## Flow 2 — Health monitor (every 5s)
 
-`ClientConnectivityService.startMonitoring()` — default 5s period, 5s delay before first check.
+`ClientConnectivityService.startMonitoring()` — default 5s period, 5s delay before first check (20s on Tor).
 
 ```text
 checkConnectivity() loop

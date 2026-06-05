@@ -31,7 +31,13 @@ open class ClientConnectivityService(
     companion object {
         const val TIMEOUT = 5000L
         const val PERIOD = 5000L // default check every 5 sec
+        const val START_DELAY = 5_000L
+        const val START_DELAY_TOR = 20_000L
         const val ROUND_TRIP_SLOW_THRESHOLD = 500L
+
+        // Tor .onion round trips are typically 1–3 s, so a 500 ms threshold would
+        // permanently keep status at REQUESTING_INVENTORY on Tor connections.
+        const val ROUND_TRIP_SLOW_THRESHOLD_TOR = 3000L
         internal const val IOS_FORCE_RECREATE_CYCLES = 12 // ~60s at default 5s period
 
         private const val DEFAULT_AVERAGE_TRIP_TIME = -1L // invalid
@@ -95,19 +101,23 @@ open class ClientConnectivityService(
         super.deactivate()
     }
 
+    internal fun monitoringStartDelay(): Long =
+        if (webSocketClientService.isTorProxy) START_DELAY_TOR else START_DELAY
+
     /**
      * Starts monitoring connectivity every given period (ms). Default is 5 seconds ([PERIOD]).
      * @param period of time in ms to check connectivity
-     * @param startDelay to delay the first check, default to 5 secs
+     * @param startDelay to delay the first check; defaults to [START_DELAY] or [START_DELAY_TOR] for Tor
      */
     fun startMonitoring(
         period: Long = PERIOD,
-        startDelay: Long = 5_000,
+        startDelay: Long? = null,
     ) {
+        val effectiveStartDelay = startDelay ?: monitoringStartDelay()
         job?.cancel()
         job =
             serviceScope.launch(Dispatchers.Default) {
-                delay(startDelay)
+                delay(effectiveStartDelay)
                 while (true) {
                     checkConnectivity()
                     delay(period)
@@ -123,8 +133,9 @@ open class ClientConnectivityService(
     @Throws(IllegalStateException::class)
     protected suspend fun isSlow(): Boolean {
         if (sessionTotalRequests > MIN_REQUESTS_TO_ASSESS_SPEED) {
-//            log.d { "Current average trip time is ${averageTripTime}ms" }
-            return averageTripTime > ROUND_TRIP_SLOW_THRESHOLD
+            val threshold =
+                if (webSocketClientService.isTorProxy) ROUND_TRIP_SLOW_THRESHOLD_TOR else ROUND_TRIP_SLOW_THRESHOLD
+            return averageTripTime > threshold
         }
         return false // assume is not slow on non mature connections
     }
