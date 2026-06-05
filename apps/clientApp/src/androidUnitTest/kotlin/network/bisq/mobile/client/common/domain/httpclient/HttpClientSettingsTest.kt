@@ -19,6 +19,7 @@ class HttpClientSettingsTest {
 
         assertNull(settings.clientId)
         assertNull(settings.sessionId)
+        assertNull(settings.sessionExpiresAt)
         assertEquals(BisqProxyOption.NONE, settings.selectedProxyOption)
         assertNull(settings.externalProxyUrl)
         assertFalse(settings.isTorProxy)
@@ -54,6 +55,7 @@ class HttpClientSettingsTest {
                 tlsFingerprint = "fingerprint",
                 clientId = "client",
                 sessionId = "session",
+                sessionExpiresAt = 1_700_000_000_000L,
                 selectedProxyOption = BisqProxyOption.NONE,
             )
 
@@ -63,6 +65,7 @@ class HttpClientSettingsTest {
         assertEquals("fingerprint", httpSettings.tlsFingerprint)
         assertEquals("client", httpSettings.clientId)
         assertEquals("session", httpSettings.sessionId)
+        assertEquals(1_700_000_000_000L, httpSettings.sessionExpiresAt)
         assertEquals(BisqProxyOption.NONE, httpSettings.selectedProxyOption)
         assertNull(httpSettings.externalProxyUrl)
         assertFalse(httpSettings.isTorProxy)

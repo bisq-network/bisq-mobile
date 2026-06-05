@@ -85,6 +85,7 @@ class ApiAccessService(
                     // Old sessions may have expired or the server may have restarted.
                     clientId = null,
                     sessionId = null,
+                    sessionExpiresAt = null,
                     clientSecret = null,
                 )
             }
@@ -113,6 +114,7 @@ class ApiAccessService(
                     clientName = generateClientName(),
                     clientId = DEMO_CLIENT_ID,
                     sessionId = DEMO_SESSION_ID,
+                    sessionExpiresAt = Long.MAX_VALUE,
                     clientSecret = DEMO_CLIENT_SECRET,
                     selectedProxyOption = BisqProxyOption.NONE,
                 )
@@ -156,6 +158,7 @@ class ApiAccessService(
             it.copy(
                 clientId = pairingResponse.clientId,
                 sessionId = pairingResponse.sessionId,
+                sessionExpiresAt = pairingResponse.sessionExpiryDate,
                 clientSecret = pairingResponse.clientSecret,
                 bisqApiUrl = pairingQrCode.restApiUrl,
                 tlsFingerprint = pairingQrCode.tlsFingerprint,

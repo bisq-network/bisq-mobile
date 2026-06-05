@@ -16,6 +16,7 @@ class SensitiveSettingsTest {
         assertNull(settings.clientSecret)
         assertNull(settings.clientId)
         assertNull(settings.sessionId)
+        assertNull(settings.sessionExpiresAt)
         assertEquals(BisqProxyOption.NONE, settings.selectedProxyOption)
         assertEquals("", settings.externalProxyUrl)
     }

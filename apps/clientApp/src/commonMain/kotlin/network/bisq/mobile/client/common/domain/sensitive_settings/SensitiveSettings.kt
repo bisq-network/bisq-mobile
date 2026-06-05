@@ -12,6 +12,7 @@ data class SensitiveSettings(
     val clientSecret: String? = null, // Server provided at pairing
     val clientId: String? = null, // Server provided at pairing
     val sessionId: String? = null, // Server provided at pairing or at session request
+    val sessionExpiresAt: Long? = null, // Epoch millis from pairing or session POST; used for skip-recreate TTL check
     val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
     val externalProxyUrl: String = EMPTY_STRING,
 )

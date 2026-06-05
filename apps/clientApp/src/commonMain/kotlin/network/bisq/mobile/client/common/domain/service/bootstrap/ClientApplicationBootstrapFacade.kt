@@ -92,6 +92,7 @@ class ClientApplicationBootstrapFacade(
                         val updatedSettings =
                             currentSettings.copy(
                                 sessionId = response.sessionId,
+                                sessionExpiresAt = response.expiresAt,
                             )
 
                         sensitiveSettingsRepository.update { updatedSettings }
