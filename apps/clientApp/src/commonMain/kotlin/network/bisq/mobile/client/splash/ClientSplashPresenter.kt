@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
+import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.ConnectivityService

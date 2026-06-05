@@ -13,10 +13,10 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
+import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO

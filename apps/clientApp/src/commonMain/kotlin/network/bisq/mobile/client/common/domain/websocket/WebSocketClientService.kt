@@ -335,7 +335,7 @@ class WebSocketClientService(
                 !SessionValidity.hasMinRemainingValidity(httpClientSettings.sessionExpiresAt)
             ) {
                 log.d {
-                    "Skipping WebSocket client creation — session expires within 15m or expiry unknown; " +
+                    "Skipping WebSocket client creation — session expired, expiring within 15m, or expiry unknown; " +
                         "waiting for session POST"
                 }
                 stateCollectionJob?.cancel()

@@ -18,9 +18,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
-import network.bisq.mobile.client.common.domain.access.session.SessionValidity
-import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.client.common.domain.access.session.SessionService
+import network.bisq.mobile.client.common.domain.access.session.SessionValidity
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
@@ -29,6 +28,7 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
+import network.bisq.mobile.domain.utils.DateUtils
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

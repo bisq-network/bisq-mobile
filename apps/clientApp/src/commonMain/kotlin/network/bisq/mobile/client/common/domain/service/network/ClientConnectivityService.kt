@@ -101,23 +101,36 @@ open class ClientConnectivityService(
         super.deactivate()
     }
 
-    internal fun monitoringStartDelay(): Long =
-        if (webSocketClientService.isTorProxy) START_DELAY_TOR else START_DELAY
+    internal fun monitoringStartDelay(): Long = if (webSocketClientService.isTorProxy) START_DELAY_TOR else START_DELAY
 
     /**
      * Starts monitoring connectivity every given period (ms). Default is 5 seconds ([PERIOD]).
      * @param period of time in ms to check connectivity
-     * @param startDelay to delay the first check; defaults to [START_DELAY] or [START_DELAY_TOR] for Tor
+     * @param startDelay explicit delay before the first check; when null (default) a two-phase
+     *   delay is used: always wait [START_DELAY] first (by which time proxy settings are
+     *   guaranteed to be loaded), then read [isTorProxy] and add the remaining Tor delay if
+     *   needed.  This avoids a startup race where [monitoringStartDelay] reads `isTorProxy`
+     *   before [WebSocketClientService.currentClientSettings] has been applied.
      */
     fun startMonitoring(
         period: Long = PERIOD,
         startDelay: Long? = null,
     ) {
-        val effectiveStartDelay = startDelay ?: monitoringStartDelay()
         job?.cancel()
         job =
             serviceScope.launch(Dispatchers.Default) {
-                delay(effectiveStartDelay)
+                if (startDelay != null) {
+                    delay(startDelay)
+                } else {
+                    // Phase 1: base delay — always wait at least the non-Tor start delay.
+                    // By the time this elapses, WebSocketClientService.currentClientSettings
+                    // is guaranteed to have been applied, so isTorProxy is reliable.
+                    delay(START_DELAY)
+                    // Phase 2: if the connection uses Tor, wait the additional time.
+                    if (webSocketClientService.isTorProxy) {
+                        delay(START_DELAY_TOR - START_DELAY)
+                    }
+                }
                 while (true) {
                     checkConnectivity()
                     delay(period)
