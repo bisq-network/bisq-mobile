@@ -19,7 +19,7 @@ class TestApplicationLifecycleService(
     kmpTorService: KmpTorService = mockk(relaxed = true),
     analyticsService: AnalyticsService = NoOpAnalyticsService,
     analyticsBootstrapConfig: AnalyticsBootstrapConfig =
-        AnalyticsBootstrapConfig(dsn = "", environment = "test", release = "test"),
+        AnalyticsBootstrapConfig(dsn = "", environment = "test", release = "test", isDebug = false),
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,

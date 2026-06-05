@@ -11,6 +11,7 @@ class NoOpAnalyticsServiceTest {
             dsn = "http://abc@localhost:8000/3",
             environment = "development",
             release = "0.4.1",
+            isDebug = true,
         )
     }
 
@@ -18,7 +19,7 @@ class NoOpAnalyticsServiceTest {
     fun `init accepts blank DSN without throwing - still a no-op`() {
         // Blank DSN is meaningless in the SDK-backed impl, but NoOp ignores
         // everything by design — including bad input.
-        service.init(dsn = "", environment = "", release = "")
+        service.init(dsn = "", environment = "", release = "", isDebug = false)
     }
 
     @Test

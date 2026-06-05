@@ -25,12 +25,16 @@ internal interface SentryClient {
      *
      * Implementations MUST be safe to call only once per process — Sentry-KMP
      * keeps internal init state and re-init is undefined.
+     *
+     * [isDebug] gates the SDK's own verbose internal logging — see the
+     * matching field on [AnalyticsBootstrapConfig] for the rationale.
      */
     fun init(
         dsn: String,
         environment: String,
         release: String,
         redactor: AnalyticsRedactor,
+        isDebug: Boolean,
     )
 
     /**
@@ -58,21 +62,23 @@ internal object DefaultSentryClient : SentryClient {
         environment: String,
         release: String,
         redactor: AnalyticsRedactor,
+        isDebug: Boolean,
     ) {
         Sentry.init { options ->
             options.dsn = dsn
             options.environment = environment
             options.release = release
-            // Verification aid: surface the SDK's internal log lines
-            // (envelope POSTs, transport failures, etc.) so we can see WHY an
-            // event isn't arriving when GlitchTip's UI is empty despite a
-            // successful `track()` call. SentryLevel.INFO is the loudest level
-            // worth running — DEBUG floods logcat with every breadcrumb.
-            // TODO: gate on BuildConfig.IS_DEBUG
-            // pipeline is reliable; keeping always-on for now while we are
-            // still tracking down ingestion bugs.
-            options.debug = true
-            options.diagnosticLevel = SentryLevel.INFO
+            // Verification aid in debug builds only: surface the SDK's internal
+            // log lines (envelope POSTs, transport failures, etc.) so we can
+            // see WHY an event isn't arriving when GlitchTip's UI is empty
+            // despite a successful `track()` call. SentryLevel.INFO is the
+            // loudest level worth running — DEBUG floods logcat with every
+            // breadcrumb. In release builds we drop to ERROR-only so opted-in
+            // users don't see Sentry chatter in their logs. Sourced from the
+            // app's BuildConfig.IS_DEBUG via [AnalyticsBootstrapConfig] — see
+            // [SentryClient.init] kdoc.
+            options.debug = isDebug
+            options.diagnosticLevel = if (isDebug) SentryLevel.INFO else SentryLevel.ERROR
             // The two layers that make this analytics integration shippable per
             // the privacy agreement on issue #525:
             options.sendDefaultPii = false

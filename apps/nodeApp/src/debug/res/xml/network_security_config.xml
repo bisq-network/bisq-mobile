@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug build variant ONLY — never shipped in release APKs. Android resource
+  merging overlays this file on top of src/androidMain/res/xml/network_security_config.xml
+  for debug builds so developers get the cleartext exceptions they need for
+  local tunneling. Release builds inherit the (safe, no-exception) version
+  from androidMain.
+
+  Keep this file scoped to genuinely dev-only cleartext destinations. If you
+  need to allow cleartext to a domain that ships to users, that's not a
+  network_security_config concern — re-think the connection (TLS, Tor, etc.).
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!--
+          Android emulator's loopback to the host machine. Used for SSH tunnel
+          debugging during analytics dev (e.g. talking to a GlitchTip instance
+          running on the developer's Mac). The runtime follow-up will route
+          analytics events over Tor onion instead, at which point this entry
+          can be removed.
+        -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

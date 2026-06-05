@@ -17,6 +17,7 @@ class SentryAnalyticsServiceTest {
         var lastDsn: String? = null
         var lastEnv: String? = null
         var lastRelease: String? = null
+        var lastIsDebug: Boolean? = null
         val capturedMessages = mutableListOf<String>()
         val capturedExceptions = mutableListOf<Throwable>()
 
@@ -25,11 +26,13 @@ class SentryAnalyticsServiceTest {
             environment: String,
             release: String,
             redactor: AnalyticsRedactor,
+            isDebug: Boolean,
         ) {
             initCalls++
             lastDsn = dsn
             lastEnv = environment
             lastRelease = release
+            lastIsDebug = isDebug
         }
 
         override fun captureMessage(message: String) {
@@ -58,7 +61,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `init dials the SDK with the configured DSN - environment and release`() {
         val (service, client) = newService()
-        service.init(dsn = "http://abc@localhost:8000/3", environment = "development", release = "0.4.1")
+        service.init(dsn = "http://abc@localhost:8000/3", environment = "development", release = "0.4.1", isDebug = true)
         assertEquals(1, client.initCalls)
         assertEquals("http://abc@localhost:8000/3", client.lastDsn)
         assertEquals("development", client.lastEnv)
@@ -66,10 +69,25 @@ class SentryAnalyticsServiceTest {
     }
 
     @Test
+    fun `init forwards isDebug to the SDK client - controls verbose SDK logging`() {
+        // Pins the contract that prevents the SDK from spamming logcat with
+        // envelope POSTs / transport diagnostics in shipped builds. If a
+        // refactor ever drops the isDebug threading, this test fails before
+        // the noise reaches a user's logs.
+        val (debugService, debugClient) = newService()
+        debugService.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+        assertEquals(true, debugClient.lastIsDebug, "isDebug=true must reach the SDK in debug builds")
+
+        val (releaseService, releaseClient) = newService()
+        releaseService.init("http://abc@localhost:8000/3", "production", "0.5.0", isDebug = false)
+        assertEquals(false, releaseClient.lastIsDebug, "isDebug=false must reach the SDK in release builds")
+    }
+
+    @Test
     fun `init is idempotent - second call is a silent no-op`() {
         val (service, client) = newService()
-        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
-        service.init("http://different@elsewhere/4", "production", "0.5.0")
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+        service.init("http://different@elsewhere/4", "production", "0.5.0", isDebug = false)
         assertEquals(1, client.initCalls)
         // First-call config is preserved; second call's args are dropped.
         assertEquals("http://abc@localhost:8000/3", client.lastDsn)
@@ -78,7 +96,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `init with blank DSN refuses to dial`() {
         val (service, client) = newService()
-        service.init(dsn = "", environment = "development", release = "0.4.1")
+        service.init(dsn = "", environment = "development", release = "0.4.1", isDebug = true)
         assertEquals(0, client.initCalls)
         assertNull(client.lastDsn)
     }
@@ -86,7 +104,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `init with whitespace-only DSN refuses to dial`() {
         val (service, client) = newService()
-        service.init(dsn = "   ", environment = "development", release = "0.4.1")
+        service.init(dsn = "   ", environment = "development", release = "0.4.1", isDebug = true)
         assertEquals(0, client.initCalls)
     }
 
@@ -102,7 +120,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `track emits when initialized AND user is opted in`() {
         val (service, client) = newService(optedIn = true)
-        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
         service.track(AnalyticsEvent.ScreenViewed.Dashboard)
         assertEquals(listOf("screen.dashboard_opened"), client.capturedMessages)
     }
@@ -110,7 +128,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `track is a no-op when runtime opt-in is false even after init`() {
         val (service, client) = newService(optedIn = false)
-        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
         service.track(AnalyticsEvent.ScreenViewed.Dashboard)
         assertTrue(client.capturedMessages.isEmpty())
     }
@@ -122,7 +140,7 @@ class SentryAnalyticsServiceTest {
         var consented = false
         val client = FakeSentryClient()
         val service = SentryAnalyticsService(client, runtimeOptInProvider = { consented })
-        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
 
         service.track(AnalyticsEvent.ScreenViewed.Dashboard)
         assertTrue(client.capturedMessages.isEmpty())
@@ -148,7 +166,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `captureException ships throwable when initialized AND opted in`() {
         val (service, client) = newService(optedIn = true)
-        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
         val boom = RuntimeException("boom")
         service.captureException(boom)
         assertEquals(listOf<Throwable>(boom), client.capturedExceptions)
@@ -157,7 +175,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `captureException is a no-op when opted out`() {
         val (service, client) = newService(optedIn = false)
-        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
         service.captureException(RuntimeException("boom"))
         assertTrue(client.capturedExceptions.isEmpty())
     }
@@ -169,7 +187,7 @@ class SentryAnalyticsServiceTest {
         // We do NOT call init here — that would touch the real SDK. We just
         // assert construction with default deps is safe.
         SentryAnalyticsService()
-        assertFalse(false) // placeholder so the test isn't empty
+        // No assertion needed — successful construction is the contract
     }
 
     @Test
@@ -182,7 +200,7 @@ class SentryAnalyticsServiceTest {
         val client = FakeSentryClient()
         val service = SentryAnalyticsService(client) // no runtimeOptInProvider passed
 
-        service.init("http://abc@localhost:8000/3", "development", "0.4.1")
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
         service.track(AnalyticsEvent.ScreenViewed.Dashboard)
         service.captureException(RuntimeException("boom"))
 

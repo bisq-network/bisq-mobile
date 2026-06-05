@@ -242,6 +242,7 @@ val clientDomainModule =
                         PlatformType.IOS -> BuildConfig.IOS_APP_VERSION
                     }
                 }",
+                isDebug = BuildConfig.IS_DEBUG,
             )
         }
 

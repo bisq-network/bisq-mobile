@@ -130,6 +130,7 @@ val androidNodeDomainModule =
                 dsn = BuildNodeConfig.ANALYTICS_DSN,
                 environment = if (BuildNodeConfig.IS_DEBUG) "development" else "production",
                 release = "bisq-easy-node@${BuildNodeConfig.APP_VERSION}",
+                isDebug = BuildNodeConfig.IS_DEBUG,
             )
         }
 

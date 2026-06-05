@@ -99,6 +99,7 @@ class ClientOfferbookPresenterTest {
                     dsn = "",
                     environment = "test",
                     release = "test",
+                    isDebug = false,
                 ),
             ) {
                 override suspend fun activateServiceFacades() {}

@@ -70,13 +70,14 @@ class SentryAnalyticsService internal constructor(
         dsn: String,
         environment: String,
         release: String,
+        isDebug: Boolean,
     ) {
         // Idempotent: Sentry-KMP holds internal init state and re-init is undefined.
         if (!initialized.compareAndSet(expect = false, update = true)) return
         // Refuse to dial a blank/missing DSN — better to silently do nothing
         // than to send events to a misconfigured destination.
         if (dsn.isBlank()) return
-        sentryClient.init(dsn, environment, release, redactor)
+        sentryClient.init(dsn, environment, release, redactor, isDebug)
         log.d { "Sentry initialized" }
     }
 

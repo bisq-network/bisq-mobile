@@ -18,6 +18,7 @@ object NoOpAnalyticsService : AnalyticsService {
         dsn: String,
         environment: String,
         release: String,
+        isDebug: Boolean,
     ) = Unit
 
     override fun track(event: AnalyticsEvent) = Unit

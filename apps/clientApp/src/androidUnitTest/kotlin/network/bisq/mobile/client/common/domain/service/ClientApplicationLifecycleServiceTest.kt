@@ -105,7 +105,7 @@ class ClientApplicationLifecycleServiceTest {
                 // tests in this fixture — wire NoOp + an empty config so the
                 // bootstrap.init() call in the base class is a no-op.
                 analyticsService = NoOpAnalyticsService as AnalyticsService,
-                analyticsBootstrapConfig = AnalyticsBootstrapConfig(dsn = "", environment = "test", release = "test"),
+                analyticsBootstrapConfig = AnalyticsBootstrapConfig(dsn = "", environment = "test", release = "test", isDebug = false),
             )
     }
 

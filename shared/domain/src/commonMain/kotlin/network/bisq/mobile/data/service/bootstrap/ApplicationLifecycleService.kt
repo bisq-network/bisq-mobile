@@ -55,6 +55,7 @@ abstract class ApplicationLifecycleService(
                 dsn = analyticsBootstrapConfig.dsn,
                 environment = analyticsBootstrapConfig.environment,
                 release = analyticsBootstrapConfig.release,
+                isDebug = analyticsBootstrapConfig.isDebug,
             )
         } catch (e: Exception) {
             // Never let analytics setup take the app down — if Sentry-KMP's

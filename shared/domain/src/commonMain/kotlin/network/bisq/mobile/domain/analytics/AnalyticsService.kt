@@ -42,11 +42,16 @@ interface AnalyticsService {
      * for shipped builds.
      * @param release Release identifier used by GlitchTip to group events and
      * match against uploaded proguard/dSYM mappings.
+     * @param isDebug When true the underlying SDK logs verbose internal
+     * diagnostics (envelope POSTs, transport failures, etc.) to logcat — useful
+     * for debugging ingestion locally. When false only ERROR-level SDK problems
+     * are logged, keeping shipped builds quiet even when a user opts in.
      */
     fun init(
         dsn: String,
         environment: String,
         release: String,
+        isDebug: Boolean,
     )
 
     /**

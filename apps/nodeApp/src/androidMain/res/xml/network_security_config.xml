@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Only for dev -->
-<network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">172.86.75.7</domain>
-        <!-- TODO 10.0.2.2 = Android emulator's loopback to the host machine.
-             used for ssh tunneling - will route over Tor onion
-             instead, at which point this entry can be removed / commented. -->
-        <domain includeSubdomains="true">10.0.2.2</domain>
-    </domain-config>
-</network-security-config>
+<!--
+  Safe-default network security config for the nodeApp Bisq Easy release.
+
+  Empty <network-security-config /> = use Android's built-in defaults:
+  cleartext (plain HTTP) traffic is denied (API 28+), TLS is required, and
+  trust anchors are the system CA set. That's the correct policy for shipped
+  builds because:
+
+    - The embedded bisq2 runtime handles its own Tor transport via a SOCKS
+      proxy and bypasses Android's network policy entirely.
+    - nodeApp Kotlin code itself doesn't make outbound HTTP requests to
+      .onion or local-network addresses at runtime.
+
+  Dev-only cleartext exceptions (Android emulator loopback for SSH tunneling
+  to local services, etc.) live in src/debug/res/xml/network_security_config.xml
+  and are merged in ONLY for the debug build variant. The manifest reference
+  in src/androidMain/AndroidManifest.xml points at @xml/network_security_config
+  for both variants; resource merging swaps the contents per-variant.
+
+  If you ever need to allow cleartext to a domain that ships to users, that's
+  not a network_security_config concern — re-think the connection (TLS, Tor,
+  embed via the bisq2 SOCKS path, etc.).
+-->
+<network-security-config />
