@@ -198,28 +198,36 @@ class ClientApplicationLifecycleServiceTest {
         }
 
     /**
-     * Verifies the runtime orchestrator job — the [combine]+[onEach] pipeline that
-     * mirrors `relayed × keepConnected × osPermission` into TWO independent
-     * decisions:
+     * Verifies the runtime orchestrator job — the [map]+[onEach] pipeline that
+     * mirrors `relayed × keepConnected × osPermission` into TWO independent decisions:
      *  - [OpenTradesNotificationService.setKeepProcessAlive] (FG service lifecycle)
      *  - [OpenTradesNotificationService.setLocalDeliverySuppressed] (notification posting)
+     *
+     * Both `relayed` and `keepConnected` are sourced from [settingsRepository.data] —
+     * a single canonical Flow rather than two redundant inputs. The previous combine
+     * shape used [PushNotificationServiceFacade.isPushNotificationsEnabled] as a second
+     * input, but that StateFlow lags settings (it is updated asynchronously from inside
+     * the facade's own `activate()` collector). The lag fired a transient
+     * `(start, stop)` pair on cold start that tripped Android's
+     * `ForegroundServiceDidNotStartInTimeException`. Single source = no race.
      *
      * The orchestrator runs on `pushModeScope` (Dispatchers.Default), which is not
      * controlled by `runTest`'s virtual scheduler, so we use MockK's `coVerify(timeout = …)`
      * to wait for the side-effect rather than driving virtual time.
      *
      * `distinctUntilChanged` operates on the whole [ClientApplicationLifecycleService.PushOrchestrationState]
-     * pair, so when *either* component changes, BOTH method calls fire (the orchestrator
-     * is idempotent per-method, so a no-op call is fine). State C is the regression we
-     * fixed: relayed=true + keep=true now correctly keeps FG alive.
+     * data class, so when *either* component changes, BOTH method calls fire (the
+     * orchestrator is idempotent per-method, so a no-op call is fine). State C is the
+     * regression we fixed: relayed=true + keep=true now correctly keeps FG alive.
      */
     @Test
     fun `orchestrator mirrors truth table when relayed and keep-connected change at runtime`() =
         runTest {
             order.clear()
-            val relayedFlow = MutableStateFlow(false)
-            val settingsFlow = MutableStateFlow(Settings(keepConnectedInBackground = false))
-            every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns relayedFlow
+            val settingsFlow =
+                MutableStateFlow(
+                    Settings(pushNotificationsEnabled = false, keepConnectedInBackground = false),
+                )
             every { settingsRepository.data } returns settingsFlow
             coEvery { notificationController.hasPermission() } returns true
             coEvery { settingsRepository.fetch() } returns
@@ -229,8 +237,8 @@ class ClientApplicationLifecycleServiceTest {
 
             // State A: relayed=false → FG ON, NOT suppressed (default mode, local posts).
             // Note: BOTH the bootstrap path (`maybeLaunchForegroundNotificationService`)
-            // AND the orchestrator's initial combine emission fire with the same values
-            // on activate(), so each method is called TWICE at State A. The service
+            // AND the orchestrator's initial emission fire with the same values on
+            // activate(), so each method is called TWICE at State A. The service
             // methods are idempotent so the double-call is a no-op past the first one.
             coVerify(timeout = 2_000, exactly = 2) {
                 openTradesNotificationService.setLocalDeliverySuppressed(false)
@@ -240,7 +248,7 @@ class ClientApplicationLifecycleServiceTest {
             }
 
             // State B: relayed=true, keep=false → FG OFF, suppressed (pure relayed mode).
-            relayedFlow.value = true
+            settingsFlow.value = settingsFlow.value.copy(pushNotificationsEnabled = true)
             coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(true) }
             coVerify(timeout = 2_000) { openTradesNotificationService.setKeepProcessAlive(false) }
 
@@ -271,7 +279,7 @@ class ClientApplicationLifecycleServiceTest {
             //   setKeepProcessAlive(true):        4 (2× A + C + D)
             //   setKeepProcessAlive(false):       1 (B only — sanity-check the
             //                                        "stop FG" path stayed scoped to State B)
-            relayedFlow.value = false
+            settingsFlow.value = settingsFlow.value.copy(pushNotificationsEnabled = false)
             coVerify(timeout = 2_000, exactly = 3) {
                 openTradesNotificationService.setLocalDeliverySuppressed(false)
             }
@@ -287,9 +295,10 @@ class ClientApplicationLifecycleServiceTest {
     fun `orchestrator stops FG and suppresses local delivery when OS notification permission is revoked`() =
         runTest {
             order.clear()
-            val relayedFlow = MutableStateFlow(false)
-            val settingsFlow = MutableStateFlow(Settings(keepConnectedInBackground = false))
-            every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns relayedFlow
+            val settingsFlow =
+                MutableStateFlow(
+                    Settings(pushNotificationsEnabled = false, keepConnectedInBackground = false),
+                )
             every { settingsRepository.data } returns settingsFlow
             // Permission denied: there's nothing useful to deliver locally; suppress AND
             // shut FG down regardless of the relayed/keep-connected combo.

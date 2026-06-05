@@ -5,9 +5,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
@@ -240,7 +240,8 @@ class ClientApplicationLifecycleService(
      *     handles delivery, to avoid duplicate notifications. See bisq-mobile#1450.
      *
      * Three inputs drive both decisions:
-     *  - relayed-push opt-in (from the push-notifications facade)
+     *  - relayed-push opt-in (read from [settingsRepository] — the canonical source the
+     *    push-notifications facade itself mirrors)
      *  - "keep connected in background" sub-setting (Android-only; only user-visible when
      *    relayed is on, but read unconditionally)
      *  - OS POST_NOTIFICATIONS permission (queried directly from the OS each tick)
@@ -275,18 +276,26 @@ class ClientApplicationLifecycleService(
      */
     private fun launchForegroundNotificationServiceSuppressorJob() {
         pushModeOrchestrationJob?.cancel()
+        // Single source of truth: derive both `relayed` and the orchestration state from
+        // [settingsRepository.data]. The push-notifications facade also exposes an
+        // `isPushNotificationsEnabled` StateFlow, but it is seeded to `false` and only
+        // catches up to the persisted setting asynchronously inside its own `activate()`.
+        // Combining both flows here let the orchestrator fire a transient
+        // `(relayed=false, settings.relayed=true)` first emission — i.e. start the FG
+        // service — followed milliseconds later by the corrected `(relayed=true, …)`
+        // emission stopping it. The rapid start→stop trips Android's
+        // `ForegroundServiceDidNotStartInTimeException`.
         pushModeOrchestrationJob =
-            combine(
-                pushNotificationServiceFacade.isPushNotificationsEnabled,
-                settingsRepository.data,
-            ) { relayed, settings ->
-                val keepConnected = settings.keepConnectedInBackground
-                val osGranted = notificationController.hasPermission()
-                PushOrchestrationState(
-                    keepProcessAlive = osGranted && (!relayed || keepConnected),
-                    localDeliverySuppressed = relayed || !osGranted,
-                )
-            }.distinctUntilChanged()
+            settingsRepository.data
+                .map { settings ->
+                    val relayed = settings.pushNotificationsEnabled
+                    val keepConnected = settings.keepConnectedInBackground
+                    val osGranted = notificationController.hasPermission()
+                    PushOrchestrationState(
+                        keepProcessAlive = osGranted && (!relayed || keepConnected),
+                        localDeliverySuppressed = relayed || !osGranted,
+                    )
+                }.distinctUntilChanged()
                 .onEach { state ->
                     openTradesNotificationService.setLocalDeliverySuppressed(state.localDeliverySuppressed)
                     openTradesNotificationService.setKeepProcessAlive(state.keepProcessAlive)
