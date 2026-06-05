@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
@@ -37,8 +38,22 @@ class ClientSplashPresenter(
         versionProvider,
     ) {
     companion object {
-        private const val CONNECTIVITY_WAIT_TIMEOUT_MS = 15_000L
+        // Must exceed monitoring start delay + one full health cycle (period + health-check timeout).
+        private const val CONNECTIVITY_WAIT_TIMEOUT_CLEARNET_MS =
+            ClientConnectivityService.START_DELAY +
+                ClientConnectivityService.PERIOD +
+                ClientConnectivityService.TIMEOUT
+        private const val CONNECTIVITY_WAIT_TIMEOUT_TOR_MS =
+            ClientConnectivityService.START_DELAY_TOR +
+                ClientConnectivityService.PERIOD +
+                ClientConnectivityService.TIMEOUT
+
+        // Safety net for clearnet connections: 45 s is generous for a TCP round trip.
         private const val CONNECTIVITY_SAFETY_NET_TIMEOUT_MS = 45_000L
+
+        // Safety net for Tor (.onion) connections: Tor circuit establishment alone takes
+        // 15–60 s; the subsequent WS upgrade and API-version probe add more.
+        private const val CONNECTIVITY_SAFETY_NET_TIMEOUT_TOR_MS = 60_000L
     }
 
     private var hasNavigated = false
@@ -91,12 +106,20 @@ class ClientSplashPresenter(
                     }
                 }
 
-                // Safety net: if connectivity is not established within timeout,
-                // redirect to trusted node setup regardless of bootstrap progress.
+                // Safety net: if connectivity is not established within timeout, redirect to
+                // trusted node setup. The budget is host-type-aware: Tor (.onion) circuits
+                // take longer to establish than clearnet TCP.
+                val isTorConnection = isTorConnection(settings.bisqApiUrl)
+                val safetyNetTimeoutMs =
+                    if (isTorConnection) {
+                        CONNECTIVITY_SAFETY_NET_TIMEOUT_TOR_MS
+                    } else {
+                        CONNECTIVITY_SAFETY_NET_TIMEOUT_MS
+                    }
                 presenterScope.launch {
-                    delay(CONNECTIVITY_SAFETY_NET_TIMEOUT_MS)
+                    delay(safetyNetTimeoutMs)
                     if (!hasNavigated) {
-                        log.d { "Connectivity safety net triggered, navigating to trusted node setup" }
+                        log.d { "Connectivity safety net triggered (${safetyNetTimeoutMs}ms, tor=$isTorConnection), navigating to trusted node setup" }
                         hasNavigated = true
                         navigateToTrustedNodeSetup(showConnectionFailed = true)
                     }
@@ -113,9 +136,17 @@ class ClientSplashPresenter(
         if (!ApplicationBootstrapFacade.isDemo) {
             // Wait for ConnectivityService to confirm real data exchange with the backend,
             // rather than relying on raw WebSocket connection state which can be stale
-            // during credential handoff.
+            // during credential handoff. Timeout must exceed the monitoring start delay so
+            // at least one health cycle can complete (especially on Tor).
+            val settings = sensitiveSettingsRepository.fetch()
+            val connectivityWaitTimeoutMs =
+                if (isTorConnection(settings.bisqApiUrl)) {
+                    CONNECTIVITY_WAIT_TIMEOUT_TOR_MS
+                } else {
+                    CONNECTIVITY_WAIT_TIMEOUT_CLEARNET_MS
+                }
             val connected =
-                withTimeoutOrNull(CONNECTIVITY_WAIT_TIMEOUT_MS) {
+                withTimeoutOrNull(connectivityWaitTimeoutMs) {
                     connectivityService.status.first { it.isConnected() }
                     true
                 } ?: false
@@ -138,6 +169,8 @@ class ClientSplashPresenter(
         }
         super.navigateToNextScreen()
     }
+
+    private fun isTorConnection(bisqApiUrl: String): Boolean = bisqApiUrl.contains(".onion", ignoreCase = true)
 
     private fun navigateToTrustedNodeSetup(
         showConnectionFailed: Boolean = false,

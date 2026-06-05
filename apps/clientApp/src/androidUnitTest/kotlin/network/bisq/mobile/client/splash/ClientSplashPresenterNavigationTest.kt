@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
@@ -163,7 +164,7 @@ class ClientSplashPresenterNavigationTest {
 
             // When: progress reaches 1.0 triggering navigateToNextScreen
             progressFlow.value = 1.0f
-            // Advance past the 15s CONNECTIVITY_WAIT_TIMEOUT_MS
+            // Advance past the clearnet connectivity wait (START_DELAY + PERIOD + TIMEOUT = 15s)
             advanceTimeBy(16_000)
             testScheduler.runCurrent()
 
@@ -225,6 +226,51 @@ class ClientSplashPresenterNavigationTest {
                     any(),
                 )
             }
+        }
+
+    @Test
+    fun `waits for Tor connectivity timeout before failing`() =
+        runTest(testDispatcher) {
+            val torWaitTimeoutMs =
+                ClientConnectivityService.START_DELAY_TOR +
+                    ClientConnectivityService.PERIOD +
+                    ClientConnectivityService.TIMEOUT
+
+            coEvery { sensitiveSettingsRepository.fetch() } returns
+                SensitiveSettings(
+                    bisqApiUrl = "http://abc123.onion:8080",
+                    clientId = "test-client-id",
+                    clientSecret = "test-client-secret",
+                )
+            coEvery { settingsServiceFacade.getSettings() } returns
+                Result.success(SettingsVO(isTacAccepted = true))
+            coEvery { settingsRepository.fetch() } returns Settings(firstLaunch = false)
+            coEvery { userProfileService.hasUserProfile() } returns true
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            progressFlow.value = 1.0f
+            // Clearnet timeout (16s) would have expired; Tor timeout (30s) has not.
+            advanceTimeBy(16_000)
+            testScheduler.runCurrent()
+
+            verify(exactly = 0) {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is ClientNavRoute.TrustedNodeSetup
+                    },
+                    any(),
+                    any(),
+                )
+            }
+
+            connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+            advanceTimeBy(torWaitTimeoutMs - 16_000)
+            advanceUntilIdle()
+
+            verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
         }
 
     @Test
