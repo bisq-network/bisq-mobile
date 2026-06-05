@@ -56,7 +56,7 @@ class SentryAnalyticsServiceTest {
     // ============ INIT GUARDS ============
 
     @Test
-    fun `init dials the SDK with the configured DSN, environment and release`() {
+    fun `init dials the SDK with the configured DSN - environment and release`() {
         val (service, client) = newService()
         service.init(dsn = "http://abc@localhost:8000/3", environment = "development", release = "0.4.1")
         assertEquals(1, client.initCalls)
@@ -116,7 +116,7 @@ class SentryAnalyticsServiceTest {
     }
 
     @Test
-    fun `runtime opt-in is checked PER call, not just at init`() {
+    fun `runtime opt-in is checked PER call - not just at init`() {
         // The provider returns a different value each invocation — proves we
         // re-query each time rather than caching the value from init.
         var consented = false

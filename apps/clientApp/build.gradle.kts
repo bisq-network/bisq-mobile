@@ -149,14 +149,14 @@ kotlin {
         // SDK from release builds with the flag off), this pod() declaration
         // statically links Sentry.framework into the iOS binary regardless of
         // whether any Kotlin code references it. ~few-hundred-KB binary cost
-        // when analyticsEnabled=false. Options when Phase 2 ships:
+        // when analyticsEnabled=false. Options for a follow-up:
         //   1. Gate this declaration on resolveProperty("feature.analyticsEnabled")
         //      (cleanest, but requires gating the Sentry-KMP dependency too so
         //      cinterop bindings don't try to compile against missing types)
         //   2. Move SentryAnalyticsService.kt into a separate source set
         //      that's only included when the flag is on
-        //   3. Accept as cost-of-iOS — events go over Tor anyway,
-        //      so the binary surface is exercised in production if user opts in.
+        //   3. Accept as cost-of-iOS — events go over Tor anyway when the user
+        //      opts in, so the binary surface is exercised in production then.
         pod("Sentry") {
             version = "8.58.2"
             extraOpts += listOf("-compiler-option", "-fmodules")

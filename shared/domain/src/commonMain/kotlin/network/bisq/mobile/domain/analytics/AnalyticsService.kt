@@ -9,10 +9,11 @@ package network.bisq.mobile.domain.analytics
  *     graph binds [NoOpAnalyticsService] and Sentry-KMP isn't even loaded.
  *     Production builds ship with this OFF. A contributor's fresh clone sends
  *     nothing.
- *  2. **Runtime gate** — the user's explicit opt-in (Phase 1 will wire this to
- *     `SettingsRepository.analyticsEnabled`;Initial work hardcodes `true` purely
- *     to verify ingestion end-to-end during dev). Default at the user level
- *     is OFF.
+ *  2. **Runtime gate** — the user's explicit opt-in. The DI module wires the
+ *     provider to `{ BuildConfig.ANALYTICS_ENABLED }` initially (same source
+ *     as the build-time gate, doubly-locked); a follow-up swaps this for
+ *     `{ settingsRepository.analyticsEnabled.value }` once the Settings UI
+ *     toggle ships. Default at the user level is OFF.
  *
  * The API surface is deliberately narrow:
  *  - [init] is called once during app bootstrap.

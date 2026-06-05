@@ -183,9 +183,17 @@ jobs:
           retention-days: 30
           path: build/reports/diff-cover/diff-cover.html
 
-      - name: Generate dummy framework for CocoaPods (Mac only)
+      - name: Install CocoaPods (Mac only)
+        # Replaces the previous `generateDummyFramework` step. The dummy
+        # framework was enough when no module needed real pods at link time,
+        # but the analytics work (#525) introduces Sentry-KMP, whose
+        # cinterop bindings reference symbols from the Sentry Cocoa SDK.
+        # Without a real `pod install`, the K/N linker fails the iOS test
+        # binaries with `ld: framework 'Sentry' not found`. `podInstall`
+        # is a superset of `generateDummyFramework`; macos-14 runners have
+        # CocoaPods preinstalled, so no extra setup is required.
         if: startsWith(matrix.os, 'macos')
-        run: ./gradlew :apps:clientApp:generateDummyFramework
+        run: ./gradlew :apps:clientApp:podInstall
 
       - name: Android compile-only (Mac only)
         if: startsWith(matrix.os, 'macos')

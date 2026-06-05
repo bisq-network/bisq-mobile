@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.cocoapods)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.compose)
@@ -12,6 +13,13 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.atomicfu)
     alias(libs.plugins.kover)
+    // Sentry-KMP plugin must be applied to every module whose iOS test/main
+    // binary transitively links Sentry-KMP. This module transitively pulls
+    // Sentry-KMP through its `implementation(project(":shared:domain"))`
+    // dependency, so its K/N test framework needs Sentry.framework on the
+    // link path — without the plugin coordinating with cocoapods at this
+    // module level the link fails with `ld: framework 'Sentry' not found`.
+    alias(libs.plugins.sentry.kotlin.multiplatform)
 }
 
 dependencies {
@@ -33,6 +41,28 @@ kotlin {
     }
     iosArm64()
     iosSimulatorArm64()
+
+    // The Sentry Cocoa SDK pod is declared here (matching apps/clientApp and
+    // shared/domain) so the K/N linker for this module's iOS test framework
+    // finds Sentry.framework. Sentry-KMP's cinterop bindings reference Sentry
+    // Cocoa symbols at link time; without this declaration
+    // `linkDebugTestIosSimulatorArm64` fails with `ld: framework 'Sentry' not
+    // found`. Shares the iosClient/Podfile with the host app, so a single
+    // `pod install` covers every module.
+    cocoapods {
+        summary = "Bisq Mobile — shared presentation module"
+        homepage = "https://github.com/bisq-network/bisq-mobile"
+        version = project.version.toString()
+        ios.deploymentTarget = "16.0"
+        podfile = project.file("../../iosClient/Podfile")
+        pod("Sentry") {
+            // Version and `-fmodules` MUST match apps/clientApp's declaration
+            // (Sentry-KMP 0.26.0 → Sentry Cocoa 8.58.2; -fmodules avoids the
+            // `SentryMechanismMeta declared twice` cinterop crash).
+            version = "8.58.2"
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {

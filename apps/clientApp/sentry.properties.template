@@ -16,9 +16,9 @@
 #     can publish releases and modify mappings on the Bisq GlitchTip deployment.
 #     The token is PERSONAL — generate your own, don't share, rotate if leaked.
 #
-# This file only covers Android proguard mapping uploads. iOS dSYM upload is a
-# separate flow that will land alongside the Tor-routed runtime transport
-# (Phase 2). For now, this only handles `mapping.txt` for the Android variant
+# This file only covers Android proguard mapping uploads. iOS dSYM upload is
+# a separate flow that will land alongside the Tor-routed runtime transport
+# follow-up. For now, this only handles `mapping.txt` for the Android variant
 # of Bisq Connect (clientApp → `bisq-connect-android` GlitchTip project).
 #
 # ─── How to generate your auth token ─────────────────────────────────────────
