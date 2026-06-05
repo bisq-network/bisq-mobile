@@ -73,8 +73,8 @@ class WebSocketClientImpl(
     private val httpClient: HttpClient,
     private val json: Json,
     override val apiUrl: Url,
-    val sessionId: String?,
-    val clientId: String?,
+    override val sessionId: String?,
+    override val clientId: String?,
     private val clientScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : WebSocketClient,
     Logging {
@@ -126,7 +126,7 @@ class WebSocketClientImpl(
                     return null
                 }
                 doDisconnect() // clean up state
-                log.d { "WS connecting to $apiUrl ..." }
+                log.d { "WS connecting to $apiUrl (timeout=${timeout}ms) ..." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val startTime = DateUtils.now()
                 val wsProtocol =
@@ -134,25 +134,31 @@ class WebSocketClientImpl(
                 val wsHost = apiUrl.host
                 val wsPort = apiUrl.port
                 val newSession =
-                    withTimeout(timeout) {
-                        httpClient.webSocketSession {
-                            url {
-                                // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
-                                protocol = wsProtocol
-                                host = wsHost
-                                port = wsPort
-                                path("/websocket")
+                    try {
+                        withTimeout(timeout) {
+                            httpClient.webSocketSession {
+                                url {
+                                    // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
+                                    protocol = wsProtocol
+                                    host = wsHost
+                                    port = wsPort
+                                    path("/websocket")
+                                }
+                                // Send session credentials on upgrade for servers with password auth
+                                sessionId?.let { headers.append(Headers.SESSION_ID, it) }
+                                clientId?.let { headers.append(Headers.CLIENT_ID, it) }
                             }
-                            // Send session credentials on upgrade for servers with password auth
-                            sessionId?.let { headers.append(Headers.SESSION_ID, it) }
-                            clientId?.let { headers.append(Headers.CLIENT_ID, it) }
                         }
+                    } catch (e: Throwable) {
+                        val elapsed = DateUtils.now() - startTime
+                        log.e(e) { "WS TCP/upgrade phase failed after ${elapsed}ms: ${e::class.simpleName}" }
+                        throw e
                     }
                 val elapsed = DateUtils.now() - startTime
                 val remainingTime = timeout - elapsed
                 session = newSession
                 if (newSession.isActive) {
-                    log.d { "WS connected successfully" }
+                    log.i { "WS connected successfully (TCP/upgrade in ${elapsed}ms, remaining=${remainingTime}ms)" }
                     listenerJob =
                         clientScope.launch { startListening(newSession) }
 

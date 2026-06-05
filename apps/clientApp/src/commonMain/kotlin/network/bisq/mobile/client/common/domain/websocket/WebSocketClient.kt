@@ -21,6 +21,8 @@ interface WebSocketClient {
     }
 
     val apiUrl: Url
+    val sessionId: String?
+    val clientId: String?
     val webSocketClientStatus: StateFlow<ConnectionState>
 
     fun isConnected(): Boolean = webSocketClientStatus.value is ConnectionState.Connected

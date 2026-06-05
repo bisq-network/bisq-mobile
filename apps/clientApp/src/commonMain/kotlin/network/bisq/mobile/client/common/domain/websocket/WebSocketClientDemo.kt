@@ -69,6 +69,8 @@ class WebSocketClientDemo(
 ) : WebSocketClient,
     Logging {
     override val apiUrl = parseUrl("http://demo.bisq:21")!!
+    override val sessionId: String? = null
+    override val clientId: String? = null
 
     private val emptyClosedTradesPage =
         PaginatedResponse<ClosedTradeListItemDto>(

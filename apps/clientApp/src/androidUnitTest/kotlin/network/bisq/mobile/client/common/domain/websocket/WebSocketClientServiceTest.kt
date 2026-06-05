@@ -18,6 +18,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
+import network.bisq.mobile.client.common.domain.access.session.SessionValidity
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
@@ -63,7 +65,11 @@ class WebSocketClientServiceTest {
 
         every { httpClientService.httpClientChangedFlow } returns httpClientChangedFlow
         coEvery { httpClientService.getClient() } returns mockk(relaxed = true)
-        every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockClient
+        every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } answers {
+            every { mockClient.sessionId } returns arg(2)
+            every { mockClient.clientId } returns arg(3)
+            mockClient
+        }
         every { mockClient.apiUrl } returns
             mockk {
                 every { host } returns "localhost"
@@ -112,6 +118,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -160,6 +167,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -194,6 +202,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -228,6 +237,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -289,6 +299,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = null,
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -335,6 +346,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -358,6 +370,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -415,6 +428,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -460,6 +474,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -500,6 +515,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -542,6 +558,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -606,6 +623,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -624,6 +642,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id-2",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -656,6 +675,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -691,6 +711,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -738,6 +759,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -776,6 +798,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -816,6 +839,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -885,6 +909,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                     externalProxyUrl = "127.0.0.1:9050",
                     isTorProxy = true,
                 ),
@@ -899,6 +924,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                     externalProxyUrl = null,
                     isTorProxy = false,
                 ),
@@ -943,6 +969,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                     externalProxyUrl = "127.0.0.1:9050",
                     isTorProxy = true,
                 ),
@@ -982,6 +1009,7 @@ class WebSocketClientServiceTest {
                     tlsFingerprint = null,
                     clientId = "client-id",
                     sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
                     externalProxyUrl = null,
                     isTorProxy = false,
                 )
@@ -994,6 +1022,207 @@ class WebSocketClientServiceTest {
 
             // Then — factory called once only (not on the redundant emission)
             verify(exactly = 1) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `changed sessionId with healthy connection skips WebSocket client recreation`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { mockWsClient.sessionId } returns "old-session-id"
+            every { mockWsClient.clientId } returns "client-id"
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "old-session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // When — bootstrap POST persists a new sessionId while WS is still connected
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "new-session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then — working live client kept; new id saved for HTTP / future renewal only
+            coVerify(exactly = 0) { mockWsClient.dispose() }
+            verify(exactly = 1) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `session expiring within 15m defers WebSocket creation until session POST completes`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { mockWsClient.sessionId } returns "new-session-id"
+            every { mockWsClient.clientId } returns "client-id"
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Wall-clock DateUtils.now() matches production; half of 15m is always < min remaining.
+            val soonExpiry =
+                DateUtils.now() + SessionValidity.SESSION_SKIP_RECREATE_MIN_REMAINING_MS / 2
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "old-session-id",
+                    sessionExpiresAt = soonExpiry,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify(exactly = 0) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "new-session-id",
+                    sessionExpiresAt = DateUtils.now() + 3_600_000L,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 0) { mockWsClient.dispose() }
+            verify(exactly = 1) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `null session expiry defers WebSocket creation until session POST completes`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { mockWsClient.sessionId } returns "new-session-id"
+            every { mockWsClient.clientId } returns "client-id"
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "old-session-id",
+                    sessionExpiresAt = null,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify(exactly = 0) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "new-session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 0) { mockWsClient.dispose() }
+            verify(exactly = 1) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `changed sessionId after 401 recreates WebSocket client`() =
+        runTest(testDispatcher) {
+            val statusFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns statusFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { mockWsClient.sessionId } returns "old-session-id"
+            every { mockWsClient.clientId } returns "client-id"
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "old-session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            statusFlow.value =
+                ConnectionState.Disconnected(error = UnauthorizedApiAccessException())
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "new-session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { mockWsClient.dispose() }
+            verify(exactly = 2) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
         }
 
     @Test

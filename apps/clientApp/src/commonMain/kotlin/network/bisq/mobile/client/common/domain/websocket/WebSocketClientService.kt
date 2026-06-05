@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.common.domain.access.session.SessionService
+import network.bisq.mobile.client.common.domain.access.session.SessionValidity
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
@@ -92,6 +93,8 @@ class WebSocketClientService(
     fun acknowledgeRevocation() {
         _clientRevoked.value = false
     }
+
+    val isTorProxy: Boolean get() = currentClientSettings?.isTorProxy == true
 
     private val clientUpdateMutex = Mutex()
     private val _connectionState =
@@ -238,6 +241,44 @@ class WebSocketClientService(
                 return@withLock
             }
 
+            // Skip recreation when connection topology is unchanged and the live client is healthy.
+            // Bootstrap POST may persist a new sessionId while the WS upgrade still uses the
+            // previous (still-valid) session — recreating would dispose subscriptions mid-handshake.
+            // Recreate only after auth failure (401/403) when attemptSessionRenewal updates credentials.
+            val connectionTopologyUnchanged =
+                previousSettings != null &&
+                    previousSettings.bisqApiUrl == httpClientSettings.bisqApiUrl &&
+                    previousSettings.tlsFingerprint == httpClientSettings.tlsFingerprint &&
+                    previousSettings.externalProxyUrl == httpClientSettings.externalProxyUrl &&
+                    previousSettings.isTorProxy == httpClientSettings.isTorProxy &&
+                    previousSettings.selectedProxyOption == httpClientSettings.selectedProxyOption
+            val isAuthFailure =
+                run {
+                    val s = currentClient.value?.webSocketClientStatus?.value
+                    s is ConnectionState.Disconnected && s.error is UnauthorizedApiAccessException
+                }
+            val liveClient = currentClient.value
+            if (liveClient != null && connectionTopologyUnchanged && !isAuthFailure) {
+                // Intentionally not updating currentClientSettings — it must keep sessionExpiresAt for the live WS session.
+                if (liveClient.clientId == httpClientSettings.clientId) {
+                    val liveSessionExpiresAt = previousSettings.sessionExpiresAt
+                    if (SessionValidity.hasMinRemainingValidity(liveSessionExpiresAt)) {
+                        log.d {
+                            "Session id changed in settings " +
+                                "(${liveClient.sessionId} → ${httpClientSettings.sessionId}); " +
+                                "live WS healthy with ≥15m session remaining — skipping recreation"
+                        }
+                        return@withLock
+                    }
+                } else {
+                    log.d {
+                        "Client id changed on live client " +
+                            "(${liveClient.clientId} → ${httpClientSettings.clientId}); " +
+                            "recreating WebSocket client"
+                    }
+                }
+            }
+
             // Proxy mode transitions (e.g. Tor → clearnet when switching to demo, or
             // back) must not leak state from the previous client's reconnect loop.
             // Cancel state collection BEFORE disposing so dying status emissions can't
@@ -275,12 +316,28 @@ class WebSocketClientService(
             // (prevents stale Connected from the disposed client).
             _connectionState.value = ConnectionState.Disconnected()
 
-            // Don't create the WebSocket client until we have valid session credentials.
-            // During the pairing flow, settings are first updated with URL/TLS (credentials null),
-            // then again with credentials after the pairing HTTP POST succeeds.
-            // Connecting without credentials causes 401 on servers with password auth enabled.
-            if (httpClientSettings.sessionId.isNullOrBlank() || httpClientSettings.clientId.isNullOrBlank()) {
+            // Don't create the WebSocket client until session credentials exist.
+            // During pairing, settings may be updated with URL/TLS before credentials exist.
+            if (httpClientSettings.clientId.isNullOrBlank() ||
+                httpClientSettings.sessionId.isNullOrBlank()
+            ) {
                 log.d { "Skipping WebSocket client creation — session credentials not yet available" }
+                stateCollectionJob?.cancel()
+                stateCollectionJob = null
+                currentClientSettings = null
+                _connectionState.value = ConnectionState.Disconnected()
+                return@withLock
+            }
+
+            // Cold start with a short-lived persisted session: wait for bootstrap POST to
+            // rotate sessionId before opening WS (avoids connect-then-dispose on renewal).
+            if (liveClient == null &&
+                !SessionValidity.hasMinRemainingValidity(httpClientSettings.sessionExpiresAt)
+            ) {
+                log.d {
+                    "Skipping WebSocket client creation — session expires within 15m or expiry unknown; " +
+                        "waiting for session POST"
+                }
                 stateCollectionJob?.cancel()
                 stateCollectionJob = null
                 currentClientSettings = null
@@ -365,7 +422,13 @@ class WebSocketClientService(
     }
 
     suspend fun connect(): Throwable? {
-        val client = getWsClient()
+        // Prefer the client snapshot obtained while holding clientUpdateMutex so we
+        // don't race with a concurrent updateWebSocketClient that is in the middle of
+        // disposing the old client.  If we arrive while an update is in progress we
+        // wait for it to finish; once the lock is released currentClient.value already
+        // points to the freshly-created client.  Falling back to getWsClient() handles
+        // the narrow window where the value is still null mid-transition.
+        val client = clientUpdateMutex.withLock { currentClient.value } ?: getWsClient()
         val timeout = WebSocketClient.determineTimeout(client.apiUrl.host)
         return client.connect(timeout)
     }
@@ -540,7 +603,7 @@ class WebSocketClientService(
             throw e
         } catch (e: UnauthorizedApiAccessException) {
             throw e // Propagate so the connection state handler triggers session renewal
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -571,7 +634,12 @@ class WebSocketClientService(
             if (result.isSuccess) {
                 val response = result.getOrThrow()
                 log.i { "Session renewal succeeded, updating settings with new sessionId" }
-                settingsRepo.update { it.copy(sessionId = response.sessionId) }
+                settingsRepo.update {
+                    it.copy(
+                        sessionId = response.sessionId,
+                        sessionExpiresAt = response.expiresAt,
+                    )
+                }
                 // Note: settingsRepo.update triggers httpClientChangedFlow → updateWebSocketClient()
                 // which creates a new WS client with fresh credentials and connects automatically.
                 // No explicit connect() call needed here - it's handled reactively.
@@ -583,7 +651,12 @@ class WebSocketClientService(
                     // signal the UI to navigate to re-pairing.
                     log.e { "Client credentials revoked — clearing stored pairing data" }
                     settingsRepo.update {
-                        it.copy(clientId = null, clientSecret = null, sessionId = null)
+                        it.copy(
+                            clientId = null,
+                            clientSecret = null,
+                            sessionId = null,
+                            sessionExpiresAt = null,
+                        )
                     }
                     // Dispose the HTTP client so re-pairing creates a fresh one
                     // (the old client has stale TLS settings that cause connection reset)
@@ -595,11 +668,16 @@ class WebSocketClientService(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (e: UnauthorizedApiAccessException) {
+        } catch (_: UnauthorizedApiAccessException) {
             // HTTP client validator threw 401 directly (before result wrapping)
             log.e { "Client credentials revoked (exception) — clearing stored pairing data" }
             settingsRepo.update {
-                it.copy(clientId = null, clientSecret = null, sessionId = null)
+                it.copy(
+                    clientId = null,
+                    clientSecret = null,
+                    sessionId = null,
+                    sessionExpiresAt = null,
+                )
             }
             httpClientService.disposeClient()
             _clientRevoked.value = true
