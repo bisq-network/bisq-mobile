@@ -9,7 +9,8 @@ Source of truth is the code. Update this file whenever connectivity behaviour ch
 | File | Role |
 |------|------|
 | `httpclient/HttpClientService.kt` | Settings-driven `HttpClient` lifecycle; `recreateClient()` for iOS recovery |
-| `httpclient/HttpClientSettings.kt` | Tor proxy defaults; iOS maps proxy host `127.0.0.1` → `localhost` |
+| `httpclient/HttpClientSettings.kt` | Tor proxy defaults, `sessionExpiresAt`; iOS maps proxy host `127.0.0.1` → `localhost` |
+| `access/session/SessionValidity.kt` | Session expiry checks (15m min remaining, cold-start deferral) |
 | `utils/PlatformAbstractions.{android,ios}.kt` | `createHttpClient()`, TLS/proxy wiring |
 | `websocket/WebSocketClientService.kt` | WS factory, subscriptions, reconnect/recreate orchestration |
 | `websocket/WebSocketClientImpl.kt` | Connect, listen, request/response, reconnect backoff |
@@ -43,12 +44,18 @@ WebSocketClientService.updateWebSocketClient()
         ├─ currentClient != null AND settings == previousSettings
         │       └─► return (keep live client; duplicate httpClientChangedFlow)
         │
+        ├─ live client healthy, topology unchanged, sessionId changed, ≥15m left
+        │       └─► return (keep WS; HTTP gets new sessionId from settings)
+        │
         ├─ proxy mode changed (Tor ↔ clearnet) ──► cancel stateCollectionJob
         │
         ▼
 dispose prior client (if any) ──► _connectionState = Disconnected
         │
         ├─ sessionId or clientId blank ──► return (pairing; no new WS yet)
+        │
+        ├─ no live client AND session expired / expiring within 15m / expiry unknown
+        │       └─► return (wait for bootstrap session POST)
         │
         ▼
 new WebSocketClientImpl + currentClientSettings = settings
@@ -71,15 +78,15 @@ withTimeout(remainingTime after WS handshake)
 Connected ──► applySubscriptions()
 ```
 
-Note: The pairing path runs after dispose — it does not keep an old WS. Any material settings change (including new `sessionId` after pairing) goes through dispose + new client; there is no credentials-only in-place update.
+Note: Pairing still waits for credentials before creating a WS. A bootstrap `sessionId` rotation alone does not always dispose the live client — see skip branch above. After 401/403, recreation runs as before.
 
-External callers (`ClientApplicationBootstrapFacade`, `TrustedNodeSetupUseCase`) can also trigger a connect via `WebSocketClientService.connect()` directly. This path awaits a live client via `currentClient.filterNotNull()` then calls `WebSocketClientImpl.connect(determineTimeout(host))`; it does not go through `updateWebSocketClient()`.
+External callers (`ClientApplicationBootstrapFacade`, `TrustedNodeSetupUseCase`) can call `WebSocketClientService.connect()` directly. Uses `clientUpdateMutex` snapshot (or `getWsClient()` fallback), then `WebSocketClientImpl.connect(determineTimeout(host))`.
 
 ---
 
 ## Flow 2 — Health monitor (every 5s)
 
-`ClientConnectivityService.startMonitoring()` — default 5s period, 5s delay before first check (20s on Tor).
+`ClientConnectivityService.startMonitoring()` — 5s period. Default start delay: 5s clearnet, 20s Tor (two-phase: wait 5s for settings, then read `WebSocketClientService.isTorProxy`, then +15s if Tor).
 
 ```text
 checkConnectivity() loop
@@ -99,7 +106,8 @@ checkConnectivity() loop
 
 Status derivation (when health check passes):
         failed subscription topics ──► CONNECTED_WITH_LIMITATIONS
-        avg RTT > 500ms (≥4 samples) ──► REQUESTING_INVENTORY
+        avg RTT > threshold (≥4 samples) ──► REQUESTING_INVENTORY
+              (500ms clearnet, 3000ms Tor)
         else ──► CONNECTED_AND_DATA_RECEIVED
 
         ▼
@@ -184,10 +192,12 @@ Details omitted here: WCS also calls `reconnect()` from its status collector on 
 Health check 401/403 OR WS disconnect with UnauthorizedApiAccessException
         ▼
 attemptSessionRenewal() [30s cooldown; needs SessionService + SensitiveSettingsRepository]
-        ├─ success ──► settingsRepo.update(sessionId) ──► httpClientChangedFlow ──► new WS
-        └─ renewal 401/403 ──► clear creds, disposeClient(), clientRevoked=true ──► pairing UI
+        ├─ success ──► settingsRepo.update(sessionId, sessionExpiresAt) ──► httpClientChangedFlow
+        │       └─► new WS unless healthy live client skip applies (Flow 1)
+        └─ renewal 401/403 ──► clear creds + sessionExpiresAt, disposeClient(), clientRevoked=true
 
 CCS on health-check 401: attemptSessionRenewal() — NOT forceReconnect() (stale sessionId).
+Bootstrap session POST also persists `sessionExpiresAt` (same as renewal).
 ```
 
 ---
@@ -199,11 +209,13 @@ CCS on health-check 401: attemptSessionRenewal() — NOT forceReconnect() (stale
 3. `triggerReconnect` vs `forceReconnect` — former only if not connected; latter always runs `reconnect()` (stale TCP while status says connected).
 4. Proxy mode change (`isTorProxy` / `externalProxyUrl`) — cancel state collector before disposing the old client.
 5. Identical `HttpClientSettings` — skip WS replacement (avoids churn during Tor startup duplicates).
-6. Pairing — blank `sessionId`/`clientId` skips WS creation until credentials exist.
-7. iOS `CancellationException` on disconnect — reconnect only when cause message contains `"Socket is not connected"`; other cancellations are not auto-retried.
-8. iOS SIGSEGV guard — extract `requestId` from raw JSON before deserializing sealed WS messages.
-9. `unSubscribe()` — not implemented (logs warning).
-10. Demo — host `demo.bisq:21` → `WebSocketClientDemo` (`WebSocketClientFactory`).
+6. Healthy live WS + unchanged topology — bootstrap `sessionId` rotation may skip recreation when ≥15m session remains.
+7. Cold start — defer WS creation when persisted session is expired, expiring within 15m, or expiry unknown.
+8. Pairing — blank `sessionId`/`clientId` skips WS creation until credentials exist.
+9. iOS `CancellationException` on disconnect — reconnect only when cause message contains `"Socket is not connected"`; other cancellations are not auto-retried.
+10. iOS SIGSEGV guard — extract `requestId` from raw JSON before deserializing sealed WS messages.
+11. `unSubscribe()` — not implemented (logs warning).
+12. Demo — host `demo.bisq:21` → `WebSocketClientDemo` (`WebSocketClientFactory`).
 
 ### Platform differences (Android vs iOS)
 
