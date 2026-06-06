@@ -1245,4 +1245,93 @@ class WebSocketClientServiceTest {
             // When/Then - service should work without session renewal capability
             assertTrue(serviceWithoutSession.connectionState.value is ConnectionState.Disconnected)
         }
+
+    @Test
+    fun `isTorProxy reflects current client settings`() =
+        runTest(testDispatcher) {
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://abc.onion:8090",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = "127.0.0.1:9050",
+                    isTorProxy = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(webSocketClientService.isTorProxy)
+        }
+
+    @Test
+    fun `connect delegates to current client under clientUpdateMutex`() =
+        runTest(testDispatcher) {
+            coEvery { mockClient.connect(any()) } returns null
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.connect()
+
+            coVerify { mockClient.connect(any()) }
+        }
+
+    @Test
+    fun `changed clientId on live client recreates WebSocket client`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            every { mockWsClient.sessionId } returns "session-id"
+            every { mockWsClient.clientId } returns "old-client-id"
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "old-client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "new-client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { mockWsClient.dispose() }
+            verify(exactly = 2) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
 }

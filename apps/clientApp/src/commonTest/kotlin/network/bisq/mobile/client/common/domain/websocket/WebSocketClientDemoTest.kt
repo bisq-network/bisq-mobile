@@ -398,6 +398,12 @@ class WebSocketClientDemoTest {
     }
 
     @Test
+    fun `demo client has null session credentials`() {
+        assertNull(demoClient.sessionId)
+        assertNull(demoClient.clientId)
+    }
+
+    @Test
     fun `connect returns null and sets Connected state`() =
         runTest {
             val error = demoClient.connect()
