@@ -94,7 +94,7 @@ class WebSocketClientService(
         _clientRevoked.value = false
     }
 
-    val isTorProxy: Boolean get() = currentClientSettings?.isTorProxy == true
+    val isTorProxy: Boolean get() = preservedIsTorProxy || currentClientSettings?.isTorProxy == true
 
     private val clientUpdateMutex = Mutex()
     private val _connectionState =
@@ -103,6 +103,7 @@ class WebSocketClientService(
 
     private var stateCollectionJob: Job? = null
     private var currentClientSettings: HttpClientSettings? = null
+    private var preservedIsTorProxy = false
 
     private var currentClient = MutableStateFlow<WebSocketClient?>(null)
     private val subscriptionMutex = Mutex()
@@ -240,6 +241,8 @@ class WebSocketClientService(
                 log.d { "WebSocket client settings unchanged, skipping update" }
                 return@withLock
             }
+
+            preservedIsTorProxy = httpClientSettings.isTorProxy
 
             // Skip recreation when connection topology is unchanged and the live client is healthy.
             // Bootstrap POST may persist a new sessionId while the WS upgrade still uses the

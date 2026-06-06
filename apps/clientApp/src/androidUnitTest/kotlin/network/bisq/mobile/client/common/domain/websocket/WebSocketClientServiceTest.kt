@@ -1269,6 +1269,68 @@ class WebSocketClientServiceTest {
         }
 
     @Test
+    fun `isTorProxy preserved when WS creation deferred for short-lived session`() =
+        runTest(testDispatcher) {
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val soonExpiry =
+                DateUtils.now() + SessionValidity.SESSION_SKIP_RECREATE_MIN_REMAINING_MS / 2
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://abc.onion:8090",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = soonExpiry,
+                    externalProxyUrl = "127.0.0.1:9050",
+                    isTorProxy = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify(exactly = 0) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+            assertTrue(webSocketClientService.isTorProxy)
+        }
+
+    @Test
+    fun `isTorProxy cleared when topology switches to clearnet`() =
+        runTest(testDispatcher) {
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://abc.onion:8090",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = null,
+                    externalProxyUrl = "127.0.0.1:9050",
+                    isTorProxy = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertTrue(webSocketClientService.isTorProxy)
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://demo.bisq:21",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = null,
+                    isTorProxy = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertFalse(webSocketClientService.isTorProxy)
+        }
+
+    @Test
     fun `connect delegates to current client under clientUpdateMutex`() =
         runTest(testDispatcher) {
             coEvery { mockClient.connect(any()) } returns null

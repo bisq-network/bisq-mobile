@@ -4,9 +4,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -148,7 +146,7 @@ class ClientApplicationBootstrapFacadeTest {
 
     @Test
     fun `successful session renewal persists sessionExpiresAt`() =
-        runBlocking {
+        runTest(testDispatcher) {
             val expiresAt = 1_700_000_000_000L
             settingsFlow.value =
                 SensitiveSettings(
@@ -167,7 +165,12 @@ class ClientApplicationBootstrapFacadeTest {
                 )
 
             facade.onTorStartedOrSkipped()
-            delay(500)
+            // onTorStartedOrSkipped uses Dispatchers.Default — advanceUntilIdle() won't drive it.
+            val deadline = System.currentTimeMillis() + 2_000L
+            while (settingsFlow.value.sessionId != "new-session-id") {
+                check(System.currentTimeMillis() < deadline) { "Timed out waiting for session renewal" }
+                Thread.sleep(5)
+            }
 
             assertEquals("new-session-id", settingsFlow.value.sessionId)
             assertEquals(expiresAt, settingsFlow.value.sessionExpiresAt)

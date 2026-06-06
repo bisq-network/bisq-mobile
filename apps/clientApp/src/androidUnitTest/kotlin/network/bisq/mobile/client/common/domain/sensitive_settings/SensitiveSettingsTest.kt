@@ -31,6 +31,7 @@ class SensitiveSettingsTest {
                 clientSecret = "secret",
                 clientId = "client-id",
                 sessionId = "session-id",
+                sessionExpiresAt = 1_700_000_000_000L,
                 selectedProxyOption = BisqProxyOption.INTERNAL_TOR,
                 externalProxyUrl = "127.0.0.1:9050",
             )
@@ -41,6 +42,7 @@ class SensitiveSettingsTest {
         assertEquals("secret", settings.clientSecret)
         assertEquals("client-id", settings.clientId)
         assertEquals("session-id", settings.sessionId)
+        assertEquals(1_700_000_000_000L, settings.sessionExpiresAt)
         assertEquals(BisqProxyOption.INTERNAL_TOR, settings.selectedProxyOption)
         assertEquals("127.0.0.1:9050", settings.externalProxyUrl)
     }

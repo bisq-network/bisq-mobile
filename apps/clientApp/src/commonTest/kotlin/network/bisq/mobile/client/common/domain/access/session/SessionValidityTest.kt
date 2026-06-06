@@ -17,6 +17,16 @@ class SessionValidityTest {
     }
 
     @Test
+    fun `hasMinRemainingValidity is false at exact 15m threshold`() {
+        val now = 1_000_000L
+        val expiresAt =
+            now +
+                SessionValidity.SESSION_SKIP_RECREATE_MIN_REMAINING_MS +
+                SessionValidity.SESSION_EXPIRY_BUFFER_MS
+        assertFalse(SessionValidity.hasMinRemainingValidity(expiresAt, now = now))
+    }
+
+    @Test
     fun `hasMinRemainingValidity is false when less than 15m remains`() {
         val now = 1_000_000L
         val expiresAt =
