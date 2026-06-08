@@ -4,12 +4,10 @@ import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.CashDepositAccountPayloadDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.CreateCashDepositAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.CreateCashDepositAccountPayloadDto
-import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.BankAccountTypeDto
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccountPayload
-import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 
 fun CashDepositAccountDto.toDomain(): CashDepositAccount =
     CashDepositAccount(
@@ -57,7 +55,3 @@ fun CreateCashDepositAccountPayload.toDto(): CreateCashDepositAccountPayloadDto 
         nationalAccountId = nationalAccountId,
         requirements = requirements,
     )
-
-private fun BankAccountTypeDto.toDomain(): BankAccountType = BankAccountType.valueOf(name)
-
-private fun BankAccountType.toDto(): BankAccountTypeDto = BankAccountTypeDto.valueOf(name)

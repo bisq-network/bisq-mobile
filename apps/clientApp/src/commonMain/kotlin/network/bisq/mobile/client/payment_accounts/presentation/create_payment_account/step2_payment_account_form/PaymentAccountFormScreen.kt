@@ -31,14 +31,17 @@ import network.bisq.mobile.client.payment_accounts.presentation.create_payment_a
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer.AchTransferFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer.AchTransferFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.bank.BankAccountFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit.CashDepositFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit.CashDepositFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero.MoneroFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero.MoneroFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.national_bank.NationalBankFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto.OtherCryptoFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.same_bank.SameBankFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormContent
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.wise.WiseFormContent
@@ -252,6 +255,34 @@ private fun PaymentMethodFormContent(
                     }
                 }
 
+                FiatPaymentRail.SAME_BANK -> {
+                    val presenter = methodPresenter as? SameBankFormPresenter
+                    if (presenter != null) {
+                        BankAccountFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            paymentMethod = paymentMethod,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
+                FiatPaymentRail.NATIONAL_BANK -> {
+                    val presenter = methodPresenter as? NationalBankFormPresenter
+                    if (presenter != null) {
+                        BankAccountFormContent(
+                            presenter = presenter,
+                            onNavigateToNextScreen = onNavigateToNextScreen,
+                            paymentMethod = paymentMethod,
+                            modifier = modifier,
+                        )
+                    } else {
+                        UnsupportedAccountState(modifier = modifier.fillMaxWidth())
+                    }
+                }
+
                 FiatPaymentRail.SEPA -> {
                     val presenter = methodPresenter as? SepaFormPresenter
                     if (presenter != null) {
@@ -371,6 +402,8 @@ private fun rememberMethodPresenter(paymentType: PaymentTypeVO?): AccountFormPre
         PaymentTypeVO.XMR -> RememberPresenterLifecycleBackStackAware<MoneroFormPresenter>()
         PaymentTypeVO.WISE -> RememberPresenterLifecycleBackStackAware<WiseFormPresenter>()
         PaymentTypeVO.REVOLUT -> RememberPresenterLifecycleBackStackAware<RevolutFormPresenter>()
+        PaymentTypeVO.SAME_BANK -> RememberPresenterLifecycleBackStackAware<SameBankFormPresenter>()
+        PaymentTypeVO.NATIONAL_BANK -> RememberPresenterLifecycleBackStackAware<NationalBankFormPresenter>()
         PaymentTypeVO.SEPA -> RememberPresenterLifecycleBackStackAware<SepaFormPresenter>()
         PaymentTypeVO.BSQ,
         PaymentTypeVO.LTC,

@@ -7,7 +7,9 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.Cr
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.CreateOtherCryptoAssetAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.national_bank.CreateNationalBankAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.CreateRevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.same_bank.CreateSameBankAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.sepa.CreateSepaAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccount
@@ -22,6 +24,8 @@ fun CreatePaymentAccount.toDto(): CreatePaymentAccountDto =
         is CreateZelleAccount -> toDto()
         is CreateWiseAccount -> toDto()
         is CreateRevolutAccount -> toDto()
+        is CreateSameBankAccount -> toDto()
+        is CreateNationalBankAccount -> toDto()
         is CreateSepaAccount -> toDto()
         is CreateMoneroAccount -> toDto()
         is CreateOtherCryptoAssetAccount -> toDto()

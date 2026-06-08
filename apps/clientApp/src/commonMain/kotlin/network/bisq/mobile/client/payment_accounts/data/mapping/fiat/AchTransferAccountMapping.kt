@@ -4,12 +4,10 @@ import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.AchTransferAccountPayloadDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.CreateAchTransferAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.CreateAchTransferAccountPayloadDto
-import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.BankAccountTypeDto
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.AchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.AchTransferAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccountPayload
-import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 
 fun AchTransferAccountDto.toDomain(): AchTransferAccount =
     AchTransferAccount(
@@ -49,7 +47,3 @@ fun CreateAchTransferAccountPayload.toDto(): CreateAchTransferAccountPayloadDto 
         accountNr = accountNr,
         bankAccountType = bankAccountType.toDto(),
     )
-
-private fun BankAccountTypeDto.toDomain(): BankAccountType = BankAccountType.valueOf(name)
-
-private fun BankAccountType.toDto(): BankAccountTypeDto = BankAccountTypeDto.valueOf(name)

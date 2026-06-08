@@ -6,6 +6,7 @@ import network.bisq.mobile.client.payment_accounts.data.model.bank_account_count
 import network.bisq.mobile.client.payment_accounts.data.model.bank_account_country_details.BankAccountCountryDetailsCacheSerializer
 import network.bisq.mobile.client.payment_accounts.data.repository.BankAccountCountryDetailsRepositoryImpl
 import network.bisq.mobile.client.payment_accounts.domain.repository.BankAccountCountryDetailsRepository
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.bank.BankAccountDetailPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.cash_deposit.CashDepositAccountDetailPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.CreatePaymentAccountPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step1_select_payment_method.crypto.SelectCryptoPaymentMethodPresenter
@@ -13,8 +14,10 @@ import network.bisq.mobile.client.payment_accounts.presentation.create_payment_a
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer.AchTransferFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.cash_deposit.CashDepositFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero.MoneroFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.national_bank.NationalBankFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.same_bank.SameBankFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.wise.WiseFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.zelle.ZelleFormPresenter
@@ -38,12 +41,15 @@ val paymentsAccountsModule =
 
         factory { PaymentAccountReviewPresenter(get(), get()) }
         factory { CashDepositAccountDetailPresenter(get(), get()) }
+        factory { BankAccountDetailPresenter(get(), get()) }
 
         factory { AchTransferFormPresenter(get()) }
         factory { CashDepositFormPresenter(get(), get()) }
         factory { ZelleFormPresenter(get()) }
         factory { WiseFormPresenter(get()) }
         factory { RevolutFormPresenter(get()) }
+        factory { SameBankFormPresenter(get(), get()) }
+        factory { NationalBankFormPresenter(get(), get()) }
         factory { SepaFormPresenter(get()) }
         factory { MoneroFormPresenter(get()) }
         factory { OtherCryptoFormPresenter(get()) }

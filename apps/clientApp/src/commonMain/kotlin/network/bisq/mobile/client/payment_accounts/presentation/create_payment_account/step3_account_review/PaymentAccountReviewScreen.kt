@@ -21,7 +21,9 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfe
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.national_bank.NationalBankAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.same_bank.SameBankAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.sepa.SepaAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.WiseAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccount
@@ -33,7 +35,9 @@ import network.bisq.mobile.client.payment_accounts.presentation.common.ui.accoun
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.ach_transfer.AchTransferAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.cash_deposit.CashDepositAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.national_bank.NationalBankAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.revolut.RevolutAccountDetailContent
+import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.same_bank.SameBankAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.sepa.SepaAccountDetailContent
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.wise.WiseAccountDetailContent
 import network.bisq.mobile.domain.model.account.PaymentAccount
@@ -133,6 +137,12 @@ private fun PaymentAccountReviewContent(
 
                 is RevolutAccount ->
                     RevolutAccountDetailContent(paymentAccount)
+
+                is NationalBankAccount ->
+                    NationalBankAccountDetailContent(paymentAccount)
+
+                is SameBankAccount ->
+                    SameBankAccountDetailContent(paymentAccount)
 
                 is SepaAccount ->
                     SepaAccountDetailContent(paymentAccount)

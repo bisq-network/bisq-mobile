@@ -27,9 +27,11 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPay
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero.MoneroFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto.OtherCryptoFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut.RevolutFormPresenter
+import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.same_bank.SameBankFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.sepa.SepaFormPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.zelle.ZelleFormPresenter
 import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
@@ -93,9 +95,11 @@ class PaymentAccountFormScreenTest {
                         single<NavigationManager> { mockk(relaxed = true) }
                         factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
                         single<GlobalUiManager> { mockk(relaxed = true) }
+                        single<PaymentAccountsServiceFacade> { mockk(relaxed = true) }
                         factory { ZelleFormPresenter(mainPresenter) }
                         factory { RevolutFormPresenter(mainPresenter) }
                         factory { SepaFormPresenter(mainPresenter) }
+                        factory { SameBankFormPresenter(get(), mainPresenter) }
                         factory { MoneroFormPresenter(mainPresenter) }
                         factory { OtherCryptoFormPresenter(mainPresenter) }
                     },
@@ -212,6 +216,20 @@ class PaymentAccountFormScreenTest {
         composeTestRule.onNodeWithText("paymentAccounts.sepa.bic".i18n()).performScrollTo().assertIsDisplayed()
         composeTestRule
             .onNodeWithText("paymentAccounts.createAccount.accountData.sepa.acceptCountries".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when same bank payment method rendered then bank account form content is shown`() {
+        paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SAME_BANK, "Same Bank")
+        setTestContent()
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Same Bank").assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.country".i18n()).performScrollTo().assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.createAccount.accountData.country.prompt".i18n())
             .performScrollTo()
             .assertIsDisplayed()
     }

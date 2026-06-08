@@ -11,7 +11,9 @@ import network.bisq.mobile.client.payment_accounts.data.model.crypto.other_crypt
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.ach_transfer.CreateAchTransferAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.cash_deposit.CreateCashDepositAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.FiatPaymentRailDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.national_bank.CreateNationalBankAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.revolut.CreateRevolutAccountDto
+import network.bisq.mobile.client.payment_accounts.data.model.fiat.same_bank.CreateSameBankAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.sepa.CreateSepaAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.user_defined.CreateUserDefinedFiatAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.wise.CreateWiseAccountDto
@@ -34,6 +36,8 @@ object CreatePaymentAccountDtoSerializer : JsonContentPolymorphicSerializer<Crea
             FiatPaymentRailDto.ZELLE.name -> CreateZelleAccountDto.serializer()
             FiatPaymentRailDto.WISE.name -> CreateWiseAccountDto.serializer()
             FiatPaymentRailDto.REVOLUT.name -> CreateRevolutAccountDto.serializer()
+            FiatPaymentRailDto.SAME_BANK.name -> CreateSameBankAccountDto.serializer()
+            FiatPaymentRailDto.NATIONAL_BANK.name -> CreateNationalBankAccountDto.serializer()
             FiatPaymentRailDto.SEPA.name -> CreateSepaAccountDto.serializer()
             CryptoPaymentRailDto.MONERO.name -> CreateMoneroAccountDto.serializer()
             CryptoPaymentRailDto.OTHER_CRYPTO_ASSET.name -> CreateOtherCryptoAssetAccountDto.serializer()

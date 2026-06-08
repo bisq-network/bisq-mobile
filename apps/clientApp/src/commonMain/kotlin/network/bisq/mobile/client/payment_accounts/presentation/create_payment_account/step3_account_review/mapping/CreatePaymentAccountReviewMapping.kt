@@ -7,7 +7,9 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_cry
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.ach_transfer.CreateAchTransferAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CreateCashDepositAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.national_bank.CreateNationalBankAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.CreateRevolutAccount
+import network.bisq.mobile.client.payment_accounts.domain.model.fiat.same_bank.CreateSameBankAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.sepa.CreateSepaAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.wise.CreateWiseAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccount
@@ -21,6 +23,8 @@ fun CreatePaymentAccount.toReviewPaymentAccount(paymentMethod: PaymentMethod): P
         this is CreateZelleAccount && paymentMethod is FiatPaymentMethod -> toReviewPaymentAccount(paymentMethod)
         this is CreateWiseAccount && paymentMethod is FiatPaymentMethod -> toReviewPaymentAccount(paymentMethod)
         this is CreateRevolutAccount && paymentMethod is FiatPaymentMethod -> toReviewPaymentAccount(paymentMethod)
+        this is CreateNationalBankAccount && paymentMethod is FiatPaymentMethod -> toReviewPaymentAccount(paymentMethod)
+        this is CreateSameBankAccount && paymentMethod is FiatPaymentMethod -> toReviewPaymentAccount(paymentMethod)
         this is CreateSepaAccount && paymentMethod is FiatPaymentMethod -> toReviewPaymentAccount(paymentMethod)
         this is CreateMoneroAccount && paymentMethod is CryptoPaymentMethod -> toReviewPaymentAccount(paymentMethod)
         this is CreateOtherCryptoAssetAccount && paymentMethod is CryptoPaymentMethod -> toReviewPaymentAccount(paymentMethod)
