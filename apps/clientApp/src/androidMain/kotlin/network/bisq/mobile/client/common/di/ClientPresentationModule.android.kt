@@ -71,6 +71,8 @@ val androidClientPresentationModule =
                 get(), // notificationController
                 get(), // analyticsService
                 get(), // analyticsBootstrapConfig
+                getOrNull(), // bufferedAnalyticsService — only bound when ANALYTICS_ENABLED
+                getOrNull(), // analyticsSocksPortProvider — only bound when ANALYTICS_ENABLED
             )
         }
 

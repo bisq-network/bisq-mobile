@@ -1,7 +1,6 @@
 package network.bisq.mobile.domain.analytics
 
 import io.sentry.kotlin.multiplatform.Sentry
-import io.sentry.kotlin.multiplatform.SentryLevel
 
 /**
  * Thin abstraction over the Sentry-KMP top-level [Sentry] object. The only
@@ -22,6 +21,9 @@ internal interface SentryClient {
      *  - `beforeSend` runs the [AnalyticsRedactor] over message + exception
      *    text as a defence-in-depth layer for whatever made it past the
      *    sealed-event API.
+     *  - SOCKS5 proxy when [socksProxyHost] + [socksProxyPort] are non-null —
+     *    required for production where the GlitchTip server lives on a Tor
+     *    hidden service.
      *
      * Implementations MUST be safe to call only once per process — Sentry-KMP
      * keeps internal init state and re-init is undefined.
@@ -35,6 +37,8 @@ internal interface SentryClient {
         release: String,
         redactor: AnalyticsRedactor,
         isDebug: Boolean,
+        socksProxyHost: String? = null,
+        socksProxyPort: Int? = null,
     )
 
     /**
@@ -52,59 +56,36 @@ internal interface SentryClient {
 }
 
 /**
- * Production implementation. The only place in the codebase that touches
- * Sentry-KMP types directly — keeps the SDK touch surface to one file so the
- * privacy review (and any future SDK bump) has a single grep target.
+ * Production implementation. Delegates the platform-touching `Sentry.initWithPlatformOptions`
+ * call to an injected [NativeSentryInitializer] (provided per app/platform by
+ * the DI module) — this keeps the cocoapods-dependent iOS init code out of
+ * `:shared:domain`, which doesn't apply the cocoapods plugin.
+ *
+ * The captureMessage / captureException paths still go through the cross-
+ * platform [Sentry] object — they don't touch native types so no platform
+ * indirection is needed there.
  */
-internal object DefaultSentryClient : SentryClient {
+internal class DefaultSentryClient(
+    private val nativeInitializer: NativeSentryInitializer,
+) : SentryClient {
     override fun init(
         dsn: String,
         environment: String,
         release: String,
         redactor: AnalyticsRedactor,
         isDebug: Boolean,
+        socksProxyHost: String?,
+        socksProxyPort: Int?,
     ) {
-        Sentry.init { options ->
-            options.dsn = dsn
-            options.environment = environment
-            options.release = release
-            // Verification aid in debug builds only: surface the SDK's internal
-            // log lines (envelope POSTs, transport failures, etc.) so we can
-            // see WHY an event isn't arriving when GlitchTip's UI is empty
-            // despite a successful `track()` call. SentryLevel.INFO is the
-            // loudest level worth running — DEBUG floods logcat with every
-            // breadcrumb. In release builds we drop to ERROR-only so opted-in
-            // users don't see Sentry chatter in their logs. Sourced from the
-            // app's BuildConfig.IS_DEBUG via [AnalyticsBootstrapConfig] — see
-            // [SentryClient.init] kdoc.
-            options.debug = isDebug
-            options.diagnosticLevel = if (isDebug) SentryLevel.INFO else SentryLevel.ERROR
-            // The two layers that make this analytics integration shippable per
-            // the privacy agreement on issue #525:
-            options.sendDefaultPii = false
-            options.beforeSend = { event ->
-                // Defence-in-depth: scrub message + exception text through the
-                // PII redactor before the SDK serialises the event. The sealed
-                // AnalyticsEvent API is the primary guarantee; this catches
-                // whatever runtime-constructed strings (stack frame messages,
-                // JVM-formatted FileNotFoundException paths, etc.) sneak in.
-                event.message?.let { msg ->
-                    msg.message = msg.message?.let { redactor.redact(it) }
-                    msg.formatted = msg.formatted?.let { redactor.redact(it) }
-                }
-                // SentryException is a data class with val fields; the list
-                // itself is mutable so we replace each entry in place with a
-                // redacted copy.
-                for (i in event.exceptions.indices) {
-                    val ex = event.exceptions[i]
-                    val redactedValue = ex.value?.let { redactor.redact(it) }
-                    if (redactedValue != ex.value) {
-                        event.exceptions[i] = ex.copy(value = redactedValue)
-                    }
-                }
-                event
-            }
-        }
+        nativeInitializer.init(
+            dsn = dsn,
+            environment = environment,
+            release = release,
+            redactor = redactor,
+            isDebug = isDebug,
+            socksProxyHost = socksProxyHost,
+            socksProxyPort = socksProxyPort,
+        )
     }
 
     override fun captureMessage(message: String) {

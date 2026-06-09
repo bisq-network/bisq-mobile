@@ -5,9 +5,12 @@ import network.bisq.mobile.client.common.domain.service.push_notification.Client
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
 import network.bisq.mobile.client.main.ClientMainActivity
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.domain.analytics.NativeSentryInitializer
+import network.bisq.mobile.domain.analytics.SentryJavaNativeSentryInitializer
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceControllerImpl
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -37,5 +40,15 @@ val androidClientDomainModule =
         single { PushNotificationApiGateway(get()) }
         single<PushNotificationServiceFacade> {
             ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())
+        }
+
+        // Native Sentry SDK initializer — only bound when analytics is enabled
+        // at build time. The factory itself uses sentry-android-core types, so
+        // gating the binding lets R8 prune SentryJavaNativeSentryInitializer
+        // (and the Sentry-KMP SDK it touches) from analytics-disabled release
+        // builds. Verified empirically by grepping the release APK for the
+        // class name — see [[project_analytics_phase0_plan]].
+        if (BuildConfig.ANALYTICS_ENABLED) {
+            single<NativeSentryInitializer> { SentryJavaNativeSentryInitializer() }
         }
     }

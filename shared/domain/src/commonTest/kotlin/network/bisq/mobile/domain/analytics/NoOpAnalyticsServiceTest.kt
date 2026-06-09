@@ -28,7 +28,19 @@ class NoOpAnalyticsServiceTest {
     }
 
     @Test
+    fun `trackImmediate accepts any AnalyticsEvent subtype without throwing`() {
+        // Same contract as track for the no-op impl — buffering / priority
+        // semantics only matter in BufferedAnalyticsService.
+        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+    }
+
+    @Test
     fun `captureException accepts any Throwable without throwing`() {
         service.captureException(RuntimeException("boom"))
+    }
+
+    @Test
+    fun `captureExceptionImmediate accepts any Throwable without throwing`() {
+        service.captureExceptionImmediate(RuntimeException("boom"))
     }
 }

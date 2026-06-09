@@ -19,6 +19,8 @@ class SentryAnalyticsServiceTest {
         var lastEnv: String? = null
         var lastRelease: String? = null
         var lastIsDebug: Boolean? = null
+        var lastSocksHost: String? = null
+        var lastSocksPort: Int? = null
         val capturedMessages = mutableListOf<String>()
         val capturedExceptions = mutableListOf<Throwable>()
 
@@ -28,12 +30,16 @@ class SentryAnalyticsServiceTest {
             release: String,
             redactor: AnalyticsRedactor,
             isDebug: Boolean,
+            socksProxyHost: String?,
+            socksProxyPort: Int?,
         ) {
             initCalls++
             lastDsn = dsn
             lastEnv = environment
             lastRelease = release
             lastIsDebug = isDebug
+            lastSocksHost = socksProxyHost
+            lastSocksPort = socksProxyPort
         }
 
         override fun captureMessage(message: String) {
@@ -181,38 +187,158 @@ class SentryAnalyticsServiceTest {
         assertTrue(client.capturedExceptions.isEmpty())
     }
 
-    // ============ DEFAULT WIRING ============
+    // ============ IMMEDIATE-PRIORITY PASS-THROUGH ============
+    //
+    // At the SDK level "immediate" is identical to the normal variant — the
+    // priority semantics are enforced upstream by BufferedAnalyticsService.
+    // These tests pin that the Sentry impl forwards to the same path, so
+    // future refactors that try to differentiate at the SDK level (and
+    // accidentally re-introduce the early-event-drop bug) fail loudly.
 
     @Test
-    fun `default constructor wires DefaultSentryClient without throwing`() {
-        // We do NOT call init here — that would touch the real SDK. We just
-        // assert construction with default deps is safe.
-        SentryAnalyticsService()
-        // No assertion needed — successful construction is the contract
+    fun `trackImmediate emits via the same path as track when ready and opted in`() {
+        val (service, client) = newService(optedIn = true)
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+        assertEquals(listOf("screen.dashboard_opened"), client.capturedMessages)
     }
 
     @Test
-    fun `DI-friendly public constructor accepts an explicit runtimeOptInProvider`() {
+    fun `trackImmediate is a no-op when opted out`() {
+        val (service, client) = newService(optedIn = false)
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+        assertTrue(client.capturedMessages.isEmpty(), "runtime opt-in must gate the immediate variant the same way")
+    }
+
+    @Test
+    fun `trackImmediate is a no-op before init`() {
+        val (service, client) = newService()
+        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+        assertTrue(client.capturedMessages.isEmpty())
+    }
+
+    @Test
+    fun `captureExceptionImmediate ships throwable via the same path when ready and opted in`() {
+        val (service, client) = newService(optedIn = true)
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+        val boom = RuntimeException("boom")
+        service.captureExceptionImmediate(boom)
+        assertEquals(listOf<Throwable>(boom), client.capturedExceptions)
+    }
+
+    @Test
+    fun `captureExceptionImmediate is a no-op when opted out`() {
+        val (service, client) = newService(optedIn = false)
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+        service.captureExceptionImmediate(RuntimeException("boom"))
+        assertTrue(client.capturedExceptions.isEmpty())
+    }
+
+    @Test
+    fun `captureExceptionImmediate is a no-op before init`() {
+        val (service, client) = newService()
+        service.captureExceptionImmediate(RuntimeException("boom"))
+        assertTrue(client.capturedExceptions.isEmpty())
+    }
+
+    // ============ SOCKS PROXY PASS-THROUGH ============
+
+    @Test
+    fun `init forwards both SOCKS host and port to the SDK client`() {
+        val (service, client) = newService()
+        service.init(
+            dsn = "http://abc@localhost:8000/3",
+            environment = "development",
+            release = "0.4.1",
+            isDebug = true,
+            socksProxyHost = "127.0.0.1",
+            socksProxyPort = 9050,
+        )
+        assertEquals("127.0.0.1", client.lastSocksHost)
+        assertEquals(9050, client.lastSocksPort)
+    }
+
+    @Test
+    fun `init with no SOCKS args passes null through to the SDK client`() {
+        // Dev / SSH-tunnel mode: no proxy configured. The SDK must be wired
+        // for direct egress so devs can hit a localhost-tunnelled GlitchTip.
+        val (service, client) = newService()
+        service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+        assertNull(client.lastSocksHost)
+        assertNull(client.lastSocksPort)
+    }
+
+    @Test
+    fun `init refuses to dial when only SOCKS host is set - half-config is rejected`() {
+        // Defence in depth against a refactor that wires only one half of the
+        // SOCKS pair. Without this guard we'd silently dial direct (clearnet)
+        // when the caller intended Tor — leaking onion-bound traffic.
+        val (service, client) = newService()
+        service.init(
+            dsn = "http://abc@localhost:8000/3",
+            environment = "development",
+            release = "0.4.1",
+            isDebug = true,
+            socksProxyHost = "127.0.0.1",
+            socksProxyPort = null,
+        )
+        assertEquals(1, client.initCalls, "init must still happen — degrade to no-proxy rather than refusing entirely")
+        assertNull(client.lastSocksHost, "half-config must be downgraded to no proxy, not partially applied")
+        assertNull(client.lastSocksPort)
+    }
+
+    @Test
+    fun `init refuses to dial when only SOCKS port is set - half-config is rejected`() {
+        val (service, client) = newService()
+        service.init(
+            dsn = "http://abc@localhost:8000/3",
+            environment = "development",
+            release = "0.4.1",
+            isDebug = true,
+            socksProxyHost = null,
+            socksProxyPort = 9050,
+        )
+        assertEquals(1, client.initCalls)
+        assertNull(client.lastSocksHost)
+        assertNull(client.lastSocksPort)
+    }
+
+    // ============ DEFAULT WIRING ============
+
+    @Test
+    fun `DI-friendly public constructor accepts a NativeSentryInitializer plus runtimeOptInProvider`() {
         // Pins the contract for the constructor used by every DI module
-        // (ClientDomainModule + NodeDomainModule pass a `() -> Boolean`
-        // provider that reads BuildConfig.ANALYTICS_ENABLED). Construction
-        // must not throw, and the passed provider must be the one consulted
-        // on emit. This test exercises the public 1-arg constructor that
-        // currently shows as uncovered in PR diff coverage despite being
-        // the most-used production wiring path.
+        // (ClientDomainModule + NodeDomainModule pass `get<NativeSentryInitializer>()`
+        // plus `{ BuildConfig.ANALYTICS_ENABLED }`). Construction must not throw
+        // and must NOT actually invoke the native initializer (init is lazy —
+        // only fires when init() is called). This catches any refactor that
+        // eagerly calls into the SDK at construction time.
         var consented = false
-        // SentryAnalyticsService(runtimeOptInProvider) — the public 1-arg
-        // constructor production code uses. It delegates to the internal
-        // primary constructor with DefaultSentryClient, but we can't observe
-        // emissions through the real SDK from a unit test — so the visible
-        // contract we pin here is: construction succeeds + the provider is
-        // actually wired (verified indirectly via the parent class' branches
-        // tested elsewhere in this file).
-        val instance = SentryAnalyticsService(runtimeOptInProvider = { consented })
-        // Construction succeeded without touching the SDK (no init() call).
+        var nativeInitCalls = 0
+        val recordingNative =
+            object : NativeSentryInitializer {
+                override fun init(
+                    dsn: String,
+                    environment: String,
+                    release: String,
+                    redactor: AnalyticsRedactor,
+                    isDebug: Boolean,
+                    socksProxyHost: String?,
+                    socksProxyPort: Int?,
+                ) {
+                    nativeInitCalls++
+                }
+            }
+        val instance =
+            SentryAnalyticsService(
+                nativeInitializer = recordingNative,
+                runtimeOptInProvider = { consented },
+            )
         assertNotNull(instance)
+        assertEquals(0, nativeInitCalls, "construction must not touch the SDK — init() is the only entry point")
         // Mutating `consented` after construction proves the provider lambda
-        // is captured-by-reference, not snapshotted.
+        // is captured-by-reference, not snapshotted at construction time.
         consented = true
         assertEquals(true, consented)
     }
@@ -220,12 +346,12 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `default runtimeOptInProvider denies emission - safe by default`() {
         // Defence in depth: if a caller wires up SentryAnalyticsService without
-        // passing an explicit provider, the service must NOT emit. The DI
-        // module's build-time gate is the primary lock; this is the secondary.
-        // If this default ever drifts back to `{ true }`, a refactor that
-        // bypasses the DI gate would silently start sending events.
+        // passing an explicit provider (internal constructor path), the service
+        // must NOT emit. The DI module's build-time gate is the primary lock;
+        // this is the secondary. If this default ever drifts back to `{ true }`,
+        // a refactor that bypasses the DI gate would silently start sending events.
         val client = FakeSentryClient()
-        val service = SentryAnalyticsService(client) // no runtimeOptInProvider passed
+        val service = SentryAnalyticsService(sentryClient = client) // no runtimeOptInProvider passed
 
         service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
         service.track(AnalyticsEvent.ScreenViewed.Dashboard)

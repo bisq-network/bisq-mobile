@@ -7,6 +7,8 @@ import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
+import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.killProcess
 import network.bisq.mobile.domain.utils.restartProcess
@@ -16,6 +18,15 @@ abstract class ApplicationLifecycleService(
     private val kmpTorService: KmpTorService,
     private val analyticsService: AnalyticsService,
     private val analyticsBootstrapConfig: AnalyticsBootstrapConfig,
+    // Optional — wired by Koin (`getOrNull`) when ANALYTICS_ENABLED is true.
+    // null in production builds with analytics disabled (NoOpAnalyticsService bound)
+    // and in test fixtures that don't care about the readiness signal.
+    private val bufferedAnalyticsService: BufferedAnalyticsService? = null,
+    // Optional — wired by Koin (`getOrNull`) when ANALYTICS_ENABLED is true.
+    // Per-app: ClientApp wraps KmpTorService, NodeApp polls bisq2's NetworkService.
+    // null when analytics is disabled at build time — `bootstrapAnalytics()`
+    // then skips entirely.
+    private val analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
 ) : BaseService() {
     private val isTerminating = atomic<Boolean>(false)
 
@@ -32,10 +43,12 @@ abstract class ApplicationLifecycleService(
     }
 
     fun initialize() {
-        // Init analytics SDK FIRST so the unhandled-exception handler that the
-        // SDK auto-installs is in place before any service work starts. The
-        // service implementation is itself gated (build-time + runtime) so
-        // this is a cheap no-op when analytics is off.
+        // Defer analytics SDK init until the kmp-tor SOCKS port is up — Phase 1
+        // contract is "Tor or nothing", so clearnet users get no analytics on
+        // the wire (events still hit the BufferedAnalyticsService buffer and
+        // are evicted by the bounded-buffer policy without ever leaving the
+        // device). The service implementation is itself gated (build-time +
+        // runtime) so a build with analytics disabled never enters this path.
         log.i { "Maybe initialize analytics" }
         bootstrapAnalytics()
 
@@ -50,18 +63,60 @@ abstract class ApplicationLifecycleService(
     }
 
     private fun bootstrapAnalytics() {
-        try {
-            analyticsService.init(
-                dsn = analyticsBootstrapConfig.dsn,
-                environment = analyticsBootstrapConfig.environment,
-                release = analyticsBootstrapConfig.release,
-                isDebug = analyticsBootstrapConfig.isDebug,
-            )
-        } catch (e: Exception) {
-            // Never let analytics setup take the app down — if Sentry-KMP's
-            // init throws on a malformed DSN or platform quirk, log and proceed.
-            log.w(e) { "Analytics init failed; continuing without analytics" }
+        // Skip entirely when analytics is disabled at build time. With the
+        // build-time gate off, the [AnalyticsSocksPortProvider] binding is
+        // absent and the runtime gate on [SentryAnalyticsService] denies
+        // emission anyway — but bailing out here keeps the log noise honest
+        // and avoids spinning a coroutine that has nothing to do.
+        val provider = analyticsSocksPortProvider
+        if (provider == null) {
+            log.d { "Analytics: SocksPortProvider not bound — analytics disabled" }
+            return
         }
+        // Launch instead of running inline so the lifecycle's initialize() does
+        // not block on Tor bootstrap (which can take 30–60s on first run, much
+        // longer for users who pair their onion trusted node well after launch).
+        // All service facade activation proceeds in parallel — the SDK is not
+        // on the critical path.
+        serviceScope.launch {
+            try {
+                log.i { "Analytics: waiting for Tor SOCKS port (suspends until available)" }
+                // No timeout — if Tor never comes up (clearnet trusted node on
+                // the client, or a node app that fails Tor bootstrap), this
+                // suspends forever. The bounded BufferedAnalyticsService FIFO
+                // eviction guarantees memory safety; the privacy contract
+                // guarantees we never leak via clearnet because Sentry is
+                // simply never initialized.
+                val socksPort = provider.awaitSocksPort()
+                analyticsService.init(
+                    dsn = analyticsBootstrapConfig.dsn,
+                    environment = analyticsBootstrapConfig.environment,
+                    release = analyticsBootstrapConfig.release,
+                    isDebug = analyticsBootstrapConfig.isDebug,
+                    socksProxyHost = LOOPBACK_SOCKS_HOST,
+                    socksProxyPort = socksPort,
+                )
+                // Flip the buffer's readiness flag and trigger an immediate
+                // drain of any events that fired between presenter wiring and
+                // now. Null when analytics is disabled at build time (NoOp is
+                // bound, there's nothing to flush). Safe to call multiple
+                // times — the method is idempotent (atomic CAS internally).
+                bufferedAnalyticsService?.onSentryReady()
+                log.i { "Analytics: Sentry initialized over Tor (SOCKS5 $LOOPBACK_SOCKS_HOST:$socksPort)" }
+            } catch (e: Exception) {
+                // Never let analytics setup take the app down — if Sentry-KMP's
+                // init throws on a malformed DSN or platform quirk, log and
+                // proceed. We intentionally do NOT flip readiness here —
+                // events stay in the buffer (subject to the periodic flush's
+                // later retry, which will keep tryDirect failing safely).
+                log.w(e) { "Analytics init failed; continuing without analytics" }
+            }
+        }
+    }
+
+    private companion object {
+        /** kmp-tor and bisq2 both bind their SOCKS5 listener on loopback. */
+        const val LOOPBACK_SOCKS_HOST = "127.0.0.1"
     }
 
     /**

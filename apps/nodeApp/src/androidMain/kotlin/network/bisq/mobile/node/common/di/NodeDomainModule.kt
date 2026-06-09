@@ -3,6 +3,9 @@ package network.bisq.mobile.node.common.di
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Debug
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
@@ -30,13 +33,18 @@ import network.bisq.mobile.data.utils.AndroidUrlLauncher
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
+import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
+import network.bisq.mobile.domain.analytics.NativeSentryInitializer
 import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.analytics.SentryAnalyticsService
+import network.bisq.mobile.domain.analytics.SentryJavaNativeSentryInitializer
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.node.BuildConfig
+import network.bisq.mobile.node.common.domain.analytics.Bisq2SocksPortProvider
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.NodeApplicationLifecycleService
 import network.bisq.mobile.node.common.domain.service.accounts.NodeUserDefinedAccountsServiceFacade
@@ -113,17 +121,34 @@ val androidNodeDomainModule =
         single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
 
         // Opt-in analytics (issue #525). Same shape as clientApp's binding —
-        // see ClientDomainModule for the full double-lock rationale.
+        // see ClientDomainModule for the full double-lock rationale plus the
+        // BufferedAnalyticsService double-binding pattern.
         // Node app sends to the bisq-easy-node-android GlitchTip project (DSN
         // from gradle.properties / local.properties).
-        single<AnalyticsService> {
-            if (BuildNodeConfig.ANALYTICS_ENABLED) {
-                SentryAnalyticsService(
-                    runtimeOptInProvider = { BuildNodeConfig.ANALYTICS_ENABLED },
+        if (BuildNodeConfig.ANALYTICS_ENABLED) {
+            single<NativeSentryInitializer> { SentryJavaNativeSentryInitializer() }
+            // SOCKS port source: bisq2's embedded NetworkService. The node app's
+            // KmpTorService binding is NEVER started (its startTor() is only
+            // called from the Connect-side TrustedNodeSetupUseCase) — so we
+            // must NOT wire KmpTorSocksPortProvider here or analytics would
+            // suspend forever waiting on a Tor instance nobody ever starts.
+            single<AnalyticsSocksPortProvider> { Bisq2SocksPortProvider(get()) }
+            single {
+                BufferedAnalyticsService(
+                    downstream =
+                        SentryAnalyticsService(
+                            nativeInitializer = get(),
+                            runtimeOptInProvider = { BuildNodeConfig.ANALYTICS_ENABLED },
+                        ),
+                    scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
                 )
-            } else {
-                NoOpAnalyticsService
             }
+            single<AnalyticsService> { get<BufferedAnalyticsService>() }
+        } else {
+            single<AnalyticsService> { NoOpAnalyticsService }
+            // Intentionally NO BufferedAnalyticsService binding here — the
+            // lifecycle service uses getOrNull<BufferedAnalyticsService>(),
+            // which returns null and skips the onSentryReady() call.
         }
         single<AnalyticsBootstrapConfig> {
             AnalyticsBootstrapConfig(
@@ -200,6 +225,8 @@ val androidNodeDomainModule =
                 get(),
                 get(), // analyticsService
                 get(), // analyticsBootstrapConfig
+                getOrNull(), // bufferedAnalyticsService — only bound when ANALYTICS_ENABLED
+                getOrNull(), // analyticsSocksPortProvider — only bound when ANALYTICS_ENABLED
             )
         } bind ApplicationLifecycleService::class
 

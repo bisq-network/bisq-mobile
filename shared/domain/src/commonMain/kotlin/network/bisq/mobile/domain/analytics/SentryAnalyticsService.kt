@@ -36,30 +36,27 @@ import network.bisq.mobile.domain.utils.Logging
  *  `{ false }` (no emission) — see "Runtime opt-in gate" above.
  */
 class SentryAnalyticsService internal constructor(
-    private val sentryClient: SentryClient = DefaultSentryClient,
+    private val sentryClient: SentryClient,
     private val redactor: AnalyticsRedactor = AnalyticsRedactor(),
     private val runtimeOptInProvider: () -> Boolean = { false },
 ) : AnalyticsService,
     Logging {
     /**
-     * Public no-arg constructor. **Will not emit** — `runtimeOptInProvider`
-     * defaults to `{ false }`. Kept as a safe-default fallback; DI modules
-     * should prefer the [runtimeOptInProvider] overload below.
+     * Public constructor for DI modules. The DI module is responsible for
+     * constructing a [SentryClient] (typically [DefaultSentryClient] wrapping
+     * a platform-specific [NativeSentryInitializer]) and passing it here.
      *
-     * Tests use the [internal] primary constructor to inject a fake
-     * [SentryClient] alongside a fixed opt-in provider.
+     * Takes the runtime opt-in source explicitly so the caller's intent
+     * (and what gates emission) is visible at the binding site. Initial work
+     * wires this to `{ BuildConfig.ANALYTICS_ENABLED }`; TODO swap to
+     * `{ settingsRepository.analyticsEnabled.value }` once the Settings UI
+     * toggle ships.
      */
-    constructor() : this(sentryClient = DefaultSentryClient)
-
-    /**
-     * Public constructor for DI modules. Takes the runtime opt-in source
-     * explicitly so the caller's intent (and what gates emission) is visible
-     * at the binding site. Initial work wires this to
-     * `{ BuildConfig.ANALYTICS_ENABLED }`; TODO swap to
-     * `{ settingsRepository.analyticsEnabled.value }`.
-     */
-    constructor(runtimeOptInProvider: () -> Boolean) : this(
-        sentryClient = DefaultSentryClient,
+    constructor(
+        nativeInitializer: NativeSentryInitializer,
+        runtimeOptInProvider: () -> Boolean,
+    ) : this(
+        sentryClient = DefaultSentryClient(nativeInitializer),
         redactor = AnalyticsRedactor(),
         runtimeOptInProvider = runtimeOptInProvider,
     )
@@ -71,14 +68,34 @@ class SentryAnalyticsService internal constructor(
         environment: String,
         release: String,
         isDebug: Boolean,
+        socksProxyHost: String?,
+        socksProxyPort: Int?,
     ) {
         // Idempotent: Sentry-KMP holds internal init state and re-init is undefined.
         if (!initialized.compareAndSet(expect = false, update = true)) return
         // Refuse to dial a blank/missing DSN — better to silently do nothing
         // than to send events to a misconfigured destination.
         if (dsn.isBlank()) return
-        sentryClient.init(dsn, environment, release, redactor, isDebug)
-        log.d { "Sentry initialized" }
+        // Half-set proxy = misconfiguration; treat as no proxy rather than
+        // silently dialling without one (which would leak onion-bound traffic
+        // attempts onto clearnet).
+        val (effectiveHost, effectivePort) =
+            if (socksProxyHost != null && socksProxyPort != null) {
+                socksProxyHost to socksProxyPort
+            } else {
+                if (socksProxyHost != null || socksProxyPort != null) {
+                    log.w { "Ignoring half-configured SOCKS proxy (host=$socksProxyHost, port=$socksProxyPort)" }
+                }
+                null to null
+            }
+        sentryClient.init(dsn, environment, release, redactor, isDebug, effectiveHost, effectivePort)
+        log.d {
+            if (effectiveHost != null) {
+                "Sentry initialized with SOCKS proxy at $effectiveHost:$effectivePort"
+            } else {
+                "Sentry initialized (no proxy — dev / SSH-tunnel mode only)"
+            }
+        }
     }
 
     override fun track(event: AnalyticsEvent) {
@@ -87,11 +104,21 @@ class SentryAnalyticsService internal constructor(
         sentryClient.captureMessage(event.name)
     }
 
+    /**
+     * At the SDK level "immediate" is identical to [track] — Sentry already
+     * accepts the event into its own internal queue without blocking on the
+     * wire. The priority distinction is enforced by [BufferedAnalyticsService]
+     * upstream (HEAD-of-queue placement when the transport isn't ready yet).
+     */
+    override fun trackImmediate(event: AnalyticsEvent) = track(event)
+
     override fun captureException(throwable: Throwable) {
         if (!isReadyToEmit()) return
         log.w { "Sentry: Tracking exception ${throwable.message}" }
         sentryClient.captureException(throwable)
     }
+
+    override fun captureExceptionImmediate(throwable: Throwable) = captureException(throwable)
 
     private fun isReadyToEmit(): Boolean = initialized.value && runtimeOptInProvider()
 }

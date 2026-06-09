@@ -59,11 +59,15 @@ class NodeApplicationLifecycleService(
     private val connectivityService: NodeConnectivityService,
     analyticsService: AnalyticsService,
     analyticsBootstrapConfig: AnalyticsBootstrapConfig,
+    bufferedAnalyticsService: network.bisq.mobile.domain.analytics.BufferedAnalyticsService? = null,
+    analyticsSocksPortProvider: network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,
         analyticsService,
         analyticsBootstrapConfig,
+        bufferedAnalyticsService,
+        analyticsSocksPortProvider,
     ) {
     fun restartForRestoreDataDirectory(view: Any?) {
         val activity =

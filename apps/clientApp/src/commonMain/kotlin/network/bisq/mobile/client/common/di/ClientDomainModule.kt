@@ -2,6 +2,9 @@ package network.bisq.mobile.client.common.di
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -12,6 +15,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.access.session.SessionApiGateway
 import network.bisq.mobile.client.common.domain.access.session.SessionService
+import network.bisq.mobile.client.common.domain.analytics.KmpTorSocksPortProvider
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
@@ -103,6 +107,8 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.data.utils.getStorageDir
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
+import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.analytics.SentryAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
@@ -204,21 +210,49 @@ val clientDomainModule =
 
         // Opt-in analytics (issue #525). Two locks gate emission:
         //  1. Build-time: ANALYTICS_ENABLED=false → NoOpAnalyticsService is
-        //     bound and R8 prunes Sentry-KMP from release artifacts entirely.
+        //     bound and R8 prunes Sentry-KMP AND BufferedAnalyticsService from
+        //     release artifacts entirely (verified via
+        //     `unzip -l <release.apk> | grep -E 'sentry|Buffered'` = empty).
         //  2. Runtime: `runtimeOptInProvider` below is checked on every emit.
         //     For first tests we tie it to the same BuildConfig flag — double-lock,
         //     no information leakage if (1) ever gets bypassed by a refactor.
         //     TODO swap `{ BuildConfig.ANALYTICS_ENABLED }` for
         //     `{ get<SettingsRepository>().analyticsEnabled.value }` once the
         //     Settings UI toggle ships.
-        single<AnalyticsService> {
-            if (BuildConfig.ANALYTICS_ENABLED) {
-                SentryAnalyticsService(
-                    runtimeOptInProvider = { BuildConfig.ANALYTICS_ENABLED },
+        //
+        // When enabled, BufferedAnalyticsService wraps SentryAnalyticsService:
+        // events fired before the Sentry SDK is ready (e.g. during Tor
+        // bootstrap) sit in an in-memory bounded buffer and drain when the
+        // lifecycle service calls onSentryReady(). The same instance is bound
+        // BOTH as AnalyticsService (for general use) AND as
+        // BufferedAnalyticsService (so ApplicationLifecycleService can call
+        // onSentryReady() on the concrete type) — see Koin's double-binding
+        // pattern below.
+        if (BuildConfig.ANALYTICS_ENABLED) {
+            // SOCKS port source: kmp-tor. Suspends until the user pairs an
+            // onion trusted node and `TrustedNodeSetupUseCase` starts Tor.
+            // On a LAN/clearnet trusted node this never resolves — events
+            // sit in the buffer and evict by FIFO with no clearnet leak.
+            single<AnalyticsSocksPortProvider> { KmpTorSocksPortProvider(get()) }
+            single {
+                BufferedAnalyticsService(
+                    downstream =
+                        SentryAnalyticsService(
+                            nativeInitializer = get(),
+                            runtimeOptInProvider = { BuildConfig.ANALYTICS_ENABLED },
+                        ),
+                    // Independent scope so the buffer's periodic flusher survives
+                    // any individual feature-scope cancellation. SupervisorJob so
+                    // a single failed enqueue doesn't kill the flusher.
+                    scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
                 )
-            } else {
-                NoOpAnalyticsService
             }
+            single<AnalyticsService> { get<BufferedAnalyticsService>() }
+        } else {
+            single<AnalyticsService> { NoOpAnalyticsService }
+            // Intentionally NO BufferedAnalyticsService binding here — the
+            // lifecycle service uses getOrNull<BufferedAnalyticsService>(),
+            // which returns null and skips the onSentryReady() call.
         }
         // Per-platform analytics bootstrap config. The Connect app ships a
         // separate GlitchTip project for Android (id=3) and iOS (id=4); the

@@ -1,16 +1,19 @@
 package network.bisq.mobile.client.common.di
 
+import network.bisq.mobile.client.common.domain.analytics.SentryCocoaNativeSentryInitializer
 import network.bisq.mobile.client.common.domain.service.ClientApplicationLifecycleService
 import network.bisq.mobile.client.common.domain.service.push_notification.ClientPushNotificationServiceFacade
 import network.bisq.mobile.client.common.domain.service.push_notification.IosPushNotificationTokenProvider
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.utils.IOSUrlLauncher
 import network.bisq.mobile.data.utils.UrlLauncher
+import network.bisq.mobile.domain.analytics.NativeSentryInitializer
 import network.bisq.mobile.domain.utils.ClientVersionProvider
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
@@ -64,8 +67,21 @@ val iosClientDomainModule =
                 get(), // notificationController
                 get(), // analyticsService
                 get(), // analyticsBootstrapConfig
+                getOrNull(), // bufferedAnalyticsService — only bound when ANALYTICS_ENABLED
+                getOrNull(), // analyticsSocksPortProvider — only bound when ANALYTICS_ENABLED
             )
         }
         single<UrlLauncher> { IOSUrlLauncher() }
         single<VersionProvider> { ClientVersionProvider() }
+
+        // Native Sentry SDK initializer — only bound when analytics is enabled
+        // at build time. Unlike Android (where R8 prunes the Sentry-KMP classes
+        // outright), iOS still statically links Sentry.framework via the pod()
+        // declaration in clientApp/build.gradle.kts — but no Kotlin code paths
+        // reference it when this binding is absent, so it stays inert.
+        // TODO: gate the pod() declaration too (see clientApp/build.gradle.kts
+        // for iOS pruning options).
+        if (BuildConfig.ANALYTICS_ENABLED) {
+            single<NativeSentryInitializer> { SentryCocoaNativeSentryInitializer() }
+        }
     }

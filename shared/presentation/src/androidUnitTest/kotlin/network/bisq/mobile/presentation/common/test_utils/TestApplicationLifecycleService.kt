@@ -6,6 +6,8 @@ import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
+import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 
 /**
@@ -20,11 +22,15 @@ class TestApplicationLifecycleService(
     analyticsService: AnalyticsService = NoOpAnalyticsService,
     analyticsBootstrapConfig: AnalyticsBootstrapConfig =
         AnalyticsBootstrapConfig(dsn = "", environment = "test", release = "test", isDebug = false),
+    bufferedAnalyticsService: BufferedAnalyticsService? = null,
+    analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,
         analyticsService,
         analyticsBootstrapConfig,
+        bufferedAnalyticsService,
+        analyticsSocksPortProvider,
     ) {
     override suspend fun activateServiceFacades() {}
 

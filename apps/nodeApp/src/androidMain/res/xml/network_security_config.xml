@@ -1,25 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Safe-default network security config for the nodeApp Bisq Easy release.
+  Network security config for the nodeApp Bisq Easy release.
 
-  Empty <network-security-config /> = use Android's built-in defaults:
-  cleartext (plain HTTP) traffic is denied (API 28+), TLS is required, and
-  trust anchors are the system CA set. That's the correct policy for shipped
-  builds because:
-
+  Default policy: cleartext (plain HTTP) traffic is denied (API 28+), TLS is
+  required, system CAs trusted. That's the correct policy for shipped builds
+  because:
     - The embedded bisq2 runtime handles its own Tor transport via a SOCKS
-      proxy and bypasses Android's network policy entirely.
+      proxy at the JNI/native layer and bypasses Android's network policy
+      entirely.
     - nodeApp Kotlin code itself doesn't make outbound HTTP requests to
       .onion or local-network addresses at runtime.
 
+  ONE narrow exception: the GlitchTip analytics onion host. The Sentry Android
+  SDK uses java.net.HttpURLConnection internally, which IS subject to Android
+  NSC even when we configure a SOCKS5 proxy on SentryOptions — so without this
+  exception every Sentry envelope fails with `Cleartext HTTP traffic to
+  *.onion not permitted` before the SOCKS layer ever sees the request.
+
+  Why http:// is correct (not a workaround):
+    - Onion services provide end-to-end encryption via Tor's onion routing.
+      Adding TLS on top of a v3 onion is generally discouraged — it shifts
+      identity verification onto the CA trust model that Tor's onion address
+      ALREADY provides cryptographically.
+    - The actual TCP socket is routed through `127.0.0.1:<socksPort>` to
+      bisq2's local Tor; the cleartext bytes never leave the device on a
+      clearnet link.
+
   Dev-only cleartext exceptions (Android emulator loopback for SSH tunneling
   to local services, etc.) live in src/debug/res/xml/network_security_config.xml
-  and are merged in ONLY for the debug build variant. The manifest reference
-  in src/androidMain/AndroidManifest.xml points at @xml/network_security_config
-  for both variants; resource merging swaps the contents per-variant.
-
-  If you ever need to allow cleartext to a domain that ships to users, that's
-  not a network_security_config concern — re-think the connection (TLS, Tor,
-  embed via the bisq2 SOCKS path, etc.).
+  and are merged in ONLY for the debug build variant.
 -->
-<network-security-config />
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!--
+          Analytics endpoint (GlitchTip). Used by all 3 mobile apps; the
+          three DSN paths /2 /3 /4 select the per-app GlitchTip project on
+          the same host. Routed through bisq2's local Tor via SOCKS5 —
+          configured on SentryOptions in SentryJavaNativeSentryInitializer.
+          When the user opts out of analytics this host is never dialed
+          (build-time + runtime gates).
+        -->
+        <domain includeSubdomains="false">uzlqr4bnoscfifvjvzj3kicoc23ejibefpsynuorcvetjptzqkaqisid.onion</domain>
+    </domain-config>
+</network-security-config>

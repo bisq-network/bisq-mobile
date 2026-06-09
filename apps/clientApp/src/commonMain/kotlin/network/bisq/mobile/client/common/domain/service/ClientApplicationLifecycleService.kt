@@ -64,11 +64,15 @@ class ClientApplicationLifecycleService(
     private val notificationController: NotificationController,
     analyticsService: AnalyticsService,
     analyticsBootstrapConfig: AnalyticsBootstrapConfig,
+    bufferedAnalyticsService: network.bisq.mobile.domain.analytics.BufferedAnalyticsService? = null,
+    analyticsSocksPortProvider: network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,
         analyticsService,
         analyticsBootstrapConfig,
+        bufferedAnalyticsService,
+        analyticsSocksPortProvider,
     ) {
     /**
      * Dedicated scope for the local-vs-relayed orchestration job. Kept separate
