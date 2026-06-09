@@ -322,4 +322,205 @@ class SentryJavaNativeSentryInitializerTest {
         val result = callback.execute(event, io.sentry.Hint())
         assertSame(event, result, "beforeSend must return the SAME event reference — not a copy")
     }
+
+    // ============ MINIMAL PAYLOAD CONTRACT (privacy scrub) ============
+    //
+    // These tests exercise `applyMinimalPayloadContract` against synthetic
+    // events populated with everything Sentry-Android auto-attaches by default.
+    // After the scrub, ONLY the privacy-contract-approved fields survive.
+    // See class kdoc for the contract.
+
+    @Test
+    fun `scrub clears user - no user id ever leaves the device`() {
+        // `user.id` is auto-populated by Sentry's session tracking even with
+        // sendDefaultPii=false. Disabling the integration is the primary lock;
+        // this scrub is defence in depth — a refactor that flips
+        // enableAutoSessionTracking back on would still NOT leak the id.
+        val event =
+            SentryEvent().apply {
+                user =
+                    io.sentry.protocol
+                        .User()
+                        .apply { id = "7B9A3BC1-01C7-4AF8-A932" }
+            }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+        assertNull(event.user, "user MUST be cleared — `user.id` violates the no-user-ids contract")
+    }
+
+    @Test
+    fun `scrub clears breadcrumbs - no trusted-node onion leakage`() {
+        // The CRITICAL scrub: Sentry-Android's network event breadcrumbs would
+        // attach every HTTP request to subsequent events, including the URL.
+        // We talk to *.onion trusted nodes — without this clear, every Sentry
+        // event would ship the user's chosen trusted node onion URL.
+        val event =
+            SentryEvent().apply {
+                breadcrumbs =
+                    mutableListOf(
+                        io.sentry.Breadcrumb().apply {
+                            category = "http"
+                            setData("url", "http://b4teju6q...trusted-node.onion/api/v1/session")
+                        },
+                    )
+            }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+        assertNull(event.breadcrumbs, "breadcrumbs MUST be cleared to avoid trusted-node URL leakage")
+    }
+
+    @Test
+    fun `scrub clears auto-attached threads - track events do not ship thread stacks`() {
+        // Sentry-Android attaches every thread stack to non-exception events
+        // when attachThreads=true. The dashboard-opened test event was carrying
+        // 60+ frames including K/N runtime internals and absolute file paths.
+        // Disabling attachThreads is the primary lock; this scrub is the catch.
+        //
+        // Note: Sentry's SentryEvent wraps the threads list in `SentryValues`
+        // whose constructor normalises null to an empty ArrayList — so
+        // setThreads(null) results in event.threads == empty list, NOT null.
+        // Empty list is functionally equivalent for the wire (no thread data
+        // attached), which is what we care about for the privacy contract.
+        val event =
+            SentryEvent().apply {
+                threads =
+                    mutableListOf(
+                        io.sentry.protocol
+                            .SentryThread()
+                            .apply { name = "main" },
+                    )
+            }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+        assertEquals(
+            true,
+            event.threads.isNullOrEmpty(),
+            "auto-attached threads MUST be cleared on track events (null or empty list — got ${event.threads})",
+        )
+    }
+
+    @Test
+    fun `scrub clears debugMeta - no user home paths in symbol file references`() {
+        // debugMeta carries absolute paths to debug symbol files — on a dev
+        // build these point inside `/Users/<name>/Library/Developer/...` which
+        // de-anonymises the developer/user. Real users get sandbox paths, but
+        // those still fingerprint the device.
+        val event = SentryEvent().apply { debugMeta = io.sentry.protocol.DebugMeta() }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+        assertNull(event.debugMeta, "debugMeta MUST be cleared (paths fingerprint device/user)")
+    }
+
+    @Test
+    fun `scrub keeps OS name and version - useful for triage`() {
+        val event =
+            SentryEvent().apply {
+                contexts.setOperatingSystem(
+                    io.sentry.protocol.OperatingSystem().apply {
+                        name = "Android"
+                        version = "15"
+                        build = "AE3A.240806.043" // fingerprint-adjacent — should be dropped
+                        kernelVersion = "6.6.30-android15" // should be dropped
+                    },
+                )
+            }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+
+        val os = assertNotNull(event.contexts.operatingSystem)
+        assertEquals("Android", os.name)
+        assertEquals("15", os.version)
+        assertNull(os.build, "OS build hash is fingerprint-adjacent — must be stripped")
+        assertNull(os.kernelVersion, "kernel version is fingerprint-adjacent — must be stripped")
+    }
+
+    @Test
+    fun `scrub keeps device volatile diagnostic fields and drops the fingerprint ones`() {
+        // Keep-list per the privacy contract: volatile fields only (rotate
+        // with reboot / charge / OS pressure), useful for triage but no
+        // device fingerprint. Crucially, the STATIC counterparts of the
+        // memory/storage pair (memorySize, storageSize) are NOT kept — those
+        // fingerprint the device tier (e.g. 256GB iPhone).
+        val event =
+            SentryEvent().apply {
+                contexts.setDevice(
+                    io.sentry.protocol.Device().apply {
+                        // Keep these — volatile diagnostics
+                        bootTime = java.util.Date(1_700_000_000_000L)
+                        batteryLevel = 72.5f
+                        isCharging = false
+                        freeMemory = 1_302_515_712L
+                        freeStorage = 3_030_827_008L
+                        isLowMemory = false
+                        // Drop these — fingerprints
+                        id = "f71bd5bdf6a54251bbb3acb286623025"
+                        manufacturer = "Google"
+                        brand = "google"
+                        family = "sdk_gphone64_arm64"
+                        model = "sdk_gphone64_arm64"
+                        modelId = "AE3A.240806.043"
+                        archs = arrayOf("arm64-v8a")
+                        memorySize = 2_592_759_808L // total RAM = device tier fingerprint
+                        storageSize = 6_228_115_456L // total disk = device tier fingerprint
+                        timezone = java.util.TimeZone.getTimeZone("Asia/Kuala_Lumpur") // location leak
+                        screenDensity = 2.75f
+                        screenDpi = 440
+                    },
+                )
+            }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+
+        val device = assertNotNull(event.contexts.device)
+        // Kept (volatile diagnostics)
+        assertEquals(java.util.Date(1_700_000_000_000L), device.bootTime)
+        assertEquals(72.5f, device.batteryLevel)
+        assertEquals(false, device.isCharging)
+        assertEquals(1_302_515_712L, device.freeMemory)
+        assertEquals(3_030_827_008L, device.freeStorage)
+        assertEquals(false, device.isLowMemory)
+        // Stripped (the load-bearing assertions for privacy)
+        assertNull(device.id, "device.id is the FIRST contract violation we hit on iOS — must be stripped")
+        assertNull(device.manufacturer)
+        assertNull(device.brand)
+        assertNull(device.family)
+        assertNull(device.model)
+        assertNull(device.modelId)
+        assertNull(device.archs)
+        assertNull(device.memorySize, "total RAM fingerprints the device model — strip")
+        assertNull(device.storageSize, "total disk capacity fingerprints the device tier — strip")
+        assertNull(device.timezone, "timezone leaks user region — strip")
+        assertNull(device.screenDensity)
+        assertNull(device.screenDpi)
+    }
+
+    @Test
+    fun `scrub drops every context type other than os and device`() {
+        // App context carries app_identifier, app_id, view_names, device_app_hash,
+        // permissions — all device/user fingerprint. Drop wholesale. Same for
+        // every other context Sentry-Java might attach.
+        val event =
+            SentryEvent().apply {
+                contexts.setApp(
+                    io.sentry.protocol
+                        .App()
+                        .apply { appName = "Bisq Easy" },
+                )
+                contexts.setBrowser(io.sentry.protocol.Browser())
+                contexts.setRuntime(io.sentry.protocol.SentryRuntime())
+                contexts.setGpu(io.sentry.protocol.Gpu())
+                contexts.setOperatingSystem(
+                    io.sentry.protocol
+                        .OperatingSystem()
+                        .apply { name = "Android" },
+                )
+                contexts.setDevice(
+                    io.sentry.protocol
+                        .Device()
+                        .apply { batteryLevel = 50f },
+                )
+            }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+
+        assertNotNull(event.contexts.operatingSystem, "OS context is on the keep list")
+        assertNotNull(event.contexts.device, "Device context is on the keep list")
+        assertNull(event.contexts.app, "App context MUST be dropped (carries app_identifier, permissions, etc.)")
+        assertNull(event.contexts.browser)
+        assertNull(event.contexts.runtime)
+        assertNull(event.contexts.gpu)
+    }
 }
