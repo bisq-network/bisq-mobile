@@ -318,6 +318,7 @@ val clientDomainModule =
                 get(),
                 get(),
                 get(),
+                kmpTorService = get(),
             )
         }
 

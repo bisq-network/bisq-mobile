@@ -9,6 +9,8 @@ import io.matthewnelson.kmp.tor.runtime.TorRuntime
 import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
+import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
+import io.matthewnelson.kmp.tor.runtime.core.util.executeAsync
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -185,6 +187,23 @@ class KmpTorService(
             _socksPort.filterNotNull(),
             _state.filter { it is TorState.Stopped },
         )
+
+    /**
+     * Sends a NEWNYM signal to Tor, requesting fresh circuits for all subsequent
+     * connections. This is a no-op if Tor is not running or the signal fails.
+     *
+     * Tor enforces a 10-second rate limit on NEWNYM; if called more often it
+     * silently returns RATE_LIMITED, which is harmless.
+     */
+    suspend fun signalNewNym() {
+        val runtime = torRuntime ?: return
+        try {
+            runtime.executeAsync(TorCmd.Signal.NewNym)
+            log.i { "NEWNYM signal sent — Tor will use fresh circuits" }
+        } catch (e: Exception) {
+            log.w(e) { "NEWNYM signal failed" }
+        }
+    }
 
     suspend fun stopTor(reason: Throwable? = null) {
         startDefer?.cancel()

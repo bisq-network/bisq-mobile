@@ -27,6 +27,7 @@ import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.access.session.SessionValidity
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
@@ -66,6 +67,7 @@ class WebSocketClientService(
     private val webSocketClientFactory: WebSocketClientFactory,
     private val sessionService: SessionService? = null,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository? = null,
+    private val kmpTorService: KmpTorService? = null,
 ) : ServiceFacade(),
     Logging {
     companion object {
@@ -570,6 +572,9 @@ class WebSocketClientService(
         }
         // Call outside the lock since updateWebSocketClient acquires clientUpdateMutex
         httpClientService.recreateClient()
+        if (isTorProxy) {
+            kmpTorService?.signalNewNym()
+        }
     }
 
     /**
