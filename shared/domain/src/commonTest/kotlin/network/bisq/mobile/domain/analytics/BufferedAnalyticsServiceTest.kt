@@ -155,22 +155,80 @@ class BufferedAnalyticsServiceTest {
             val downstream = RecordingAnalyticsService()
             val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
 
-            // Two normal events first → they sit at positions 0 and 1
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
-            // Then an immediate one → jumps to head, ahead of both
-            service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+            // The AnalyticsEvent sealed type has only one concrete subclass right
+            // now (Dashboard), so we use exception messages as the distinguishable
+            // identifier — both code paths share the same head/tail enqueue
+            // policy via the BufferedItem sealed type. Two normal-priority
+            // exceptions go in first (tail), then one immediate exception
+            // (head) — that one must come out FIRST on flush.
+            val normalA = RuntimeException("normal-a")
+            val normalB = RuntimeException("normal-b")
+            val critical = RuntimeException("critical")
+
+            service.captureException(normalA)
+            service.captureException(normalB)
+            service.captureExceptionImmediate(critical)
             advanceUntilIdle()
 
             assertEquals(3, service.bufferedCount())
 
-            // When we flush, the immediate one comes out FIRST
             service.onSentryReady()
             advanceUntilIdle()
-            assertEquals(3, downstream.tracked.size, "all three must be drained")
-            // Can't distinguish them by value (same enum), but order is verifiable:
-            // the head-insertion property is what matters. We verify the policy by
-            // adding a distinguishable immediate item below.
+
+            assertEquals(3, downstream.capturedExceptions.size, "all three must be drained")
+            assertEquals(
+                listOf<Throwable>(critical, normalA, normalB),
+                downstream.capturedExceptions,
+                "immediate item must be flushed FIRST (head insertion), normal items follow in FIFO tail order",
+            )
+        }
+
+    @Test
+    fun `trackImmediate before ready buffers via the same head-insertion path as captureExceptionImmediate`() =
+        runTest {
+            // Symmetric coverage for the track() codepath. AnalyticsEvent's
+            // sealed hierarchy currently only has Dashboard, so we can't
+            // distinguish events by value — but the BUFFER STATE side of the
+            // contract is still observable: a normal track sits at tail, an
+            // immediate track jumps to head, and the head-vs-tail eviction
+            // policy differs (verified in the BOUNDED BUFFER POLICY tests
+            // below). The ordering contract for the same-priority path is
+            // pinned by the captureExceptionImmediate test above; this test
+            // ensures `trackImmediate` itself is exercised so a future
+            // refactor that breaks it loudly fails.
+            val downstream = RecordingAnalyticsService()
+            val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
+
+            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+            advanceUntilIdle()
+
+            assertEquals(2, service.bufferedCount(), "both tracks must be in the buffer pre-ready")
+            assertTrue(downstream.tracked.isEmpty(), "nothing reaches downstream pre-ready")
+
+            service.onSentryReady()
+            advanceUntilIdle()
+
+            assertEquals(2, downstream.tracked.size, "both items must flush on ready")
+        }
+
+    @Test
+    fun `trackImmediate after ready forwards directly without buffering`() =
+        runTest {
+            // Once sentryReady is flipped, trackImmediate must call
+            // downstream.trackImmediate inline (not via the buffer path). This
+            // verifies the synchronous fast-path is wired so subsequent
+            // refactors can't accidentally route all calls through the buffer.
+            val downstream = RecordingAnalyticsService()
+            val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
+            service.onSentryReady()
+            advanceUntilIdle()
+
+            service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+            // No advanceUntilIdle needed — the direct path is synchronous.
+
+            assertEquals(1, downstream.tracked.size, "trackImmediate post-ready must forward directly")
+            assertEquals(0, service.bufferedCount(), "buffer stays empty when direct path takes the event")
         }
 
     // ============ READY DRAIN ============
@@ -309,13 +367,31 @@ class BufferedAnalyticsServiceTest {
                     flushIntervalMs = 0L,
                 )
 
-            // Add 3 → buffer full
-            repeat(3) { service.track(AnalyticsEvent.ScreenViewed.Dashboard) }
-            // Add a 4th → oldest dropped, new appended
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            // Use exceptions for distinguishable identity — see the buffer-
+            // ordering test above for why we use exception messages.
+            val e1 = RuntimeException("e1-oldest")
+            val e2 = RuntimeException("e2")
+            val e3 = RuntimeException("e3")
+            val e4 = RuntimeException("e4-newest")
+
+            // Fill the buffer
+            service.captureException(e1)
+            service.captureException(e2)
+            service.captureException(e3)
+            // Overflow → e1 (oldest) must be evicted, e4 appended at tail
+            service.captureException(e4)
             advanceUntilIdle()
 
             assertEquals(3, service.bufferedCount(), "buffer must stay bounded")
+
+            service.onSentryReady()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf<Throwable>(e2, e3, e4),
+                downstream.capturedExceptions,
+                "FIFO drop-oldest: e1 must be evicted, remaining items in insertion order",
+            )
         }
 
     @Test
@@ -330,13 +406,32 @@ class BufferedAnalyticsServiceTest {
                     flushIntervalMs = 0L,
                 )
 
-            repeat(3) { service.track(AnalyticsEvent.ScreenViewed.Dashboard) }
-            // Add an immediate → buffer was full, tail (newest non-critical) dropped,
-            // new item inserted at head.
-            service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+            // Three normal-priority items fill the buffer. Then a critical
+            // (immediate) item arrives: the TAIL (newest non-critical, lowest
+            // priority) gets dropped, and the critical lands at HEAD. The
+            // remaining items keep their relative order.
+            val normal1 = RuntimeException("normal-1-oldest")
+            val normal2 = RuntimeException("normal-2")
+            val normal3Dropped = RuntimeException("normal-3-will-be-dropped")
+            val critical = RuntimeException("critical-jumps-head")
+
+            service.captureException(normal1)
+            service.captureException(normal2)
+            service.captureException(normal3Dropped)
+            // Triggers drop-newest-tail + head insertion
+            service.captureExceptionImmediate(critical)
             advanceUntilIdle()
 
             assertEquals(3, service.bufferedCount())
+
+            service.onSentryReady()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf<Throwable>(critical, normal1, normal2),
+                downstream.capturedExceptions,
+                "critical at HEAD, oldest survivors in FIFO order, newest non-critical (normal3Dropped) evicted",
+            )
         }
 
     // ============ DOWNSTREAM-FAILURE FALLBACK ============

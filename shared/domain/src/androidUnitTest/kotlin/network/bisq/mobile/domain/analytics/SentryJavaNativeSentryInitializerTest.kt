@@ -219,9 +219,13 @@ class SentryJavaNativeSentryInitializerTest {
             }
         val result = assertNotNull(callback.execute(event, io.sentry.Hint()))
         val scrubbedValue = assertNotNull(result.exceptions?.firstOrNull()?.value)
+        // The injected onion is a real Tor v3 (DuckDuckGo's, public, 56 base32
+        // chars + .onion). Asserting against the EXACT injected string forces
+        // the test to verify actual redaction — using any other string would
+        // pass trivially regardless of whether beforeSend ran.
         assertEquals(
             false,
-            scrubbedValue.contains("expyuzz4wqqyqhjn.onion"),
+            scrubbedValue.contains("2gzyxa5ihm7nsggfxnu52rck2vv4rvmdlkiu3zzui5du4xyclen53wid.onion"),
             "beforeSend must redact exception value — got: $scrubbedValue",
         )
     }

@@ -33,6 +33,8 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
+import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -64,8 +66,8 @@ class ClientApplicationLifecycleService(
     private val notificationController: NotificationController,
     analyticsService: AnalyticsService,
     analyticsBootstrapConfig: AnalyticsBootstrapConfig,
-    bufferedAnalyticsService: network.bisq.mobile.domain.analytics.BufferedAnalyticsService? = null,
-    analyticsSocksPortProvider: network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider? = null,
+    bufferedAnalyticsService: BufferedAnalyticsService? = null,
+    analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,
