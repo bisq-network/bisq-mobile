@@ -94,6 +94,32 @@ class DefaultSentryClientTest {
     }
 
     @Test
+    fun `init with SOCKS args omitted falls back to nulls via default parameters`() {
+        // Exercises the Kotlin-generated default-args bridge on the
+        // [SentryClient.init] interface method. Without this case, the
+        // bridge is dead code from a coverage perspective even though it's
+        // used by any caller that opts to skip the optional SOCKS pair.
+        // The contract: omitted SOCKS args MUST resolve to nulls (not
+        // localhost defaults or "any" sentinels — those would silently
+        // route prod traffic without a proxy).
+        val native = RecordingNativeInitializer()
+        val client = DefaultSentryClient(native)
+
+        client.init(
+            dsn = "http://abc@localhost/3",
+            environment = "development",
+            release = "dev",
+            redactor = AnalyticsRedactor(),
+            isDebug = true,
+            // socksProxyHost + socksProxyPort omitted — exercise the defaults.
+        )
+
+        assertEquals(1, native.initCalls)
+        assertNull(native.lastSocksHost, "omitted SOCKS host must default to null")
+        assertNull(native.lastSocksPort, "omitted SOCKS port must default to null")
+    }
+
+    @Test
     fun `init passes null SOCKS arguments through unchanged - no-proxy mode`() {
         // Dev / SSH-tunnel scenarios pass null/null. The wrapper must NOT
         // silently inject a localhost default — that would create a confusing

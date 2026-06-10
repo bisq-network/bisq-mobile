@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.analytics
 
 import io.sentry.SentryEvent
 import io.sentry.SentryOptions
+import io.sentry.android.core.SentryAndroidOptions
 import io.sentry.protocol.Message
 import io.sentry.protocol.SentryException
 import java.net.Proxy
@@ -12,32 +13,29 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 /**
- * Pins the [SentryJavaNativeSentryInitializer] privacy contract by capturing
- * the `SentryAndroidOptions` lambda passed to Sentry-KMP — without actually
- * dialing the SDK. We do this by inspecting the Sentry Java `SentryOptions`
- * subtype directly: every setter the initializer touches is exercised AND
- * verified against the privacy-relevant defaults required by issue #525.
+ * Pins the [SentryJavaNativeSentryInitializer] privacy contract by exercising
+ * the same `setupPrivacy` + `setupTransport` mutations the production code
+ * applies to `SentryAndroidOptions` — without actually calling into the SDK's
+ * global `Sentry.initWithPlatformOptions` (which holds process-wide state
+ * across tests and would try to start the real transport).
  *
- * Why not just construct the initializer and call `init()` for real? Because
- * that touches the global `Sentry.initWithPlatformOptions` which holds process-
- * wide state across tests AND tries to start the SDK transport. We need the
- * options-mutation behaviour without the side effects, so we factor it out
- * into a package-internal helper that the production code reuses.
- *
- * That helper isn't exposed — instead we reproduce the EXACT mutation pattern
- * in the test fixture below and verify the production code matches. If
- * production deviates (drops a setter, swaps a default, weakens privacy), this
- * test fails. It's a covering test, not a calling test.
+ * The production methods are `internal` so this test calls them DIRECTLY: the
+ * SDK boot is sidestepped but every options setter, integration killswitch,
+ * and `beforeSend` scrub path is real production code. A regression at any
+ * point — a dropped killswitch, a weakened default, an unredacted field —
+ * fails an assertion below.
  */
 class SentryJavaNativeSentryInitializerTest {
     /**
-     * Reproduces the lambda body of [SentryJavaNativeSentryInitializer.init].
-     * If this drifts from production, the contract pinned below either fails
-     * on one of the assertions or on the file diff during review. Either way
-     * a regression is loud.
+     * Calls the real production [SentryJavaNativeSentryInitializer.setupPrivacy]
+     * and [SentryJavaNativeSentryInitializer.setupTransport] methods so the
+     * assertions below pin the actual production behaviour (not a test mirror
+     * that could drift). DSN/env/release/isDebug mirror what the production
+     * `init` lambda sets — they live outside `setupPrivacy` because they're
+     * the boring identity bits that don't need explicit coverage.
      */
     private fun applyProductionOptionsContract(
-        options: SentryOptions,
+        options: SentryAndroidOptions,
         dsn: String,
         environment: String,
         release: String,
@@ -50,32 +48,15 @@ class SentryJavaNativeSentryInitializerTest {
         options.environment = environment
         options.release = release
         options.isDebug = isDebug
-        options.isSendDefaultPii = false
-        options.beforeSend =
-            SentryOptions.BeforeSendCallback { event, _ ->
-                event.message?.let { msg ->
-                    msg.message?.let { msg.message = redactor.redact(it) }
-                    msg.formatted?.let { msg.formatted = redactor.redact(it) }
-                }
-                event.exceptions?.forEach { ex ->
-                    ex.value?.let { ex.value = redactor.redact(it) }
-                }
-                event
-            }
-        if (socksProxyHost != null && socksProxyPort != null) {
-            options.setProxy(
-                SentryOptions.Proxy(
-                    socksProxyHost,
-                    socksProxyPort.toString(),
-                    Proxy.Type.SOCKS,
-                ),
-            )
-        }
+
+        val initializer = SentryJavaNativeSentryInitializer()
+        initializer.setupPrivacy(options, redactor)
+        initializer.setupTransport(options, socksProxyHost, socksProxyPort)
     }
 
     @Test
     fun `init configures DSN environment release and isDebug on the platform options`() {
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = options,
             dsn = "http://abc@onion-host/3",
@@ -99,7 +80,7 @@ class SentryJavaNativeSentryInitializerTest {
         // (where present), and various OS-level fingerprints. We MUST keep
         // this off regardless of any future config — pin it here as a
         // regression gate.
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         // Pre-condition: SDK default could theoretically change between versions.
         // We don't care what it WAS — we care what we set it TO.
         applyProductionOptionsContract(
@@ -122,7 +103,7 @@ class SentryJavaNativeSentryInitializerTest {
         // contains an email/onion/BTC address ships verbatim. Pin that we DO
         // wire it AND that the wiring actually runs the redactor.
         val redactor = AnalyticsRedactor()
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = options,
             dsn = "http://abc@onion/3",
@@ -157,7 +138,7 @@ class SentryJavaNativeSentryInitializerTest {
     @Test
     fun `init wires beforeSend to scrub message_formatted text via AnalyticsRedactor`() {
         val redactor = AnalyticsRedactor()
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = options,
             dsn = "http://abc@onion/3",
@@ -192,7 +173,7 @@ class SentryJavaNativeSentryInitializerTest {
         // user input, and remote endpoints in throw messages all the time.
         // Pin that the SDK-side scrub layer fires on them.
         val redactor = AnalyticsRedactor()
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = options,
             dsn = "http://abc@onion/3",
@@ -237,7 +218,7 @@ class SentryJavaNativeSentryInitializerTest {
         // refactor that changes the type to HTTP, or passes a `host:port`
         // shape that the SDK doesn't recognise, would silently fall back to
         // direct dialling and leak.
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = options,
             dsn = "http://abc@onion/3",
@@ -256,7 +237,7 @@ class SentryJavaNativeSentryInitializerTest {
 
     @Test
     fun `init does NOT set a proxy when neither SOCKS host nor port given`() {
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = options,
             dsn = "http://abc@localhost:8000/3",
@@ -276,7 +257,7 @@ class SentryJavaNativeSentryInitializerTest {
         // strips half-set pairs before they reach the platform initializer —
         // pin that the platform initializer ALSO refuses, so a future refactor
         // can't silently weaken the upstream guard.
-        val hostOnlyOptions = SentryOptions()
+        val hostOnlyOptions = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = hostOnlyOptions,
             dsn = "http://abc@onion/3",
@@ -289,7 +270,7 @@ class SentryJavaNativeSentryInitializerTest {
         )
         assertNull(hostOnlyOptions.proxy)
 
-        val portOnlyOptions = SentryOptions()
+        val portOnlyOptions = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = portOnlyOptions,
             dsn = "http://abc@onion/3",
@@ -310,7 +291,7 @@ class SentryJavaNativeSentryInitializerTest {
         // we don't accidentally clone or swap out the event protects against a
         // subtle bug where downstream metadata (level, breadcrumbs, etc.)
         // attached to the original event would be lost on the wire.
-        val options = SentryOptions()
+        val options = SentryAndroidOptions()
         applyProductionOptionsContract(
             options = options,
             dsn = "http://abc@onion/3",

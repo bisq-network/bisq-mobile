@@ -87,7 +87,12 @@ class SentryJavaNativeSentryInitializer :
         }
     }
 
-    private fun setupPrivacy(
+    /**
+     * Visible to androidUnitTest so the privacy contract on `SentryOptions`
+     * can be pinned without spinning up the global SDK. The production
+     * callsite ([init]) is the only intended caller.
+     */
+    internal fun setupPrivacy(
         options: io.sentry.android.core.SentryAndroidOptions,
         redactor: AnalyticsRedactor,
     ) {
@@ -227,7 +232,8 @@ class SentryJavaNativeSentryInitializer :
             // promise" wiki contract.
         }
 
-    private fun setupTransport(
+    /** Visible to androidUnitTest — see [setupPrivacy] kdoc for the rationale. */
+    internal fun setupTransport(
         options: SentryOptions,
         socksProxyHost: String?,
         socksProxyPort: Int?,
