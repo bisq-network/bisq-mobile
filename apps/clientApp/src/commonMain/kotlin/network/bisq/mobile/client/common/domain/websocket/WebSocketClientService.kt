@@ -571,10 +571,10 @@ class WebSocketClientService(
             // Must release clientUpdateMutex first since updateWebSocketClient acquires it
         }
         // Call outside the lock since updateWebSocketClient acquires clientUpdateMutex
-        httpClientService.recreateClient()
         if (isTorProxy) {
             kmpTorService?.signalNewNym()
         }
+        httpClientService.recreateClient()
     }
 
     /**

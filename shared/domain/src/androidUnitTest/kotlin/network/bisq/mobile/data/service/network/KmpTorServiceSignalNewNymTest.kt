@@ -5,6 +5,7 @@ import io.matthewnelson.kmp.tor.runtime.core.ctrl.Reply
 import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
 import io.matthewnelson.kmp.tor.runtime.core.util.executeAsync
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -52,6 +53,7 @@ class KmpTorServiceSignalNewNymTest {
             val service = createService()
             setTorRuntime(service, mockRuntime)
             service.signalNewNym()
+            coVerify(exactly = 1) { mockRuntime.executeAsync(TorCmd.Signal.NewNym) }
         }
 
     @Test
@@ -64,6 +66,7 @@ class KmpTorServiceSignalNewNymTest {
             val service = createService()
             setTorRuntime(service, mockRuntime)
             service.signalNewNym()
+            coVerify(exactly = 1) { mockRuntime.executeAsync(TorCmd.Signal.NewNym) }
         }
 
     private companion object {
