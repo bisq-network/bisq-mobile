@@ -39,6 +39,7 @@ open class ClientConnectivityService(
         // permanently keep status at REQUESTING_INVENTORY on Tor connections.
         const val ROUND_TRIP_SLOW_THRESHOLD_TOR = 3000L
         internal const val IOS_FORCE_RECREATE_CYCLES = 12 // ~60s at default 5s period
+        internal const val ANDROID_FORCE_RECREATE_CYCLES = 12 // ~60s at default 5s period
 
         private const val DEFAULT_AVERAGE_TRIP_TIME = -1L // invalid
         const val MIN_REQUESTS_TO_ASSESS_SPEED = 3 // invalid
@@ -169,7 +170,7 @@ open class ClientConnectivityService(
                             consecutiveReconnectingCycles++
                             log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
                             if (shouldForceClientRecreation()) {
-                                log.i { "iOS: forcing client recreation after $consecutiveReconnectingCycles failed cycles" }
+                                log.i { "Forcing client recreation after $consecutiveReconnectingCycles failed cycles (platform=${platformInfo.type})" }
                                 webSocketClientService.forceClientRecreation()
                                 consecutiveReconnectingCycles = 0
                             } else {
@@ -197,7 +198,7 @@ open class ClientConnectivityService(
                                 consecutiveReconnectingCycles++
                                 log.d { "Untrusted connection health check failed, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
                                 if (shouldForceClientRecreation()) {
-                                    log.i { "iOS: forcing client recreation after $consecutiveReconnectingCycles failed untrusted cycles" }
+                                    log.i { "Forcing client recreation after $consecutiveReconnectingCycles failed untrusted cycles (platform=${platformInfo.type})" }
                                     webSocketClientService.forceClientRecreation()
                                     consecutiveReconnectingCycles = 0
                                 } else {
@@ -263,8 +264,10 @@ open class ClientConnectivityService(
     }
 
     private fun shouldForceClientRecreation(): Boolean =
-        platformInfo.type == PlatformType.IOS &&
-            consecutiveReconnectingCycles >= IOS_FORCE_RECREATE_CYCLES
+        consecutiveReconnectingCycles >= when (platformInfo.type) {
+            PlatformType.IOS -> IOS_FORCE_RECREATE_CYCLES
+            PlatformType.ANDROID -> ANDROID_FORCE_RECREATE_CYCLES
+        }
 
     /**
      * Sends a lightweight health check request to verify the server is responsive.

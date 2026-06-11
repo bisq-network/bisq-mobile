@@ -551,7 +551,7 @@ class WebSocketClientService(
     internal suspend fun forceClientRecreation() {
         clientUpdateMutex.withLock {
             val settings = currentClientSettings ?: return@withLock
-            log.i { "Forcing full client recreation to recover stale iOS NSURLSession" }
+            log.i { "Forcing full client recreation to recover stale HTTP client state / iOS NSURLSession" }
             // Dispose current client and clear settings so updateWebSocketClient
             // treats the next call as a fresh configuration
             currentClient.value?.dispose()
