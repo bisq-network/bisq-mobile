@@ -229,6 +229,7 @@ Please refer to [this README](shared/presentation/src/commonMain/kotlin/network/
  - Some Apple M chips have trouble with cocoapods, follow [this guide](https://stackoverflow.com/questions/64901180/how-to-run-cocoapods-on-apple-silicon-m1/66556339#66556339) to fix it
  - On MacOS: non-homebrew versions of Ruby will cause problems
  - On MacOS: If Gradle sync fails with "Gradle not found" error, you may need to install gradle with `homebrew` and then run `gradle wrapper` on the root. Then reopen Android Studio and try syncing again.
+ - **iOS link errors with `kniprot_cocoapods_Sentry0_*` "symbol multiply defined"**: stale cinterop incremental cache after Kotlin changes near the Sentry cocoapods boundary. Recovery: `./gradlew :apps:clientApp:clean`, then Xcode → Product → Clean Build Folder, then rebuild. Cascading Swift errors (`MainPresenter`/`Koin_coreQualifier` not in scope, etc.) are downstream of this — fixing the link error fixes them too.
 
 ### Initial Project Structure
 
