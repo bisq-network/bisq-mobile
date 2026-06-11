@@ -80,4 +80,12 @@ sealed interface SettingsUiAction {
     data class OnKeepConnectedInBackgroundToggle(
         val enabled: Boolean,
     ) : SettingsUiAction
+
+    /** User toggled the opt-in analytics switch (issue #525). */
+    data class OnAnalyticsToggle(
+        val enabled: Boolean,
+    ) : SettingsUiAction
+
+    /** User tapped "Learn more" in the analytics section — opens the privacy wiki page. */
+    data object OnAnalyticsLearnMore : SettingsUiAction
 }

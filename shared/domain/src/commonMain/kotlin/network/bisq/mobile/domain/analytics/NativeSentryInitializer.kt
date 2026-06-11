@@ -39,6 +39,14 @@ package network.bisq.mobile.domain.analytics
  * @see DefaultSentryClient
  */
 interface NativeSentryInitializer {
+    /**
+     * @param runtimeOptInProvider cheap synchronous lambda the platform's
+     *   `beforeSend` MUST consult before letting any event reach the wire.
+     *   Returning false drops the event entirely (including auto-captured
+     *   crashes from UncaughtExceptionHandler / ActivityLifecycle), giving
+     *   the user-settings toggle authority over the SDK's own pipelines —
+     *   not just our manual `track()` / `captureException()` callsites.
+     */
     fun init(
         dsn: String,
         environment: String,
@@ -47,5 +55,6 @@ interface NativeSentryInitializer {
         isDebug: Boolean,
         socksProxyHost: String?,
         socksProxyPort: Int?,
+        runtimeOptInProvider: () -> Boolean,
     )
 }

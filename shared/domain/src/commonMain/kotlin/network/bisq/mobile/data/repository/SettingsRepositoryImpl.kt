@@ -90,4 +90,16 @@ open class SettingsRepositoryImpl(
             it.copy(cookiePermitOpeningBrowser = value)
         }
     }
+
+    override suspend fun setAnalyticsEnabled(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(analyticsEnabled = value)
+        }
+    }
+
+    override suspend fun setAnalyticsPromptSeen(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(analyticsPromptSeen = value)
+        }
+    }
 }

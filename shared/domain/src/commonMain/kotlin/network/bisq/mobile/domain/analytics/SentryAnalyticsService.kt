@@ -4,12 +4,12 @@ import kotlinx.atomicfu.atomic
 import network.bisq.mobile.domain.utils.Logging
 
 /**
- * The Sentry-backed [AnalyticsService]. Bound only when the build-time gate
- * (`BuildConfig.ANALYTICS_ENABLED`) is true; otherwise the DI module wires
- * [NoOpAnalyticsService] and this class is never instantiated. R8 then prunes
- * both this class and the Sentry-KMP SDK from release builds.
+ * The Sentry-backed [AnalyticsService]. Always bound by the DI module — the
+ * runtime gates ([runtimeOptInProvider] below) control emission, not whether
+ * the class exists. Release builds ship Sentry-KMP linked in but inert until
+ * the user-settings toggle is flipped ON.
  *
- * Two runtime guards on top of the build-time gate:
+ * Two runtime guards:
  *
  *  1. **Init guard.** [init] is idempotent — Sentry-KMP keeps internal state
  *     and a second `Sentry.init` is undefined; we silently no-op the second
@@ -17,15 +17,11 @@ import network.bisq.mobile.domain.utils.Logging
  *     a typo destination).
  *  2. **Runtime opt-in gate.** Every emit checks [runtimeOptInProvider]
  *     immediately before calling into the SDK. **Defaults to `{ false }` —
- *     callers MUST pass a provider explicitly to enable emission.** This is
- *     defence in depth: the DI module's build-time check already gates
- *     construction, and the secure-by-default lambda here ensures any future
- *     bypass of that gate (a refactor, a test fixture, a new platform binding)
- *     can't silently start emitting events. Initial work wires the DI modules to
- *     pass `{ BuildConfig.ANALYTICS_ENABLED }` — same source as the build-time
- *     gate, doubly-locked. TODO swap that for
- *     `{ settingsRepository.analyticsEnabled.value }` once the Settings UI
- *     toggle ships.
+ *     callers MUST pass a provider explicitly to enable emission.** Production
+ *     wiring combines `BuildConfig.ANALYTICS_DEV_ENABLED` (dev safety) AND
+ *     `SettingsRepository.analyticsEnabled.value` (user-facing) — both gates
+ *     must be true for the SDK to fire. See `ClientDomainModule` /
+ *     `NodeDomainModule` for the exact binding.
  *
  * @param sentryClient Indirection over Sentry-KMP for test substitution. See
  *  [DefaultSentryClient] for the production wiring.
@@ -47,10 +43,9 @@ class SentryAnalyticsService internal constructor(
      * a platform-specific [NativeSentryInitializer]) and passing it here.
      *
      * Takes the runtime opt-in source explicitly so the caller's intent
-     * (and what gates emission) is visible at the binding site. Initial work
-     * wires this to `{ BuildConfig.ANALYTICS_ENABLED }`; TODO swap to
-     * `{ settingsRepository.analyticsEnabled.value }` once the Settings UI
-     * toggle ships.
+     * (and what gates emission) is visible at the binding site. Production
+     * wiring is `{ BuildConfig.ANALYTICS_DEV_ENABLED && settingsRepository.analyticsEnabled.value }`
+     * — see `ClientDomainModule` / `NodeDomainModule`.
      */
     constructor(
         nativeInitializer: NativeSentryInitializer,
@@ -88,7 +83,22 @@ class SentryAnalyticsService internal constructor(
                 }
                 null to null
             }
-        sentryClient.init(dsn, environment, release, redactor, isDebug, effectiveHost, effectivePort)
+        // Thread the runtime opt-in provider into the native SDK init so the
+        // platform's beforeSend can drop ALL events when the user is opted out
+        // — including SDK auto-captures (UncaughtExceptionHandler crashes,
+        // ActivityLifecycle, etc.) that don't pass through our [track] /
+        // [captureException] gates. Without this, an opted-out user whose
+        // app crashes would still ship the crash to GlitchTip.
+        sentryClient.init(
+            dsn,
+            environment,
+            release,
+            redactor,
+            isDebug,
+            effectiveHost,
+            effectivePort,
+            runtimeOptInProvider,
+        )
         log.d {
             if (effectiveHost != null) {
                 "Sentry initialized with SOCKS proxy at $effectiveHost:$effectivePort"
@@ -99,7 +109,7 @@ class SentryAnalyticsService internal constructor(
     }
 
     override fun track(event: AnalyticsEvent) {
-        if (!isReadyToEmit()) return
+        if (!isReadyToEmit(event.name)) return
         log.d { "Sentry: Tracking event $event" }
         sentryClient.captureMessage(event.name)
     }
@@ -113,12 +123,28 @@ class SentryAnalyticsService internal constructor(
     override fun trackImmediate(event: AnalyticsEvent) = track(event)
 
     override fun captureException(throwable: Throwable) {
-        if (!isReadyToEmit()) return
+        if (!isReadyToEmit("exception:${throwable::class.simpleName}")) return
         log.w { "Sentry: Tracking exception ${throwable.message}" }
         sentryClient.captureException(throwable)
     }
 
     override fun captureExceptionImmediate(throwable: Throwable) = captureException(throwable)
 
-    private fun isReadyToEmit(): Boolean = initialized.value && runtimeOptInProvider()
+    /**
+     * Both gates must be true. On a `false`, log WHY — silent drops here used
+     * to be a debugging nightmare (the upstream [BufferedAnalyticsService]
+     * sees no exception and happily logs "forwarded direct", but the event
+     * never actually reaches the SDK).
+     */
+    private fun isReadyToEmit(reason: String): Boolean {
+        val init = initialized.value
+        val optedIn = runtimeOptInProvider()
+        if (!init || !optedIn) {
+            log.d {
+                "Sentry: dropping '$reason' — initialized=$init, runtimeOptInProvider=$optedIn"
+            }
+            return false
+        }
+        return true
+    }
 }

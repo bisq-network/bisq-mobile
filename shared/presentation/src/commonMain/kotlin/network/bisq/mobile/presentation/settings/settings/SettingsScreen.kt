@@ -211,7 +211,9 @@ fun SettingsContent(
                     )
 
                     BisqHDivider()
+                    AnalyticsSection(uiState, onAction)
 
+                    BisqHDivider()
                     BisqText.H4Light("settings.display.headline".i18n())
 
                     BisqGap.V1()
@@ -378,6 +380,74 @@ private fun PushNotificationsExtraGuidance(
             color = BisqTheme.colors.warning,
         )
     }
+}
+
+/**
+ * Crash & usage reporting (analytics) section. Two halves:
+ *  1. Title + toggle switch + subtitle (mirrors push notifications pattern).
+ *  2. Privacy bullets + "Learn more" link routing to the analytics wiki page.
+ *
+ * Visibility is unconditional — the privacy contract is opt-in everywhere, so
+ * every user gets to see this section and decide. The toggle persists through
+ * [SettingsPresenter.onAnalyticsToggle] → [SettingsRepository.setAnalyticsEnabled]
+ * → DI's `runtimeOptInProvider` StateFlow on the next emit.
+ *
+ * Excluded from coverage like the other declarative Compose helpers in this
+ * file — the underlying logic lives in the presenter and is unit-tested there.
+ */
+@ExcludeFromCoverage
+@Composable
+private fun AnalyticsSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsUiAction) -> Unit,
+) {
+    BisqText.H4Light("mobile.settings.analytics.title".i18n())
+
+    BisqGap.V1()
+
+    BisqSwitch(
+        label = "mobile.settings.analytics.toggleLabel".i18n(),
+        checked = uiState.analyticsEnabled,
+        onSwitch = { onAction(SettingsUiAction.OnAnalyticsToggle(it)) },
+    )
+
+    BisqGap.VQuarter()
+
+    BisqText.SmallLight(
+        text = "mobile.settings.analytics.subtitle".i18n(),
+        color = BisqTheme.colors.mid_grey20,
+    )
+
+    BisqGap.V1()
+
+    // Privacy bullets — four short lines summarising the wiki contract for
+    // users who won't tap "Learn more". Kept in i18n so translators can adapt
+    // wording per language.
+    AnalyticsBulletRow("mobile.settings.analytics.info.tor".i18n())
+    AnalyticsBulletRow("mobile.settings.analytics.info.noPii".i18n())
+    AnalyticsBulletRow("mobile.settings.analytics.info.noTrade".i18n())
+    AnalyticsBulletRow("mobile.settings.analytics.info.retention".i18n())
+
+    BisqGap.VHalf()
+
+    BisqText.SmallLight(
+        text = "mobile.settings.analytics.learnMore".i18n(),
+        color = BisqTheme.colors.primary,
+        modifier =
+            Modifier.clickable {
+                onAction(SettingsUiAction.OnAnalyticsLearnMore)
+            },
+    )
+}
+
+@ExcludeFromCoverage
+@Composable
+private fun AnalyticsBulletRow(text: String) {
+    BisqText.SmallLight(
+        text = "• $text",
+        color = BisqTheme.colors.mid_grey20,
+    )
+    BisqGap.VQuarter()
 }
 
 @ExcludeFromCoverage

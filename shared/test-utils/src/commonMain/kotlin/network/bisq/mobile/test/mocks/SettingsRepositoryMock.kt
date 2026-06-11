@@ -81,4 +81,16 @@ class SettingsRepositoryMock :
             it.copy(cookiePermitOpeningBrowser = value)
         }
     }
+
+    override suspend fun setAnalyticsEnabled(value: Boolean) {
+        _data.update {
+            it.copy(analyticsEnabled = value)
+        }
+    }
+
+    override suspend fun setAnalyticsPromptSeen(value: Boolean) {
+        _data.update {
+            it.copy(analyticsPromptSeen = value)
+        }
+    }
 }

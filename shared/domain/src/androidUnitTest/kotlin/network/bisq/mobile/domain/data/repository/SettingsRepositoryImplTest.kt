@@ -223,4 +223,60 @@ class SettingsRepositoryImplTest {
             assertEquals(true, afterMarketUpdate.showChatRulesWarnBox) // preserved
             assertEquals("BTC/EUR", afterMarketUpdate.selectedMarketCode)
         }
+
+    // ============ Opt-in analytics (issue #525) ============
+    //
+    // These pins matter because the DI module's runtimeOptInProvider reads
+    // these settings on every analytics emit. If the persistence path
+    // regresses, the SDK silently keeps using the stale value — which would
+    // either suppress events the user enabled (annoying) or worse, emit when
+    // they didn't (privacy contract violation).
+
+    @Test
+    fun `setAnalyticsEnabled should update analyticsEnabled flag without touching other fields`() =
+        runTest {
+            val updateSlot = slot<suspend (Settings) -> Settings>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
+
+            val originalSettings =
+                Settings(
+                    firstLaunch = false,
+                    analyticsEnabled = false,
+                    analyticsPromptSeen = true,
+                    selectedMarketCode = "BTC/EUR",
+                )
+
+            repository.setAnalyticsEnabled(true)
+
+            coVerify { mockDataStore.updateData(any()) }
+            val updated = updateSlot.captured(originalSettings)
+            assertEquals(true, updated.analyticsEnabled)
+            // Sibling fields preserved
+            assertEquals(true, updated.analyticsPromptSeen)
+            assertEquals(false, updated.firstLaunch)
+            assertEquals("BTC/EUR", updated.selectedMarketCode)
+        }
+
+    @Test
+    fun `setAnalyticsPromptSeen should update analyticsPromptSeen flag without touching analyticsEnabled`() =
+        runTest {
+            // Critical: the welcome carousel marks the prompt as seen via
+            // "Don't ask again" WITHOUT enabling analytics. If this setter
+            // ever flipped analyticsEnabled as a side effect, a user who
+            // declined the prompt would start emitting events anyway.
+            val updateSlot = slot<suspend (Settings) -> Settings>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
+
+            val originalSettings =
+                Settings(
+                    analyticsEnabled = false,
+                    analyticsPromptSeen = false,
+                )
+
+            repository.setAnalyticsPromptSeen(true)
+
+            val updated = updateSlot.captured(originalSettings)
+            assertEquals(true, updated.analyticsPromptSeen)
+            assertEquals(false, updated.analyticsEnabled, "promptSeen flip must NOT enable analytics — privacy contract")
+        }
 }

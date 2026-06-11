@@ -27,6 +27,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.restartProcess
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
 import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
@@ -63,6 +64,7 @@ class NodeApplicationLifecycleService(
     analyticsBootstrapConfig: AnalyticsBootstrapConfig,
     bufferedAnalyticsService: BufferedAnalyticsService? = null,
     analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
+    settingsRepository: SettingsRepository? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,
@@ -70,6 +72,7 @@ class NodeApplicationLifecycleService(
         analyticsBootstrapConfig,
         bufferedAnalyticsService,
         analyticsSocksPortProvider,
+        settingsRepository,
     ) {
     fun restartForRestoreDataDirectory(view: Any?) {
         val activity =

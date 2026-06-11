@@ -81,6 +81,7 @@ open class SettingsPresenter(
         fetchSettings()
         observePushNotificationsEnabled()
         observeKeepConnectedInBackground()
+        observeAnalyticsEnabled()
     }
 
     private fun observePushNotificationsEnabled() {
@@ -110,6 +111,23 @@ open class SettingsPresenter(
             settingsRepository.data.collect { settings ->
                 _uiState.update {
                     it.copy(keepConnectedInBackground = settings.keepConnectedInBackground)
+                }
+            }
+        }
+    }
+
+    /**
+     * Reflect the persisted analytics opt-in state into the UI. Source of truth
+     * is `SettingsRepository.analyticsEnabled` — the DI module reads the same
+     * value via [SettingsRepository.analyticsEnabledIn] for the SDK's runtime
+     * gate, so a flip from here propagates to emission within the next track()
+     * call without any extra plumbing.
+     */
+    private fun observeAnalyticsEnabled() {
+        presenterScope.launch {
+            settingsRepository.data.collect { settings ->
+                _uiState.update {
+                    it.copy(analyticsEnabled = settings.analyticsEnabled)
                 }
             }
         }
@@ -148,6 +166,23 @@ open class SettingsPresenter(
 
             is SettingsUiAction.OnKeepConnectedInBackgroundToggle ->
                 onKeepConnectedInBackgroundToggle(action.enabled)
+
+            is SettingsUiAction.OnAnalyticsToggle -> onAnalyticsToggle(action.enabled)
+            SettingsUiAction.OnAnalyticsLearnMore ->
+                navigateToUrl(BisqLinks.BISQ_MOBILE_ANALYTICS_WIKI_URL)
+        }
+    }
+
+    private fun onAnalyticsToggle(enabled: Boolean) {
+        presenterScope.launch {
+            // Persist via the repo. The DI module's hot StateFlow view of
+            // analyticsEnabled picks this up on the next emission and the
+            // SDK's runtimeOptInProvider reflects the new value on the next
+            // track() call. Also mark the prompt as seen so the welcome
+            // carousel won't auto-prompt later if the user already engaged.
+            settingsRepository.update {
+                it.copy(analyticsEnabled = enabled, analyticsPromptSeen = true)
+            }
         }
     }
 

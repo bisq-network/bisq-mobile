@@ -67,6 +67,7 @@ class SentryJavaNativeSentryInitializer :
         isDebug: Boolean,
         socksProxyHost: String?,
         socksProxyPort: Int?,
+        runtimeOptInProvider: () -> Boolean,
     ) {
         Sentry.initWithPlatformOptions { options ->
             // Identity / build-time config
@@ -75,7 +76,7 @@ class SentryJavaNativeSentryInitializer :
             options.release = release
             options.isDebug = isDebug
 
-            setupPrivacy(options, redactor)
+            setupPrivacy(options, redactor, runtimeOptInProvider)
             setupTransport(options, socksProxyHost, socksProxyPort)
         }
         log.d {
@@ -95,6 +96,7 @@ class SentryJavaNativeSentryInitializer :
     internal fun setupPrivacy(
         options: io.sentry.android.core.SentryAndroidOptions,
         redactor: AnalyticsRedactor,
+        runtimeOptInProvider: () -> Boolean = { true },
     ) {
         // Defaults that block whole categories of auto-attached data.
         options.isSendDefaultPii = false
@@ -121,12 +123,21 @@ class SentryJavaNativeSentryInitializer :
         options.isEnableNdk = false
         options.isAnrEnabled = false
 
-        // beforeSend is defence in depth on top of the killswitches above.
-        // Each killswitch can be a no-op on a future Sentry version (e.g. a
-        // new integration that attaches similar data) — the scrubber is the
-        // last gate before the wire.
+        // beforeSend serves TWO purposes:
+        //  1. Defence in depth on top of the killswitches above — each
+        //     killswitch can be a no-op on a future Sentry version (e.g. a
+        //     new integration that attaches similar data); the scrubber here
+        //     is the last gate before the wire.
+        //  2. THE opt-in gate for SDK auto-captures. The SDK auto-installs
+        //     UncaughtExceptionHandler etc. that ship events through this
+        //     callback — NOT through our [SentryAnalyticsService.track] /
+        //     [captureException] gates. Returning null when the user is
+        //     opted out drops those events at the SDK level. Without this,
+        //     an opted-out user whose app crashes would still ship the
+        //     crash to GlitchTip.
         options.beforeSend =
             SentryOptions.BeforeSendCallback { event, _ ->
+                if (!runtimeOptInProvider()) return@BeforeSendCallback null
                 applyMinimalPayloadContract(event, redactor)
                 event
             }

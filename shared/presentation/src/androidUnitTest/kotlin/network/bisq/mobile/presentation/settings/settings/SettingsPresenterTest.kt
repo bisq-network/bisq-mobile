@@ -1094,4 +1094,70 @@ class SettingsPresenterTest {
 
             assertFalse(flow.value.keepConnectedInBackground)
         }
+
+    // ============ Opt-in analytics (issue #525) ============
+
+    @Test
+    fun `OnAnalyticsToggle on persists analyticsEnabled=true AND analyticsPromptSeen=true`() =
+        runTest(testDispatcher) {
+            // The promptSeen flip matters: the welcome carousel keys off it to
+            // decide whether to auto-prompt. Once the user has engaged from
+            // Settings (either direction), the carousel should not auto-prompt
+            // them again.
+            val flow = wireSettingsRepositoryUpdate(Settings(analyticsEnabled = false, analyticsPromptSeen = false))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(true))
+            advanceUntilIdle()
+
+            assertTrue(flow.value.analyticsEnabled, "toggle ON must persist analyticsEnabled=true")
+            assertTrue(flow.value.analyticsPromptSeen, "engaging from Settings must mark prompt as seen — suppresses carousel auto-prompt")
+        }
+
+    @Test
+    fun `OnAnalyticsToggle off persists analyticsEnabled=false AND analyticsPromptSeen=true`() =
+        runTest(testDispatcher) {
+            // User who turns analytics OFF from Settings has also "seen" the
+            // prompt — auto-carousel must not pester them.
+            val flow = wireSettingsRepositoryUpdate(Settings(analyticsEnabled = true, analyticsPromptSeen = false))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(false))
+            advanceUntilIdle()
+
+            assertFalse(flow.value.analyticsEnabled)
+            assertTrue(flow.value.analyticsPromptSeen)
+        }
+
+    @Test
+    fun `analyticsEnabled state reflects repository value via observeAnalyticsEnabled`() =
+        runTest(testDispatcher) {
+            // Pins the read-side observer. A flip from anywhere (carousel,
+            // welcome flow, factory reset) must propagate into the Settings
+            // screen state so the toggle visually matches reality.
+            val flow = wireSettingsRepositoryUpdate(Settings(analyticsEnabled = false))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.analyticsEnabled)
+
+            // Simulate an external write (e.g. the welcome carousel).
+            flow.value = flow.value.copy(analyticsEnabled = true)
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.analyticsEnabled)
+
+            flow.value = flow.value.copy(analyticsEnabled = false)
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.analyticsEnabled)
+        }
 }

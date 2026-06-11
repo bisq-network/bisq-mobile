@@ -41,6 +41,8 @@ class DefaultSentryClientTest {
             private set
         var lastSocksPort: Int? = null
             private set
+        var lastRuntimeOptInProvider: (() -> Boolean)? = null
+            private set
 
         override fun init(
             dsn: String,
@@ -50,6 +52,7 @@ class DefaultSentryClientTest {
             isDebug: Boolean,
             socksProxyHost: String?,
             socksProxyPort: Int?,
+            runtimeOptInProvider: () -> Boolean,
         ) {
             initCalls++
             lastDsn = dsn
@@ -59,6 +62,7 @@ class DefaultSentryClientTest {
             lastIsDebug = isDebug
             lastSocksHost = socksProxyHost
             lastSocksPort = socksProxyPort
+            lastRuntimeOptInProvider = runtimeOptInProvider
         }
     }
 
@@ -73,6 +77,7 @@ class DefaultSentryClientTest {
         val redactor = AnalyticsRedactor()
         val client = DefaultSentryClient(native)
 
+        val providerStub: () -> Boolean = { true }
         client.init(
             dsn = "http://abc@onion-host/3",
             environment = "production",
@@ -81,6 +86,7 @@ class DefaultSentryClientTest {
             isDebug = false,
             socksProxyHost = "127.0.0.1",
             socksProxyPort = 9050,
+            runtimeOptInProvider = providerStub,
         )
 
         assertEquals(1, native.initCalls)
@@ -91,6 +97,11 @@ class DefaultSentryClientTest {
         assertEquals(false, native.lastIsDebug)
         assertEquals("127.0.0.1", native.lastSocksHost)
         assertEquals(9050, native.lastSocksPort)
+        assertEquals(
+            providerStub,
+            native.lastRuntimeOptInProvider,
+            "must forward the SAME runtimeOptInProvider lambda — replacing it breaks the beforeSend opt-in gate",
+        )
     }
 
     @Test
@@ -112,6 +123,7 @@ class DefaultSentryClientTest {
             redactor = AnalyticsRedactor(),
             isDebug = true,
             // socksProxyHost + socksProxyPort omitted — exercise the defaults.
+            runtimeOptInProvider = { true },
         )
 
         assertEquals(1, native.initCalls)
@@ -136,6 +148,7 @@ class DefaultSentryClientTest {
             isDebug = true,
             socksProxyHost = null,
             socksProxyPort = null,
+            runtimeOptInProvider = { true },
         )
 
         assertEquals(1, native.initCalls)

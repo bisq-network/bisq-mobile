@@ -21,6 +21,10 @@ internal interface SentryClient {
      *  - `beforeSend` runs the [AnalyticsRedactor] over message + exception
      *    text as a defence-in-depth layer for whatever made it past the
      *    sealed-event API.
+     *  - `beforeSend` ALSO consults [runtimeOptInProvider] and drops the event
+     *    when it returns false — this is the only gate that catches the SDK's
+     *    auto-installed pipelines (UncaughtExceptionHandler, ActivityLifecycle,
+     *    etc.) when a user opts out AFTER init has happened.
      *  - SOCKS5 proxy when [socksProxyHost] + [socksProxyPort] are non-null —
      *    required for production where the GlitchTip server lives on a Tor
      *    hidden service.
@@ -39,6 +43,7 @@ internal interface SentryClient {
         isDebug: Boolean,
         socksProxyHost: String? = null,
         socksProxyPort: Int? = null,
+        runtimeOptInProvider: () -> Boolean,
     )
 
     /**
@@ -76,6 +81,7 @@ internal class DefaultSentryClient(
         isDebug: Boolean,
         socksProxyHost: String?,
         socksProxyPort: Int?,
+        runtimeOptInProvider: () -> Boolean,
     ) {
         nativeInitializer.init(
             dsn = dsn,
@@ -85,6 +91,7 @@ internal class DefaultSentryClient(
             isDebug = isDebug,
             socksProxyHost = socksProxyHost,
             socksProxyPort = socksProxyPort,
+            runtimeOptInProvider = runtimeOptInProvider,
         )
     }
 

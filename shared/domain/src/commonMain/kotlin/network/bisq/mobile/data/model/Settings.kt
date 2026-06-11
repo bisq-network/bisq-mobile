@@ -17,6 +17,15 @@ data class Settings(
     val marketFilter: MarketFilter = MarketFilter.All,
     val dontShowAgainHyperlinksOpenInBrowser: Boolean = false,
     val cookiePermitOpeningBrowser: Boolean = false,
+    // Opt-in analytics (issue #525). The actual emission gate consulted on
+    // every track/captureException via `runtimeOptInProvider` in DI. Default
+    // OFF — privacy contract is opt-in, never opt-out.
+    val analyticsEnabled: Boolean = false,
+    // Has the welcome carousel's analytics page been resolved (either via
+    // "Enable" or "Don't ask again")? When false, the dashboard promo will
+    // include the analytics page; once true, it never auto-prompts again
+    // (user can still flip the toggle manually from Settings).
+    val analyticsPromptSeen: Boolean = false,
 )
 
 @Serializable

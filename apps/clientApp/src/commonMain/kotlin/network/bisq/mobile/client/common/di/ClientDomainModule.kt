@@ -109,9 +109,9 @@ import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
-import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.analytics.SentryAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
@@ -209,58 +209,69 @@ val clientDomainModule =
         }
 
         // Opt-in analytics (issue #525). Two locks gate emission:
-        //  1. Build-time: ANALYTICS_ENABLED=false → NoOpAnalyticsService is
-        //     bound and R8 prunes Sentry-KMP AND BufferedAnalyticsService from
-        //     release artifacts entirely (verified via
-        //     `unzip -l <release.apk> | grep -E 'sentry|Buffered'` = empty).
-        //  2. Runtime: `runtimeOptInProvider` below is checked on every emit.
-        //     For first tests we tie it to the same BuildConfig flag — double-lock,
-        //     no information leakage if (1) ever gets bypassed by a refactor.
-        //     TODO swap `{ BuildConfig.ANALYTICS_ENABLED }` for
-        //     `{ get<SettingsRepository>().analyticsEnabled.value }` once the
-        //     Settings UI toggle ships.
+        //  1. Dev-only build gate: `BuildConfig.ANALYTICS_DEV_ENABLED`. In RELEASE
+        //     builds this is always true (forced at BuildConfig generation time);
+        //     in DEBUG builds it reads `feature.analyticsDevEnabled` from
+        //     gradle/local.properties (default false). Protects production
+        //     GlitchTip from being polluted by developer test events while
+        //     guaranteeing end users get a ready-to-flip release build.
+        //  2. User-facing runtime gate: `SettingsRepository.analyticsEnabled`.
+        //     This is THE switch a user controls from the Settings UI — default
+        //     OFF. Checked on every emit; flipping it ON in a release build
+        //     starts emission immediately, no rebuild required.
         //
-        // When enabled, BufferedAnalyticsService wraps SentryAnalyticsService:
-        // events fired before the Sentry SDK is ready (e.g. during Tor
-        // bootstrap) sit in an in-memory bounded buffer and drain when the
-        // lifecycle service calls onSentryReady(). The same instance is bound
-        // BOTH as AnalyticsService (for general use) AND as
+        // We ALWAYS bind SentryAnalyticsService now (no R8 pruning) — the
+        // tradeoff is a few hundred KB of Sentry-KMP linked into release builds,
+        // but the SDK stays inert until both gates pass + Tor is ready. The
+        // upside is end users don't need a special build to enable analytics.
+        //
+        // BufferedAnalyticsService wraps SentryAnalyticsService: events fired
+        // before the Sentry SDK is ready (e.g. during Tor bootstrap) sit in an
+        // in-memory bounded buffer and drain when the lifecycle service calls
+        // onSentryReady(). Bound BOTH as AnalyticsService AND as
         // BufferedAnalyticsService (so ApplicationLifecycleService can call
-        // onSentryReady() on the concrete type) — see Koin's double-binding
-        // pattern below.
-        if (BuildConfig.ANALYTICS_ENABLED) {
-            // SOCKS port source: kmp-tor. Suspends until the user pairs an
-            // onion trusted node and `TrustedNodeSetupUseCase` starts Tor.
-            // On a LAN/clearnet trusted node this never resolves — events
-            // sit in the buffer and evict by FIFO with no clearnet leak.
-            single<AnalyticsSocksPortProvider> { KmpTorSocksPortProvider(get()) }
-            single {
-                BufferedAnalyticsService(
-                    downstream =
-                        SentryAnalyticsService(
-                            nativeInitializer = get(),
-                            runtimeOptInProvider = { BuildConfig.ANALYTICS_ENABLED },
-                        ),
-                    // Independent scope so the buffer's periodic flusher survives
-                    // any individual feature-scope cancellation. SupervisorJob so
-                    // a single failed enqueue doesn't kill the flusher.
-                    scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
-                )
-            }
-            single<AnalyticsService> { get<BufferedAnalyticsService>() }
-        } else {
-            single<AnalyticsService> { NoOpAnalyticsService }
-            // Intentionally NO BufferedAnalyticsService binding here — the
-            // lifecycle service uses getOrNull<BufferedAnalyticsService>(),
-            // which returns null and skips the onSentryReady() call.
+        // onSentryReady() on the concrete type).
+        //
+        // SOCKS port source: kmp-tor. Suspends until the user pairs an onion
+        // trusted node and `TrustedNodeSetupUseCase` starts Tor. On a LAN /
+        // clearnet trusted node this never resolves — events sit in the buffer
+        // and evict by FIFO with no clearnet leak.
+        single<AnalyticsSocksPortProvider> { KmpTorSocksPortProvider(get()) }
+        single {
+            // Independent scope so the buffer's periodic flusher survives any
+            // individual feature-scope cancellation. SupervisorJob so a single
+            // failed enqueue doesn't kill the flusher. Reused for the
+            // settings-derived analyticsEnabled StateFlow so its hot-share
+            // lives exactly as long as the BufferedAnalyticsService instance.
+            val analyticsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            val settingsRepository = get<SettingsRepository>()
+            // Hot StateFlow view of `Settings.analyticsEnabled`. Backed by
+            // DataStore so a settings flip from any UI surface propagates
+            // immediately to this `.value` read in the runtime gate.
+            val analyticsEnabledFlow = settingsRepository.analyticsEnabledIn(analyticsScope)
+            BufferedAnalyticsService(
+                downstream =
+                    SentryAnalyticsService(
+                        nativeInitializer = get(),
+                        // Two gates AND'd together:
+                        //  1) Dev-only build flag — release builds const-fold
+                        //     this to true at BuildConfig generation time.
+                        //  2) User-settings toggle — flipped from Settings UI.
+                        // Both must be true for the SDK to emit anything.
+                        runtimeOptInProvider = {
+                            BuildConfig.ANALYTICS_DEV_ENABLED && analyticsEnabledFlow.value
+                        },
+                    ),
+                scope = analyticsScope,
+            )
         }
+        single<AnalyticsService> { get<BufferedAnalyticsService>() }
         // Per-platform analytics bootstrap config. The Connect app ships a
         // separate GlitchTip project for Android (id=3) and iOS (id=4); the
         // right DSN is selected at runtime from the platform. `IS_DEBUG`
-        // splits debug-mode opt-in events (tagged "development") from any
-        // future production rollout ("production"). For intial work only debug
-        // builds with `feature.analyticsEnabled=true` in local.properties
-        // emit anything.
+        // splits debug-mode events (tagged "development") from release events
+        // ("production"). Debug builds need both feature.analyticsDevEnabled=true
+        // in local.properties AND the user-settings toggle ON to emit.
         single<AnalyticsBootstrapConfig> {
             val dsn =
                 when (getPlatformInfo().type) {

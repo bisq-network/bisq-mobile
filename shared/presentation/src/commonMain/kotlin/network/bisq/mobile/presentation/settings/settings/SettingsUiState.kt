@@ -37,4 +37,12 @@ data class SettingsUiState(
      */
     val shouldShowKeepConnectedToggle: Boolean = false,
     val keepConnectedInBackground: Boolean = false,
+    /**
+     * Opt-in analytics toggle state (issue #525). Source of truth is
+     * `SettingsRepository.analyticsEnabled`. Default OFF — privacy contract is
+     * never opt-out. The DI module's `runtimeOptInProvider` reads the same
+     * backing settings value, so flipping this switch propagates to Sentry
+     * emission within the next track() call (no rebuild required).
+     */
+    val analyticsEnabled: Boolean = false,
 )

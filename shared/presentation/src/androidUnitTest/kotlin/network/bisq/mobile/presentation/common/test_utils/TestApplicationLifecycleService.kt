@@ -9,6 +9,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
+import network.bisq.mobile.domain.repository.SettingsRepository
 
 /**
  * Lightweight reusable ApplicationLifecycleService for unit tests.
@@ -24,6 +25,7 @@ class TestApplicationLifecycleService(
         AnalyticsBootstrapConfig(dsn = "", environment = "test", release = "test", isDebug = false),
     bufferedAnalyticsService: BufferedAnalyticsService? = null,
     analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
+    settingsRepository: SettingsRepository? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,
@@ -31,6 +33,7 @@ class TestApplicationLifecycleService(
         analyticsBootstrapConfig,
         bufferedAnalyticsService,
         analyticsSocksPortProvider,
+        settingsRepository,
     ) {
     override suspend fun activateServiceFacades() {}
 

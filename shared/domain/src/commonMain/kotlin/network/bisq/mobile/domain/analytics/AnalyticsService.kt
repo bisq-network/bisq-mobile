@@ -3,17 +3,18 @@ package network.bisq.mobile.domain.analytics
 /**
  * Opt-in analytics surface for Bisq Mobile (issue #525).
  *
- * Two layers of gating must both be true for any event to leave the device:
+ * Two layers of gating must BOTH be true for any event to leave the device:
  *
- *  1. **Build-time gate** — `BuildConfig.ANALYTICS_ENABLED`. When false the DI
- *     graph binds [NoOpAnalyticsService] and Sentry-KMP isn't even loaded.
- *     Production builds ship with this OFF. A contributor's fresh clone sends
- *     nothing.
- *  2. **Runtime gate** — the user's explicit opt-in. The DI module wires the
- *     provider to `{ BuildConfig.ANALYTICS_ENABLED }` initially (same source
- *     as the build-time gate, doubly-locked); a follow-up swaps this for
- *     `{ settingsRepository.analyticsEnabled.value }` once the Settings UI
- *     toggle ships. Default at the user level is OFF.
+ *  1. **Dev-only build gate** — `BuildConfig.ANALYTICS_DEV_ENABLED`. In RELEASE
+ *     builds this is hardcoded to true at BuildConfig generation time. In DEBUG
+ *     builds it reads `feature.analyticsDevEnabled` from gradle/local.properties
+ *     (default false), letting contributors keep their dev builds silent even
+ *     if they toggle the user setting ON for testing. Protects the production
+ *     GlitchTip from being polluted by dev test traffic.
+ *  2. **User-facing runtime gate** — `SettingsRepository.analyticsEnabled`.
+ *     The user-controlled switch in the Settings UI. Default OFF. Checked on
+ *     every emit; flipping it ON in a release build starts emission
+ *     immediately, no rebuild required.
  *
  * The API surface is deliberately narrow:
  *  - [init] is called once during app bootstrap.

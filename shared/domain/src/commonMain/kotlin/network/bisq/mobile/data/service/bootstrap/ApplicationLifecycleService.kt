@@ -1,6 +1,9 @@
 package network.bisq.mobile.data.service.bootstrap
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.BaseService
 import network.bisq.mobile.data.service.network.KmpTorService
@@ -10,6 +13,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.killProcess
 import network.bisq.mobile.domain.utils.restartProcess
 
@@ -18,15 +22,21 @@ abstract class ApplicationLifecycleService(
     private val kmpTorService: KmpTorService,
     private val analyticsService: AnalyticsService,
     private val analyticsBootstrapConfig: AnalyticsBootstrapConfig,
-    // Optional — wired by Koin (`getOrNull`) when ANALYTICS_ENABLED is true.
-    // null in production builds with analytics disabled (NoOpAnalyticsService bound)
-    // and in test fixtures that don't care about the readiness signal.
+    // Optional — always bound now in production DI; null only in test fixtures
+    // that don't care about the readiness signal (see TestApplicationLifecycleService).
     private val bufferedAnalyticsService: BufferedAnalyticsService? = null,
-    // Optional — wired by Koin (`getOrNull`) when ANALYTICS_ENABLED is true.
-    // Per-app: ClientApp wraps KmpTorService, NodeApp polls bisq2's NetworkService.
-    // null when analytics is disabled at build time — `bootstrapAnalytics()`
-    // then skips entirely.
+    // Optional — always bound now in production DI (per-app: ClientApp wraps
+    // KmpTorService, NodeApp polls bisq2's NetworkService). null only in test
+    // fixtures; `bootstrapAnalytics()` then skips entirely.
     private val analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
+    // Optional — always bound in production DI. Pre-warmed in
+    // [bootstrapAnalytics] before flipping onSentryReady so the DI's
+    // hot StateFlow gate (`analyticsEnabledIn`) has its real value before
+    // any track() call runs through it. Without this, a fast first-frame
+    // dashboard view could race the StateFlow's initial emission and the
+    // event would be silently dropped at the runtime gate. See PR #1473
+    // discussion + diagnostic logs in [SentryAnalyticsService.isReadyToEmit].
+    private val settingsRepository: SettingsRepository? = null,
 ) : BaseService() {
     private val isTerminating = atomic<Boolean>(false)
 
@@ -80,13 +90,35 @@ abstract class ApplicationLifecycleService(
         // on the critical path.
         serviceScope.launch {
             try {
-                log.i { "Analytics: waiting for Tor SOCKS port (suspends until available)" }
-                // No timeout — if Tor never comes up (clearnet trusted node on
-                // the client, or a node app that fails Tor bootstrap), this
-                // suspends forever. The bounded BufferedAnalyticsService FIFO
-                // eviction guarantees memory safety; the privacy contract
-                // guarantees we never leak via clearnet because Sentry is
-                // simply never initialized.
+                // (1) Wait until the user opts in. NEVER load Sentry's SDK
+                //     into the process until the user explicitly agrees —
+                //     prevents the auto-installed integrations (Uncaught-
+                //     ExceptionHandler, ActivityLifecycle, Watchdog, etc.)
+                //     from being registered at all. If the user never opts
+                //     in, this suspends forever and Sentry is never loaded.
+                //
+                //     Note: SettingsRepository is typed nullable for test
+                //     fixtures. Without it we can't honour the opt-in
+                //     contract — fail loudly via early return rather than
+                //     silently behaving as opted-in.
+                val settingsRepo = settingsRepository
+                if (settingsRepo == null) {
+                    log.w { "Analytics: SettingsRepository not bound — refusing to init Sentry (opt-in cannot be verified)" }
+                    return@launch
+                }
+                log.i { "Analytics: waiting for the user opt-in toggle" }
+                settingsRepo.data
+                    .map { it.analyticsEnabled }
+                    .filter { it }
+                    .first()
+                log.i { "Analytics: opt-in confirmed; waiting for Tor SOCKS port" }
+                // (2) Wait for Tor. No timeout — if Tor never comes up
+                //     (clearnet trusted node on the client, or a node app
+                //     that fails Tor bootstrap), this suspends forever. The
+                //     bounded BufferedAnalyticsService FIFO eviction
+                //     guarantees memory safety; the privacy contract
+                //     guarantees we never leak via clearnet because Sentry
+                //     is simply never initialized.
                 val socksPort = provider.awaitSocksPort()
                 analyticsService.init(
                     dsn = analyticsBootstrapConfig.dsn,
@@ -98,9 +130,13 @@ abstract class ApplicationLifecycleService(
                 )
                 // Flip the buffer's readiness flag and trigger an immediate
                 // drain of any events that fired between presenter wiring and
-                // now. Null when analytics is disabled at build time (NoOp is
-                // bound, there's nothing to flush). Safe to call multiple
+                // now. Null only in test fixtures. Safe to call multiple
                 // times — the method is idempotent (atomic CAS internally).
+                //
+                // No pre-warm needed here: the `filter { it }.first()` above
+                // already proved DataStore has emitted at least one value
+                // where `analyticsEnabled == true`, so the DI module's hot
+                // StateFlow gate reflects reality before any track call.
                 bufferedAnalyticsService?.onSentryReady()
                 log.i { "Analytics: Sentry initialized over Tor (SOCKS5 $LOOPBACK_SOCKS_HOST:$socksPort)" }
             } catch (e: Exception) {

@@ -21,6 +21,7 @@ class SentryAnalyticsServiceTest {
         var lastIsDebug: Boolean? = null
         var lastSocksHost: String? = null
         var lastSocksPort: Int? = null
+        var lastRuntimeOptInProvider: (() -> Boolean)? = null
         val capturedMessages = mutableListOf<String>()
         val capturedExceptions = mutableListOf<Throwable>()
 
@@ -32,6 +33,7 @@ class SentryAnalyticsServiceTest {
             isDebug: Boolean,
             socksProxyHost: String?,
             socksProxyPort: Int?,
+            runtimeOptInProvider: () -> Boolean,
         ) {
             initCalls++
             lastDsn = dsn
@@ -40,6 +42,7 @@ class SentryAnalyticsServiceTest {
             lastIsDebug = isDebug
             lastSocksHost = socksProxyHost
             lastSocksPort = socksProxyPort
+            lastRuntimeOptInProvider = runtimeOptInProvider
         }
 
         override fun captureMessage(message: String) {
@@ -310,10 +313,10 @@ class SentryAnalyticsServiceTest {
     fun `DI-friendly public constructor accepts a NativeSentryInitializer plus runtimeOptInProvider`() {
         // Pins the contract for the constructor used by every DI module
         // (ClientDomainModule + NodeDomainModule pass `get<NativeSentryInitializer>()`
-        // plus `{ BuildConfig.ANALYTICS_ENABLED }`). Construction must not throw
-        // and must NOT actually invoke the native initializer (init is lazy —
-        // only fires when init() is called). This catches any refactor that
-        // eagerly calls into the SDK at construction time.
+        // plus `{ ANALYTICS_DEV_ENABLED && settingsRepository.analyticsEnabled.value }`).
+        // Construction must not throw and must NOT actually invoke the native
+        // initializer (init is lazy — only fires when init() is called). This
+        // catches any refactor that eagerly calls into the SDK at construction time.
         var consented = false
         var nativeInitCalls = 0
         val recordingNative =
@@ -326,6 +329,7 @@ class SentryAnalyticsServiceTest {
                     isDebug: Boolean,
                     socksProxyHost: String?,
                     socksProxyPort: Int?,
+                    runtimeOptInProvider: () -> Boolean,
                 ) {
                     nativeInitCalls++
                 }
@@ -359,5 +363,46 @@ class SentryAnalyticsServiceTest {
 
         assertTrue(client.capturedMessages.isEmpty(), "default provider must deny track()")
         assertTrue(client.capturedExceptions.isEmpty(), "default provider must deny captureException()")
+    }
+
+    // ============ OPT-IN GATE FORWARDING ============
+    //
+    // The init must forward the SAME `runtimeOptInProvider` to the underlying
+    // SentryClient so the platform's `beforeSend` can drop SDK-auto-captured
+    // events (UncaughtExceptionHandler crashes, ActivityLifecycle events,
+    // etc.) when the user is opted out. Without this, the gate only catches
+    // OUR manual track() / captureException() calls — auto-captured events
+    // bypass it entirely and leak post-opt-out.
+
+    @Test
+    fun `init forwards the runtimeOptInProvider to the SentryClient`() {
+        // Pins the load-bearing contract for Option B (PR #1474 follow-up):
+        // the same lambda the service uses to gate its own emit paths must
+        // ALSO be threaded into the native init so beforeSend can refuse
+        // events at the SDK level. Identity check (===), not equality.
+        var consented = true
+        val providerLambda: () -> Boolean = { consented }
+        val (service, client) = newService(optedIn = true)
+        // Replace with a fresh instance whose provider we control by reference.
+        val taggedService =
+            SentryAnalyticsService(
+                sentryClient = client,
+                runtimeOptInProvider = providerLambda,
+            )
+
+        taggedService.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
+
+        assertEquals(1, client.initCalls)
+        assertEquals(
+            providerLambda,
+            client.lastRuntimeOptInProvider,
+            "SentryAnalyticsService.init MUST forward the same runtimeOptInProvider — beforeSend uses it as the SDK-level opt-in gate",
+        )
+        // Bonus: mutating `consented` via the lambda reaches the forwarded
+        // lambda too (i.e. it's captured-by-reference, not snapshotted).
+        consented = false
+        assertEquals(false, client.lastRuntimeOptInProvider?.invoke())
+        // Silence the unused warning on the test-helper service.
+        assertEquals(client, client.also { service.track(AnalyticsEvent.ScreenViewed.Dashboard) })
     }
 }

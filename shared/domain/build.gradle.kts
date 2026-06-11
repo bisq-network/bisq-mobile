@@ -31,7 +31,7 @@ version = project.findProperty("shared.version") as String
 // overrides any property if you need to setup for example local networking"
 // below, we load it once here and prefer it over gradle.properties.
 //
-// Used for: feature.analyticsEnabled, analytics.dsn.*, feature.muSigEnabled,
+// Used for: feature.analyticsDevEnabled, analytics.dsn.*, feature.muSigEnabled,
 // bisq.isDebug, and any future per-developer override. Never commit
 // local.properties — it is gitignored.
 val devLocalProperties: Properties =
@@ -115,19 +115,32 @@ buildConfig {
             "MU_SIG_ENABLED",
             muSigEnabled,
         )
-        // Analytics build-time gate (issue #525). See gradle.properties for the
-        // full opt-in story. Strict parse: refuses anything that isn't a literal
-        // "true"/"false" — silent coercion on a privacy-sensitive switch is a
-        // foot-gun we explicitly want to avoid. Read via resolveProperty so
-        // local.properties takes precedence over gradle.properties.
-        val analyticsEnabled =
-            resolveProperty("feature.analyticsEnabled")
-                ?.let { value ->
-                    value.toBooleanStrictOrNull()
-                        ?: error("feature.analyticsEnabled must be 'true' or 'false', got '$value'")
-                }
-                ?: false
-        buildConfigField("ANALYTICS_ENABLED", analyticsEnabled)
+        // Analytics dev-only override (issue #525). See gradle.properties for the
+        // full opt-in story. This is NOT the user-facing gate — that lives in
+        // SettingsRepository.analyticsEnabled and is honoured by every build.
+        //
+        // What this flag does: in DEBUG builds, when false, prevents Sentry from
+        // emitting even if the user-settings toggle is ON. Protects production
+        // GlitchTip from being polluted by developer test events. In RELEASE
+        // builds, this is forced TRUE — end users get a ready-to-flip build.
+        //
+        // Strict parse: refuses anything that isn't literal "true"/"false" —
+        // silent coercion on a privacy-sensitive switch is a foot-gun we
+        // explicitly want to avoid. Read via resolveProperty so local.properties
+        // takes precedence over gradle.properties.
+        val analyticsDevEnabled =
+            if (!isDebugBuild) {
+                // Release builds always honour the user-settings toggle.
+                true
+            } else {
+                resolveProperty("feature.analyticsDevEnabled")
+                    ?.let { value ->
+                        value.toBooleanStrictOrNull()
+                            ?: error("feature.analyticsDevEnabled must be 'true' or 'false', got '$value'")
+                    }
+                    ?: false
+            }
+        buildConfigField("ANALYTICS_DEV_ENABLED", analyticsDevEnabled)
         // DSNs are public per Sentry's threat model — the public key alone
         // cannot read data, only post. Empty default = effectively disabled.
         // Connect's BuildConfig holds both Android + iOS DSNs; the runtime
@@ -152,18 +165,23 @@ buildConfig {
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
         // Note: Update when updating kmp-tor lib
         buildConfigField("TOR_VERSION", "0.4.8.17") // is TOR DAEMON version
-        // Analytics build-time gate (issue #525). See client BuildConfig above for
-        // the rationale; the Node app gets its own DSN pointing at GlitchTip
-        // project id=2 (bisq-easy-node-android). Read via resolveProperty so
-        // local.properties takes precedence over gradle.properties.
-        val nodeAnalyticsEnabled =
-            resolveProperty("feature.analyticsEnabled")
-                ?.let { value ->
-                    value.toBooleanStrictOrNull()
-                        ?: error("feature.analyticsEnabled must be 'true' or 'false', got '$value'")
-                }
-                ?: false
-        buildConfigField("ANALYTICS_ENABLED", nodeAnalyticsEnabled)
+        // Analytics dev-only override (issue #525). See client BuildConfig above
+        // for the full rationale. Node app gets its own DSN pointing at GlitchTip
+        // project id=2 (bisq-easy-node-android). Same semantics: release builds
+        // always honour the user-settings toggle; debug builds need this flag
+        // true to actually emit (dev safety against polluting prod GlitchTip).
+        val nodeAnalyticsDevEnabled =
+            if (!isDebugBuild) {
+                true
+            } else {
+                resolveProperty("feature.analyticsDevEnabled")
+                    ?.let { value ->
+                        value.toBooleanStrictOrNull()
+                            ?: error("feature.analyticsDevEnabled must be 'true' or 'false', got '$value'")
+                    }
+                    ?: false
+            }
+        buildConfigField("ANALYTICS_DEV_ENABLED", nodeAnalyticsDevEnabled)
         buildConfigField(
             "ANALYTICS_DSN",
             resolveProperty("analytics.dsn.node.android").orEmpty(),
@@ -248,11 +266,13 @@ kotlin {
             implementation(libs.kphonenumber)
             api(libs.okio) // api to allow platform specific path conversion for kmp-tor
 
-            // Opt-in analytics SDK (issue #525). Always on the classpath so the
-            // DI module can switch between NoOp and Sentry-backed implementations
-            // at runtime based on BuildConfig.ANALYTICS_ENABLED. R8 prunes the
-            // SDK classes from release builds when ANALYTICS_ENABLED=false since
-            // SentryAnalyticsService is then never referenced.
+            // Opt-in analytics SDK (issue #525). Always on the classpath AND
+            // always bound in DI now — the SDK ships linked into every release
+            // build but stays inert until both runtime gates pass: the dev-only
+            // BuildConfig.ANALYTICS_DEV_ENABLED (always true in release) AND
+            // SettingsRepository.analyticsEnabled (default OFF, user-controlled).
+            // Trade-off: a few hundred KB binary cost in exchange for end users
+            // getting a ready-to-flip release build (no rebuild needed to enable).
             implementation(libs.sentry.kotlin.multiplatform)
 
             configurations.all {

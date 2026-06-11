@@ -7,11 +7,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import org.junit.After
@@ -158,9 +161,10 @@ class ApplicationLifecycleServiceBootstrapTest {
     }
 
     @Test
-    fun `initialize forwards every AnalyticsBootstrapConfig value to AnalyticsService_init when SOCKS port is up`() {
+    fun `initialize forwards every AnalyticsBootstrapConfig value to AnalyticsService_init when opted-in AND SOCKS port is up`() {
         val analytics = RecordingAnalyticsService()
         val provider = FakeSocksPortProvider(CompletableDeferred(9050))
+        val settingsRepo = TestSettingsRepository(MutableStateFlow(Settings(analyticsEnabled = true)))
         val config =
             AnalyticsBootstrapConfig(
                 dsn = "http://abc@onion-host/3",
@@ -173,11 +177,12 @@ class ApplicationLifecycleServiceBootstrapTest {
                 analyticsService = analytics,
                 analyticsBootstrapConfig = config,
                 analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
             )
 
         runCatching { service.initialize() }
 
-        assertEquals(1, analytics.initCalls, "AnalyticsService.init must be called exactly once when SOCKS is up")
+        assertEquals(1, analytics.initCalls, "AnalyticsService.init must be called exactly once when opted-in + SOCKS up")
         assertEquals(config.dsn, analytics.lastDsn)
         assertEquals(config.environment, analytics.lastEnvironment)
         assertEquals(config.release, analytics.lastRelease)
@@ -196,6 +201,7 @@ class ApplicationLifecycleServiceBootstrapTest {
         // leaking the user's IP to whatever clearnet exit it hit.
         val analytics = RecordingAnalyticsService()
         val provider = FakeSocksPortProvider(CompletableDeferred()) // never completes
+        val settingsRepo = TestSettingsRepository(MutableStateFlow(Settings(analyticsEnabled = true)))
         val service =
             TestApplicationLifecycleService(
                 analyticsService = analytics,
@@ -207,6 +213,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                         isDebug = false,
                     ),
                 analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
             )
 
         runCatching { service.initialize() }
@@ -253,6 +260,7 @@ class ApplicationLifecycleServiceBootstrapTest {
         val boom = RuntimeException("Sentry-KMP refused to dial")
         val analytics = RecordingAnalyticsService(throwOnInit = boom)
         val provider = FakeSocksPortProvider(CompletableDeferred(9050))
+        val settingsRepo = TestSettingsRepository(MutableStateFlow(Settings(analyticsEnabled = true)))
         val service =
             TestApplicationLifecycleService(
                 analyticsService = analytics,
@@ -264,6 +272,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                         isDebug = false,
                     ),
                 analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
             )
 
         val outcome = runCatching { service.initialize() }
@@ -294,6 +303,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                 flushIntervalMs = 0L,
             )
         val provider = FakeSocksPortProvider(CompletableDeferred(9050))
+        val settingsRepo = TestSettingsRepository(MutableStateFlow(Settings(analyticsEnabled = true)))
         val service =
             TestApplicationLifecycleService(
                 analyticsService = buffered,
@@ -306,6 +316,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                     ),
                 bufferedAnalyticsService = buffered,
                 analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
             )
 
         // Pre-condition: not ready before initialize.
@@ -332,6 +343,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                 flushIntervalMs = 0L,
             )
         val provider = FakeSocksPortProvider(CompletableDeferred()) // never completes
+        val settingsRepo = TestSettingsRepository(MutableStateFlow(Settings(analyticsEnabled = true)))
         val service =
             TestApplicationLifecycleService(
                 analyticsService = buffered,
@@ -344,11 +356,198 @@ class ApplicationLifecycleServiceBootstrapTest {
                     ),
                 bufferedAnalyticsService = buffered,
                 analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
             )
 
         runCatching { service.initialize() }
 
         assertEquals(0, analytics.initCalls)
         assertEquals(false, buffered.isReady, "Buffer must NOT be flipped to ready when Sentry was never initialized")
+    }
+
+    // ============ OPTION B — Defer init until first opt-in ============
+
+    @Test
+    fun `initialize waits for analyticsEnabled=true BEFORE calling Sentry init - opted-out users never load the SDK`() {
+        // THE Option B privacy invariant: a user who never opts in must NEVER
+        // see Sentry's SDK loaded into the process. UncaughtExceptionHandler
+        // installed, native libs (libsentry.so, libsentry-android.so) loaded,
+        // ActivityLifecycle integration registered, cache dirs created — ALL
+        // bypassed until the user explicitly agrees. Verified empirically:
+        // `nativeloader Load /.../libsentry.so` log line never appears for
+        // opted-out users.
+        val analytics = RecordingAnalyticsService()
+        val provider = FakeSocksPortProvider(CompletableDeferred(9050))
+        val settingsRepo = TestSettingsRepository(MutableStateFlow(Settings(analyticsEnabled = false)))
+        val service =
+            TestApplicationLifecycleService(
+                analyticsService = analytics,
+                analyticsBootstrapConfig =
+                    AnalyticsBootstrapConfig(
+                        dsn = "http://abc@onion-host/3",
+                        environment = "production",
+                        release = "test",
+                        isDebug = false,
+                    ),
+                analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
+            )
+
+        runCatching { service.initialize() }
+
+        assertEquals(0, analytics.initCalls, "Sentry init must NOT run while user is opted-out")
+        assertNull(analytics.lastDsn, "DSN must never reach the SDK pre-opt-in")
+    }
+
+    @Test
+    fun `initialize triggers Sentry init when user flips opt-in to true mid-session`() {
+        // The reactive flip-on path: user defers consent at launch, then
+        // changes their mind. The lifecycle's `filter { it }.first()` must
+        // observe that transition and proceed to init. Without this, a user
+        // who opts in via Settings AFTER launch would never get analytics
+        // unless they restart the app.
+        val analytics = RecordingAnalyticsService()
+        val provider = FakeSocksPortProvider(CompletableDeferred(9050))
+        val settingsFlow = MutableStateFlow(Settings(analyticsEnabled = false))
+        val settingsRepo = TestSettingsRepository(settingsFlow)
+        val service =
+            TestApplicationLifecycleService(
+                analyticsService = analytics,
+                analyticsBootstrapConfig =
+                    AnalyticsBootstrapConfig(
+                        dsn = "http://abc@onion-host/3",
+                        environment = "production",
+                        release = "test",
+                        isDebug = false,
+                    ),
+                analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
+            )
+
+        runCatching { service.initialize() }
+        assertEquals(0, analytics.initCalls, "pre-condition: opted-out → no init")
+
+        // User flips toggle ON in Settings.
+        settingsFlow.value = settingsFlow.value.copy(analyticsEnabled = true)
+
+        assertEquals(1, analytics.initCalls, "opt-in flip must trigger Sentry init")
+    }
+
+    @Test
+    fun `initialize refuses to init Sentry when SettingsRepository is not bound - fails closed`() {
+        // Defence in depth: if production DI somehow forgot to bind
+        // SettingsRepository (refactor bug, module misconfiguration), we must
+        // NOT silently default to "init Sentry anyway". That would
+        // effectively force-enable analytics for everyone — catastrophic for
+        // the opt-in contract. Fail closed, log loud.
+        val analytics = RecordingAnalyticsService()
+        val provider = FakeSocksPortProvider(CompletableDeferred(9050))
+        val service =
+            TestApplicationLifecycleService(
+                analyticsService = analytics,
+                analyticsBootstrapConfig =
+                    AnalyticsBootstrapConfig(
+                        dsn = "http://abc@onion-host/3",
+                        environment = "production",
+                        release = "test",
+                        isDebug = false,
+                    ),
+                analyticsSocksPortProvider = provider,
+                settingsRepository = null, // explicit: misconfiguration scenario
+            )
+
+        runCatching { service.initialize() }
+
+        assertEquals(0, analytics.initCalls, "no SettingsRepository → MUST NOT init Sentry")
+    }
+
+    /**
+     * Minimal [SettingsRepository] stand-in that lets the test control when
+     * `data` emits. Used by the pre-warm contract test below. We don't reach
+     * for mockk here because the SettingsRepository interface has many
+     * methods and the test only cares about `data` emissions.
+     */
+    private class TestSettingsRepository(
+        private val flow: MutableStateFlow<Settings> = MutableStateFlow(Settings()),
+    ) : SettingsRepository {
+        override val data = flow
+
+        override suspend fun setFirstLaunch(value: Boolean) {}
+
+        override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
+
+        override suspend fun setSelectedMarketCode(value: String) {}
+
+        override suspend fun setNotificationPermissionState(
+            value: network.bisq.mobile.data.model.PermissionState,
+        ) {}
+
+        override suspend fun setBatteryOptimizationPermissionState(
+            value: network.bisq.mobile.data.model.BatteryOptimizationState,
+        ) {}
+
+        override suspend fun update(transform: suspend (t: Settings) -> Settings) {
+            flow.value = transform(flow.value)
+        }
+
+        override suspend fun clear() {}
+
+        override suspend fun setMarketSortBy(value: network.bisq.mobile.data.model.market.MarketSortBy) {}
+
+        override suspend fun setMarketFilter(value: network.bisq.mobile.data.model.market.MarketFilter) {}
+
+        override suspend fun setDontShowAgainHyperlinksOpenInBrowser(value: Boolean) {}
+
+        override suspend fun setPermitOpeningBrowser(value: Boolean) {}
+
+        override suspend fun setAnalyticsEnabled(value: Boolean) {
+            flow.value = flow.value.copy(analyticsEnabled = value)
+        }
+
+        override suspend fun setAnalyticsPromptSeen(value: Boolean) {
+            flow.value = flow.value.copy(analyticsPromptSeen = value)
+        }
+    }
+
+    @Test
+    fun `init + onSentryReady fire only after the opt-in flip is observed in Settings`() {
+        // Pins the ordering: under Option B, the lifecycle waits for the
+        // settings flow to emit `analyticsEnabled=true` BEFORE calling init
+        // BEFORE calling onSentryReady. So the buffer's "ready" flag must
+        // ONLY flip after both the opt-in flip and SDK init complete.
+        //
+        // This also implicitly handles the StateFlow pre-warm we previously
+        // hand-coded: by the time `filter { it }.first()` resolves, DataStore
+        // has emitted at least once with the truthy value, so the DI module's
+        // `analyticsEnabledIn` StateFlow has its real value. The race window
+        // we hit on the node app on 2026-06-11 is gone.
+        val analytics = RecordingAnalyticsService()
+        val buffered =
+            BufferedAnalyticsService(
+                downstream = analytics,
+                scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob()),
+                flushIntervalMs = 0L,
+            )
+        val provider = FakeSocksPortProvider(CompletableDeferred(9050))
+        val settingsRepo = TestSettingsRepository(MutableStateFlow(Settings(analyticsEnabled = true)))
+        val service =
+            TestApplicationLifecycleService(
+                analyticsService = buffered,
+                analyticsBootstrapConfig =
+                    AnalyticsBootstrapConfig(
+                        dsn = "http://abc@onion-host/3",
+                        environment = "production",
+                        release = "test",
+                        isDebug = false,
+                    ),
+                bufferedAnalyticsService = buffered,
+                analyticsSocksPortProvider = provider,
+                settingsRepository = settingsRepo,
+            )
+
+        runCatching { service.initialize() }
+
+        assertEquals(1, analytics.initCalls)
+        assertEquals(true, buffered.isReady, "Buffer ready flips only after opt-in flip + init + onSentryReady")
     }
 }

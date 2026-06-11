@@ -75,6 +75,7 @@ class ClientApplicationLifecycleService(
         analyticsBootstrapConfig,
         bufferedAnalyticsService,
         analyticsSocksPortProvider,
+        settingsRepository,
     ) {
     /**
      * Dedicated scope for the local-vs-relayed orchestration job. Kept separate

@@ -67,21 +67,17 @@ val iosClientDomainModule =
                 get(), // notificationController
                 get(), // analyticsService
                 get(), // analyticsBootstrapConfig
-                getOrNull(), // bufferedAnalyticsService — only bound when ANALYTICS_ENABLED
-                getOrNull(), // analyticsSocksPortProvider — only bound when ANALYTICS_ENABLED
+                getOrNull(), // bufferedAnalyticsService — always bound now (dev + user-settings gates at runtime)
+                getOrNull(), // analyticsSocksPortProvider — always bound now (dev + user-settings gates at runtime)
             )
         }
         single<UrlLauncher> { IOSUrlLauncher() }
         single<VersionProvider> { ClientVersionProvider() }
 
-        // Native Sentry SDK initializer — only bound when analytics is enabled
-        // at build time. Unlike Android (where R8 prunes the Sentry-KMP classes
-        // outright), iOS still statically links Sentry.framework via the pod()
-        // declaration in clientApp/build.gradle.kts — but no Kotlin code paths
-        // reference it when this binding is absent, so it stays inert.
-        // TODO: gate the pod() declaration too (see clientApp/build.gradle.kts
-        // for iOS pruning options).
-        if (BuildConfig.ANALYTICS_ENABLED) {
-            single<NativeSentryInitializer> { SentryCocoaNativeSentryInitializer() }
-        }
+        // Native Sentry SDK initializer. Unconditionally bound — the
+        // user-settings toggle + dev gate are the runtime gates. iOS already
+        // statically links Sentry.framework via the pod() declaration in
+        // clientApp/build.gradle.kts regardless; the SDK stays inert until
+        // SentryAnalyticsService.init() runs (gated by both lock layers).
+        single<NativeSentryInitializer> { SentryCocoaNativeSentryInitializer() }
     }

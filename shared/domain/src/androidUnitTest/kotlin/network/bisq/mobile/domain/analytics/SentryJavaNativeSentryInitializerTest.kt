@@ -508,4 +508,79 @@ class SentryJavaNativeSentryInitializerTest {
         assertNull(event.contexts.runtime)
         assertNull(event.contexts.gpu)
     }
+
+    // ============ beforeSend OPT-IN GATE (Option B) ============
+
+    @Test
+    fun `beforeSend returns null when runtimeOptInProvider returns false - drops SDK auto-captures`() {
+        // The load-bearing privacy invariant from Option B (issue #525):
+        // when the user is opted out, the SDK's own pipelines (Uncaught-
+        // ExceptionHandler crashes, ActivityLifecycle, etc.) ship envelopes
+        // through beforeSend — NOT through SentryAnalyticsService.track().
+        // Without this gate, an opted-out user whose app crashes would still
+        // leak the crash report.
+        val options = SentryAndroidOptions()
+        SentryJavaNativeSentryInitializer().setupPrivacy(
+            options = options,
+            redactor = AnalyticsRedactor(),
+            runtimeOptInProvider = { false }, // user opted OUT
+        )
+        val callback = assertNotNull(options.beforeSend)
+
+        val event = SentryEvent()
+        val result = callback.execute(event, io.sentry.Hint())
+
+        assertNull(
+            result,
+            "beforeSend MUST return null when opted-out — Sentry drops the envelope at SDK level, no wire traffic",
+        )
+    }
+
+    @Test
+    fun `beforeSend forwards the event when runtimeOptInProvider returns true`() {
+        // Symmetric to the opted-out test: when opted in, the gate is open
+        // and beforeSend returns the event (after scrubbing).
+        val options = SentryAndroidOptions()
+        SentryJavaNativeSentryInitializer().setupPrivacy(
+            options = options,
+            redactor = AnalyticsRedactor(),
+            runtimeOptInProvider = { true }, // user opted IN
+        )
+        val callback = assertNotNull(options.beforeSend)
+
+        val event = SentryEvent()
+        val result = callback.execute(event, io.sentry.Hint())
+
+        assertEquals(event, result, "beforeSend MUST return the event when opted-in — SDK ships it")
+    }
+
+    @Test
+    fun `beforeSend consults the provider on EVERY call - flipping opt-in mid-session takes effect immediately`() {
+        // Captures-by-reference contract: the provider lambda is invoked fresh
+        // on every event, not snapshotted at init time. This is what makes
+        // toggle-off-after-init work — Sentry stays loaded but stops emitting
+        // the instant the user flips the switch in Settings.
+        var consented = true
+        val options = SentryAndroidOptions()
+        SentryJavaNativeSentryInitializer().setupPrivacy(
+            options = options,
+            redactor = AnalyticsRedactor(),
+            runtimeOptInProvider = { consented },
+        )
+        val callback = assertNotNull(options.beforeSend)
+
+        // First event: opted in → shipped.
+        assertNotNull(callback.execute(SentryEvent(), io.sentry.Hint()))
+
+        // User flips toggle OFF mid-session.
+        consented = false
+        assertNull(
+            callback.execute(SentryEvent(), io.sentry.Hint()),
+            "beforeSend must re-read the provider on every call, not cache",
+        )
+
+        // User flips back ON.
+        consented = true
+        assertNotNull(callback.execute(SentryEvent(), io.sentry.Hint()))
+    }
 }

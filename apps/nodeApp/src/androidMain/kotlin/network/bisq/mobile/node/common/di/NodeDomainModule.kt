@@ -36,9 +36,9 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.analytics.NativeSentryInitializer
-import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.analytics.SentryAnalyticsService
 import network.bisq.mobile.domain.analytics.SentryJavaNativeSentryInitializer
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
@@ -121,35 +121,34 @@ val androidNodeDomainModule =
         single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
 
         // Opt-in analytics (issue #525). Same shape as clientApp's binding —
-        // see ClientDomainModule for the full double-lock rationale plus the
-        // BufferedAnalyticsService double-binding pattern.
-        // Node app sends to the bisq-easy-node-android GlitchTip project (DSN
-        // from gradle.properties / local.properties).
-        if (BuildNodeConfig.ANALYTICS_ENABLED) {
-            single<NativeSentryInitializer> { SentryJavaNativeSentryInitializer() }
-            // SOCKS port source: bisq2's embedded NetworkService. The node app's
-            // KmpTorService binding is NEVER started (its startTor() is only
-            // called from the Connect-side TrustedNodeSetupUseCase) — so we
-            // must NOT wire KmpTorSocksPortProvider here or analytics would
-            // suspend forever waiting on a Tor instance nobody ever starts.
-            single<AnalyticsSocksPortProvider> { Bisq2SocksPortProvider(get()) }
-            single {
-                BufferedAnalyticsService(
-                    downstream =
-                        SentryAnalyticsService(
-                            nativeInitializer = get(),
-                            runtimeOptInProvider = { BuildNodeConfig.ANALYTICS_ENABLED },
-                        ),
-                    scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
-                )
-            }
-            single<AnalyticsService> { get<BufferedAnalyticsService>() }
-        } else {
-            single<AnalyticsService> { NoOpAnalyticsService }
-            // Intentionally NO BufferedAnalyticsService binding here — the
-            // lifecycle service uses getOrNull<BufferedAnalyticsService>(),
-            // which returns null and skips the onSentryReady() call.
+        // see ClientDomainModule for the full double-lock rationale (dev gate
+        // + user-settings gate) and the BufferedAnalyticsService double-binding
+        // pattern. Node app sends to the bisq-easy-node-android GlitchTip
+        // project (DSN from gradle.properties / local.properties).
+        single<NativeSentryInitializer> { SentryJavaNativeSentryInitializer() }
+        // SOCKS port source: bisq2's embedded NetworkService. The node app's
+        // KmpTorService binding is NEVER started (its startTor() is only
+        // called from the Connect-side TrustedNodeSetupUseCase) — so we must
+        // NOT wire KmpTorSocksPortProvider here or analytics would suspend
+        // forever waiting on a Tor instance nobody ever starts.
+        single<AnalyticsSocksPortProvider> { Bisq2SocksPortProvider(get()) }
+        single {
+            // See ClientDomainModule for the matching pattern + rationale.
+            val analyticsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            val settingsRepository = get<SettingsRepository>()
+            val analyticsEnabledFlow = settingsRepository.analyticsEnabledIn(analyticsScope)
+            BufferedAnalyticsService(
+                downstream =
+                    SentryAnalyticsService(
+                        nativeInitializer = get(),
+                        runtimeOptInProvider = {
+                            BuildNodeConfig.ANALYTICS_DEV_ENABLED && analyticsEnabledFlow.value
+                        },
+                    ),
+                scope = analyticsScope,
+            )
         }
+        single<AnalyticsService> { get<BufferedAnalyticsService>() }
         single<AnalyticsBootstrapConfig> {
             AnalyticsBootstrapConfig(
                 dsn = BuildNodeConfig.ANALYTICS_DSN,
@@ -225,8 +224,9 @@ val androidNodeDomainModule =
                 get(),
                 get(), // analyticsService
                 get(), // analyticsBootstrapConfig
-                getOrNull(), // bufferedAnalyticsService — only bound when ANALYTICS_ENABLED
-                getOrNull(), // analyticsSocksPortProvider — only bound when ANALYTICS_ENABLED
+                getOrNull(), // bufferedAnalyticsService — always bound now (dev + user-settings gates at runtime)
+                getOrNull(), // analyticsSocksPortProvider — always bound now (dev + user-settings gates at runtime)
+                get<SettingsRepository>(), // pre-warm DataStore before flipping onSentryReady — see ApplicationLifecycleService
             )
         } bind ApplicationLifecycleService::class
 

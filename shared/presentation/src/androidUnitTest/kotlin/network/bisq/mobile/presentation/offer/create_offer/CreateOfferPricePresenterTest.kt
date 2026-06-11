@@ -130,6 +130,10 @@ class CreateOfferPricePresenterTest {
         override suspend fun setDontShowAgainHyperlinksOpenInBrowser(value: Boolean) {}
 
         override suspend fun setPermitOpeningBrowser(value: Boolean) {}
+
+        override suspend fun setAnalyticsEnabled(value: Boolean) {}
+
+        override suspend fun setAnalyticsPromptSeen(value: Boolean) {}
     }
 
     private class FakeMarketPriceServiceFacade(

@@ -92,6 +92,7 @@ class SentryCocoaNativeSentryInitializer :
         isDebug: Boolean,
         socksProxyHost: String?,
         socksProxyPort: Int?,
+        runtimeOptInProvider: () -> Boolean,
     ) {
         Sentry.initWithPlatformOptions { options ->
             // Identity / build-time config
@@ -100,7 +101,7 @@ class SentryCocoaNativeSentryInitializer :
             options.releaseName = release
             options.debug = isDebug
 
-            setupPrivacy(options, redactor)
+            setupPrivacy(options, redactor, runtimeOptInProvider)
             setupTransport(options, socksProxyHost, socksProxyPort)
         }
         log.d {
@@ -115,6 +116,7 @@ class SentryCocoaNativeSentryInitializer :
     private fun setupPrivacy(
         options: cocoapods.Sentry.SentryOptions,
         redactor: AnalyticsRedactor,
+        runtimeOptInProvider: () -> Boolean,
     ) {
         options.sendDefaultPii = false
 
@@ -134,10 +136,20 @@ class SentryCocoaNativeSentryInitializer :
         options.enableCoreDataTracing = false
         options.attachStacktrace = false
 
-        // beforeSend is defence in depth — see [applyMinimalPayloadContract].
+        // beforeSend serves TWO purposes:
+        //  1. Defence in depth scrubbing — see [applyMinimalPayloadContract].
+        //  2. THE opt-in gate for SDK auto-captures (Crash, Watchdog, etc.)
+        //     that ship through this callback rather than our explicit
+        //     [SentryAnalyticsService.track] / [captureException] gates.
+        //     Returning null drops the event at the SDK level so an opted-out
+        //     user never leaks a crash report or session.
         options.beforeSend = { event ->
-            event?.let { applyMinimalPayloadContract(it, redactor) }
-            event
+            if (!runtimeOptInProvider()) {
+                null
+            } else {
+                event?.let { applyMinimalPayloadContract(it, redactor) }
+                event
+            }
         }
     }
 

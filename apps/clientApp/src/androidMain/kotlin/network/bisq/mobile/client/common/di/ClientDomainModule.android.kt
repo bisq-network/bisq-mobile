@@ -42,13 +42,11 @@ val androidClientDomainModule =
             ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())
         }
 
-        // Native Sentry SDK initializer — only bound when analytics is enabled
-        // at build time. The factory itself uses sentry-android-core types, so
-        // gating the binding lets R8 prune SentryJavaNativeSentryInitializer
-        // (and the Sentry-KMP SDK it touches) from analytics-disabled release
-        // builds. Verified empirically by grepping the release APK for the
-        // class name — see [[project_analytics_phase0_plan]].
-        if (BuildConfig.ANALYTICS_ENABLED) {
-            single<NativeSentryInitializer> { SentryJavaNativeSentryInitializer() }
-        }
+        // Native Sentry SDK initializer. Unconditionally bound — release builds
+        // ship the SDK linked and inert; the user-settings toggle + dev gate are
+        // the runtime gates. The previous build-time gate that allowed R8 to
+        // prune Sentry-KMP is gone (verified historic empty grep:
+        // `unzip -l <release.apk> | grep sentry`). We accept a few-hundred-KB
+        // cost in exchange for ship-ready release builds.
+        single<NativeSentryInitializer> { SentryJavaNativeSentryInitializer() }
     }
