@@ -73,13 +73,16 @@ class WebSocketClientService(
     companion object {
         private const val SESSION_RENEWAL_COOLDOWN_MS = 30_000L
 
-        // Initial subscriptions tracked for network banner:
-        private val initialSubscriptionTypes =
-            setOf(
+        // Banner-critical subscriptions — applied first so the network banner can dismiss early.
+        private val bannerSubscriptionPriorityOrder =
+            listOf(
                 SubscriptionType(Topic.MARKET_PRICE, null),
                 SubscriptionType(Topic.NUM_USER_PROFILES, null),
                 SubscriptionType(Topic.NUM_OFFERS, null),
             )
+
+        // Initial subscriptions tracked for network banner:
+        private val initialSubscriptionTypes = bannerSubscriptionPriorityOrder.toSet()
     }
 
     @Volatile
@@ -491,7 +494,7 @@ class WebSocketClientService(
             }
             val subs = requestedSubscriptions.value
             log.d { "applying subscriptions on WS client, entry count: ${subs.size}" }
-            subs.forEach { entry ->
+            subscriptionEntriesInApplyOrder(subs).forEach { entry ->
                 try {
                     entry.value.resetSequence()
                     client.subscribe(
@@ -510,6 +513,20 @@ class WebSocketClientService(
             }
             subscriptionsAreApplied = true
         }
+    }
+
+    private fun subscriptionEntriesInApplyOrder(
+        subs: Map<SubscriptionType, WebSocketEventObserver>,
+    ): List<Map.Entry<SubscriptionType, WebSocketEventObserver>> {
+        val prioritized =
+            bannerSubscriptionPriorityOrder.mapNotNull { type ->
+                subs.entries.find { it.key == type }
+            }
+        val rest =
+            subs.entries.filter { entry ->
+                entry.key !in initialSubscriptionTypes
+            }
+        return prioritized + rest
     }
 
     /**

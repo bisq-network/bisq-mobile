@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -686,6 +687,65 @@ class WebSocketClientServiceTest {
 
             assertEquals(setOf(Topic.MARKET_PRICE), webSocketClientService.failedSubscriptionTopics.first())
             assertFalse(webSocketClientService.isSubscriptionsPending.first())
+        }
+
+    @Test
+    fun `applySubscriptions subscribes banner-critical topics before other topics`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            val subscribeOrder = mutableListOf<Topic>()
+            coEvery { mockWsClient.subscribe(any(), any(), any()) } coAnswers {
+                subscribeOrder.add(firstArg())
+                thirdArg()
+            }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.subscribe(Topic.CLOSED_TRADES)
+            webSocketClientService.subscribe(Topic.TRADES)
+            webSocketClientService.subscribe(Topic.NUM_OFFERS)
+            webSocketClientService.subscribe(Topic.NUM_USER_PROFILES)
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            connectedStateFlow.value = ConnectionState.Connected
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    Topic.MARKET_PRICE,
+                    Topic.NUM_USER_PROFILES,
+                    Topic.NUM_OFFERS,
+                    Topic.CLOSED_TRADES,
+                    Topic.TRADES,
+                ),
+                subscribeOrder,
+            )
+            val bannerEndIndex = subscribeOrder.indexOf(Topic.NUM_OFFERS)
+            val slowTopicStartIndex = subscribeOrder.indexOf(Topic.CLOSED_TRADES)
+            assertTrue(
+                bannerEndIndex in 0 until slowTopicStartIndex,
+                "Banner topics must be subscribed before CLOSED_TRADES, got order=$subscribeOrder",
+            )
         }
 
     @Test

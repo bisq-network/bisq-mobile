@@ -14,6 +14,7 @@ import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
+import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
@@ -25,6 +26,7 @@ import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPrese
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
+import kotlin.concurrent.Volatile
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -47,16 +49,22 @@ class ClientOffersServiceFacade(
 
     private var getMarketsJob: Job? = null
 
+    /** Latest NUM_OFFERS payload; replayed when [fillMarketListItems] runs after an early WS snapshot. */
+    @Volatile
+    private var cachedNumOffersByMarketCode: Map<String, Int>? = null
+
     // Life cycle
     override suspend fun activate() {
         super<OffersServiceFacade>.activate()
 
         observeMarketPrice()
         observeAvailableMarkets()
+        observeNumOffers()
     }
 
     override suspend fun deactivate() {
         _offerbookMarketItems.value = emptyList()
+        cachedNumOffersByMarketCode = null
         hasSubscribedToOffers.value = false
         super<OffersServiceFacade>.deactivate()
     }
@@ -149,7 +157,6 @@ class ClientOffersServiceFacade(
                                 } else {
                                     val markets = result.getOrThrow()
                                     fillMarketListItems(markets)
-                                    subscribeNumOffers()
                                     getMarketsJob?.cancel() // we only need this once
                                 }
                             }
@@ -175,8 +182,17 @@ class ClientOffersServiceFacade(
         }
     }
 
-    private suspend fun subscribeNumOffers() {
-        val observer = apiGateway.subscribeNumOffers()
+    private fun observeNumOffers() {
+        serviceScope.launch {
+            try {
+                collectNumOffers(apiGateway.subscribeNumOffers())
+            } catch (e: Exception) {
+                log.e(e) { "Failed to subscribe to numOffers" }
+            }
+        }
+    }
+
+    private suspend fun collectNumOffers(observer: WebSocketEventObserver) {
         observer.webSocketEvent.collect { webSocketEvent ->
             if (webSocketEvent?.deferredPayload == null) {
                 return@collect
@@ -189,13 +205,9 @@ class ClientOffersServiceFacade(
                         webSocketEvent,
                     )
                 val numOffersByMarketCode = webSocketEventPayload.payload
-
+                cachedNumOffersByMarketCode = numOffersByMarketCode
                 _offerbookMarketItems.update { list ->
-                    list.map { marketListItem ->
-                        numOffersByMarketCode[marketListItem.market.quoteCurrencyCode]
-                            ?.let { marketListItem.copy(numOffers = it) }
-                            ?: marketListItem
-                    }
+                    applyNumOffersToMarketList(list, numOffersByMarketCode)
                 }
             } catch (e: Exception) {
                 log.e(e) { "Error processing numOffers WebSocket event" }
@@ -345,11 +357,23 @@ class ClientOffersServiceFacade(
     }
 
     private fun fillMarketListItems(markets: List<network.bisq.mobile.data.replicated.common.currency.MarketVO>) {
+        val numOffersByMarketCode = cachedNumOffersByMarketCode
         val marketListItems =
             markets.map { marketVO ->
-                MarketListItem.from(marketVO)
+                val numOffers = numOffersByMarketCode?.get(marketVO.quoteCurrencyCode) ?: 0
+                MarketListItem.from(marketVO, numOffers)
             }
 
         _offerbookMarketItems.value = marketListItems
     }
+
+    private fun applyNumOffersToMarketList(
+        list: List<MarketListItem>,
+        numOffersByMarketCode: Map<String, Int>,
+    ): List<MarketListItem> =
+        list.map { marketListItem ->
+            numOffersByMarketCode[marketListItem.market.quoteCurrencyCode]
+                ?.let { marketListItem.copy(numOffers = it) }
+                ?: marketListItem
+        }
 }
