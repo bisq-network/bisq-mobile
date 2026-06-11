@@ -264,10 +264,11 @@ open class ClientConnectivityService(
     }
 
     private fun shouldForceClientRecreation(): Boolean =
-        consecutiveReconnectingCycles >= when (platformInfo.type) {
-            PlatformType.IOS -> IOS_FORCE_RECREATE_CYCLES
-            PlatformType.ANDROID -> ANDROID_FORCE_RECREATE_CYCLES
-        }
+        consecutiveReconnectingCycles >=
+            when (platformInfo.type) {
+                PlatformType.IOS -> IOS_FORCE_RECREATE_CYCLES
+                PlatformType.ANDROID -> ANDROID_FORCE_RECREATE_CYCLES
+            }
 
     /**
      * Sends a lightweight health check request to verify the server is responsive.

@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.network
 
 import io.mockk.Runs
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -57,6 +58,12 @@ class ClientConnectivityServiceTest {
         object : PlatformInfo {
             override val name = "Android Test"
             override val type = PlatformType.ANDROID
+        }
+
+    private val iosPlatformInfo =
+        object : PlatformInfo {
+            override val name = "iOS Test"
+            override val type = PlatformType.IOS
         }
 
     private class TestClientConnectivityService(
@@ -548,12 +555,37 @@ class ClientConnectivityServiceTest {
     @Test
     fun `calls forceClientRecreation after threshold disconnected cycles`() =
         runBlocking {
-            every { webSocketClientService.isConnected() } returns false
-            coEvery { webSocketClientService.triggerReconnect() } just Runs
+            // Both platforms share the same threshold today; exercise each when-branch.
+            for (platform in listOf(androidPlatformInfo, iosPlatformInfo)) {
+                clearMocks(webSocketClientService)
+                every { webSocketClientService.isConnected() } returns false
+                every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(emptySet())
+                coEvery { webSocketClientService.triggerReconnect() } just Runs
+                coEvery { webSocketClientService.forceClientRecreation() } just Runs
+
+                val service = ClientConnectivityService(webSocketClientService, platform)
+                try {
+                    service.activate()
+                    // Threshold is 12 cycles on both platforms; use a short period to hit it quickly.
+                    service.startMonitoring(period = 50, startDelay = 0)
+                    delay(50 * 15)
+
+                    coVerify(atLeast = 1) { webSocketClientService.forceClientRecreation() }
+                } finally {
+                    service.stopMonitoring()
+                }
+            }
+        }
+
+    @Test
+    fun `calls forceClientRecreation after threshold untrusted health check failures`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } returns false
+            coEvery { webSocketClientService.forceReconnect() } just Runs
             coEvery { webSocketClientService.forceClientRecreation() } just Runs
 
             clientConnectivityService.activate()
-            // Threshold is 12 cycles on both platforms; use a short period to hit it quickly.
             clientConnectivityService.startMonitoring(period = 50, startDelay = 0)
             delay(50 * 15)
 

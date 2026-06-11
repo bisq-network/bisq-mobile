@@ -16,6 +16,7 @@ Source of truth is the code. Update this file whenever connectivity behaviour ch
 | `websocket/WebSocketClientImpl.kt` | Connect, listen, request/response, reconnect backoff |
 | `websocket/WebSocketClient.kt` | Connect timeouts: 15s clearnet / 60s `.onion` |
 | `service/network/ClientConnectivityService.kt` | Health polling, derives raw status, calls `setConnectivityStatus()` |
+| `data/.../KmpTorService.kt` | Tor runtime; `signalNewNym()` on force recreation (Tor proxy only) |
 | `data/.../ConnectivityService.kt` | Shared `ConnectivityStatus` enum, `setConnectivityStatus()`, RECONNECTING timeout |
 
 ```text
@@ -94,11 +95,11 @@ checkConnectivity() loop
         ├─ !isConnected() OR connectionUntrusted
         │       ├─ !isConnected()
         │       │       ├─ triggerReconnect() if not already connected at WCS layer
-        │       │       └─ iOS: 12 consecutive cycles ──► forceClientRecreation()
+        │       │       └─ 12 consecutive cycles ──► forceClientRecreation()
         │       │
         │       └─ isConnected() but untrusted (prior health check failed)
         │               ├─ health check pass ──► restore trust, derive status
-        │               └─ health check fail ──► forceReconnect(); iOS may forceClientRecreation()
+        │               └─ health check fail ──► forceReconnect(); may forceClientRecreation()
         │
         └─ connected and trusted
                 ├─ health check pass ──► derive status
@@ -152,7 +153,7 @@ After timeout, health polls may still compute `rawStatus = RECONNECTING`, but `s
 
 ---
 
-## Flow 3 — Reconnect & iOS force recreation
+## Flow 3 — Reconnect & force recreation
 
 ```text
 reconnect()  [CCS triggerReconnect/forceReconnect | WCS on abnormal disconnect]
@@ -173,9 +174,10 @@ connect(min(determineTimeout(host), 30s))   // 30s cap even for 60s Tor hosts
 
 WCS triggerReconnect(): only calls reconnect() when WCS reports not connected.
 
-iOS forceClientRecreation() (CCS after 12 failed cycles):
+forceClientRecreation() (CCS after 12 failed cycles, iOS + Android):
         dispose WS ──► cancel state collector ──► HttpClientService.recreateClient()
-        ──► httpClientChangedFlow ──► updateWebSocketClient() ──► new client + connect()
+        ├─ Tor proxy ──► KmpTorService.signalNewNym() (fresh circuits)
+        └─► httpClientChangedFlow ──► updateWebSocketClient() ──► new client + connect()
 ```
 
 Constants (`WebSocketClientImpl`): `STALE_RECONNECT_THRESHOLD_MS` = 30s; `MAX_RECONNECT_ATTEMPTS` = 5; `RECONNECT_CONNECT_TIMEOUT` = 30s.
@@ -222,6 +224,6 @@ Bootstrap session POST also persists `sessionExpiresAt` (same as renewal).
 | | Android (OkHttp) | iOS (Darwin) |
 |--|------------------|--------------|
 | Dead TCP detection | More reliable | Often needs health checks |
-| Stuck reconnect recovery | `triggerReconnect` / backoff | + `forceClientRecreation()` after 12×5s failures |
+| Stuck reconnect recovery | `triggerReconnect` / backoff + `forceClientRecreation()` after 12×5s | same |
 | Tor SOCKS in settings | `127.0.0.1:port` as configured | `127.0.0.1` normalized to `localhost` in `HttpClientSettings` |
 | HTTP client hard reset | `disposeClient()` / settings-driven recreate | `recreateClient()` closes and re-emits settings |

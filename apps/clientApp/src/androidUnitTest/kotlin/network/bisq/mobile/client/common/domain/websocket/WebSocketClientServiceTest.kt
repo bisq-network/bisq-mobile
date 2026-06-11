@@ -28,6 +28,7 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
+import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.DateUtils
 import org.junit.After
 import org.junit.Before
@@ -813,6 +814,54 @@ class WebSocketClientServiceTest {
 
             coVerify { httpClientService.disposeClient() }
             assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
+    @Test
+    fun `forceClientRecreation signals NEWNYM when using Tor proxy`() =
+        runTest(testDispatcher) {
+            val kmpTorService = mockk<KmpTorService>(relaxed = true)
+            coEvery { kmpTorService.signalNewNym() } just Runs
+
+            val torWebSocketClientService =
+                WebSocketClientService(
+                    defaultHost = "abc.onion",
+                    defaultPort = 8090,
+                    httpClientService = httpClientService,
+                    webSocketClientFactory = webSocketClientFactory,
+                    sessionService = sessionService,
+                    sensitiveSettingsRepository = sensitiveSettingsRepository,
+                    kmpTorService = kmpTorService,
+                )
+
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "abc.onion"
+                }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            torWebSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://abc.onion:8090",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                    externalProxyUrl = "127.0.0.1:9050",
+                    isTorProxy = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            torWebSocketClientService.forceClientRecreation()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { kmpTorService.signalNewNym() }
         }
 
     @Test
