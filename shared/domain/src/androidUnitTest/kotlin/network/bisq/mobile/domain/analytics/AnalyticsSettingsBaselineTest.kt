@@ -8,7 +8,6 @@ import io.mockk.verifySequence
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.data.model.Settings
-import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import kotlin.test.Test
@@ -39,12 +38,17 @@ class AnalyticsSettingsBaselineTest {
     ): Fixture {
         val analytics = mockk<AnalyticsService>(relaxed = true)
 
+        // Push baseline reads from `Settings.pushNotificationsEnabled`, not
+        // from the PushNotificationServiceFacade StateFlow (which lags on
+        // Client and is permanently false on Node). See the kdoc in
+        // AnalyticsSettingsBaseline.emit().
         val settingsFlow =
             MutableStateFlow(
                 Settings(
                     analyticsEnabled = true,
                     analyticsPromptSeen = true,
                     keepConnectedInBackground = keepConnectedInBackground,
+                    pushNotificationsEnabled = pushEnabled,
                     analyticsBaselineSent = analyticsBaselineSent,
                 ),
             )
@@ -54,15 +58,11 @@ class AnalyticsSettingsBaselineTest {
         val settingsServiceFacade = mockk<SettingsServiceFacade>(relaxed = true)
         every { settingsServiceFacade.languageCode } returns MutableStateFlow(languageCode)
 
-        val pushNotificationServiceFacade = mockk<PushNotificationServiceFacade>(relaxed = true)
-        every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns MutableStateFlow(pushEnabled)
-
         val baseline =
             AnalyticsSettingsBaseline(
                 analyticsService = analytics,
                 settingsRepository = settingsRepository,
                 settingsServiceFacade = settingsServiceFacade,
-                pushNotificationServiceFacade = pushNotificationServiceFacade,
             )
         return Fixture(baseline, analytics, settingsRepository, settingsFlow)
     }
@@ -80,6 +80,23 @@ class AnalyticsSettingsBaselineTest {
                 fx.analytics.track(AnalyticsEvent.Settings.PushNotificationsDisabled)
                 fx.analytics.track(AnalyticsEvent.Settings.KeepConnectedDisabled)
             }
+        }
+
+    @Test
+    fun `push baseline reads from Settings_pushNotificationsEnabled not the lagging facade StateFlow`() =
+        runTest {
+            // Regression: previously read `pushNotificationServiceFacade.isPushNotificationsEnabled.value`,
+            // which is seeded false and updated asynchronously inside the
+            // facade's activate() collector on Client (race) AND permanently
+            // false on Node (NoOpPushNotificationServiceFacade never updates).
+            // Reading from the already-collected Settings snapshot is the
+            // ground truth in both apps.
+            val fx = build(pushEnabled = true)
+
+            fx.baseline.emit()
+
+            verify(exactly = 1) { fx.analytics.track(AnalyticsEvent.Settings.PushNotificationsEnabled) }
+            verify(exactly = 0) { fx.analytics.track(AnalyticsEvent.Settings.PushNotificationsDisabled) }
         }
 
     @Test

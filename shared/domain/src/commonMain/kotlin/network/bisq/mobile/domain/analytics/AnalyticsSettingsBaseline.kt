@@ -1,7 +1,6 @@
 package network.bisq.mobile.domain.analytics
 
 import kotlinx.coroutines.flow.first
-import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
@@ -43,7 +42,6 @@ class AnalyticsSettingsBaseline(
     private val analyticsService: AnalyticsService,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val pushNotificationServiceFacade: PushNotificationServiceFacade,
 ) : Logging {
     /**
      * Read the current value of each tracked setting and emit the matching
@@ -88,9 +86,20 @@ class AnalyticsSettingsBaseline(
                 analyticsService.track(AnalyticsEvent.Settings.LanguageChanged(code))
             }
 
-        // Push notifications opt-in
+        // Push notifications opt-in — read from the already-collected settings
+        // snapshot. The PushNotificationServiceFacade's `isPushNotificationsEnabled`
+        // StateFlow is NOT a safe baseline source because:
+        //   (a) ClientPushNotificationServiceFacade seeds it to false and only
+        //       catches up asynchronously inside an activate-time collector
+        //       (documented in ClientApplicationLifecycleService.kt:299-301)
+        //   (b) NoOpPushNotificationServiceFacade for the Node app NEVER
+        //       updates it, so the facade would always report false regardless
+        //       of the user's actual setting.
+        // settings.pushNotificationsEnabled is the persisted ground truth in
+        // both apps; reading from the already-collected snapshot also keeps
+        // the baseline atomic (all 4 events reflect the same point-in-time).
         analyticsService.track(
-            if (pushNotificationServiceFacade.isPushNotificationsEnabled.value) {
+            if (settings.pushNotificationsEnabled) {
                 AnalyticsEvent.Settings.PushNotificationsEnabled
             } else {
                 AnalyticsEvent.Settings.PushNotificationsDisabled

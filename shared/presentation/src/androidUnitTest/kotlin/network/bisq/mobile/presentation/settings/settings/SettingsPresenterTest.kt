@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.settings.settings
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -1272,6 +1273,51 @@ class SettingsPresenterTest {
 
             verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.AnalyticsDisabled) }
             verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.AnalyticsEnabled) }
+        }
+
+    @Test
+    fun `OnAnalyticsToggle off tracks AnalyticsDisabled BEFORE the repository persist`() =
+        runTest(testDispatcher) {
+            // Pins the disable-direction ordering contract from SettingsPresenter
+            // kdoc: the SDK gate must still be OPEN when the track call hits the
+            // BufferedAnalyticsService, otherwise runtimeOptInProvider drops the
+            // event. Any refactor that flips this ordering breaks the contract.
+            wireSettingsRepositoryUpdate(Settings(analyticsEnabled = true, analyticsPromptSeen = true))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(false))
+            advanceUntilIdle()
+
+            coVerifyOrder {
+                analyticsService.track(AnalyticsEvent.Settings.AnalyticsDisabled)
+                settingsRepository.update(any())
+            }
+        }
+
+    @Test
+    fun `OnAnalyticsToggle on tracks AnalyticsEnabled AFTER the repository persist`() =
+        runTest(testDispatcher) {
+            // Pins the enable-direction ordering contract. In the re-opt-in-
+            // after-opt-out case the SDK is already initialised so track()
+            // forwards direct; the runtime gate must read the NEW analyticsEnabled
+            // value (true) when our event arrives. Track-before-persist would
+            // race the StateFlow propagation and risk a dropped event.
+            wireSettingsRepositoryUpdate(Settings(analyticsEnabled = false, analyticsPromptSeen = true))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(true))
+            advanceUntilIdle()
+
+            coVerifyOrder {
+                settingsRepository.update(any())
+                analyticsService.track(AnalyticsEvent.Settings.AnalyticsEnabled)
+            }
         }
 
     @Test

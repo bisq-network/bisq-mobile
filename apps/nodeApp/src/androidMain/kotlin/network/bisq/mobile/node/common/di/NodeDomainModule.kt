@@ -169,7 +169,6 @@ val androidNodeDomainModule =
                 analyticsService = get<AnalyticsService>(),
                 settingsRepository = get<SettingsRepository>(),
                 settingsServiceFacade = get<SettingsServiceFacade>(),
-                pushNotificationServiceFacade = get<PushNotificationServiceFacade>(),
             )
         }
 

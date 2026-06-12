@@ -218,4 +218,35 @@ class MainPresenterLanguageAnalyticsTest {
             verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.LanguageChanged("en")) }
             verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.LanguageChanged("es")) }
         }
+
+    @Test
+    fun `observer restarts after onViewUnattaching disposes the scope`() =
+        runTest(testDispatcher) {
+            // Pins the contract that the once-only guard is RESET on
+            // disposal so the next attach can start a fresh collector. Without
+            // the reset, an Android config-change cycle (activity recreation
+            // → onViewUnattaching → jobsManager.dispose() → new scope →
+            // onViewAttached) would leave the observer dead because the stale
+            // flag would short-circuit the next start.
+            val languageCode = MutableStateFlow("en")
+            val presenter =
+                MainPresenterTestFactory.create(
+                    languageCode = languageCode,
+                    applicationLifecycleService = TestApplicationLifecycleService(),
+                )
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.LanguageChanged("en")) }
+
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            languageCode.value = "es"
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.LanguageChanged("es")) }
+        }
 }

@@ -177,6 +177,21 @@ open class SettingsPresenter(
     }
 
     private fun onAnalyticsToggle(enabled: Boolean) {
+        // Track ordering depends on direction:
+        //  - DISABLE: track BEFORE persist so the event ships through the SDK
+        //    gate while it's still open. Track-after-persist would let the
+        //    StateFlow propagation close the gate first and the event would
+        //    be dropped by `runtimeOptInProvider`.
+        //  - ENABLE: track AFTER persist for the symmetric reason. In the
+        //    re-opt-in-after-opt-out case the SDK is already initialised so
+        //    `track()` forwards direct; the gate would still read the OLD
+        //    `analyticsEnabled=false` if we tracked first, and the event
+        //    would be silently dropped. In the first-ever opt-in case the
+        //    SDK isn't ready yet so the event gets buffered either way —
+        //    ordering doesn't hurt the cold-start path.
+        if (!enabled) {
+            analyticsService?.track(AnalyticsEvent.Settings.AnalyticsDisabled)
+        }
         presenterScope.launch {
             // Persist via the repo. The DI module's hot StateFlow view of
             // analyticsEnabled picks this up on the next emission and the
@@ -199,17 +214,10 @@ open class SettingsPresenter(
                     analyticsBaselineSent = if (enabled) it.analyticsBaselineSent else false,
                 )
             }
-        }
-        // Track BEFORE the persist completes so the enabled→disabled transition
-        // still ships its event before the SDK gate flips closed. Track-after
-        // would lose the disable event.
-        val event =
             if (enabled) {
-                AnalyticsEvent.Settings.AnalyticsEnabled
-            } else {
-                AnalyticsEvent.Settings.AnalyticsDisabled
+                analyticsService?.track(AnalyticsEvent.Settings.AnalyticsEnabled)
             }
-        analyticsService?.track(event)
+        }
     }
 
     private fun onKeepConnectedInBackgroundToggle(enabled: Boolean) {

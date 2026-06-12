@@ -166,11 +166,16 @@ open class MainPresenter(
 
     /**
      * Emit [AnalyticsEvent.Settings.LanguageChanged] whenever the observed UI
-     * language settles on a new code. Single-shot per MainPresenter instance —
-     * MainPresenter is a Koin `single`, so this fires once per app process
-     * lifetime AND survives view re-attach (background → foreground → re-attach
-     * would otherwise start a second collector and double-emit on the next
-     * distinct change).
+     * language settles on a new code. Single-shot per attached scope —
+     * MainPresenter is a Koin `single`, so this guards against double-emission
+     * when [onViewAttached] is invoked multiple times on the SAME live
+     * `presenterScope` (background→foreground without a config change).
+     *
+     * The guard is RESET in [onViewUnattaching] because
+     * `jobsManager.dispose()` cancels the old scope and creates a fresh one
+     * (e.g. on Android config change → activity recreation). Without the
+     * reset, the next `onViewAttached` would skip on the stale flag and the
+     * collector would never start on the new scope.
      *
      * Emission semantics (matches the rationale rodvar locked in 2026-06-12 —
      * "most important so we get to know our userbase preferences on languages"):
@@ -196,6 +201,16 @@ open class MainPresenter(
             .onEach { code ->
                 analyticsService?.track(AnalyticsEvent.Settings.LanguageChanged(code))
             }.launchIn(presenterScope)
+    }
+
+    @CallSuper
+    override fun onViewUnattaching() {
+        // Reset the guard FIRST — `super.onViewUnattaching()` triggers
+        // `jobsManager.dispose()` which cancels the current scope and creates
+        // a new one. Next `onViewAttached` needs to start a fresh collector
+        // on that new scope; with the flag still `true`, it'd be skipped.
+        languageAnalyticsObserverStarted = false
+        super.onViewUnattaching()
     }
 
     @CallSuper

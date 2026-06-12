@@ -98,7 +98,6 @@ import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
-import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -303,7 +302,6 @@ val clientDomainModule =
                 analyticsService = get<AnalyticsService>(),
                 settingsRepository = get<SettingsRepository>(),
                 settingsServiceFacade = get<SettingsServiceFacade>(),
-                pushNotificationServiceFacade = get<PushNotificationServiceFacade>(),
             )
         }
 

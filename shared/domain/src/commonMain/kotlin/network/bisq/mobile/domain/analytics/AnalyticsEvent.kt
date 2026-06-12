@@ -161,8 +161,11 @@ sealed class AnalyticsEvent(
                 val candidate =
                     when {
                         withHyphens == "pcm" -> "pcm-NG"
-                        // Bisq2 stores e.g. `en_US`; collapse all `en*` variants to `en`.
-                        withHyphens.startsWith("en") && withHyphens.length > 2 -> "en"
+                        // Bisq2 stores e.g. `en_US`; collapse to `en`. Match ONLY
+                        // `en` exactly OR `en-` prefixed locale variants — naive
+                        // `startsWith("en")` would silently accept words like
+                        // "engine" as English.
+                        withHyphens == "en" || withHyphens.startsWith("en-") -> "en"
                         else -> withHyphens
                     }
                 return candidate.takeIf { it in TRACKED_LANGUAGE_CODES }

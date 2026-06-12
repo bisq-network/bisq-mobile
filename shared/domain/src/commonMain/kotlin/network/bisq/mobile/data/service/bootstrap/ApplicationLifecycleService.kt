@@ -125,6 +125,22 @@ abstract class ApplicationLifecycleService(
                 //     guarantees we never leak via clearnet because Sentry
                 //     is simply never initialized.
                 val socksPort = provider.awaitSocksPort()
+                // (2.5) Re-check consent. The Tor wait can take many seconds
+                //     (cold-start onion bootstrap); the user may have visited
+                //     Settings during that window and opted out. Loading the
+                //     Sentry SDK at this point would violate Option B's
+                //     "don't load until opted in" guarantee even though the
+                //     runtime gate would still drop events. Bail out cleanly
+                //     and let the next opt-in re-enter via the unchanged
+                //     filter.first() suspension above (a NEW serviceScope
+                //     launch isn't needed — bootstrap is one-shot per
+                //     process; if the user opts back in mid-process they'll
+                //     get analytics on the next cold start).
+                val stillOptedIn = settingsRepo.data.map { it.analyticsEnabled }.first()
+                if (!stillOptedIn) {
+                    log.i { "Analytics: user opted out during Tor wait; aborting SDK init" }
+                    return@launch
+                }
                 analyticsService.init(
                     dsn = analyticsBootstrapConfig.dsn,
                     environment = analyticsBootstrapConfig.environment,
