@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.offer.create_offer.payment_method
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -14,6 +15,8 @@ class CreateOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val createOfferCoordinator: CreateOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferPaymentMethod
+
     val quoteSideHeadline: String
     val baseSideHeadline: String
     val availableQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))

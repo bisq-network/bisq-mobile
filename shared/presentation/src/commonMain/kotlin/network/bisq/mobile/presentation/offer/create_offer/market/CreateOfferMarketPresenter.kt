@@ -13,6 +13,7 @@ import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -26,6 +27,8 @@ class CreateOfferMarketPresenter(
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferMarket
+
     var headline: String
     private val _selectedMarketItem = MutableStateFlow<MarketListItem?>(null)
     val selectedMarketItem: StateFlow<MarketListItem?> = _selectedMarketItem.asStateFlow()

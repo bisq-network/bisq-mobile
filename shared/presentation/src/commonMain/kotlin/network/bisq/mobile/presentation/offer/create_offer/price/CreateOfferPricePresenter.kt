@@ -11,6 +11,7 @@ import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory.f
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.parser.PercentageParser
@@ -29,6 +30,8 @@ class CreateOfferPricePresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferCoordinator: CreateOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferPrice
+
     var priceTypeTitle: String
     var fixPriceDescription: String
     var priceTypes: List<PriceType> = PriceType.entries.toList()

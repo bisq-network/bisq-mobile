@@ -14,6 +14,7 @@ import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.combine
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -30,6 +31,8 @@ class OfferbookMarketPresenter(
     private val settingsRepository: SettingsRepository,
     private val computeOfferbookMarketListUseCase: ComputeOfferbookMarketListUseCase,
 ) : BasePresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.OfferbookMarket
+
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
 

@@ -17,6 +17,7 @@ import network.bisq.mobile.data.replicated.offer.amount.spec.RangeAmountSpecVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.utils.getGroupingSeparator
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.MonetarySlider
@@ -32,6 +33,8 @@ class TakeOfferAmountPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.TakeOfferAmount
+
     private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
     val sliderPosition: StateFlow<Float> = _sliderPosition.asStateFlow()
 

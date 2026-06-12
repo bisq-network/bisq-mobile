@@ -14,6 +14,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -27,6 +28,8 @@ class CreateOfferDirectionPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferDirection
+
     var direction: DirectionEnum = createOfferCoordinator.createOfferModel.direction
 
     @OptIn(ExperimentalCoroutinesApi::class)

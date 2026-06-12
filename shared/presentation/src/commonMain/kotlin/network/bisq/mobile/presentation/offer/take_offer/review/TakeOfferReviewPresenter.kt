@@ -14,6 +14,7 @@ import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
@@ -33,6 +34,8 @@ class TakeOfferReviewPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.TakeOfferReview
+
     var headLine: String
     var quoteSidePaymentMethodDisplayString: String
     var baseSidePaymentMethodDisplayString: String

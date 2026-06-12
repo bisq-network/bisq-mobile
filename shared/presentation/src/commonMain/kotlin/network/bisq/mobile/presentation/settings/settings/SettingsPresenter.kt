@@ -14,6 +14,7 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.data.utils.setDefaultLocale
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
@@ -33,6 +34,8 @@ open class SettingsPresenter(
     private val settingsRepository: SettingsRepository,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.Settings
+
     private val _uiState =
         MutableStateFlow(
             SettingsUiState(
@@ -184,12 +187,29 @@ open class SettingsPresenter(
                 it.copy(analyticsEnabled = enabled, analyticsPromptSeen = true)
             }
         }
+        // Track BEFORE the persist completes so the enabled→disabled transition
+        // still ships its event before the SDK gate flips closed. Track-after
+        // would lose the disable event.
+        val event =
+            if (enabled) {
+                AnalyticsEvent.Settings.AnalyticsEnabled
+            } else {
+                AnalyticsEvent.Settings.AnalyticsDisabled
+            }
+        analyticsService?.track(event)
     }
 
     private fun onKeepConnectedInBackgroundToggle(enabled: Boolean) {
         presenterScope.launch {
             settingsRepository.update { it.copy(keepConnectedInBackground = enabled) }
         }
+        val event =
+            if (enabled) {
+                AnalyticsEvent.Settings.KeepConnectedEnabled
+            } else {
+                AnalyticsEvent.Settings.KeepConnectedDisabled
+            }
+        analyticsService?.track(event)
     }
 
     private fun onPushNotificationsToggle(enabled: Boolean) {
@@ -217,6 +237,16 @@ open class SettingsPresenter(
                             "mobile.pushNotifications.toggleOffSuccess"
                         }
                     showSnackbar(msgKey.i18n())
+                    // Track only on success — a failed register/unregister means
+                    // the toggle didn't actually take effect, so emitting would
+                    // misrepresent state. handleError path below emits nothing.
+                    val event =
+                        if (enabled) {
+                            AnalyticsEvent.Settings.PushNotificationsEnabled
+                        } else {
+                            AnalyticsEvent.Settings.PushNotificationsDisabled
+                        }
+                    analyticsService?.track(event)
                 }.onFailure { exception ->
                     handleError(exception)
                 }

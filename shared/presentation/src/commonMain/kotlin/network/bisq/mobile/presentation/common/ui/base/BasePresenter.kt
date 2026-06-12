@@ -164,7 +164,26 @@ abstract class BasePresenter(
      * constructor — the service is a single binding shared across the app and
      * is a no-op when analytics is disabled at build time.
      */
-    protected val analyticsService: AnalyticsService by inject()
+    /**
+     * Null-tolerant access so the existing test suites (40+ files) don't all
+     * need to bind [AnalyticsService] in their Koin modules. Tests that don't
+     * care about analytics tracking get a silent no-op; tests that DO care
+     * (see `ScreenAnalyticsCoverageTest`, `SettingsPresenterTest`) bind a
+     * mock and verify against it. Production DI modules always bind a real
+     * implementation, so the null path never executes outside tests.
+     *
+     * `by lazy` (not `by inject` / `by getKoin().injectOrNull`) is load-
+     * bearing: the latter two evaluate `getKoin()` at delegate-creation time,
+     * which is at presenter constructor time. Some UI tests (e.g. dialog
+     * presenters under Compose UI test harnesses) construct presenters
+     * without first calling `startKoin {}`, and `getKoin()` would crash with
+     * "KoinApplication has not been started". The lazy + runCatching here
+     * defers resolution to first read AND swallows that case, leaving the
+     * service null.
+     */
+    protected val analyticsService: AnalyticsService? by lazy {
+        runCatching { getKoin().getOrNull<AnalyticsService>() }.getOrNull()
+    }
 
     /**
      * Override in a subclass to opt INTO automatic screen-view tracking. Default
@@ -175,8 +194,16 @@ abstract class BasePresenter(
      * When non-null, [onViewAttached] emits the event through [analyticsService],
      * which is a no-op unless both the build-time AND runtime opt-in gates are
      * open.
+     *
+     * Visibility is `internal` rather than `protected` so the screen-coverage
+     * contract test in this module can read it directly (asserting each
+     * presenter returns the event declared in [AnalyticsEvent.ScreenViewed.all]).
+     * Cross-module subclasses (clientApp/nodeApp) are concrete subclasses of
+     * abstract presenters that already live in this module, so they don't need
+     * to override this method themselves — the override lives on the abstract
+     * base in `:shared:presentation`.
      */
-    protected open fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed? = null
+    internal open fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed? = null
 
     // Add a flag to track if we've shown the exit warning
     private var exitWarningShown = false
@@ -201,7 +228,7 @@ abstract class BasePresenter(
         // Opt-in screen-view tracking. No-op unless the subclass explicitly
         // overrides analyticsScreenEvent() AND the analytics service is
         // active (build-time + runtime gates open).
-        analyticsScreenEvent()?.let { analyticsService.track(it) }
+        analyticsScreenEvent()?.let { event -> analyticsService?.track(event) }
     }
 
     @CallSuper

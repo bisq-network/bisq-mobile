@@ -12,6 +12,7 @@ import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
@@ -28,6 +29,8 @@ class CreateOfferReviewPresenter(
     mainPresenter: MainPresenter,
     private val createOfferCoordinator: CreateOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferReview
+
     lateinit var headLine: String
     lateinit var quoteSidePaymentMethodDisplayString: String
     lateinit var baseSidePaymentMethodDisplayString: String

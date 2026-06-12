@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.offer.take_offer.payment_method
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -13,6 +14,8 @@ class TakeOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.TakeOfferPaymentMethod
+
     var hasMultipleQuoteSidePaymentMethods: Boolean = false
     var hasMultipleBaseSidePaymentMethods: Boolean = false
     var quoteSidePaymentMethods: List<String>

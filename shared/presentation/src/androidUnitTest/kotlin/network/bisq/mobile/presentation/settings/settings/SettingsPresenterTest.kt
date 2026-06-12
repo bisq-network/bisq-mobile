@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,8 @@ import network.bisq.mobile.data.service.push_notification.PushNotificationServic
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
@@ -64,6 +67,7 @@ class SettingsPresenterTest {
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var mainPresenter: MainPresenter
     private lateinit var globalUiManager: GlobalUiManager
+    private lateinit var analyticsService: AnalyticsService
     private lateinit var presenter: SettingsPresenter
 
     // Test data
@@ -99,6 +103,7 @@ class SettingsPresenterTest {
         settingsRepository = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
+        analyticsService = mockk(relaxed = true)
 
         startKoin {
             modules(
@@ -106,6 +111,7 @@ class SettingsPresenterTest {
                     single<NavigationManager> { mockk(relaxed = true) }
                     single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
                     single<GlobalUiManager> { globalUiManager }
+                    single<AnalyticsService> { analyticsService }
                 },
             )
         }
@@ -1159,5 +1165,133 @@ class SettingsPresenterTest {
             flow.value = flow.value.copy(analyticsEnabled = false)
             advanceUntilIdle()
             assertFalse(presenter.uiState.value.analyticsEnabled)
+        }
+
+    // ============ Settings toggle analytics tracking ============
+    //
+    // Each user-controlled toggle on the Settings screen emits a sealed
+    // AnalyticsEvent.Settings.* event with the new state encoded in the
+    // event name (no free-form payload — privacy contract). These tests pin
+    // the contract so a future refactor that drops the track() call is
+    // caught loudly.
+
+    @Test
+    fun `OnAnalyticsToggle on tracks AnalyticsEnabled`() =
+        runTest(testDispatcher) {
+            val flow = wireSettingsRepositoryUpdate(Settings(analyticsEnabled = false, analyticsPromptSeen = false))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(true))
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.AnalyticsEnabled) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.AnalyticsDisabled) }
+            assertTrue(flow.value.analyticsEnabled)
+        }
+
+    @Test
+    fun `OnAnalyticsToggle off tracks AnalyticsDisabled`() =
+        runTest(testDispatcher) {
+            // Track-before-persist matters: a true→false transition still
+            // ships its event before the runtime opt-in provider closes the
+            // SDK gate. Track-after-persist would lose this event.
+            wireSettingsRepositoryUpdate(Settings(analyticsEnabled = true, analyticsPromptSeen = true))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(false))
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.AnalyticsDisabled) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.AnalyticsEnabled) }
+        }
+
+    @Test
+    fun `OnKeepConnectedInBackgroundToggle on tracks KeepConnectedEnabled`() =
+        runTest(testDispatcher) {
+            wireSettingsRepositoryUpdate()
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnKeepConnectedInBackgroundToggle(true))
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.KeepConnectedEnabled) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.KeepConnectedDisabled) }
+        }
+
+    @Test
+    fun `OnKeepConnectedInBackgroundToggle off tracks KeepConnectedDisabled`() =
+        runTest(testDispatcher) {
+            wireSettingsRepositoryUpdate(Settings(keepConnectedInBackground = true))
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnKeepConnectedInBackgroundToggle(false))
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.KeepConnectedDisabled) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.KeepConnectedEnabled) }
+        }
+
+    @Test
+    fun `OnPushNotificationsToggle on tracks PushNotificationsEnabled only on register success`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns Result.success(Unit)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnPushNotificationsToggle(true))
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.PushNotificationsEnabled) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.PushNotificationsDisabled) }
+        }
+
+    @Test
+    fun `OnPushNotificationsToggle off tracks PushNotificationsDisabled only on unregister success`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } returns Result.success(Unit)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnPushNotificationsToggle(false))
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Settings.PushNotificationsDisabled) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.PushNotificationsEnabled) }
+        }
+
+    @Test
+    fun `OnPushNotificationsToggle does NOT track when facade register fails`() =
+        runTest(testDispatcher) {
+            // Failed register/unregister means the toggle didn't actually take
+            // effect — emitting an event would misrepresent state, so the
+            // success-only gate must hold.
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns
+                Result.failure(RuntimeException("APNs handshake failed"))
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnPushNotificationsToggle(true))
+            advanceUntilIdle()
+
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.PushNotificationsEnabled) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Settings.PushNotificationsDisabled) }
         }
 }

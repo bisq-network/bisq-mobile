@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -17,6 +18,8 @@ class MyTradesPresenter(
     mainPresenter: MainPresenter,
     private val backendCapabilitiesService: BackendCapabilitiesService,
 ) : BasePresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.MyTrades
+
     companion object {
         private const val LAST_TAB = 1
     }

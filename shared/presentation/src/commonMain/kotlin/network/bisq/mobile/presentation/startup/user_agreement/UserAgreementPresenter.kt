@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -15,6 +16,8 @@ open class UserAgreementPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
 ) : BasePresenter(mainPresenter),
     IAgreementPresenter {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.UserAgreement
+
     private val _accepted = MutableStateFlow(false)
     override val isAccepted: StateFlow<Boolean> = _accepted.asStateFlow()
 

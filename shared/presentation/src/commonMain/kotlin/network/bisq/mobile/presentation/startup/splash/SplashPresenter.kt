@@ -13,6 +13,7 @@ import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.getPlatformInfo
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -31,6 +32,8 @@ abstract class SplashPresenter(
     versionProvider: VersionProvider,
     private val isIos: Boolean = getPlatformInfo().type == PlatformType.IOS,
 ) : BasePresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.Splash
+
     abstract val state: StateFlow<String>
 
     open fun applyRoute(route: NavRoute.Splash) = Unit

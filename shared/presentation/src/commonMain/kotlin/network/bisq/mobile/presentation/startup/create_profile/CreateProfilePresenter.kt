@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -18,6 +19,8 @@ class CreateProfilePresenter(
     mainPresenter: MainPresenter,
     private val userProfileService: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateProfile
+
     companion object {
         // The png files used for the image composition are 300 px, thus this is the max size.
         // The view use 140.dp, which translates with a screen density factor of 2 to 280 px

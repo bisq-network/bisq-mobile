@@ -23,6 +23,7 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.getGroupingSeparator
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT
@@ -50,6 +51,8 @@ class CreateOfferAmountPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : OfferFlowPresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferAmount
+
     val headline: String
     val quoteCurrencyCode: String
     val formattedMinAmount: String
