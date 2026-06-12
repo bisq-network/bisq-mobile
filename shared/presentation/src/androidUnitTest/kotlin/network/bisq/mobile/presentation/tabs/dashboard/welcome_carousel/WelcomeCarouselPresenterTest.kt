@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -32,6 +34,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -61,6 +64,17 @@ class WelcomeCarouselPresenterTest {
         coEvery { settingsRepository.setBatteryOptimizationPermissionState(any()) } answers {
             val next = firstArg<BatteryOptimizationState>()
             settingsFlow.value = settingsFlow.value.copy(batteryOptimizationState = next)
+        }
+        coEvery { settingsRepository.setAnalyticsPromptSeen(any()) } answers {
+            val next = firstArg<Boolean>()
+            settingsFlow.value = settingsFlow.value.copy(analyticsPromptSeen = next)
+        }
+        // The presenter uses `settingsRepository.update { it.copy(...) }` for the
+        // analytics-enable path so both fields land atomically. Run the transform
+        // against the live state to keep test reactivity working.
+        val transformSlot = slot<suspend (Settings) -> Settings>()
+        coEvery { settingsRepository.update(capture(transformSlot)) } coAnswers {
+            settingsFlow.value = transformSlot.captured.invoke(settingsFlow.value)
         }
 
         pushEnabledFlow = MutableStateFlow(false)
@@ -103,11 +117,12 @@ class WelcomeCarouselPresenterTest {
     @Test
     fun `pending pages include NOTIFICATIONS when state is NOT_GRANTED`() =
         runTest(testDispatcher) {
-            // battery is IGNORED so it isn't pending — this test isolates NOTIFICATIONS logic.
+            // Other cards suppressed to isolate NOTIFICATIONS logic.
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.NOT_GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter()
 
@@ -126,6 +141,7 @@ class WelcomeCarouselPresenterTest {
                 Settings(
                     notificationPermissionState = PermissionState.DENIED,
                     batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter()
 
@@ -144,6 +160,7 @@ class WelcomeCarouselPresenterTest {
                 Settings(
                     notificationPermissionState = PermissionState.DONT_ASK_AGAIN,
                     batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter()
 
@@ -162,6 +179,7 @@ class WelcomeCarouselPresenterTest {
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter(platform = PlatformType.ANDROID)
 
@@ -180,6 +198,7 @@ class WelcomeCarouselPresenterTest {
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter(platform = PlatformType.IOS)
 
@@ -198,6 +217,7 @@ class WelcomeCarouselPresenterTest {
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+                    analyticsPromptSeen = true,
                 )
             pushEnabledFlow.value = true
             val presenter = newPresenter(platform = PlatformType.ANDROID)
@@ -211,12 +231,13 @@ class WelcomeCarouselPresenterTest {
         }
 
     @Test
-    fun `NOTIFICATIONS and BATTERY are pending independently on a fresh install`() =
+    fun `NOTIFICATIONS and BATTERY are pending independently when analytics already seen`() =
         runTest(testDispatcher) {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.NOT_GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter(platform = PlatformType.ANDROID)
 
@@ -237,6 +258,7 @@ class WelcomeCarouselPresenterTest {
                 Settings(
                     notificationPermissionState = PermissionState.NOT_GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter(platform = PlatformType.ANDROID)
             advanceUntilIdle()
@@ -262,6 +284,8 @@ class WelcomeCarouselPresenterTest {
                 Settings(
                     notificationPermissionState = PermissionState.NOT_GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+                    // analyticsPromptSeen left default (false) — demo must override
+                    // analytics card too.
                 )
             val presenter = newPresenter(platform = PlatformType.ANDROID)
 
@@ -276,11 +300,13 @@ class WelcomeCarouselPresenterTest {
     @Test
     fun `pages transition live as cards resolve in any order`() =
         runTest(testDispatcher) {
-            // First-launch: both cards pending independently
+            // First-launch: both OS-coupled cards pending; analytics deferred for
+            // isolation in this scenario.
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.NOT_GRANTED,
                     batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
+                    analyticsPromptSeen = true,
                 )
             val presenter = newPresenter(platform = PlatformType.ANDROID)
             advanceUntilIdle()
@@ -291,10 +317,7 @@ class WelcomeCarouselPresenterTest {
 
             // User grants notifications → NOTIFICATIONS resolved, BATTERY still pending
             settingsFlow.value =
-                Settings(
-                    notificationPermissionState = PermissionState.GRANTED,
-                    batteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
-                )
+                settingsFlow.value.copy(notificationPermissionState = PermissionState.GRANTED)
             advanceUntilIdle()
             assertEquals(
                 listOf(CarouselPageType.BATTERY),
@@ -303,10 +326,7 @@ class WelcomeCarouselPresenterTest {
 
             // Battery resolved — carousel dismisses
             settingsFlow.value =
-                Settings(
-                    notificationPermissionState = PermissionState.GRANTED,
-                    batteryOptimizationState = BatteryOptimizationState.IGNORED,
-                )
+                settingsFlow.value.copy(batteryOptimizationState = BatteryOptimizationState.IGNORED)
             advanceUntilIdle()
             assertTrue(
                 presenter.uiState.value.pages
@@ -346,5 +366,183 @@ class WelcomeCarouselPresenterTest {
                     BatteryOptimizationState.DONT_ASK_AGAIN,
                 )
             }
+        }
+
+    // ------------------------------------------------------------------
+    // ANALYTICS card
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `ANALYTICS pending when analyticsPromptSeen is false`() =
+        runTest(testDispatcher) {
+            // Other cards suppressed to isolate ANALYTICS logic.
+            settingsFlow.value =
+                Settings(
+                    notificationPermissionState = PermissionState.GRANTED,
+                    batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = false,
+                )
+            val presenter = newPresenter()
+
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(CarouselPageType.ANALYTICS),
+                presenter.uiState.value.pages,
+            )
+        }
+
+    @Test
+    fun `ANALYTICS not pending when analyticsPromptSeen is true`() =
+        runTest(testDispatcher) {
+            settingsFlow.value =
+                Settings(
+                    notificationPermissionState = PermissionState.GRANTED,
+                    batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = true,
+                )
+            val presenter = newPresenter()
+
+            advanceUntilIdle()
+
+            assertTrue(
+                presenter.uiState.value.pages
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun `ANALYTICS not pending for users who already opted in via Settings`() =
+        runTest(testDispatcher) {
+            // Settings → Analytics toggle handler always sets promptSeen=true alongside
+            // analyticsEnabled, so users who engaged via Settings should not see the
+            // carousel card. Mirrors that observed state.
+            settingsFlow.value =
+                Settings(
+                    notificationPermissionState = PermissionState.GRANTED,
+                    batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsEnabled = true,
+                    analyticsPromptSeen = true,
+                )
+            val presenter = newPresenter()
+
+            advanceUntilIdle()
+
+            assertTrue(
+                presenter.uiState.value.pages
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun `fresh install shows all three cards in order NOTIFICATIONS BATTERY ANALYTICS`() =
+        runTest(testDispatcher) {
+            // Default Settings() values: no permission granted, battery unset,
+            // analytics never prompted. This is what an existing user looks like
+            // after upgrading to the version that adds the analytics card.
+            settingsFlow.value = Settings()
+            val presenter = newPresenter(platform = PlatformType.ANDROID)
+
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    CarouselPageType.NOTIFICATIONS,
+                    CarouselPageType.BATTERY,
+                    CarouselPageType.ANALYTICS,
+                ),
+                presenter.uiState.value.pages,
+            )
+        }
+
+    @Test
+    fun `OnEnableAnalytics persists analyticsEnabled and analyticsPromptSeen atomically`() =
+        runTest(testDispatcher) {
+            settingsFlow.value =
+                Settings(
+                    notificationPermissionState = PermissionState.GRANTED,
+                    batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = false,
+                )
+            val presenter = newPresenter()
+            advanceUntilIdle()
+
+            presenter.onAction(WelcomeCarouselUiAction.OnEnableAnalytics)
+            advanceUntilIdle()
+
+            assertTrue(settingsFlow.value.analyticsEnabled)
+            assertTrue(settingsFlow.value.analyticsPromptSeen)
+            // And the carousel dismisses (analytics card resolved, other cards already
+            // suppressed in this setup).
+            assertTrue(
+                presenter.uiState.value.pages
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun `OnDontAskAgain ANALYTICS sets analyticsPromptSeen only and leaves analyticsEnabled off`() =
+        runTest(testDispatcher) {
+            settingsFlow.value =
+                Settings(
+                    notificationPermissionState = PermissionState.GRANTED,
+                    batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = false,
+                )
+            val presenter = newPresenter()
+            advanceUntilIdle()
+
+            presenter.onAction(
+                WelcomeCarouselUiAction.OnDontAskAgain(CarouselPageType.ANALYTICS),
+            )
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { settingsRepository.setAnalyticsPromptSeen(true) }
+            assertTrue(settingsFlow.value.analyticsPromptSeen)
+            // Critical: dismissal must NOT opt the user in.
+            assertFalse(settingsFlow.value.analyticsEnabled)
+            assertTrue(
+                presenter.uiState.value.pages
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun `OnAnalyticsLearnMore opens the analytics wiki URL`() =
+        runTest(testDispatcher) {
+            val presenter = newPresenter()
+            advanceUntilIdle()
+
+            presenter.onAction(WelcomeCarouselUiAction.OnAnalyticsLearnMore)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) {
+                mainPresenter.navigateToUrlWithLauncher(BisqLinks.BISQ_MOBILE_ANALYTICS_WIKI_URL)
+            }
+        }
+
+    @Test
+    fun `OnAnalyticsLearnMore does not change analyticsPromptSeen`() =
+        runTest(testDispatcher) {
+            // Tapping "Learn more" navigates to the wiki; it must NOT count as
+            // engagement that dismisses the carousel — the user still has to
+            // either Enable or Don't ask again.
+            settingsFlow.value =
+                Settings(
+                    notificationPermissionState = PermissionState.GRANTED,
+                    batteryOptimizationState = BatteryOptimizationState.IGNORED,
+                    analyticsPromptSeen = false,
+                )
+            val presenter = newPresenter()
+            advanceUntilIdle()
+
+            presenter.onAction(WelcomeCarouselUiAction.OnAnalyticsLearnMore)
+            advanceUntilIdle()
+
+            assertFalse(settingsFlow.value.analyticsPromptSeen)
+            assertEquals(
+                listOf(CarouselPageType.ANALYTICS),
+                presenter.uiState.value.pages,
+            )
         }
 }

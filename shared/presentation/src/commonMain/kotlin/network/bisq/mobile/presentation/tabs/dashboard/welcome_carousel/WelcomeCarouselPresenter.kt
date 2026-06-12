@@ -16,21 +16,23 @@ import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 
 /**
  * Drives the dashboard welcome carousel: which opt-in cards are still pending,
- * and how a "Don't ask again" tap persists.
+ * and how a "Don't ask again" / "Enable" tap persists.
  *
  * Pending pages are computed live from [SettingsRepository] + the relayed-push
  * opt-in flag. As one card resolves (the user grants/denies the OS prompt or
- * taps "Don't ask again"), the underlying state changes and the live list
+ * taps a resolution button), the underlying state changes and the live list
  * reflects that — the carousel reactively transitions to the next pending card
  * without any session snapshot.
  *
- * Primary actions (asking the OS for notification permission, opening battery
- * settings) need Composable-side launchers and stay in [DashboardScreen]. This
- * presenter owns only the state-driven concerns.
+ * OS-coupled primary actions (asking the OS for notification permission, opening
+ * battery settings) need Composable-side launchers and stay in [DashboardScreen].
+ * Pure state actions (analytics enable, analytics learn-more, don't-ask-again)
+ * are owned here.
  */
 open class WelcomeCarouselPresenter(
     mainPresenter: MainPresenter,
@@ -48,12 +50,18 @@ open class WelcomeCarouselPresenter(
             .map { it.batteryOptimizationState }
             .distinctUntilChanged()
 
+    private val analyticsPromptSeen =
+        settingsRepository.data
+            .map { it.analyticsPromptSeen }
+            .distinctUntilChanged()
+
     val uiState: StateFlow<WelcomeCarouselUiState> =
         combine(
             notificationPermissionState,
             batteryOptimizationState,
             pushNotificationServiceFacade.isPushNotificationsEnabled,
-        ) { notifState, batteryState, pushEnabled ->
+            analyticsPromptSeen,
+        ) { notifState, batteryState, pushEnabled, analyticsSeen ->
             // BasePresenter.isDemo() returns false (MainPresenter hardcodes it);
             // the actual demo flag lives on ApplicationBootstrapFacade, set by the
             // pairing flow when the BISQ_DEMO_PAIRING_CODE is entered.
@@ -66,6 +74,7 @@ open class WelcomeCarouselPresenter(
                             notifState = notifState,
                             batteryState = batteryState,
                             relayedPushEnabled = pushEnabled,
+                            analyticsPromptSeen = analyticsSeen,
                         ),
                 )
             }
@@ -93,8 +102,29 @@ open class WelcomeCarouselPresenter(
                             settingsRepository.setBatteryOptimizationPermissionState(
                                 BatteryOptimizationState.DONT_ASK_AGAIN,
                             )
+
+                        CarouselPageType.ANALYTICS ->
+                            // Analytics has no DONT_ASK_AGAIN state — the prompt-seen
+                            // flag is the only thing that gates the carousel. We never
+                            // flip analyticsEnabled here: dismissal must not opt the
+                            // user into reporting.
+                            settingsRepository.setAnalyticsPromptSeen(true)
                     }
                 }
+
+            WelcomeCarouselUiAction.OnEnableAnalytics ->
+                presenterScope.launch {
+                    // Atomic write of both fields mirrors the Settings screen's
+                    // toggle handler, so the runtime opt-in provider (which reads
+                    // analyticsEnabled) and the carousel gate (which reads
+                    // analyticsPromptSeen) are consistent on the next emission.
+                    settingsRepository.update {
+                        it.copy(analyticsEnabled = true, analyticsPromptSeen = true)
+                    }
+                }
+
+            WelcomeCarouselUiAction.OnAnalyticsLearnMore ->
+                navigateToUrl(BisqLinks.BISQ_MOBILE_ANALYTICS_WIKI_URL)
         }
     }
 
@@ -102,6 +132,7 @@ open class WelcomeCarouselPresenter(
         notifState: PermissionState?,
         batteryState: BatteryOptimizationState?,
         relayedPushEnabled: Boolean,
+        analyticsPromptSeen: Boolean,
     ): List<CarouselPageType> {
         val pages = mutableListOf<CarouselPageType>()
 
@@ -115,6 +146,10 @@ open class WelcomeCarouselPresenter(
             )
         ) {
             pages.add(CarouselPageType.BATTERY)
+        }
+
+        if (isAnalyticsPending(analyticsPromptSeen)) {
+            pages.add(CarouselPageType.ANALYTICS)
         }
 
         return pages
@@ -135,4 +170,10 @@ open class WelcomeCarouselPresenter(
         if (relayedPushEnabled) return false
         return batteryState == BatteryOptimizationState.NOT_IGNORED
     }
+
+    // Pending whenever the user hasn't yet engaged with the analytics opt-in —
+    // either via this carousel or via Settings → Analytics (which sets the same
+    // flag). Existing users on a fresh install of the new version will see the
+    // card once; users who already toggled in Settings will not.
+    private fun isAnalyticsPending(analyticsPromptSeen: Boolean): Boolean = !analyticsPromptSeen
 }

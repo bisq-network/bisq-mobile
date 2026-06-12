@@ -3,11 +3,12 @@ package network.bisq.mobile.presentation.tabs.dashboard.welcome_carousel
 /**
  * Identifies a card in the dashboard welcome carousel.
  *
- * Extend this enum when adding a new opt-in card (e.g. ANALYTICS in a follow-up PR).
  * The presenter decides — based on persisted state, platform, and runtime conditions —
- * which subset of values appears in the pending list for the current session.
+ * which subset of values appears in the pending list for the current session. Order
+ * here is also the display order when multiple cards are pending.
  */
 enum class CarouselPageType {
     NOTIFICATIONS,
     BATTERY,
+    ANALYTICS,
 }

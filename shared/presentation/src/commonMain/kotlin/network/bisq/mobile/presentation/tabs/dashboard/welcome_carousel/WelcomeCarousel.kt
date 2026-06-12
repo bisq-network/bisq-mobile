@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,21 +42,21 @@ import org.koin.compose.koinInject
 
 /**
  * Overlay shown on top of the dashboard. Bundles all pending opt-in cards
- * (notifications, battery optimization, ...) into a single sequential carousel
- * instead of stacking modal dialogs.
+ * (notifications, battery optimization, analytics) into a single sequential
+ * carousel instead of stacking modal dialogs.
  *
  * The carousel is a live view of [WelcomeCarouselPresenter.uiState] — when the
  * underlying state shifts (the user grants the OS prompt, taps "Don't ask
- * again", or new cards become pending), the visible page transitions
- * automatically. There is no local session snapshot.
+ * again", enables analytics, or new cards become pending), the visible page
+ * transitions automatically. There is no local session snapshot.
  *
- * Primary action handling is split:
- * - "Don't ask again" is presenter-owned (pure state persistence) and goes
- *   through [WelcomeCarouselPresenter.onAction].
- * - "Enable / Open settings" needs a Composable-side launcher
- *   (rememberNotificationPermissionLauncher, rememberBatteryOptimizationsLauncher),
- *   which the screen owns and bridges via [onRequestNotificationPermission] and
- *   [onRequestBatteryOptimization].
+ * Primary action handling is split by where the work lives:
+ * - OS-coupled primary actions (Notifications / Battery) need a Composable-side
+ *   launcher (`rememberNotificationPermissionLauncher`,
+ *   `rememberBatteryOptimizationsLauncher`); the screen owns those launchers and
+ *   bridges via [onRequestNotificationPermission] / [onRequestBatteryOptimization].
+ * - Pure-state primary actions (Analytics opt-in, Analytics learn-more, all
+ *   "Don't ask again" buttons) go through [WelcomeCarouselPresenter.onAction].
  */
 @Composable
 fun WelcomeCarousel(
@@ -72,6 +73,8 @@ fun WelcomeCarousel(
             when (type) {
                 CarouselPageType.NOTIFICATIONS -> onRequestNotificationPermission()
                 CarouselPageType.BATTERY -> onRequestBatteryOptimization()
+                CarouselPageType.ANALYTICS ->
+                    presenter.onAction(WelcomeCarouselUiAction.OnEnableAnalytics)
             }
         },
         onAction = presenter::onAction,
@@ -158,6 +161,16 @@ internal fun WelcomeCarouselContent(
                         text = page.description,
                         textAlign = TextAlign.Center,
                     )
+                    if (page.learnMoreText != null) {
+                        BisqGap.VHalf()
+                        BisqButton(
+                            text = page.learnMoreText,
+                            onClick = { onAction(WelcomeCarouselUiAction.OnAnalyticsLearnMore) },
+                            type = BisqButtonType.Clear,
+                            color = BisqTheme.colors.primary,
+                            padding = PaddingValues(0.dp),
+                        )
+                    }
                 }
             }
 
@@ -213,6 +226,7 @@ private data class CarouselPageDisplay(
     val title: String,
     val description: String,
     val actionText: String,
+    val learnMoreText: String? = null,
 )
 
 @Composable
@@ -234,6 +248,16 @@ private fun CarouselPageType.toDisplay(): CarouselPageDisplay =
                 title = "mobile.welcomeCarousel.battery.title".i18n(),
                 description = "mobile.welcomeCarousel.battery.description".i18n(),
                 actionText = "mobile.welcomeCarousel.battery.action".i18n(),
+            )
+
+        CarouselPageType.ANALYTICS ->
+            CarouselPageDisplay(
+                iconText = "📊",
+                iconBackgroundColor = BisqTheme.colors.primary,
+                title = "mobile.welcomeCarousel.analytics.title".i18n(),
+                description = "mobile.welcomeCarousel.analytics.description".i18n(),
+                actionText = "mobile.welcomeCarousel.analytics.action".i18n(),
+                learnMoreText = "mobile.welcomeCarousel.analytics.learnMore".i18n(),
             )
     }
 
@@ -273,6 +297,40 @@ private fun WelcomeCarousel_NotificationsOnly_Preview() {
     BisqTheme.Preview {
         WelcomeCarouselContent(
             uiState = WelcomeCarouselUiState(pages = listOf(CarouselPageType.NOTIFICATIONS)),
+            onPrimaryAction = {},
+            onAction = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun WelcomeCarousel_AnalyticsOnly_Preview() {
+    BisqTheme.Preview {
+        WelcomeCarouselContent(
+            uiState = WelcomeCarouselUiState(pages = listOf(CarouselPageType.ANALYTICS)),
+            onPrimaryAction = {},
+            onAction = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun WelcomeCarousel_AllThreePages_Preview() {
+    BisqTheme.Preview {
+        WelcomeCarouselContent(
+            uiState =
+                WelcomeCarouselUiState(
+                    pages =
+                        listOf(
+                            CarouselPageType.NOTIFICATIONS,
+                            CarouselPageType.BATTERY,
+                            CarouselPageType.ANALYTICS,
+                        ),
+                ),
             onPrimaryAction = {},
             onAction = {},
         )
