@@ -507,6 +507,10 @@ class ApplicationLifecycleServiceBootstrapTest {
         override suspend fun setAnalyticsPromptSeen(value: Boolean) {
             flow.value = flow.value.copy(analyticsPromptSeen = value)
         }
+
+        override suspend fun setAnalyticsBaselineSent(value: Boolean) {
+            flow.value = flow.value.copy(analyticsBaselineSent = value)
+        }
     }
 
     @Test

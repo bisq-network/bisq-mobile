@@ -25,6 +25,7 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSettingsBaseline
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
@@ -65,6 +66,7 @@ class NodeApplicationLifecycleService(
     bufferedAnalyticsService: BufferedAnalyticsService? = null,
     analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
     settingsRepository: SettingsRepository? = null,
+    analyticsSettingsBaseline: AnalyticsSettingsBaseline? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
         kmpTorService,
@@ -73,6 +75,7 @@ class NodeApplicationLifecycleService(
         bufferedAnalyticsService,
         analyticsSocksPortProvider,
         settingsRepository,
+        analyticsSettingsBaseline,
     ) {
     fun restartForRestoreDataDirectory(view: Any?) {
         val activity =

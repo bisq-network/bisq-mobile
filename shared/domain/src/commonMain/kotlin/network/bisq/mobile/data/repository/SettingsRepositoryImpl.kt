@@ -102,4 +102,10 @@ open class SettingsRepositoryImpl(
             it.copy(analyticsPromptSeen = value)
         }
     }
+
+    override suspend fun setAnalyticsBaselineSent(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(analyticsBaselineSent = value)
+        }
+    }
 }

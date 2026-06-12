@@ -1144,6 +1144,69 @@ class SettingsPresenterTest {
         }
 
     @Test
+    fun `OnAnalyticsToggle off resets analyticsBaselineSent so the next opt-in re-emits baseline`() =
+        runTest(testDispatcher) {
+            // Pins the once-per-opt-in baseline contract: opting out must
+            // clear the "baseline already sent" flag so that re-opting in
+            // later triggers a fresh AnalyticsSettingsBaseline.emit() (their
+            // settings may have changed during the opt-out interval).
+            val flow =
+                wireSettingsRepositoryUpdate(
+                    Settings(
+                        analyticsEnabled = true,
+                        analyticsPromptSeen = true,
+                        analyticsBaselineSent = true,
+                    ),
+                )
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(false))
+            advanceUntilIdle()
+
+            assertFalse(flow.value.analyticsEnabled)
+            assertFalse(
+                flow.value.analyticsBaselineSent,
+                "Opt-out must reset analyticsBaselineSent so the next opt-in re-emits baseline",
+            )
+        }
+
+    @Test
+    fun `OnAnalyticsToggle on preserves analyticsBaselineSent unchanged`() =
+        runTest(testDispatcher) {
+            // Opting in does NOT itself reset the flag — the flag only flips
+            // when the baseline emitter actually runs (in lifecycle service)
+            // and writes true via setAnalyticsBaselineSent. Toggling here is
+            // an opt-in flip; the emitter will see the false value (because
+            // the previous opt-out reset it) and proceed with a fresh emit.
+            val flow =
+                wireSettingsRepositoryUpdate(
+                    Settings(
+                        analyticsEnabled = false,
+                        analyticsPromptSeen = true,
+                        analyticsBaselineSent = false,
+                    ),
+                )
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAnalyticsToggle(true))
+            advanceUntilIdle()
+
+            assertTrue(flow.value.analyticsEnabled)
+            assertFalse(
+                flow.value.analyticsBaselineSent,
+                "Opt-in must leave analyticsBaselineSent untouched (false here) so the baseline emitter will fire",
+            )
+        }
+
+    @Test
     fun `analyticsEnabled state reflects repository value via observeAnalyticsEnabled`() =
         runTest(testDispatcher) {
             // Pins the read-side observer. A flip from anywhere (carousel,

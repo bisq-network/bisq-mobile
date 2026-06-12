@@ -73,6 +73,7 @@ val androidClientPresentationModule =
                 get(), // analyticsBootstrapConfig
                 getOrNull(), // bufferedAnalyticsService — always bound now (dev + user-settings gates at runtime)
                 getOrNull(), // analyticsSocksPortProvider — always bound now (dev + user-settings gates at runtime)
+                getOrNull(), // analyticsSettingsBaseline — always bound (post-opt-in baseline emitter)
             )
         }
 

@@ -48,26 +48,91 @@ class AnalyticsEventContractTest {
     }
 
     @Test
-    fun `every Settings event name follows the settings_x_enabled or settings_x_disabled convention`() {
+    fun `every Settings event name uses the settings dot lowercase snake_case alphabet`() {
         AnalyticsEvent.Settings.all.forEach { event ->
             assertTrue(
-                event.name.matches(Regex("^settings\\.[a-z][a-z0-9_]*_(enabled|disabled)$")),
-                "Settings event name '${event.name}' must match settings.<thing>_(enabled|disabled)",
+                event.name.matches(Regex("^settings\\.[a-z][a-z0-9_]*$")),
+                "Settings event name '${event.name}' must match settings.<a-z0-9_>",
             )
         }
     }
 
     @Test
-    fun `Settings_all enabled and disabled events are paired`() {
-        val names = AnalyticsEvent.Settings.all.map { it.name }
-        val enabled = names.filter { it.endsWith("_enabled") }.map { it.removeSuffix("_enabled") }.toSet()
-        val disabled = names.filter { it.endsWith("_disabled") }.map { it.removeSuffix("_disabled") }.toSet()
+    fun `Settings toggle events follow the _enabled or _disabled suffix convention`() {
+        // LanguageChanged is a data class with code baked into the name — not a
+        // boolean toggle — so it's exempt from this rule. All other Settings
+        // events MUST end in _enabled or _disabled.
+        val toggleEvents = AnalyticsEvent.Settings.all.filterNot { it is AnalyticsEvent.Settings.LanguageChanged }
+        toggleEvents.forEach { event ->
+            assertTrue(
+                event.name.matches(Regex("^settings\\.[a-z][a-z0-9_]*_(enabled|disabled)$")),
+                "Toggle event '${event.name}' must end in _enabled or _disabled",
+            )
+        }
+    }
+
+    @Test
+    fun `Settings toggle enabled and disabled events are paired`() {
+        // Exclude LanguageChanged from the pair check — it has no _enabled/_disabled
+        // counterpart and follows its own naming (settings.language_changed_<code>).
+        val toggleNames =
+            AnalyticsEvent.Settings.all
+                .filterNot { it is AnalyticsEvent.Settings.LanguageChanged }
+                .map { it.name }
+        val enabled = toggleNames.filter { it.endsWith("_enabled") }.map { it.removeSuffix("_enabled") }.toSet()
+        val disabled = toggleNames.filter { it.endsWith("_disabled") }.map { it.removeSuffix("_disabled") }.toSet()
         assertEquals(
             enabled,
             disabled,
             "Every Settings toggle must declare BOTH _enabled and _disabled events so opt-in/opt-out conversions are " +
                 "measurable. Missing pairs: ${(enabled - disabled).map { "${it}_disabled" } + (disabled - enabled).map { "${it}_enabled" }}",
         )
+    }
+
+    @Test
+    fun `Settings_LanguageChanged events use the settings_language_changed_x pattern`() {
+        val langEvents = AnalyticsEvent.Settings.all.filterIsInstance<AnalyticsEvent.Settings.LanguageChanged>()
+        assertTrue(
+            langEvents.isNotEmpty(),
+            "Settings.all must contain at least one LanguageChanged representative — " +
+                "either re-add it or drop the language-tracking contract from the docs.",
+        )
+        langEvents.forEach { event ->
+            assertTrue(
+                event.name.matches(Regex("^settings\\.language_changed_[a-z][a-z0-9_]*$")),
+                "LanguageChanged('${event.code}') -> '${event.name}' must match settings.language_changed_<code>",
+            )
+        }
+    }
+
+    @Test
+    fun `Settings_LanguageChanged covers every TRACKED_LANGUAGE_CODE`() {
+        val coveredCodes =
+            AnalyticsEvent.Settings.all
+                .filterIsInstance<AnalyticsEvent.Settings.LanguageChanged>()
+                .map { it.code }
+                .toSet()
+        val expectedCodes = AnalyticsEvent.Settings.TRACKED_LANGUAGE_CODES.toSet()
+        assertEquals(
+            expectedCodes,
+            coveredCodes,
+            "Settings.all LanguageChanged instances must mirror TRACKED_LANGUAGE_CODES exactly. " +
+                "If you added a new translatable language, add it to TRACKED_LANGUAGE_CODES AND " +
+                "the MainPresenter observer will pick it up via the live flow.",
+        )
+    }
+
+    @Test
+    fun `sanitizeCode lowercases and replaces hyphens`() {
+        // Pins the wire-format guarantee: anything we pass through sanitizeCode
+        // matches the [a-z0-9_] alphabet downstream consumers (GlitchTip search,
+        // grep, dashboards) rely on.
+        assertEquals("en", AnalyticsEvent.Settings.sanitizeCode("en"))
+        assertEquals("pcm_ng", AnalyticsEvent.Settings.sanitizeCode("pcm-NG"))
+        assertEquals("pt_br", AnalyticsEvent.Settings.sanitizeCode("pt-BR"))
+        assertEquals("af_za", AnalyticsEvent.Settings.sanitizeCode("af-ZA"))
+        // Idempotent.
+        assertEquals("pcm_ng", AnalyticsEvent.Settings.sanitizeCode("pcm_ng"))
     }
 
     @Test
@@ -88,7 +153,9 @@ class AnalyticsEventContractTest {
 
     @Test
     fun `Settings_all matches the sealed class subclasses exhaustively`() {
-        val expectedCount = 6
+        // 6 toggle events (Analytics/Push/KeepConnected × Enabled/Disabled) +
+        // 1 LanguageChanged per TRACKED_LANGUAGE_CODES entry.
+        val expectedCount = 6 + AnalyticsEvent.Settings.TRACKED_LANGUAGE_CODES.size
         assertEquals(
             expectedCount,
             AnalyticsEvent.Settings.all.size,

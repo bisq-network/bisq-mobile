@@ -33,6 +33,7 @@ import network.bisq.mobile.data.utils.AndroidUrlLauncher
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSettingsBaseline
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.analytics.NativeSentryInitializer
@@ -158,6 +159,20 @@ val androidNodeDomainModule =
             )
         }
 
+        // Settings baseline emitter — fires a snapshot of the user-controlled
+        // settings (analytics, language, push, keep-connected) once per
+        // process AFTER the user opts into analytics, called from
+        // ApplicationLifecycleService.bootstrapAnalytics. Reuses the
+        // BufferedAnalyticsService so events go through the same gates.
+        single {
+            AnalyticsSettingsBaseline(
+                analyticsService = get<AnalyticsService>(),
+                settingsRepository = get<SettingsRepository>(),
+                settingsServiceFacade = get<SettingsServiceFacade>(),
+                pushNotificationServiceFacade = get<PushNotificationServiceFacade>(),
+            )
+        }
+
         single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
 
         single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
@@ -227,6 +242,7 @@ val androidNodeDomainModule =
                 getOrNull(), // bufferedAnalyticsService — always bound now (dev + user-settings gates at runtime)
                 getOrNull(), // analyticsSocksPortProvider — always bound now (dev + user-settings gates at runtime)
                 get<SettingsRepository>(), // pre-warm DataStore before flipping onSentryReady — see ApplicationLifecycleService
+                getOrNull(), // analyticsSettingsBaseline — always bound (post-opt-in baseline emitter)
             )
         } bind ApplicationLifecycleService::class
 

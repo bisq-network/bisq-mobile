@@ -61,17 +61,111 @@ sealed class AnalyticsEvent(
 
         data object KeepConnectedDisabled : Settings("settings.keep_connected_disabled")
 
+        /**
+         * UI language is now [code]. Emitted by `MainPresenter` whenever the
+         * observed language flow changes — including the first non-blank value
+         * after app launch (auto-detected baseline) AND any subsequent user
+         * change via Settings → Language.
+         *
+         * The code is baked into the wire name via [sanitizeCode] so the event
+         * name stays in the `[a-z0-9_]` alphabet (Bisq2 codes like `pcm-NG`
+         * and `pt-BR` become `pcm_ng` and `pt_br`). The raw [code] property is
+         * kept on the event so downstream tests can assert on the input.
+         *
+         * Cardinality is bounded by the project's translated languages — see
+         * [TRACKED_LANGUAGE_CODES]. The `.all` companion below mirrors that
+         * list (1 representative instance per code) so the contract test pins
+         * coverage.
+         */
+        data class LanguageChanged(
+            val code: String,
+        ) : Settings("settings.language_changed_${sanitizeCode(code)}")
+
         companion object {
+            /**
+             * Codes considered "tracked" — pinned to the project's translatable
+             * UI languages (`LanguageServiceFacade.DEFAULT_TRANSLATABLE_LANGUAGES`).
+             * Adding a new Transifex translation should add its code here so the
+             * contract test continues to pin coverage AND so a typo in the
+             * `MainPresenter` observer would surface as the test asserting an
+             * unknown name.
+             *
+             * Wire codes are derived via [sanitizeCode] — lowercase, `-` → `_`.
+             */
+            val TRACKED_LANGUAGE_CODES: List<String> =
+                listOf(
+                    "af-ZA",
+                    "cs",
+                    "de",
+                    "en",
+                    "es",
+                    "fr",
+                    "hi",
+                    "id",
+                    "it",
+                    "pcm-NG",
+                    "pt-BR",
+                    "ru",
+                    "tr",
+                    "vi",
+                )
+
             // See [ScreenViewed.all] kdoc for why `by lazy`.
             val all: List<Settings> by lazy {
-                listOf(
-                    AnalyticsEnabled,
-                    AnalyticsDisabled,
-                    PushNotificationsEnabled,
-                    PushNotificationsDisabled,
-                    KeepConnectedEnabled,
-                    KeepConnectedDisabled,
-                )
+                val toggles =
+                    listOf(
+                        AnalyticsEnabled,
+                        AnalyticsDisabled,
+                        PushNotificationsEnabled,
+                        PushNotificationsDisabled,
+                        KeepConnectedEnabled,
+                        KeepConnectedDisabled,
+                    )
+                val languages = TRACKED_LANGUAGE_CODES.map { LanguageChanged(it) }
+                toggles + languages
+            }
+
+            /**
+             * Normalise a Bisq language code (`pcm-NG`, `pt-BR`, …) into the
+             * `[a-z0-9_]` alphabet used by analytics event names. Idempotent on
+             * already-normalised codes.
+             *
+             * Public so [LanguageChanged]'s name initialiser can use it AND so
+             * other modules' observers can pre-sanitise before emitting if they
+             * ever need to (current callers normalise via [normalizeLanguageCode]
+             * which already gates against the tracked-codes allowlist).
+             */
+            fun sanitizeCode(code: String): String = code.lowercase().replace('-', '_')
+
+            /**
+             * Translate a raw language code as it might come from bisq2 (`en_US`,
+             * `pt_BR`, `pcm`) or any other observable source into the canonical
+             * Transifex form expected by [TRACKED_LANGUAGE_CODES]. Returns null
+             * for blanks, unrecognised codes, or anything that doesn't survive
+             * normalisation — callers MUST drop nulls silently (the privacy
+             * contract is sealed events only, and we don't want to emit names
+             * for codes we never reviewed).
+             *
+             * Mirrors `NodeSettingsServiceFacade.normalizeLanguageCode` so the
+             * shared analytics observer can apply the same mapping without
+             * pulling platform-specific (Android-Java) code into commonMain.
+             * Kept terse — see that source for the full domain rationale.
+             *
+             * Public so callers in `:shared:presentation` (MainPresenter
+             * observer) and `:shared:domain` (AnalyticsSettingsBaseline) can
+             * share one implementation.
+             */
+            fun normalizeLanguageCode(code: String): String? {
+                if (code.isBlank()) return null
+                val withHyphens = code.replace('_', '-')
+                val candidate =
+                    when {
+                        withHyphens == "pcm" -> "pcm-NG"
+                        // Bisq2 stores e.g. `en_US`; collapse all `en*` variants to `en`.
+                        withHyphens.startsWith("en") && withHyphens.length > 2 -> "en"
+                        else -> withHyphens
+                    }
+                return candidate.takeIf { it in TRACKED_LANGUAGE_CODES }
             }
         }
     }

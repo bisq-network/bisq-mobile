@@ -10,6 +10,7 @@ import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.analytics.AnalyticsSettingsBaseline
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
@@ -37,6 +38,10 @@ abstract class ApplicationLifecycleService(
     // event would be silently dropped at the runtime gate. See PR #1473
     // discussion + diagnostic logs in [SentryAnalyticsService.isReadyToEmit].
     private val settingsRepository: SettingsRepository? = null,
+    // Optional — bound in production DI by both Client + Node apps. Null in
+    // test fixtures so existing test harnesses don't need to wire up the
+    // settings/push facades just to construct a lifecycle service.
+    private val analyticsSettingsBaseline: AnalyticsSettingsBaseline? = null,
 ) : BaseService() {
     private val isTerminating = atomic<Boolean>(false)
 
@@ -139,6 +144,19 @@ abstract class ApplicationLifecycleService(
                 // StateFlow gate reflects reality before any track call.
                 bufferedAnalyticsService?.onSentryReady()
                 log.i { "Analytics: Sentry initialized over Tor (SOCKS5 $LOOPBACK_SOCKS_HOST:$socksPort)" }
+
+                // Settings baseline snapshot — fires AFTER onSentryReady so the
+                // events go direct (not buffered) and AFTER the user has opted
+                // in (no events leave the device unless analytics is enabled).
+                // Null only in test fixtures; in production both apps bind it.
+                // try/catch isolates baseline failures from the lifecycle path —
+                // a stale facade or a future test mock that throws won't
+                // collapse analytics.
+                try {
+                    analyticsSettingsBaseline?.emit()
+                } catch (e: Exception) {
+                    log.w(e) { "Analytics baseline emission failed; continuing" }
+                }
             } catch (e: Exception) {
                 // Never let analytics setup take the app down — if Sentry-KMP's
                 // init throws on a malformed DSN or platform quirk, log and

@@ -65,6 +65,8 @@ class NodeOffersServiceFacadeIntegrationTest {
         override suspend fun setAnalyticsEnabled(value: Boolean) {}
 
         override suspend fun setAnalyticsPromptSeen(value: Boolean) {}
+
+        override suspend fun setAnalyticsBaselineSent(value: Boolean) {}
     }
 
     private fun buildDto(

@@ -45,6 +45,15 @@ interface SettingsRepository {
     suspend fun setAnalyticsPromptSeen(value: Boolean)
 
     /**
+     * Set the "baseline already emitted for this opt-in cycle" flag. Written
+     * to `true` by `AnalyticsSettingsBaseline.emit()` after a successful
+     * snapshot, and to `false` by the opt-out path (atomic with the
+     * `analyticsEnabled = false` write) so the next opt-in re-emits a fresh
+     * baseline. See [Settings.analyticsBaselineSent] for the full semantics.
+     */
+    suspend fun setAnalyticsBaselineSent(value: Boolean)
+
+    /**
      * Returns a hot [StateFlow] of [Settings.analyticsEnabled] sharing in the
      * given [scope]. The DI module passes its long-lived buffer scope here so
      * the analytics SDK's synchronous `runtimeOptInProvider` can read

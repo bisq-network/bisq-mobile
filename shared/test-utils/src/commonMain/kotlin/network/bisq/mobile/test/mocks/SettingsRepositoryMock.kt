@@ -93,4 +93,10 @@ class SettingsRepositoryMock :
             it.copy(analyticsPromptSeen = value)
         }
     }
+
+    override suspend fun setAnalyticsBaselineSent(value: Boolean) {
+        _data.update {
+            it.copy(analyticsBaselineSent = value)
+        }
+    }
 }

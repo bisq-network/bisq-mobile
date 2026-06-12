@@ -26,6 +26,14 @@ data class Settings(
     // include the analytics page; once true, it never auto-prompts again
     // (user can still flip the toggle manually from Settings).
     val analyticsPromptSeen: Boolean = false,
+    // Has the settings baseline snapshot been emitted for the current opt-in
+    // cycle? Set to true after `AnalyticsSettingsBaseline.emit()` succeeds;
+    // reset to false when the user opts OUT so the next opt-in re-emits a
+    // fresh baseline (their settings may have changed during the opt-out).
+    // Default false so existing installs upgrading to this version send one
+    // baseline on their next cold-start-after-opt-in — that's the correct
+    // initial state because we don't know if they had a baseline before.
+    val analyticsBaselineSent: Boolean = false,
 )
 
 @Serializable

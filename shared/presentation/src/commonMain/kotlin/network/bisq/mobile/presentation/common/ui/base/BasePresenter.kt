@@ -159,12 +159,11 @@ abstract class BasePresenter(
     protected val globalUiManager: GlobalUiManager by inject()
 
     /**
-     * Opt-in analytics (issue #525). KoinComponent injection rather than ctor
-     * parameter to avoid threading it through every BasePresenter subclass
-     * constructor — the service is a single binding shared across the app and
-     * is a no-op when analytics is disabled at build time.
-     */
-    /**
+     * Opt-in analytics (issue #525). KoinComponent resolution rather than ctor
+     * parameter to avoid threading it through every BasePresenter subclass.
+     * The service is a single binding shared across the app and is a no-op
+     * when analytics is disabled at build time.
+     *
      * Null-tolerant access so the existing test suites (40+ files) don't all
      * need to bind [AnalyticsService] in their Koin modules. Tests that don't
      * care about analytics tracking get a silent no-op; tests that DO care

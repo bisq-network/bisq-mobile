@@ -183,8 +183,21 @@ open class SettingsPresenter(
             // SDK's runtimeOptInProvider reflects the new value on the next
             // track() call. Also mark the prompt as seen so the welcome
             // carousel won't auto-prompt later if the user already engaged.
+            //
+            // On opt-OUT, also reset `analyticsBaselineSent` to false. The
+            // baseline-snapshot mechanism in AnalyticsSettingsBaseline.emit()
+            // checks this flag to avoid re-emitting on every cold start;
+            // resetting on opt-out guarantees that if the user opts back in
+            // later, they get a fresh baseline (their settings may have
+            // changed during the opt-out interval). Single atomic write keeps
+            // the two flags in sync — no risk of "opted out but still flagged
+            // as baselined" leaking into the next opt-in cycle.
             settingsRepository.update {
-                it.copy(analyticsEnabled = enabled, analyticsPromptSeen = true)
+                it.copy(
+                    analyticsEnabled = enabled,
+                    analyticsPromptSeen = true,
+                    analyticsBaselineSent = if (enabled) it.analyticsBaselineSent else false,
+                )
             }
         }
         // Track BEFORE the persist completes so the enabled→disabled transition
