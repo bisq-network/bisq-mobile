@@ -28,7 +28,7 @@ class CreateOfferDirectionPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : OfferFlowPresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferDirection
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CreateOfferDirection
 
     var direction: DirectionEnum = createOfferCoordinator.createOfferModel.direction
 

@@ -16,7 +16,7 @@ open class UserAgreementPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
 ) : BasePresenter(mainPresenter),
     IAgreementPresenter {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.UserAgreement
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.UserAgreement
 
     private val _accepted = MutableStateFlow(false)
     override val isAccepted: StateFlow<Boolean> = _accepted.asStateFlow()

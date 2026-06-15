@@ -34,7 +34,7 @@ open class SettingsPresenter(
     private val settingsRepository: SettingsRepository,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.Settings
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.Settings
 
     private val _uiState =
         MutableStateFlow(

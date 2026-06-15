@@ -39,7 +39,7 @@ class AnalyticsEventContractTest {
 
     @Test
     fun `every ScreenViewed name follows the screen_x_opened convention`() {
-        AnalyticsEvent.ScreenViewed.all.forEach { event ->
+        AnalyticsEvent.ScreenOpened.all.forEach { event ->
             assertTrue(
                 event.name.matches(Regex("^screen\\.[a-z][a-z0-9_]*_opened$")),
                 "ScreenViewed name '${event.name}' must match screen.<thing>_opened",
@@ -145,7 +145,7 @@ class AnalyticsEventContractTest {
         val expectedCount = 17
         assertEquals(
             expectedCount,
-            AnalyticsEvent.ScreenViewed.all.size,
+            AnalyticsEvent.ScreenOpened.all.size,
             "ScreenViewed.all.size changed without updating the expected count in this test. " +
                 "If you intentionally added/removed an event, update this expected value.",
         )
@@ -165,7 +165,7 @@ class AnalyticsEventContractTest {
 
     @Test
     fun `AnalyticsEvent_all is the union of every family list`() {
-        val sum = AnalyticsEvent.ScreenViewed.all.size + AnalyticsEvent.Settings.all.size
+        val sum = AnalyticsEvent.ScreenOpened.all.size + AnalyticsEvent.Settings.all.size
         assertEquals(
             sum,
             AnalyticsEvent.all.size,

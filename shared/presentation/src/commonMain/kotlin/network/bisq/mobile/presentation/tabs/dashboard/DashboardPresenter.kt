@@ -46,7 +46,7 @@ open class DashboardPresenter(
      * Emits `screen.dashboard_opened` when the user reaches the Dashboard.
      * No-op unless both build-time AND runtime analytics gates are open.
      */
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.Dashboard
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.Dashboard
 
     private val _offersOnline = MutableStateFlow(0)
     val offersOnline: StateFlow<Int> = _offersOnline.asStateFlow()

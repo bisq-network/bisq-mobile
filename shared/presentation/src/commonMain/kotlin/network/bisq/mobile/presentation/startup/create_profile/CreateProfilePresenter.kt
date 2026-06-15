@@ -19,7 +19,7 @@ class CreateProfilePresenter(
     mainPresenter: MainPresenter,
     private val userProfileService: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateProfile
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CreateProfile
 
     companion object {
         // The png files used for the image composition are 300 px, thus this is the max size.

@@ -14,7 +14,7 @@ class TakeOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val takeOfferCoordinator: TakeOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.TakeOfferPaymentMethod
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.TakeOfferPaymentMethod
 
     var hasMultipleQuoteSidePaymentMethods: Boolean = false
     var hasMultipleBaseSidePaymentMethods: Boolean = false

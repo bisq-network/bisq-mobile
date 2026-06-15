@@ -33,7 +33,7 @@ sealed class AnalyticsEvent(
          * Every declared event across all families. Used by the contract test
          * to assert names are unique and follow the convention.
          */
-        val all: List<AnalyticsEvent> by lazy { ScreenViewed.all + Settings.all }
+        val all: List<AnalyticsEvent> by lazy { ScreenOpened.all + Settings.all }
     }
 
     /**
@@ -41,7 +41,7 @@ sealed class AnalyticsEvent(
      * encodes both the toggle identity AND the new state, so there's no
      * separate payload — keeps the privacy contract obvious in event ingest.
      *
-     * Carousel-driven analytics opt-in goes through [ScreenViewed.Dashboard]
+     * Carousel-driven analytics opt-in goes through [ScreenOpened.Dashboard]
      * follow-up signals (a user who opts in via carousel will have events
      * starting to appear); we intentionally don't add a carousel-specific
      * event here to avoid two ways to measure the same conversion.
@@ -182,10 +182,10 @@ sealed class AnalyticsEvent(
      * `data object` here, add it to [all], add the override on the presenter.
      * The contract test guarantees the three stay in sync.
      */
-    sealed class ScreenViewed(
+    sealed class ScreenOpened(
         name: String,
     ) : AnalyticsEvent(name) {
-        companion object {
+        companion object Companion {
             /**
              * Exhaustive list of declared ScreenViewed events. Source of truth for
              * the contract test, which verifies every declared event has a presenter
@@ -196,11 +196,11 @@ sealed class AnalyticsEvent(
              *
              * `by lazy` is load-bearing: a strict `val = listOf(...)` triggers a
              * JVM class-init cycle (the companion's init references the sealed
-             * subclasses, each of which extends [ScreenViewed] — whose companion
+             * subclasses, each of which extends [ScreenOpened] — whose companion
              * is what's currently being initialised). Lazy defers the list build
              * until first read, by which time every subclass is fully loaded.
              */
-            val all: List<ScreenViewed> by lazy {
+            val all: List<ScreenOpened> by lazy {
                 listOf(
                     Splash,
                     Onboarding,
@@ -224,39 +224,39 @@ sealed class AnalyticsEvent(
         }
 
         // -- Tier A: core funnel spine ---------------------------------
-        data object Splash : ScreenViewed("screen.splash_opened")
+        data object Splash : ScreenOpened("screen.splash_opened")
 
-        data object Onboarding : ScreenViewed("screen.onboarding_opened")
+        data object Onboarding : ScreenOpened("screen.onboarding_opened")
 
-        data object UserAgreement : ScreenViewed("screen.user_agreement_opened")
+        data object UserAgreement : ScreenOpened("screen.user_agreement_opened")
 
-        data object CreateProfile : ScreenViewed("screen.create_profile_opened")
+        data object CreateProfile : ScreenOpened("screen.create_profile_opened")
 
-        data object Dashboard : ScreenViewed("screen.dashboard_opened")
+        data object Dashboard : ScreenOpened("screen.dashboard_opened")
 
-        data object OfferbookMarket : ScreenViewed("screen.offerbook_market_opened")
+        data object OfferbookMarket : ScreenOpened("screen.offerbook_market_opened")
 
-        data object MyTrades : ScreenViewed("screen.my_trades_opened")
+        data object MyTrades : ScreenOpened("screen.my_trades_opened")
 
-        data object Settings : ScreenViewed("screen.settings_opened")
+        data object Settings : ScreenOpened("screen.settings_opened")
 
         // -- Tier B: offer wizard funnel -------------------------------
-        data object CreateOfferDirection : ScreenViewed("screen.create_offer_direction_opened")
+        data object CreateOfferDirection : ScreenOpened("screen.create_offer_direction_opened")
 
-        data object CreateOfferMarket : ScreenViewed("screen.create_offer_market_opened")
+        data object CreateOfferMarket : ScreenOpened("screen.create_offer_market_opened")
 
-        data object CreateOfferAmount : ScreenViewed("screen.create_offer_amount_opened")
+        data object CreateOfferAmount : ScreenOpened("screen.create_offer_amount_opened")
 
-        data object CreateOfferPrice : ScreenViewed("screen.create_offer_price_opened")
+        data object CreateOfferPrice : ScreenOpened("screen.create_offer_price_opened")
 
-        data object CreateOfferPaymentMethod : ScreenViewed("screen.create_offer_payment_method_opened")
+        data object CreateOfferPaymentMethod : ScreenOpened("screen.create_offer_payment_method_opened")
 
-        data object CreateOfferReview : ScreenViewed("screen.create_offer_review_opened")
+        data object CreateOfferReview : ScreenOpened("screen.create_offer_review_opened")
 
-        data object TakeOfferAmount : ScreenViewed("screen.take_offer_amount_opened")
+        data object TakeOfferAmount : ScreenOpened("screen.take_offer_amount_opened")
 
-        data object TakeOfferPaymentMethod : ScreenViewed("screen.take_offer_payment_method_opened")
+        data object TakeOfferPaymentMethod : ScreenOpened("screen.take_offer_payment_method_opened")
 
-        data object TakeOfferReview : ScreenViewed("screen.take_offer_review_opened")
+        data object TakeOfferReview : ScreenOpened("screen.take_offer_review_opened")
     }
 }

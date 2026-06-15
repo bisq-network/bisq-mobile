@@ -15,7 +15,7 @@ class CreateOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val createOfferCoordinator: CreateOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferPaymentMethod
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CreateOfferPaymentMethod
 
     val quoteSideHeadline: String
     val baseSideHeadline: String

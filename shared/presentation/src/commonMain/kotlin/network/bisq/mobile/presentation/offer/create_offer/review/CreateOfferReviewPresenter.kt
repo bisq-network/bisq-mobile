@@ -29,7 +29,7 @@ class CreateOfferReviewPresenter(
     mainPresenter: MainPresenter,
     private val createOfferCoordinator: CreateOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferReview
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CreateOfferReview
 
     lateinit var headLine: String
     lateinit var quoteSidePaymentMethodDisplayString: String

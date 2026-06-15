@@ -24,14 +24,14 @@ class NoOpAnalyticsServiceTest {
 
     @Test
     fun `track accepts any AnalyticsEvent subtype without throwing`() {
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
     }
 
     @Test
     fun `trackImmediate accepts any AnalyticsEvent subtype without throwing`() {
         // Same contract as track for the no-op impl — buffering / priority
         // semantics only matter in BufferedAnalyticsService.
-        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.trackImmediate(AnalyticsEvent.ScreenOpened.Dashboard)
     }
 
     @Test

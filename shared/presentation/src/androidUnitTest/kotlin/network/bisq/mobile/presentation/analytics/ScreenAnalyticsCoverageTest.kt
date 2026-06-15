@@ -48,7 +48,7 @@ import kotlin.test.assertTrue
 /**
  * Regression net for the screen-view analytics coverage contract.
  *
- * For every entry in [AnalyticsEvent.ScreenViewed.all] there MUST be a
+ * For every entry in [AnalyticsEvent.ScreenOpened.all] there MUST be a
  * presenter whose `analyticsScreenEvent()` override returns it. If anyone
  * refactors a presenter and silently drops the override, this test fails the
  * build before the regression ships.
@@ -84,29 +84,29 @@ class ScreenAnalyticsCoverageTest {
 
     /**
      * The expected mapping from presenter class to its screen-view event.
-     * Must stay in sync with [AnalyticsEvent.ScreenViewed.all].
+     * Must stay in sync with [AnalyticsEvent.ScreenOpened.all].
      */
-    private val expectedCoverage: List<Pair<String, AnalyticsEvent.ScreenViewed>> =
+    private val expectedCoverage: List<Pair<String, AnalyticsEvent.ScreenOpened>> =
         listOf(
             // Tier A — core funnel spine
-            "SplashPresenter" to AnalyticsEvent.ScreenViewed.Splash,
-            "OnboardingPresenter" to AnalyticsEvent.ScreenViewed.Onboarding,
-            "UserAgreementPresenter" to AnalyticsEvent.ScreenViewed.UserAgreement,
-            "CreateProfilePresenter" to AnalyticsEvent.ScreenViewed.CreateProfile,
-            "DashboardPresenter" to AnalyticsEvent.ScreenViewed.Dashboard,
-            "OfferbookMarketPresenter" to AnalyticsEvent.ScreenViewed.OfferbookMarket,
-            "MyTradesPresenter" to AnalyticsEvent.ScreenViewed.MyTrades,
-            "SettingsPresenter" to AnalyticsEvent.ScreenViewed.Settings,
+            "SplashPresenter" to AnalyticsEvent.ScreenOpened.Splash,
+            "OnboardingPresenter" to AnalyticsEvent.ScreenOpened.Onboarding,
+            "UserAgreementPresenter" to AnalyticsEvent.ScreenOpened.UserAgreement,
+            "CreateProfilePresenter" to AnalyticsEvent.ScreenOpened.CreateProfile,
+            "DashboardPresenter" to AnalyticsEvent.ScreenOpened.Dashboard,
+            "OfferbookMarketPresenter" to AnalyticsEvent.ScreenOpened.OfferbookMarket,
+            "MyTradesPresenter" to AnalyticsEvent.ScreenOpened.MyTrades,
+            "SettingsPresenter" to AnalyticsEvent.ScreenOpened.Settings,
             // Tier B — offer wizard funnel
-            "CreateOfferDirectionPresenter" to AnalyticsEvent.ScreenViewed.CreateOfferDirection,
-            "CreateOfferMarketPresenter" to AnalyticsEvent.ScreenViewed.CreateOfferMarket,
-            "CreateOfferAmountPresenter" to AnalyticsEvent.ScreenViewed.CreateOfferAmount,
-            "CreateOfferPricePresenter" to AnalyticsEvent.ScreenViewed.CreateOfferPrice,
-            "CreateOfferPaymentMethodPresenter" to AnalyticsEvent.ScreenViewed.CreateOfferPaymentMethod,
-            "CreateOfferReviewPresenter" to AnalyticsEvent.ScreenViewed.CreateOfferReview,
-            "TakeOfferAmountPresenter" to AnalyticsEvent.ScreenViewed.TakeOfferAmount,
-            "TakeOfferPaymentMethodPresenter" to AnalyticsEvent.ScreenViewed.TakeOfferPaymentMethod,
-            "TakeOfferReviewPresenter" to AnalyticsEvent.ScreenViewed.TakeOfferReview,
+            "CreateOfferDirectionPresenter" to AnalyticsEvent.ScreenOpened.CreateOfferDirection,
+            "CreateOfferMarketPresenter" to AnalyticsEvent.ScreenOpened.CreateOfferMarket,
+            "CreateOfferAmountPresenter" to AnalyticsEvent.ScreenOpened.CreateOfferAmount,
+            "CreateOfferPricePresenter" to AnalyticsEvent.ScreenOpened.CreateOfferPrice,
+            "CreateOfferPaymentMethodPresenter" to AnalyticsEvent.ScreenOpened.CreateOfferPaymentMethod,
+            "CreateOfferReviewPresenter" to AnalyticsEvent.ScreenOpened.CreateOfferReview,
+            "TakeOfferAmountPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferAmount,
+            "TakeOfferPaymentMethodPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferPaymentMethod,
+            "TakeOfferReviewPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferReview,
         )
 
     @BeforeTest
@@ -134,7 +134,7 @@ class ScreenAnalyticsCoverageTest {
 
     @Test
     fun `expectedCoverage matches ScreenViewed_all exhaustively`() {
-        val declared = AnalyticsEvent.ScreenViewed.all.toSet()
+        val declared = AnalyticsEvent.ScreenOpened.all.toSet()
         val covered = expectedCoverage.map { it.second }.toSet()
         assertEquals(
             declared,
@@ -174,7 +174,7 @@ class ScreenAnalyticsCoverageTest {
                 versionProvider = mockk(relaxed = true),
                 isIos = false,
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.Splash, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.Splash, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -186,7 +186,7 @@ class ScreenAnalyticsCoverageTest {
                 settingsRepository = mockk(relaxed = true),
                 userProfileService = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.Onboarding, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.Onboarding, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -196,7 +196,7 @@ class ScreenAnalyticsCoverageTest {
                 mainPresenter = mainPresenter,
                 settingsServiceFacade = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.UserAgreement, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.UserAgreement, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -206,7 +206,7 @@ class ScreenAnalyticsCoverageTest {
                 mainPresenter = mainPresenter,
                 userProfileService = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.CreateProfile, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.CreateProfile, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -225,7 +225,7 @@ class ScreenAnalyticsCoverageTest {
                 platformSettingsManager = mockk(relaxed = true),
                 pushNotificationServiceFacade = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.Dashboard, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.Dashboard, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -239,7 +239,7 @@ class ScreenAnalyticsCoverageTest {
                 settingsRepository = mockk(relaxed = true),
                 computeOfferbookMarketListUseCase = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.OfferbookMarket, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.OfferbookMarket, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -249,7 +249,7 @@ class ScreenAnalyticsCoverageTest {
                 mainPresenter = mainPresenter,
                 backendCapabilitiesService = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.MyTrades, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.MyTrades, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -262,7 +262,7 @@ class ScreenAnalyticsCoverageTest {
                 settingsRepository = mockk(relaxed = true),
                 mainPresenter = mainPresenter,
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.Settings, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.Settings, presenter.analyticsScreenEvent())
     }
 
     // -- Create offer wizard ----------------------------------------
@@ -276,7 +276,7 @@ class ScreenAnalyticsCoverageTest {
                 userProfileServiceFacade = mockk(relaxed = true),
                 reputationServiceFacade = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.CreateOfferDirection, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.CreateOfferDirection, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -288,7 +288,7 @@ class ScreenAnalyticsCoverageTest {
                 createOfferCoordinator = mockk(relaxed = true),
                 marketPriceServiceFacade = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.CreateOfferMarket, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.CreateOfferMarket, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -314,7 +314,7 @@ class ScreenAnalyticsCoverageTest {
                 marketPriceServiceFacade = mockk(relaxed = true),
                 createOfferCoordinator = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.CreateOfferPrice, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.CreateOfferPrice, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -325,7 +325,7 @@ class ScreenAnalyticsCoverageTest {
                 createOfferCoordinator = mockk(relaxed = true),
             )
         assertEquals(
-            AnalyticsEvent.ScreenViewed.CreateOfferPaymentMethod,
+            AnalyticsEvent.ScreenOpened.CreateOfferPaymentMethod,
             presenter.analyticsScreenEvent(),
         )
     }
@@ -337,7 +337,7 @@ class ScreenAnalyticsCoverageTest {
                 mainPresenter = mainPresenter,
                 createOfferCoordinator = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.CreateOfferReview, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.CreateOfferReview, presenter.analyticsScreenEvent())
     }
 
     // -- Take offer wizard ------------------------------------------
@@ -350,7 +350,7 @@ class ScreenAnalyticsCoverageTest {
                 marketPriceServiceFacade = mockk(relaxed = true),
                 takeOfferCoordinator = mockk(relaxed = true),
             )
-        assertEquals(AnalyticsEvent.ScreenViewed.TakeOfferAmount, presenter.analyticsScreenEvent())
+        assertEquals(AnalyticsEvent.ScreenOpened.TakeOfferAmount, presenter.analyticsScreenEvent())
     }
 
     @Test
@@ -361,7 +361,7 @@ class ScreenAnalyticsCoverageTest {
                 takeOfferCoordinator = mockk(relaxed = true),
             )
         assertEquals(
-            AnalyticsEvent.ScreenViewed.TakeOfferPaymentMethod,
+            AnalyticsEvent.ScreenOpened.TakeOfferPaymentMethod,
             presenter.analyticsScreenEvent(),
         )
     }

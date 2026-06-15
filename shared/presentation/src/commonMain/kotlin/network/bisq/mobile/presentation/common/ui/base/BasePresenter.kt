@@ -188,7 +188,7 @@ abstract class BasePresenter(
      * Override in a subclass to opt INTO automatic screen-view tracking. Default
      * is `null` — no event is emitted. This is deliberately opt-in per presenter
      * so the privacy review surface stays small: every screen that ever emits
-     * an event must be explicitly enumerated via [AnalyticsEvent.ScreenViewed].
+     * an event must be explicitly enumerated via [AnalyticsEvent.ScreenOpened].
      *
      * When non-null, [onViewAttached] emits the event through [analyticsService],
      * which is a no-op unless both the build-time AND runtime opt-in gates are
@@ -196,13 +196,13 @@ abstract class BasePresenter(
      *
      * Visibility is `internal` rather than `protected` so the screen-coverage
      * contract test in this module can read it directly (asserting each
-     * presenter returns the event declared in [AnalyticsEvent.ScreenViewed.all]).
+     * presenter returns the event declared in [AnalyticsEvent.ScreenOpened.all]).
      * Cross-module subclasses (clientApp/nodeApp) are concrete subclasses of
      * abstract presenters that already live in this module, so they don't need
      * to override this method themselves — the override lives on the abstract
      * base in `:shared:presentation`.
      */
-    internal open fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed? = null
+    internal open fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened? = null
 
     // Add a flag to track if we've shown the exit warning
     private var exitWarningShown = false

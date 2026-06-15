@@ -18,7 +18,7 @@ class MyTradesPresenter(
     mainPresenter: MainPresenter,
     private val backendCapabilitiesService: BackendCapabilitiesService,
 ) : BasePresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.MyTrades
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.MyTrades
 
     companion object {
         private const val LAST_TAB = 1

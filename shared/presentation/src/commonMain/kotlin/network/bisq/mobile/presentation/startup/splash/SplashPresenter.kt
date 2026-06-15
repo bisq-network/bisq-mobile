@@ -32,7 +32,7 @@ abstract class SplashPresenter(
     versionProvider: VersionProvider,
     private val isIos: Boolean = getPlatformInfo().type == PlatformType.IOS,
 ) : BasePresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.Splash
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.Splash
 
     abstract val state: StateFlow<String>
 

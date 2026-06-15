@@ -27,7 +27,7 @@ class CreateOfferMarketPresenter(
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
 ) : OfferFlowPresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferMarket
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CreateOfferMarket
 
     var headline: String
     private val _selectedMarketItem = MutableStateFlow<MarketListItem?>(null)

@@ -2,7 +2,6 @@ package network.bisq.mobile.domain.analytics
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -123,7 +122,7 @@ class SentryAnalyticsServiceTest {
     @Test
     fun `track is a no-op before init`() {
         val (service, client) = newService()
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
         assertTrue(client.capturedMessages.isEmpty())
     }
 
@@ -131,7 +130,7 @@ class SentryAnalyticsServiceTest {
     fun `track emits when initialized AND user is opted in`() {
         val (service, client) = newService(optedIn = true)
         service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
         assertEquals(listOf("screen.dashboard_opened"), client.capturedMessages)
     }
 
@@ -139,7 +138,7 @@ class SentryAnalyticsServiceTest {
     fun `track is a no-op when runtime opt-in is false even after init`() {
         val (service, client) = newService(optedIn = false)
         service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
         assertTrue(client.capturedMessages.isEmpty())
     }
 
@@ -152,15 +151,15 @@ class SentryAnalyticsServiceTest {
         val service = SentryAnalyticsService(client, runtimeOptInProvider = { consented })
         service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
 
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
         assertTrue(client.capturedMessages.isEmpty())
 
         consented = true
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
         assertEquals(1, client.capturedMessages.size)
 
         consented = false
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
         assertEquals(1, client.capturedMessages.size)
     }
 
@@ -202,7 +201,7 @@ class SentryAnalyticsServiceTest {
     fun `trackImmediate emits via the same path as track when ready and opted in`() {
         val (service, client) = newService(optedIn = true)
         service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
-        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.trackImmediate(AnalyticsEvent.ScreenOpened.Dashboard)
         assertEquals(listOf("screen.dashboard_opened"), client.capturedMessages)
     }
 
@@ -210,14 +209,14 @@ class SentryAnalyticsServiceTest {
     fun `trackImmediate is a no-op when opted out`() {
         val (service, client) = newService(optedIn = false)
         service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
-        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.trackImmediate(AnalyticsEvent.ScreenOpened.Dashboard)
         assertTrue(client.capturedMessages.isEmpty(), "runtime opt-in must gate the immediate variant the same way")
     }
 
     @Test
     fun `trackImmediate is a no-op before init`() {
         val (service, client) = newService()
-        service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.trackImmediate(AnalyticsEvent.ScreenOpened.Dashboard)
         assertTrue(client.capturedMessages.isEmpty())
     }
 
@@ -358,7 +357,7 @@ class SentryAnalyticsServiceTest {
         val service = SentryAnalyticsService(sentryClient = client) // no runtimeOptInProvider passed
 
         service.init("http://abc@localhost:8000/3", "development", "0.4.1", isDebug = true)
-        service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+        service.track(AnalyticsEvent.ScreenOpened.Dashboard)
         service.captureException(RuntimeException("boom"))
 
         assertTrue(client.capturedMessages.isEmpty(), "default provider must deny track()")
@@ -403,6 +402,6 @@ class SentryAnalyticsServiceTest {
         consented = false
         assertEquals(false, client.lastRuntimeOptInProvider?.invoke())
         // Silence the unused warning on the test-helper service.
-        assertEquals(client, client.also { service.track(AnalyticsEvent.ScreenViewed.Dashboard) })
+        assertEquals(client, client.also { service.track(AnalyticsEvent.ScreenOpened.Dashboard) })
     }
 }

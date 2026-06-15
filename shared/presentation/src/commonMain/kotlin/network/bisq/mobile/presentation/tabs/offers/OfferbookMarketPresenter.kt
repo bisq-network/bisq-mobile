@@ -31,7 +31,7 @@ class OfferbookMarketPresenter(
     private val settingsRepository: SettingsRepository,
     private val computeOfferbookMarketListUseCase: ComputeOfferbookMarketListUseCase,
 ) : BasePresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.OfferbookMarket
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.OfferbookMarket
 
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)

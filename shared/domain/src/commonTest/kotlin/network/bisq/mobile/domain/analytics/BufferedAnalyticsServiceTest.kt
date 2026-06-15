@@ -129,7 +129,7 @@ class BufferedAnalyticsServiceTest {
             val downstream = RecordingAnalyticsService()
             val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
 
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
             advanceUntilIdle() // drain the fire-and-forget enqueue coroutine
 
             assertTrue(downstream.tracked.isEmpty(), "must NOT send before ready")
@@ -199,8 +199,8 @@ class BufferedAnalyticsServiceTest {
             val downstream = RecordingAnalyticsService()
             val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
 
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
-            service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
+            service.trackImmediate(AnalyticsEvent.ScreenOpened.Dashboard)
             advanceUntilIdle()
 
             assertEquals(2, service.bufferedCount(), "both tracks must be in the buffer pre-ready")
@@ -224,7 +224,7 @@ class BufferedAnalyticsServiceTest {
             service.onSentryReady()
             advanceUntilIdle()
 
-            service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.trackImmediate(AnalyticsEvent.ScreenOpened.Dashboard)
             // No advanceUntilIdle needed — the direct path is synchronous.
 
             assertEquals(1, downstream.tracked.size, "trackImmediate post-ready must forward directly")
@@ -251,8 +251,8 @@ class BufferedAnalyticsServiceTest {
             val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
 
             // Pile up multiple buffered events
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
             service.captureException(RuntimeException("a"))
             advanceUntilIdle()
             assertEquals(3, service.bufferedCount())
@@ -271,7 +271,7 @@ class BufferedAnalyticsServiceTest {
             val downstream = RecordingAnalyticsService()
             val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
 
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
             advanceUntilIdle()
 
             service.onSentryReady()
@@ -294,7 +294,7 @@ class BufferedAnalyticsServiceTest {
             service.onSentryReady()
             advanceUntilIdle()
 
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
 
             assertEquals(1, downstream.tracked.size)
             assertEquals(0, service.bufferedCount())
@@ -308,7 +308,7 @@ class BufferedAnalyticsServiceTest {
             service.onSentryReady()
             advanceUntilIdle()
 
-            service.trackImmediate(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.trackImmediate(AnalyticsEvent.ScreenOpened.Dashboard)
 
             assertEquals(1, downstream.tracked.size)
             assertEquals(0, service.bufferedCount())
@@ -444,7 +444,7 @@ class BufferedAnalyticsServiceTest {
             service.onSentryReady()
             advanceUntilIdle()
 
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
             advanceUntilIdle()
 
             // Direct push raised → captured as failed → enqueued instead.
@@ -488,8 +488,8 @@ class BufferedAnalyticsServiceTest {
 
             assertEquals(0, service.bufferedCount())
 
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
-            service.track(AnalyticsEvent.ScreenViewed.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
             advanceUntilIdle()
             assertEquals(2, service.bufferedCount())
 

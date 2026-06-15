@@ -30,7 +30,7 @@ class CreateOfferPricePresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferCoordinator: CreateOfferCoordinator,
 ) : OfferFlowPresenter(mainPresenter) {
-    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenViewed = AnalyticsEvent.ScreenViewed.CreateOfferPrice
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CreateOfferPrice
 
     var priceTypeTitle: String
     var fixPriceDescription: String
