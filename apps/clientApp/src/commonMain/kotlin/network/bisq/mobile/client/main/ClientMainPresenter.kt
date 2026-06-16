@@ -59,15 +59,27 @@ open class ClientMainPresenter(
         connectivityService.startMonitoring()
     }
 
+    private var previousConnectivityStatus: ConnectivityService.ConnectivityStatus? = null
+
     private fun observeConnectivity() {
         presenterScope.launch {
             combine(connectivityService.status, isMainContentVisible) { status, mainVisible ->
                 status to mainVisible
             }.collect { (status, mainVisible) ->
-                _showAllConnectionsLostDialogue.value =
-                    status == ConnectivityService.ConnectivityStatus.DISCONNECTED && mainVisible
+                if (!mainVisible) {
+                    _showReconnectOverlay.value = false
+                    _showAllConnectionsLostDialogue.value = false
+                    previousConnectivityStatus = null
+                    return@collect
+                }
+
                 _showReconnectOverlay.value =
-                    status == ConnectivityService.ConnectivityStatus.RECONNECTING && mainVisible
+                    status == ConnectivityService.ConnectivityStatus.RECONNECTING
+                _showAllConnectionsLostDialogue.value =
+                    previousConnectivityStatus == ConnectivityService.ConnectivityStatus.RECONNECTING &&
+                    status == ConnectivityService.ConnectivityStatus.DISCONNECTED
+
+                previousConnectivityStatus = status
             }
         }
     }

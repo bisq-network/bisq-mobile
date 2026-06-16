@@ -204,6 +204,24 @@ class ClientMainPresenterTest {
         }
 
     @Test
+    fun `when disconnected without prior reconnecting then hides connection lost dialog`() =
+        runTest(testDispatcher) {
+            val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
+            every { connectivityService.status } returns statusFlow
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            presenter.setIsMainContentVisible(true)
+            advanceUntilIdle()
+
+            statusFlow.value = ConnectivityService.ConnectivityStatus.DISCONNECTED
+            advanceUntilIdle()
+
+            assertFalse(presenter.showReconnectOverlay.value)
+            assertFalse(presenter.showAllConnectionsLostDialogue.value)
+        }
+
+    @Test
     fun `when disconnected after prolonged reconnecting then shows connection lost dialog`() =
         runTest(testDispatcher) {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
