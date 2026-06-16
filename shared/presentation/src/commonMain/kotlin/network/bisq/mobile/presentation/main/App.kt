@@ -211,14 +211,18 @@ fun App(
 
             if (showAllConnectionsLostDialogue) {
                 WarningConfirmationDialog(
-                    headline = "mobile.connectivity.disconnected.title".i18n(),
-                    message = "mobile.connectivity.disconnected.message".i18n(),
-                    confirmButtonText = "mobile.connectivity.disconnected.restart".i18n(),
+                    headline = mainPresenter.connectionsLostDialogTitleKey.i18n(),
+                    message = mainPresenter.connectionsLostDialogMessageKey.i18n(),
+                    confirmButtonText = mainPresenter.connectionsLostDialogRestartKey.i18n(),
                     onConfirm = { presenter.onRestartApp() },
                     onDismiss = { presenter.onCloseConnectionLostDialogue() },
                 )
             } else if (showReconnectOverlay) {
-                ReconnectingOverlay(onClick = { presenter.onRestartApp() })
+                ReconnectingOverlay(
+                    onClick = { presenter.onRestartApp() },
+                    infoKey = mainPresenter.reconnectOverlayInfoKey,
+                    detailsKey = mainPresenter.reconnectOverlayDetailsKey,
+                )
             }
 
             // Global loading overlay - blocks interaction immediately, shows dialog after grace delay
@@ -245,7 +249,11 @@ fun App(
 }
 
 @Composable
-fun ReconnectingOverlay(onClick: (() -> Unit)? = null) {
+fun ReconnectingOverlay(
+    onClick: (() -> Unit)? = null,
+    infoKey: String = "mobile.connectivity.reconnecting.info",
+    detailsKey: String = "mobile.connectivity.reconnecting.details",
+) {
     Box(
         modifier =
             Modifier
@@ -291,13 +299,13 @@ fun ReconnectingOverlay(onClick: (() -> Unit)? = null) {
                 BisqGap.VQuarter()
 
                 BisqText.LargeLight(
-                    text = "mobile.connectivity.reconnecting.info".i18n(),
+                    text = infoKey.i18n(),
                     color = BisqTheme.colors.light_grey50,
                     textAlign = TextAlign.Center,
                 )
 
                 BisqText.BaseLight(
-                    text = "mobile.connectivity.reconnecting.details".i18n(),
+                    text = detailsKey.i18n(),
                     color = BisqTheme.colors.light_grey50,
                     textAlign = TextAlign.Center,
                 )

@@ -70,6 +70,13 @@ open class MainPresenter(
     protected val _showReconnectOverlay = MutableStateFlow(false)
     override val showReconnectOverlay: StateFlow<Boolean> = _showReconnectOverlay.asStateFlow()
 
+    open val reconnectOverlayInfoKey: String = "mobile.connectivity.reconnecting.info"
+    open val reconnectOverlayDetailsKey: String = "mobile.connectivity.reconnecting.details"
+
+    open val connectionsLostDialogTitleKey: String = "mobile.connectivity.disconnected.title"
+    open val connectionsLostDialogMessageKey: String = "mobile.connectivity.disconnected.message"
+    open val connectionsLostDialogRestartKey: String = "mobile.connectivity.disconnected.restart"
+
     final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 
     var view: Any? = null
