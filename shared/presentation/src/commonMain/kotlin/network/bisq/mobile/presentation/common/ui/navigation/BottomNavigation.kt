@@ -16,8 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.nav_home
+import bisqapps.shared.presentation.generated.resources.nav_more
+import bisqapps.shared.presentation.generated.resources.nav_offers
+import bisqapps.shared.presentation.generated.resources.nav_trades
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -100,5 +107,126 @@ fun BottomNavigation(
                 label = {},
             )
         }
+    }
+}
+
+private fun previewBottomNavigationItems() =
+    listOf(
+        BottomNavigationItem(
+            "mobile.bottomNavigation.home".i18n(),
+            NavRoute.TabHome,
+            Res.drawable.nav_home,
+        ),
+        BottomNavigationItem(
+            "mobile.bottomNavigation.offerbook".i18n(),
+            NavRoute.TabOfferbookMarket,
+            Res.drawable.nav_offers,
+        ),
+        BottomNavigationItem(
+            "mobile.bottomNavigation.myTrades".i18n(),
+            NavRoute.TabMyTrades(),
+            Res.drawable.nav_trades,
+        ),
+        BottomNavigationItem(
+            "mobile.bottomNavigation.miscItems.tab".i18n(),
+            NavRoute.TabMiscItems,
+            Res.drawable.nav_more,
+        ),
+    )
+
+@Preview
+@Composable
+private fun BottomNavigation_HomeSelectedPreview() {
+    BisqTheme.Preview {
+        BottomNavigation(
+            items = previewBottomNavigationItems(),
+            currentRoute = NavRoute.TabHome,
+            unreadTradeCount = 0,
+            showAnimation = false,
+            onItemClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_MyTradesSelectedWithUnreadBadgePreview() {
+    BisqTheme.Preview {
+        BottomNavigation(
+            items = previewBottomNavigationItems(),
+            currentRoute = NavRoute.TabMyTrades(),
+            unreadTradeCount = 7,
+            showAnimation = true,
+            onItemClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_NoSelectedTabPreview() {
+    BisqTheme.Preview {
+        BottomNavigation(
+            items = previewBottomNavigationItems(),
+            currentRoute = null,
+            unreadTradeCount = 0,
+            showAnimation = false,
+            onItemClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_SpanishLabelsPreview() {
+    BottomNavigationLanguagePreview(language = "es")
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_PortugueseBrazilLabelsPreview() {
+    BottomNavigationLanguagePreview(language = "pt-BR")
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_ItalianLabelsPreview() {
+    BottomNavigationLanguagePreview(language = "it")
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_GermanLabelsPreview() {
+    BottomNavigationLanguagePreview(language = "de")
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_IndonesianLabelsPreview() {
+    BottomNavigationLanguagePreview(language = "id")
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_VietnameseLabelsPreview() {
+    BottomNavigationLanguagePreview(language = "vi")
+}
+
+@Preview
+@Composable
+private fun BottomNavigation_RussianLabelsPreview() {
+    BottomNavigationLanguagePreview(language = "ru")
+}
+
+@Composable
+private fun BottomNavigationLanguagePreview(language: String) {
+    BisqTheme.Preview(language = language) {
+        BottomNavigation(
+            items = previewBottomNavigationItems(),
+            currentRoute = null,
+            unreadTradeCount = 0,
+            showAnimation = false,
+            onItemClick = {},
+        )
     }
 }
