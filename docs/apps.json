@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.6.0",
+          "date": "2026-06-16",
+          "localizedDescription": "# Bisq Connect v0.6.0\n\n## What's New\n\n• **Critical iOS fix**: resolves the startup crash affecting all 0.5.0 iOS users (missing app resources in the bundle). Please update.\n• **\"Help improve Bisq\" (opt-in)**: new privacy-respecting setting. When enabled, anonymous usage events are sent through Tor to Bisq's self-hosted server — no personal data ever leaves your device. Off by default.\n• **Tor reliability**: no more \"slow network\" banner on Tor startup; market offer counts appear immediately; stuck \"Reconnecting…\" state now times out and recovers automatically.\n• Fixed an issue where two Tor WebSocket connections could briefly open at once during session renewal on startup.\n• Translations refreshed across all 13 supported languages.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 desktop node to pair with",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.6.0/Bisq.Connect.ipa",
+          "size": 54368503,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.5.0",
           "date": "2026-06-09",
           "localizedDescription": "# Bisq Connect v0.5.0\n\n## What's New\n\n• **Trade history**: browse, search, and filter your past trades. Tap any closed trade for full details.\n• **My Trades reorganized**: split into *Open Trades* and *My Trades (history)* tabs; notifications deep-link straight to Open Trades.\n• Translations refreshed across all 13 supported languages.\n• Updated to **Bisq2 core 2.1.11** under the hood (stability + security improvements upstream from the desktop release).\n• Plus the usual stability and UX polish.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 desktop node to pair with",
@@ -54,6 +62,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.6.0 — Critical iOS fix + opt-in analytics",
+      "identifier": "bisq-connect-0.6.0",
+      "caption": "Resolves the 0.5.0 startup crash. Adds privacy-respecting opt-in analytics over Tor.",
+      "date": "2026-06-16",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.5.0 — Trade history is here",
       "identifier": "bisq-connect-0.5.0",
