@@ -25,7 +25,7 @@ kover = "0.9.7"
 agp = "8.13.2"
 android-ndk = "26.1.10909125"
 android-compileSdk = "36"
-android-targetSdk = "35"
+android-targetSdk = "36"
 android-minSdk = "24"
 # TODO analyse lowering back to API 31 when Bisq2 full J17 support is returned and we can get rid of desugaring
 android-node-minSdk = "33"
