@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.InitialScreenInteractionLock
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -34,147 +35,152 @@ fun CreateOfferReviewOfferScreen() {
 
     val isCreateOfferBtnEnabled by presenter.isCreateOfferBtnEnabled.collectAsState()
 
-    MultiScreenWizardScaffold(
-        "bisqEasy.tradeWizard.review.headline.maker".i18n(),
-        stepIndex = if (createCoordinator.skipCurrency) 6 else 7,
-        stepsLength = if (createCoordinator.skipCurrency) 6 else 7,
-        prevOnClick = { presenter.onBack() },
-        nextDisabled = !isCreateOfferBtnEnabled,
-        nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
-        nextOnClick = { presenter.onCreateOffer() },
-        showUserAvatar = false,
-        closeAction = true,
-        onConfirmedClose = presenter::onClose,
-    ) {
-        BisqGap.V1()
-        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
-            InfoBox(
-                label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
-                value = presenter.headLine,
-            )
-            if (presenter.isRangeOffer) {
-                if (presenter.direction == DirectionEnum.BUY) {
-                    InfoBoxCurrency(
-                        label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                        value = presenter.amountToPay,
-                    )
-                    InfoBox(
-                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                        valueComposable = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                BtcSatsText(
-                                    formattedBtcAmountValue = presenter.formattedBaseRangeMinAmount,
-                                    noCode = true,
-                                    textStyle = BisqTheme.typography.h6Regular,
-                                    modifier = Modifier.alignByBaseline(),
-                                )
-                                BisqGap.H1()
-                                BisqText.H6Light("–", modifier = Modifier.alignByBaseline())
-                                BisqGap.H1()
-                                BtcSatsText(
-                                    formattedBtcAmountValue = presenter.formattedBaseRangeMaxAmount,
-                                    noCode = true,
-                                    textStyle = BisqTheme.typography.h6Regular,
-                                    modifier = Modifier.alignByBaseline(),
-                                )
-                                BisqGap.HHalf()
-                                BisqText.BaseRegularGrey(
-                                    "BTC",
-                                    modifier = Modifier.alignByBaseline(),
-                                )
-                            }
-                        },
-                    )
-                } else {
-                    InfoBoxCurrency(
-                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                        value = presenter.amountToReceive,
-                    )
-                    InfoBox(
-                        label = "bisqEasy.tradeWizard.review.toSend".i18n().uppercase(),
-                        valueComposable = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                BtcSatsText(
-                                    presenter.formattedBaseRangeMinAmount,
-                                    noCode = true,
-                                    textStyle = BisqTheme.typography.h6Regular,
-                                    modifier = Modifier.alignByBaseline(),
-                                )
-                                BisqGap.H1()
-                                BisqText.H6Light("–", modifier = Modifier.alignByBaseline())
-                                BisqGap.H1()
-                                BtcSatsText(
-                                    presenter.formattedBaseRangeMaxAmount,
-                                    noCode = true,
-                                    textStyle = BisqTheme.typography.h6Regular,
-                                    modifier = Modifier.alignByBaseline(),
-                                )
-                                BisqGap.HHalf()
-                                BisqText.BaseRegularGrey(
-                                    "BTC",
-                                    modifier = Modifier.alignByBaseline(),
-                                )
-                            }
-                        },
-                    )
-                }
-            } else {
-                if (presenter.direction == DirectionEnum.BUY) {
-                    InfoRowContainer {
+    // This final review step is locked briefly to prevent fast repeated taps from creating the offer
+    // before the user has reviewed it. A deeper fix is harder because the controls are wrapped inside
+    // MultiScreenWizardScaffold.
+    InitialScreenInteractionLock {
+        MultiScreenWizardScaffold(
+            "bisqEasy.tradeWizard.review.headline.maker".i18n(),
+            stepIndex = if (createCoordinator.skipCurrency) 6 else 7,
+            stepsLength = if (createCoordinator.skipCurrency) 6 else 7,
+            prevOnClick = { presenter.onBack() },
+            nextDisabled = !isCreateOfferBtnEnabled,
+            nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
+            nextOnClick = { presenter.onCreateOffer() },
+            showUserAvatar = false,
+            closeAction = true,
+            onConfirmedClose = presenter::onClose,
+        ) {
+            BisqGap.V1()
+            Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
+                InfoBox(
+                    label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
+                    value = presenter.headLine,
+                )
+                if (presenter.isRangeOffer) {
+                    if (presenter.direction == DirectionEnum.BUY) {
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                             value = presenter.amountToPay,
                         )
-                        InfoBoxSats(
+                        InfoBox(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                            value = presenter.amountToReceive,
+                            valueComposable = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    BtcSatsText(
+                                        formattedBtcAmountValue = presenter.formattedBaseRangeMinAmount,
+                                        noCode = true,
+                                        textStyle = BisqTheme.typography.h6Regular,
+                                        modifier = Modifier.alignByBaseline(),
+                                    )
+                                    BisqGap.H1()
+                                    BisqText.H6Light("–", modifier = Modifier.alignByBaseline())
+                                    BisqGap.H1()
+                                    BtcSatsText(
+                                        formattedBtcAmountValue = presenter.formattedBaseRangeMaxAmount,
+                                        noCode = true,
+                                        textStyle = BisqTheme.typography.h6Regular,
+                                        modifier = Modifier.alignByBaseline(),
+                                    )
+                                    BisqGap.HHalf()
+                                    BisqText.BaseRegularGrey(
+                                        "BTC",
+                                        modifier = Modifier.alignByBaseline(),
+                                    )
+                                }
+                            },
                         )
-                    }
-                } else {
-                    InfoRowContainer {
-                        InfoBoxSats(
-                            label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                            value = presenter.amountToPay,
-                        )
+                    } else {
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = presenter.amountToReceive,
                         )
+                        InfoBox(
+                            label = "bisqEasy.tradeWizard.review.toSend".i18n().uppercase(),
+                            valueComposable = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    BtcSatsText(
+                                        presenter.formattedBaseRangeMinAmount,
+                                        noCode = true,
+                                        textStyle = BisqTheme.typography.h6Regular,
+                                        modifier = Modifier.alignByBaseline(),
+                                    )
+                                    BisqGap.H1()
+                                    BisqText.H6Light("–", modifier = Modifier.alignByBaseline())
+                                    BisqGap.H1()
+                                    BtcSatsText(
+                                        presenter.formattedBaseRangeMaxAmount,
+                                        noCode = true,
+                                        textStyle = BisqTheme.typography.h6Regular,
+                                        modifier = Modifier.alignByBaseline(),
+                                    )
+                                    BisqGap.HHalf()
+                                    BisqText.BaseRegularGrey(
+                                        "BTC",
+                                        modifier = Modifier.alignByBaseline(),
+                                    )
+                                }
+                            },
+                        )
+                    }
+                } else {
+                    if (presenter.direction == DirectionEnum.BUY) {
+                        InfoRowContainer {
+                            InfoBoxCurrency(
+                                label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
+                                value = presenter.amountToPay,
+                            )
+                            InfoBoxSats(
+                                label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
+                                value = presenter.amountToReceive,
+                            )
+                        }
+                    } else {
+                        InfoRowContainer {
+                            InfoBoxSats(
+                                label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
+                                value = presenter.amountToPay,
+                            )
+                            InfoBoxCurrency(
+                                label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
+                                value = presenter.amountToReceive,
+                            )
+                        }
                     }
                 }
+
+                BisqHDivider()
+
+                InfoBox(
+                    label = "bisqEasy.tradeWizard.review.priceDescription.maker".i18n(),
+                    valueComposable = {
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            BisqText.H6Light(presenter.formattedPrice)
+                            BisqGap.HQuarter()
+                            BisqText.BaseLightGrey(presenter.marketCodes)
+                        }
+                    },
+                    subvalue = presenter.priceDetails,
+                )
+
+                InfoBox(
+                    label = "bisqEasy.tradeWizard.review.paymentMethodDescription.fiat".i18n(), // Fiat payment method
+                    value = presenter.quoteSidePaymentMethodDisplayString,
+                )
+                InfoBox(
+                    label = "bisqEasy.tradeWizard.review.paymentMethodDescription.btc".i18n(), // Bitcoin settlement method
+                    value = presenter.baseSidePaymentMethodDisplayString,
+                )
+
+                InfoBox(
+                    label = "bisqEasy.tradeWizard.review.feeDescription".i18n(),
+                    value = presenter.fee,
+                    subvalue = presenter.feeDetails,
+                )
             }
-
-            BisqHDivider()
-
-            InfoBox(
-                label = "bisqEasy.tradeWizard.review.priceDescription.maker".i18n(),
-                valueComposable = {
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        BisqText.H6Light(presenter.formattedPrice)
-                        BisqGap.HQuarter()
-                        BisqText.BaseLightGrey(presenter.marketCodes)
-                    }
-                },
-                subvalue = presenter.priceDetails,
-            )
-
-            InfoBox(
-                label = "bisqEasy.tradeWizard.review.paymentMethodDescription.fiat".i18n(), // Fiat payment method
-                value = presenter.quoteSidePaymentMethodDisplayString,
-            )
-            InfoBox(
-                label = "bisqEasy.tradeWizard.review.paymentMethodDescription.btc".i18n(), // Bitcoin settlement method
-                value = presenter.baseSidePaymentMethodDisplayString,
-            )
-
-            InfoBox(
-                label = "bisqEasy.tradeWizard.review.feeDescription".i18n(),
-                value = presenter.fee,
-                subvalue = presenter.feeDetails,
-            )
         }
     }
 }

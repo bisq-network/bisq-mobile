@@ -48,8 +48,6 @@ class TakeOfferReviewPresenter(
     var takersDirection: DirectionEnum
     lateinit var priceDetails: String
 
-    override val blockInteractivityOnAttached: Boolean = true
-
     private var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
 
     // We pass that to the domain, which updates the state while take offer is in progress, so that we can show the status
@@ -77,6 +75,7 @@ class TakeOfferReviewPresenter(
                 log.i { "takeOfferStatus: $it" }
                 if (it == TakeOfferStatus.SUCCESS) {
                     setShowTakeOfferSuccessDialog(true)
+                    setShowTakeOfferProgressDialog(false)
                 }
             }
         }
@@ -131,8 +130,6 @@ class TakeOfferReviewPresenter(
 
     fun onTakeOffer() {
         setShowTakeOfferProgressDialog(true)
-        disableInteractive()
-
         presenterScope.launch {
             try {
                 if (isDemo()) {
@@ -152,9 +149,7 @@ class TakeOfferReviewPresenter(
                 log.e("Take offer failed", e)
                 takeOfferErrorMessage.value =
                     e.message ?: ("mobile.takeOffer.failedWithException".i18n(e.toString().truncate(50)))
-            } finally {
                 setShowTakeOfferProgressDialog(false)
-                enableInteractive()
             }
         }
     }

@@ -26,7 +26,6 @@ fun TradeGuideTradeRules() {
 
     val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
     var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
-    val isInteractive by presenter.isInteractive.collectAsState()
 
     val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.rules".i18n()
 
@@ -39,7 +38,6 @@ fun TradeGuideTradeRules() {
         nextButtonText = "mobile.action.finish".i18n(),
         nextDisabled = !localUserAgreed,
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
         showJumpToBottom = true,
     ) {
         BisqText.H3Light("bisqEasy.tradeGuide.rules.headline".i18n())

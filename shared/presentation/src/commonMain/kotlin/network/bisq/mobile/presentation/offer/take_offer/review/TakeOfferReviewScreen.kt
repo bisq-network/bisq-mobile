@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.InitialScreenInteractionLock
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
@@ -40,7 +41,6 @@ fun TakeOfferReviewTradeScreen() {
 
     val showProgressDialog by presenter.showTakeOfferProgressDialog.collectAsState()
     val showSuccessDialog by presenter.showTakeOfferSuccessDialog.collectAsState()
-    val isInteractive by presenter.isInteractive.collectAsState()
 
     val takeOffer = takeOfferCoordinator.takeOfferModel
     var stepIndex = 1
@@ -54,29 +54,33 @@ fun TakeOfferReviewTradeScreen() {
         stepIndex++
     }
 
-    TakeOfferReviewContent(
-        headLine = presenter.headLine,
-        takersDirection = presenter.takersDirection,
-        amountToPay = presenter.amountToPay,
-        amountToReceive = presenter.amountToReceive,
-        price = presenter.price,
-        marketCodes = presenter.marketCodes,
-        priceDetails = presenter.priceDetails,
-        quoteSidePaymentMethodDisplayString = presenter.quoteSidePaymentMethodDisplayString,
-        baseSidePaymentMethodDisplayString = presenter.baseSidePaymentMethodDisplayString,
-        fee = presenter.fee,
-        feeDetails = presenter.feeDetails,
-        isSmallScreen = presenter::isSmallScreen,
-        stepIndex = stepIndex,
-        stepsLength = takeOfferCoordinator.totalSteps,
-        showProgressDialog = showProgressDialog,
-        showSuccessDialog = showSuccessDialog,
-        isInteractive = isInteractive,
-        onBack = presenter::onBack,
-        onTakeOffer = presenter::onTakeOffer,
-        onClose = presenter::onClose,
-        onGoToOpenTrades = presenter::onGoToOpenTrades,
-    )
+    // This final review step is locked briefly to prevent fast repeated taps from creating the offer
+    // before the user has reviewed it. A deeper fix is harder because the controls are wrapped inside
+    // MultiScreenWizardScaffold.
+    InitialScreenInteractionLock {
+        TakeOfferReviewContent(
+            headLine = presenter.headLine,
+            takersDirection = presenter.takersDirection,
+            amountToPay = presenter.amountToPay,
+            amountToReceive = presenter.amountToReceive,
+            price = presenter.price,
+            marketCodes = presenter.marketCodes,
+            priceDetails = presenter.priceDetails,
+            quoteSidePaymentMethodDisplayString = presenter.quoteSidePaymentMethodDisplayString,
+            baseSidePaymentMethodDisplayString = presenter.baseSidePaymentMethodDisplayString,
+            fee = presenter.fee,
+            feeDetails = presenter.feeDetails,
+            isSmallScreen = presenter::isSmallScreen,
+            stepIndex = stepIndex,
+            stepsLength = takeOfferCoordinator.totalSteps,
+            showProgressDialog = showProgressDialog,
+            showSuccessDialog = showSuccessDialog,
+            onBack = presenter::onBack,
+            onTakeOffer = presenter::onTakeOffer,
+            onClose = presenter::onClose,
+            onGoToOpenTrades = presenter::onGoToOpenTrades,
+        )
+    }
 }
 
 @ExcludeFromCoverage
@@ -98,7 +102,6 @@ fun TakeOfferReviewContent(
     stepsLength: Int,
     showProgressDialog: Boolean,
     showSuccessDialog: Boolean,
-    isInteractive: Boolean,
     onBack: () -> Unit,
     onTakeOffer: () -> Unit,
     onClose: () -> Unit,
@@ -111,7 +114,6 @@ fun TakeOfferReviewContent(
         prevOnClick = onBack,
         nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
         nextOnClick = onTakeOffer,
-        isInteractive = isInteractive,
         shouldBlurBg = showProgressDialog || showSuccessDialog,
         showUserAvatar = false,
         closeAction = true,
@@ -253,7 +255,6 @@ private fun TakeOfferReviewScreen_Buyer_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
-            isInteractive = true,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
@@ -283,7 +284,6 @@ private fun TakeOfferReviewScreen_Seller_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
-            isInteractive = true,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
@@ -313,7 +313,6 @@ private fun TakeOfferReviewScreen_SmallScreen_Buyer_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
-            isInteractive = true,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
@@ -343,7 +342,6 @@ private fun TakeOfferReviewScreen_SmallScreen_Seller_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
-            isInteractive = true,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
@@ -373,7 +371,6 @@ private fun TakeOfferReviewScreen_WithProgressDialog_Preview() {
             stepsLength = 4,
             showProgressDialog = true,
             showSuccessDialog = false,
-            isInteractive = false,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
@@ -403,7 +400,6 @@ private fun TakeOfferReviewScreen_WithSuccessDialog_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = true,
-            isInteractive = false,
             onBack = {},
             onTakeOffer = {},
             onClose = {},

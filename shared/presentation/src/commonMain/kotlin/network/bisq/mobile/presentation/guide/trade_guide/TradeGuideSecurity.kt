@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.guide.trade_guide
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
@@ -22,10 +20,7 @@ fun TradeGuideSecurity() {
     val presenter: TradeGuideSecurityPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
-
     TradeGuideSecurityContent(
-        isInteractive = isInteractive,
         prevClick = presenter::prevClick,
         nextClick = presenter::securityNextClick,
     )
@@ -33,7 +28,6 @@ fun TradeGuideSecurity() {
 
 @Composable
 fun TradeGuideSecurityContent(
-    isInteractive: Boolean,
     prevClick: () -> Unit,
     nextClick: () -> Unit,
 ) {
@@ -46,7 +40,6 @@ fun TradeGuideSecurityContent(
         prevOnClick = prevClick,
         nextOnClick = nextClick,
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
     ) {
         BisqText.H3Light("bisqEasy.tradeGuide.security.headline".i18n())
 
@@ -79,7 +72,6 @@ private fun TradeGuideSecurityContentPreview(
 ) {
     BisqTheme.Preview(language = language) {
         TradeGuideSecurityContent(
-            isInteractive = true,
             prevClick = {},
             nextClick = {},
         )

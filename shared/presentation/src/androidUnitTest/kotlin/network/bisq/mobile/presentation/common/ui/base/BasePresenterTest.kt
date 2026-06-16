@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.utils.UrlLauncher
@@ -34,7 +33,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BasePresenterTest {
@@ -60,7 +58,7 @@ class BasePresenterTest {
                             get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
                         }
                     }
-                    single<NavigationManager> { io.mockk.mockk(relaxed = true) }
+                    single<NavigationManager> { mockk(relaxed = true) }
                     single { globalUiManager }
                 },
             )
@@ -209,7 +207,7 @@ class BasePresenterTest {
     }
 
     @Test
-    fun `navigateToUrl returns false and restores interactivity when URL launcher throws`() {
+    fun `navigateToUrl returns false and clears loading when URL launcher throws`() {
         val urlLauncher = mockk<UrlLauncher>()
         coEvery { urlLauncher.openUrl(any()) } throws IllegalStateException("unexpected")
         mainPresenter =
@@ -222,9 +220,8 @@ class BasePresenterTest {
         val result = runBlocking { presenter.navigateToUrlAwait("https://bisq.network") }
 
         assertFalse(result)
-        assertFalse(presenter.isInteractive.value)
-        testDispatcher.scheduler.advanceUntilIdle()
-        assertTrue(presenter.isInteractive.value)
+        assertFalse(globalUiManager.isLoadingBlocking.value)
+        assertFalse(globalUiManager.showLoadingDialog.value)
         coVerify(exactly = 1) { urlLauncher.openUrl("https://bisq.network") }
         verify(exactly = 1) {
             globalUiManager.showSnackbar(

@@ -20,7 +20,6 @@ fun TradeGuideProcess() {
     val presenter: TradeGuideProcessPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.process".i18n()
 
     MultiScreenWizardScaffold(
@@ -30,7 +29,6 @@ fun TradeGuideProcess() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::processNextClick,
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
     ) {
         BisqText.H3Light("bisqEasy.tradeGuide.process.headline".i18n())
 

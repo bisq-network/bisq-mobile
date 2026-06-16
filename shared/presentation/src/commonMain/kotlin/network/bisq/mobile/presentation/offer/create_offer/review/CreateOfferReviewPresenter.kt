@@ -46,8 +46,6 @@ class CreateOfferReviewPresenter(
     var formattedBaseRangeMaxAmount: String = ""
     var isRangeOffer: Boolean = false
 
-    override val blockInteractivityOnAttached: Boolean = true
-
     private val _isCreateOfferBtnEnabled = MutableStateFlow(true)
     val isCreateOfferBtnEnabled = _isCreateOfferBtnEnabled.asStateFlow()
 

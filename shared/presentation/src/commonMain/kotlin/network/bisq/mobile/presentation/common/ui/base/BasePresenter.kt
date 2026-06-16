@@ -377,13 +377,12 @@ abstract class BasePresenter(
      * For the [Boolean] result inside a coroutine, use [navigateToUrlAwait].
      */
     open fun navigateToUrl(url: String) {
-        if (!_isInteractive.value) return
-        disableInteractive()
+        showLoading()
         presenterScope.launch {
             try {
                 mainPresenterForUrlNavigation()?.navigateToUrlWithLauncher(url)
             } finally {
-                enableInteractive()
+                hideLoading()
             }
         }
     }
@@ -393,12 +392,11 @@ abstract class BasePresenter(
      * succeeded. Use from coroutines when the [Boolean] matters (e.g. web-link confirmation flow).
      */
     open suspend fun navigateToUrlAwait(url: String): Boolean {
-        if (!_isInteractive.value) return false
-        disableInteractive()
+        showLoading()
         return try {
             mainPresenterForUrlNavigation()?.navigateToUrlWithLauncher(url) ?: false
         } finally {
-            enableInteractive()
+            hideLoading()
         }
     }
 
@@ -419,20 +417,20 @@ abstract class BasePresenter(
         destination: NavRoute,
         customSetup: (NavOptionsBuilder) -> Unit = {},
     ) {
-        disableInteractive()
+        showLoading()
         navigationManager.navigate(
             destination,
             customSetup,
         ) {
-            enableInteractive()
+            hideLoading()
         }
     }
 
     protected fun navigateBack() {
         log.d { "Navigating back" }
-        disableInteractive()
+        showLoading()
         navigationManager.navigateBack {
-            enableInteractive()
+            hideLoading()
         }
     }
 

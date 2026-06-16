@@ -15,6 +15,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.OfferFlowPresenter
@@ -45,17 +46,6 @@ class CreateOfferMarketPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-
-        // wait for market items to be ready
-        disableInteractive()
-        presenterScope.launch {
-            offersServiceFacade.offerbookMarketItems.collect { markets ->
-                if (markets.isNotEmpty()) {
-                    enableInteractive()
-                }
-            }
-        }
-
         observeGlobalMarketPrices()
     }
 
@@ -132,6 +122,8 @@ class CreateOfferMarketPresenter(
     fun onNext() {
         if (isValid()) {
             navigateNext()
+        } else {
+            showSnackbar("mobile.bisqEasy.tradeWizard.market.select.error".i18n(), type = SnackbarType.ERROR)
         }
     }
 

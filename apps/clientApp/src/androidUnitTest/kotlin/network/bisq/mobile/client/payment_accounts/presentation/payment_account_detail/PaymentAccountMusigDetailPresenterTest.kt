@@ -190,7 +190,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
             // Then
             coVerify(exactly = 1) { paymentAccountsServiceFacade.deleteAccount(account.accountName) }
-            verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
+            verify(exactly = 2) { globalUiManager.scheduleShowLoading() }
             verify(exactly = 1) { globalUiManager.hideLoading() }
             verify(exactly = 1) { navigationManager.navigateBack(any()) }
             assertFalse(presenter.uiState.value.showDeleteConfirmationDialog)

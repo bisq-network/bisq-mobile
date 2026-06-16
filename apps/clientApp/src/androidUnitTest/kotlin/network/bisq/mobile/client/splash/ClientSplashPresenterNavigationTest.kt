@@ -30,6 +30,7 @@ import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
+import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -106,6 +107,7 @@ class ClientSplashPresenterNavigationTest {
                             get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
                         }
                     }
+                    single<GlobalUiManager> { GlobalUiManager(testDispatcher) }
                     single<NavigationManager> { navigationManager }
                 },
             )
