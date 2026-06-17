@@ -69,6 +69,13 @@ class TakeOfferReviewPresenter(
         _showTakeOfferSuccessDialog.value = value
     }
 
+    // Atomic guard against rapid-fire taps on the "Take offer" button. The progress
+    // dialog is the visible signal, but its modality is not enough on its own —
+    // touches can land before the dialog renders, especially on the android node
+    // app where the API returns near-instantly. compareAndSet ensures only the
+    // first tap proceeds; subsequent taps short-circuit until SUCCESS / error.
+    private val isTakingOffer = MutableStateFlow(false)
+
     init {
         presenterScope.launch {
             takeOfferStatus.collect {
@@ -76,6 +83,9 @@ class TakeOfferReviewPresenter(
                 if (it == TakeOfferStatus.SUCCESS) {
                     setShowTakeOfferSuccessDialog(true)
                     setShowTakeOfferProgressDialog(false)
+                    // Keep isTakingOffer = true on success: the user moves on via
+                    // the success dialog. Resetting could re-expose the button if
+                    // the dialog were dismissed unexpectedly.
                 }
             }
         }
@@ -84,6 +94,10 @@ class TakeOfferReviewPresenter(
             takeOfferErrorMessage.drop(1).collect {
                 log.e { "takeOfferErrorMessage: $it" }
                 showSnackbar(it ?: "mobile.takeOffer.unexpectedError".i18n(), type = SnackbarType.ERROR)
+                // Error path: hide the progress dialog (otherwise it stays up forever)
+                // and release the guard so the user can retry.
+                setShowTakeOfferProgressDialog(false)
+                isTakingOffer.value = false
             }
         }
 
@@ -129,27 +143,32 @@ class TakeOfferReviewPresenter(
     }
 
     fun onTakeOffer() {
+        if (isDemo()) {
+            showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
+            return
+        }
+        if (!isTakingOffer.compareAndSet(expect = false, update = true)) {
+            log.w { "onTakeOffer called while a take is already in progress; ignoring" }
+            return
+        }
         setShowTakeOfferProgressDialog(true)
         presenterScope.launch {
             try {
-                if (isDemo()) {
-                    showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
-                } else {
-                    val (statusFlow, errorFlow) = takeOfferCoordinator.takeOffer()
+                val (statusFlow, errorFlow) = takeOfferCoordinator.takeOffer()
 
-                    // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
-                    presenterScope.launch {
-                        statusFlow.collect { takeOfferStatus.value = it }
-                    }
-                    presenterScope.launch {
-                        errorFlow.collect { takeOfferErrorMessage.value = it }
-                    }
+                // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
+                presenterScope.launch {
+                    statusFlow.collect { takeOfferStatus.value = it }
+                }
+                presenterScope.launch {
+                    errorFlow.collect { takeOfferErrorMessage.value = it }
                 }
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
                 takeOfferErrorMessage.value =
                     e.message ?: ("mobile.takeOffer.failedWithException".i18n(e.toString().truncate(50)))
                 setShowTakeOfferProgressDialog(false)
+                isTakingOffer.value = false
             }
         }
     }

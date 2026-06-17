@@ -1,16 +1,22 @@
 package network.bisq.mobile.presentation.offer.create_offer
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.spyk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.BatteryOptimizationState
 import network.bisq.mobile.data.model.PermissionState
@@ -74,6 +80,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -865,6 +872,49 @@ class CreateOfferReviewPresenterTest {
                 "but was: '${reviewPresenter.priceDetails}'"
         }
     }
+
+    /**
+     * Rapid double-tap on "Publish offer" must trigger the underlying createOffer
+     * only once. Disabling the button via the StateFlow alone has a recomposition
+     * window where a second tap can land before the UI redraws — compareAndSet
+     * closes that window.
+     */
+    @Test
+    fun `rapid double-tap on onCreateOffer triggers createOffer only once`() =
+        runTest(testDispatcher) {
+            val marketUSD = MarketVOFactory.USD
+            val staleMarketPrice = with(PriceQuoteVOFactory) { fromPrice(100000.0, marketUSD) }
+            val currentMarketItem = makeMarketPriceItem(marketUSD, 105000.0)
+            val prices = mutableMapOf(marketUSD to currentMarketItem)
+            val settingsRepo = FakeSettingsRepository()
+            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+
+            mockkStatic(
+                "network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt",
+            )
+            every { getScreenWidthDp() } returns 480
+
+            val mainPresenter = makeMainPresenter()
+            val createOfferCoordinator = spyk(makeCreateOfferCoordinator(marketPriceServiceFacade))
+            // Suspend the underlying create so the guard is observable across the second tap.
+            coEvery { createOfferCoordinator.createOffer() } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success("never")
+            }
+
+            createOfferCoordinator.createOfferModel =
+                buildModelWithPercentagePricing(marketUSD, staleMarketPrice, 0.10)
+
+            val reviewPresenter = CreateOfferReviewPresenter(mainPresenter, createOfferCoordinator)
+            reviewPresenter.onViewAttached()
+
+            reviewPresenter.onCreateOffer()
+            reviewPresenter.onCreateOffer()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { createOfferCoordinator.createOffer() }
+            assertFalse(reviewPresenter.isCreateOfferBtnEnabled.value)
+        }
 
     @Test
     fun `when demo mode then onCreateOffer returns early without calling createOffer`() {
