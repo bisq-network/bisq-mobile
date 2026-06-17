@@ -45,7 +45,22 @@ class ClientOffersServiceFacade(
     // Misc
     private val offersMutex = Mutex()
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
+
+    /**
+     * Guards single OFFERS WebSocket subscription across market selections. Reset to false
+     * on loading timeout or collect error so the next [selectOfferbookMarket] re-attempts
+     * the subscription. Without this reset, a single failed initial subscription leaves the
+     * app unable to ever show offers again until process restart (CRITICAL bug — manifested
+     * when the trusted node does not respond to the OFFERS subscription request).
+     */
     private var hasSubscribedToOffers = atomic(false)
+
+    /**
+     * Coroutine handle for the active OFFERS subscription collector. Captured so it can be
+     * cancelled cleanly on reset / deactivate without leaving orphan collectors attached
+     * to stale observers.
+     */
+    private var offersSubscriptionJob: Job? = null
 
     private var getMarketsJob: Job? = null
 
@@ -65,6 +80,10 @@ class ClientOffersServiceFacade(
     override suspend fun deactivate() {
         _offerbookMarketItems.value = emptyList()
         cachedNumOffersByMarketCode = null
+        offersSubscriptionJob?.cancel()
+        offersSubscriptionJob = null
+        loadingTimeoutJob?.cancel()
+        loadingTimeoutJob = null
         hasSubscribedToOffers.value = false
         super<OffersServiceFacade>.deactivate()
     }
@@ -216,31 +235,46 @@ class ClientOffersServiceFacade(
     }
 
     private fun subscribeOffers() {
-        serviceScope.launch {
-            // We subscribe for all markets
-            val observer = apiGateway.subscribeOffers()
-            observer.webSocketEvent.collect { webSocketEvent ->
-                if (webSocketEvent?.deferredPayload == null) {
-                    return@collect
-                }
+        offersSubscriptionJob?.cancel()
+        offersSubscriptionJob =
+            serviceScope.launch {
+                // We subscribe for all markets
+                val observer = apiGateway.subscribeOffers()
+                observer.webSocketEvent.collect { webSocketEvent ->
+                    if (webSocketEvent?.deferredPayload == null) {
+                        return@collect
+                    }
 
-                runCatching {
-                    val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
-                        WebSocketEventPayload.from(
-                            json,
-                            webSocketEvent,
-                        )
-                    val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
-                    log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
-                    updateOffersByMarket(webSocketEvent, payload)
-                    applyOffersToSelectedMarket()
-                }.onFailure { e ->
-                    log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
-                    _isOfferbookLoading.value = false
-                    loadingTimeoutJob?.cancel()
+                    runCatching {
+                        val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
+                            WebSocketEventPayload.from(
+                                json,
+                                webSocketEvent,
+                            )
+                        val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
+                        log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
+                        updateOffersByMarket(webSocketEvent, payload)
+                        applyOffersToSelectedMarket()
+                    }.onFailure { e ->
+                        log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
+                        // Release the guard so the next selectOfferbookMarket re-subscribes
+                        // (otherwise switching markets just re-applies filters on empty cache).
+                        resetOffersSubscriptionState()
+                    }
                 }
             }
-        }
+    }
+
+    /**
+     * Releases the offers subscription guard and cancels the collector. The next
+     * [selectOfferbookMarket] call will trigger a fresh subscribe attempt.
+     */
+    private fun resetOffersSubscriptionState() {
+        _isOfferbookLoading.value = false
+        loadingTimeoutJob?.cancel()
+        offersSubscriptionJob?.cancel()
+        offersSubscriptionJob = null
+        hasSubscribedToOffers.value = false
     }
 
     private suspend fun updateOffersByMarket(
@@ -351,7 +385,10 @@ class ClientOffersServiceFacade(
                 }
                 if (_isOfferbookLoading.value) {
                     log.w { "Offerbook loading timed out for market ${selectedOfferbookMarket.value.market.quoteCurrencyCode}" }
-                    _isOfferbookLoading.value = false
+                    // Release the subscription guard so the next selectOfferbookMarket
+                    // can re-attempt subscription. Without this, the app would be stuck
+                    // showing 0 offers for every market until process restart.
+                    resetOffersSubscriptionState()
                 }
             }
     }

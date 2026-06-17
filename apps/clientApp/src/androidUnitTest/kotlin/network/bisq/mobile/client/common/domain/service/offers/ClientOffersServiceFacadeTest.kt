@@ -6,7 +6,9 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
@@ -42,6 +44,7 @@ class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
     private lateinit var facade: ClientOffersServiceFacade
 
     private val usdMarket = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
+    private val brlMarket = MarketVO("BTC", "BRL", "Bitcoin", "Brazilian Real")
 
     override fun onSetup() {
         every { webSocketClientService.connectionState } returns connectionState
@@ -139,6 +142,108 @@ class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
 
             assertTrue(facade.offerbookMarketItems.value.isEmpty())
         }
+
+    /**
+     * Regression test for the "stuck subscription guard" bug: if the initial OFFERS
+     * subscription request never produces a payload (e.g. trusted node misbehaving),
+     * the loading timeout fires — and historically `hasSubscribedToOffers` stayed
+     * `true`, leaving every subsequent `selectOfferbookMarket` call stuck showing
+     * zero offers forever (until app restart).
+     */
+    @Test
+    fun `loading timeout releases the guard so next selectOfferbookMarket re-subscribes`() =
+        runTest {
+            val firstObserver = WebSocketEventObserver()
+            val secondObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returnsMany listOf(firstObserver, secondObserver)
+
+            facade.activate()
+            advanceUntilIdle()
+
+            // First market selection — subscribes (and server never delivers an OFFERS payload)
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+
+            // Loading timeout (12s) fires — guard must be released
+            advanceTimeBy(13_000L)
+            advanceUntilIdle()
+
+            // Second market selection — must re-subscribe instead of being permanently stuck
+            facade.selectOfferbookMarket(MarketListItem.from(usdMarket, numOffers = 82))
+            advanceUntilIdle()
+            coVerify(exactly = 2) { apiGateway.subscribeOffers() }
+        }
+
+    /**
+     * Happy path control: when the subscription is alive and serving data, switching
+     * markets must NOT re-subscribe (filters are applied in-process against the cache).
+     */
+    @Test
+    fun `subsequent selectOfferbookMarket does not re-subscribe while subscription is alive`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            // runCurrent() processes the launches without advancing the virtual clock past
+            // the 12s loading timeout — otherwise the timeout would fire first and reset
+            // the guard, defeating the point of this happy-path test.
+            runCurrent()
+
+            // Delivering an event causes applyOffersToSelectedMarket to set isLoading=false
+            // and cancel the timeout, so the timeout will not fire even after advanceUntilIdle.
+            offersObserver.setEvent(offersEvent("[]"))
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(usdMarket, numOffers = 82))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+        }
+
+    /**
+     * The subscription collector job and loading timeout job must be cancelled on
+     * `deactivate()` so they don't linger past the facade's lifecycle.
+     */
+    @Test
+    fun `deactivate cancels active subscription so re-activate cleanly re-subscribes`() =
+        runTest {
+            val firstObserver = WebSocketEventObserver()
+            val secondObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returnsMany listOf(firstObserver, secondObserver)
+
+            facade.activate()
+            advanceUntilIdle()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+
+            facade.deactivate()
+            advanceUntilIdle()
+
+            facade.activate()
+            advanceUntilIdle()
+            facade.selectOfferbookMarket(MarketListItem.from(usdMarket, numOffers = 82))
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { apiGateway.subscribeOffers() }
+        }
+
+    private fun offersEvent(payload: String) =
+        WebSocketEvent(
+            topic = Topic.OFFERS,
+            subscriberId = "offers-test",
+            deferredPayload = payload,
+            modificationType = ModificationType.REPLACE,
+            sequenceNumber = 1,
+        )
 
     private fun numOffersEvent(payload: String) =
         WebSocketEvent(
