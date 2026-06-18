@@ -69,9 +69,7 @@ internal fun isFingerprintAnEmulator(
         host.startsWith("Build") ||
         // MSI App Player
         (brand.startsWith("generic") && device.startsWith("generic")) ||
-        product == "google_sdk" ||
-        // QEMU host indicator (still useful for some images)
-        System.getProperties()["ro.kernel.qemu"] == "1"
+        product == "google_sdk"
 
 actual fun provideApiHost(): String = BuildConfig.WS_ANDROID_HOST.takeIf { it.isNotEmpty() } ?: "10.0.2.2"
 
