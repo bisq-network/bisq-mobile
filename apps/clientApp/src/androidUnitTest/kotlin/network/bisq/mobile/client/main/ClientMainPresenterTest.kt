@@ -239,6 +239,72 @@ class ClientMainPresenterTest {
             assertTrue(presenter.showAllConnectionsLostDialogue.value)
         }
 
+    /**
+     * Guards against a regression where a brief intermediate CONNECTED state (e.g.
+     * RECONNECTING → CONNECTED_AND_DATA_RECEIVED → DISCONNECTED) would incorrectly
+     * trigger the "connection lost" dialog. The previous-status tracking must reset
+     * once we hit a connected state, so a subsequent DISCONNECTED is treated as a
+     * fresh disconnect — NOT a post-reconnect-timeout transition.
+     */
+    @Test
+    fun `disconnected after intermediate connected state does not show lost dialog`() =
+        runTest(testDispatcher) {
+            val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
+            every { connectivityService.status } returns statusFlow
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            presenter.setIsMainContentVisible(true)
+            advanceUntilIdle()
+            assertTrue(presenter.showReconnectOverlay.value)
+
+            // Reconnect briefly succeeds — the prior RECONNECTING cycle is now over.
+            statusFlow.value = ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+            advanceUntilIdle()
+            assertFalse(presenter.showReconnectOverlay.value)
+
+            // A new, distinct disconnect — NOT a timeout from the prior cycle.
+            statusFlow.value = ConnectivityService.ConnectivityStatus.DISCONNECTED
+            advanceUntilIdle()
+
+            assertFalse(presenter.showReconnectOverlay.value)
+            assertFalse(
+                presenter.showAllConnectionsLostDialogue.value,
+                "dialog must NOT show for a disconnect that did not directly follow RECONNECTING",
+            )
+        }
+
+    /**
+     * Backgrounding the app during a reconnect should hide the overlay (no foreground
+     * UI to show it on), and foregrounding again while still RECONNECTING should bring
+     * the overlay back. The previous-status tracking resets when main goes hidden,
+     * so the re-emerged RECONNECTING is treated as a fresh transition (not a stale one).
+     */
+    @Test
+    fun `mainVisible toggling during reconnecting keeps overlay in sync with status`() =
+        runTest(testDispatcher) {
+            val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
+            every { connectivityService.status } returns statusFlow
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            presenter.setIsMainContentVisible(true)
+            advanceUntilIdle()
+            assertTrue(presenter.showReconnectOverlay.value)
+
+            // App backgrounded — overlay hidden.
+            presenter.setIsMainContentVisible(false)
+            advanceUntilIdle()
+            assertFalse(presenter.showReconnectOverlay.value)
+            assertFalse(presenter.showAllConnectionsLostDialogue.value)
+
+            // App foregrounded again while reconnect is still in progress — overlay returns.
+            presenter.setIsMainContentVisible(true)
+            advanceUntilIdle()
+            assertTrue(presenter.showReconnectOverlay.value)
+            assertFalse(presenter.showAllConnectionsLostDialogue.value)
+        }
+
     @Test
     fun `uses client specific reconnect overlay copy keys`() {
         val presenter = createPresenter()
