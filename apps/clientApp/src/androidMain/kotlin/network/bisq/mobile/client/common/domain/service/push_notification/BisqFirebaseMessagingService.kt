@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Base64
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -90,6 +91,43 @@ class BisqFirebaseMessagingService :
             val plaintextBytes = cipher.doFinal(ciphertextWithTag)
             return String(plaintextBytes, Charsets.UTF_8)
         }
+
+        /**
+         * Resolves the navigation destination from `(category, tradeId?)`. Kept as
+         * a pure function in the companion object so it's directly unit-testable
+         * without instantiating the [FirebaseMessagingService] (which requires
+         * Android lifecycle scaffolding).
+         *
+         * - Trade-scoped categories ([NotificationCategory.TRADE_UPDATE],
+         *   [NotificationCategory.CHAT_MESSAGE]) with a non-null `tradeId`
+         *   deep-link to the specific trade ([NavRoute.OpenTrade]).
+         * - Trade-scoped categories without `tradeId` (older trusted nodes that
+         *   predate the wire-format change for bisq-network/bisq-mobile#1395)
+         *   fall back to the open-trade list.
+         * - Non-trade categories ([NotificationCategory.OFFER_UPDATE],
+         *   [NotificationCategory.GENERAL]) have no deep link; the launcher
+         *   intent in `pendingIntentFor` takes over.
+         */
+        @VisibleForTesting
+        internal fun deepLinkRouteFor(
+            category: NotificationCategory,
+            tradeId: String?,
+        ): DeepLinkableRoute? =
+            when (category) {
+                NotificationCategory.TRADE_UPDATE,
+                NotificationCategory.CHAT_MESSAGE,
+                ->
+                    if (tradeId.isNullOrBlank()) {
+                        NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN)
+                    } else {
+                        NavRoute.OpenTrade(tradeId)
+                    }
+                // No deep link for offerbook market or general — fall back to
+                // launcher intent in `pendingIntentFor`.
+                NotificationCategory.OFFER_UPDATE,
+                NotificationCategory.GENERAL,
+                -> null
+            }
     }
 
     override fun onNewToken(token: String) {
@@ -162,7 +200,7 @@ class BisqFirebaseMessagingService :
             }
 
         val category = NotificationCategory.fromPayload(payload)
-        showNotification(payload.id, category)
+        showNotification(payload.id, category, payload.tradeId)
     }
 
     /**
@@ -183,13 +221,14 @@ class BisqFirebaseMessagingService :
     private fun showNotification(
         notificationId: String,
         category: NotificationCategory,
+        tradeId: String?,
     ) {
         if (!hasPostNotificationsPermission()) {
             log.w { "POST_NOTIFICATIONS not granted — dropping decrypted push" }
             return
         }
 
-        val pending = pendingIntentFor(notificationId, category)
+        val pending = pendingIntentFor(notificationId, category, tradeId)
 
         val builder =
             NotificationCompat
@@ -224,18 +263,22 @@ class BisqFirebaseMessagingService :
      * For categories without a matching deep link we fall back to the plain
      * launcher intent so tapping still opens the app.
      *
-     * The encrypted FCM payload only carries `id`, `title`, `message`, and
-     * `category` — no trade id — so the deepest we can route is the trade list
-     * (open trades / chats) and the offerbook list.
+     * When the FCM payload carries a `tradeId` (bisq-network/bisq-mobile#1395
+     * — present from trusted nodes built against bisq2 with the corresponding
+     * change), trade-scoped categories deep-link straight to the specific
+     * trade screen (`bisq://OpenTrade/<tradeId>`). When `tradeId` is absent
+     * (older trusted nodes), we fall back to the trade list — the same
+     * behaviour as before.
      */
     private fun pendingIntentFor(
         notificationId: String,
         category: NotificationCategory,
+        tradeId: String?,
     ): PendingIntent? {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val requestCode = notificationId.hashCode()
 
-        val deepLinkRoute = deepLinkRouteFor(category)
+        val deepLinkRoute = deepLinkRouteFor(category, tradeId)
         if (deepLinkRoute != null) {
             val intent =
                 Intent(
@@ -256,17 +299,10 @@ class BisqFirebaseMessagingService :
         return PendingIntent.getActivity(this, requestCode, launchIntent, flags)
     }
 
-    private fun deepLinkRouteFor(category: NotificationCategory): DeepLinkableRoute? =
-        when (category) {
-            NotificationCategory.TRADE_UPDATE,
-            NotificationCategory.CHAT_MESSAGE,
-            -> NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN)
-            // No deep link for offerbook market or general — fall back to
-            // launcher intent in `pendingIntentFor`.
-            NotificationCategory.OFFER_UPDATE,
-            NotificationCategory.GENERAL,
-            -> null
-        }
+    private fun deepLinkRouteFor(
+        category: NotificationCategory,
+        tradeId: String?,
+    ): DeepLinkableRoute? = Companion.deepLinkRouteFor(category, tradeId)
 
     @Serializable
     internal data class NotificationPayload(
@@ -277,6 +313,12 @@ class BisqFirebaseMessagingService :
         // the brittle title-keyword mapping. Default null for backwards
         // compatibility with bisq2 versions that don't populate it yet.
         val category: String? = null,
+        // Optional bisq2 trade id from the trusted node. When present, taps on
+        // trade-scoped notifications deep-link straight to the specific trade
+        // screen instead of the open-trade list. Default null for backwards
+        // compatibility with trusted nodes that predate
+        // bisq-network/bisq-mobile#1395.
+        val tradeId: String? = null,
     )
 
     /**
