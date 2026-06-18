@@ -2,6 +2,7 @@ package network.bisq.mobile.client.common.domain.service.push_notification
 
 import android.util.Base64
 import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -12,6 +13,7 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -244,6 +246,111 @@ class BisqFirebaseMessagingServiceTest {
                 "unexpected category for title: $title",
             )
         }
+    }
+
+    // ----- deepLinkRouteFor (tradeId-aware deep linking, #1395) -----
+
+    @Test
+    fun `deepLinkRouteFor TRADE_UPDATE with tradeId routes to specific OpenTrade`() {
+        val route =
+            BisqFirebaseMessagingService.deepLinkRouteFor(
+                BisqFirebaseMessagingService.NotificationCategory.TRADE_UPDATE,
+                tradeId = "trade-abcd-1234",
+            )
+
+        assertEquals(NavRoute.OpenTrade("trade-abcd-1234"), route)
+    }
+
+    @Test
+    fun `deepLinkRouteFor CHAT_MESSAGE with tradeId routes to specific OpenTrade`() {
+        val route =
+            BisqFirebaseMessagingService.deepLinkRouteFor(
+                BisqFirebaseMessagingService.NotificationCategory.CHAT_MESSAGE,
+                tradeId = "trade-abcd-1234",
+            )
+
+        assertEquals(NavRoute.OpenTrade("trade-abcd-1234"), route)
+    }
+
+    @Test
+    fun `deepLinkRouteFor TRADE_UPDATE without tradeId falls back to open-trade list (older trusted nodes)`() {
+        // Older trusted nodes (pre-#1395) don't populate tradeId. The mobile
+        // client must keep working — fall back to the trade list, same as the
+        // pre-#1395 behaviour. If we ever change this to "no deep link" we'd
+        // surprise users with the launcher landing instead of trades.
+        val route =
+            BisqFirebaseMessagingService.deepLinkRouteFor(
+                BisqFirebaseMessagingService.NotificationCategory.TRADE_UPDATE,
+                tradeId = null,
+            )
+
+        assertEquals(
+            NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN),
+            route,
+        )
+    }
+
+    @Test
+    fun `deepLinkRouteFor treats blank tradeId same as null`() {
+        // Defensive: an empty string from a buggy trusted node MUST NOT produce
+        // `bisq://OpenTrade/` (which would route to a non-existent trade). Treat
+        // blank as absent and fall back to the open-trade list.
+        val route =
+            BisqFirebaseMessagingService.deepLinkRouteFor(
+                BisqFirebaseMessagingService.NotificationCategory.CHAT_MESSAGE,
+                tradeId = "   ",
+            )
+
+        assertEquals(
+            NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN),
+            route,
+        )
+    }
+
+    @Test
+    fun `deepLinkRouteFor OFFER_UPDATE returns null regardless of tradeId`() {
+        // Offer notifications aren't trade-scoped — even a spurious tradeId
+        // from the backend must not produce a trade deep link.
+        listOf(null, "spurious-trade-id").forEach { tradeId ->
+            val route =
+                BisqFirebaseMessagingService.deepLinkRouteFor(
+                    BisqFirebaseMessagingService.NotificationCategory.OFFER_UPDATE,
+                    tradeId = tradeId,
+                )
+            assertNull(route, "OFFER_UPDATE must have no deep link route (tradeId=$tradeId)")
+        }
+    }
+
+    @Test
+    fun `deepLinkRouteFor GENERAL returns null regardless of tradeId`() {
+        listOf(null, "spurious-trade-id").forEach { tradeId ->
+            val route =
+                BisqFirebaseMessagingService.deepLinkRouteFor(
+                    BisqFirebaseMessagingService.NotificationCategory.GENERAL,
+                    tradeId = tradeId,
+                )
+            assertNull(route, "GENERAL must have no deep link route (tradeId=$tradeId)")
+        }
+    }
+
+    // ----- NotificationPayload tradeId field (wire-format compat) -----
+
+    @Test
+    fun `NotificationPayload tradeId defaults to null for backwards compatibility`() {
+        // Older trusted nodes that don't emit `tradeId` must deserialize cleanly
+        // — the default-null on the data class makes the field optional on the
+        // wire. Mirrors the older-node compatibility approach used for the
+        // `category` field.
+        val payload =
+            BisqFirebaseMessagingService.NotificationPayload(
+                id = "1",
+                title = "Trade update",
+                message = "msg",
+                category = "trade_update",
+                // tradeId omitted → default null
+            )
+
+        assertNull(payload.tradeId)
     }
 
     private fun aesGcmEncrypt(
