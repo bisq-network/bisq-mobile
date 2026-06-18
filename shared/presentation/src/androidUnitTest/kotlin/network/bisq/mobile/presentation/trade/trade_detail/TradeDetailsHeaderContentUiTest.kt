@@ -118,7 +118,6 @@ class TradeDetailsHeaderContentUiTest {
 
     private fun baseSessionUiState(
         showDetails: Boolean = true,
-        isInteractive: Boolean = true,
         isCompleted: Boolean = false,
         interruptTradeButtonText: String = "",
         openMediationButtonText: String = "",
@@ -129,7 +128,6 @@ class TradeDetailsHeaderContentUiTest {
     ): TradeDetailsHeaderSessionUiState =
         TradeDetailsHeaderSessionUiState(
             showDetails = showDetails,
-            isInteractive = isInteractive,
             interruptTradeButtonText = interruptTradeButtonText,
             openMediationButtonText = openMediationButtonText,
             isInMediation = isInMediation,
@@ -353,15 +351,6 @@ class TradeDetailsHeaderContentUiTest {
         composeTestRule.onNodeWithContentDescription("Up icon").performClick()
 
         verify { mockOnAction(TradeDetailsHeaderUiAction.ToggleHeader) }
-    }
-
-    @Test
-    fun `when header not interactive then toggle is disabled`() {
-        val trade = baseTradeUiState()
-        val session = baseSessionUiState(isInteractive = false)
-
-        renderHeader(trade, session)
-        composeTestRule.onNodeWithContentDescription("Up icon").assertIsNotEnabled()
     }
 
     @Test

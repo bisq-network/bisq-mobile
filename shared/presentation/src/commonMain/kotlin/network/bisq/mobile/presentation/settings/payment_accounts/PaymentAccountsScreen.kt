@@ -59,10 +59,10 @@ fun PaymentAccountsScreen() {
 @Composable
 fun PaymentAccountsContent(
     uiState: PaymentAccountsUiState,
+    onAction: (PaymentAccountsUiAction) -> Unit,
     isAddAccountEnabled: Boolean = true,
     isSaveAccountEnabled: Boolean = true,
     isDeleteAccountEnabled: Boolean = true,
-    onAction: (PaymentAccountsUiAction) -> Unit,
     topBar: @Composable () -> Unit = {},
 ) {
     BisqScaffold(

@@ -25,7 +25,6 @@ fun MyTradesScreen(initialTab: Int = 0) {
     LaunchedEffect(initialTab) { presenter.setInitialTab(initialTab) }
 
     val uiState by presenter.uiState.collectAsState()
-    val isInteractive by presenter.isInteractive.collectAsState()
     val showHistoryTab by presenter.showHistoryTab.collectAsState()
 
     val tabOptions =
@@ -36,7 +35,6 @@ fun MyTradesScreen(initialTab: Int = 0) {
 
     BisqStaticLayout(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
-        isInteractive = isInteractive,
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (showHistoryTab) {

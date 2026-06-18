@@ -55,7 +55,6 @@ fun ReputationScreen() {
     val presenter: ReputationPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val profileId by presenter.profileId.collectAsState()
     var selectedWebLink by remember { mutableStateOf<String?>(null) }
 
@@ -63,7 +62,6 @@ fun ReputationScreen() {
         topBar = { TopBar("mobile.more.reputation".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero),
-        isInteractive = isInteractive,
     ) {
         BisqText.BaseLight(
             text = "mobile.reputation.info".i18n(),

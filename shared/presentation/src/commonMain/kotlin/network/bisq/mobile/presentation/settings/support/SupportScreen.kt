@@ -35,14 +35,12 @@ fun SupportScreen() {
     val presenter: SupportPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val reportUrl by presenter.reportUrl.collectAsState()
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.support".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero),
-        isInteractive = isInteractive,
     ) {
         BisqText.H2Light("mobile.support.headline".i18n())
         BisqGap.V2()

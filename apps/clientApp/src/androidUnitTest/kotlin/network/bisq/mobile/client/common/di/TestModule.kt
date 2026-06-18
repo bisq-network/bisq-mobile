@@ -92,7 +92,6 @@ val clientTestModule =
                 override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
                 override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =
                     MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
-                override val isInteractive: StateFlow<Boolean> = MutableStateFlow(true)
 
                 override fun avatarEnabled(currentTab: TabNavRoute?): Boolean = false
 

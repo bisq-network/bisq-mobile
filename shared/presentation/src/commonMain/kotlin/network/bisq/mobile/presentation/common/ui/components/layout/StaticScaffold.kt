@@ -29,7 +29,6 @@ fun BisqStaticScaffold(
     floatingButton: @Composable (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    isInteractive: Boolean = true,
     shouldBlurBg: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -50,7 +49,6 @@ fun BisqStaticScaffold(
                 scaffoldPadding = scaffoldPadding,
                 horizontalAlignment = horizontalAlignment,
                 verticalArrangement = verticalArrangement,
-                isInteractive = isInteractive,
             ) {
                 content()
             }

@@ -69,8 +69,6 @@ fun ClosedTradeListScreen() {
     val presenter: ClosedTradeListPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
-
     val uiState by presenter.uiState.collectAsState()
     val totalCount by presenter.totalCount.collectAsState()
     val lazyItems = presenter.pagingData.collectAsLazyPagingItems()
@@ -109,7 +107,6 @@ fun ClosedTradeListScreen() {
 
     BisqStaticLayout(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
-        isInteractive = isInteractive,
         verticalArrangement = Arrangement.Top,
     ) {
         BisqGap.V1()

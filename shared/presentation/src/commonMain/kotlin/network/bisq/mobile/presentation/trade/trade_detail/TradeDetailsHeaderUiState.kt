@@ -33,7 +33,6 @@ data class TradeDetailsHeaderTradeUiState(
 
 data class TradeDetailsHeaderSessionUiState(
     val showDetails: Boolean = false,
-    val isInteractive: Boolean = true,
     val interruptTradeButtonText: String = "",
     val openMediationButtonText: String = "",
     val isInMediation: Boolean = false,

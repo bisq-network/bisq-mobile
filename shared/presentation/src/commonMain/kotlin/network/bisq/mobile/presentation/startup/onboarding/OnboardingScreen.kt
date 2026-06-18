@@ -64,10 +64,10 @@ fun OnboardingScreen() {
 @Composable
 private fun OnboardingContent(
     uiState: OnboardingUiState,
-    isNextButtonEnabled: Boolean = true,
     onAction: (OnboardingUiAction) -> Unit,
     pagerState: PagerState,
     coroutineScope: CoroutineScope,
+    isNextButtonEnabled: Boolean = true,
 ) {
     BisqScaffold { paddingValues ->
         if (uiState.isLoading) {

@@ -60,7 +60,7 @@ fun MultiScreenWizardScaffold(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     useStaticScaffold: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
-    isInteractive: Boolean = true,
+    contentEnabled: Boolean = true,
     showJumpToBottom: Boolean = false,
     shouldBlurBg: Boolean = false,
     showUserAvatar: Boolean = true,
@@ -95,7 +95,6 @@ fun MultiScreenWizardScaffold(
                     horizontalAlignment = hAlignment,
                     verticalArrangement = verticalArrangement,
                     snackbarHostState = snackState,
-                    isInteractive = isInteractive && !confirmClose.visible,
                     shouldBlurBg = _shouldBlurBg || confirmClose.visible,
                     content = innerContent,
                 )
@@ -108,7 +107,6 @@ fun MultiScreenWizardScaffold(
                     horizontalAlignment = hAlignment,
                     verticalArrangement = verticalArrangement,
                     snackbarHostState = snackState,
-                    isInteractive = isInteractive && !confirmClose.visible,
                     showJumpToBottom = _showJumpToBottom,
                     shouldBlurBg = _shouldBlurBg || confirmClose.visible,
                     content = innerContent,
@@ -157,8 +155,8 @@ fun MultiScreenWizardScaffold(
                         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        // Lock controls when global interactivity is off or confirm dialog is open.
-                        val controlsLocked = !isInteractive || confirmClose.visible
+                        // Lock controls when content is disabled or confirm dialog is open.
+                        val controlsLocked = !contentEnabled || confirmClose.visible
                         var clickLocked by remember { mutableStateOf(false) }
                         // Always reset when we switch wizard steps to avoid sticky locks across steps.
                         if (!LocalInspectionMode.current) {
@@ -166,7 +164,7 @@ fun MultiScreenWizardScaffold(
                         } else {
                             clickLocked = false
                         }
-                        // Auto-unlock throttle when UI is globally interactive (no modal/overlay).
+                        // Auto-unlock throttle when content is enabled (no modal/overlay).
                         if (!LocalInspectionMode.current) {
                             LaunchedEffect(clickLocked, controlsLocked) {
                                 if (clickLocked && !controlsLocked) {
@@ -175,7 +173,7 @@ fun MultiScreenWizardScaffold(
                                 }
                             }
                         }
-                        // Also unlock once the UI becomes interactive again after a modal/overlay.
+                        // Also unlock once content is enabled again after a modal/overlay.
                         if (!LocalInspectionMode.current) {
                             LaunchedEffect(controlsLocked) {
                                 if (!controlsLocked) clickLocked = false

@@ -41,7 +41,6 @@ fun OfferbookMarketScreen() {
 
     var showFilterDialog by remember { mutableStateOf(false) }
     val searchText by presenter.searchText.collectAsState()
-    val isInteractive by presenter.isInteractive.collectAsState()
     val hasIgnoredUsers by presenter.hasIgnoredUsers.collectAsState()
     val marketItems by presenter.marketListItemWithNumOffers.collectAsState()
     val filter by presenter.filter.collectAsState()
@@ -49,7 +48,6 @@ fun OfferbookMarketScreen() {
 
     OfferbookMarketScreenContent(
         searchText = searchText,
-        isInteractive = isInteractive,
         hasIgnoredUsers = hasIgnoredUsers,
         marketItems = marketItems,
         filter = filter,
@@ -67,7 +65,6 @@ fun OfferbookMarketScreen() {
 @Composable
 private fun OfferbookMarketScreenContent(
     searchText: String,
-    isInteractive: Boolean,
     hasIgnoredUsers: Boolean,
     marketItems: List<MarketListItem>,
     filter: MarketFilter,
@@ -83,7 +80,6 @@ private fun OfferbookMarketScreenContent(
     BisqStaticLayout(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.Top,
-        isInteractive = isInteractive,
     ) {
         BisqSearchField(
             value = searchText,
@@ -162,7 +158,6 @@ private fun OfferbookMarketScreenContentPreview() {
     BisqTheme.Preview {
         OfferbookMarketScreenContent(
             searchText = "",
-            isInteractive = true,
             hasIgnoredUsers = false,
             marketItems = mockMarketItems,
             filter = MarketFilter.All,

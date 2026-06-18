@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +30,6 @@ fun WalletGuideReceiving() {
     val presenter: WalletGuideReceivingPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val title = "bisqEasy.walletGuide.tabs.headline".i18n() + ": " + "bisqEasy.walletGuide.receive".i18n()
     var showSecondImage by remember { mutableStateOf(false) }
 
@@ -50,7 +48,6 @@ fun WalletGuideReceiving() {
         nextOnClick = presenter::receivingNextClick,
         nextButtonText = "action.close".i18n(),
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
     ) {
         BisqText.H3Light("bisqEasy.walletGuide.receive.headline".i18n())
 

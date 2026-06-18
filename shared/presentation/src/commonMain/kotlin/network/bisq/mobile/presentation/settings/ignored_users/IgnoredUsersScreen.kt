@@ -50,7 +50,6 @@ fun IgnoredUsersScreen() {
     val presenter: IIgnoredUsersPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val ignoredUsers by presenter.ignoredUsers.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val isUnblockUserConfirmEnabled by presenter.isUnblockUserConfirmEnabled.collectAsState()
@@ -59,7 +58,6 @@ fun IgnoredUsersScreen() {
     BisqScrollScaffold(
         topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
         verticalArrangement = Arrangement.SpaceBetween,
-        isInteractive = isInteractive,
     ) {
         if (ignoredUsers.isEmpty()) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {

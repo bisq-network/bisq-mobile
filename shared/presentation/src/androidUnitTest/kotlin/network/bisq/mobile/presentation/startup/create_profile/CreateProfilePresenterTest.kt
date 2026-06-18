@@ -4,9 +4,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -57,8 +57,7 @@ class CreateProfilePresenterTest {
         Dispatchers.resetMain()
     }
 
-    private fun createPresenter(): CreateProfilePresenter =
-        CreateProfilePresenter(mainPresenter, userProfileService)
+    private fun createPresenter(): CreateProfilePresenter = CreateProfilePresenter(mainPresenter, userProfileService)
 
     @Test
     fun `rapid double-tap on create profile triggers createAndPublish only once`() =

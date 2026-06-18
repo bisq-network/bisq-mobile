@@ -151,7 +151,7 @@ fun CreateOfferAmountContent(
         prevOnClick = onBack,
         nextOnClick = onNext,
         nextDisabled = (!amountValid && amountType == AmountType.FIXED_AMOUNT) || ((isMinRangeAmountError || isMaxRangeAmountError) && amountType == AmountType.RANGE_AMOUNT),
-        isInteractive = !showLimitPopup,
+        contentEnabled = !showLimitPopup,
         shouldBlurBg = showLimitPopup,
         showUserAvatar = false,
         closeAction = true,

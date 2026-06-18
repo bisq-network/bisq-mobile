@@ -54,9 +54,9 @@ fun SellerState1Content(
     paymentAccountDataEntry: DataEntry,
     accounts: List<UserDefinedFiatAccount>,
     selectedIndex: Int,
-    isSendPaymentDataEnabled: Boolean = true,
     onPaymentDataInput: (String) -> Unit,
     onAccountSelect: (Int) -> Unit,
+    isSendPaymentDataEnabled: Boolean = true,
     onSendPaymentData: () -> Unit,
 ) {
     Column {

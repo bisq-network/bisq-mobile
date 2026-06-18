@@ -33,7 +33,6 @@ fun ResourcesScreen() {
     val presenter: ResourcesPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val uiState by presenter.uiState.collectAsState()
     val dividerModifier =
         Modifier.padding(
@@ -44,7 +43,6 @@ fun ResourcesScreen() {
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.resources".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
     ) {
         Guides(presenter::onAction)
 

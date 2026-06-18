@@ -127,28 +127,12 @@ class BasePresenterTest {
     }
 
     @Test
-    fun `onViewRevealed re-enables interactivity`() {
+    fun `onViewRevealed completes without error when scope is alive`() {
         val presenter = TestPresenter(mainPresenter)
 
         presenter.onViewAttached()
         presenter.onViewHidden()
         presenter.onViewRevealed()
-
-        // After reveal, interactive should be re-enabled (true after 250ms delay)
-        // The fact that onViewRevealed completes without error confirms the scope is alive
-    }
-
-    @Test
-    fun `onViewRevealed blocks interactivity briefly when blockInteractivityOnAttached is true`() {
-        val presenter = BlockingPresenter(mainPresenter)
-
-        presenter.onViewAttached()
-        presenter.onViewHidden()
-        presenter.onViewRevealed()
-
-        // blockInteractivityForBriefMoment disables then re-enables after 250ms
-        // Immediately after the call, interactive should be false (disabled)
-        assertFalse(presenter.isInteractive.value)
     }
 
     @Test
@@ -231,15 +215,6 @@ class BasePresenterTest {
                 any(),
             )
         }
-    }
-
-    /**
-     * Presenter with blockInteractivityOnAttached = true to test the brief-moment blocking path.
-     */
-    private class BlockingPresenter(
-        mainPresenter: MainPresenter,
-    ) : BasePresenter(mainPresenter) {
-        override val blockInteractivityOnAttached = true
     }
 
     private class TestPresenter(

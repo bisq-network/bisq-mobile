@@ -81,6 +81,7 @@ fun SettingsScreen() {
 @Composable
 fun SettingsContent(
     uiState: SettingsUiState,
+    onAction: (SettingsUiAction) -> Unit,
     isTradePriceToleranceSaveEnabled: Boolean = true,
     isNumDaysAfterRedactingTradeDataSaveEnabled: Boolean = true,
     isPowFactorSaveEnabled: Boolean = true,
@@ -91,7 +92,6 @@ fun SettingsContent(
     isUseAnimationsChangeEnabled: Boolean = true,
     isIgnorePowChangeEnabled: Boolean = true,
     isResetAllDontShowAgainEnabled: Boolean = true,
-    onAction: (SettingsUiAction) -> Unit,
     topBar: @Composable () -> Unit = {},
 ) {
     // Pre-prompt explainer + system permission launcher for the push-notifications

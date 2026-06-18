@@ -86,9 +86,9 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
 fun TradeDetailsHeaderContent(
     tradeUiState: TradeDetailsHeaderTradeUiState,
     sessionUiState: TradeDetailsHeaderSessionUiState,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     isInterruptTradeEnabled: Boolean = true,
     isOpenMediationEnabled: Boolean = true,
-    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onAction: (TradeDetailsHeaderUiAction) -> Unit,
 ) {
     val enterTransition =
@@ -471,7 +471,6 @@ private fun previewTradeDetailsHeaderStates(
         ) to
             TradeDetailsHeaderSessionUiState(
                 showDetails = showDetails,
-                isInteractive = true,
                 interruptTradeButtonText = "",
                 openMediationButtonText = "",
                 isInMediation = false,

@@ -8,9 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
@@ -37,11 +34,6 @@ import org.koin.core.component.inject
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
  */
 interface ViewPresenter {
-    /**
-     * allows to enable/disable UI components from the presenters
-     */
-    val isInteractive: StateFlow<Boolean>
-
     fun isDemo(): Boolean
 
     fun isSmallScreen(): Boolean
@@ -133,7 +125,6 @@ abstract class BasePresenter(
     Logging {
     companion object {
         const val EXIT_WARNING_TIMEOUT = 3000L
-        const val SMALLEST_PERCEPTIVE_DELAY = 250L
     }
 
     protected val navigationManager: NavigationManager by inject()
@@ -145,15 +136,6 @@ abstract class BasePresenter(
     protected val presenterScope get() = jobsManager.getScope()
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
-
-    /**
-     * override in your presenter if you want to block interactivity on view attached
-     */
-    protected open val blockInteractivityOnAttached = false
-
-    // Presenter is interactive by default
-    private val _isInteractive = MutableStateFlow(true)
-    override val isInteractive: StateFlow<Boolean> = _isInteractive.asStateFlow()
 
     // Global UI manager for app-wide UI state (loading dialogs, snackbars, etc.)
     protected val globalUiManager: GlobalUiManager by inject()
@@ -213,12 +195,6 @@ abstract class BasePresenter(
 
     @CallSuper
     override fun onViewAttached() {
-        if (blockInteractivityOnAttached) {
-            blockInteractivityForBriefMoment()
-        } else {
-            enableInteractive()
-        }
-
         // In bisq2, UserActivityDetected is triggered on mouse move and key press events
         // In bisq-mobile, userActivityDetected is triggered on every screen navigation,
         // which helps to reset user.publishDate.
@@ -253,13 +229,6 @@ abstract class BasePresenter(
 
     @CallSuper
     override fun onViewRevealed() {
-        // View is visible again after being on the back stack.
-        // Scope is still alive — just re-enable interactivity.
-        if (blockInteractivityOnAttached) {
-            blockInteractivityForBriefMoment()
-        } else {
-            enableInteractive()
-        }
         log.d { "onViewRevealed — scope still alive" }
     }
 
@@ -490,25 +459,6 @@ abstract class BasePresenter(
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
 
     /**
-     * Enable interactive state with a small delay to avoid flicker.
-     * Link your UI to this state to disable user interactions.
-     */
-    protected fun enableInteractive() {
-        presenterScope.launch {
-            delay(SMALLEST_PERCEPTIVE_DELAY)
-            _isInteractive.value = true
-        }
-    }
-
-    /**
-     * Disable interactive state immediately.
-     * Link your UI to this state to disable user interactions.
-     */
-    protected fun disableInteractive() {
-        _isInteractive.value = false
-    }
-
-    /**
      * Schedule showing a loading dialog after a grace delay.
      * If the operation completes before the delay expires, the dialog never appears (avoiding flicker).
      * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
@@ -578,11 +528,6 @@ abstract class BasePresenter(
     }
 
     private fun isRoot() = rootPresenter == null
-
-    private fun blockInteractivityForBriefMoment() {
-        disableInteractive()
-        enableInteractive()
-    }
 
     private fun launchUserActivityDetection() {
         presenterScope.launch {

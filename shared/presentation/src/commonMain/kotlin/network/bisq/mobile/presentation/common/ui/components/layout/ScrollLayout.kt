@@ -20,9 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.common.ui.components.molecules.JumpToBottomFloatingButton
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -35,7 +32,6 @@ fun BisqScrollLayout(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     onModifier: ((Modifier) -> Modifier)? = null, // allows to customize modifier settings
-    isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
     scrollState: ScrollState = rememberScrollState(),
     content: @Composable ColumnScope.() -> Unit,
@@ -73,24 +69,6 @@ fun BisqScrollLayout(
                     .run { onModifier?.invoke(this) ?: this },
         ) {
             content()
-        }
-
-        // This covers only the Scaffold content, not the TopBar or BottomBar
-        if (!isInteractive) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            coroutineScope {
-                                awaitPointerEventScope {
-                                    while (true) {
-                                        awaitPointerEvent() // .consumeAllChanges() // Consumes all touch events
-                                    }
-                                }
-                            }
-                        }.clearAndSetSemantics { }, // Disables accessibility interactions
-            )
         }
 
         if (showJumpToBottom) {

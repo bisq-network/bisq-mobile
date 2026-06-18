@@ -39,7 +39,6 @@ class ReputationScreenUiTest {
         I18nSupport.setLanguage()
 
         val reputationPresenter = mockk<ReputationPresenter>(relaxed = true)
-        every { reputationPresenter.isInteractive } returns MutableStateFlow(true)
         every { reputationPresenter.profileId } returns MutableStateFlow("abc123-profile-id")
 
         startKoin {

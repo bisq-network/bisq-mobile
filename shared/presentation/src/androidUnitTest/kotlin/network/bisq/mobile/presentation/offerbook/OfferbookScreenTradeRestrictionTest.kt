@@ -102,7 +102,6 @@ class OfferbookScreenTradeRestrictionTest {
                                 MutableStateFlow(
                                     network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
                                 )
-                            every { m.isInteractive } returns MutableStateFlow(true)
                         }
                     }
                     factory { WebLinkConfirmationDialogPresenter(mockk(relaxed = true), get()) }

@@ -28,13 +28,11 @@ fun MiscItemsScreen() {
     val presenter: MiscItemsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val menuTree by presenter.menuItems.collectAsState()
 
     BisqStaticLayout(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.Top,
-        isInteractive = isInteractive,
     ) {
         menuTree?.let { root ->
             Menu(menuItem = root) { selectedItem ->

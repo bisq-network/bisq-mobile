@@ -17,9 +17,6 @@ import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
  * so TopBar and scaffolds can render without real DI/navigation.
  */
 class PreviewTopBarPresenter : ITopBarPresenter {
-    private val _isInteractive = MutableStateFlow(true)
-    override val isInteractive: StateFlow<Boolean> = _isInteractive.asStateFlow()
-
     override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
 
     private val _userProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
