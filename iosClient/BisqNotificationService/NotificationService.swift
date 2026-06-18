@@ -76,16 +76,40 @@ class NotificationService: UNNotificationServiceExtension {
             let payload = try JSONDecoder().decode(NotificationPayload.self, from: decryptedData)
 
             // Privacy: show only a category-based summary on the lock screen.
-            let summary = NotificationCategory.from(title: payload.title)
+            // Prefer the explicit `payload.category` from the trusted node — only
+            // fall back to the title-keyword heuristic for older bisq2 versions
+            // that don't yet populate `category`. Mirrors the Android-side fix in
+            // bisq-network/bisq-mobile#1450.
+            let summary = NotificationCategory.from(payload: payload)
             bestAttemptContent.title = "Bisq"
             bestAttemptContent.body = summary.displayText
 
-            // Pass opaque identifiers only — no human-readable trade details in userInfo
-            bestAttemptContent.userInfo = bestAttemptContent.userInfo.merging([
+            // Pass opaque identifiers only — no human-readable trade details in userInfo.
+            // notification_trade_id is forwarded ONLY when the trusted node
+            // emitted it (bisq-network/bisq-mobile#1395), letting the main app's
+            // notification tap handler deep-link straight to the specific trade.
+            // Older trusted nodes omit the field; the main app falls back to the
+            // category-only routing in that case.
+            var userInfo: [AnyHashable: Any] = [
                 "nse_decrypted": true,
                 "notification_id": payload.id,
                 "notification_category": summary.rawValue,
-            ]) { _, new in new }
+            ]
+            if let tradeId = payload.tradeId, !tradeId.isEmpty {
+                userInfo["notification_trade_id"] = tradeId
+            }
+            // Synthesize a `default`-action deep-link URI so the existing main-app
+            // AppDelegate.userNotificationCenter(_:didReceive:) handler — already
+            // wired for local notifications — routes a tap on a relayed push
+            // through the same `ExternalUriHandler.onNewUri(...)` codepath. The
+            // URI scheme matches NavRoute.toUriString() on the Kotlin side
+            // (bisq://OpenTrade/<id> | bisq://TabMyTrades?initialTab=0), keeping
+            // Android and iOS routing identical. Mirrors the Android
+            // deepLinkRouteFor(category, tradeId) logic.
+            if let deepLink = summary.deepLinkUri(tradeId: payload.tradeId) {
+                userInfo["default"] = deepLink
+            }
+            bestAttemptContent.userInfo = bestAttemptContent.userInfo.merging(userInfo) { _, new in new }
 
             os_log("NSE: decryption success, category=%{public}@", log: log, type: .info, summary.rawValue)
             writeBreadcrumb(stage: "decrypt_success:\(summary.rawValue)")
@@ -124,13 +148,65 @@ class NotificationService: UNNotificationServiceExtension {
             }
         }
 
+        /// Deep-link URI to use for a notification tap. Matches the Android
+        /// `deepLinkRouteFor(category, tradeId)` mapping exactly:
+        /// - Trade-scoped categories with a `tradeId` → `bisq://OpenTrade/<id>`.
+        /// - Trade-scoped categories without `tradeId` (older trusted nodes that
+        ///   predate bisq-network/bisq-mobile#1395) → trade list fallback.
+        /// - Offer/general → nil (no deep link; tap just opens the app).
+        ///
+        /// The URI is consumed by `AppDelegate.userNotificationCenter(_:didReceive:)`
+        /// via `userInfo["default"]`, then routed through `ExternalUriHandler`.
+        func deepLinkUri(tradeId: String?) -> String? {
+            switch self {
+            case .tradeUpdate, .chatMessage:
+                if let tradeId = tradeId, !tradeId.isEmpty {
+                    return "bisq://OpenTrade/\(tradeId)"
+                }
+                // Trade list. Matches NavRoute.TabMyTrades.toUriString() with
+                // initialTab=0 (TAB_OPEN). Hard-coded mirror of the Kotlin
+                // route because the NSE can't link the Kotlin shared module
+                // (its binary footprint would explode the NSE memory limit).
+                return "bisq://TabMyTrades?initialTab=0"
+            case .offerUpdate, .general:
+                return nil
+            }
+        }
+
+        /// Resolves the category from the decrypted payload, preferring the
+        /// explicit `category` id over the brittle title-keyword heuristic.
+        ///
+        /// - When `payload.category` is present and recognized, use it. This is
+        ///   the stable wire signal from the trusted node.
+        /// - When `payload.category` is present but unknown to this client
+        ///   (e.g. a newer bisq2 introduced a new id like `dispute_alert`),
+        ///   return `.general` rather than running the title heuristic — the
+        ///   node already told us it's a specific category, so a generic banner
+        ///   is more honest than guessing.
+        /// - When `payload.category` is absent (older bisq2 that predates
+        ///   bisq-network/bisq-mobile#1450), fall back to title-keyword
+        ///   scanning. This matches the Android-side `fromPayload` contract.
+        static func from(payload: NotificationPayload) -> NotificationCategory {
+            if let categoryId = payload.category {
+                return NotificationCategory(rawValue: categoryId) ?? .general
+            }
+            return from(title: payload.title)
+        }
+
         static func from(title: String) -> NotificationCategory {
             let lower = title.lowercased()
-            if lower.contains("trade") || lower.contains("payment") || lower.contains("btc") {
-                return .tradeUpdate
-            }
+            // Chat keyword check is intentionally ordered BEFORE the trade/payment/btc
+            // check: trade-private chat titles built by bisq2 (e.g.
+            // "Alice (Bisq Easy → Open Trades → Bob)") contain "trade" but no chat
+            // keyword, so they'll still mislabel as trade-update on older nodes —
+            // the explicit `category` path above is the real fix. For titles that
+            // contain BOTH (e.g. "Trade chat update"), chat wins. Mirrors the
+            // Android ordering tested by `fromTitle prefers chat over trade keywords`.
             if lower.contains("message") || lower.contains("chat") {
                 return .chatMessage
+            }
+            if lower.contains("trade") || lower.contains("payment") || lower.contains("btc") {
+                return .tradeUpdate
             }
             if lower.contains("offer") {
                 return .offerUpdate
@@ -215,4 +291,14 @@ private struct NotificationPayload: Decodable {
     let id: String
     let title: String
     let message: String
+    /// Stable category id emitted by the trusted node (bisq2 #1450). Mirrors
+    /// `Notification.Category#getId` on the bisq2 side and
+    /// `BisqFirebaseMessagingService.NotificationCategory#id` on Android. Optional
+    /// for backward compatibility with trusted nodes that don't yet populate it.
+    let category: String?
+    /// Bisq2 trade id surfaced by the trusted node (bisq-network/bisq-mobile#1395).
+    /// When present, the main app deep-links a notification tap straight to the
+    /// trade screen instead of the open-trade list. Optional for backward
+    /// compatibility with older trusted nodes that don't emit it.
+    let tradeId: String?
 }
