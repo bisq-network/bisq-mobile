@@ -26,6 +26,9 @@ abstract class State4Presenter(
     private val _uiState = MutableStateFlow(State4UiState())
     val uiState: StateFlow<State4UiState> = _uiState.asStateFlow()
 
+    private val _isConfirmCloseTradeEnabled = MutableStateFlow(true)
+    val isConfirmCloseTradeEnabled: StateFlow<Boolean> = _isConfirmCloseTradeEnabled.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         presenterScope.launch {
@@ -64,34 +67,44 @@ abstract class State4Presenter(
     }
 
     private fun onConfirmCloseTrade() {
-        presenterScope.launch {
-            val tradeId =
-                _uiState.value.trade?.tradeId ?: run {
-                    _uiState.update { it.copy(showCloseTradeDialog = false) }
-                    GenericErrorHandler.handleGenericError("No trade selected for closure")
-                    return@launch
-                }
-            showLoading()
-            val result = tradesServiceFacade.closeTrade()
-
-            when {
-                result.isFailure -> {
-                    _uiState.update { it.copy(showCloseTradeDialog = false) }
-                    result
-                        .exceptionOrNull()
-                        ?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
-                        ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
-                }
-
-                result.isSuccess -> {
-                    withContext(Dispatchers.IO) {
-                        tradeReadStateRepository.clearId(tradeId)
-                    }
-                    _uiState.update { it.copy(showCloseTradeDialog = false) }
-                    navigateBack()
-                }
+        val tradeId =
+            _uiState.value.trade?.tradeId ?: run {
+                _uiState.update { it.copy(showCloseTradeDialog = false) }
+                GenericErrorHandler.handleGenericError("No trade selected for closure")
+                return
             }
-            hideLoading()
+
+        if (!_isConfirmCloseTradeEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onConfirmCloseTrade called while close is already in progress; ignoring" }
+            return
+        }
+
+        presenterScope.launch {
+            try {
+                showLoading()
+                val result = tradesServiceFacade.closeTrade()
+
+                when {
+                    result.isFailure -> {
+                        _uiState.update { it.copy(showCloseTradeDialog = false) }
+                        _isConfirmCloseTradeEnabled.value = true
+                        result
+                            .exceptionOrNull()
+                            ?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
+                            ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
+                    }
+
+                    result.isSuccess -> {
+                        withContext(Dispatchers.IO) {
+                            tradeReadStateRepository.clearId(tradeId)
+                        }
+                        _uiState.update { it.copy(showCloseTradeDialog = false) }
+                        navigateBack()
+                    }
+                }
+            } finally {
+                hideLoading()
+            }
         }
     }
 

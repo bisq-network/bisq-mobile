@@ -42,9 +42,15 @@ fun PaymentAccountsScreen() {
     RememberPresenterLifecycle(presenter)
 
     val uiState by presenter.uiState.collectAsState()
+    val isAddAccountEnabled by presenter.isAddAccountEnabled.collectAsState()
+    val isSaveAccountEnabled by presenter.isSaveAccountEnabled.collectAsState()
+    val isDeleteAccountEnabled by presenter.isDeleteAccountEnabled.collectAsState()
 
     PaymentAccountsContent(
         uiState = uiState,
+        isAddAccountEnabled = isAddAccountEnabled,
+        isSaveAccountEnabled = isSaveAccountEnabled,
+        isDeleteAccountEnabled = isDeleteAccountEnabled,
         onAction = presenter::onAction,
         topBar = { TopBar("paymentAccounts.headline".i18n()) },
     )
@@ -53,6 +59,9 @@ fun PaymentAccountsScreen() {
 @Composable
 fun PaymentAccountsContent(
     uiState: PaymentAccountsUiState,
+    isAddAccountEnabled: Boolean = true,
+    isSaveAccountEnabled: Boolean = true,
+    isDeleteAccountEnabled: Boolean = true,
     onAction: (PaymentAccountsUiAction) -> Unit,
     topBar: @Composable () -> Unit = {},
 ) {
@@ -77,6 +86,7 @@ fun PaymentAccountsContent(
                     paddingValues = paddingValues,
                     onAction = onAction,
                     uiState = uiState,
+                    isAddAccountEnabled = isAddAccountEnabled,
                 )
             }
 
@@ -92,6 +102,9 @@ fun PaymentAccountsContent(
                     uiState = uiState,
                     paddingValues = paddingValues,
                     onAction = onAction,
+                    isAddAccountEnabled = isAddAccountEnabled,
+                    isSaveAccountEnabled = isSaveAccountEnabled,
+                    isDeleteAccountEnabled = isDeleteAccountEnabled,
                 )
             }
         }
@@ -149,6 +162,9 @@ private fun AccountsListState(
     uiState: PaymentAccountsUiState,
     paddingValues: PaddingValues,
     onAction: (PaymentAccountsUiAction) -> Unit,
+    isAddAccountEnabled: Boolean = true,
+    isSaveAccountEnabled: Boolean = true,
+    isDeleteAccountEnabled: Boolean = true,
 ) {
     Column(
         modifier =
@@ -163,6 +179,9 @@ private fun AccountsListState(
             PaymentAccountForm(
                 uiState = uiState,
                 onAction = onAction,
+                isAddAccountEnabled = isAddAccountEnabled,
+                isSaveAccountEnabled = isSaveAccountEnabled,
+                isDeleteAccountEnabled = isDeleteAccountEnabled,
             )
         }
 
@@ -184,6 +203,7 @@ private fun CreateAccountState(
     uiState: PaymentAccountsUiState,
     paddingValues: PaddingValues,
     onAction: (PaymentAccountsUiAction) -> Unit,
+    isAddAccountEnabled: Boolean = true,
 ) {
     Column(
         modifier =
@@ -196,6 +216,7 @@ private fun CreateAccountState(
         PaymentAccountForm(
             uiState = uiState,
             onAction = onAction,
+            isAddAccountEnabled = isAddAccountEnabled,
         )
     }
 }
@@ -205,6 +226,9 @@ private fun CreateAccountState(
 private fun ColumnScope.PaymentAccountForm(
     uiState: PaymentAccountsUiState,
     onAction: (PaymentAccountsUiAction) -> Unit,
+    isAddAccountEnabled: Boolean = true,
+    isSaveAccountEnabled: Boolean = true,
+    isDeleteAccountEnabled: Boolean = true,
 ) {
     if (uiState.showEditAccountState || uiState.showAddAccountState) {
         BisqTextFieldV0(
@@ -251,6 +275,7 @@ private fun ColumnScope.PaymentAccountForm(
                             .padding(vertical = 4.dp),
                     text = "action.save".i18n(),
                     onClick = { onAction(PaymentAccountsUiAction.OnSaveAccountClick) },
+                    disabled = !isSaveAccountEnabled,
                 )
                 BisqButton(
                     modifier =
@@ -260,6 +285,7 @@ private fun ColumnScope.PaymentAccountForm(
                     text = "paymentAccounts.deleteAccount".i18n(),
                     type = BisqButtonType.Grey,
                     onClick = { onAction(PaymentAccountsUiAction.OnDeleteAccountClick) },
+                    disabled = !isDeleteAccountEnabled,
                 )
                 BisqButton(
                     modifier =
@@ -280,6 +306,7 @@ private fun ColumnScope.PaymentAccountForm(
                             .padding(vertical = 4.dp),
                     text = "paymentAccounts.createAccount".i18n(),
                     onClick = { onAction(PaymentAccountsUiAction.OnConfirmAddAccountClick) },
+                    disabled = !isAddAccountEnabled,
                 )
                 BisqButton(
                     modifier =

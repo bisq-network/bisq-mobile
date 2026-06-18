@@ -29,17 +29,19 @@ fun SellerStateLightning3b(
     RememberPresenterLifecycle(presenter)
 
     val buyerHasConfirmedBitcoinReceipt by presenter.buyerHasConfirmedBitcoinReceipt.collectAsState()
+    val isSkipWaitingEnabled by presenter.isSkipWaitingEnabled.collectAsState()
 
     if (buyerHasConfirmedBitcoinReceipt) {
-        SellerStateLightning3bPaymentConfirmed(presenter)
+        SellerStateLightning3bPaymentConfirmed(presenter, isSkipWaitingEnabled)
     } else {
-        SellerStateLightning3bWaitingForPayment(presenter)
+        SellerStateLightning3bWaitingForPayment(presenter, isSkipWaitingEnabled)
     }
 }
 
 @Composable
 private fun SellerStateLightning3bWaitingForPayment(
     presenter: SellerStateLightning3bPresenter,
+    isSkipWaitingEnabled: Boolean,
 ) {
     Column {
         BisqGap.V1()
@@ -68,6 +70,7 @@ private fun SellerStateLightning3bWaitingForPayment(
                 text = "bisqEasy.tradeState.info.seller.phase3b.confirmButton.skipWaitForConfirmation.ln".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = presenter::skipWaiting,
+                disabled = !isSkipWaitingEnabled,
             )
         }
     }
@@ -76,6 +79,7 @@ private fun SellerStateLightning3bWaitingForPayment(
 @Composable
 private fun SellerStateLightning3bPaymentConfirmed(
     presenter: SellerStateLightning3bPresenter,
+    isSkipWaitingEnabled: Boolean,
 ) {
     Column {
         BisqGap.V1()
@@ -103,6 +107,7 @@ private fun SellerStateLightning3bPaymentConfirmed(
             // Complete trade
             text = "bisqEasy.tradeState.info.seller.phase3b.confirmButton.ln".i18n(),
             onClick = presenter::completeTrade,
+            disabled = !isSkipWaitingEnabled,
         )
     }
 }

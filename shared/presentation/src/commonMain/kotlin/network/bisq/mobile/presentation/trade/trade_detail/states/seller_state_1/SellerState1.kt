@@ -28,6 +28,7 @@ fun SellerState1(
     val paymentAccountDataEntry by presenter.paymentAccountDataEntry.collectAsState()
     val paymentAccountName by presenter.paymentAccountName.collectAsState()
     val accounts by presenter.accounts.collectAsState()
+    val isSendPaymentDataEnabled by presenter.isSendPaymentDataEnabled.collectAsState()
 
     val selectedIndex = accounts.indexOfFirst { it.accountName == paymentAccountName }
 
@@ -35,6 +36,7 @@ fun SellerState1(
         paymentAccountDataEntry = paymentAccountDataEntry,
         accounts = accounts,
         selectedIndex = selectedIndex,
+        isSendPaymentDataEnabled = isSendPaymentDataEnabled,
         onPaymentDataInput = { value -> presenter.onPaymentDataInput(value) },
         onAccountSelect = { index ->
             if (index in accounts.indices) {
@@ -52,6 +54,7 @@ fun SellerState1Content(
     paymentAccountDataEntry: DataEntry,
     accounts: List<UserDefinedFiatAccount>,
     selectedIndex: Int,
+    isSendPaymentDataEnabled: Boolean = true,
     onPaymentDataInput: (String) -> Unit,
     onAccountSelect: (Int) -> Unit,
     onSendPaymentData: () -> Unit,
@@ -87,7 +90,10 @@ fun SellerState1Content(
         BisqButton(
             text = "bisqEasy.tradeState.info.seller.phase1.buttonText".i18n(), // Send account data
             onClick = onSendPaymentData,
-            disabled = paymentAccountDataEntry.errorMessage != null || paymentAccountDataEntry.value.isEmpty(),
+            disabled =
+                !isSendPaymentDataEnabled ||
+                    paymentAccountDataEntry.errorMessage != null ||
+                    paymentAccountDataEntry.value.isEmpty(),
         )
     }
 }

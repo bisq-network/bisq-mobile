@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_3.state_b
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -13,11 +15,24 @@ class BuyerStateLightning3bPresenter(
 ) : BasePresenter(mainPresenter) {
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
+    private val _isCompleteTradeEnabled = MutableStateFlow(true)
+    val isCompleteTradeEnabled: StateFlow<Boolean> = _isCompleteTradeEnabled.asStateFlow()
+
     fun onCompleteTrade() {
+        if (!_isCompleteTradeEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onCompleteTrade called while confirm is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            tradesServiceFacade.btcConfirmed()
-            hideLoading()
+            try {
+                showLoading()
+                tradesServiceFacade.btcConfirmed().onFailure {
+                    _isCompleteTradeEnabled.value = true
+                }
+            } finally {
+                hideLoading()
+            }
         }
     }
 }

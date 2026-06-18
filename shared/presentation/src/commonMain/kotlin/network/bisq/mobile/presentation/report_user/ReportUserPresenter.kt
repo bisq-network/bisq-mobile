@@ -44,10 +44,30 @@ class ReportUserPresenter(
     }
 
     fun onReportClick() {
+        var acquired = false
+        _uiState.update { state ->
+            if (!state.isReportButtonEnabled) return@update state
+            acquired = true
+            state.copy(
+                isReportButtonEnabled = false,
+                isLoading = true,
+            )
+        }
+        if (!acquired) {
+            log.w { "onReportClick called while report is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
             val message = _uiState.value.message
             if (!::chatMessage.isInitialized) {
                 log.w { "ReportUserPresenter.onReportClick called before initialize" }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isReportButtonEnabled = message.isNotBlank() && message.length <= REPORT_USER_MAX_MESSAGE_LENGTH,
+                    )
+                }
                 _effect.emit(
                     ReportUserEffect.ReportError(
                         "mobile.chat.reportToModerator.error".i18n(),
@@ -56,21 +76,31 @@ class ReportUserPresenter(
                 )
                 return@launch
             }
-            _uiState.update { it.copy(isLoading = true) }
-            userProfileServiceFacade
-                .reportUserProfile(
-                    chatMessage.senderUserProfile,
-                    message,
-                ).onSuccess {
-                    _effect.emit(ReportUserEffect.ReportSuccess)
-                }.onFailure {
-                    _effect.emit(
-                        ReportUserEffect.ReportError(
-                            "mobile.chat.reportToModerator.error".i18n(),
-                            message,
-                        ),
+            try {
+                userProfileServiceFacade
+                    .reportUserProfile(
+                        chatMessage.senderUserProfile,
+                        message,
+                    ).onSuccess {
+                        _effect.emit(ReportUserEffect.ReportSuccess)
+                    }.onFailure {
+                        _effect.emit(
+                            ReportUserEffect.ReportError(
+                                "mobile.chat.reportToModerator.error".i18n(),
+                                message,
+                            ),
+                        )
+                    }
+            } finally {
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        isReportButtonEnabled =
+                            state.message.isNotBlank() &&
+                                state.message.length <= REPORT_USER_MAX_MESSAGE_LENGTH,
                     )
                 }
+            }
         }
     }
 }

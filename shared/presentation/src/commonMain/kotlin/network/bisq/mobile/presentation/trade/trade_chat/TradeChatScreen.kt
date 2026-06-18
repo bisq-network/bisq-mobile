@@ -47,6 +47,7 @@ fun TradeChatScreen(tradeId: String) {
     val showReportUserDialog by presenter.showReportUserDialog.collectAsState()
     val reportUserTradeMessage by presenter.reportUserTradeMessage.collectAsState()
     val reportUserMessage by presenter.reportUserMessage.collectAsState()
+    val isSendChatMessageEnabled by presenter.isSendChatMessageEnabled.collectAsState()
 
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -97,6 +98,7 @@ fun TradeChatScreen(tradeId: String) {
             placeholder = "chat.message.input.prompt".i18n(),
             onMessageSend = presenter::sendChatMessage,
             onCloseReply = { presenter.onReply(null) },
+            sendEnabled = isSendChatMessageEnabled,
         )
 
         reportUserTradeMessage?.let { message ->

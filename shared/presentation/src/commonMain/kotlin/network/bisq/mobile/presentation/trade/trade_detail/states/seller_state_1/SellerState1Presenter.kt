@@ -29,6 +29,9 @@ class SellerState1Presenter(
     private var _paymentAccountName = MutableStateFlow("")
     val paymentAccountName: StateFlow<String> = _paymentAccountName.asStateFlow()
 
+    private val _isSendPaymentDataEnabled = MutableStateFlow(true)
+    val isSendPaymentDataEnabled: StateFlow<Boolean> = _isSendPaymentDataEnabled.asStateFlow()
+
     private val minPaymentAccountDataLength = 3
     private val maxPaymentAccountDataLength = 1024
 
@@ -88,10 +91,22 @@ class SellerState1Presenter(
             return
         }
 
+        if (!_isSendPaymentDataEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onSendPaymentData called while send is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData)
-            hideLoading()
+            try {
+                showLoading()
+                tradesServiceFacade
+                    .sellerSendsPaymentAccount(paymentAccountData)
+                    .onFailure {
+                        _isSendPaymentDataEnabled.value = true
+                    }
+            } finally {
+                hideLoading()
+            }
         }
     }
 }

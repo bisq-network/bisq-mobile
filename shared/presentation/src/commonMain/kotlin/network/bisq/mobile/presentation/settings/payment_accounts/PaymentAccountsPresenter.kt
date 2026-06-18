@@ -34,6 +34,15 @@ open class PaymentAccountsPresenter(
         )
     val uiState: StateFlow<PaymentAccountsUiState> = _uiState.asStateFlow()
 
+    private val _isAddAccountEnabled = MutableStateFlow(true)
+    val isAddAccountEnabled: StateFlow<Boolean> = _isAddAccountEnabled.asStateFlow()
+
+    private val _isSaveAccountEnabled = MutableStateFlow(true)
+    val isSaveAccountEnabled: StateFlow<Boolean> = _isSaveAccountEnabled.asStateFlow()
+
+    private val _isDeleteAccountEnabled = MutableStateFlow(true)
+    val isDeleteAccountEnabled: StateFlow<Boolean> = _isDeleteAccountEnabled.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         loadAccounts()
@@ -183,21 +192,31 @@ open class PaymentAccountsPresenter(
             return
         }
 
+        if (!_isAddAccountEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "addAccount called while add is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            val newAccount = createAccount(newName, newDescription)
-            userDefinedAccountsServiceFacade
-                .addAccount(newAccount)
-                .onSuccess {
-                    showSnackbar(
-                        "mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(),
-                        type = SnackbarType.SUCCESS,
-                    )
-                    _uiState.update { it.copy(showAddAccountState = false) }
-                }.onFailure { exception ->
-                    handleError(exception)
-                }
-            hideLoading()
+            try {
+                showLoading()
+                val newAccount = createAccount(newName, newDescription)
+                userDefinedAccountsServiceFacade
+                    .addAccount(newAccount)
+                    .onSuccess {
+                        showSnackbar(
+                            "mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(),
+                            type = SnackbarType.SUCCESS,
+                        )
+                        _uiState.update { it.copy(showAddAccountState = false) }
+                        _isAddAccountEnabled.value = true
+                    }.onFailure { exception ->
+                        handleError(exception)
+                        _isAddAccountEnabled.value = true
+                    }
+            } finally {
+                hideLoading()
+            }
         }
     }
 
@@ -212,19 +231,29 @@ open class PaymentAccountsPresenter(
             return
         }
 
+        if (!_isSaveAccountEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "saveAccount called while save is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            val newAccount = createAccount(newName, newDescription)
-            userDefinedAccountsServiceFacade
-                .saveAccount(newAccount)
-                .onSuccess {
-                    showSnackbar(
-                        "mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(),
-                    )
-                }.onFailure { exception ->
-                    handleError(exception)
-                }
-            hideLoading()
+            try {
+                showLoading()
+                val newAccount = createAccount(newName, newDescription)
+                userDefinedAccountsServiceFacade
+                    .saveAccount(newAccount)
+                    .onSuccess {
+                        showSnackbar(
+                            "mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(),
+                        )
+                        _isSaveAccountEnabled.value = true
+                    }.onFailure { exception ->
+                        handleError(exception)
+                        _isSaveAccountEnabled.value = true
+                    }
+            } finally {
+                hideLoading()
+            }
         }
     }
 
@@ -232,22 +261,33 @@ open class PaymentAccountsPresenter(
         val state = _uiState.value
         val selectedAccount = state.accounts.getOrNull(state.selectedAccountIndex)
         if (selectedAccount == null) return
+
+        if (!_isDeleteAccountEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "deleteSelectedAccount called while delete is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            userDefinedAccountsServiceFacade
-                .deleteAccount(selectedAccount.accountName)
-                .onSuccess {
-                    showSnackbar(
-                        "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),
-                    )
-                }.onFailure { exception ->
-                    val defaultMessage =
-                        "mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(
-                            selectedAccount.accountName,
+            try {
+                showLoading()
+                userDefinedAccountsServiceFacade
+                    .deleteAccount(selectedAccount.accountName)
+                    .onSuccess {
+                        showSnackbar(
+                            "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),
                         )
-                    handleError(exception, defaultMessage)
-                }
-            hideLoading()
+                        _isDeleteAccountEnabled.value = true
+                    }.onFailure { exception ->
+                        val defaultMessage =
+                            "mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(
+                                selectedAccount.accountName,
+                            )
+                        handleError(exception, defaultMessage)
+                        _isDeleteAccountEnabled.value = true
+                    }
+            } finally {
+                hideLoading()
+            }
         }
     }
 

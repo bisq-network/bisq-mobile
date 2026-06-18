@@ -50,9 +50,15 @@ fun SettingsScreen() {
     RememberPresenterLifecycle(presenter)
 
     val uiState by presenter.uiState.collectAsState()
+    val isTradePriceToleranceSaveEnabled by presenter.isTradePriceToleranceSaveEnabled.collectAsState()
+    val isNumDaysAfterRedactingTradeDataSaveEnabled by presenter.isNumDaysAfterRedactingTradeDataSaveEnabled.collectAsState()
+    val isPowFactorSaveEnabled by presenter.isPowFactorSaveEnabled.collectAsState()
 
     SettingsContent(
         uiState = uiState,
+        isTradePriceToleranceSaveEnabled = isTradePriceToleranceSaveEnabled,
+        isNumDaysAfterRedactingTradeDataSaveEnabled = isNumDaysAfterRedactingTradeDataSaveEnabled,
+        isPowFactorSaveEnabled = isPowFactorSaveEnabled,
         onAction = presenter::onAction,
         topBar = { TopBar("mobile.settings.title".i18n()) },
     )
@@ -61,6 +67,9 @@ fun SettingsScreen() {
 @Composable
 fun SettingsContent(
     uiState: SettingsUiState,
+    isTradePriceToleranceSaveEnabled: Boolean = true,
+    isNumDaysAfterRedactingTradeDataSaveEnabled: Boolean = true,
+    isPowFactorSaveEnabled: Boolean = true,
     onAction: (SettingsUiAction) -> Unit,
     topBar: @Composable () -> Unit = {},
 ) {
@@ -168,6 +177,7 @@ fun SettingsContent(
                                     EditableFieldActions(
                                         onSave = { onAction(SettingsUiAction.OnTradePriceToleranceSave) },
                                         onCancel = { onAction(SettingsUiAction.OnTradePriceToleranceCancel) },
+                                        disabled = !isTradePriceToleranceSaveEnabled,
                                     )
                                 }
                             } else {
@@ -203,6 +213,7 @@ fun SettingsContent(
                                     EditableFieldActions(
                                         onSave = { onAction(SettingsUiAction.OnNumDaysAfterRedactingTradeDataSave) },
                                         onCancel = { onAction(SettingsUiAction.OnNumDaysAfterRedactingTradeDataCancel) },
+                                        disabled = !isNumDaysAfterRedactingTradeDataSaveEnabled,
                                     )
                                 }
                             } else {
@@ -328,6 +339,7 @@ fun SettingsContent(
                                         EditableFieldActions(
                                             onSave = { onAction(SettingsUiAction.OnPowFactorSave) },
                                             onCancel = { onAction(SettingsUiAction.OnPowFactorCancel) },
+                                            disabled = !isPowFactorSaveEnabled,
                                         )
                                     }
                                 } else {

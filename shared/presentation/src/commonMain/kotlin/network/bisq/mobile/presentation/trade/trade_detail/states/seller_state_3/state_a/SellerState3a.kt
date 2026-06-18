@@ -41,6 +41,7 @@ fun SellerState3a(
     val trade = selectedTrade ?: return
     val paymentProof by presenter.paymentProof.collectAsState()
     val buttonEnabled by presenter.buttonEnabled.collectAsState()
+    val isConfirmSendEnabled by presenter.isConfirmSendEnabled.collectAsState()
     val quoteAmount = trade.quoteAmountWithCode
     val baseAmount = trade.formattedBaseAmount
     val paymentMethod = trade.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
@@ -123,7 +124,7 @@ fun SellerState3a(
             // I confirm to have sent {0}
             text = "bisqEasy.tradeState.info.seller.phase3a.btcSentButton".i18n(baseAmount),
             onClick = { presenter.onConfirmedBtcSent() },
-            disabled = buttonEnabled.not(),
+            disabled = buttonEnabled.not() || !isConfirmSendEnabled,
         )
     }
 }

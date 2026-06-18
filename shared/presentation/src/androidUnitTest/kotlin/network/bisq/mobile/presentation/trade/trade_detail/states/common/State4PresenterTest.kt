@@ -8,6 +8,7 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -126,6 +127,26 @@ class State4PresenterTest {
             presenter.onAction(State4UiAction.OnDismissCloseTrade)
 
             assertFalse(presenter.uiState.value.showCloseTradeDialog)
+        }
+
+    @Test
+    fun onConfirmCloseTrade_rapidDoubleTap_triggersCloseTradeOnlyOnce() =
+        runTest {
+            val trade = tradeForTests("t-guard", "sg1")
+            val selected = MutableStateFlow<TradeItemPresentationModel?>(trade)
+            val presenter = createPresenter(selected)
+            presenter.onViewAttached()
+            presenter.onAction(State4UiAction.OnCloseTradeClick)
+            coEvery { tradesServiceFacade.closeTrade() } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success(Unit)
+            }
+
+            presenter.onAction(State4UiAction.OnConfirmCloseTrade)
+            presenter.onAction(State4UiAction.OnConfirmCloseTrade)
+
+            coVerify(exactly = 1) { tradesServiceFacade.closeTrade() }
+            assertFalse(presenter.isConfirmCloseTradeEnabled.value)
         }
 
     @Test

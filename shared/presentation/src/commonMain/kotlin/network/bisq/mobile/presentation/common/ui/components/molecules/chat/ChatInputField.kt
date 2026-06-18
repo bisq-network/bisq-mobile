@@ -39,6 +39,7 @@ fun ChatInputField(
     placeholder: String = EMPTY_STRING,
     resetScroll: () -> Unit = {},
     onCloseReply: () -> Unit = {},
+    sendEnabled: Boolean = true,
 ) {
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
@@ -64,7 +65,7 @@ fun ChatInputField(
                             text = ""
                         }
                     },
-                    disabled = text.isBlank() || !isTextValid,
+                    disabled = text.isBlank() || !isTextValid || !sendEnabled,
                 ) {
                     SendIcon()
                 }

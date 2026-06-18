@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,6 +130,9 @@ class PaymentAccountsPresenterTest {
             assertFalse(state.isLoadingAccountsError)
             assertFalse(state.showAddAccountState)
             assertFalse(state.showEditAccountState)
+            assertTrue(presenter.isAddAccountEnabled.value)
+            assertTrue(presenter.isSaveAccountEnabled.value)
+            assertTrue(presenter.isDeleteAccountEnabled.value)
         }
 
     @Test
@@ -1012,5 +1016,186 @@ class PaymentAccountsPresenterTest {
             assertFalse(state.showAddAccountState)
             assertEquals("", state.accountNameEntry.value)
             assertEquals("", state.accountDescriptionEntry.value)
+        }
+
+    // ========== Duplicate-call protection tests ==========
+
+    @Test
+    fun `rapid double-tap on confirm add account triggers addAccount only once`() =
+        runTest(testDispatcher) {
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success(Unit)
+            }
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnAddAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("New Account"))
+            presenter.onAction(PaymentAccountsUiAction.OnAccountDescriptionChange("account@example.com"))
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmAddAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmAddAccountClick)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { userDefinedAccountsServiceFacade.addAccount(any()) }
+            assertFalse(presenter.isAddAccountEnabled.value)
+        }
+
+    @Test
+    fun `add account failure re-enables mutation buttons for retry`() =
+        runTest(testDispatcher) {
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } returns Result.failure(Exception("Error"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnAddAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("New Account"))
+            presenter.onAction(PaymentAccountsUiAction.OnAccountDescriptionChange("account@example.com"))
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmAddAccountClick)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isAddAccountEnabled.value)
+        }
+
+    @Test
+    fun `rapid double-tap on save account triggers saveAccount only once`() =
+        runTest(testDispatcher) {
+            val accountStateFlow =
+                MutableStateFlow(
+                    AccountsState(
+                        accounts = listOf(sampleAccount1),
+                        selectedAccountIndex = 0,
+                    ),
+                )
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.saveAccount(any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success(Unit)
+            }
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnEditAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("Updated Account"))
+            presenter.onAction(PaymentAccountsUiAction.OnAccountDescriptionChange("updated@example.com"))
+            presenter.onAction(PaymentAccountsUiAction.OnSaveAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnSaveAccountClick)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { userDefinedAccountsServiceFacade.saveAccount(any()) }
+            assertFalse(presenter.isSaveAccountEnabled.value)
+        }
+
+    @Test
+    fun `save account failure re-enables mutation buttons for retry`() =
+        runTest(testDispatcher) {
+            val accountStateFlow =
+                MutableStateFlow(
+                    AccountsState(
+                        accounts = listOf(sampleAccount1),
+                        selectedAccountIndex = 0,
+                    ),
+                )
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.saveAccount(any()) } returns Result.failure(Exception("Error"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnEditAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("Updated Account"))
+            presenter.onAction(PaymentAccountsUiAction.OnSaveAccountClick)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isSaveAccountEnabled.value)
+        }
+
+    @Test
+    fun `rapid double-tap on confirm delete triggers deleteAccount only once`() =
+        runTest(testDispatcher) {
+            val accountStateFlow =
+                MutableStateFlow(
+                    AccountsState(
+                        accounts = listOf(sampleAccount1),
+                        selectedAccountIndex = 0,
+                    ),
+                )
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.deleteAccount(any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success(Unit)
+            }
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnDeleteAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmDeleteAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmDeleteAccountClick)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { userDefinedAccountsServiceFacade.deleteAccount(any()) }
+            assertFalse(presenter.isDeleteAccountEnabled.value)
+        }
+
+    @Test
+    fun `delete account failure re-enables mutation buttons for retry`() =
+        runTest(testDispatcher) {
+            val accountStateFlow =
+                MutableStateFlow(
+                    AccountsState(
+                        accounts = listOf(sampleAccount1),
+                        selectedAccountIndex = 0,
+                    ),
+                )
+            every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(listOf(sampleAccount1))
+            coEvery { userDefinedAccountsServiceFacade.getSelectedAccount() } returns Result.success(Unit)
+            coEvery { userDefinedAccountsServiceFacade.deleteAccount(any()) } returns Result.failure(Exception("Delete error"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnDeleteAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmDeleteAccountClick)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isDeleteAccountEnabled.value)
+        }
+
+    @Test
+    fun `add account success re-enables mutation buttons`() =
+        runTest(testDispatcher) {
+            coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
+            coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } returns Result.success(Unit)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PaymentAccountsUiAction.OnAddAccountClick)
+            presenter.onAction(PaymentAccountsUiAction.OnAccountNameChange("New Account"))
+            presenter.onAction(PaymentAccountsUiAction.OnAccountDescriptionChange("account@example.com"))
+            presenter.onAction(PaymentAccountsUiAction.OnConfirmAddAccountClick)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isAddAccountEnabled.value)
         }
 }

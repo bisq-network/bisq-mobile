@@ -46,6 +46,16 @@ open class SettingsPresenter(
         )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
+    private val _isTradePriceToleranceSaveEnabled = MutableStateFlow(true)
+    val isTradePriceToleranceSaveEnabled: StateFlow<Boolean> = _isTradePriceToleranceSaveEnabled.asStateFlow()
+
+    private val _isNumDaysAfterRedactingTradeDataSaveEnabled = MutableStateFlow(true)
+    val isNumDaysAfterRedactingTradeDataSaveEnabled: StateFlow<Boolean> =
+        _isNumDaysAfterRedactingTradeDataSaveEnabled.asStateFlow()
+
+    private val _isPowFactorSaveEnabled = MutableStateFlow(true)
+    val isPowFactorSaveEnabled: StateFlow<Boolean> = _isPowFactorSaveEnabled.asStateFlow()
+
     open val shouldShowPoWAdjustmentFactor = false
 
     /**
@@ -349,22 +359,36 @@ open class SettingsPresenter(
     }
 
     private fun onTradePriceToleranceSave() {
+        _uiState.update {
+            it.copy(tradePriceTolerance = it.tradePriceTolerance.validate())
+        }
+        val currentEntry = _uiState.value.tradePriceTolerance
+        if (!currentEntry.isValid) return
+        val parsedValue = currentEntry.value.toDoubleOrNullLocaleAware() ?: return
+        val newDeviation = parsedValue / 100
+
+        if (!_isTradePriceToleranceSaveEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onTradePriceToleranceSave called while save is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            _uiState.update {
-                it.copy(tradePriceTolerance = it.tradePriceTolerance.validate())
-            }
-            val currentEntry = _uiState.value.tradePriceTolerance
-            if (currentEntry.isValid) {
-                val parsedValue = currentEntry.value.toDoubleOrNullLocaleAware()
-                if (parsedValue != null) {
-                    val newDeviation = parsedValue / 100
-                    settingsServiceFacade.setMaxTradePriceDeviation(newDeviation)
-                    // Update original value and reset hasChanges after successful save
-                    originalMaxTradePriceDeviation = newDeviation
-                    _uiState.update {
-                        it.copy(hasChangesTradePriceTolerance = false)
+            try {
+                showLoading()
+                settingsServiceFacade
+                    .setMaxTradePriceDeviation(newDeviation)
+                    .onSuccess {
+                        originalMaxTradePriceDeviation = newDeviation
+                        _uiState.update {
+                            it.copy(hasChangesTradePriceTolerance = false)
+                        }
+                        _isTradePriceToleranceSaveEnabled.value = true
+                    }.onFailure { exception ->
+                        handleError(exception)
+                        _isTradePriceToleranceSaveEnabled.value = true
                     }
-                }
+            } finally {
+                hideLoading()
             }
         }
     }
@@ -400,21 +424,35 @@ open class SettingsPresenter(
     }
 
     private fun onNumDaysAfterRedactingTradeDataSave() {
+        _uiState.update {
+            it.copy(numDaysAfterRedactingTradeData = it.numDaysAfterRedactingTradeData.validate())
+        }
+        val currentEntry = _uiState.value.numDaysAfterRedactingTradeData
+        if (!currentEntry.isValid) return
+        val parsedValue = currentEntry.value.toIntOrNull() ?: return
+
+        if (!_isNumDaysAfterRedactingTradeDataSaveEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onNumDaysAfterRedactingTradeDataSave called while save is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            _uiState.update {
-                it.copy(numDaysAfterRedactingTradeData = it.numDaysAfterRedactingTradeData.validate())
-            }
-            val currentEntry = _uiState.value.numDaysAfterRedactingTradeData
-            if (currentEntry.isValid) {
-                val parsedValue = currentEntry.value.toIntOrNull()
-                if (parsedValue != null) {
-                    settingsServiceFacade.setNumDaysAfterRedactingTradeData(parsedValue)
-                    // Update original value and reset hasChanges after successful save
-                    originalNumDaysAfterRedactingTradeData = parsedValue
-                    _uiState.update {
-                        it.copy(hasChangesNumDaysAfterRedactingTradeData = false)
+            try {
+                showLoading()
+                settingsServiceFacade
+                    .setNumDaysAfterRedactingTradeData(parsedValue)
+                    .onSuccess {
+                        originalNumDaysAfterRedactingTradeData = parsedValue
+                        _uiState.update {
+                            it.copy(hasChangesNumDaysAfterRedactingTradeData = false)
+                        }
+                        _isNumDaysAfterRedactingTradeDataSaveEnabled.value = true
+                    }.onFailure { exception ->
+                        handleError(exception)
+                        _isNumDaysAfterRedactingTradeDataSaveEnabled.value = true
                     }
-                }
+            } finally {
+                hideLoading()
             }
         }
     }
@@ -466,20 +504,35 @@ open class SettingsPresenter(
     }
 
     private fun onPowFactorSave() {
+        _uiState.update {
+            it.copy(powFactor = it.powFactor.validate())
+        }
+        val currentEntry = _uiState.value.powFactor
+        if (!currentEntry.isValid) return
+        val parsedValue = currentEntry.value.toDoubleOrNullLocaleAware() ?: return
+
+        if (!_isPowFactorSaveEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onPowFactorSave called while save is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            _uiState.update {
-                it.copy(powFactor = it.powFactor.validate())
-            }
-            val currentEntry = _uiState.value.powFactor
-            if (currentEntry.isValid) {
-                currentEntry.value.toDoubleOrNullLocaleAware()?.let { parsedValue ->
-                    settingsServiceFacade.setDifficultyAdjustmentFactor(parsedValue)
-                    // Update original value and reset hasChanges after successful save
-                    originalDifficultyAdjustmentFactor = parsedValue
-                    _uiState.update {
-                        it.copy(hasChangesPowFactor = false)
+            try {
+                showLoading()
+                settingsServiceFacade
+                    .setDifficultyAdjustmentFactor(parsedValue)
+                    .onSuccess {
+                        originalDifficultyAdjustmentFactor = parsedValue
+                        _uiState.update {
+                            it.copy(hasChangesPowFactor = false)
+                        }
+                        _isPowFactorSaveEnabled.value = true
+                    }.onFailure { exception ->
+                        handleError(exception)
+                        _isPowFactorSaveEnabled.value = true
                     }
-                }
+            } finally {
+                hideLoading()
             }
         }
     }

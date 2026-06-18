@@ -19,6 +19,7 @@ fun SellerState2b(
     RememberPresenterLifecycle(presenter)
 
     val selectedTrade by presenter.selectedTrade.collectAsState()
+    val isConfirmFiatReceiptEnabled by presenter.isConfirmFiatReceiptEnabled.collectAsState()
     val trade = selectedTrade ?: return
     val shortId = trade.shortTradeId
     val quoteAmountWithCode = trade.quoteAmountWithCode
@@ -40,6 +41,7 @@ fun SellerState2b(
             // Confirm receipt of {0}
             text = "bisqEasy.tradeState.info.seller.phase2b.fiatReceivedButton".i18n(quoteAmountWithCode),
             onClick = { presenter.onConfirmFiatReceipt() },
+            disabled = !isConfirmFiatReceiptEnabled,
         )
     }
 }

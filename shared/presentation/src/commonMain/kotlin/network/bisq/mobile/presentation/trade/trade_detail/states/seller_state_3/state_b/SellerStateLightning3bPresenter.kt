@@ -18,6 +18,9 @@ class SellerStateLightning3bPresenter(
     private val _buyerHasConfirmedBitcoinReceipt: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val buyerHasConfirmedBitcoinReceipt: StateFlow<Boolean> = _buyerHasConfirmedBitcoinReceipt.asStateFlow()
 
+    private val _isSkipWaitingEnabled = MutableStateFlow(true)
+    val isSkipWaitingEnabled: StateFlow<Boolean> = _isSkipWaitingEnabled.asStateFlow()
+
     fun setBuyerHasConfirmedBitcoinReceipt(value: Boolean) {
         _buyerHasConfirmedBitcoinReceipt.value = value
     }
@@ -53,10 +56,20 @@ class SellerStateLightning3bPresenter(
     }
 
     fun skipWaiting() {
+        if (!_isSkipWaitingEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "skipWaiting called while confirm is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            tradesServiceFacade.btcConfirmed()
-            hideLoading()
+            try {
+                showLoading()
+                tradesServiceFacade.btcConfirmed().onFailure {
+                    _isSkipWaitingEnabled.value = true
+                }
+            } finally {
+                hideLoading()
+            }
         }
     }
 

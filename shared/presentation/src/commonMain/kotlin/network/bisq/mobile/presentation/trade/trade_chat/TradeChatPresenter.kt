@@ -89,6 +89,9 @@ class TradeChatPresenter(
     private val _reportUserMessage = MutableStateFlow<String?>(null)
     val reportUserMessage: StateFlow<String?> = _reportUserMessage.asStateFlow()
 
+    private val _isSendChatMessageEnabled = MutableStateFlow(true)
+    val isSendChatMessageEnabled: StateFlow<Boolean> = _isSendChatMessageEnabled.asStateFlow()
+
     val readCount =
         selectedTrade
             .combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
@@ -180,6 +183,12 @@ class TradeChatPresenter(
     fun sendChatMessage(text: String) {
         val finalText = text.trim()
         if (finalText.isEmpty()) return
+
+        if (!_isSendChatMessageEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "sendChatMessage called while send is already in progress; ignoring" }
+            return
+        }
+
         val citation =
             quotedMessage.value?.let { quotedMessage ->
                 quotedMessage.text?.let { text ->
@@ -191,8 +200,19 @@ class TradeChatPresenter(
                 }
             }
         presenterScope.launch {
-            tradeChatMessagesServiceFacade.sendChatMessage(finalText, citation)
-            _quotedMessage.value = null
+            try {
+                showLoading()
+                tradeChatMessagesServiceFacade
+                    .sendChatMessage(finalText, citation)
+                    .onSuccess {
+                        _quotedMessage.value = null
+                        _isSendChatMessageEnabled.value = true
+                    }.onFailure {
+                        _isSendChatMessageEnabled.value = true
+                    }
+            } finally {
+                hideLoading()
+            }
         }
     }
 
