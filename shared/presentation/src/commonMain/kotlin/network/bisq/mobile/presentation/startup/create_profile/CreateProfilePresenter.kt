@@ -65,8 +65,14 @@ class CreateProfilePresenter(
     private val _generateKeyPairInProgress = MutableStateFlow(false)
     val generateKeyPairInProgress: StateFlow<Boolean> = _generateKeyPairInProgress.asStateFlow()
 
+    private val _isGenerateKeyPairEnabled = MutableStateFlow(true)
+    val isGenerateKeyPairEnabled: StateFlow<Boolean> = _isGenerateKeyPairEnabled.asStateFlow()
+
     private val _createAndPublishInProgress = MutableStateFlow(false)
     val createAndPublishInProgress: StateFlow<Boolean> = _createAndPublishInProgress.asStateFlow()
+
+    private val _isCreateAndPublishEnabled = MutableStateFlow(true)
+    val isCreateAndPublishEnabled: StateFlow<Boolean> = _isCreateAndPublishEnabled.asStateFlow()
 
     // Lifecycle
     override fun onViewAttached() {
@@ -89,47 +95,57 @@ class CreateProfilePresenter(
 
     fun onCreateAndPublishNewUserProfile() {
         val toSubmit = nickName.value.trim()
-        if (toSubmit.isNotEmpty()) {
-            presenterScope.launch {
-                disableInteractive()
-                _createAndPublishInProgress.value = true
-                log.i { "Show busy animation for createAndPublishInProgress" }
-                runCatching {
-                    userProfileService.createAndPublishNewUserProfile(toSubmit)
-                    if (isOnboarding.value) {
-                        // Navigate to TabContainer and completely clear the back stack
-                        // This ensures the user can never navigate back to onboarding screens
-                        navigateTo(NavRoute.TabContainer) {
-                            it.popUpTo<NavRoute.Splash> { inclusive = true }
-                        }
-                    } else {
-                        navigateBack()
-                    }
+        if (toSubmit.isEmpty()) return
 
-                    log.i { "Hide busy animation for createAndPublishInProgress" }
-                    _nickName.value = ""
-                    _createAndPublishInProgress.value = false
-                    enableInteractive()
-                }.onFailure { e ->
-                    GenericErrorHandler.handleGenericError(
-                        "Creating and publishing new user profile failed.",
-                        e,
-                    )
-                    _createAndPublishInProgress.value = false
-                    enableInteractive()
+        if (!_isCreateAndPublishEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onCreateAndPublishNewUserProfile called while create is already in progress; ignoring" }
+            return
+        }
+
+        presenterScope.launch {
+            try {
+                _createAndPublishInProgress.value = true
+                showLoading()
+                log.i { "Show busy animation for createAndPublishInProgress" }
+                userProfileService.createAndPublishNewUserProfile(toSubmit)
+                if (isOnboarding.value) {
+                    // Navigate to TabContainer and completely clear the back stack
+                    // This ensures the user can never navigate back to onboarding screens
+                    navigateTo(NavRoute.TabContainer) {
+                        it.popUpTo<NavRoute.Splash> { inclusive = true }
+                    }
+                } else {
+                    navigateBack()
                 }
+                log.i { "Hide busy animation for createAndPublishInProgress" }
+                _nickName.value = ""
+                _createAndPublishInProgress.value = false
+            } catch (e: Exception) {
+                GenericErrorHandler.handleGenericError(
+                    "Creating and publishing new user profile failed.",
+                    e,
+                )
+                _createAndPublishInProgress.value = false
+                _isCreateAndPublishEnabled.value = true
+            } finally {
+                hideLoading()
             }
         }
     }
 
     // Private
     private fun generateKeyPair() {
+        if (!_isGenerateKeyPairEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "generateKeyPair called while generation is already in progress; ignoring" }
+            return
+        }
+
         _generateKeyPairInProgress.value = true
         log.i { "Show busy animation for generateKeyPair" }
 
         presenterScope.launch(Dispatchers.Default) {
-            // takes 200 -1000 ms
-            runCatching {
+            try {
+                // takes 200 -1000 ms
                 userProfileService.generateKeyPair(
                     IMAGE_SIZE_IN_PX,
                 ) { id, nym, profileIcon ->
@@ -137,12 +153,14 @@ class CreateProfilePresenter(
                     setNym(nym)
                     setProfileIcon(profileIcon)
                 }
-            }.onFailure {
-                disableInteractive()
+            } catch (e: Exception) {
                 showSnackbar("mobile.profile.generatingKeyPairFailed".i18n(), type = SnackbarType.ERROR)
+                _isGenerateKeyPairEnabled.value = true
+            } finally {
+                _generateKeyPairInProgress.value = false
+                _isGenerateKeyPairEnabled.value = true
+                log.i { "Hide busy animation for generateKeyPair" }
             }
-            _generateKeyPairInProgress.value = false
-            log.i { "Hide busy animation for generateKeyPair" }
         }
     }
 }

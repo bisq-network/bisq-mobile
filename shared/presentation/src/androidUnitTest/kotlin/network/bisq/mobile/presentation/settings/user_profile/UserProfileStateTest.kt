@@ -35,8 +35,7 @@ class UserProfileStateTest {
         assertEquals("", state.statementDraft)
         assertEquals("", state.termsDraft)
         assertFalse(state.isLoadingData)
-        assertFalse(state.isBusyWithAction)
-        assertFalse(state.isBusy) // Computed property
+        assertFalse(state.isBusy)
         assertFalse(state.shouldBlurBg)
         assertNull(state.showDeleteConfirmationForProfile)
         assertFalse(state.showDeleteErrorDialog)
@@ -50,36 +49,22 @@ class UserProfileStateTest {
                 userProfiles = listOf(profile1),
                 selectedUserProfile = profile1,
                 isLoadingData = false,
-                isBusyWithAction = false,
             )
 
-        // When - set action busy flag
-        val updated = original.copy(isBusyWithAction = true)
+        // When
+        val updated = original.copy(isLoadingData = true)
 
         // Then
         assertEquals(original.userProfiles, updated.userProfiles)
         assertEquals(original.selectedUserProfile, updated.selectedUserProfile)
-        assertTrue(updated.isBusy) // Computed property should be true
-        assertFalse(original.isBusy) // Computed property should be false
+        assertTrue(updated.isBusy)
+        assertFalse(original.isBusy)
     }
 
     @Test
-    fun `isBusy computed property works correctly`() {
-        // When both flags are false
-        val state1 = UserProfileUiState(isLoadingData = false, isBusyWithAction = false)
-        assertFalse(state1.isBusy)
-
-        // When only loading data
-        val state2 = UserProfileUiState(isLoadingData = true, isBusyWithAction = false)
-        assertTrue(state2.isBusy)
-
-        // When only busy with action
-        val state3 = UserProfileUiState(isLoadingData = false, isBusyWithAction = true)
-        assertTrue(state3.isBusy)
-
-        // When both flags are true
-        val state4 = UserProfileUiState(isLoadingData = true, isBusyWithAction = true)
-        assertTrue(state4.isBusy)
+    fun `isBusy reflects loading data state`() {
+        assertFalse(UserProfileUiState(isLoadingData = false).isBusy)
+        assertTrue(UserProfileUiState(isLoadingData = true).isBusy)
     }
 
     @Test

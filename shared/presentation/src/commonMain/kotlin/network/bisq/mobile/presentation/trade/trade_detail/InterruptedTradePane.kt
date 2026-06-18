@@ -41,6 +41,8 @@ fun InterruptedTradePane() {
     val reportToMediatorButtonVisible by presenter.reportToMediatorButtonVisible.collectAsState()
     val showNoMediatorAvailableWarningDialog by presenter.showNoMediatorAvailableWarningDialog.collectAsState()
     val showMediationRequestedDialog by presenter.showMediationRequestedDialog.collectAsState()
+    val isCloseTradeEnabled by presenter.isCloseTradeEnabled.collectAsState()
+    val isReportToMediatorEnabled by presenter.isReportToMediatorEnabled.collectAsState()
 
     Column(
         modifier =
@@ -89,6 +91,7 @@ fun InterruptedTradePane() {
                     type = BisqButtonType.Outline,
                     color = BisqTheme.colors.primary,
                     borderColor = BisqTheme.colors.primary,
+                    disabled = !isReportToMediatorEnabled,
                 )
                 BisqGap.H1()
             }
@@ -96,6 +99,7 @@ fun InterruptedTradePane() {
                 modifier = Modifier.fillMaxHeight(),
                 text = "action.close".i18n(),
                 onClick = { presenter.onCloseTrade() },
+                disabled = !isCloseTradeEnabled,
             )
         }
 

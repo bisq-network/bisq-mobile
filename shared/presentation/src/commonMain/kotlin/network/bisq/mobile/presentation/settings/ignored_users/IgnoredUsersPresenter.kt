@@ -21,6 +21,9 @@ class IgnoredUsersPresenter(
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
     override val ignoreUserId: StateFlow<String> = _ignoreUserId.asStateFlow()
 
+    private val _isUnblockUserConfirmEnabled = MutableStateFlow(true)
+    override val isUnblockUserConfirmEnabled: StateFlow<Boolean> = _isUnblockUserConfirmEnabled.asStateFlow()
+
     override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     override fun onViewAttached() {
@@ -46,13 +49,22 @@ class IgnoredUsersPresenter(
     }
 
     override fun unblockUserConfirm(userId: String) {
+        if (!_isUnblockUserConfirmEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "unblockUserConfirm called while unblock is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
             try {
+                showLoading()
                 userProfileServiceFacade.undoIgnoreUserProfile(userId)
                 _ignoreUserId.value = ""
                 loadIgnoredUsers()
             } catch (e: Exception) {
                 log.e(e) { "Failed to unblock user: $userId" }
+            } finally {
+                _isUnblockUserConfirmEnabled.value = true
+                hideLoading()
             }
         }
     }

@@ -48,6 +48,8 @@ fun TradeChatScreen(tradeId: String) {
     val reportUserTradeMessage by presenter.reportUserTradeMessage.collectAsState()
     val reportUserMessage by presenter.reportUserMessage.collectAsState()
     val isSendChatMessageEnabled by presenter.isSendChatMessageEnabled.collectAsState()
+    val isConfirmIgnoreUserEnabled by presenter.isConfirmIgnoreUserEnabled.collectAsState()
+    val isConfirmUndoIgnoreUserEnabled by presenter.isConfirmUndoIgnoreUserEnabled.collectAsState()
 
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -121,6 +123,7 @@ fun TradeChatScreen(tradeId: String) {
                 confirmButtonText = "chat.ignoreUser.confirm".i18n(),
                 dismissButtonText = "action.cancel".i18n(),
                 verticalButtonPlacement = true,
+                confirmButtonLoading = !isConfirmIgnoreUserEnabled,
                 onConfirm = { presenter.onConfirmedIgnoreUser(ignoreUserId) },
                 onDismiss = { presenter.onDismissIgnoreUser() },
             )
@@ -130,6 +133,7 @@ fun TradeChatScreen(tradeId: String) {
             UndoIgnoreDialog(
                 onConfirm = { presenter.onConfirmedUndoIgnoreUser(undoIgnoreUserId) },
                 onDismiss = { presenter.onDismissUndoIgnoreUser() },
+                confirmButtonLoading = !isConfirmUndoIgnoreUserEnabled,
             )
         }
 

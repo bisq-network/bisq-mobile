@@ -43,12 +43,16 @@ fun WebLinkConfirmationDialog(
     })
 
     val uiState by presenter.uiState.collectAsState()
+    val isOpenUriEnabled by presenter.isOpenUriEnabled.collectAsState()
+    val isCopyToClipboardEnabled by presenter.isCopyToClipboardEnabled.collectAsState()
 
     if (!uiState.isDialogVisible) return
 
     WebLinkConfirmationDialogContent(
         link = link,
         uiState = uiState,
+        isOpenUriEnabled = isOpenUriEnabled,
+        isCopyToClipboardEnabled = isCopyToClipboardEnabled,
         onAction = presenter::onAction,
         showDontShowAgainCheckbox = !forceConfirm,
         headline = headline,
@@ -64,6 +68,8 @@ fun WebLinkConfirmationDialog(
 private fun WebLinkConfirmationDialogContent(
     link: String,
     uiState: WebLinkConfirmationUiState,
+    isOpenUriEnabled: Boolean,
+    isCopyToClipboardEnabled: Boolean,
     onAction: (WebLinkConfirmationUiAction) -> Unit,
     showDontShowAgainCheckbox: Boolean = true,
     headline: String? = null,
@@ -80,6 +86,8 @@ private fun WebLinkConfirmationDialogContent(
         message = message ?: "hyperlinks.openInBrowser.attention".i18n(link),
         confirmButtonText = confirmButtonText ?: "confirmation.yes".i18n(),
         dismissButtonText = dismissButtonText ?: "hyperlinks.openInBrowser.no".i18n(),
+        confirmButtonLoading = !isOpenUriEnabled,
+        dismissButtonLoading = !isCopyToClipboardEnabled,
         onConfirm = { onAction(WebLinkConfirmationUiAction.OnConfirm) },
         onDismiss = { toCopy -> onAction(WebLinkConfirmationUiAction.OnDismiss(toCopy)) },
         closeButton = true,
@@ -107,6 +115,8 @@ private fun WebLinkConfirmationDialogContent_DefaultPreview() {
         WebLinkConfirmationDialogContent(
             link = "https://bisq.network",
             uiState = WebLinkConfirmationUiState(isDialogVisible = true),
+            isOpenUriEnabled = true,
+            isCopyToClipboardEnabled = true,
             onAction = {},
         )
     }

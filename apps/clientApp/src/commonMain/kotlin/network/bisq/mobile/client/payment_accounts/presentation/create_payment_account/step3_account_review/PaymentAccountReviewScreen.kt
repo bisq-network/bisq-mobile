@@ -58,6 +58,7 @@ fun PaymentAccountReviewScreen(
 ) {
     val presenter = RememberPresenterLifecycleBackStackAware<PaymentAccountReviewPresenter>()
     val uiState by presenter.uiState.collectAsState()
+    val isCreateAccountEnabled by presenter.isCreateAccountEnabled.collectAsState()
     val latestOnCloseCreateAccountFlow = rememberUpdatedState(onCloseCreateAccountFlow)
 
     LaunchedEffect(presenter, createPaymentAccount, paymentMethod) {
@@ -81,6 +82,7 @@ fun PaymentAccountReviewScreen(
         paymentAccount != null ->
             PaymentAccountReviewContent(
                 paymentAccount = paymentAccount,
+                isCreateAccountEnabled = isCreateAccountEnabled,
                 onCreateAccountClick = {
                     presenter.onAction(PaymentAccountReviewUiAction.OnCreateAccountClick(createPaymentAccount))
                 },
@@ -93,6 +95,7 @@ fun PaymentAccountReviewScreen(
 @Composable
 private fun PaymentAccountReviewContent(
     paymentAccount: PaymentAccount,
+    isCreateAccountEnabled: Boolean = true,
     onCreateAccountClick: () -> Unit = {},
 ) {
     Column(
@@ -155,6 +158,8 @@ private fun PaymentAccountReviewContent(
         BisqButton(
             text = "paymentAccounts.createAccount.createAccount".i18n(),
             modifier = Modifier.fillMaxWidth(),
+            disabled = !isCreateAccountEnabled,
+            isLoading = !isCreateAccountEnabled,
             onClick = onCreateAccountClick,
         )
     }

@@ -16,6 +16,9 @@ class PaymentAccountMusigDetailPresenter(
     private val _uiState = MutableStateFlow(PaymentAccountMusigDetailUiState())
     val uiState: StateFlow<PaymentAccountMusigDetailUiState> = _uiState.asStateFlow()
 
+    private val _isConfirmDeleteEnabled = MutableStateFlow(true)
+    val isConfirmDeleteEnabled: StateFlow<Boolean> = _isConfirmDeleteEnabled.asStateFlow()
+
     fun initialize(accountName: String) {
         val paymentAccount = paymentAccountsServiceFacade.accountsByName.value[accountName]
         _uiState.update {
@@ -40,17 +43,26 @@ class PaymentAccountMusigDetailPresenter(
 
     private fun onConfirmDeleteAccountClick() {
         val account = uiState.value.paymentAccount ?: return
+        if (!_isConfirmDeleteEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onConfirmDeleteAccountClick called while delete is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            _uiState.update { state -> state.copy(showDeleteConfirmationDialog = false) }
-            paymentAccountsServiceFacade
-                .deleteAccount(account.accountName)
-                .onSuccess {
-                    navigateBack()
-                }.onFailure {
-                    handleError(it)
-                }
-            hideLoading()
+            try {
+                showLoading()
+                _uiState.update { state -> state.copy(showDeleteConfirmationDialog = false) }
+                paymentAccountsServiceFacade
+                    .deleteAccount(account.accountName)
+                    .onSuccess {
+                        navigateBack()
+                    }.onFailure {
+                        handleError(it)
+                        _isConfirmDeleteEnabled.value = true
+                    }
+            } finally {
+                hideLoading()
+            }
         }
     }
 

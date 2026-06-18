@@ -75,9 +75,9 @@ fun OpenTradeScreen(tradeId: String) {
     val showTradeNotFoundDialog by presenter.showTradeNotFoundDialog.collectAsState()
     val mediationError by headerPresenter.mediationError.collectAsState()
     val showUndoIgnoreDialog by presenter.showUndoIgnoreDialog.collectAsState()
+    val isUndoIgnoreEnabled by presenter.isUndoIgnoreEnabled.collectAsState()
     val newMsgCount by presenter.newMsgCount.collectAsState()
     val lastChatMsg by presenter.lastChatMsg.collectAsState()
-    val isInteractive by presenter.isInteractive.collectAsState()
     val isIgnoredUser by presenter.isUserIgnored.collectAsState()
 
     val buyerState1aAddressFieldType by buyerState1aPresenter.bitcoinLnAddressFieldType.collectAsState()
@@ -157,6 +157,7 @@ fun OpenTradeScreen(tradeId: String) {
                                         horizontal = BisqUIConstants.ScreenPaddingHalf,
                                         vertical = BisqUIConstants.ScreenPaddingHalf,
                                     ),
+                                disabled = !isUndoIgnoreEnabled,
                                 onClick = presenter::onOpenUndoIgnoreDialog,
                             )
                         }
@@ -184,7 +185,6 @@ fun OpenTradeScreen(tradeId: String) {
                         onOpenChat = presenter::onOpenChat,
                         lastChatMsg = lastChatMsg,
                         newMsgCount = newMsgCount,
-                        enabled = isInteractive,
                     )
                 }
             }
@@ -277,6 +277,7 @@ fun OpenTradeScreen(tradeId: String) {
         UndoIgnoreDialog(
             onConfirm = presenter::onConfirmedUndoIgnoreUser,
             onDismiss = presenter::hideUndoIgnoreDialog,
+            confirmButtonLoading = !isUndoIgnoreEnabled,
         )
     }
 }

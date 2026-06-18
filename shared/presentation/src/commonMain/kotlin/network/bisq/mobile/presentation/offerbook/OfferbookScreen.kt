@@ -54,8 +54,11 @@ fun OfferbookScreen() {
     val showDeleteConfirmation by presenter.showDeleteConfirmation.collectAsState()
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
     val showTradeRestrictedDialog by presenter.showTradeRestrictedDialog.collectAsState()
-    val isInteractive by presenter.isInteractive.collectAsState()
+    val isCreateOfferEnabled by presenter.isCreateOfferEnabled.collectAsState()
+    val isDeleteOfferEnabled by presenter.isDeleteOfferEnabled.collectAsState()
+    val isTakeOfferEnabled by presenter.isTakeOfferEnabled.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
+    val isOfferSelectionEnabled = isDeleteOfferEnabled && isTakeOfferEnabled
 
     // Show a loading overlay only while data is being fetched for the selected market
     val showLoading by presenter.isLoading.collectAsState()
@@ -73,10 +76,9 @@ fun OfferbookScreen() {
         floatingButton = {
             BisqFABAddButton(
                 onClick = { presenter.createOffer() },
-                enabled = !presenter.isDemo(),
+                enabled = !presenter.isDemo() && isCreateOfferEnabled,
             )
         },
-        isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog || showTradeRestrictedDialog != null,
     ) {
         DirectionToggle(
@@ -144,6 +146,7 @@ fun OfferbookScreen() {
                             presenter.onOfferSelected(item)
                         },
                         userProfileIconProvider = presenter.userProfileIconProvider,
+                        enabled = isOfferSelectionEnabled,
                     )
                 }
             }
@@ -197,6 +200,7 @@ fun OfferbookScreen() {
             headline = if (presenter.isDemo()) "mobile.demo.action.disabled".i18n() else "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
             onConfirm = { presenter.onConfirmedDeleteOffer() },
             onDismiss = { presenter.onDismissDeleteOffer() },
+            confirmButtonLoading = !isDeleteOfferEnabled,
         )
     }
 

@@ -55,6 +55,7 @@ fun SellerStateMainChain3b(
     val balanceLabel = "bisqEasy.tradeState.info.seller.phase3b.balance".i18n() // Bitcoin payment
     val skip by presenter.skip.collectAsState()
     val amountNotMatchingDialogText by presenter.amountNotMatchingDialogText.collectAsState()
+    val isCompleteTradeEnabled by presenter.isCompleteTradeEnabled.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -148,6 +149,7 @@ fun SellerStateMainChain3b(
                     )
                 },
                 onClick = { presenter.onCtaClick() },
+                disabled = !isCompleteTradeEnabled,
             )
         }
         amountNotMatchingDialogText?.let { errorDialogText ->
@@ -159,6 +161,7 @@ fun SellerStateMainChain3b(
                 confirmButtonText = "bisqEasy.tradeState.info.phase3b.button.next.amountNotMatching.resolved".i18n(),
                 dismissButtonText = "action.close".i18n(),
                 verticalButtonPlacement = true,
+                confirmButtonLoading = !isCompleteTradeEnabled,
                 onConfirm = { presenter.onCompleteTrade() },
                 onDismiss = { presenter.onAmountNotMatchingDialogDismiss() },
             )

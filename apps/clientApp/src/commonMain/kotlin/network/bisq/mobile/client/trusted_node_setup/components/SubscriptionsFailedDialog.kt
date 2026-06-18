@@ -99,12 +99,15 @@ internal fun SubscriptionsFailedDialog(
                 text = "mobile.action.retry".i18n(),
                 onClick = { onAction(SubscriptionsFailedDialogUiAction.OnRetryPress) },
                 fullWidth = true,
+                isLoading = state.isRetryInProgress,
+                disabled = state.isRetryInProgress,
             )
             BisqButton(
                 text = "mobile.client.dialog.failed_subs.continue".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = { onAction(SubscriptionsFailedDialogUiAction.OnContinuePress) },
                 fullWidth = true,
+                disabled = state.isRetryInProgress,
             )
         }
     }

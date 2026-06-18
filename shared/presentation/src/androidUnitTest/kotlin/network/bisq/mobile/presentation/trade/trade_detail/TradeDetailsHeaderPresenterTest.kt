@@ -8,10 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -26,7 +24,6 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -158,7 +155,7 @@ class TradeDetailsHeaderPresenterTest {
         }
 
     @Test
-    fun `when toggle header action then updates show details and interactivity in session state`() =
+    fun `when toggle header action then updates show details in session state`() =
         runTest(testDispatcher) {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
@@ -167,21 +164,11 @@ class TradeDetailsHeaderPresenterTest {
             presenter.onViewAttached()
             advanceUntilIdle()
 
-            assertTrue(presenter.sessionUiState.value.isInteractive)
-
             assertFalse(presenter.sessionUiState.value.showDetails)
             presenter.onAction(TradeDetailsHeaderUiAction.ToggleHeader)
-            // Flush disableInteractive + combine; do not advance time — advanceUntilIdle can complete
-            // enableInteractive()'s delayed re-enable before we assert the brief non-interactive window.
-            runCurrent()
+            advanceUntilIdle()
 
             assertTrue(presenter.sessionUiState.value.showDetails)
-            assertFalse(presenter.sessionUiState.value.isInteractive)
-
-            advanceTimeBy(BasePresenter.SMALLEST_PERCEPTIVE_DELAY)
-            runCurrent()
-
-            assertTrue(presenter.sessionUiState.value.isInteractive)
         }
 
     @Test

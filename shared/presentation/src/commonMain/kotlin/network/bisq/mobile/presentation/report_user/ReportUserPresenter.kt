@@ -21,6 +21,9 @@ class ReportUserPresenter(
     private val _uiState = MutableStateFlow(ReportUserUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _isReportActionEnabled = MutableStateFlow(true)
+    val isReportActionEnabled = _isReportActionEnabled.asStateFlow()
+
     private val _effect = MutableSharedFlow<ReportUserEffect>()
     val effect = _effect.asSharedFlow()
 
@@ -38,45 +41,32 @@ class ReportUserPresenter(
         _uiState.update {
             it.copy(
                 message = message,
-                isReportButtonEnabled = message.isNotBlank() && message.length <= REPORT_USER_MAX_MESSAGE_LENGTH,
+                isReportMessageValid = message.isNotBlank() && message.length <= REPORT_USER_MAX_MESSAGE_LENGTH,
             )
         }
     }
 
     fun onReportClick() {
-        var acquired = false
-        _uiState.update { state ->
-            if (!state.isReportButtonEnabled) return@update state
-            acquired = true
-            state.copy(
-                isReportButtonEnabled = false,
-                isLoading = true,
-            )
-        }
-        if (!acquired) {
+        if (!_uiState.value.isReportMessageValid) return
+        if (!_isReportActionEnabled.compareAndSet(expect = true, update = false)) {
             log.w { "onReportClick called while report is already in progress; ignoring" }
             return
         }
+        _uiState.update { it.copy(isLoading = true) }
 
         presenterScope.launch {
             val message = _uiState.value.message
-            if (!::chatMessage.isInitialized) {
-                log.w { "ReportUserPresenter.onReportClick called before initialize" }
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        isReportButtonEnabled = message.isNotBlank() && message.length <= REPORT_USER_MAX_MESSAGE_LENGTH,
-                    )
-                }
-                _effect.emit(
-                    ReportUserEffect.ReportError(
-                        "mobile.chat.reportToModerator.error".i18n(),
-                        message,
-                    ),
-                )
-                return@launch
-            }
             try {
+                if (!::chatMessage.isInitialized) {
+                    log.w { "ReportUserPresenter.onReportClick called before initialize" }
+                    _effect.emit(
+                        ReportUserEffect.ReportError(
+                            "mobile.chat.reportToModerator.error".i18n(),
+                            message,
+                        ),
+                    )
+                    return@launch
+                }
                 userProfileServiceFacade
                     .reportUserProfile(
                         chatMessage.senderUserProfile,
@@ -92,14 +82,8 @@ class ReportUserPresenter(
                         )
                     }
             } finally {
-                _uiState.update { state ->
-                    state.copy(
-                        isLoading = false,
-                        isReportButtonEnabled =
-                            state.message.isNotBlank() &&
-                                state.message.length <= REPORT_USER_MAX_MESSAGE_LENGTH,
-                    )
-                }
+                _isReportActionEnabled.value = true
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

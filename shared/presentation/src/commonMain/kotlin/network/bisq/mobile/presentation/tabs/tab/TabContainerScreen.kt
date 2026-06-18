@@ -29,6 +29,7 @@ interface ITabContainerPresenter : ViewPresenter {
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
     val showAnimation: StateFlow<Boolean>
     val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?>
+    val isCreateOfferEnabled: StateFlow<Boolean>
 
     fun createOffer()
 
@@ -43,7 +44,7 @@ fun TabContainerScreen() {
 
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
+    val isCreateOfferEnabled by presenter.isCreateOfferEnabled.collectAsState()
     val currentTab by navigationManager.currentTab.collectAsState()
 
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
@@ -111,10 +112,10 @@ fun TabContainerScreen() {
             if (currentTab == NavRoute.TabOfferbookMarket) {
                 BisqFABAddButton(
                     onClick = presenter::createOffer,
+                    enabled = isCreateOfferEnabled,
                 )
             }
         },
-        isInteractive = isInteractive,
         content = { TabNavGraph(tabNavController) },
     )
 

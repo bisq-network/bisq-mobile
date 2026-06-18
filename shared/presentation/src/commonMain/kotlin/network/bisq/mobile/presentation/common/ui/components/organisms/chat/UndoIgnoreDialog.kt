@@ -10,6 +10,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 fun UndoIgnoreDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    confirmButtonLoading: Boolean = false,
 ) {
     ConfirmationDialog(
         headline = "mobile.error.warning".i18n(),
@@ -19,6 +20,7 @@ fun UndoIgnoreDialog(
         confirmButtonText = "user.profileCard.userActions.undoIgnore".i18n(),
         dismissButtonText = "action.cancel".i18n(),
         verticalButtonPlacement = true,
+        confirmButtonLoading = confirmButtonLoading,
         onConfirm = onConfirm,
         onDismiss = { _ -> onDismiss() },
     )

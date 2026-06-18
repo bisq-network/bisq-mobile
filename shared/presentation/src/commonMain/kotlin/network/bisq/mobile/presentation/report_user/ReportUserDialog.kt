@@ -31,6 +31,7 @@ fun ReportUserDialog(
 ) {
     val presenter: ReportUserPresenter = koinInject()
     val state by presenter.uiState.collectAsState()
+    val isReportActionEnabled by presenter.isReportActionEnabled.collectAsState()
     RememberPresenterLifecycle(presenter)
 
     LaunchedEffect(Unit, onDismiss, onReportFailure) {
@@ -49,6 +50,7 @@ fun ReportUserDialog(
 
     ReportUserDialogContent(
         state = state,
+        isReportActionEnabled = isReportActionEnabled,
         onMessageChange = presenter::onMessageChange,
         onReportClick = presenter::onReportClick,
         onDismiss = onDismiss,
@@ -58,6 +60,7 @@ fun ReportUserDialog(
 @Composable
 private fun ReportUserDialogContent(
     state: ReportUserUiState,
+    isReportActionEnabled: Boolean,
     onMessageChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onReportClick: () -> Unit,
@@ -93,7 +96,7 @@ private fun ReportUserDialogContent(
                 modifier =
                     Modifier
                         .fillMaxWidth(),
-                disabled = state.isReportButtonEnabled.not(),
+                disabled = !state.isReportMessageValid || !isReportActionEnabled,
                 text = "chat.reportToModerator.report".i18n(),
                 onClick = onReportClick,
             )
@@ -117,9 +120,10 @@ private fun ReportUserDialogPreview() {
         ReportUserDialogContent(
             state =
                 ReportUserUiState(
-                    isReportButtonEnabled = true,
+                    isReportMessageValid = true,
                     message = "",
                 ),
+            isReportActionEnabled = true,
             onMessageChange = {},
             onDismiss = {},
             onReportClick = {},
@@ -134,10 +138,11 @@ private fun ReportUserDialog_LoadingPreview() {
         ReportUserDialogContent(
             state =
                 ReportUserUiState(
-                    isReportButtonEnabled = true,
+                    isReportMessageValid = true,
                     message = "",
                     isLoading = true,
                 ),
+            isReportActionEnabled = false,
             onMessageChange = {},
             onDismiss = {},
             onReportClick = {},

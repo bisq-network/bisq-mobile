@@ -65,6 +65,7 @@ fun OfferCard(
     item: OfferItemPresentationModel,
     onSelectOffer: () -> Unit,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
+    enabled: Boolean = true,
 ) {
     val userName by item.userName.collectAsState()
     val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f)
@@ -110,6 +111,7 @@ fun OfferCard(
                 .height(height)
                 .padding(BisqUIConstants.ScreenPadding)
                 .debouncedClickable(
+                    enabled = enabled,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onSelectOffer,

@@ -11,4 +11,5 @@ data class SubscriptionsFailedDialogUiState(
      * Shown as a subtle hint when it differs from the client's expected version.
      */
     val connectedApiVersion: String? = null,
+    val isRetryInProgress: Boolean = false,
 )

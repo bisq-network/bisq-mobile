@@ -52,6 +52,7 @@ import org.koin.compose.koinInject
 
 interface IUserProfilePresenter : ViewPresenter {
     val uiState: StateFlow<UserProfileUiState>
+    val isActionEnabled: StateFlow<Boolean>
 
     fun onAction(action: UserProfileUiAction)
 
@@ -63,8 +64,9 @@ fun UserProfileScreen() {
     val presenter: IUserProfilePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val uiState by presenter.uiState.collectAsState()
+    val isActionEnabled by presenter.isActionEnabled.collectAsState()
+    val isBusy = uiState.isLoadingData || !isActionEnabled
     val scrollState = rememberScrollState()
 
     LaunchedEffect(uiState.selectedUserProfile?.id) {
@@ -93,7 +95,6 @@ fun UserProfileScreen() {
             }
         },
         horizontalAlignment = Alignment.Start,
-        isInteractive = isInteractive,
         shouldBlurBg = uiState.shouldBlurBg,
         scrollState = scrollState,
     ) {
@@ -112,7 +113,7 @@ fun UserProfileScreen() {
                     onSelect = {
                         presenter.onAction(UserProfileUiAction.OnUserProfileSelect(it))
                     },
-                    disabled = !isInteractive || uiState.userProfiles.isEmpty(),
+                    disabled = isBusy || uiState.userProfiles.isEmpty(),
                     modifier = Modifier.weight(1f),
                 )
 
@@ -122,7 +123,7 @@ fun UserProfileScreen() {
                         onClick = {
                             presenter.onAction(UserProfileUiAction.OnCreateProfilePress)
                         },
-                        disabled = !isInteractive,
+                        disabled = isBusy,
                         modifier =
                             Modifier
                                 .size(BisqUIConstants.userProfileIconButtonSize)
@@ -224,7 +225,7 @@ fun UserProfileScreen() {
             UserProfileScreenFooter(
                 onSavePress = { presenter.onAction(UserProfileUiAction.OnSavePress) },
                 onDeletePress = { presenter.onAction(UserProfileUiAction.OnDeletePress) },
-                isBusy = uiState.isBusy,
+                isBusy = isBusy,
             )
         }
     }
@@ -306,6 +307,7 @@ private fun UserProfileScreenFooter(
         BisqButton(
             text = "mobile.settings.userProfile.labels.save".i18n(),
             onClick = onSavePress,
+            disabled = isBusy,
             isLoading = isBusy,
             modifier = Modifier.weight(1.0F),
             padding =
@@ -317,6 +319,7 @@ private fun UserProfileScreenFooter(
         BisqButton(
             text = "mobile.action.delete".i18n(),
             onClick = onDeletePress,
+            disabled = isBusy,
             isLoading = isBusy,
             modifier = Modifier.weight(1.0F),
             padding =

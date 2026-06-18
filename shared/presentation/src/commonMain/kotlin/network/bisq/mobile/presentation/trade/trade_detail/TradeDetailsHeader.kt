@@ -67,11 +67,15 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
 
     val tradeUiState by presenter.tradeUiState.collectAsState()
     val sessionUiState by presenter.sessionUiState.collectAsState()
+    val isInterruptTradeEnabled by presenter.isInterruptTradeEnabled.collectAsState()
+    val isOpenMediationEnabled by presenter.isOpenMediationEnabled.collectAsState()
 
     tradeUiState?.let { tradeState ->
         TradeDetailsHeaderContent(
             tradeUiState = tradeState,
             sessionUiState = sessionUiState,
+            isInterruptTradeEnabled = isInterruptTradeEnabled,
+            isOpenMediationEnabled = isOpenMediationEnabled,
             userProfileIconProvider = presenter.userProfileIconProvider,
             onAction = presenter::onAction,
         )
@@ -82,6 +86,8 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
 fun TradeDetailsHeaderContent(
     tradeUiState: TradeDetailsHeaderTradeUiState,
     sessionUiState: TradeDetailsHeaderSessionUiState,
+    isInterruptTradeEnabled: Boolean = true,
+    isOpenMediationEnabled: Boolean = true,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onAction: (TradeDetailsHeaderUiAction) -> Unit,
 ) {
@@ -240,6 +246,8 @@ fun TradeDetailsHeaderContent(
                 ActiveTradeDetailsSection(
                     tradeUiState = tradeUiState,
                     sessionUiState = sessionUiState,
+                    isInterruptTradeEnabled = isInterruptTradeEnabled,
+                    isOpenMediationEnabled = isOpenMediationEnabled,
                     onAction = onAction,
                 )
             }
@@ -252,7 +260,6 @@ fun TradeDetailsHeaderContent(
         ) {
             IconButton(
                 onClick = { onAction(TradeDetailsHeaderUiAction.ToggleHeader) },
-                enabled = sessionUiState.isInteractive,
             ) {
                 UpIcon(
                     modifier =
@@ -271,6 +278,8 @@ fun TradeDetailsHeaderContent(
 private fun ActiveTradeDetailsSection(
     tradeUiState: TradeDetailsHeaderTradeUiState,
     sessionUiState: TradeDetailsHeaderSessionUiState,
+    isInterruptTradeEnabled: Boolean,
+    isOpenMediationEnabled: Boolean,
     onAction: (TradeDetailsHeaderUiAction) -> Unit,
 ) {
     Column(
@@ -328,6 +337,7 @@ private fun ActiveTradeDetailsSection(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         text = sessionUiState.interruptTradeButtonText,
                         onClick = { onAction(TradeDetailsHeaderUiAction.OpenInterruptionConfirmationDialog) },
+                        disabled = !isInterruptTradeEnabled,
                         type = BisqButtonType.Outline,
                     )
                 }
@@ -336,6 +346,7 @@ private fun ActiveTradeDetailsSection(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         text = sessionUiState.openMediationButtonText,
                         onClick = { onAction(TradeDetailsHeaderUiAction.OpenMediationConfirmationDialog) },
+                        disabled = !isOpenMediationEnabled,
                         type = BisqButtonType.WarningOutline,
                     )
                 }
@@ -495,7 +506,6 @@ private fun previewTradeDetailsHeaderStates(
         ) to
             TradeDetailsHeaderSessionUiState(
                 showDetails = showDetails,
-                isInteractive = true,
                 interruptTradeButtonText = if (isCompleted) "" else "Cancel trade",
                 openMediationButtonText = if (isCompleted) "" else "Request mediation",
                 isInMediation = false,

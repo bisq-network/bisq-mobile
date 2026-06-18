@@ -50,6 +50,12 @@ class InterruptedTradePresenter(
     private val _showMediationRequestedDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showMediationRequestedDialog: StateFlow<Boolean> = _showMediationRequestedDialog.asStateFlow()
 
+    private val _isCloseTradeEnabled = MutableStateFlow(true)
+    val isCloseTradeEnabled: StateFlow<Boolean> = _isCloseTradeEnabled.asStateFlow()
+
+    private val _isReportToMediatorEnabled = MutableStateFlow(true)
+    val isReportToMediatorEnabled: StateFlow<Boolean> = _isReportToMediatorEnabled.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -175,55 +181,74 @@ class InterruptedTradePresenter(
 
     fun onCloseTrade() {
         val trade = selectedTrade.value ?: return
+
+        if (!_isCloseTradeEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onCloseTrade called while close is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            val result = tradesServiceFacade.closeTrade()
-            if (result.isFailure) {
-                val msg = result.exceptionOrNull()?.message ?: ""
-                GenericErrorHandler.handleGenericError(
-                    "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg),
-                )
-                hideLoading()
-                return@launch
-            }
-
-            withContext(Dispatchers.IO) {
-                // On success, clear read state. If this fails, report but still navigate back.
-                runCatching {
-                    tradeReadStateRepository.clearId(trade.tradeId)
-                }.onFailure { ex ->
+            try {
+                showLoading()
+                val result = tradesServiceFacade.closeTrade()
+                if (result.isFailure) {
+                    val msg = result.exceptionOrNull()?.message ?: ""
                     GenericErrorHandler.handleGenericError(
-                        "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: ""),
+                        "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg),
                     )
+                    _isCloseTradeEnabled.value = true
+                    return@launch
                 }
-            }
 
-            hideLoading()
-            navigateBack()
+                withContext(Dispatchers.IO) {
+                    // On success, clear read state. If this fails, report but still navigate back.
+                    runCatching {
+                        tradeReadStateRepository.clearId(trade.tradeId)
+                    }.onFailure { ex ->
+                        GenericErrorHandler.handleGenericError(
+                            "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: ""),
+                        )
+                    }
+                }
+
+                navigateBack()
+            } finally {
+                hideLoading()
+            }
         }
     }
 
     fun onReportToMediator() {
         val trade = selectedTrade.value
         if (trade == null) return
-        presenterScope.launch {
-            showLoading()
-            mediationServiceFacade
-                .reportToMediator(trade)
-                .onSuccess {
-                    _showMediationRequestedDialog.value = true
-                }.onFailure { error ->
-                    when (error) {
-                        is MediatorNotAvailableException -> {
-                            _showNoMediatorAvailableWarningDialog.value = true
-                        }
 
-                        else -> {
-                            showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
+        if (!_isReportToMediatorEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onReportToMediator called while report is already in progress; ignoring" }
+            return
+        }
+
+        presenterScope.launch {
+            try {
+                showLoading()
+                mediationServiceFacade
+                    .reportToMediator(trade)
+                    .onSuccess {
+                        _showMediationRequestedDialog.value = true
+                    }.onFailure { error ->
+                        when (error) {
+                            is MediatorNotAvailableException -> {
+                                _showNoMediatorAvailableWarningDialog.value = true
+                            }
+
+                            else -> {
+                                showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
+                            }
                         }
                     }
-                }
-            hideLoading()
+            } finally {
+                hideLoading()
+                _isReportToMediatorEnabled.value = true
+            }
         }
     }
 

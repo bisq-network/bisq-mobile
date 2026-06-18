@@ -26,6 +26,7 @@ import org.koin.compose.koinInject
 
 interface IAgreementPresenter : ViewPresenter {
     val isAccepted: StateFlow<Boolean>
+    val isAcceptTermsEnabled: StateFlow<Boolean>
 
     fun onAccepted(accepted: Boolean)
 
@@ -38,6 +39,7 @@ fun UserAgreementScreen() {
     RememberPresenterLifecycle(presenter)
 
     val isAccepted by presenter.isAccepted.collectAsState()
+    val isAcceptTermsEnabled by presenter.isAcceptTermsEnabled.collectAsState()
 
     // TODO: Enhancement phase: To add a language dropdown, so as to render the agreement in supported languages
     BisqScrollScaffold(
@@ -55,7 +57,7 @@ fun UserAgreementScreen() {
                 )
                 BisqButton(
                     text = "tac.accept".i18n(),
-                    disabled = !isAccepted,
+                    disabled = !isAccepted || !isAcceptTermsEnabled,
                     fullWidth = true,
                     onClick = { presenter.onAcceptTerms() },
                     modifier = Modifier.semantics { contentDescription = "agreement_accept_button" },

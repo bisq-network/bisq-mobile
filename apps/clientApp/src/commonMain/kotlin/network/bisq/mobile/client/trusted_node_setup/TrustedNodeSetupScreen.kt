@@ -68,9 +68,11 @@ fun TrustedNodeSetupScreen(
     }
 
     val uiState by presenter.uiState.collectAsState()
+    val isConnectionFailedRetryEnabled by presenter.isConnectionFailedRetryEnabled.collectAsState()
 
     TrustedNodeSetupContent(
         uiState = uiState,
+        isConnectionFailedRetryEnabled = isConnectionFailedRetryEnabled,
         onAction = presenter::onAction,
         isWorkflow = isWorkflow,
         topBar =
@@ -87,6 +89,7 @@ fun TrustedNodeSetupScreen(
 fun TrustedNodeSetupContent(
     uiState: TrustedNodeSetupUiState,
     onAction: (TrustedNodeSetupUiAction) -> Unit,
+    isConnectionFailedRetryEnabled: Boolean = true,
     isWorkflow: Boolean = true,
     topBar: @Composable () -> Unit = {},
 ) {
@@ -155,6 +158,8 @@ fun TrustedNodeSetupContent(
             message = "mobile.trustedNodeSetup.connectionFailed.message".i18n(),
             confirmButtonText = "mobile.action.retry".i18n(),
             dismissButtonText = "mobile.trustedNodeSetup.pairWithNewNode".i18n(),
+            confirmButtonLoading = !isConnectionFailedRetryEnabled,
+            dismissButtonLoading = !isConnectionFailedRetryEnabled,
             onConfirm = { onAction(TrustedNodeSetupUiAction.OnConnectionFailedRetryPress) },
             onDismiss = { onAction(TrustedNodeSetupUiAction.OnConnectionFailedPairWithNewNodePress) },
             dismissOnClickOutside = false,
@@ -167,6 +172,7 @@ fun TrustedNodeSetupContent(
             SubscriptionsFailedDialogUiState(
                 failedTopics = uiState.failedTopics,
                 connectedApiVersion = uiState.serverVersion.ifBlank { null },
+                isRetryInProgress = !isConnectionFailedRetryEnabled,
             ),
         ) { dialogAction ->
             onAction(TrustedNodeSetupUiAction.OnSubscriptionsFailedDialogUiAction(dialogAction))

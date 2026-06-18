@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step3_account_review
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +27,8 @@ class PaymentAccountReviewPresenter(
     private val _effect = MutableSharedFlow<PaymentAccountReviewEffect>()
     val effect = _effect.asSharedFlow()
 
-    private var createAccountJob: Job? = null
+    private val _isCreateAccountEnabled = MutableStateFlow(true)
+    val isCreateAccountEnabled: StateFlow<Boolean> = _isCreateAccountEnabled.asStateFlow()
 
     fun initialize(
         createPaymentAccount: CreatePaymentAccount,
@@ -51,9 +51,13 @@ class PaymentAccountReviewPresenter(
     }
 
     private fun onCreateAccount(account: CreatePaymentAccount) {
-        if (createAccountJob?.isActive == true) return
-        createAccountJob =
-            presenterScope.launch {
+        if (!_isCreateAccountEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onCreateAccount called while create is already in progress; ignoring" }
+            return
+        }
+
+        presenterScope.launch {
+            try {
                 showLoading()
                 paymentAccountsServiceFacade
                     .addAccount(account)
@@ -61,9 +65,12 @@ class PaymentAccountReviewPresenter(
                         _effect.emit(PaymentAccountReviewEffect.CloseCreateAccountFlow)
                     }.onFailure {
                         handleError(it, customHandler = ::handleCreateAccountError)
+                        _isCreateAccountEnabled.value = true
                     }
+            } finally {
                 hideLoading()
             }
+        }
     }
 
     private fun handleCreateAccountError(exception: Throwable): Boolean {

@@ -24,6 +24,12 @@ class WebLinkConfirmationDialogPresenter(
     private val _uiState = MutableStateFlow(WebLinkConfirmationUiState())
     val uiState: StateFlow<WebLinkConfirmationUiState> = _uiState.asStateFlow()
 
+    private val _isOpenUriEnabled = MutableStateFlow(true)
+    val isOpenUriEnabled: StateFlow<Boolean> = _isOpenUriEnabled.asStateFlow()
+
+    private val _isCopyToClipboardEnabled = MutableStateFlow(true)
+    val isCopyToClipboardEnabled: StateFlow<Boolean> = _isCopyToClipboardEnabled.asStateFlow()
+
     private var userOnConfirm: () -> Unit = {}
     private var userOnDismiss: () -> Unit = {}
     private var userOnError: () -> Unit = {}
@@ -45,6 +51,8 @@ class WebLinkConfirmationDialogPresenter(
         currentClipboard = clipboard
 
         _uiState.value = WebLinkConfirmationUiState()
+        _isOpenUriEnabled.value = true
+        _isCopyToClipboardEnabled.value = true
 
         val shouldShow =
             forceConfirm || settingsServiceFacade.showWebLinkConfirmation.value
@@ -81,6 +89,11 @@ class WebLinkConfirmationDialogPresenter(
         uri: String,
         persist: Boolean,
     ) {
+        if (!_isOpenUriEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "openUri called while open is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
             if (persist) showLoading()
             try {
@@ -90,23 +103,20 @@ class WebLinkConfirmationDialogPresenter(
                         dontShowAgain = _uiState.value.dontShowAgain,
                     )
                 }
-                // navigateToUrlAwait returns false when already non-interactive (anti double-tap)
-                // before attempting to open; snapshot before call to tell that apart from a real failure.
-                val interactiveBeforeOpen = isInteractive.value
                 if (!navigateToUrlAwait(uri)) {
-                    if (!interactiveBeforeOpen) {
-                        return@launch
-                    }
                     userOnError.invoke()
+                    _isOpenUriEnabled.value = true
                     return@launch
                 }
                 userOnConfirm.invoke()
             } catch (cancellationException: CancellationException) {
+                _isOpenUriEnabled.value = true
                 throw cancellationException
             } catch (throwable: Throwable) {
                 log.e(throwable) { "Failed to open URI from web link confirmation dialog" }
                 userOnError.invoke()
                 mainPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
+                _isOpenUriEnabled.value = true
             } finally {
                 if (persist) hideLoading()
             }
@@ -117,6 +127,11 @@ class WebLinkConfirmationDialogPresenter(
         uri: String,
         persist: Boolean,
     ) {
+        if (!_isCopyToClipboardEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "copyToClipboard called while copy is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
             if (persist) showLoading()
             try {
@@ -130,11 +145,13 @@ class WebLinkConfirmationDialogPresenter(
                 }
                 userOnDismiss.invoke()
             } catch (cancellationException: CancellationException) {
+                _isCopyToClipboardEnabled.value = true
                 throw cancellationException
             } catch (throwable: Throwable) {
                 log.e(throwable) { "Failed to copy URI from web link confirmation dialog" }
                 userOnError.invoke()
                 mainPresenter.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+                _isCopyToClipboardEnabled.value = true
             } finally {
                 if (persist) hideLoading()
             }

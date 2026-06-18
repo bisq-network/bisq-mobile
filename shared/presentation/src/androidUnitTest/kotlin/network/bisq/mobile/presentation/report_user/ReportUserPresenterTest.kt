@@ -115,7 +115,8 @@ class ReportUserPresenterTest {
             advanceUntilIdle()
 
             coVerify(exactly = 1) { userProfileServiceFacade.reportUserProfile(reportedUser, any()) }
-            assertFalse(presenter.uiState.value.isReportButtonEnabled)
+            assertFalse(presenter.isReportActionEnabled.value)
+            assertTrue(presenter.uiState.value.isLoading)
         }
 
     @Test
@@ -127,7 +128,8 @@ class ReportUserPresenterTest {
             presenter.onReportClick()
             advanceUntilIdle()
 
-            assertTrue(presenter.uiState.value.isReportButtonEnabled)
+            assertTrue(presenter.isReportActionEnabled.value)
+            assertTrue(presenter.uiState.value.isReportMessageValid)
             assertFalse(presenter.uiState.value.isLoading)
         }
 }

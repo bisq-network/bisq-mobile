@@ -92,6 +92,12 @@ class TradeChatPresenter(
     private val _isSendChatMessageEnabled = MutableStateFlow(true)
     val isSendChatMessageEnabled: StateFlow<Boolean> = _isSendChatMessageEnabled.asStateFlow()
 
+    private val _isConfirmIgnoreUserEnabled = MutableStateFlow(true)
+    val isConfirmIgnoreUserEnabled: StateFlow<Boolean> = _isConfirmIgnoreUserEnabled.asStateFlow()
+
+    private val _isConfirmUndoIgnoreUserEnabled = MutableStateFlow(true)
+    val isConfirmUndoIgnoreUserEnabled: StateFlow<Boolean> = _isConfirmUndoIgnoreUserEnabled.asStateFlow()
+
     val readCount =
         selectedTrade
             .combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
@@ -261,29 +267,45 @@ class TradeChatPresenter(
     }
 
     fun onConfirmedIgnoreUser(id: String) {
+        if (!_isConfirmIgnoreUserEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onConfirmedIgnoreUser called while ignore is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
             try {
+                showLoading()
                 userProfileServiceFacade.ignoreUserProfile(id)
                 hideIgnoreUserPopup()
+                _isConfirmIgnoreUserEnabled.value = true
             } catch (e: Exception) {
                 log.e(e) { "Failed to ignore user $id" }
+                _isConfirmIgnoreUserEnabled.value = true
             } finally {
                 hideLoading()
+                _isConfirmIgnoreUserEnabled.value = true
             }
         }
     }
 
     fun onConfirmedUndoIgnoreUser(id: String) {
+        if (!_isConfirmUndoIgnoreUserEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onConfirmedUndoIgnoreUser called while undo-ignore is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
             try {
+                showLoading()
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
                 hideUndoIgnoreUserPopup()
+                _isConfirmUndoIgnoreUserEnabled.value = true
             } catch (e: Exception) {
                 log.e(e) { "Failed to undo ignore user $id" }
+                _isConfirmUndoIgnoreUserEnabled.value = true
             } finally {
                 hideLoading()
+                _isConfirmUndoIgnoreUserEnabled.value = true
             }
         }
     }

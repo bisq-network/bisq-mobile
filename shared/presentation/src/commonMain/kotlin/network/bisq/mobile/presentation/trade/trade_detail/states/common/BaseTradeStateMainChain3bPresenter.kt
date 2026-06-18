@@ -47,6 +47,9 @@ abstract class BaseTradeStateMainChain3bPresenter(
         MutableStateFlow(null)
     val amountNotMatchingDialogText: StateFlow<String?> = _amountNotMatchingDialogText.asStateFlow()
 
+    private val _isCompleteTradeEnabled = MutableStateFlow(true)
+    val isCompleteTradeEnabled: StateFlow<Boolean> = _isCompleteTradeEnabled.asStateFlow()
+
     private var txAmount: Long? = null
     private var txAmountFormatted: String? = null
     private val openTradeItemModel = tradesServiceFacade.selectedTrade.value
@@ -122,10 +125,20 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun completeTrade() {
+        if (!_isCompleteTradeEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "completeTrade called while confirm is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            showLoading()
-            tradesServiceFacade.btcConfirmed()
-            hideLoading()
+            try {
+                showLoading()
+                tradesServiceFacade.btcConfirmed().onFailure {
+                    _isCompleteTradeEnabled.value = true
+                }
+            } finally {
+                hideLoading()
+            }
         }
     }
 

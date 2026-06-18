@@ -21,22 +21,34 @@ open class UserAgreementPresenter(
     private val _accepted = MutableStateFlow(false)
     override val isAccepted: StateFlow<Boolean> = _accepted.asStateFlow()
 
+    private val _isAcceptTermsEnabled = MutableStateFlow(true)
+    override val isAcceptTermsEnabled: StateFlow<Boolean> = _isAcceptTermsEnabled.asStateFlow()
+
     override fun onAccepted(accepted: Boolean) {
         _accepted.value = accepted
     }
 
     override fun onAcceptTerms() {
-        showLoading()
+        if (!_isAcceptTermsEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onAcceptTerms called while accept is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
-            settingsServiceFacade
-                .confirmTacAccepted(true)
-                .onSuccess {
-                    navigateToOnboarding()
-                    showSnackbar("mobile.startup.agreement.welcome".i18n())
-                }.onFailure { exception ->
-                    handleError(exception)
-                }
-            hideLoading()
+            try {
+                showLoading()
+                settingsServiceFacade
+                    .confirmTacAccepted(true)
+                    .onSuccess {
+                        navigateToOnboarding()
+                        showSnackbar("mobile.startup.agreement.welcome".i18n())
+                    }.onFailure { exception ->
+                        handleError(exception)
+                        _isAcceptTermsEnabled.value = true
+                    }
+            } finally {
+                hideLoading()
+            }
         }
     }
 

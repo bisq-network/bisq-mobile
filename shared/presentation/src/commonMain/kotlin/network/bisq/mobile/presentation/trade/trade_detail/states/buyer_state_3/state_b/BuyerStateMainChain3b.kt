@@ -53,6 +53,7 @@ fun BuyerStateMainChain3b(
     val txId = tradeItemModel.bisqEasyTradeModel.paymentProof.value ?: "data.na".i18n()
     val skip by presenter.skip.collectAsState()
     val amountNotMatchingDialogText by presenter.amountNotMatchingDialogText.collectAsState()
+    val isCompleteTradeEnabled by presenter.isCompleteTradeEnabled.collectAsState()
 
     val role = if (tradeItemModel.bisqEasyTradeModel.isBuyer) "buyer" else "seller"
     val waitingText =
@@ -153,6 +154,7 @@ fun BuyerStateMainChain3b(
                 },
                 type = if (skip) BisqButtonType.Grey else BisqButtonType.Default,
                 onClick = { presenter.onCtaClick() },
+                disabled = !isCompleteTradeEnabled,
             )
         }
         amountNotMatchingDialogText?.let { dialogText ->
@@ -164,6 +166,7 @@ fun BuyerStateMainChain3b(
                 confirmButtonText = "bisqEasy.tradeState.info.phase3b.button.next.amountNotMatching.resolved".i18n(),
                 dismissButtonText = "action.close".i18n(),
                 verticalButtonPlacement = true,
+                confirmButtonLoading = !isCompleteTradeEnabled,
                 onConfirm = { presenter.onCompleteTrade() },
                 onDismiss = { presenter.onAmountNotMatchingDialogDismiss() },
             )

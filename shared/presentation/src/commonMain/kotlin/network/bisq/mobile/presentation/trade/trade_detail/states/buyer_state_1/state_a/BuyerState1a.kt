@@ -30,7 +30,6 @@ fun BuyerState1a(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
     val headline by presenter.headline.collectAsState()
     val description by presenter.description.collectAsState()
     val bitcoinPaymentData by presenter.bitcoinPaymentData.collectAsState()
@@ -69,7 +68,6 @@ fun BuyerState1a(
             )
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.walletHelpButton".i18n(), // Open wallet guide
-                disabled = !isInteractive,
                 onClick = { presenter.onOpenWalletGuide() },
                 type = BisqButtonType.Outline,
                 padding =

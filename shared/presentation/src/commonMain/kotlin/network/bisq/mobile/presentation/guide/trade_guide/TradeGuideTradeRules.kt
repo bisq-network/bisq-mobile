@@ -25,6 +25,7 @@ fun TradeGuideTradeRules() {
     RememberPresenterLifecycle(presenter)
 
     val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
+    val isTradeRulesNextEnabled by presenter.isTradeRulesNextEnabled.collectAsState()
     var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
 
     val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.rules".i18n()
@@ -36,7 +37,7 @@ fun TradeGuideTradeRules() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::tradeRulesNextClick,
         nextButtonText = "mobile.action.finish".i18n(),
-        nextDisabled = !localUserAgreed,
+        nextDisabled = !localUserAgreed || !isTradeRulesNextEnabled,
         horizontalAlignment = Alignment.Start,
         showJumpToBottom = true,
     ) {

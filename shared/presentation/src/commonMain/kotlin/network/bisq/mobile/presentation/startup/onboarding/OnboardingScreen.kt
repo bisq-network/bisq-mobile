@@ -44,6 +44,7 @@ fun OnboardingScreen() {
     RememberPresenterLifecycle(presenter)
 
     val uiState by presenter.uiState.collectAsState()
+    val isNextButtonEnabled by presenter.isNextButtonEnabled.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { uiState.filteredPages.size })
 
@@ -53,6 +54,7 @@ fun OnboardingScreen() {
 
     OnboardingContent(
         uiState = uiState,
+        isNextButtonEnabled = isNextButtonEnabled,
         onAction = presenter::onAction,
         pagerState = pagerState,
         coroutineScope = coroutineScope,
@@ -62,6 +64,7 @@ fun OnboardingScreen() {
 @Composable
 private fun OnboardingContent(
     uiState: OnboardingUiState,
+    isNextButtonEnabled: Boolean = true,
     onAction: (OnboardingUiAction) -> Unit,
     pagerState: PagerState,
     coroutineScope: CoroutineScope,
@@ -93,6 +96,7 @@ private fun OnboardingContent(
                 }
                 BisqButton(
                     text = uiState.nextButtonText,
+                    disabled = !isNextButtonEnabled,
                     onClick = {
                         if (pagerState.currentPage == uiState.filteredPages.lastIndex) {
                             onAction(OnboardingUiAction.OnNextButtonClick)

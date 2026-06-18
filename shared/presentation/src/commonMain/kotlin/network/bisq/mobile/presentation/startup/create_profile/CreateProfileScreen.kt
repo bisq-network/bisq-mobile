@@ -42,7 +42,9 @@ fun CreateProfileScreen(isOnboarding: Boolean) {
     }
 
     val generateKeyPairInProgress by presenter.generateKeyPairInProgress.collectAsState()
+    val isGenerateKeyPairEnabled by presenter.isGenerateKeyPairEnabled.collectAsState()
     val createAndPublishInProgress by presenter.createAndPublishInProgress.collectAsState()
+    val isCreateAndPublishEnabled by presenter.isCreateAndPublishEnabled.collectAsState()
     val nickName by presenter.nickName.collectAsState()
     val profileIcon by presenter.profileIcon.collectAsState()
     val nym by presenter.nym.collectAsState()
@@ -99,7 +101,7 @@ fun CreateProfileScreen(isOnboarding: Boolean) {
                     }
                 Button(
                     contentPadding = PaddingValues(BisqUIConstants.Zero),
-                    enabled = !generateKeyPairInProgress,
+                    enabled = isGenerateKeyPairEnabled,
                     colors =
                         ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent,
@@ -134,7 +136,7 @@ fun CreateProfileScreen(isOnboarding: Boolean) {
         BisqButton(
             text = "onboarding.createProfile.regenerate".i18n(),
             type = BisqButtonType.Grey,
-            disabled = generateKeyPairInProgress,
+            disabled = !isGenerateKeyPairEnabled,
             padding =
                 PaddingValues(
                     horizontal = BisqUIConstants.ScreenPadding5X,
@@ -151,7 +153,7 @@ fun CreateProfileScreen(isOnboarding: Boolean) {
                     "mobile.onboarding.createProfile".i18n()
                 },
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
-            disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || nickNameError != null,
+            disabled = nickName.isEmpty() || !isCreateAndPublishEnabled || !isGenerateKeyPairEnabled || nickNameError != null,
             isLoading = createAndPublishInProgress,
             modifier = Modifier.semantics { contentDescription = "create_profile_next_button" },
         )

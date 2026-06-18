@@ -65,6 +65,7 @@ fun PaymentAccountMusigDetailScreen(
 ) {
     val presenter = RememberPresenterLifecycleBackStackAware<PaymentAccountMusigDetailPresenter>()
     val uiState by presenter.uiState.collectAsState()
+    val isConfirmDeleteEnabled by presenter.isConfirmDeleteEnabled.collectAsState()
 
     LaunchedEffect(presenter, accountName) {
         presenter.initialize(accountName)
@@ -72,6 +73,7 @@ fun PaymentAccountMusigDetailScreen(
 
     PaymentAccountMusigDetailContent(
         uiState = uiState,
+        isConfirmDeleteEnabled = isConfirmDeleteEnabled,
         topBar = { TopBar("mobile.user.paymentAccounts.details".i18n()) },
         onAction = presenter::onAction,
     )
@@ -81,6 +83,7 @@ fun PaymentAccountMusigDetailScreen(
 fun PaymentAccountMusigDetailContent(
     uiState: PaymentAccountMusigDetailUiState,
     onAction: (PaymentAccountMusigDetailUiAction) -> Unit,
+    isConfirmDeleteEnabled: Boolean = true,
     topBar: @Composable () -> Unit = {},
 ) {
     val paymentAccount = uiState.paymentAccount
@@ -157,6 +160,7 @@ fun PaymentAccountMusigDetailContent(
                     BisqButton(
                         text = "mobile.action.delete".i18n(),
                         modifier = Modifier.fillMaxWidth(),
+                        disabled = !isConfirmDeleteEnabled,
                         onClick = { onAction(PaymentAccountMusigDetailUiAction.OnDeleteAccountClick) },
                     )
                 }
@@ -164,6 +168,8 @@ fun PaymentAccountMusigDetailContent(
                 if (uiState.showDeleteConfirmationDialog) {
                     ConfirmationDialog(
                         headline = "mobile.user.paymentAccounts.delete.confirmation".i18n(),
+                        confirmButtonLoading = !isConfirmDeleteEnabled,
+                        dismissButtonLoading = !isConfirmDeleteEnabled,
                         onConfirm = { onAction(PaymentAccountMusigDetailUiAction.OnConfirmDeleteAccountClick) },
                         onDismiss = { onAction(PaymentAccountMusigDetailUiAction.OnCancelDeleteAccountClick) },
                     )

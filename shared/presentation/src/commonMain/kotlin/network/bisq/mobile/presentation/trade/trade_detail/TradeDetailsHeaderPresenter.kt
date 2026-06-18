@@ -68,6 +68,12 @@ class TradeDetailsHeaderPresenter(
     private val _sessionUiState = MutableStateFlow(TradeDetailsHeaderSessionUiState())
     val sessionUiState: StateFlow<TradeDetailsHeaderSessionUiState> = _sessionUiState.asStateFlow()
 
+    private val _isInterruptTradeEnabled = MutableStateFlow(true)
+    val isInterruptTradeEnabled: StateFlow<Boolean> = _isInterruptTradeEnabled.asStateFlow()
+
+    private val _isOpenMediationEnabled = MutableStateFlow(true)
+    val isOpenMediationEnabled: StateFlow<Boolean> = _isOpenMediationEnabled.asStateFlow()
+
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     override fun onViewAttached() {
@@ -142,11 +148,10 @@ class TradeDetailsHeaderPresenter(
                         }
                     }
                 }
-            combine(actionsFlow, paymentDataFlow, formattedTradeDurationFlow, isInteractive) { actions, payment, formattedTradeDuration, interactive ->
+            combine(actionsFlow, paymentDataFlow, formattedTradeDurationFlow) { actions, payment, formattedTradeDuration ->
                 _sessionUiState.update { prev ->
                     prev.copy(
                         showDetails = prev.showDetails,
-                        isInteractive = interactive,
                         interruptTradeButtonText = actions.interruptTradeButtonText,
                         openMediationButtonText = actions.openMediationButtonText,
                         isInMediation = actions.isInMediation,
@@ -311,29 +316,37 @@ class TradeDetailsHeaderPresenter(
         if (selectedTrade.value == null) {
             return
         }
+        if (!_isInterruptTradeEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onInterruptTrade called while interrupt is already in progress; ignoring" }
+            return
+        }
         presenterScope.launch {
-            showLoading()
-            when (tradeCloseType.value) {
-                TradeCloseType.REJECT -> {
-                    tradesServiceFacade
-                        .rejectTrade()
-                        .onFailure { exception ->
-                            handleError(exception)
-                        }
-                }
+            try {
+                showLoading()
+                when (tradeCloseType.value) {
+                    TradeCloseType.REJECT -> {
+                        tradesServiceFacade
+                            .rejectTrade()
+                            .onFailure { exception ->
+                                handleError(exception)
+                            }
+                    }
 
-                TradeCloseType.CANCEL -> {
-                    tradesServiceFacade
-                        .cancelTrade()
-                        .onFailure { exception ->
-                            handleError(exception)
-                        }
-                }
+                    TradeCloseType.CANCEL -> {
+                        tradesServiceFacade
+                            .cancelTrade()
+                            .onFailure { exception ->
+                                handleError(exception)
+                            }
+                    }
 
-                else -> Unit
+                    else -> Unit
+                }
+                _showInterruptionConfirmationDialog.value = false
+            } finally {
+                hideLoading()
+                _isInterruptTradeEnabled.value = true
             }
-            _showInterruptionConfirmationDialog.value = false
-            hideLoading()
         }
     }
 
@@ -351,25 +364,33 @@ class TradeDetailsHeaderPresenter(
             _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
             return
         }
+        if (!_isOpenMediationEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onOpenMediation called while mediation is already in progress; ignoring" }
+            return
+        }
         _showMediationConfirmationDialog.value = false
         presenterScope.launch {
-            showLoading()
-            mediationServiceFacade
-                .reportToMediator(trade)
-                .onFailure { exception ->
-                    when (exception) {
-                        is MediatorNotAvailableException -> {
-                            _mediationError.value =
-                                "mobile.takeOffer.noMediatorAvailable.warning".i18n()
-                        }
+            try {
+                showLoading()
+                mediationServiceFacade
+                    .reportToMediator(trade)
+                    .onFailure { exception ->
+                        when (exception) {
+                            is MediatorNotAvailableException -> {
+                                _mediationError.value =
+                                    "mobile.takeOffer.noMediatorAvailable.warning".i18n()
+                            }
 
-                        else -> {
-                            _mediationError.value =
-                                "mobile.bisqEasy.tradeState.mediationFailed".i18n()
+                            else -> {
+                                _mediationError.value =
+                                    "mobile.bisqEasy.tradeState.mediationFailed".i18n()
+                            }
                         }
                     }
-                }
-            hideLoading()
+            } finally {
+                hideLoading()
+                _isOpenMediationEnabled.value = true
+            }
         }
     }
 
@@ -378,9 +399,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onToggleHeader() {
-        disableInteractive()
         _sessionUiState.update { it.copy(showDetails = !it.showDetails) }
-        enableInteractive()
     }
 
     private fun reset() {

@@ -38,6 +38,9 @@ class UserProfilePresenter(
     private val _uiState = MutableStateFlow(UserProfileUiState())
     override val uiState = _uiState.asStateFlow()
 
+    private val _isActionEnabled = MutableStateFlow(true)
+    override val isActionEnabled = _isActionEnabled.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         _uiState.update { it.copy(isLoadingData = true) }
@@ -103,10 +106,14 @@ class UserProfilePresenter(
     private fun onSavePress() {
         val uiStateSnapshot = _uiState.value
         val selectedProfile = uiStateSnapshot.selectedUserProfile ?: return
-        disableInteractive()
-        _uiState.update { it.copy(isBusyWithAction = true) }
+        if (!_isActionEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onSavePress called while an action is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
             try {
+                showLoading()
                 val na = getLocalizedNA()
                 val safeStatement = uiStateSnapshot.statementDraft.takeUnless { it == na } ?: ""
                 val safeTerms = uiStateSnapshot.termsDraft.takeUnless { it == na } ?: ""
@@ -124,48 +131,60 @@ class UserProfilePresenter(
             } catch (e: Exception) {
                 log.e(e) { "Failed to save user profile settings" }
             } finally {
-                _uiState.update { it.copy(isBusyWithAction = false) }
-                enableInteractive()
+                hideLoading()
+                _isActionEnabled.value = true
             }
         }
     }
 
     private fun onDeleteConfirm() {
         val profileId = _uiState.value.showDeleteConfirmationForProfile?.id ?: return
-        disableInteractive()
-        _uiState.update { it.copy(isBusyWithAction = true, showDeleteConfirmationForProfile = null) }
+        if (!_isActionEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onDeleteConfirm called while an action is already in progress; ignoring" }
+            return
+        }
+
+        _uiState.update { it.copy(showDeleteConfirmationForProfile = null) }
         presenterScope.launch {
-            userProfileServiceFacade
-                .deleteUserProfile(profileId)
-                .onSuccess {
-                    showSnackbar("mobile.settings.userProfile.deleteSuccess".i18n())
-                }.onFailure { e ->
-                    log.e(e) { "Failed to delete user profile" }
-                    onAction(UserProfileUiAction.OnDeleteError)
-                }
-            _uiState.update { it.copy(isBusyWithAction = false) }
-            enableInteractive()
+            try {
+                showLoading()
+                userProfileServiceFacade
+                    .deleteUserProfile(profileId)
+                    .onSuccess {
+                        showSnackbar("mobile.settings.userProfile.deleteSuccess".i18n())
+                    }.onFailure { e ->
+                        log.e(e) { "Failed to delete user profile" }
+                        onAction(UserProfileUiAction.OnDeleteError)
+                    }
+            } finally {
+                hideLoading()
+                _isActionEnabled.value = true
+            }
         }
     }
 
     private fun onUserProfileSelect(profileId: String) {
         if (_uiState.value.selectedUserProfile?.id == profileId) return
+        if (!_isActionEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "onUserProfileSelect called while an action is already in progress; ignoring" }
+            return
+        }
 
-        disableInteractive()
-        _uiState.update { it.copy(isBusyWithAction = true) }
         presenterScope.launch {
-            userProfileServiceFacade
-                .selectUserProfile(profileId)
-                .onSuccess {
-                    showSnackbar("mobile.settings.userProfile.selectSuccess".i18n())
-                    _uiState.update { it.copy(isBusyWithAction = false) }
-                    enableInteractive()
-                }.onFailure { e ->
-                    log.e(e) { "Failed to change user profile" }
-                    showSnackbar("mobile.settings.userProfile.selectFailure".i18n(), type = SnackbarType.ERROR)
-                    _uiState.update { it.copy(isBusyWithAction = false) }
-                    enableInteractive()
-                }
+            try {
+                showLoading()
+                userProfileServiceFacade
+                    .selectUserProfile(profileId)
+                    .onSuccess {
+                        showSnackbar("mobile.settings.userProfile.selectSuccess".i18n())
+                    }.onFailure { e ->
+                        log.e(e) { "Failed to change user profile" }
+                        showSnackbar("mobile.settings.userProfile.selectFailure".i18n(), type = SnackbarType.ERROR)
+                    }
+            } finally {
+                hideLoading()
+                _isActionEnabled.value = true
+            }
         }
     }
 
