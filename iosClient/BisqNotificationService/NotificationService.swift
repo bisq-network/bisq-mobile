@@ -95,7 +95,7 @@ class NotificationService: UNNotificationServiceExtension {
                 "notification_id": payload.id,
                 "notification_category": summary.rawValue,
             ]
-            if let tradeId = payload.tradeId, !tradeId.isEmpty {
+            if let tradeId = payload.tradeId, !tradeId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 userInfo["notification_trade_id"] = tradeId
             }
             // Synthesize a `default`-action deep-link URI so the existing main-app
@@ -160,7 +160,7 @@ class NotificationService: UNNotificationServiceExtension {
         func deepLinkUri(tradeId: String?) -> String? {
             switch self {
             case .tradeUpdate, .chatMessage:
-                if let tradeId = tradeId, !tradeId.isEmpty {
+                if let tradeId = tradeId, !tradeId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     return "bisq://OpenTrade/\(tradeId)"
                 }
                 // Trade list. Matches NavRoute.TabMyTrades.toUriString() with

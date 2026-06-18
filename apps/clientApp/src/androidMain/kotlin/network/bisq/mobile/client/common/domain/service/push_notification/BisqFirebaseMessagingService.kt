@@ -270,7 +270,8 @@ class BisqFirebaseMessagingService :
      * (older trusted nodes), we fall back to the trade list — the same
      * behaviour as before.
      */
-    private fun pendingIntentFor(
+    @VisibleForTesting
+    internal fun pendingIntentFor(
         notificationId: String,
         category: NotificationCategory,
         tradeId: String?,
@@ -299,7 +300,8 @@ class BisqFirebaseMessagingService :
         return PendingIntent.getActivity(this, requestCode, launchIntent, flags)
     }
 
-    private fun deepLinkRouteFor(
+    @VisibleForTesting
+    internal fun deepLinkRouteFor(
         category: NotificationCategory,
         tradeId: String?,
     ): DeepLinkableRoute? = Companion.deepLinkRouteFor(category, tradeId)
