@@ -178,6 +178,27 @@ class InterruptedTradePresenterTest {
             assertFalse(globalUiManager.showLoadingDialog.value)
         }
 
+    @Test
+    fun onReportToMediator_success_shows_mediation_requested_dialog() =
+        runTest {
+            val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
+            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(tradeItem)
+            coEvery { mediationServiceFacade.reportToMediator(tradeItem) } returns Result.success(Unit)
+
+            val presenter =
+                InterruptedTradePresenter(
+                    mainPresenter,
+                    tradesServiceFacade,
+                    mediationServiceFacade,
+                    tradeReadStateRepository,
+                )
+
+            presenter.onReportToMediator()
+
+            coVerify { mediationServiceFacade.reportToMediator(tradeItem) }
+            assertEquals(true, presenter.showMediationRequestedDialog.value)
+        }
+
     // Helper: simple polling wait
     private suspend fun waitUntil(
         timeoutMs: Long,

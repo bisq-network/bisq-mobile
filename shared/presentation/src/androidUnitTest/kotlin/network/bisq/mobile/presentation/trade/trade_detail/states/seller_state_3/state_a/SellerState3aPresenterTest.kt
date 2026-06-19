@@ -15,6 +15,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SellerState3aPresenterTest {
@@ -44,5 +45,19 @@ class SellerState3aPresenterTest {
 
             coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmBtcSent("tx-id-123") }
             assertFalse(presenter.isConfirmSendEnabled.value)
+        }
+
+    @Test
+    fun `confirm send failure re-enables confirm guard`() =
+        runTest(testDispatcher) {
+            val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onPaymentProofInput("tx-id-123", isValid = true)
+            coEvery { tradesServiceFacade.sellerConfirmBtcSent(any()) } returns
+                Result.failure(RuntimeException("confirm failed"))
+
+            presenter.confirmSend()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isConfirmSendEnabled.value)
         }
 }

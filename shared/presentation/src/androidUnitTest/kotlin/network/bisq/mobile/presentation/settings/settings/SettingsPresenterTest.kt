@@ -1510,4 +1510,40 @@ class SettingsPresenterTest {
             coVerify(exactly = 1) { settingsServiceFacade.setDifficultyAdjustmentFactor(2.0) }
             assertFalse(presenter.isPowFactorSaveEnabled.value)
         }
+
+    @Test
+    fun `num days save failure keeps save guard enabled for retry`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.setNumDaysAfterRedactingTradeData(any()) } returns
+                Result.failure(Exception("save failed"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnNumDaysAfterRedactingTradeDataChange("120"))
+            presenter.onAction(SettingsUiAction.OnNumDaysAfterRedactingTradeDataSave)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isNumDaysAfterRedactingTradeDataSaveEnabled.value)
+        }
+
+    @Test
+    fun `pow factor save failure keeps save guard enabled for retry`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.setDifficultyAdjustmentFactor(any()) } returns
+                Result.failure(Exception("save failed"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnPowFactorChange("2"))
+            presenter.onAction(SettingsUiAction.OnPowFactorSave)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isPowFactorSaveEnabled.value)
+        }
 }

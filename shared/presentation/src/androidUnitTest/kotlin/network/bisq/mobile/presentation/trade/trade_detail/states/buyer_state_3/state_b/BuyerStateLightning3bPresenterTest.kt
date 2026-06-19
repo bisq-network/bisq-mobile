@@ -15,6 +15,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BuyerStateLightning3bPresenterTest {
@@ -43,5 +44,18 @@ class BuyerStateLightning3bPresenterTest {
 
             coVerify(exactly = 1) { tradesServiceFacade.btcConfirmed() }
             assertFalse(presenter.isCompleteTradeEnabled.value)
+        }
+
+    @Test
+    fun `complete trade failure re-enables guard`() =
+        runTest(testDispatcher) {
+            val presenter = BuyerStateLightning3bPresenter(mainPresenter, tradesServiceFacade)
+            coEvery { tradesServiceFacade.btcConfirmed() } returns
+                Result.failure(RuntimeException("failed"))
+
+            presenter.onCompleteTrade()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isCompleteTradeEnabled.value)
         }
 }

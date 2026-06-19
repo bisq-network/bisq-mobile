@@ -15,6 +15,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SellerStateLightning3bPresenterTest {
@@ -43,5 +44,18 @@ class SellerStateLightning3bPresenterTest {
 
             coVerify(exactly = 1) { tradesServiceFacade.btcConfirmed() }
             assertFalse(presenter.isSkipWaitingEnabled.value)
+        }
+
+    @Test
+    fun `skip waiting failure re-enables guard`() =
+        runTest(testDispatcher) {
+            val presenter = SellerStateLightning3bPresenter(mainPresenter, tradesServiceFacade)
+            coEvery { tradesServiceFacade.btcConfirmed() } returns
+                Result.failure(RuntimeException("failed"))
+
+            presenter.skipWaiting()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isSkipWaitingEnabled.value)
         }
 }

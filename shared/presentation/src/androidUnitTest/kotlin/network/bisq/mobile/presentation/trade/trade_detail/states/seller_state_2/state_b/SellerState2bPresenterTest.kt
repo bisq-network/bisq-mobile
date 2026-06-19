@@ -15,6 +15,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SellerState2bPresenterTest {
@@ -43,5 +44,18 @@ class SellerState2bPresenterTest {
 
             coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmFiatReceipt() }
             assertFalse(presenter.isConfirmFiatReceiptEnabled.value)
+        }
+
+    @Test
+    fun `confirm fiat receipt failure re-enables guard`() =
+        runTest(testDispatcher) {
+            val presenter = SellerState2bPresenter(mainPresenter, tradesServiceFacade)
+            coEvery { tradesServiceFacade.sellerConfirmFiatReceipt() } returns
+                Result.failure(RuntimeException("failed"))
+
+            presenter.onConfirmFiatReceipt()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isConfirmFiatReceiptEnabled.value)
         }
 }

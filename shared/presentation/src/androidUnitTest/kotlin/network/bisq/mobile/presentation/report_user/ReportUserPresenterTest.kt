@@ -132,4 +132,35 @@ class ReportUserPresenterTest {
             assertTrue(presenter.uiState.value.isReportMessageValid)
             assertFalse(presenter.uiState.value.isLoading)
         }
+
+    @Test
+    fun `report success completes and re-enables report button`() =
+        runTest(testDispatcher) {
+            coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns
+                Result.success(Unit)
+
+            presenter.onReportClick()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isReportActionEnabled.value)
+            assertFalse(presenter.uiState.value.isLoading)
+            coVerify(exactly = 1) { userProfileServiceFacade.reportUserProfile(reportedUser, any()) }
+        }
+
+    @Test
+    fun `report click before initialize completes without calling service`() =
+        runTest(testDispatcher) {
+            val uninitializedPresenter =
+                ReportUserPresenter(
+                    mainPresenter = mainPresenter,
+                    userProfileServiceFacade = userProfileServiceFacade,
+                )
+            uninitializedPresenter.onMessageChange("report text")
+
+            uninitializedPresenter.onReportClick()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { userProfileServiceFacade.reportUserProfile(any(), any()) }
+            assertTrue(uninitializedPresenter.isReportActionEnabled.value)
+        }
 }

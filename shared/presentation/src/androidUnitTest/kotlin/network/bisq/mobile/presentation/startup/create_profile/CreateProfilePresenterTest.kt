@@ -4,8 +4,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -24,6 +26,7 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -106,16 +109,61 @@ class CreateProfilePresenterTest {
     @Test
     fun `rapid double-tap on regenerate key pair triggers generateKeyPair only once`() =
         runTest(testDispatcher) {
+            val keyGenerationStarted = CompletableDeferred<Unit>()
             coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
-                delay(Long.MAX_VALUE)
+                keyGenerationStarted.complete(Unit)
+                awaitCancellation()
             }
 
             presenter = createPresenter()
             presenter.onGenerateKeyPair()
             presenter.onGenerateKeyPair()
-            advanceUntilIdle()
+            keyGenerationStarted.await()
 
             coVerify(exactly = 1) { userProfileService.generateKeyPair(any(), any()) }
             assertFalse(presenter.isGenerateKeyPairEnabled.value)
+        }
+
+    @Test
+    fun `create profile success during onboarding navigates to home and clears nickname`() =
+        runTest(testDispatcher) {
+            coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
+                val callback = secondArg<(String, String, Any?) -> Unit>()
+                callback("id", "nym", null)
+            }
+            coEvery { userProfileService.createAndPublishNewUserProfile(any()) } returns Unit
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.setIsOnboarding(true)
+            presenter.setNickname("Alice")
+            presenter.onCreateAndPublishNewUserProfile()
+            advanceUntilIdle()
+
+            assertEquals("", presenter.nickName.value)
+            coVerify(exactly = 1) { userProfileService.createAndPublishNewUserProfile("Alice") }
+        }
+
+    @Test
+    fun `create profile success outside onboarding navigates back`() =
+        runTest(testDispatcher) {
+            coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
+                val callback = secondArg<(String, String, Any?) -> Unit>()
+                callback("id", "nym", null)
+            }
+            coEvery { userProfileService.createAndPublishNewUserProfile(any()) } returns Unit
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.setIsOnboarding(false)
+            presenter.setNickname("Bob")
+            presenter.onCreateAndPublishNewUserProfile()
+            advanceUntilIdle()
+
+            assertEquals("", presenter.nickName.value)
         }
 }

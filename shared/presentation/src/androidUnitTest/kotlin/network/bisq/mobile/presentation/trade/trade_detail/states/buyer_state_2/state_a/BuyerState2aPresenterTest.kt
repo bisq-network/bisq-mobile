@@ -15,6 +15,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BuyerState2aPresenterTest {
@@ -43,5 +44,18 @@ class BuyerState2aPresenterTest {
 
             coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent() }
             assertFalse(presenter.isConfirmFiatSentEnabled.value)
+        }
+
+    @Test
+    fun `confirm fiat sent failure re-enables guard`() =
+        runTest(testDispatcher) {
+            val presenter = BuyerState2aPresenter(mainPresenter, tradesServiceFacade)
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent() } returns
+                Result.failure(RuntimeException("failed"))
+
+            presenter.onConfirmFiatSent()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isConfirmFiatSentEnabled.value)
         }
 }
