@@ -58,4 +58,16 @@ class BuyerStateLightning3bPresenterTest {
 
             assertTrue(presenter.isCompleteTradeEnabled.value)
         }
+
+    @Test
+    fun `complete trade exception re-enables guard`() =
+        runTest(testDispatcher) {
+            val presenter = BuyerStateLightning3bPresenter(mainPresenter, tradesServiceFacade)
+            coEvery { tradesServiceFacade.btcConfirmed() } throws RuntimeException("failed")
+
+            presenter.onCompleteTrade()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isCompleteTradeEnabled.value)
+        }
 }

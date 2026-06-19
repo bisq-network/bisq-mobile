@@ -76,10 +76,12 @@ class TrustedNodeSetupPresenter(
                 it.copy(showKeystoreError = true)
             }
         } else if (showConnectionFailed) {
+            resetConnectionFailedRetryGuard()
             _uiState.update {
                 it.copy(showConnectionFailedWarning = true)
             }
         } else if (showSubscriptionsFailed) {
+            resetConnectionFailedRetryGuard()
             _uiState.update {
                 if (webSocketClientService.connectionState.value is ConnectionState.Connected) {
                     it.copy(
@@ -146,6 +148,7 @@ class TrustedNodeSetupPresenter(
                 if (connectionState is ConnectionState.Disconnected) {
                     _uiState.update { currentState ->
                         if (currentState.showSubscriptionsFailedWarning) {
+                            resetConnectionFailedRetryGuard()
                             currentState.copy(
                                 showSubscriptionsFailedWarning = false,
                                 showConnectionFailedWarning = true,
@@ -360,9 +363,13 @@ class TrustedNodeSetupPresenter(
             } else {
                 // Re-show the connection failed dialog so the user can retry
                 _uiState.update { it.copy(showConnectionFailedWarning = true) }
-                _isConnectionFailedRetryEnabled.value = true
+                resetConnectionFailedRetryGuard()
             }
         }
+    }
+
+    private fun resetConnectionFailedRetryGuard() {
+        _isConnectionFailedRetryEnabled.value = true
     }
 
     private fun onFailedSubsDialogContinuePress() {

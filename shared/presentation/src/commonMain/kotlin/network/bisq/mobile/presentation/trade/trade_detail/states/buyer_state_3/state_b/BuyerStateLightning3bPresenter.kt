@@ -23,7 +23,10 @@ class BuyerStateLightning3bPresenter(
             "onCompleteTrade",
             reEnableGuardOnComplete = false,
         ) {
-            tradesServiceFacade.btcConfirmed().onFailure {
+            val result =
+                runCatching { tradesServiceFacade.btcConfirmed() }
+                    .getOrElse { Result.failure(it) }
+            result.onFailure {
                 _isCompleteTradeEnabled.value = true
             }
         }

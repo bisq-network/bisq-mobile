@@ -1014,6 +1014,52 @@ class TrustedNodeSetupPresenterTest {
         }
 
     @Test
+    fun `re-enables retry guard when connection failed warning is shown again after successful retry`() =
+        runTest(testDispatcher) {
+            coEvery { applicationLifecycleService.deactivate() } returns Unit
+            coEvery { applicationLifecycleService.activate() } returns Unit
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showConnectionFailed = true)
+            advanceUntilIdle()
+
+            presenter.onAction(TrustedNodeSetupUiAction.OnConnectionFailedRetryPress)
+            advanceUntilIdle()
+
+            assertFalse(presenter.isConnectionFailedRetryEnabled.value)
+
+            presenter.initialize(isWorkflow = true, showConnectionFailed = true)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isConnectionFailedRetryEnabled.value)
+            assertTrue(presenter.uiState.value.showConnectionFailedWarning)
+        }
+
+    @Test
+    fun `re-enables retry guard when subscriptions failed warning is shown again after successful retry`() =
+        runTest(testDispatcher) {
+            coEvery { applicationLifecycleService.deactivate() } returns Unit
+            coEvery { applicationLifecycleService.activate() } returns Unit
+            setupPresenter()
+            presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
+            advanceUntilIdle()
+
+            presenter.onAction(
+                TrustedNodeSetupUiAction.OnSubscriptionsFailedDialogUiAction(
+                    SubscriptionsFailedDialogUiAction.OnRetryPress,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertFalse(presenter.isConnectionFailedRetryEnabled.value)
+
+            presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isConnectionFailedRetryEnabled.value)
+            assertTrue(presenter.uiState.value.showSubscriptionsFailedWarning)
+        }
+
+    @Test
     fun `re-shows connection failed warning when lifecycle restart fails`() =
         runTest(testDispatcher) {
             // Given

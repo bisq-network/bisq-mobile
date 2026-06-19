@@ -12,6 +12,7 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.trade.export.TradeCompletedCsv
 import network.bisq.mobile.domain.trade.export.TradeExportCsvHeaders
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.share.ShareFileService
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
@@ -93,7 +94,13 @@ abstract class State4Presenter(
 
                 result.isSuccess -> {
                     withContext(Dispatchers.IO) {
-                        tradeReadStateRepository.clearId(tradeId)
+                        runCatching {
+                            tradeReadStateRepository.clearId(tradeId)
+                        }.onFailure { ex ->
+                            GenericErrorHandler.handleGenericError(
+                                "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: ""),
+                            )
+                        }
                     }
                     _uiState.update { it.copy(showCloseTradeDialog = false) }
                     navigateBack()

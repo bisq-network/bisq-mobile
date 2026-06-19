@@ -169,6 +169,28 @@ class State4PresenterTest {
         }
 
     @Test
+    fun onConfirmCloseTrade_success_but_clearReadState_throws_showsError_and_still_navigates() =
+        runTest {
+            val trade = tradeForTests("t-clear-fail", "s3")
+            val selected = MutableStateFlow<TradeItemPresentationModel?>(trade)
+            val presenter = createPresenter(selected)
+            presenter.onViewAttached()
+            presenter.onAction(State4UiAction.OnCloseTradeClick)
+            coEvery { tradesServiceFacade.closeTrade() } returns Result.success(Unit)
+            coEvery { tradeReadStateRepository.clearId("t-clear-fail") } throws IllegalStateException("fail-clear")
+
+            presenter.onAction(State4UiAction.OnConfirmCloseTrade)
+
+            verify(timeout = 500) { navigationManager.navigateBack(any()) }
+            assertFalse(presenter.uiState.value.showCloseTradeDialog)
+            waitUntil(timeoutMs = 500) {
+                GenericErrorHandler.genericErrorMessage.value?.contains("Failed to update read state") == true
+            }
+            waitUntil(timeoutMs = 1000) { globalUiManager.showLoadingDialog.value == false }
+            assertFalse(globalUiManager.showLoadingDialog.value)
+        }
+
+    @Test
     fun onConfirmCloseTrade_failure_shows_error_and_closes_dialog() =
         runTest {
             val trade = tradeForTests("t-fail", "s2")

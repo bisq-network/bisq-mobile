@@ -4,11 +4,14 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
@@ -59,5 +62,10 @@ class OfferbookScreenDeleteConfirmationUiTest {
         composeTestRule
             .onNodeWithText("bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n())
             .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithContentDescription("dialog_confirm_yes")
+            .assertIsNotEnabled()
+
+        verify(exactly = 0) { presenter.onConfirmedDeleteOffer() }
     }
 }

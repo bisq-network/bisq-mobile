@@ -4,7 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
@@ -23,6 +26,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertFalse
 
 @RunWith(AndroidJUnit4::class)
 class ActionGuardScreenBindingUiTest {
@@ -47,16 +51,26 @@ class ActionGuardScreenBindingUiTest {
     @Test
     fun `ChatInputField respects sendEnabled false`() {
         var sent = false
+        val placeholder = "Type message"
         setTestContent {
             ChatInputField(
                 onMessageSend = { sent = true },
-                placeholder = "Type message",
+                placeholder = placeholder,
                 sendEnabled = false,
             )
         }
 
         composeTestRule.waitForIdle()
-        assert(!sent)
+        composeTestRule
+            .onNodeWithText(placeholder)
+            .performTextInput("hello")
+        composeTestRule
+            .onNodeWithContentDescription("Send icon")
+            .assertIsNotEnabled()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertFalse(sent)
     }
 
     @Test

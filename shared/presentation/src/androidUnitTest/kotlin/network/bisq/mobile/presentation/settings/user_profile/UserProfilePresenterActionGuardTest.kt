@@ -186,7 +186,7 @@ class UserProfilePresenterActionGuardTest {
         }
 
     @Test
-    fun `delete confirm exception is logged and does not crash`() =
+    fun `delete confirm exception shows error dialog`() =
         runTest(testDispatcher) {
             setUiState(
                 UserProfileUiState(
@@ -200,6 +200,7 @@ class UserProfilePresenterActionGuardTest {
             presenter.onAction(UserProfileUiAction.OnDeleteConfirm)
             advanceUntilIdle()
 
+            assertTrue(presenter.uiState.value.showDeleteErrorDialog)
             assertTrue(presenter.isActionEnabled.value)
         }
 

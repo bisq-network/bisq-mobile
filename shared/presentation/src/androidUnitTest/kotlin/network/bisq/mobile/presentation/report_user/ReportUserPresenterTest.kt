@@ -4,12 +4,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
@@ -105,18 +106,22 @@ class ReportUserPresenterTest {
     @Test
     fun `rapid double-tap on onReportClick triggers reportUserProfile only once`() =
         runTest(testDispatcher) {
+            val blocker = CompletableDeferred<Unit>()
             coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } coAnswers {
-                delay(Long.MAX_VALUE)
+                blocker.await()
                 Result.success(Unit)
             }
 
             presenter.onReportClick()
             presenter.onReportClick()
-            advanceUntilIdle()
+            runCurrent()
 
             coVerify(exactly = 1) { userProfileServiceFacade.reportUserProfile(reportedUser, any()) }
             assertFalse(presenter.isReportActionEnabled.value)
             assertTrue(presenter.uiState.value.isLoading)
+
+            blocker.complete(Unit)
+            advanceUntilIdle()
         }
 
     @Test

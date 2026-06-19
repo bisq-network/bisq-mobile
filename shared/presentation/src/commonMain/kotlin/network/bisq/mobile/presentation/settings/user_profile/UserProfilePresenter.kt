@@ -143,6 +143,7 @@ class UserProfilePresenter(
                     }
             } catch (e: Exception) {
                 log.e(e) { "Failed to delete user profile $profileId" }
+                onAction(UserProfileUiAction.OnDeleteError)
             }
         }
     }
@@ -161,6 +162,7 @@ class UserProfilePresenter(
                     }
             } catch (e: Exception) {
                 log.e(e) { "Failed to select user profile $profileId" }
+                showSnackbar("mobile.settings.userProfile.selectFailure".i18n(), type = SnackbarType.ERROR)
             }
         }
     }

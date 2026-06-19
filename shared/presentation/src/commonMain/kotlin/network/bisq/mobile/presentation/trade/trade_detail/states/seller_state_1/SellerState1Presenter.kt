@@ -96,11 +96,12 @@ class SellerState1Presenter(
             "onSendPaymentData",
             reEnableGuardOnComplete = false,
         ) {
-            tradesServiceFacade
-                .sellerSendsPaymentAccount(paymentAccountData)
-                .onFailure {
-                    _isSendPaymentDataEnabled.value = true
-                }
+            val result =
+                runCatching { tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData) }
+                    .getOrElse { Result.failure(it) }
+            result.onFailure {
+                _isSendPaymentDataEnabled.value = true
+            }
         }
     }
 }
