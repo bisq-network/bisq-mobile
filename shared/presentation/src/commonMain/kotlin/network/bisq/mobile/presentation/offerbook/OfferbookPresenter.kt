@@ -129,6 +129,7 @@ open class OfferbookPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
+        resetActionGuards()
         selectedOffer = null
         presenterScope.launch {
             // pack strongly-typed, use vararg combine -> Array, then map
@@ -777,4 +778,10 @@ open class OfferbookPresenter(
      * This method is safe to call from hot paths like offer filtering.
      */
     open fun isOfferFromIgnoredUserCached(offer: BisqEasyOfferVO): Boolean = false
+
+    private fun resetActionGuards() {
+        _isCreateOfferEnabled.value = true
+        _isDeleteOfferEnabled.value = true
+        _isTakeOfferEnabled.value = true
+    }
 }

@@ -1408,6 +1408,27 @@ class SettingsPresenterTest {
     // ========== Duplicate-call protection tests ==========
 
     @Test
+    fun `rapid double-tap on supported language toggle triggers setSupportedLanguageCodes only once`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.setSupportedLanguageCodes(setOf("en", "es", "de")) } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success(Unit)
+            }
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnSupportedLanguageCodeToggle("de", true))
+            presenter.onAction(SettingsUiAction.OnSupportedLanguageCodeToggle("de", true))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { settingsServiceFacade.setSupportedLanguageCodes(setOf("en", "es", "de")) }
+            assertFalse(presenter.isSupportedLanguageCodesChangeEnabled.value)
+        }
+
+    @Test
     fun `rapid double-tap on trade price tolerance save triggers setMaxTradePriceDeviation only once`() =
         runTest(testDispatcher) {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)

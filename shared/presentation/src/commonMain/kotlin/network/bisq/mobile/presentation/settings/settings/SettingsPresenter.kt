@@ -349,6 +349,11 @@ open class SettingsPresenter(
         langCode: String,
         selected: Boolean,
     ) {
+        if (!_isSupportedLanguageCodesChangeEnabled.compareAndSet(expect = true, update = false)) {
+            log.w { "setSupportedLanguageCodes called while update is already in progress; ignoring" }
+            return
+        }
+
         presenterScope.launch {
             val current = _uiState.value.supportedLanguageCodes
             val next = if (selected) current + langCode else current - langCode
