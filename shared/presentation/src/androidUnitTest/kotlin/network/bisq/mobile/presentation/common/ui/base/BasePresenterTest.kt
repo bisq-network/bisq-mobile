@@ -10,14 +10,18 @@ import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
@@ -32,7 +36,9 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BasePresenterTest {
@@ -53,11 +59,7 @@ class BasePresenterTest {
             modules(
                 module {
                     single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
+                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
                     single<NavigationManager> { mockk(relaxed = true) }
                     single { globalUiManager }
                 },
@@ -215,6 +217,96 @@ class BasePresenterTest {
                 any(),
             )
         }
+    }
+
+    @Test
+    fun `guardedSuspendAction re-enables guard and hides loading when block completes`() =
+        runTest(testDispatcher) {
+            val guard = MutableStateFlow(true)
+            val presenter = GuardTestPresenter(mainPresenter)
+            presenter.onViewAttached()
+
+            assertTrue(presenter.runGuarded(guard))
+            advanceUntilIdle()
+
+            assertTrue(guard.value)
+            verify(atLeast = 1) { globalUiManager.hideLoading() }
+        }
+
+    @Test
+    fun `guardedSuspendAction ignores second call while first is in progress`() =
+        runTest(testDispatcher) {
+            val guard = MutableStateFlow(true)
+            val presenter = GuardTestPresenter(mainPresenter)
+            presenter.onViewAttached()
+
+            assertTrue(presenter.runGuarded(guard, blockForMs = Long.MAX_VALUE))
+            advanceUntilIdle() // first block enters and suspends on delay
+            assertEquals(1, presenter.blockStartCount)
+            assertFalse(guard.value)
+
+            assertFalse(presenter.runGuarded(guard, blockForMs = 0))
+            assertEquals(1, presenter.blockStartCount)
+            assertEquals(0, presenter.completedActions)
+        }
+
+    @Test
+    fun `guardedSuspendAction with reEnableGuardOnComplete false leaves guard disabled after success`() =
+        runTest(testDispatcher) {
+            val guard = MutableStateFlow(true)
+            val presenter = GuardTestPresenter(mainPresenter)
+            presenter.onViewAttached()
+
+            assertTrue(presenter.runGuarded(guard, reEnableGuardOnComplete = false))
+            advanceUntilIdle()
+
+            assertFalse(guard.value)
+        }
+
+    @Test
+    fun `guardedSuspendAction with reEnableGuardOnComplete false allows manual re-enable on failure`() =
+        runTest(testDispatcher) {
+            val guard = MutableStateFlow(true)
+            val presenter = GuardTestPresenter(mainPresenter)
+            presenter.onViewAttached()
+
+            assertTrue(
+                presenter.runGuarded(reEnableGuardOnComplete = false) {
+                    guard.value = true
+                },
+            )
+            advanceUntilIdle()
+
+            assertTrue(guard.value)
+        }
+
+    private class GuardTestPresenter(
+        mainPresenter: MainPresenter,
+    ) : BasePresenter(mainPresenter) {
+        var blockStartCount = 0
+        var completedActions = 0
+
+        fun runGuarded(
+            guard: MutableStateFlow<Boolean> = MutableStateFlow(true),
+            blockForMs: Long = 0,
+            showLoadingOverlay: Boolean = true,
+            reEnableGuardOnComplete: Boolean = true,
+            block: (suspend () -> Unit)? = null,
+        ): Boolean =
+            guardedSuspendAction(
+                guard,
+                "testAction",
+                showLoadingOverlay = showLoadingOverlay,
+                reEnableGuardOnComplete = reEnableGuardOnComplete,
+            ) {
+                blockStartCount++
+                if (block != null) {
+                    block()
+                } else {
+                    delay(blockForMs)
+                    completedActions++
+                }
+            }
     }
 
     private class TestPresenter(

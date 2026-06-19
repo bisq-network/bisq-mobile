@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
@@ -97,15 +97,13 @@ class CreateProfilePresenter(
         val toSubmit = nickName.value.trim()
         if (toSubmit.isEmpty()) return
 
-        if (!_isCreateAndPublishEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onCreateAndPublishNewUserProfile called while create is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(
+            _isCreateAndPublishEnabled,
+            "onCreateAndPublishNewUserProfile",
+            reEnableGuardOnComplete = false,
+        ) {
             try {
                 _createAndPublishInProgress.value = true
-                showLoading()
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 userProfileService.createAndPublishNewUserProfile(toSubmit)
                 if (isOnboarding.value) {
@@ -127,38 +125,34 @@ class CreateProfilePresenter(
                 )
                 _createAndPublishInProgress.value = false
                 _isCreateAndPublishEnabled.value = true
-            } finally {
-                hideLoading()
             }
         }
     }
 
     // Private
     private fun generateKeyPair() {
-        if (!_isGenerateKeyPairEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "generateKeyPair called while generation is already in progress; ignoring" }
-            return
-        }
-
-        _generateKeyPairInProgress.value = true
-        log.i { "Show busy animation for generateKeyPair" }
-
-        presenterScope.launch(Dispatchers.Default) {
+        guardedSuspendAction(
+            _isGenerateKeyPairEnabled,
+            "generateKeyPair",
+            showLoadingOverlay = false,
+        ) {
+            _generateKeyPairInProgress.value = true
+            log.i { "Show busy animation for generateKeyPair" }
             try {
-                // takes 200 -1000 ms
-                userProfileService.generateKeyPair(
-                    IMAGE_SIZE_IN_PX,
-                ) { id, nym, profileIcon ->
-                    setId(id)
-                    setNym(nym)
-                    setProfileIcon(profileIcon)
+                withContext(Dispatchers.Default) {
+                    // takes 200 -1000 ms
+                    userProfileService.generateKeyPair(
+                        IMAGE_SIZE_IN_PX,
+                    ) { id, nym, profileIcon ->
+                        setId(id)
+                        setNym(nym)
+                        setProfileIcon(profileIcon)
+                    }
                 }
             } catch (e: Exception) {
                 showSnackbar("mobile.profile.generatingKeyPairFailed".i18n(), type = SnackbarType.ERROR)
-                _isGenerateKeyPairEnabled.value = true
             } finally {
                 _generateKeyPairInProgress.value = false
-                _isGenerateKeyPairEnabled.value = true
                 log.i { "Hide busy animation for generateKeyPair" }
             }
         }

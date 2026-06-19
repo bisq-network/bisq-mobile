@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -43,26 +42,20 @@ class PaymentAccountMusigDetailPresenter(
 
     private fun onConfirmDeleteAccountClick() {
         val account = uiState.value.paymentAccount ?: return
-        if (!_isConfirmDeleteEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmDeleteAccountClick called while delete is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                _uiState.update { state -> state.copy(showDeleteConfirmationDialog = false) }
-                paymentAccountsServiceFacade
-                    .deleteAccount(account.accountName)
-                    .onSuccess {
-                        navigateBack()
-                    }.onFailure {
-                        handleError(it)
-                        _isConfirmDeleteEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(
+            _isConfirmDeleteEnabled,
+            "onConfirmDeleteAccountClick",
+            reEnableGuardOnComplete = false,
+        ) {
+            _uiState.update { state -> state.copy(showDeleteConfirmationDialog = false) }
+            paymentAccountsServiceFacade
+                .deleteAccount(account.accountName)
+                .onSuccess {
+                    navigateBack()
+                }.onFailure {
+                    handleError(it)
+                    _isConfirmDeleteEnabled.value = true
+                }
         }
     }
 

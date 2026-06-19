@@ -267,81 +267,59 @@ open class SettingsPresenter(
     }
 
     private fun onPushNotificationsToggle(enabled: Boolean) {
-        if (!_isPushNotificationsToggleEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onPushNotificationsToggle called while toggle is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                val result =
-                    if (enabled) {
-                        pushNotificationServiceFacade.registerForPushNotifications()
-                    } else {
-                        pushNotificationServiceFacade.unregisterFromPushNotifications()
+        guardedSuspendAction(_isPushNotificationsToggleEnabled, "onPushNotificationsToggle") {
+            val result =
+                if (enabled) {
+                    pushNotificationServiceFacade.registerForPushNotifications()
+                } else {
+                    pushNotificationServiceFacade.unregisterFromPushNotifications()
+                }
+            result
+                .onSuccess {
+                    // Hide-implies-reset: when relayed is turned off the keep-connected sub-toggle
+                    // disappears from the UI. Persist the reset so re-enabling relayed later
+                    // starts fresh on the default (OFF) rather than remembering a previously
+                    // chosen power-user combo the user can no longer see or undo.
+                    if (!enabled) {
+                        settingsRepository.update { it.copy(keepConnectedInBackground = false) }
                     }
-                result
-                    .onSuccess {
-                        // Hide-implies-reset: when relayed is turned off the keep-connected sub-toggle
-                        // disappears from the UI. Persist the reset so re-enabling relayed later
-                        // starts fresh on the default (OFF) rather than remembering a previously
-                        // chosen power-user combo the user can no longer see or undo.
-                        if (!enabled) {
-                            settingsRepository.update { it.copy(keepConnectedInBackground = false) }
+                    val msgKey =
+                        if (enabled) {
+                            "mobile.pushNotifications.registrationSuccess"
+                        } else {
+                            "mobile.pushNotifications.toggleOffSuccess"
                         }
-                        val msgKey =
-                            if (enabled) {
-                                "mobile.pushNotifications.registrationSuccess"
-                            } else {
-                                "mobile.pushNotifications.toggleOffSuccess"
-                            }
-                        showSnackbar(msgKey.i18n())
-                        // Track only on success — a failed register/unregister means
-                        // the toggle didn't actually take effect, so emitting would
-                        // misrepresent state. handleError path below emits nothing.
-                        val event =
-                            if (enabled) {
-                                AnalyticsEvent.Settings.PushNotificationsEnabled
-                            } else {
-                                AnalyticsEvent.Settings.PushNotificationsDisabled
-                            }
-                        analyticsService?.track(event)
-                    }.onFailure { exception ->
-                        handleError(exception)
-                    }
-            } finally {
-                hideLoading()
-                _isPushNotificationsToggleEnabled.value = true
-            }
+                    showSnackbar(msgKey.i18n())
+                    // Track only on success — a failed register/unregister means
+                    // the toggle didn't actually take effect, so emitting would
+                    // misrepresent state. handleError path below emits nothing.
+                    val event =
+                        if (enabled) {
+                            AnalyticsEvent.Settings.PushNotificationsEnabled
+                        } else {
+                            AnalyticsEvent.Settings.PushNotificationsDisabled
+                        }
+                    analyticsService?.track(event)
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 
     private fun setLanguageCode(langCode: String) {
-        if (!_isLanguageCodeChangeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "setLanguageCode called while language change is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                settingsServiceFacade
-                    .setLanguageCode(langCode)
-                    .onSuccess {
-                        try {
-                            setDefaultLocale(langCode)
-                            _uiState.update { it.copy(languageCode = langCode) }
-                        } catch (e: Exception) {
-                            showSnackbar(e.message ?: "mobile.error.generic".i18n(), SnackbarType.ERROR)
-                        }
-                    }.onFailure { exception ->
-                        handleError(exception)
+        guardedSuspendAction(_isLanguageCodeChangeEnabled, "setLanguageCode") {
+            settingsServiceFacade
+                .setLanguageCode(langCode)
+                .onSuccess {
+                    try {
+                        setDefaultLocale(langCode)
+                        _uiState.update { it.copy(languageCode = langCode) }
+                    } catch (e: Exception) {
+                        showSnackbar(e.message ?: "mobile.error.generic".i18n(), SnackbarType.ERROR)
                     }
-            } finally {
-                hideLoading()
-                _isLanguageCodeChangeEnabled.value = true
-            }
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 
@@ -349,51 +327,29 @@ open class SettingsPresenter(
         langCode: String,
         selected: Boolean,
     ) {
-        if (!_isSupportedLanguageCodesChangeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "setSupportedLanguageCodes called while update is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(_isSupportedLanguageCodesChangeEnabled, "setSupportedLanguageCodes") {
             val current = _uiState.value.supportedLanguageCodes
             val next = if (selected) current + langCode else current - langCode
             _uiState.update { it.copy(supportedLanguageCodes = next) }
 
-            try {
-                showLoading()
-                settingsServiceFacade
-                    .setSupportedLanguageCodes(next)
-                    .onFailure { exception ->
-                        _uiState.update { it.copy(supportedLanguageCodes = current) }
-                        handleError(exception, position = SnackbarPosition.TOP)
-                    }
-            } finally {
-                hideLoading()
-                _isSupportedLanguageCodesChangeEnabled.value = true
-            }
+            settingsServiceFacade
+                .setSupportedLanguageCodes(next)
+                .onFailure { exception ->
+                    _uiState.update { it.copy(supportedLanguageCodes = current) }
+                    handleError(exception, position = SnackbarPosition.TOP)
+                }
         }
     }
 
     private fun setCloseOfferWhenTradeTaken(value: Boolean) {
-        if (!_isCloseOfferWhenTradeTakenChangeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "setCloseOfferWhenTradeTaken called while update is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                _uiState.update { it.copy(closeOfferWhenTradeTaken = value) }
-                settingsServiceFacade
-                    .setCloseMyOfferWhenTaken(value)
-                    .onFailure { exception ->
-                        _uiState.update { it.copy(closeOfferWhenTradeTaken = !value) }
-                        handleError(exception)
-                    }
-            } finally {
-                hideLoading()
-                _isCloseOfferWhenTradeTakenChangeEnabled.value = true
-            }
+        guardedSuspendAction(_isCloseOfferWhenTradeTakenChangeEnabled, "setCloseOfferWhenTradeTaken") {
+            _uiState.update { it.copy(closeOfferWhenTradeTaken = value) }
+            settingsServiceFacade
+                .setCloseMyOfferWhenTaken(value)
+                .onFailure { exception ->
+                    _uiState.update { it.copy(closeOfferWhenTradeTaken = !value) }
+                    handleError(exception)
+                }
         }
     }
 
@@ -426,29 +382,17 @@ open class SettingsPresenter(
         val parsedValue = currentEntry.value.toDoubleOrNullLocaleAware() ?: return
         val newDeviation = parsedValue / 100
 
-        if (!_isTradePriceToleranceSaveEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onTradePriceToleranceSave called while save is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                settingsServiceFacade
-                    .setMaxTradePriceDeviation(newDeviation)
-                    .onSuccess {
-                        originalMaxTradePriceDeviation = newDeviation
-                        _uiState.update {
-                            it.copy(hasChangesTradePriceTolerance = false)
-                        }
-                        _isTradePriceToleranceSaveEnabled.value = true
-                    }.onFailure { exception ->
-                        handleError(exception)
-                        _isTradePriceToleranceSaveEnabled.value = true
+        guardedSuspendAction(_isTradePriceToleranceSaveEnabled, "onTradePriceToleranceSave") {
+            settingsServiceFacade
+                .setMaxTradePriceDeviation(newDeviation)
+                .onSuccess {
+                    originalMaxTradePriceDeviation = newDeviation
+                    _uiState.update {
+                        it.copy(hasChangesTradePriceTolerance = false)
                     }
-            } finally {
-                hideLoading()
-            }
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 
@@ -490,29 +434,17 @@ open class SettingsPresenter(
         if (!currentEntry.isValid) return
         val parsedValue = currentEntry.value.toIntOrNull() ?: return
 
-        if (!_isNumDaysAfterRedactingTradeDataSaveEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onNumDaysAfterRedactingTradeDataSave called while save is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                settingsServiceFacade
-                    .setNumDaysAfterRedactingTradeData(parsedValue)
-                    .onSuccess {
-                        originalNumDaysAfterRedactingTradeData = parsedValue
-                        _uiState.update {
-                            it.copy(hasChangesNumDaysAfterRedactingTradeData = false)
-                        }
-                        _isNumDaysAfterRedactingTradeDataSaveEnabled.value = true
-                    }.onFailure { exception ->
-                        handleError(exception)
-                        _isNumDaysAfterRedactingTradeDataSaveEnabled.value = true
+        guardedSuspendAction(_isNumDaysAfterRedactingTradeDataSaveEnabled, "onNumDaysAfterRedactingTradeDataSave") {
+            settingsServiceFacade
+                .setNumDaysAfterRedactingTradeData(parsedValue)
+                .onSuccess {
+                    originalNumDaysAfterRedactingTradeData = parsedValue
+                    _uiState.update {
+                        it.copy(hasChangesNumDaysAfterRedactingTradeData = false)
                     }
-            } finally {
-                hideLoading()
-            }
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 
@@ -529,25 +461,14 @@ open class SettingsPresenter(
     }
 
     private fun setUseAnimations(value: Boolean) {
-        if (!_isUseAnimationsChangeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "setUseAnimations called while update is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                _uiState.update { it.copy(useAnimations = value) }
-                settingsServiceFacade
-                    .setUseAnimations(value)
-                    .onFailure { exception ->
-                        _uiState.update { it.copy(useAnimations = !value) }
-                        handleError(exception)
-                    }
-            } finally {
-                hideLoading()
-                _isUseAnimationsChangeEnabled.value = true
-            }
+        guardedSuspendAction(_isUseAnimationsChangeEnabled, "setUseAnimations") {
+            _uiState.update { it.copy(useAnimations = value) }
+            settingsServiceFacade
+                .setUseAnimations(value)
+                .onFailure { exception ->
+                    _uiState.update { it.copy(useAnimations = !value) }
+                    handleError(exception)
+                }
         }
     }
 
@@ -579,29 +500,17 @@ open class SettingsPresenter(
         if (!currentEntry.isValid) return
         val parsedValue = currentEntry.value.toDoubleOrNullLocaleAware() ?: return
 
-        if (!_isPowFactorSaveEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onPowFactorSave called while save is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                settingsServiceFacade
-                    .setDifficultyAdjustmentFactor(parsedValue)
-                    .onSuccess {
-                        originalDifficultyAdjustmentFactor = parsedValue
-                        _uiState.update {
-                            it.copy(hasChangesPowFactor = false)
-                        }
-                        _isPowFactorSaveEnabled.value = true
-                    }.onFailure { exception ->
-                        handleError(exception)
-                        _isPowFactorSaveEnabled.value = true
+        guardedSuspendAction(_isPowFactorSaveEnabled, "onPowFactorSave") {
+            settingsServiceFacade
+                .setDifficultyAdjustmentFactor(parsedValue)
+                .onSuccess {
+                    originalDifficultyAdjustmentFactor = parsedValue
+                    _uiState.update {
+                        it.copy(hasChangesPowFactor = false)
                     }
-            } finally {
-                hideLoading()
-            }
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 
@@ -615,48 +524,26 @@ open class SettingsPresenter(
     }
 
     private fun setIgnorePow(value: Boolean) {
-        if (!_isIgnorePowChangeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "setIgnorePow called while update is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                _uiState.update { it.copy(ignorePow = value) }
-                settingsServiceFacade
-                    .setIgnoreDiffAdjustmentFromSecManager(value)
-                    .onFailure { exception ->
-                        _uiState.update { it.copy(ignorePow = !value) }
-                        handleError(exception)
-                    }
-            } finally {
-                hideLoading()
-                _isIgnorePowChangeEnabled.value = true
-            }
+        guardedSuspendAction(_isIgnorePowChangeEnabled, "setIgnorePow") {
+            _uiState.update { it.copy(ignorePow = value) }
+            settingsServiceFacade
+                .setIgnoreDiffAdjustmentFromSecManager(value)
+                .onFailure { exception ->
+                    _uiState.update { it.copy(ignorePow = !value) }
+                    handleError(exception)
+                }
         }
     }
 
     private fun onResetAllDontShowAgainClick() {
-        if (!_isResetAllDontShowAgainEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onResetAllDontShowAgainClick called while reset is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                settingsServiceFacade
-                    .resetAllDontShowAgainFlags()
-                    .onSuccess {
-                        showSnackbar("mobile.settings.resetFlagsSuccess".i18n())
-                    }.onFailure { exception ->
-                        handleError(exception)
-                    }
-            } finally {
-                hideLoading()
-                _isResetAllDontShowAgainEnabled.value = true
-            }
+        guardedSuspendAction(_isResetAllDontShowAgainEnabled, "onResetAllDontShowAgainClick") {
+            settingsServiceFacade
+                .resetAllDontShowAgainFlags()
+                .onSuccess {
+                    showSnackbar("mobile.settings.resetFlagsSuccess".i18n())
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 

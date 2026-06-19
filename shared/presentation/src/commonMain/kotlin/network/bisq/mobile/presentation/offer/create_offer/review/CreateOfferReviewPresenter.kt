@@ -250,15 +250,11 @@ class CreateOfferReviewPresenter(
             showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
             return
         }
-        // Atomic guard against rapid-fire taps. Disabling the button via the
-        // StateFlow alone has a recomposition window where a second tap can land
-        // before the UI redraws. compareAndSet ensures only the first call proceeds.
-        if (!_isCreateOfferBtnEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onCreateOffer called while a publish is already in progress; ignoring" }
-            return
-        }
-        showLoading()
-        presenterScope.launch {
+        guardedSuspendAction(
+            _isCreateOfferBtnEnabled,
+            "onCreateOffer",
+            reEnableGuardOnComplete = false,
+        ) {
             try {
                 createOfferCoordinator
                     .createOffer()
@@ -279,8 +275,6 @@ class CreateOfferReviewPresenter(
             } catch (e: Exception) {
                 handleError(e, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n())
                 _isCreateOfferBtnEnabled.value = true
-            } finally {
-                hideLoading()
             }
         }
     }

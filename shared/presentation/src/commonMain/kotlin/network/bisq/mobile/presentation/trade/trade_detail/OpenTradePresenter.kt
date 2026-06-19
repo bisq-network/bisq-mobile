@@ -254,20 +254,12 @@ class OpenTradePresenter(
             log.e { "Expected user profile id to not be null when undoing ignore, but was null" }
             return
         }
-        if (!_isUndoIgnoreEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmedUndoIgnoreUser called while undo-ignore is already in progress; ignoring" }
-            return
-        }
-        presenterScope.launch {
+        guardedSuspendAction(_isUndoIgnoreEnabled, "onConfirmedUndoIgnoreUser") {
             try {
-                showLoading()
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
                 hideUndoIgnoreDialog()
             } catch (e: Exception) {
                 log.e(e) { "Failed to undo ignore user $id" }
-            } finally {
-                _isUndoIgnoreEnabled.value = true
-                hideLoading()
             }
         }
     }

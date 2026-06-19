@@ -190,11 +190,6 @@ class TradeChatPresenter(
         val finalText = text.trim()
         if (finalText.isEmpty()) return
 
-        if (!_isSendChatMessageEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "sendChatMessage called while send is already in progress; ignoring" }
-            return
-        }
-
         val citation =
             quotedMessage.value?.let { quotedMessage ->
                 quotedMessage.text?.let { text ->
@@ -205,20 +200,12 @@ class TradeChatPresenter(
                     )
                 }
             }
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradeChatMessagesServiceFacade
-                    .sendChatMessage(finalText, citation)
-                    .onSuccess {
-                        _quotedMessage.value = null
-                        _isSendChatMessageEnabled.value = true
-                    }.onFailure {
-                        _isSendChatMessageEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(_isSendChatMessageEnabled, "sendChatMessage") {
+            tradeChatMessagesServiceFacade
+                .sendChatMessage(finalText, citation)
+                .onSuccess {
+                    _quotedMessage.value = null
+                }
         }
     }
 
@@ -267,45 +254,23 @@ class TradeChatPresenter(
     }
 
     fun onConfirmedIgnoreUser(id: String) {
-        if (!_isConfirmIgnoreUserEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmedIgnoreUser called while ignore is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(_isConfirmIgnoreUserEnabled, "onConfirmedIgnoreUser") {
             try {
-                showLoading()
                 userProfileServiceFacade.ignoreUserProfile(id)
                 hideIgnoreUserPopup()
-                _isConfirmIgnoreUserEnabled.value = true
             } catch (e: Exception) {
                 log.e(e) { "Failed to ignore user $id" }
-                _isConfirmIgnoreUserEnabled.value = true
-            } finally {
-                hideLoading()
-                _isConfirmIgnoreUserEnabled.value = true
             }
         }
     }
 
     fun onConfirmedUndoIgnoreUser(id: String) {
-        if (!_isConfirmUndoIgnoreUserEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmedUndoIgnoreUser called while undo-ignore is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(_isConfirmUndoIgnoreUserEnabled, "onConfirmedUndoIgnoreUser") {
             try {
-                showLoading()
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
                 hideUndoIgnoreUserPopup()
-                _isConfirmUndoIgnoreUserEnabled.value = true
             } catch (e: Exception) {
                 log.e(e) { "Failed to undo ignore user $id" }
-                _isConfirmUndoIgnoreUserEnabled.value = true
-            } finally {
-                hideLoading()
-                _isConfirmUndoIgnoreUserEnabled.value = true
             }
         }
     }

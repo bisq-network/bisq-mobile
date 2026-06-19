@@ -106,14 +106,8 @@ class UserProfilePresenter(
     private fun onSavePress() {
         val uiStateSnapshot = _uiState.value
         val selectedProfile = uiStateSnapshot.selectedUserProfile ?: return
-        if (!_isActionEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onSavePress called while an action is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(_isActionEnabled, "onSavePress") {
             try {
-                showLoading()
                 val na = getLocalizedNA()
                 val safeStatement = uiStateSnapshot.statementDraft.takeUnless { it == na } ?: ""
                 val safeTerms = uiStateSnapshot.termsDraft.takeUnless { it == na } ?: ""
@@ -130,24 +124,15 @@ class UserProfilePresenter(
                 }
             } catch (e: Exception) {
                 log.e(e) { "Failed to save user profile settings" }
-            } finally {
-                hideLoading()
-                _isActionEnabled.value = true
             }
         }
     }
 
     private fun onDeleteConfirm() {
         val profileId = _uiState.value.showDeleteConfirmationForProfile?.id ?: return
-        if (!_isActionEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onDeleteConfirm called while an action is already in progress; ignoring" }
-            return
-        }
-
-        _uiState.update { it.copy(showDeleteConfirmationForProfile = null) }
-        presenterScope.launch {
+        guardedSuspendAction(_isActionEnabled, "onDeleteConfirm") {
+            _uiState.update { it.copy(showDeleteConfirmationForProfile = null) }
             try {
-                showLoading()
                 userProfileServiceFacade
                     .deleteUserProfile(profileId)
                     .onSuccess {
@@ -156,23 +141,16 @@ class UserProfilePresenter(
                         log.e(e) { "Failed to delete user profile" }
                         onAction(UserProfileUiAction.OnDeleteError)
                     }
-            } finally {
-                hideLoading()
-                _isActionEnabled.value = true
+            } catch (e: Exception) {
+                log.e(e) { "Failed to delete user profile $profileId" }
             }
         }
     }
 
     private fun onUserProfileSelect(profileId: String) {
         if (_uiState.value.selectedUserProfile?.id == profileId) return
-        if (!_isActionEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onUserProfileSelect called while an action is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(_isActionEnabled, "onUserProfileSelect") {
             try {
-                showLoading()
                 userProfileServiceFacade
                     .selectUserProfile(profileId)
                     .onSuccess {
@@ -181,9 +159,8 @@ class UserProfilePresenter(
                         log.e(e) { "Failed to change user profile" }
                         showSnackbar("mobile.settings.userProfile.selectFailure".i18n(), type = SnackbarType.ERROR)
                     }
-            } finally {
-                hideLoading()
-                _isActionEnabled.value = true
+            } catch (e: Exception) {
+                log.e(e) { "Failed to select user profile $profileId" }
             }
         }
     }

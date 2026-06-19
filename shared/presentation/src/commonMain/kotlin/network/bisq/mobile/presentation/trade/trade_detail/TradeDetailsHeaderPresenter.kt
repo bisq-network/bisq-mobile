@@ -316,37 +316,27 @@ class TradeDetailsHeaderPresenter(
         if (selectedTrade.value == null) {
             return
         }
-        if (!_isInterruptTradeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onInterruptTrade called while interrupt is already in progress; ignoring" }
-            return
-        }
-        presenterScope.launch {
-            try {
-                showLoading()
-                when (tradeCloseType.value) {
-                    TradeCloseType.REJECT -> {
-                        tradesServiceFacade
-                            .rejectTrade()
-                            .onFailure { exception ->
-                                handleError(exception)
-                            }
-                    }
-
-                    TradeCloseType.CANCEL -> {
-                        tradesServiceFacade
-                            .cancelTrade()
-                            .onFailure { exception ->
-                                handleError(exception)
-                            }
-                    }
-
-                    else -> Unit
+        guardedSuspendAction(_isInterruptTradeEnabled, "onInterruptTrade") {
+            when (tradeCloseType.value) {
+                TradeCloseType.REJECT -> {
+                    tradesServiceFacade
+                        .rejectTrade()
+                        .onFailure { exception ->
+                            handleError(exception)
+                        }
                 }
-                _showInterruptionConfirmationDialog.value = false
-            } finally {
-                hideLoading()
-                _isInterruptTradeEnabled.value = true
+
+                TradeCloseType.CANCEL -> {
+                    tradesServiceFacade
+                        .cancelTrade()
+                        .onFailure { exception ->
+                            handleError(exception)
+                        }
+                }
+
+                else -> Unit
             }
+            _showInterruptionConfirmationDialog.value = false
         }
     }
 
@@ -364,33 +354,23 @@ class TradeDetailsHeaderPresenter(
             _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
             return
         }
-        if (!_isOpenMediationEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onOpenMediation called while mediation is already in progress; ignoring" }
-            return
-        }
-        _showMediationConfirmationDialog.value = false
-        presenterScope.launch {
-            try {
-                showLoading()
-                mediationServiceFacade
-                    .reportToMediator(trade)
-                    .onFailure { exception ->
-                        when (exception) {
-                            is MediatorNotAvailableException -> {
-                                _mediationError.value =
-                                    "mobile.takeOffer.noMediatorAvailable.warning".i18n()
-                            }
+        guardedSuspendAction(_isOpenMediationEnabled, "onOpenMediation") {
+            _showMediationConfirmationDialog.value = false
+            mediationServiceFacade
+                .reportToMediator(trade)
+                .onFailure { exception ->
+                    when (exception) {
+                        is MediatorNotAvailableException -> {
+                            _mediationError.value =
+                                "mobile.takeOffer.noMediatorAvailable.warning".i18n()
+                        }
 
-                            else -> {
-                                _mediationError.value =
-                                    "mobile.bisqEasy.tradeState.mediationFailed".i18n()
-                            }
+                        else -> {
+                            _mediationError.value =
+                                "mobile.bisqEasy.tradeState.mediationFailed".i18n()
                         }
                     }
-            } finally {
-                hideLoading()
-                _isOpenMediationEnabled.value = true
-            }
+                }
         }
     }
 

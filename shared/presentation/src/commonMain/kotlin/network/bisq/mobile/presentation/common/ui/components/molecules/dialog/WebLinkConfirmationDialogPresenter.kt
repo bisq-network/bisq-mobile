@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.CancellationException
@@ -8,11 +7,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -89,13 +86,12 @@ class WebLinkConfirmationDialogPresenter(
         uri: String,
         persist: Boolean,
     ) {
-        if (!_isOpenUriEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "openUri called while open is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            if (persist) showLoading()
+        guardedSuspendAction(
+            _isOpenUriEnabled,
+            "openUri",
+            showLoadingOverlay = persist,
+            reEnableGuardOnComplete = false,
+        ) {
             try {
                 if (persist) {
                     persistWebLinkDialogChoice(
@@ -106,9 +102,9 @@ class WebLinkConfirmationDialogPresenter(
                 if (!navigateToUrlAwait(uri)) {
                     userOnError.invoke()
                     _isOpenUriEnabled.value = true
-                    return@launch
+                } else {
+                    userOnConfirm.invoke()
                 }
-                userOnConfirm.invoke()
             } catch (cancellationException: CancellationException) {
                 _isOpenUriEnabled.value = true
                 throw cancellationException
@@ -117,8 +113,6 @@ class WebLinkConfirmationDialogPresenter(
                 userOnError.invoke()
                 mainPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
                 _isOpenUriEnabled.value = true
-            } finally {
-                if (persist) hideLoading()
             }
         }
     }
@@ -127,13 +121,12 @@ class WebLinkConfirmationDialogPresenter(
         uri: String,
         persist: Boolean,
     ) {
-        if (!_isCopyToClipboardEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "copyToClipboard called while copy is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            if (persist) showLoading()
+        guardedSuspendAction(
+            _isCopyToClipboardEnabled,
+            "copyToClipboard",
+            showLoadingOverlay = persist,
+            reEnableGuardOnComplete = false,
+        ) {
             try {
                 currentClipboard?.setClipEntry(AnnotatedString(uri).toClipEntry())
                 mainPresenter.showSnackbar("mobile.components.copyIconButton.copied".i18n())
@@ -150,16 +143,14 @@ class WebLinkConfirmationDialogPresenter(
             } catch (throwable: Throwable) {
                 log.e(throwable) { "Failed to copy URI from web link confirmation dialog" }
                 userOnError.invoke()
-                mainPresenter.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+                mainPresenter.showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
                 _isCopyToClipboardEnabled.value = true
-            } finally {
-                if (persist) hideLoading()
             }
         }
     }
 
     private fun showPersistFailureSnackbar() {
-        mainPresenter.showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
+        mainPresenter.showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
     }
 
     private suspend fun persistWebLinkDialogChoice(

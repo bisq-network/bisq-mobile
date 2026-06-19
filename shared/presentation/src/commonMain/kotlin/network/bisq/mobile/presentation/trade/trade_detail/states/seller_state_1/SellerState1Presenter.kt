@@ -91,22 +91,16 @@ class SellerState1Presenter(
             return
         }
 
-        if (!_isSendPaymentDataEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onSendPaymentData called while send is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradesServiceFacade
-                    .sellerSendsPaymentAccount(paymentAccountData)
-                    .onFailure {
-                        _isSendPaymentDataEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(
+            _isSendPaymentDataEnabled,
+            "onSendPaymentData",
+            reEnableGuardOnComplete = false,
+        ) {
+            tradesServiceFacade
+                .sellerSendsPaymentAccount(paymentAccountData)
+                .onFailure {
+                    _isSendPaymentDataEnabled.value = true
+                }
         }
     }
 }

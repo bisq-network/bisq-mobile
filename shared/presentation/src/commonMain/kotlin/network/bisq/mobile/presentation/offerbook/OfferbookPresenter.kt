@@ -409,51 +409,38 @@ open class OfferbookPresenter(
             showSnackbar("mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(EMPTY_STRING), type = SnackbarType.ERROR)
             return
         }
-        if (!_isDeleteOfferEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmedDeleteOffer called while delete is already in progress; ignoring" }
-            return
-        }
-        runCatching {
-            _showDeleteConfirmation.value = false
-            require(selectedOffer.isMyOffer)
-            if (isDemo()) {
-                showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
-                _isDeleteOfferEnabled.value = true
-                return@runCatching
-            }
-            presenterScope.launch {
-                try {
-                    showLoading()
-                    val result =
-                        offersServiceFacade
-                            .deleteOffer(selectedOffer.offerId)
-                            .getOrDefault(false)
-                    log.d { "delete offer success $result" }
-                    if (result) {
-                        deselectOffer()
-                    } else {
-                        log.w { "Failed to delete offer ${selectedOffer.offerId}" }
-                        showSnackbar(
-                            "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
-                                selectedOffer.offerId,
-                            ),
-                            type = SnackbarType.ERROR,
-                        )
-                    }
-                } finally {
-                    hideLoading()
-                    _isDeleteOfferEnabled.value = true
+        guardedSuspendAction(_isDeleteOfferEnabled, "onConfirmedDeleteOffer") {
+            runCatching {
+                _showDeleteConfirmation.value = false
+                require(selectedOffer.isMyOffer)
+                if (isDemo()) {
+                    showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
+                    return@runCatching
                 }
+                val result =
+                    offersServiceFacade
+                        .deleteOffer(selectedOffer.offerId)
+                        .getOrDefault(false)
+                log.d { "delete offer success $result" }
+                if (result) {
+                    deselectOffer()
+                } else {
+                    log.w { "Failed to delete offer ${selectedOffer.offerId}" }
+                    showSnackbar(
+                        "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
+                            selectedOffer.offerId,
+                        ),
+                        type = SnackbarType.ERROR,
+                    )
+                }
+            }.onFailure {
+                log.e(it) { "Failed to delete offer ${selectedOffer.offerId}" }
+                showSnackbar(
+                    "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer.offerId),
+                    type = SnackbarType.ERROR,
+                )
+                deselectOffer()
             }
-        }.onFailure {
-            hideLoading()
-            log.e(it) { "Failed to delete offer ${selectedOffer.offerId}" }
-            showSnackbar(
-                "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer.offerId),
-                type = SnackbarType.ERROR,
-            )
-            deselectOffer()
-            _isDeleteOfferEnabled.value = true
         }
     }
 
@@ -473,15 +460,15 @@ open class OfferbookPresenter(
             log.w { "takeOffer called with no selected offer; ignoring" }
             return
         }
-        if (!_isTakeOfferEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "takeOffer called while take-offer is already in progress; ignoring" }
-            return
-        }
-        runCatching {
-            require(!item.isMyOffer)
-            val selectedProfile = selectedUserProfile.value
-            require(selectedProfile != null)
-            presenterScope.launch {
+        guardedSuspendAction(
+            _isTakeOfferEnabled,
+            "takeOffer",
+            reEnableGuardOnComplete = false,
+        ) {
+            runCatching {
+                require(!item.isMyOffer)
+                val selectedProfile = selectedUserProfile.value
+                require(selectedProfile != null)
                 try {
                     if (canTakeOffer(item, selectedProfile)) {
                         takeOfferCoordinator.selectOfferToTake(item)
@@ -502,15 +489,15 @@ open class OfferbookPresenter(
                     log.e("canTakeOffer call failed", e)
                     _isTakeOfferEnabled.value = true
                 }
+            }.onFailure {
+                log.e(it) { "Failed to take offer ${item.offerId}" }
+                showSnackbar(
+                    "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(item.offerId),
+                    type = SnackbarType.ERROR,
+                )
+                deselectOffer()
+                _isTakeOfferEnabled.value = true
             }
-        }.onFailure {
-            log.e(it) { "Failed to take offer ${item.offerId}" }
-            showSnackbar(
-                "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(item.offerId),
-                type = SnackbarType.ERROR,
-            )
-            deselectOffer()
-            _isTakeOfferEnabled.value = true
         }
     }
 
@@ -681,32 +668,35 @@ open class OfferbookPresenter(
             _showTradeRestrictedDialog.value = activeAlert.toAlertNotificationUiState()
             return
         }
-        if (!_isCreateOfferEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "createOffer called while create-offer is already in progress; ignoring" }
-            return
-        }
-        try {
-            val selectedMarket = offersServiceFacade.selectedOfferbookMarket.value.market
-            createOfferCoordinator.onStartCreateOffer()
+        guardedSuspendAction(
+            _isCreateOfferEnabled,
+            "createOffer",
+            showLoadingOverlay = false,
+            reEnableGuardOnComplete = false,
+        ) {
+            try {
+                val selectedMarket = offersServiceFacade.selectedOfferbookMarket.value.market
+                createOfferCoordinator.onStartCreateOffer()
 
-            // Check if a market is already selected (not EMPTY)
+                // Check if a market is already selected (not EMPTY)
 
-            val hasValidMarket = selectedMarket.baseCurrencyCode.isNotEmpty() && selectedMarket.quoteCurrencyCode.isNotEmpty()
+                val hasValidMarket = selectedMarket.baseCurrencyCode.isNotEmpty() && selectedMarket.quoteCurrencyCode.isNotEmpty()
 
-            if (hasValidMarket) {
-                // Use the already selected market
-                createOfferCoordinator.commitMarket(selectedMarket)
-                createOfferCoordinator.skipCurrency = true
-            } else {
-                // No market selected, go to market selection
-                createOfferCoordinator.skipCurrency = false
+                if (hasValidMarket) {
+                    // Use the already selected market
+                    createOfferCoordinator.commitMarket(selectedMarket)
+                    createOfferCoordinator.skipCurrency = true
+                } else {
+                    // No market selected, go to market selection
+                    createOfferCoordinator.skipCurrency = false
+                }
+
+                navigateTo(NavRoute.CreateOfferDirection)
+            } catch (e: Exception) {
+                _isCreateOfferEnabled.value = true
+                log.e(e) { "Failed to create offer" }
+                showSnackbar(if (isDemo()) "mobile.demo.action.disabled".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n(), type = SnackbarType.ERROR)
             }
-
-            navigateTo(NavRoute.CreateOfferDirection)
-        } catch (e: Exception) {
-            _isCreateOfferEnabled.value = true
-            log.e(e) { "Failed to create offer" }
-            showSnackbar(if (isDemo()) "mobile.demo.action.disabled".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n(), type = SnackbarType.ERROR)
         }
     }
 

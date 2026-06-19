@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.startup.user_agreement
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.i18n
@@ -29,26 +28,20 @@ open class UserAgreementPresenter(
     }
 
     override fun onAcceptTerms() {
-        if (!_isAcceptTermsEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onAcceptTerms called while accept is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                settingsServiceFacade
-                    .confirmTacAccepted(true)
-                    .onSuccess {
-                        navigateToOnboarding()
-                        showSnackbar("mobile.startup.agreement.welcome".i18n())
-                    }.onFailure { exception ->
-                        handleError(exception)
-                        _isAcceptTermsEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(
+            _isAcceptTermsEnabled,
+            "onAcceptTerms",
+            reEnableGuardOnComplete = false,
+        ) {
+            settingsServiceFacade
+                .confirmTacAccepted(true)
+                .onSuccess {
+                    navigateToOnboarding()
+                    showSnackbar("mobile.startup.agreement.welcome".i18n())
+                }.onFailure { exception ->
+                    handleError(exception)
+                    _isAcceptTermsEnabled.value = true
+                }
         }
     }
 

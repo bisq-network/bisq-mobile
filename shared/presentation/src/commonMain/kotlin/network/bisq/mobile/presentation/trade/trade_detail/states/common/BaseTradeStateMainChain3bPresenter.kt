@@ -125,19 +125,13 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun completeTrade() {
-        if (!_isCompleteTradeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "completeTrade called while confirm is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradesServiceFacade.btcConfirmed().onFailure {
-                    _isCompleteTradeEnabled.value = true
-                }
-            } finally {
-                hideLoading()
+        guardedSuspendAction(
+            _isCompleteTradeEnabled,
+            "completeTrade",
+            reEnableGuardOnComplete = false,
+        ) {
+            tradesServiceFacade.btcConfirmed().onFailure {
+                _isCompleteTradeEnabled.value = true
             }
         }
     }

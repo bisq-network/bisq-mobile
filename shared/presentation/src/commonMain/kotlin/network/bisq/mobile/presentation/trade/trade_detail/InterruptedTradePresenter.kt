@@ -182,24 +182,19 @@ class InterruptedTradePresenter(
     fun onCloseTrade() {
         val trade = selectedTrade.value ?: return
 
-        if (!_isCloseTradeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onCloseTrade called while close is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                val result = tradesServiceFacade.closeTrade()
-                if (result.isFailure) {
-                    val msg = result.exceptionOrNull()?.message ?: ""
-                    GenericErrorHandler.handleGenericError(
-                        "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg),
-                    )
-                    _isCloseTradeEnabled.value = true
-                    return@launch
-                }
-
+        guardedSuspendAction(
+            _isCloseTradeEnabled,
+            "onCloseTrade",
+            reEnableGuardOnComplete = false,
+        ) {
+            val result = tradesServiceFacade.closeTrade()
+            if (result.isFailure) {
+                val msg = result.exceptionOrNull()?.message ?: ""
+                GenericErrorHandler.handleGenericError(
+                    "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg),
+                )
+                _isCloseTradeEnabled.value = true
+            } else {
                 withContext(Dispatchers.IO) {
                     // On success, clear read state. If this fails, report but still navigate back.
                     runCatching {
@@ -212,8 +207,6 @@ class InterruptedTradePresenter(
                 }
 
                 navigateBack()
-            } finally {
-                hideLoading()
             }
         }
     }
@@ -222,33 +215,22 @@ class InterruptedTradePresenter(
         val trade = selectedTrade.value
         if (trade == null) return
 
-        if (!_isReportToMediatorEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onReportToMediator called while report is already in progress; ignoring" }
-            return
-        }
+        guardedSuspendAction(_isReportToMediatorEnabled, "onReportToMediator") {
+            mediationServiceFacade
+                .reportToMediator(trade)
+                .onSuccess {
+                    _showMediationRequestedDialog.value = true
+                }.onFailure { error ->
+                    when (error) {
+                        is MediatorNotAvailableException -> {
+                            _showNoMediatorAvailableWarningDialog.value = true
+                        }
 
-        presenterScope.launch {
-            try {
-                showLoading()
-                mediationServiceFacade
-                    .reportToMediator(trade)
-                    .onSuccess {
-                        _showMediationRequestedDialog.value = true
-                    }.onFailure { error ->
-                        when (error) {
-                            is MediatorNotAvailableException -> {
-                                _showNoMediatorAvailableWarningDialog.value = true
-                            }
-
-                            else -> {
-                                showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
-                            }
+                        else -> {
+                            showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
                         }
                     }
-            } finally {
-                hideLoading()
-                _isReportToMediatorEnabled.value = true
-            }
+                }
         }
     }
 

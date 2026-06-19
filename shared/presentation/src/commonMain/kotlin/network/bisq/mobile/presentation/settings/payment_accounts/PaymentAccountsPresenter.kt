@@ -192,31 +192,19 @@ open class PaymentAccountsPresenter(
             return
         }
 
-        if (!_isAddAccountEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "addAccount called while add is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                val newAccount = createAccount(newName, newDescription)
-                userDefinedAccountsServiceFacade
-                    .addAccount(newAccount)
-                    .onSuccess {
-                        showSnackbar(
-                            "mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(),
-                            type = SnackbarType.SUCCESS,
-                        )
-                        _uiState.update { it.copy(showAddAccountState = false) }
-                        _isAddAccountEnabled.value = true
-                    }.onFailure { exception ->
-                        handleError(exception)
-                        _isAddAccountEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(_isAddAccountEnabled, "addAccount") {
+            val newAccount = createAccount(newName, newDescription)
+            userDefinedAccountsServiceFacade
+                .addAccount(newAccount)
+                .onSuccess {
+                    showSnackbar(
+                        "mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n(),
+                        type = SnackbarType.SUCCESS,
+                    )
+                    _uiState.update { it.copy(showAddAccountState = false) }
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 
@@ -231,29 +219,17 @@ open class PaymentAccountsPresenter(
             return
         }
 
-        if (!_isSaveAccountEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "saveAccount called while save is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                val newAccount = createAccount(newName, newDescription)
-                userDefinedAccountsServiceFacade
-                    .saveAccount(newAccount)
-                    .onSuccess {
-                        showSnackbar(
-                            "mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(),
-                        )
-                        _isSaveAccountEnabled.value = true
-                    }.onFailure { exception ->
-                        handleError(exception)
-                        _isSaveAccountEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(_isSaveAccountEnabled, "saveAccount") {
+            val newAccount = createAccount(newName, newDescription)
+            userDefinedAccountsServiceFacade
+                .saveAccount(newAccount)
+                .onSuccess {
+                    showSnackbar(
+                        "mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n(),
+                    )
+                }.onFailure { exception ->
+                    handleError(exception)
+                }
         }
     }
 
@@ -262,32 +238,20 @@ open class PaymentAccountsPresenter(
         val selectedAccount = state.accounts.getOrNull(state.selectedAccountIndex)
         if (selectedAccount == null) return
 
-        if (!_isDeleteAccountEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "deleteSelectedAccount called while delete is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                userDefinedAccountsServiceFacade
-                    .deleteAccount(selectedAccount.accountName)
-                    .onSuccess {
-                        showSnackbar(
-                            "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),
+        guardedSuspendAction(_isDeleteAccountEnabled, "deleteSelectedAccount") {
+            userDefinedAccountsServiceFacade
+                .deleteAccount(selectedAccount.accountName)
+                .onSuccess {
+                    showSnackbar(
+                        "mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n(),
+                    )
+                }.onFailure { exception ->
+                    val defaultMessage =
+                        "mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(
+                            selectedAccount.accountName,
                         )
-                        _isDeleteAccountEnabled.value = true
-                    }.onFailure { exception ->
-                        val defaultMessage =
-                            "mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(
-                                selectedAccount.accountName,
-                            )
-                        handleError(exception, defaultMessage)
-                        _isDeleteAccountEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+                    handleError(exception, defaultMessage)
+                }
         }
     }
 

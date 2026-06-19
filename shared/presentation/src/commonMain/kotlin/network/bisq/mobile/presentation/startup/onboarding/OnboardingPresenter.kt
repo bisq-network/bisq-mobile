@@ -102,14 +102,12 @@ abstract class OnboardingPresenter(
     private fun onNextButtonClick() {
         // Page navigation happens in the UI
         // This method is called by the UI only on the final page to complete onboarding
-        if (!_isNextButtonEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onNextButtonClick called while onboarding completion is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(
+            _isNextButtonEnabled,
+            "onNextButtonClick",
+            reEnableGuardOnComplete = false,
+        ) {
             try {
-                showLoading()
                 settingsRepository.setFirstLaunch(false)
                 val hasProfile: Boolean = userProfileService.hasUserProfile()
                 if (!hasProfile) {
@@ -120,8 +118,6 @@ abstract class OnboardingPresenter(
             } catch (e: Exception) {
                 _isNextButtonEnabled.value = true
                 throw e
-            } finally {
-                hideLoading()
             }
         }
     }

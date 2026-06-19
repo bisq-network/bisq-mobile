@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountNameAlreadyExistsException
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
@@ -51,25 +50,19 @@ class PaymentAccountReviewPresenter(
     }
 
     private fun onCreateAccount(account: CreatePaymentAccount) {
-        if (!_isCreateAccountEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onCreateAccount called while create is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                paymentAccountsServiceFacade
-                    .addAccount(account)
-                    .onSuccess {
-                        _effect.emit(PaymentAccountReviewEffect.CloseCreateAccountFlow)
-                    }.onFailure {
-                        handleError(it, customHandler = ::handleCreateAccountError)
-                        _isCreateAccountEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(
+            _isCreateAccountEnabled,
+            "onCreateAccount",
+            reEnableGuardOnComplete = false,
+        ) {
+            paymentAccountsServiceFacade
+                .addAccount(account)
+                .onSuccess {
+                    _effect.emit(PaymentAccountReviewEffect.CloseCreateAccountFlow)
+                }.onFailure {
+                    handleError(it, customHandler = ::handleCreateAccountError)
+                    _isCreateAccountEnabled.value = true
+                }
         }
     }
 

@@ -113,24 +113,18 @@ class BuyerState1aPresenter(
         val bitcoinPaymentData = bitcoinPaymentData.value
         if (bitcoinPaymentData.isEmpty()) return
 
-        if (!_isSendBitcoinPaymentDataEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "sendBitcoinPaymentData called while send is already in progress; ignoring" }
-            return
-        }
-
-        setShowInvalidAddressDialog(false)
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradesServiceFacade
-                    .buyerSendBitcoinPaymentData(bitcoinPaymentData)
-                    .onFailure { exception ->
-                        handleError(exception)
-                        _isSendBitcoinPaymentDataEnabled.value = true
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(
+            _isSendBitcoinPaymentDataEnabled,
+            "sendBitcoinPaymentData",
+            reEnableGuardOnComplete = false,
+        ) {
+            setShowInvalidAddressDialog(false)
+            tradesServiceFacade
+                .buyerSendBitcoinPaymentData(bitcoinPaymentData)
+                .onFailure { exception ->
+                    handleError(exception)
+                    _isSendBitcoinPaymentDataEnabled.value = true
+                }
         }
     }
 

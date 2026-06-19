@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -25,14 +24,12 @@ class TradeGuideTradeRulesPresenter(
     }
 
     fun tradeRulesNextClick() {
-        if (!_isTradeRulesNextEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "tradeRulesNextClick called while finish is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
+        guardedSuspendAction(
+            _isTradeRulesNextEnabled,
+            "tradeRulesNextClick",
+            reEnableGuardOnComplete = false,
+        ) {
             try {
-                showLoading()
                 val isConfirmed = tradeRulesConfirmed.first()
                 if (!isConfirmed) {
                     settingsServiceFacade.confirmTradeRules(true)
@@ -42,8 +39,6 @@ class TradeGuideTradeRulesPresenter(
             } catch (e: Exception) {
                 _isTradeRulesNextEnabled.value = true
                 throw e
-            } finally {
-                hideLoading()
             }
         }
     }

@@ -39,17 +39,20 @@ class TabContainerPresenter(
             _showTradeRestrictedDialog.value = activeAlert.toAlertNotificationUiState()
             return
         }
-        if (!_isCreateOfferEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "createOffer called while create-offer is already in progress; ignoring" }
-            return
-        }
-        try {
-            createOfferCoordinator.onStartCreateOffer()
-            createOfferCoordinator.skipCurrency = false
-            navigateTo(NavRoute.CreateOfferDirection)
-        } catch (e: Exception) {
-            _isCreateOfferEnabled.value = true
-            log.e(e) { "Failed to create offer: ${e.message}" }
+        guardedSuspendAction(
+            _isCreateOfferEnabled,
+            "createOffer",
+            showLoadingOverlay = false,
+            reEnableGuardOnComplete = false,
+        ) {
+            try {
+                createOfferCoordinator.onStartCreateOffer()
+                createOfferCoordinator.skipCurrency = false
+                navigateTo(NavRoute.CreateOfferDirection)
+            } catch (e: Exception) {
+                _isCreateOfferEnabled.value = true
+                log.e(e) { "Failed to create offer: ${e.message}" }
+            }
         }
     }
 

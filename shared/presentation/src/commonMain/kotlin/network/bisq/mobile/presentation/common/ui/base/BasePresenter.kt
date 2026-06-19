@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
@@ -474,6 +475,41 @@ abstract class BasePresenter(
      */
     protected fun hideLoading() {
         globalUiManager.hideLoading()
+    }
+
+    /**
+     * Runs [block] on [presenterScope] behind [guard] using compareAndSet.
+     * [guard] uses `true` = enabled; it is cleared for the duration of [block]
+     * and restored in finally when [reEnableGuardOnComplete] is true.
+     * Returns whether the action was started.
+     */
+    protected fun guardedSuspendAction(
+        guard: MutableStateFlow<Boolean>,
+        actionName: String,
+        showLoadingOverlay: Boolean = true,
+        reEnableGuardOnComplete: Boolean = true,
+        block: suspend () -> Unit,
+    ): Boolean {
+        if (!guard.compareAndSet(expect = true, update = false)) {
+            log.w { "$actionName called while already in progress; ignoring" }
+            return false
+        }
+        if (showLoadingOverlay) {
+            showLoading()
+        }
+        presenterScope.launch {
+            try {
+                block()
+            } finally {
+                if (reEnableGuardOnComplete) {
+                    guard.value = true
+                }
+                if (showLoadingOverlay) {
+                    hideLoading()
+                }
+            }
+        }
+        return true
     }
 
     protected fun registerChild(child: BasePresenter) {

@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -48,13 +47,8 @@ class ReportUserPresenter(
 
     fun onReportClick() {
         if (!_uiState.value.isReportMessageValid) return
-        if (!_isReportActionEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onReportClick called while report is already in progress; ignoring" }
-            return
-        }
-        _uiState.update { it.copy(isLoading = true) }
-
-        presenterScope.launch {
+        guardedSuspendAction(_isReportActionEnabled, "onReportClick", showLoadingOverlay = false) {
+            _uiState.update { it.copy(isLoading = true) }
             val message = _uiState.value.message
             try {
                 if (!::chatMessage.isInitialized) {
@@ -65,24 +59,23 @@ class ReportUserPresenter(
                             message,
                         ),
                     )
-                    return@launch
+                } else {
+                    userProfileServiceFacade
+                        .reportUserProfile(
+                            chatMessage.senderUserProfile,
+                            message,
+                        ).onSuccess {
+                            _effect.emit(ReportUserEffect.ReportSuccess)
+                        }.onFailure {
+                            _effect.emit(
+                                ReportUserEffect.ReportError(
+                                    "mobile.chat.reportToModerator.error".i18n(),
+                                    message,
+                                ),
+                            )
+                        }
                 }
-                userProfileServiceFacade
-                    .reportUserProfile(
-                        chatMessage.senderUserProfile,
-                        message,
-                    ).onSuccess {
-                        _effect.emit(ReportUserEffect.ReportSuccess)
-                    }.onFailure {
-                        _effect.emit(
-                            ReportUserEffect.ReportError(
-                                "mobile.chat.reportToModerator.error".i18n(),
-                                message,
-                            ),
-                        )
-                    }
             } finally {
-                _isReportActionEnabled.value = true
                 _uiState.update { it.copy(isLoading = false) }
             }
         }

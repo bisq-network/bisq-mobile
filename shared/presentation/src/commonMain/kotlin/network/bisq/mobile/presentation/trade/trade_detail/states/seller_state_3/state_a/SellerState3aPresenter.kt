@@ -80,25 +80,19 @@ class SellerState3aPresenter(
             return
         }
 
-        if (!_isConfirmSendEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "confirmSend called while confirm is already in progress; ignoring" }
-            return
-        }
-
-        setShowInvalidAddressDialog(false)
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradesServiceFacade
-                    .sellerConfirmBtcSent(paymentProof.value)
-                    .onFailure { exception ->
-                        _isConfirmSendEnabled.value = true
-                        // TODO: Display error to user (e.g., via snackbar or error dialog) ?
-                        log.e(exception) { "Failed to confirm BTC sent" }
-                    }
-            } finally {
-                hideLoading()
-            }
+        guardedSuspendAction(
+            _isConfirmSendEnabled,
+            "confirmSend",
+            reEnableGuardOnComplete = false,
+        ) {
+            setShowInvalidAddressDialog(false)
+            tradesServiceFacade
+                .sellerConfirmBtcSent(paymentProof.value)
+                .onFailure { exception ->
+                    _isConfirmSendEnabled.value = true
+                    // TODO: Display error to user (e.g., via snackbar or error dialog) ?
+                    log.e(exception) { "Failed to confirm BTC sent" }
+                }
         }
     }
 

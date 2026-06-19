@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -19,19 +18,13 @@ class SellerState2bPresenter(
     val isConfirmFiatReceiptEnabled: StateFlow<Boolean> = _isConfirmFiatReceiptEnabled.asStateFlow()
 
     fun onConfirmFiatReceipt() {
-        if (!_isConfirmFiatReceiptEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmFiatReceipt called while confirm is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradesServiceFacade.sellerConfirmFiatReceipt().onFailure {
-                    _isConfirmFiatReceiptEnabled.value = true
-                }
-            } finally {
-                hideLoading()
+        guardedSuspendAction(
+            _isConfirmFiatReceiptEnabled,
+            "onConfirmFiatReceipt",
+            reEnableGuardOnComplete = false,
+        ) {
+            tradesServiceFacade.sellerConfirmFiatReceipt().onFailure {
+                _isConfirmFiatReceiptEnabled.value = true
             }
         }
     }

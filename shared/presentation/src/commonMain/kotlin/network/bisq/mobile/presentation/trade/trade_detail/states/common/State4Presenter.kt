@@ -74,36 +74,30 @@ abstract class State4Presenter(
                 return
             }
 
-        if (!_isConfirmCloseTradeEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmCloseTrade called while close is already in progress; ignoring" }
-            return
-        }
+        guardedSuspendAction(
+            _isConfirmCloseTradeEnabled,
+            "onConfirmCloseTrade",
+            reEnableGuardOnComplete = false,
+        ) {
+            val result = tradesServiceFacade.closeTrade()
 
-        presenterScope.launch {
-            try {
-                showLoading()
-                val result = tradesServiceFacade.closeTrade()
-
-                when {
-                    result.isFailure -> {
-                        _uiState.update { it.copy(showCloseTradeDialog = false) }
-                        _isConfirmCloseTradeEnabled.value = true
-                        result
-                            .exceptionOrNull()
-                            ?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
-                            ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
-                    }
-
-                    result.isSuccess -> {
-                        withContext(Dispatchers.IO) {
-                            tradeReadStateRepository.clearId(tradeId)
-                        }
-                        _uiState.update { it.copy(showCloseTradeDialog = false) }
-                        navigateBack()
-                    }
+            when {
+                result.isFailure -> {
+                    _uiState.update { it.copy(showCloseTradeDialog = false) }
+                    _isConfirmCloseTradeEnabled.value = true
+                    result
+                        .exceptionOrNull()
+                        ?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
+                        ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
                 }
-            } finally {
-                hideLoading()
+
+                result.isSuccess -> {
+                    withContext(Dispatchers.IO) {
+                        tradeReadStateRepository.clearId(tradeId)
+                    }
+                    _uiState.update { it.copy(showCloseTradeDialog = false) }
+                    navigateBack()
+                }
             }
         }
     }

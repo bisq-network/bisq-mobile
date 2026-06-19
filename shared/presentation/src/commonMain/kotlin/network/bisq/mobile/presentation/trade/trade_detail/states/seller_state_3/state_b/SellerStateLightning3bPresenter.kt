@@ -56,19 +56,13 @@ class SellerStateLightning3bPresenter(
     }
 
     fun skipWaiting() {
-        if (!_isSkipWaitingEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "skipWaiting called while confirm is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradesServiceFacade.btcConfirmed().onFailure {
-                    _isSkipWaitingEnabled.value = true
-                }
-            } finally {
-                hideLoading()
+        guardedSuspendAction(
+            _isSkipWaitingEnabled,
+            "skipWaiting",
+            reEnableGuardOnComplete = false,
+        ) {
+            tradesServiceFacade.btcConfirmed().onFailure {
+                _isSkipWaitingEnabled.value = true
             }
         }
     }

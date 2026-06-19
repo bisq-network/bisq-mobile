@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -19,19 +18,13 @@ class BuyerState2aPresenter(
     val isConfirmFiatSentEnabled: StateFlow<Boolean> = _isConfirmFiatSentEnabled.asStateFlow()
 
     fun onConfirmFiatSent() {
-        if (!_isConfirmFiatSentEnabled.compareAndSet(expect = true, update = false)) {
-            log.w { "onConfirmFiatSent called while confirm is already in progress; ignoring" }
-            return
-        }
-
-        presenterScope.launch {
-            try {
-                showLoading()
-                tradesServiceFacade.buyerConfirmFiatSent().onFailure {
-                    _isConfirmFiatSentEnabled.value = true
-                }
-            } finally {
-                hideLoading()
+        guardedSuspendAction(
+            _isConfirmFiatSentEnabled,
+            "onConfirmFiatSent",
+            reEnableGuardOnComplete = false,
+        ) {
+            tradesServiceFacade.buyerConfirmFiatSent().onFailure {
+                _isConfirmFiatSentEnabled.value = true
             }
         }
     }
