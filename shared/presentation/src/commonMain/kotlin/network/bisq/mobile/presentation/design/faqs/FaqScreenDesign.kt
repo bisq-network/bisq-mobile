@@ -228,7 +228,6 @@ private data class FaqUiState(
     val faqs: List<SimulatedFaq>,
     /** -1 means nothing is expanded */
     val expandedIndex: Int = -1,
-    val appType: SimulatedAppType = SimulatedAppType.CONNECT,
 )
 
 private sealed class FaqUiAction {
@@ -395,7 +394,6 @@ private fun FaqScreen_Connect_AllCollapsed_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.CONNECT),
                     expandedIndex = -1,
-                    appType = SimulatedAppType.CONNECT,
                 ),
             onAction = {},
         )
@@ -412,7 +410,6 @@ private fun FaqScreen_Connect_Q1Expanded_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.CONNECT),
                     expandedIndex = 0,
-                    appType = SimulatedAppType.CONNECT,
                 ),
             onAction = {},
         )
@@ -429,7 +426,6 @@ private fun FaqScreen_Connect_Q2Expanded_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.CONNECT),
                     expandedIndex = 1,
-                    appType = SimulatedAppType.CONNECT,
                 ),
             onAction = {},
         )
@@ -446,7 +442,6 @@ private fun FaqScreen_Node_Q2Expanded_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.NODE),
                     expandedIndex = 1,
-                    appType = SimulatedAppType.NODE,
                 ),
             onAction = {},
         )
@@ -463,7 +458,6 @@ private fun FaqScreen_Node_Q3Expanded_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.NODE),
                     expandedIndex = 2,
-                    appType = SimulatedAppType.NODE,
                 ),
             onAction = {},
         )
@@ -480,7 +474,6 @@ private fun FaqScreen_Connect_Q5Expanded_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.CONNECT),
                     expandedIndex = 4,
-                    appType = SimulatedAppType.CONNECT,
                 ),
             onAction = {},
         )
@@ -497,7 +490,6 @@ private fun FaqScreen_Connect_Q6Expanded_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.CONNECT),
                     expandedIndex = 5,
-                    appType = SimulatedAppType.CONNECT,
                 ),
             onAction = {},
         )
@@ -519,7 +511,6 @@ private fun FaqScreen_Interactive_Preview() {
                 FaqUiState(
                     faqs = buildFaqList(SimulatedAppType.CONNECT),
                     expandedIndex = expandedIndex,
-                    appType = SimulatedAppType.CONNECT,
                 ),
             onAction = { action ->
                 when (action) {
