@@ -70,11 +70,50 @@
  * a mental model for why they are waiting.
  *
  * ====================================================================================
+ * STATE-TRANSITION CONTRACT
+ * ====================================================================================
+ * Connect app — driven by overallProgress from ClientSplashPresenter:
+ *
+ *   overallProgress = 0.0         → strip phase 1 active (Connecting)
+ *   overallProgress = 0.5         → phase 2 active (Loading data)
+ *   overallProgress = 1.0 + error string → navigate to TrustedNodeSetup
+ *                                    (no "Ready" frame rendered)
+ *   overallProgress = 1.0 + success     → navigateToNextScreen() fires automatically
+ *                                    ("Ready" frame visible ~100ms then dismissed)
+ *
+ * !!! IMPLEMENTER TRAP — progress=1.0f is AMBIGUOUS !!!
+ * Both success AND failure emit overallProgress = 1.0f. The presenter must check the
+ * connectivity status string (or an explicit error flag) IN ADDITION to the float.
+ * Never use `progress == 1.0f` alone to decide whether to show "Ready" — it will
+ * flash "Ready" for ~100ms before navigating to the error screen on failures.
+ *
+ * Connect failures navigate to TrustedNodeSetup rather than showing an inline
+ * failure state — this is by design, see ClientSplashPresenter.navigateToTrustedNodeSetup.
+ * Do not add a Connect failure state here; it would fight the existing navigation logic.
+ *
+ * Node app — driven by observeTorState() + NodeApplicationBootstrapFacade:
+ *
+ *   Tor progress 0-99%            → step 1 IN_PROGRESS (overallProgress ~0.0–0.3)
+ *   Tor complete                  → step 1 DONE, step 2 IN_PROGRESS (~0.35)
+ *   Peer count ≥ target           → step 2 DONE, step 3 IN_PROGRESS (~0.6)
+ *   Data inventory received       → step 3 DONE, step 4 IN_PROGRESS (~0.85)
+ *   overallProgress = 1.0 + success     → step 4 DONE, navigateToNextScreen()
+ *   overallProgress = 1.0 + failure     → step 1 FAILED, TorFailureActions shown
+ *
+ * ====================================================================================
  * SLOW-PATH TREATMENT
  * ====================================================================================
- * At 90+ seconds the existing SplashPresenter shows a timeout dialog ("Bootstrap is
+ * At 90 seconds the existing SplashPresenter shows a timeout dialog ("Bootstrap is
  * taking longer than usual — restart?"). The PoC adds a non-dismissible amber inline
- * banner that appears at the same threshold but does not obscure progress:
+ * banner that appears at 75 seconds — 15 seconds before the dialog — so the user
+ * receives a plausible explanation before the harder interrupt arrives. The 75s offset
+ * is intentional: it pre-empts the dialog rather than racing with it.
+ *
+ * IMPORTANT — the banner's elapsed time counter must measure wall-clock time from
+ * bootstrap start, NOT from any individual stage. The per-step timeout timers reset
+ * the 90s dialog clock; the banner must not follow suit or it will show "15s elapsed"
+ * when the user has actually been waiting 75 seconds.
+ *
  *   "Still connecting — this is normal on first launch over Tor.
  *    Average first-launch time: 2-3 minutes."
  * The banner stays below the step list. The timeout dialog is still available for the
@@ -117,10 +156,13 @@
  * mobile.bootstrap.node.step.data.done.detail=Data received
  * mobile.bootstrap.node.step.ready=Ready
  *
- * -- Slow-path banner (both apps) --
+ * -- Slow-path banner (both apps, triggered at 75s wall-clock from bootstrap start) --
  * mobile.bootstrap.slowPath.title=Still connecting — this is normal
  * mobile.bootstrap.slowPath.body=First launch over Tor typically takes 2-3 minutes.\nYour connection is encrypted and private.
  * mobile.bootstrap.slowPath.elapsed={0}s elapsed
+ *
+ * -- Connect time-aware reassurance (shown after ~8-10s stalled on phase 1, P1) --
+ * mobile.bootstrap.connect.step.connecting.detail.slow=Encrypted connections can take a moment to establish.
  *
  * -- Node failure row label --
  * mobile.bootstrap.node.step.tor.failed.label=Tor failed to start
@@ -190,6 +232,12 @@ private data class SimulatedStep(
  * Full-screen bootstrap shell used by both Connect and Node variants.
  * Keeps the logo/version header at top, step content in the middle (vertically
  * centred), and the overall progress bar pinned to the bottom above the status line.
+ *
+ * @param overallProgress Expected range: 0f..1f (clamped visually by LinearProgressIndicator).
+ *   In production, callers must also check an error flag alongside this value — see the
+ *   STATE-TRANSITION CONTRACT note at the top of this file. Do NOT use require() here:
+ *   this is a preview-only composable and a hard throw would break the preview renderer
+ *   during iteration. Add the validation in the production presenter instead.
  */
 @Composable
 private fun BootstrapShell(
@@ -377,12 +425,18 @@ private fun NodeBootstrapStepRow(step: SimulatedStep) {
         ) {
             when {
                 isDone ->
+                    // Dark glyph on green circle — high contrast against primary green.
+                    // White would also pass WCAG AA on green, but dark is stronger here.
                     BisqText.XSmallMedium(
                         text = "✓",
                         color = BisqTheme.colors.backgroundColor,
                     )
 
                 isFailed ->
+                    // White glyph on red circle — high contrast against danger red.
+                    // Different from the ✓ glyph color intentionally: each glyph is
+                    // chosen to contrast against its own circle, not to be uniform
+                    // with the other state. Dark on red would reduce contrast.
                     BisqText.XSmallMedium(
                         text = "✕",
                         color = Color.White,
@@ -469,6 +523,13 @@ private fun NodeStepList(steps: List<SimulatedStep>) {
  * Connect bootstrap: two phases only (Connect WS -> Load data).
  * Shown as a horizontal progress strip: dot + label, connector line, dot + label.
  * Avoids importing the "steps" mental model from Node when the work is much simpler.
+ *
+ * P1 — TIME-AWARE REASSURANCE LINE:
+ * After 8-10 seconds with no phase transition, the detail text should update to:
+ *   "Encrypted connections can take a moment to establish."
+ * Rationale: honest about latency without naming Tor (which may not be in use). No
+ * facade changes needed — the presenter drives this with a simple coroutine timer.
+ * See Connect_SlowStart_Preview for the visual target.
  */
 @Composable
 private fun ConnectBootstrapStrip(
@@ -637,6 +698,30 @@ private fun Connect_Done_Preview() {
                 connectingDone = true,
                 loadingDataActive = false,
                 loadingDataDone = true,
+            )
+        }
+    }
+}
+
+@ExcludeFromCoverage
+@Preview(name = "Connect 4: Slow start — 8s+ stalled on phase 1, reassurance line shown")
+@Composable
+private fun Connect_SlowStart_Preview() {
+    // P1: after ~8-10s with no phase transition the presenter swaps the detail text.
+    // This preview shows the target visual. No UI structure changes — only the detail
+    // string differs from Connect_Initial_Preview.
+    BisqTheme.Preview {
+        BootstrapShell(
+            title = "Connecting to your node",
+            subtitle = "Bisq Connect links to your trusted Bisq2 node",
+            overallProgress = 0.05f,
+            appVersion = "Bisq Connect v0.5.0",
+        ) {
+            ConnectBootstrapStrip(
+                connectingDone = false,
+                loadingDataActive = false,
+                loadingDataDone = false,
+                connectingDetail = "Encrypted connections can take a moment to establish.",
             )
         }
     }
@@ -828,11 +913,14 @@ private fun Node_Ready_Preview() {
 }
 
 // ==================================================================================
-// SLOW-PATH EDGE CASE — 90+ second mark
+// SLOW-PATH EDGE CASE — 75+ second mark
 // ==================================================================================
 
 @ExcludeFromCoverage
-@Preview(name = "Slow path — 90s mark, Node still discovering peers")
+// Banner triggers at 75s wall-clock from bootstrap start — 15s before the existing
+// 90s timeout dialog — so the user receives a reassurance message before the harder
+// interrupt. Wall-clock elapsed, NOT per-stage elapsed (see STATE-TRANSITION CONTRACT).
+@Preview(name = "Slow path — 75s mark, Node still discovering peers")
 @Composable
 private fun SlowPath_Preview() {
     BisqTheme.Preview {
@@ -842,7 +930,7 @@ private fun SlowPath_Preview() {
             overallProgress = 0.35f,
             appVersion = "Bisq Easy v0.5.0",
             slowPathBannerVisible = true,
-            slowPathElapsed = "92s elapsed",
+            slowPathElapsed = "76s elapsed",
         ) {
             NodeStepList(
                 steps =
