@@ -269,6 +269,25 @@ fun SettingsContent(
                         disabled = !isResetAllDontShowAgainEnabled,
                     )
 
+                    BisqHDivider()
+
+                    BisqText.H4Light("settings.offerbook.headline".i18n())
+
+                    BisqGap.V1()
+
+                    BisqSwitch(
+                        label = "settings.offerbook.rememberFilterPreferences".i18n(),
+                        checked = uiState.rememberOfferbookFilterPreferences,
+                        onSwitch = { onAction(SettingsUiAction.OnRememberOfferbookFilterPreferencesChange(it)) },
+                    )
+
+                    BisqGap.VQuarter()
+
+                    BisqText.SmallLight(
+                        text = "settings.offerbook.rememberFilterPreferences.help".i18n(),
+                        color = BisqTheme.colors.mid_grey20,
+                    )
+
                     if (uiState.shouldShowPushNotificationsToggle) {
                         BisqHDivider()
 

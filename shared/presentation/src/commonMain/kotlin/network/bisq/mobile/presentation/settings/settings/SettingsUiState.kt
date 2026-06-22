@@ -45,4 +45,5 @@ data class SettingsUiState(
      * emission within the next track() call (no rebuild required).
      */
     val analyticsEnabled: Boolean = false,
+    val rememberOfferbookFilterPreferences: Boolean = true,
 )

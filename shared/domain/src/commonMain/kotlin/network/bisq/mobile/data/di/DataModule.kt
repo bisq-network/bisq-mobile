@@ -3,17 +3,21 @@ package network.bisq.mobile.data.di
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import network.bisq.mobile.data.datastore.createDataStore
+import network.bisq.mobile.data.datastore.serializer.OfferbookFilterConfigsSerializer
 import network.bisq.mobile.data.datastore.serializer.SettingsSerializer
 import network.bisq.mobile.data.datastore.serializer.TradeReadStateMapSerializer
 import network.bisq.mobile.data.datastore.serializer.UserSerializer
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.model.User
+import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfigs
+import network.bisq.mobile.data.repository.OfferbookFilterConfigRepositoryImpl
 import network.bisq.mobile.data.repository.SettingsRepositoryImpl
 import network.bisq.mobile.data.repository.TradeReadStateRepositoryImpl
 import network.bisq.mobile.data.repository.UserRepositoryImpl
 import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.data.utils.getStorageDir
+import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.repository.UserRepository
@@ -55,10 +59,30 @@ val dataModule =
             )
         }
 
+        single<DataStore<OfferbookFilterConfigs>>(named("OfferbookFilterConfigs")) {
+            createDataStore(
+                "OfferbookFilterConfigs",
+                getStorageDir(),
+                OfferbookFilterConfigsSerializer,
+                ReplaceFileCorruptionHandler { OfferbookFilterConfigs() },
+            )
+        }
+
         // Repositories
         single<SettingsRepository> { SettingsRepositoryImpl(get(named("Settings"))) }
         single<UserRepository> { UserRepositoryImpl(get(named("User"))) }
         single<TradeReadStateRepository> { TradeReadStateRepositoryImpl(get(named("TradeReadStateMap"))) }
+        // Koin singles are lazy by default. This repository must initialize at app startup so it can
+        // load persisted offerbook filter configs into session memory before the user can disable
+        // remember-filter-preferences from Settings. Disabling then clears local storage while the
+        // current session keeps the loaded snapshot until app restart.
+        single<OfferbookFilterConfigRepository>(createdAtStart = true) {
+            OfferbookFilterConfigRepositoryImpl(
+                get(named("OfferbookFilterConfigs")),
+                get(),
+                get(),
+            )
+        }
 
         // Exception handler setup - singleton to ensure consistent setup
         single<CoroutineExceptionHandlerSetup> { CoroutineExceptionHandlerSetup() }

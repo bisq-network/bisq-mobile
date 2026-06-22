@@ -136,6 +136,8 @@ class CreateOfferPricePresenterTest {
         override suspend fun setAnalyticsPromptSeen(value: Boolean) {}
 
         override suspend fun setAnalyticsBaselineSent(value: Boolean) {}
+
+        override suspend fun setRememberOfferbookFilterPreferences(value: Boolean) {}
     }
 
     private class FakeMarketPriceServiceFacade(

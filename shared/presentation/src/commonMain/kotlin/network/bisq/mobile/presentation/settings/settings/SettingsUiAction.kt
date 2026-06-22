@@ -30,6 +30,10 @@ sealed interface SettingsUiAction {
         val value: Boolean,
     ) : SettingsUiAction
 
+    data class OnRememberOfferbookFilterPreferencesChange(
+        val enabled: Boolean,
+    ) : SettingsUiAction
+
     data class OnNumDaysAfterRedactingTradeDataChange(
         val value: String,
     ) : SettingsUiAction

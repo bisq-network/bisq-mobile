@@ -34,6 +34,7 @@ data class Settings(
     // baseline on their next cold-start-after-opt-in — that's the correct
     // initial state because we don't know if they had a baseline before.
     val analyticsBaselineSent: Boolean = false,
+    val rememberOfferbookFilterPreferences: Boolean = true,
 )
 
 @Serializable

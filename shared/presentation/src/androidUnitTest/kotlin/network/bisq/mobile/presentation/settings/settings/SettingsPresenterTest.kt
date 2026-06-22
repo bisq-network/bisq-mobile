@@ -211,6 +211,24 @@ class SettingsPresenterTest {
         }
 
     @Test
+    fun `when loading local settings fails then clears loading and sets error state`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsRepository.fetch() } throws Exception("Local settings error")
+
+            // When
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Then
+            val state = presenter.uiState.value
+            assertFalse(state.isFetchingSettings)
+            assertTrue(state.isFetchingSettingsError)
+        }
+
+    @Test
     fun `when retry load settings clicked then reloads settings`() =
         runTest(testDispatcher) {
             // Given
@@ -774,6 +792,47 @@ class SettingsPresenterTest {
             // Then
             val state = presenter.uiState.value
             assertTrue(state.useAnimations) // Reverted to original
+        }
+
+    @Test
+    fun `when remember offerbook filter preferences changes then updates state and repository`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.rememberOfferbookFilterPreferences)
+
+            // When
+            presenter.onAction(SettingsUiAction.OnRememberOfferbookFilterPreferencesChange(false))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { settingsRepository.setRememberOfferbookFilterPreferences(false) }
+            assertFalse(presenter.uiState.value.rememberOfferbookFilterPreferences)
+        }
+
+    @Test
+    fun `when remember offerbook filter preferences persistence fails then reverts state`() =
+        runTest(testDispatcher) {
+            // Given
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsRepository.setRememberOfferbookFilterPreferences(false) } throws Exception("Error")
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.rememberOfferbookFilterPreferences)
+
+            // When
+            presenter.onAction(SettingsUiAction.OnRememberOfferbookFilterPreferencesChange(false))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { settingsRepository.setRememberOfferbookFilterPreferences(false) }
+            assertTrue(presenter.uiState.value.rememberOfferbookFilterPreferences)
         }
 
     // ========== Reset "Don't show again" flags ==========

@@ -53,6 +53,8 @@ interface SettingsRepository {
      */
     suspend fun setAnalyticsBaselineSent(value: Boolean)
 
+    suspend fun setRememberOfferbookFilterPreferences(value: Boolean)
+
     /**
      * Returns a hot [StateFlow] of [Settings.analyticsEnabled] sharing in the
      * given [scope]. The DI module passes its long-lived buffer scope here so

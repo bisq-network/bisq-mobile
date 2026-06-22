@@ -511,6 +511,10 @@ class ApplicationLifecycleServiceBootstrapTest {
         override suspend fun setAnalyticsBaselineSent(value: Boolean) {
             flow.value = flow.value.copy(analyticsBaselineSent = value)
         }
+
+        override suspend fun setRememberOfferbookFilterPreferences(value: Boolean) {
+            flow.value = flow.value.copy(rememberOfferbookFilterPreferences = value)
+        }
     }
 
     @Test

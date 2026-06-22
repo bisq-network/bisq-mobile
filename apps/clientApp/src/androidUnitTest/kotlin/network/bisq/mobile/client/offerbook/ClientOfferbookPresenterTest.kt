@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -32,6 +33,7 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -157,6 +159,10 @@ class ClientOfferbookPresenterTest {
         val tradeRestrictingAlertServiceFacade = mockk<TradeRestrictingAlertServiceFacade>()
         every { tradeRestrictingAlertServiceFacade.alert } returns alertFlow
 
+        val offerbookFilterConfigRepository = mockk<OfferbookFilterConfigRepository>(relaxed = true)
+        coEvery { offerbookFilterConfigRepository.getConfig(any()) } returns OfferbookFilterConfig()
+        coEvery { offerbookFilterConfigRepository.setConfig(any(), any()) } returns Unit
+
         return ClientOfferbookPresenter(
             mainPresenter = mainPresenter,
             offersServiceFacade = offersService,
@@ -166,6 +172,7 @@ class ClientOfferbookPresenterTest {
             reputationServiceFacade = reputationService,
             userProfileServiceFacade = userProfileServiceFacade,
             tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
+            offerbookFilterConfigRepository = offerbookFilterConfigRepository,
         )
     }
 

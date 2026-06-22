@@ -8,6 +8,7 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -18,6 +19,8 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
+import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfigs
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
@@ -39,6 +42,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
@@ -90,6 +94,22 @@ class OfferbookPresenterFilterTest {
     }
 
     // --- Shared helpers for building presenters and awaiting state ---
+    private class FakeOfferbookFilterConfigRepository(
+        initialConfigs: OfferbookFilterConfigs = OfferbookFilterConfigs(),
+    ) : OfferbookFilterConfigRepository {
+        private val _data = MutableStateFlow(initialConfigs)
+        override val data: StateFlow<OfferbookFilterConfigs> = _data
+
+        override suspend fun getConfig(marketKey: String): OfferbookFilterConfig = _data.value.configsByMarket[marketKey] ?: OfferbookFilterConfig()
+
+        override suspend fun setConfig(
+            marketKey: String,
+            config: OfferbookFilterConfig,
+        ) {
+            _data.value = _data.value.copy(configsByMarket = _data.value.configsByMarket + (marketKey to config))
+        }
+    }
+
     private fun makeOffer(
         id: String,
         isMy: Boolean,
@@ -192,6 +212,7 @@ class OfferbookPresenterFilterTest {
                 offerUserProfileService,
                 reputationService,
                 tradeRestrictingAlertServiceFacade,
+                FakeOfferbookFilterConfigRepository(),
             )
         offersFlow.value = allOffers
         presenter.onViewAttached()
@@ -464,6 +485,93 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
+    fun test_restores_initial_market_filter_config_from_repository_and_persists_changes() =
+        runTest(testDispatcher) {
+            val initialOffers =
+                listOf(
+                    makeOffer("wise", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN")),
+                    makeOffer("sepa", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+                )
+            val repository =
+                FakeOfferbookFilterConfigRepository(
+                    OfferbookFilterConfigs(
+                        mapOf(
+                            "BTC/USD" to
+                                OfferbookFilterConfig(
+                                    selectedPaymentMethodIds = setOf("WISE"),
+                                    selectedSettlementMethodIds = setOf("MAIN_CHAIN"),
+                                    onlyMyOffers = false,
+                                    hasManualPaymentFilter = true,
+                                    hasManualSettlementFilter = false,
+                                ),
+                        ),
+                    ),
+                )
+            val mainPresenter = MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
+            val offersFlow = MutableStateFlow(initialOffers)
+            val marketFlow =
+                MutableStateFlow(
+                    OfferbookMarket(
+                        MarketVO(
+                            baseCurrencyCode = "BTC",
+                            quoteCurrencyCode = "USD",
+                            baseCurrencyName = "Bitcoin",
+                            quoteCurrencyName = "US Dollar",
+                        ),
+                    ),
+                )
+            val offersService = mockk<OffersServiceFacade>()
+            every { offersService.offerbookListItems } returns offersFlow
+            every { offersService.selectedOfferbookMarket } returns marketFlow
+            coEvery { offersService.deleteOffer(any()) } returns Result.success(true)
+            val offerUserProfileService = mockk<UserProfileServiceFacade>(relaxed = true)
+            every { offerUserProfileService.selectedUserProfile } returns MutableStateFlow(createMockUserProfile("me"))
+            coEvery { offerUserProfileService.isUserIgnored(any()) } returns false
+            coEvery { offerUserProfileService.getUserProfileIcon(any(), any()) } returns mockk(relaxed = true)
+            coEvery { offerUserProfileService.getUserProfileIcon(any()) } returns mockk(relaxed = true)
+            val marketPriceServiceFacade =
+                object : MarketPriceServiceFacade(mockk(relaxed = true)) {
+                    override fun findMarketPriceItem(marketVO: MarketVO) = null
+
+                    override fun findUSDMarketPriceItem() = null
+
+                    override fun refreshSelectedFormattedMarketPrice() {}
+
+                    override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
+                }
+            val presenter =
+                OfferbookPresenter(
+                    mainPresenter,
+                    offersService,
+                    mockk(relaxed = true),
+                    mockk(relaxed = true),
+                    marketPriceServiceFacade,
+                    offerUserProfileService,
+                    mockk(relaxed = true),
+                    mockk(relaxed = true),
+                    repository,
+                )
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            awaitSortedCount(presenter, 1)
+            assertEquals(
+                setOf("WISE"),
+                presenter.filterUiState.value.payment
+                    .filter { it.selected }
+                    .map { it.id }
+                    .toSet(),
+            )
+
+            presenter.setOnlyMyOffers(true)
+            advanceUntilIdle()
+
+            assertEquals(true, repository.getConfig("BTC/USD").onlyMyOffers)
+            assertEquals(setOf("WISE"), repository.getConfig("BTC/USD").selectedPaymentMethodIds)
+        }
+
+    @Test
     @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_cross_market_payment_filter_persistence() =
         runTest(testDispatcher) {
@@ -534,6 +642,7 @@ class OfferbookPresenterFilterTest {
                     offerUserProfileService,
                     reputationService,
                     tradeRestrictingAlertServiceFacade,
+                    FakeOfferbookFilterConfigRepository(),
                 )
             presenter.onViewAttached()
             runCurrent()

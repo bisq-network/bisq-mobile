@@ -108,4 +108,10 @@ open class SettingsRepositoryImpl(
             it.copy(analyticsBaselineSent = value)
         }
     }
+
+    override suspend fun setRememberOfferbookFilterPreferences(value: Boolean) {
+        settingsStore.updateData {
+            it.copy(rememberOfferbookFilterPreferences = value)
+        }
+    }
 }

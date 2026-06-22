@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.settings.settings
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -118,6 +119,7 @@ open class SettingsPresenter(
         observePushNotificationsEnabled()
         observeKeepConnectedInBackground()
         observeAnalyticsEnabled()
+        observeRememberOfferbookFilterPreferences()
     }
 
     private fun observePushNotificationsEnabled() {
@@ -169,6 +171,16 @@ open class SettingsPresenter(
         }
     }
 
+    private fun observeRememberOfferbookFilterPreferences() {
+        presenterScope.launch {
+            settingsRepository.data.collect { settings ->
+                _uiState.update {
+                    it.copy(rememberOfferbookFilterPreferences = settings.rememberOfferbookFilterPreferences)
+                }
+            }
+        }
+    }
+
     fun onAction(action: SettingsUiAction) {
         when (action) {
             is SettingsUiAction.OnLanguageCodeChange -> setLanguageCode(action.langCode)
@@ -181,6 +193,8 @@ open class SettingsPresenter(
             SettingsUiAction.OnTradePriceToleranceSave -> onTradePriceToleranceSave()
             SettingsUiAction.OnTradePriceToleranceCancel -> onTradePriceToleranceCancel()
             is SettingsUiAction.OnUseAnimationsChange -> setUseAnimations(action.value)
+            is SettingsUiAction.OnRememberOfferbookFilterPreferencesChange ->
+                setRememberOfferbookFilterPreferences(action.enabled)
             is SettingsUiAction.OnNumDaysAfterRedactingTradeDataChange ->
                 onNumDaysAfterRedactingTradeDataChange(action.value)
 
@@ -472,6 +486,21 @@ open class SettingsPresenter(
         }
     }
 
+    private fun setRememberOfferbookFilterPreferences(enabled: Boolean) {
+        presenterScope.launch {
+            val previous = _uiState.value.rememberOfferbookFilterPreferences
+            _uiState.update { it.copy(rememberOfferbookFilterPreferences = enabled) }
+            try {
+                settingsRepository.setRememberOfferbookFilterPreferences(enabled)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _uiState.update { it.copy(rememberOfferbookFilterPreferences = previous) }
+                handleError(exception)
+            }
+        }
+    }
+
     private fun onPowFactorChange(value: String) {
         _uiState.update {
             val newEntry = it.powFactor.updateValue(value)
@@ -566,37 +595,52 @@ open class SettingsPresenter(
                         )
                     }
                 }.onSuccess { settings ->
-                    val supportedLangCodes = settings.supportedLanguageCodes.ifEmpty { setOf(DEFAULT_LANGUAGE_CODE) }
-                    val tradePriceToleranceFormatted = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
-                    val numDaysFormatted = settings.numDaysAfterRedactingTradeData.toString()
-                    val powFactorFormatted = settingsServiceFacade.difficultyAdjustmentFactor.value.toString()
-                    val ignorePowValue = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
+                    try {
+                        val supportedLangCodes = settings.supportedLanguageCodes.ifEmpty { setOf(DEFAULT_LANGUAGE_CODE) }
+                        val tradePriceToleranceFormatted = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
+                        val numDaysFormatted = settings.numDaysAfterRedactingTradeData.toString()
+                        val powFactorFormatted = settingsServiceFacade.difficultyAdjustmentFactor.value.toString()
+                        val ignorePowValue = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
 
-                    // Store original values for cancel operations (raw numeric values from settings)
-                    originalMaxTradePriceDeviation = settings.maxTradePriceDeviation
-                    originalNumDaysAfterRedactingTradeData = settings.numDaysAfterRedactingTradeData
-                    originalDifficultyAdjustmentFactor = settingsServiceFacade.difficultyAdjustmentFactor.value
+                        val localSettings = settingsRepository.fetch()
 
-                    _uiState.update {
-                        it.copy(
-                            i18nPairs = languageServiceFacade.i18nPairs.value,
-                            allLanguagePairs = languageServiceFacade.allPairs.value,
-                            languageCode = settings.languageCode,
-                            supportedLanguageCodes = supportedLangCodes,
-                            closeOfferWhenTradeTaken = settings.closeMyOfferWhenTaken,
-                            tradePriceTolerance = it.tradePriceTolerance.updateValue(tradePriceToleranceFormatted),
-                            useAnimations = settings.useAnimations,
-                            numDaysAfterRedactingTradeData = it.numDaysAfterRedactingTradeData.updateValue(numDaysFormatted),
-                            powFactor = it.powFactor.updateValue(powFactorFormatted),
-                            ignorePow = ignorePowValue,
-                            shouldShowPoWAdjustmentFactor = shouldShowPoWAdjustmentFactor,
-                            isFetchingSettings = false,
-                            isFetchingSettingsError = false,
-                            // Reset hasChanges flags since we just loaded original values
-                            hasChangesTradePriceTolerance = false,
-                            hasChangesNumDaysAfterRedactingTradeData = false,
-                            hasChangesPowFactor = false,
-                        )
+                        // Store original values for cancel operations (raw numeric values from settings)
+                        originalMaxTradePriceDeviation = settings.maxTradePriceDeviation
+                        originalNumDaysAfterRedactingTradeData = settings.numDaysAfterRedactingTradeData
+                        originalDifficultyAdjustmentFactor = settingsServiceFacade.difficultyAdjustmentFactor.value
+
+                        _uiState.update {
+                            it.copy(
+                                i18nPairs = languageServiceFacade.i18nPairs.value,
+                                allLanguagePairs = languageServiceFacade.allPairs.value,
+                                languageCode = settings.languageCode,
+                                supportedLanguageCodes = supportedLangCodes,
+                                closeOfferWhenTradeTaken = settings.closeMyOfferWhenTaken,
+                                tradePriceTolerance = it.tradePriceTolerance.updateValue(tradePriceToleranceFormatted),
+                                useAnimations = settings.useAnimations,
+                                rememberOfferbookFilterPreferences = localSettings.rememberOfferbookFilterPreferences,
+                                numDaysAfterRedactingTradeData = it.numDaysAfterRedactingTradeData.updateValue(numDaysFormatted),
+                                powFactor = it.powFactor.updateValue(powFactorFormatted),
+                                ignorePow = ignorePowValue,
+                                shouldShowPoWAdjustmentFactor = shouldShowPoWAdjustmentFactor,
+                                isFetchingSettings = false,
+                                isFetchingSettingsError = false,
+                                // Reset hasChanges flags since we just loaded original values
+                                hasChangesTradePriceTolerance = false,
+                                hasChangesNumDaysAfterRedactingTradeData = false,
+                                hasChangesPowFactor = false,
+                            )
+                        }
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (exception: Exception) {
+                        _uiState.update {
+                            it.copy(
+                                isFetchingSettings = false,
+                                isFetchingSettingsError = true,
+                            )
+                        }
+                        handleError(exception)
                     }
                 }
         }

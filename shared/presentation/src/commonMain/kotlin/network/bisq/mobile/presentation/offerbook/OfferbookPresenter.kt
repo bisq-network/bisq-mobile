@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.offerbook
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +12,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
+import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -33,6 +36,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
+import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
@@ -57,6 +61,8 @@ open class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
+    private val offerbookFilterConfigRepository: OfferbookFilterConfigRepository,
+    private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BasePresenter(mainPresenter) {
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
     val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?> = _showTradeRestrictedDialog.asStateFlow()
@@ -91,9 +97,7 @@ open class OfferbookPresenter(
         )
     val filterUiState: StateFlow<OfferbookFilterUiState> = _filterUiState.asStateFlow()
 
-    // Track availability deltas and whether user customized filters
-    private var prevAvailPayment: Set<String> = emptySet()
-    private var prevAvailSettlement: Set<String> = emptySet()
+    private var currentFilterMarketKey: String? = null
     private var hasManualPaymentFilter: Boolean = false
     private var hasManualSettlementFilter: Boolean = false
 
@@ -125,12 +129,34 @@ open class OfferbookPresenter(
     val selectedUserProfile get() = userProfileServiceFacade.selectedUserProfile
     val isLoading get() = offersServiceFacade.isOfferbookLoading
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {
         super.onViewAttached()
 
         resetActionGuards()
         selectedOffer = null
+        launchMarketFilterRestore()
+        launchOfferFiltering()
+        launchFilterUiStateDerivation()
+    }
+
+    private fun launchMarketFilterRestore() {
+        presenterScope.launch {
+            val initialMarketKey = getCurrentFilterMarketKey()
+            restoreFilterConfig(initialMarketKey)
+            launchAutoSelectWatchers()
+
+            offersServiceFacade.selectedOfferbookMarket.collectLatest { selectedMarket ->
+                val marketKey = selectedMarket.filterMarketKey()
+                if (marketKey != currentFilterMarketKey) {
+                    persistCurrentFilterConfig()
+                    restoreFilterConfig(marketKey)
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun launchOfferFiltering() {
         presenterScope.launch {
             // pack strongly-typed, use vararg combine -> Array, then map
             combine(
@@ -228,7 +254,7 @@ open class OfferbookPresenter(
                 val sorted =
                     processed.sortedWith(compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
                 sorted
-            }.flowOn(Dispatchers.Default)
+            }.flowOn(computationDispatcher)
                 .collectLatest { sorted ->
                     if (sorted != null) {
                         _sortedFilteredOffers.value = sorted
@@ -236,8 +262,9 @@ open class OfferbookPresenter(
                     }
                 }
         }
+    }
 
-        // Derive and publish filter UI state from available + selected sets
+    private fun launchFilterUiStateDerivation() {
         presenterScope.launch {
             combine(
                 availablePaymentMethodIds,
@@ -272,51 +299,74 @@ open class OfferbookPresenter(
                     onlyMyOffers = onlyMine,
                     hasActiveFilters = hasActive,
                 )
-            }.flowOn(Dispatchers.Default).collectLatest { ui ->
+            }.flowOn(computationDispatcher).collectLatest { ui ->
                 _filterUiState.value = ui
             }
         }
+    }
 
-        // Auto-manage default selections and availability changes
+    private fun launchAutoSelectWatchers() {
+        launchPaymentAutoSelectWatcher()
+        launchSettlementAutoSelectWatcher()
+    }
+
+    private fun launchPaymentAutoSelectWatcher() {
         presenterScope.launch {
             availablePaymentMethodIds.collectLatest { avail ->
-                val current = _selectedPaymentMethodIds.value
-                val newlyAdded = avail - prevAvailPayment
-                // If user has manually filtered, preserve their selection (even if not currently available)
-                // and only add newly available methods if they haven't filtered yet
-                val newSelection =
-                    if (hasManualPaymentFilter) {
-                        current // Keep user's manual selection intact
-                    } else {
-                        current + newlyAdded // Auto-add newly available methods
-                    }
-                // If the user has never customized this filter, default to selecting all
-                // available methods when we first obtain availability.
-                val finalSelection = if (current.isEmpty() && !hasManualPaymentFilter) avail else newSelection
-                if (finalSelection != current) {
-                    _selectedPaymentMethodIds.value = finalSelection
+                if (!hasManualPaymentFilter && _selectedPaymentMethodIds.value != avail) {
+                    _selectedPaymentMethodIds.value = avail
+                    persistCurrentFilterConfig()
                 }
-                prevAvailPayment = avail
             }
         }
+    }
+
+    private fun launchSettlementAutoSelectWatcher() {
         presenterScope.launch {
             availableSettlementMethodIds.collectLatest { avail ->
-                val current = _selectedSettlementMethodIds.value
-                val newlyAdded = avail - prevAvailSettlement
-                // Mirror payment-method behavior: preserve manual selections across availability changes
-                val newSelection =
-                    if (hasManualSettlementFilter) {
-                        current // Keep user's manual selection intact
-                    } else {
-                        current + newlyAdded // Auto-add newly available methods
-                    }
-                // Only auto-select all when there is no manual filter yet.
-                val finalSelection = if (current.isEmpty() && !hasManualSettlementFilter) avail else newSelection
-                if (finalSelection != current) {
-                    _selectedSettlementMethodIds.value = finalSelection
+                if (!hasManualSettlementFilter && _selectedSettlementMethodIds.value != avail) {
+                    _selectedSettlementMethodIds.value = avail
+                    persistCurrentFilterConfig()
                 }
-                prevAvailSettlement = avail
             }
+        }
+    }
+
+    private fun OfferbookMarket.filterMarketKey(): String = market.marketCodes
+
+    private fun getCurrentFilterMarketKey(): String = offersServiceFacade.selectedOfferbookMarket.value.filterMarketKey()
+
+    private fun getCurrentFilterConfig(): OfferbookFilterConfig =
+        OfferbookFilterConfig(
+            selectedPaymentMethodIds = _selectedPaymentMethodIds.value,
+            selectedSettlementMethodIds = _selectedSettlementMethodIds.value,
+            onlyMyOffers = _onlyMyOffers.value,
+            hasManualPaymentFilter = hasManualPaymentFilter,
+            hasManualSettlementFilter = hasManualSettlementFilter,
+        )
+
+    private suspend fun restoreFilterConfig(marketKey: String) {
+        val config =
+            runCatching { offerbookFilterConfigRepository.getConfig(marketKey) }
+                .onFailure { log.w(it) { "Failed to restore offerbook filter config for market $marketKey" } }
+                .getOrDefault(OfferbookFilterConfig())
+        currentFilterMarketKey = marketKey
+        hasManualPaymentFilter = config.hasManualPaymentFilter
+        hasManualSettlementFilter = config.hasManualSettlementFilter
+        _selectedPaymentMethodIds.value = config.selectedPaymentMethodIds
+        _selectedSettlementMethodIds.value = config.selectedSettlementMethodIds
+        _onlyMyOffers.value = config.onlyMyOffers
+    }
+
+    private fun persistCurrentFilterConfig() {
+        if (currentFilterMarketKey == null) {
+            currentFilterMarketKey = getCurrentFilterMarketKey()
+        }
+        val marketKey = currentFilterMarketKey ?: return
+        val config = getCurrentFilterConfig()
+        presenterScope.launch {
+            runCatching { offerbookFilterConfigRepository.setConfig(marketKey, config) }
+                .onFailure { log.w(it) { "Failed to persist offerbook filter config for market $marketKey" } }
         }
     }
 
@@ -505,7 +555,7 @@ open class OfferbookPresenter(
         item: OfferItemPresentationModel,
         userProfile: UserProfileVO,
     ): Boolean =
-        withContext(Dispatchers.Default) {
+        withContext(computationDispatcher) {
             val bisqEasyOffer = item.bisqEasyOffer
             val requiredReputationScoreForMaxOrFixed =
                 BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
@@ -612,6 +662,7 @@ open class OfferbookPresenter(
 
     fun setOnlyMyOffers(enabled: Boolean) {
         _onlyMyOffers.value = enabled
+        persistCurrentFilterConfig()
     }
 
     fun setSelectedPaymentMethodIds(ids: Set<String>) {
@@ -619,6 +670,7 @@ open class OfferbookPresenter(
         val clamped = ids intersect avail
         hasManualPaymentFilter = clamped != avail
         _selectedPaymentMethodIds.value = clamped
+        persistCurrentFilterConfig()
     }
 
     fun setSelectedSettlementMethodIds(ids: Set<String>) {
@@ -626,6 +678,7 @@ open class OfferbookPresenter(
         val clamped = ids intersect avail
         hasManualSettlementFilter = clamped != avail
         _selectedSettlementMethodIds.value = clamped
+        persistCurrentFilterConfig()
     }
 
     fun togglePaymentMethod(id: String) {
@@ -635,6 +688,7 @@ open class OfferbookPresenter(
         val next = if (id in current) current - id else current + id
         hasManualPaymentFilter = true
         _selectedPaymentMethodIds.value = next
+        persistCurrentFilterConfig()
     }
 
     fun toggleSettlementMethod(id: String) {
@@ -644,6 +698,7 @@ open class OfferbookPresenter(
         val next = if (id in current) current - id else current + id
         hasManualSettlementFilter = true
         _selectedSettlementMethodIds.value = next
+        persistCurrentFilterConfig()
     }
 
     fun clearAllFilters() {
@@ -652,6 +707,7 @@ open class OfferbookPresenter(
         _selectedPaymentMethodIds.value = _availablePaymentMethodIds.value
         _selectedSettlementMethodIds.value = _availableSettlementMethodIds.value
         _onlyMyOffers.value = false
+        persistCurrentFilterConfig()
     }
 
     fun setPaymentSelection(ids: Set<String>) {

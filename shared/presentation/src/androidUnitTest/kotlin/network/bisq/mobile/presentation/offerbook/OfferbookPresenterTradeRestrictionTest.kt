@@ -8,12 +8,15 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
+import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfigs
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
@@ -25,6 +28,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
@@ -86,6 +90,20 @@ class OfferbookPresenterTradeRestrictionTest {
     // Helpers
     // -------------------------------------------------------------------------
 
+    private class FakeOfferbookFilterConfigRepository : OfferbookFilterConfigRepository {
+        private val _data = MutableStateFlow(OfferbookFilterConfigs())
+        override val data: StateFlow<OfferbookFilterConfigs> = _data
+
+        override suspend fun getConfig(marketKey: String): OfferbookFilterConfig = _data.value.configsByMarket[marketKey] ?: OfferbookFilterConfig()
+
+        override suspend fun setConfig(
+            marketKey: String,
+            config: OfferbookFilterConfig,
+        ) {
+            _data.value = _data.value.copy(configsByMarket = _data.value.configsByMarket + (marketKey to config))
+        }
+    }
+
     private fun buildPresenter(activeAlert: AuthorizedAlertData? = null): OfferbookPresenter {
         val urlLauncher = mockk<UrlLauncher>()
         coEvery { urlLauncher.openUrl(any()) } returns true
@@ -137,6 +155,7 @@ class OfferbookPresenterTradeRestrictionTest {
             userProfileServiceFacade,
             reputationService,
             tradeRestrictingAlertServiceFacade,
+            FakeOfferbookFilterConfigRepository(),
         )
     }
 

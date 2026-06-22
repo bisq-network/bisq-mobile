@@ -99,4 +99,10 @@ class SettingsRepositoryMock :
             it.copy(analyticsBaselineSent = value)
         }
     }
+
+    override suspend fun setRememberOfferbookFilterPreferences(value: Boolean) {
+        _data.update {
+            it.copy(rememberOfferbookFilterPreferences = value)
+        }
+    }
 }
