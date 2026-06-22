@@ -487,6 +487,7 @@ internal fun SubPageEntryCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
                 .background(BisqTheme.colors.dark_grey40)
+                .clickable { onClick() }
                 .then(
                     Modifier.padding(
                         horizontal = BisqUIConstants.ScreenPadding,
@@ -619,7 +620,7 @@ internal fun ConnectionCard(peer: SimulatedPeer) {
  */
 private fun SimulatedNodeOverview.healthState(): SimulatedHealthState =
     when {
-        peerCount == 0 || (!isTorEnabled && !isTorRunning) -> SimulatedHealthState.OFFLINE
+        peerCount == 0 || (isTorEnabled && !isTorRunning) -> SimulatedHealthState.OFFLINE
         !isDataSynced -> SimulatedHealthState.SYNCING
         else -> SimulatedHealthState.HEALTHY
     }

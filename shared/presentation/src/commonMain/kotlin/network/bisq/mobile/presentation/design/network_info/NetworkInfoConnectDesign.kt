@@ -74,6 +74,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -210,8 +211,14 @@ private fun BridgeTopologyCard(
             BisqText.XSmallLight(text = "→", color = BisqTheme.colors.mid_grey20)
             BisqGap.H1()
 
-            // Trusted node box — coloured by reachability
-            TopologyBox(label = trustedNodeName, color = nodeColor)
+            // Trusted node box — coloured by reachability.
+            // Width-capped so a long node name ellipsizes instead of overflowing the row
+            // and compressing the You / Network boxes.
+            TopologyBox(
+                label = trustedNodeName,
+                color = nodeColor,
+                modifier = Modifier.widthIn(max = 140.dp),
+            )
 
             BisqGap.H1()
             BisqText.XSmallLight(text = "→", color = BisqTheme.colors.mid_grey20)
@@ -257,10 +264,11 @@ private fun BridgeTopologyCard(
 private fun TopologyBox(
     label: String,
     color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
-            Modifier
+            modifier
                 .clip(RoundedCornerShape(BisqUIConstants.BorderRadiusSmall))
                 .background(BisqTheme.colors.dark_grey50)
                 .padding(
