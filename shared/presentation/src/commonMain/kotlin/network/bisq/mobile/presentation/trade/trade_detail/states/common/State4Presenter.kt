@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.trade.trade_detail.states.common
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,10 @@ abstract class State4Presenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val shareFileService: ShareFileService,
+    // Background dispatcher for the (CPU-bound) CSV build. Injectable so tests can pass the test
+    // dispatcher and keep the export pipeline under the test scheduler — otherwise the
+    // Dispatchers.Default hop escapes runTest and forces real-time waits, which flake on CI.
+    private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(State4UiState())
     val uiState: StateFlow<State4UiState> = _uiState.asStateFlow()
@@ -118,7 +123,7 @@ abstract class State4Presenter(
                 }
             val headers = TradeExportCsvHeaders.resolveForTrade(trade)
             val csv =
-                withContext(Dispatchers.Default) {
+                withContext(backgroundDispatcher) {
                     TradeCompletedCsv.buildCsv(trade, headers)
                 }
             val fileName = "BisqEasy-trade-${trade.shortTradeId}.csv"

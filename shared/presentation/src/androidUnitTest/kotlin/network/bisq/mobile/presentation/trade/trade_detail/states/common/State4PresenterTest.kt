@@ -5,11 +5,13 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -32,7 +34,6 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -84,6 +85,7 @@ class State4PresenterTest {
             tradesServiceFacade,
             tradeReadStateRepository,
             shareFileService,
+            testDispatcher,
         )
     }
 
@@ -259,7 +261,6 @@ class State4PresenterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until timing issue is stabilized")
     fun onExportTradeClick_when_share_fails_shows_error() =
         runTest {
             val trade = tradeForTests("t-bad-share", "sx")
@@ -270,8 +271,9 @@ class State4PresenterTest {
                 Result.failure(RuntimeException("share denied"))
 
             presenter.onAction(State4UiAction.OnExportTradeClick)
+            advanceUntilIdle()
 
-            coVerify(timeout = 5000) { shareFileService.shareUtf8TextFile(any(), any()) }
+            coVerify(exactly = 1) { shareFileService.shareUtf8TextFile(any(), any()) }
             assertEquals("share denied", GenericErrorHandler.genericErrorMessage.value)
         }
 
@@ -323,7 +325,8 @@ class State4PresenterTest {
         tradesServiceFacade: TradesServiceFacade,
         tradeReadStateRepository: TradeReadStateRepository,
         shareFileService: ShareFileService,
-    ) : State4Presenter(mainPresenter, tradesServiceFacade, tradeReadStateRepository, shareFileService) {
+        backgroundDispatcher: CoroutineDispatcher,
+    ) : State4Presenter(mainPresenter, tradesServiceFacade, tradeReadStateRepository, shareFileService, backgroundDispatcher) {
         override fun resolveMyDirectionLabel(): String = DIRECTION
 
         override fun resolveMyOutcomeLabel(): String = OUTCOME

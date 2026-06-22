@@ -28,7 +28,6 @@ import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.junit.Test
 import org.koin.core.module.Module
 import org.koin.dsl.module
-import kotlin.test.Ignore
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -107,6 +106,7 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
                 sensitiveSettingsRepository = sensitiveSettingsRepository,
                 pushNotificationTokenProvider = tokenProvider,
                 userProfileServiceFacade = userProfileServiceFacade,
+                backgroundDispatcher = testDispatcher,
             )
     }
 
@@ -202,7 +202,6 @@ class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase(
         }
 
     @Test
-    @Ignore("Flaky test")
     fun `onDeviceTokenReceived with re-registration failure updates state`() =
         runTest {
             sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }

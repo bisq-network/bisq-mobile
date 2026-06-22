@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +33,10 @@ class ClientPushNotificationServiceFacade(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val pushNotificationTokenProvider: PushNotificationTokenProvider,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    // Background dispatcher for the (multi-second, blocking) symmetric-key init. Injectable so
+    // tests can pass the test dispatcher and keep it under the test scheduler — otherwise the
+    // Dispatchers.Default hop escapes runTest/advanceUntilIdle and makes registration tests flaky.
+    private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ServiceFacade(),
     PushNotificationServiceFacade,
     Logging {
@@ -159,7 +164,7 @@ class ClientPushNotificationServiceFacade(
         // `commit()` to disk — both block whatever thread they run on, and
         // `presenterScope` runs on `Dispatchers.Main`. Using `Default` instead of `IO`
         // because `Dispatchers.IO` is JVM-only (internal on Kotlin/Native).
-        val symmetricKeyBase64 = withContext(Dispatchers.Default) { getOrCreatePushNotificationKeyBase64() }
+        val symmetricKeyBase64 = withContext(backgroundDispatcher) { getOrCreatePushNotificationKeyBase64() }
         validateSymmetricKey(platformInfo.type, symmetricKeyBase64)?.let { return it }
 
         log.i { "Registering device with deviceId: $deviceId, descriptor: $deviceDescriptor, platform: $platform" }
