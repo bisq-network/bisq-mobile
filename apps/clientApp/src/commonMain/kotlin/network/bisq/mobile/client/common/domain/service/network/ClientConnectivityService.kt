@@ -30,6 +30,13 @@ open class ClientConnectivityService(
     Logging {
     companion object {
         const val TIMEOUT = 5000L
+
+        // Tor health checks need a much larger ceiling than clearnet: .onion round trips
+        // routinely take several seconds and the TCP/WS upgrade alone can exceed 5s on a
+        // poor circuit. A flat 5s timeout fails healthy-but-slow Tor connections, tearing
+        // them down and forcing an expensive reconnect (~7s + re-subscribing every topic),
+        // which is exactly the "frequent Reconnecting" loop this avoids.
+        const val TIMEOUT_TOR = 15_000L
         const val PERIOD = 5000L // default check every 5 sec
         const val START_DELAY = 5_000L
         const val START_DELAY_TOR = 20_000L
@@ -40,6 +47,11 @@ open class ClientConnectivityService(
         const val ROUND_TRIP_SLOW_THRESHOLD_TOR = 3000L
         internal const val IOS_FORCE_RECREATE_CYCLES = 12 // ~60s at default 5s period
         internal const val ANDROID_FORCE_RECREATE_CYCLES = 12 // ~60s at default 5s period
+
+        // Consecutive failed health checks tolerated before tearing down a connection
+        // that isConnected() still reports as alive. A single slow/missed round trip
+        // (common on Tor) must not flip the UI to RECONNECTING.
+        internal const val HEALTH_CHECK_FAILURE_THRESHOLD = 2
 
         private const val DEFAULT_AVERAGE_TRIP_TIME = -1L // invalid
         const val MIN_REQUESTS_TO_ASSESS_SPEED = 3 // invalid
@@ -79,6 +91,10 @@ open class ClientConnectivityService(
     private val mutex = Mutex()
     private var consecutiveReconnectingCycles = 0
 
+    // Debounce for the trusted→untrusted transition: counts consecutive failed health
+    // checks while isConnected() still reports alive. Reset on any successful check.
+    private var consecutiveHealthCheckFailures = 0
+
     // Once a health check fails, the connection is "untrusted" until a health check
     // succeeds again. This prevents the monitoring loop from oscillating between
     // CONNECTED and RECONNECTING when isConnected() returns true on a stale/half-open
@@ -91,6 +107,7 @@ open class ClientConnectivityService(
     override suspend fun activate() {
         super.activate()
         consecutiveReconnectingCycles = 0
+        consecutiveHealthCheckFailures = 0
         connectionUntrusted = false
         startMonitoring()
     }
@@ -98,6 +115,7 @@ open class ClientConnectivityService(
     override suspend fun deactivate() {
         stopMonitoring()
         consecutiveReconnectingCycles = 0
+        consecutiveHealthCheckFailures = 0
         connectionUntrusted = false
         super.deactivate()
     }
@@ -186,14 +204,8 @@ open class ClientConnectivityService(
                                 log.i { "Connection trust restored after successful health check" }
                                 connectionUntrusted = false
                                 consecutiveReconnectingCycles = 0
-                                val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
-                                if (failedSubs.isNotEmpty()) {
-                                    ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
-                                } else if (isSlow()) {
-                                    ConnectivityStatus.REQUESTING_INVENTORY
-                                } else {
-                                    ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-                                }
+                                consecutiveHealthCheckFailures = 0
+                                connectedStatus()
                             } else {
                                 consecutiveReconnectingCycles++
                                 log.d { "Untrusted connection health check failed, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
@@ -216,19 +228,27 @@ open class ClientConnectivityService(
                         // server is down. A real round-trip request detects this.
                         val alive = isConnectionAlive()
                         log.d { "Health check result: alive=$alive" }
-                        if (!alive) {
-                            log.d { "Health check failed, marking connection as untrusted" }
-                            connectionUntrusted = true
-                            webSocketClientService.forceReconnect()
-                            ConnectivityStatus.RECONNECTING
+                        if (alive) {
+                            consecutiveHealthCheckFailures = 0
+                            connectedStatus()
                         } else {
-                            val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
-                            if (failedSubs.isNotEmpty()) {
-                                ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
-                            } else if (isSlow()) {
-                                ConnectivityStatus.REQUESTING_INVENTORY
+                            consecutiveHealthCheckFailures++
+                            if (consecutiveHealthCheckFailures < HEALTH_CHECK_FAILURE_THRESHOLD) {
+                                // Tolerate a transient slow/missed health check without tearing
+                                // down a connection that still looks alive. Re-verify next cycle;
+                                // only commit to RECONNECTING after HEALTH_CHECK_FAILURE_THRESHOLD
+                                // consecutive misses. Avoids flapping to RECONNECTING on Tor.
+                                log.d {
+                                    "Health check missed " +
+                                        "($consecutiveHealthCheckFailures/$HEALTH_CHECK_FAILURE_THRESHOLD), tolerating"
+                                }
+                                connectedStatus()
                             } else {
-                                ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+                                log.d { "Health check failed $consecutiveHealthCheckFailures consecutive times, marking connection as untrusted" }
+                                connectionUntrusted = true
+                                consecutiveHealthCheckFailures = 0
+                                webSocketClientService.forceReconnect()
+                                ConnectivityStatus.RECONNECTING
                             }
                         }
                     }
@@ -271,13 +291,29 @@ open class ClientConnectivityService(
             }
 
     /**
+     * The connected status to report when a health check has just succeeded: degraded if
+     * some subscriptions failed, still-loading if the link is slow, otherwise fully connected.
+     */
+    private suspend fun connectedStatus(): ConnectivityStatus {
+        val failedSubs = webSocketClientService.failedSubscriptionTopics.first()
+        return when {
+            failedSubs.isNotEmpty() -> ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
+            isSlow() -> ConnectivityStatus.REQUESTING_INVENTORY
+            else -> ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+        }
+    }
+
+    /** Health-check timeout, larger for Tor where round trips and the WS upgrade are slow. */
+    internal fun healthCheckTimeout(): Long = if (webSocketClientService.isTorProxy) TIMEOUT_TOR else TIMEOUT
+
+    /**
      * Sends a lightweight health check request to verify the server is responsive.
-     * Returns true if a response is received within [TIMEOUT], false otherwise.
+     * Returns true if a response is received within [healthCheckTimeout], false otherwise.
      * @throws UnauthorizedApiAccessException if the session has expired (401 response)
      */
     private suspend fun isConnectionAlive(): Boolean =
         try {
-            withTimeout(TIMEOUT) {
+            withTimeout(healthCheckTimeout()) {
                 webSocketClientService.sendHealthCheck()
             }
         } catch (e: UnauthorizedApiAccessException) {

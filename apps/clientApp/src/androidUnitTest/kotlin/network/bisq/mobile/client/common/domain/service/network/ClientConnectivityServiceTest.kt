@@ -358,6 +358,42 @@ class ClientConnectivityServiceTest {
         }
 
     @Test
+    fun `single health check failure is tolerated and does not flip to RECONNECTING`() =
+        runBlocking {
+            // Debounce: one missed health check (common on slow Tor circuits) must not
+            // tear down a connection that isConnected() still reports as alive.
+            every { webSocketClientService.isConnected() } returns true
+            coEvery { webSocketClientService.sendHealthCheck() } returns false
+            coEvery { webSocketClientService.forceReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            // Single cycle, then stop before a second failure can accrue.
+            clientConnectivityService.startMonitoring(period = 10_000, startDelay = 0)
+            delay(200)
+            clientConnectivityService.stopMonitoring()
+
+            assertEquals(
+                ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
+                clientConnectivityService.status.value,
+                "A single failed health check should be tolerated, staying connected",
+            )
+            coVerify(exactly = 0) { webSocketClientService.forceReconnect() }
+        }
+
+    @Test
+    fun `healthCheckTimeout is larger for Tor than clearnet`() {
+        every { webSocketClientService.isTorProxy } returns false
+        assertEquals(ClientConnectivityService.TIMEOUT, clientConnectivityService.healthCheckTimeout())
+
+        every { webSocketClientService.isTorProxy } returns true
+        assertEquals(ClientConnectivityService.TIMEOUT_TOR, clientConnectivityService.healthCheckTimeout())
+        assertTrue(
+            ClientConnectivityService.TIMEOUT_TOR > ClientConnectivityService.TIMEOUT,
+            "Tor health-check timeout must exceed the clearnet timeout",
+        )
+    }
+
+    @Test
     fun `health check exception triggers forceReconnect`() =
         runBlocking {
             every { webSocketClientService.isConnected() } returns true
@@ -531,8 +567,10 @@ class ClientConnectivityServiceTest {
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
 
-            // First cycle: health check fails, marks untrusted, sets RECONNECTING
-            delay(200)
+            // Debounce: the first failed health check is tolerated; once
+            // HEALTH_CHECK_FAILURE_THRESHOLD consecutive failures accrue the connection
+            // is marked untrusted and RECONNECTING is set.
+            delay(400)
             assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
 
             // Subsequent cycles: isConnected() still true but connectionUntrusted flag
@@ -587,7 +625,9 @@ class ClientConnectivityServiceTest {
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 50, startDelay = 0)
-            delay(50 * 15)
+            // One extra cycle is now consumed by the health-check debounce before the
+            // untrusted reconnect cycles start counting toward the recreation threshold.
+            delay(50 * 18)
 
             coVerify(atLeast = 1) { webSocketClientService.forceClientRecreation() }
         }
