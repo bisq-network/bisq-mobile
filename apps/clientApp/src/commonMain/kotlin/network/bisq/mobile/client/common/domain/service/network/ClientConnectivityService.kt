@@ -185,6 +185,10 @@ open class ClientConnectivityService(
                         // be down even though the TCP socket looks alive (half-open connection).
                         // We must verify with a real round-trip before trusting the connection.
                         if (!connected) {
+                            // A dropped connection ends the current trusted session, so restart
+                            // the health-check grace counter — the next reconnected session must
+                            // get a fresh single-miss tolerance rather than inheriting a stale count.
+                            consecutiveHealthCheckFailures = 0
                             consecutiveReconnectingCycles++
                             log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
                             if (shouldForceClientRecreation()) {
