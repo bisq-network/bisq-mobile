@@ -104,6 +104,7 @@ class OpenTradeListPresenterTest {
                 settingsServiceFacade = settingsServiceFacade,
                 userProfileServiceFacade = userProfileServiceFacade,
                 filterOpenTradesUseCase = filterOpenTradesUseCase,
+                backgroundDispatcher = testDispatcher,
             )
         p.onViewAttached()
         return p

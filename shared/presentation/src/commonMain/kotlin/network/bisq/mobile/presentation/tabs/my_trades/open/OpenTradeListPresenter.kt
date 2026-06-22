@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.tabs.my_trades.open
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,11 @@ class OpenTradeListPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val filterOpenTradesUseCase: FilterOpenTradesUseCase,
+    // Background dispatcher for the (CPU-bound) filter/sort pipeline. Injectable so tests can
+    // pass the test dispatcher and keep the pipeline under the test scheduler — otherwise the
+    // Dispatchers.Default hop escapes runTest and can resume on Main after resetMain(), which
+    // is the source of the flaky "Dispatchers.Main is used concurrently with setting it" failures.
+    private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BasePresenter(mainPresenter) {
     private companion object {
         const val FILTER_DEBOUNCE_MS = 400L
@@ -77,7 +83,7 @@ class OpenTradeListPresenter(
                         sortBy = sort,
                         roleFilter = role,
                     )
-            }.flowOn(Dispatchers.Default)
+            }.flowOn(backgroundDispatcher)
                 .collect { (all, filtered) ->
                     _uiState.update {
                         it.copy(
