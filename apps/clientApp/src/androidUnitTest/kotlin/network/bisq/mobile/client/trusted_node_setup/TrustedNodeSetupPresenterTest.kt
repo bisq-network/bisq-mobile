@@ -913,8 +913,7 @@ class TrustedNodeSetupPresenterTest {
     fun `hides connection failed warning on retry press`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { applicationLifecycleService.deactivate() } returns Unit
-            coEvery { applicationLifecycleService.activate() } returns Unit
+            coEvery { applicationLifecycleService.restartAllServices() } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
             advanceUntilIdle()
@@ -925,8 +924,7 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             assertFalse(presenter.uiState.value.showConnectionFailedWarning)
-            coVerify { applicationLifecycleService.deactivate() }
-            coVerify { applicationLifecycleService.activate() }
+            coVerify { applicationLifecycleService.restartAllServices() }
             verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
         }
 
@@ -1016,8 +1014,7 @@ class TrustedNodeSetupPresenterTest {
     @Test
     fun `re-enables retry guard when connection failed warning is shown again after successful retry`() =
         runTest(testDispatcher) {
-            coEvery { applicationLifecycleService.deactivate() } returns Unit
-            coEvery { applicationLifecycleService.activate() } returns Unit
+            coEvery { applicationLifecycleService.restartAllServices() } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
             advanceUntilIdle()
@@ -1037,8 +1034,7 @@ class TrustedNodeSetupPresenterTest {
     @Test
     fun `re-enables retry guard when subscriptions failed warning is shown again after successful retry`() =
         runTest(testDispatcher) {
-            coEvery { applicationLifecycleService.deactivate() } returns Unit
-            coEvery { applicationLifecycleService.activate() } returns Unit
+            coEvery { applicationLifecycleService.restartAllServices() } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
             advanceUntilIdle()
@@ -1063,7 +1059,7 @@ class TrustedNodeSetupPresenterTest {
     fun `re-shows connection failed warning when lifecycle restart fails`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { applicationLifecycleService.deactivate() } throws RuntimeException("deactivate failed")
+            coEvery { applicationLifecycleService.restartAllServices() } returns false
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
             advanceUntilIdle()

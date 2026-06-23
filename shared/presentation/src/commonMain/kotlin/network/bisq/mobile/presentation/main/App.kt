@@ -213,15 +213,16 @@ fun App(
                 WarningConfirmationDialog(
                     headline = mainPresenter.connectionsLostDialogTitleKey.i18n(),
                     message = mainPresenter.connectionsLostDialogMessageKey.i18n(),
-                    confirmButtonText = mainPresenter.connectionsLostDialogRestartKey.i18n(),
-                    onConfirm = { presenter.onRestartApp() },
+                    confirmButtonText = mainPresenter.reconnectOverlayButtonKey.i18n(),
+                    onConfirm = { mainPresenter.onConnectivityRecoveryAction() },
                     onDismiss = { presenter.onCloseConnectionLostDialogue() },
                 )
             } else if (showReconnectOverlay) {
                 ReconnectingOverlay(
-                    onClick = { presenter.onRestartApp() },
+                    onClick = { mainPresenter.onConnectivityRecoveryAction() },
                     infoKey = mainPresenter.reconnectOverlayInfoKey,
                     detailsKey = mainPresenter.reconnectOverlayDetailsKey,
+                    buttonTextKey = mainPresenter.reconnectOverlayButtonKey,
                 )
             }
 
@@ -253,6 +254,7 @@ fun ReconnectingOverlay(
     onClick: (() -> Unit)? = null,
     infoKey: String = "mobile.connectivity.reconnecting.info",
     detailsKey: String = "mobile.connectivity.reconnecting.details",
+    buttonTextKey: String = "mobile.connectivity.reconnecting.restart",
 ) {
     Box(
         modifier =
@@ -311,7 +313,7 @@ fun ReconnectingOverlay(
                 )
                 BisqGap.VHalf()
                 BisqButton(
-                    text = "mobile.connectivity.reconnecting.restart".i18n(),
+                    text = buttonTextKey.i18n(),
                     type = BisqButtonType.Outline,
                     onClick = onClick,
                 )

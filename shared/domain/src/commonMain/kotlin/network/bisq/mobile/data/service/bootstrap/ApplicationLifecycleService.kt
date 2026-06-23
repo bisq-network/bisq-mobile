@@ -224,6 +224,30 @@ abstract class ApplicationLifecycleService(
         }
     }
 
+    /**
+     * In-process restart of all service facades. Used on iOS where [restartApp]
+     * is unavailable, and shared with connection-retry flows that need a clean
+     * lifecycle cycle without killing the process.
+     *
+     * Calls [deactivateServiceFacades] / [activateServiceFacades] directly so
+     * failures propagate to the caller (unlike [deactivate]/[activate], which
+     * swallow errors for background lifecycle management).
+     */
+    suspend fun restartAllServices(): Boolean {
+        if (isTerminating.value) {
+            log.w { "Cannot restart services: app is terminating" }
+            return false
+        }
+        return try {
+            deactivateServiceFacades()
+            activateServiceFacades()
+            true
+        } catch (e: Exception) {
+            log.e(e) { "Service restart failed" }
+            false
+        }
+    }
+
     protected open fun onUnrecoverableError(e: Throwable) {
         log.e(e) { "Unrecoverable error detected. Application must be restarted. Stopping services." }
         serviceScope.launch {

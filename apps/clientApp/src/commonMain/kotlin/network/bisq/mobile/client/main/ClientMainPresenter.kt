@@ -44,9 +44,51 @@ open class ClientMainPresenter(
         applicationLifecycleService,
     ) {
     override val reconnectOverlayInfoKey: String = "mobile.connectivity.reconnecting.client.info"
-    override val reconnectOverlayDetailsKey: String = "mobile.connectivity.reconnecting.client.details"
+    override val reconnectOverlayDetailsKey: String
+        get() =
+            if (isIOS()) {
+                "mobile.connectivity.reconnecting.client.details.ios"
+            } else {
+                "mobile.connectivity.reconnecting.client.details"
+            }
+    override val reconnectOverlayButtonKey: String
+        get() =
+            if (isIOS()) {
+                "mobile.connectivity.reconnecting.restartServices"
+            } else {
+                "mobile.connectivity.reconnecting.restart"
+            }
     override val connectionsLostDialogTitleKey: String = "mobile.connectivity.disconnected.client.title"
-    override val connectionsLostDialogMessageKey: String = "mobile.connectivity.disconnected.client.message"
+    override val connectionsLostDialogMessageKey: String
+        get() =
+            if (isIOS()) {
+                "mobile.connectivity.disconnected.client.message.ios"
+            } else {
+                "mobile.connectivity.disconnected.client.message"
+            }
+
+    override fun onConnectivityRecoveryAction() {
+        if (isIOS()) {
+            restartServicesAndNavigateToSplash()
+        } else {
+            super.onConnectivityRecoveryAction()
+        }
+    }
+
+    private fun restartServicesAndNavigateToSplash() {
+        presenterScope.launch {
+            showLoading()
+            val succeeded = applicationLifecycleService.restartAllServices()
+            hideLoading()
+            if (succeeded) {
+                navigateTo(NavRoute.Splash()) {
+                    it.popUpTo(NavRoute.TabContainer) { inclusive = true }
+                }
+            } else {
+                showSnackbar("mobile.connectivity.restartFailed".i18n(), SnackbarType.ERROR)
+            }
+        }
+    }
 
     override fun onViewAttached() {
         super.onViewAttached()

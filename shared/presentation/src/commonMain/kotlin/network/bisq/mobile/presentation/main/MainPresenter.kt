@@ -54,7 +54,7 @@ open class MainPresenter(
     private val settingsService: SettingsServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val urlLauncher: UrlLauncher,
-    private val applicationLifecycleService: ApplicationLifecycleService,
+    protected val applicationLifecycleService: ApplicationLifecycleService,
 ) : BasePresenter(null),
     AppPresenter {
     // Observable state
@@ -73,9 +73,10 @@ open class MainPresenter(
     open val reconnectOverlayInfoKey: String = "mobile.connectivity.reconnecting.info"
     open val reconnectOverlayDetailsKey: String = "mobile.connectivity.reconnecting.details"
 
+    open val reconnectOverlayButtonKey: String = "mobile.connectivity.reconnecting.restart"
+
     open val connectionsLostDialogTitleKey: String = "mobile.connectivity.disconnected.title"
     open val connectionsLostDialogMessageKey: String = "mobile.connectivity.disconnected.message"
-    open val connectionsLostDialogRestartKey: String = "mobile.connectivity.disconnected.restart"
 
     final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 
@@ -284,6 +285,10 @@ open class MainPresenter(
 
     override fun onRestartApp() {
         applicationLifecycleService.restartApp(view)
+    }
+
+    open fun onConnectivityRecoveryAction() {
+        onRestartApp()
     }
 
     override fun onTerminateApp() {
