@@ -40,7 +40,7 @@ class NodeTradeChatMessagesServiceFacade(
         // Bisq2's RateLimitedPersistenceClient rate-limits persist() to 1,000 ms between writes.
         // PROTOCOL_LOG_MESSAGE arrives ~200 ms after TAKE_BISQ_EASY_OFFER, so its persist() is
         // always dropped. 1,200 ms safely clears the window before we force a flush.
-        private const val PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS = 1_200L
+        internal const val PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS = 1_200L
     }
 
     // Dependencies

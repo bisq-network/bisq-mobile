@@ -160,7 +160,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
             assertTrue(channelModel.chatMessages.value.any { it.id == "text-1" })
             verify(exactly = 0) { channelService.persist() }
 
-            advanceTimeBy(PERSIST_DELAY_MS + 1_000)
+            advanceTimeBy(NodeTradeChatMessagesServiceFacade.PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS + 1_000)
             advanceUntilIdle()
             verify(exactly = 0) { channelService.persist() }
         }
@@ -175,7 +175,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
             assertTrue(channelModel.chatMessages.value.isEmpty())
             verify(exactly = 0) { channelService.persist() }
 
-            advanceTimeBy(PERSIST_DELAY_MS + 1_000)
+            advanceTimeBy(NodeTradeChatMessagesServiceFacade.PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS + 1_000)
             advanceUntilIdle()
             verify(exactly = 0) { channelService.persist() }
         }
@@ -202,7 +202,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
             assertEquals(1, channelModel.chatMessages.value.size)
             verify(exactly = 0) { channelService.persist() }
 
-            advanceTimeBy(PERSIST_DELAY_MS - 1)
+            advanceTimeBy(NodeTradeChatMessagesServiceFacade.PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS - 1)
             verify(exactly = 0) { channelService.persist() }
 
             advanceTimeBy(1)
@@ -216,7 +216,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
             messageObserver.onAdded(createBisq2Message("log-1", ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE))
             messageObserver.onAdded(createBisq2Message("log-2", ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE))
 
-            advanceTimeBy(PERSIST_DELAY_MS)
+            advanceTimeBy(NodeTradeChatMessagesServiceFacade.PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS)
             advanceUntilIdle()
             verify(exactly = 2) { channelService.persist() }
         }
@@ -350,8 +350,5 @@ class NodeTradeChatMessagesServiceFacadeTest {
     companion object {
         private const val TRADE_ID = "trade-1"
         private const val CHANNEL_ID = "channel-1"
-
-        // Must match NodeTradeChatMessagesServiceFacade.PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS
-        private const val PERSIST_DELAY_MS = 1_200L
     }
 }
