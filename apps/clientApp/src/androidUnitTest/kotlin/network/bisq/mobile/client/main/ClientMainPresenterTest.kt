@@ -325,62 +325,66 @@ class ClientMainPresenterTest {
     @Test
     fun `uses client specific iOS reconnect overlay copy keys`() {
         mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
-        every { getPlatformInfo() } returns
-            object : PlatformInfo {
-                override val name = "iOS"
-                override val type = PlatformType.IOS
-            }
-
-        val presenter = createPresenter()
-
-        assertEquals("mobile.connectivity.reconnecting.client.details.ios", presenter.reconnectOverlayDetailsKey)
-        assertEquals("mobile.connectivity.reconnecting.restartServices", presenter.reconnectOverlayButtonKey)
-        assertEquals("mobile.connectivity.disconnected.client.message.ios", presenter.connectionsLostDialogMessageKey)
-
-        unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
-    }
-
-    @Test
-    fun `onConnectivityRecoveryAction on iOS restarts services and navigates to splash`() =
-        runTest(testDispatcher) {
-            mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+        try {
             every { getPlatformInfo() } returns
                 object : PlatformInfo {
                     override val name = "iOS"
                     override val type = PlatformType.IOS
                 }
 
-            val navigationManager = mockk<NavigationManager>(relaxed = true)
-            coEvery { applicationLifecycleService.restartAllServices() } returns true
-
-            stopKoin()
-            startKoin {
-                modules(
-                    clientTestModule,
-                    module {
-                        single<ClientConnectivityService> { connectivityService }
-                        single<NetworkServiceFacade> { networkServiceFacade }
-                        single<SettingsServiceFacade> { settingsServiceFacade }
-                        single<TradesServiceFacade> { tradesServiceFacade }
-                        single<UserProfileServiceFacade> { userProfileServiceFacade }
-                        single<OpenTradesNotificationService> { openTradesNotificationService }
-                        single<TradeReadStateRepository> { tradeReadStateRepository }
-                        single<ApplicationLifecycleService> { applicationLifecycleService }
-                        single<UrlLauncher> { urlLauncher }
-                        single<NavigationManager> { navigationManager }
-                    },
-                )
-            }
-
             val presenter = createPresenter()
-            presenter.onViewAttached()
-            presenter.onConnectivityRecoveryAction()
-            advanceUntilIdle()
 
-            coVerify { applicationLifecycleService.restartAllServices() }
-            verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
-
+            assertEquals("mobile.connectivity.reconnecting.client.details.ios", presenter.reconnectOverlayDetailsKey)
+            assertEquals("mobile.connectivity.reconnecting.restartServices", presenter.reconnectOverlayButtonKey)
+            assertEquals("mobile.connectivity.disconnected.client.message.ios", presenter.connectionsLostDialogMessageKey)
+        } finally {
             unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+        }
+    }
+
+    @Test
+    fun `onConnectivityRecoveryAction on iOS restarts services and navigates to splash`() =
+        runTest(testDispatcher) {
+            mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+            try {
+                every { getPlatformInfo() } returns
+                    object : PlatformInfo {
+                        override val name = "iOS"
+                        override val type = PlatformType.IOS
+                    }
+
+                val navigationManager = mockk<NavigationManager>(relaxed = true)
+                coEvery { applicationLifecycleService.restartAllServices() } returns true
+
+                stopKoin()
+                startKoin {
+                    modules(
+                        clientTestModule,
+                        module {
+                            single<ClientConnectivityService> { connectivityService }
+                            single<NetworkServiceFacade> { networkServiceFacade }
+                            single<SettingsServiceFacade> { settingsServiceFacade }
+                            single<TradesServiceFacade> { tradesServiceFacade }
+                            single<UserProfileServiceFacade> { userProfileServiceFacade }
+                            single<OpenTradesNotificationService> { openTradesNotificationService }
+                            single<TradeReadStateRepository> { tradeReadStateRepository }
+                            single<ApplicationLifecycleService> { applicationLifecycleService }
+                            single<UrlLauncher> { urlLauncher }
+                            single<NavigationManager> { navigationManager }
+                        },
+                    )
+                }
+
+                val presenter = createPresenter()
+                presenter.onViewAttached()
+                presenter.onConnectivityRecoveryAction()
+                advanceUntilIdle()
+
+                coVerify { applicationLifecycleService.restartAllServices() }
+                verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
+            } finally {
+                unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+            }
         }
 
     @Test

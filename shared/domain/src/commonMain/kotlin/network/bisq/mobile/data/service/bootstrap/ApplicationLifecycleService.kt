@@ -242,6 +242,8 @@ abstract class ApplicationLifecycleService(
             deactivateServiceFacades()
             activateServiceFacades()
             true
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             log.e(e) { "Service restart failed" }
             false
