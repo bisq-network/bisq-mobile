@@ -70,6 +70,7 @@ kotlin {
         androidUnitTest.dependencies {
             // Kotlin
             implementation(libs.kotlin.test.junit)
+            implementation(libs.kotlinx.coroutines.test)
 
             // Other libraries
             implementation(libs.junit)

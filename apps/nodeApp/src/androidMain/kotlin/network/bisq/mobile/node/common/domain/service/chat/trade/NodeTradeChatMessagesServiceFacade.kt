@@ -10,7 +10,9 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.replicated.chat.CitationVO
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
@@ -34,6 +36,13 @@ class NodeTradeChatMessagesServiceFacade(
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
 ) : ServiceFacade(),
     TradeChatMessagesServiceFacade {
+    companion object {
+        // Bisq2's RateLimitedPersistenceClient rate-limits persist() to 1,000 ms between writes.
+        // PROTOCOL_LOG_MESSAGE arrives ~200 ms after TAKE_BISQ_EASY_OFFER, so its persist() is
+        // always dropped. 1,200 ms safely clears the window before we force a flush.
+        private const val PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS = 1_200L
+    }
+
     // Dependencies
     private val bisqEasyOpenTradeChannelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
@@ -127,49 +136,17 @@ class NodeTradeChatMessagesServiceFacade(
         pins +=
             channel.chatMessages.addObserver(
                 object : CollectionObserver<BisqEasyOpenTradeMessage> {
+                    override fun onAllAdded(values: Collection<out BisqEasyOpenTradeMessage>) {
+                        // Override the default (which calls onAdded per element) solely to pass
+                        // persist=false, preventing a delayed persist job from being scheduled
+                        // for every historical PROTOCOL_LOG_MESSAGE replayed at startup.
+                        values.forEach { message ->
+                            addMessageToModel(tradeId, message, persist = false)
+                        }
+                    }
+
                     override fun onAdded(message: BisqEasyOpenTradeMessage) {
-                        if (message.chatMessageType == ChatMessageType.TAKE_BISQ_EASY_OFFER) {
-                            return
-                        }
-                        val openTradeItem = openTradeItems.value.find { it.tradeId == tradeId }
-                        if (openTradeItem == null) {
-                            log.w { "We got called handleChannelAdded but we have not found any trade list item with tradeId $tradeId" }
-                            return
-                        }
-
-                        val messageId = message.id
-                        if (!reactionsPinByMessageId.containsKey(messageId)) {
-                            val pin =
-                                message.chatMessageReactions.addObserver {
-                                    openTradeItem.bisqEasyOpenTradeChannelModel.chatMessages.value
-                                        .find { messageId == it.id }
-                                        ?.let { model ->
-                                            val chatMessageReactions =
-                                                message.chatMessageReactions
-                                                    .filter { !it.isRemoved }
-                                                    .map { reaction ->
-                                                        Mappings.BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(
-                                                            reaction,
-                                                        )
-                                                    }
-                                            model.setReactions(chatMessageReactions)
-                                        }
-                                }
-                            reactionsPinByMessageId[messageId] = pin
-                        }
-
-                        val citationAuthorUserProfile: UserProfile? =
-                            message.citation
-                                .flatMap { citation -> userProfileService.findUserProfile(citation.authorUserProfileId) }
-                                .orElse(null)
-                        val myUserProfile = userIdentityService.selectedUserIdentity.userProfile
-                        val model: BisqEasyOpenTradeMessageModel =
-                            Mappings.BisqEasyOpenTradeMessageModelMapping.fromBisq2Model(
-                                message,
-                                citationAuthorUserProfile,
-                                myUserProfile,
-                            )
-                        openTradeItem.bisqEasyOpenTradeChannelModel.addChatMessages(model)
+                        addMessageToModel(tradeId, message, persist = true)
                     }
 
                     override fun onRemoved(element: Any) {
@@ -180,6 +157,73 @@ class NodeTradeChatMessagesServiceFacade(
                     }
                 },
             )
+    }
+
+    /**
+     * Adds a Bisq2 chat message to the presentation model.
+     *
+     * [ChatMessageType.TAKE_BISQ_EASY_OFFER] is always filtered — it is a protocol contract
+     * carrier with no user-visible text; [ChatMessageType.PROTOCOL_LOG_MESSAGE] is the display
+     * message. When [persist] is true (live messages) a delayed persist is scheduled so
+     * PROTOCOL_LOG_MESSAGE reaches disk despite Bisq2's rate-limited persist() dropping it.
+     * [persist] = false (startup replay) skips the persist — data is already on disk.
+     */
+    private fun addMessageToModel(
+        tradeId: String,
+        message: BisqEasyOpenTradeMessage,
+        persist: Boolean,
+    ) {
+        if (message.chatMessageType == ChatMessageType.TAKE_BISQ_EASY_OFFER) {
+            return
+        }
+        val openTradeItem = openTradeItems.value.find { it.tradeId == tradeId }
+        if (openTradeItem == null) {
+            log.w { "We got called handleChannelAdded but we have not found any trade list item with tradeId $tradeId" }
+            return
+        }
+
+        val messageId = message.id
+        if (!reactionsPinByMessageId.containsKey(messageId)) {
+            val pin =
+                message.chatMessageReactions.addObserver {
+                    openTradeItem.bisqEasyOpenTradeChannelModel.chatMessages.value
+                        .find { messageId == it.id }
+                        ?.let { model ->
+                            val chatMessageReactions =
+                                message.chatMessageReactions
+                                    .filter { !it.isRemoved }
+                                    .map { reaction ->
+                                        Mappings.BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(
+                                            reaction,
+                                        )
+                                    }
+                            model.setReactions(chatMessageReactions)
+                        }
+                }
+            reactionsPinByMessageId[messageId] = pin
+        }
+
+        val citationAuthorUserProfile: UserProfile? =
+            message.citation
+                .flatMap { citation -> userProfileService.findUserProfile(citation.authorUserProfileId) }
+                .orElse(null)
+        val myUserProfile = userIdentityService.selectedUserIdentity.userProfile
+        val model: BisqEasyOpenTradeMessageModel =
+            Mappings.BisqEasyOpenTradeMessageModelMapping.fromBisq2Model(
+                message,
+                citationAuthorUserProfile,
+                myUserProfile,
+            )
+        openTradeItem.bisqEasyOpenTradeChannelModel.addChatMessages(model)
+
+        // PROTOCOL_LOG_MESSAGE's persist() is always rate-limited (arrives ~200 ms after
+        // TAKE_BISQ_EASY_OFFER, inside the 1 000 ms window). Force a persist once the window clears.
+        if (persist && message.chatMessageType == ChatMessageType.PROTOCOL_LOG_MESSAGE) {
+            serviceScope.launch {
+                delay(PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS)
+                bisqEasyOpenTradeChannelService.persist()
+            }
+        }
     }
 
     private fun handleChannelRemoved(channel: BisqEasyOpenTradeChannel) {
