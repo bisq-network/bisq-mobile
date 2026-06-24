@@ -42,6 +42,13 @@
  * ======================================================================================
  * I18N KEYS NEEDED
  * ======================================================================================
+ * IMPORTANT: All strings in this file are hardcoded English for the design PoC.
+ * When productionising, every string below must be added to:
+ *   shared/domain/src/commonMain/resources/mobile/mobile.properties
+ * under the keys listed here, then submitted to Transifex for translation into all
+ * 14 supported languages. Note that German and Russian translations can be 30–40 %
+ * longer than English — test each answer in a narrow column before shipping.
+ *
  * Screen / navigation:
  *   mobile.more.faqs                       → "FAQs"
  *   mobile.faqs.screenTitle                → "Frequently Asked Questions"
@@ -136,18 +143,20 @@ private data class SimulatedFaq(
 private fun buildFaqList(appType: SimulatedAppType): List<SimulatedFaq> {
     val q2Answer =
         if (appType == SimulatedAppType.CONNECT) {
-            "Open the Offerbook tab and browse offers to sell bitcoin. Tap an offer that " +
-                "matches your payment method and amount. Review the seller's reputation " +
-                "score, then tap \"Take offer\". Follow the on-screen steps: send payment " +
-                "to the seller's account and confirm once sent. The seller will verify and " +
-                "send bitcoin to your wallet. Note: you are trading through the Bisq2 node " +
+            "Open the Offerbook tab and browse offers from sellers. Tap an offer that " +
+                "matches your payment method and amount. Check the seller's reputation " +
+                "score — it is your main safety signal in Bisq Easy. Tap \"Take offer\", " +
+                "then follow the on-screen steps: send fiat payment to the seller's " +
+                "account and confirm once sent. The seller will verify receipt and send " +
+                "bitcoin to your wallet. Note: you are trading through the Bisq2 node " +
                 "you paired with — make sure you trust that node operator."
         } else {
-            "Open the Offerbook tab and browse offers to sell bitcoin. Tap an offer that " +
-                "matches your payment method and amount. Review the seller's reputation " +
-                "score, then tap \"Take offer\". Follow the on-screen steps: send payment " +
-                "to the seller's account and confirm once sent. The seller will verify and " +
-                "send bitcoin directly to your wallet. Your app runs its own Bisq2 node — " +
+            "Open the Offerbook tab and browse offers from sellers. Tap an offer that " +
+                "matches your payment method and amount. Check the seller's reputation " +
+                "score — it is your main safety signal in Bisq Easy. Tap \"Take offer\", " +
+                "then follow the on-screen steps: send fiat payment to the seller's " +
+                "account and confirm once sent. The seller will verify receipt and send " +
+                "bitcoin directly to your wallet. Your app runs its own Bisq2 node — " +
                 "you are trading peer-to-peer without any intermediary."
         }
 
@@ -155,17 +164,20 @@ private fun buildFaqList(appType: SimulatedAppType): List<SimulatedFaq> {
         if (appType == SimulatedAppType.CONNECT) {
             "Go to the Offerbook tab and tap \"+\" to create a sell offer, or browse " +
                 "existing buy offers and take one. Set your price (market rate or custom), " +
-                "amount range, and accepted payment methods. Once a buyer takes your offer, " +
-                "you will be prompted to share your payment account details. After the buyer " +
-                "confirms payment, send bitcoin to their wallet address. Note: transactions " +
-                "are broadcast through your paired Bisq2 node."
+                "amount range, and accepted payment methods. As a seller you need " +
+                "reputation — buyers rely on it since they send fiat first. Once a buyer " +
+                "takes your offer, share your payment account details via the trade chat. " +
+                "After the buyer confirms payment, send bitcoin to their wallet address. " +
+                "Note: transactions are broadcast through your paired Bisq2 node."
         } else {
             "Go to the Offerbook tab and tap \"+\" to create a sell offer, or browse " +
                 "existing buy offers and take one. Set your price (market rate or custom), " +
-                "amount range, and accepted payment methods. Once a buyer takes your offer, " +
-                "share your payment account details. After the buyer confirms payment, send " +
-                "bitcoin directly to their wallet. Your embedded node signs and broadcasts " +
-                "the transaction — no third party is involved."
+                "amount range, and accepted payment methods. As a seller you need " +
+                "reputation — buyers rely on it since they send fiat first. Once a buyer " +
+                "takes your offer, share your payment account details via the trade chat. " +
+                "After the buyer confirms payment, send bitcoin directly to their wallet. " +
+                "Your embedded node signs and broadcasts the transaction — no third party " +
+                "is involved."
         }
 
     return listOf(
@@ -174,8 +186,12 @@ private fun buildFaqList(appType: SimulatedAppType): List<SimulatedFaq> {
             answer =
                 "Bisq is an open-source, decentralised bitcoin exchange. There is no " +
                     "company, no account, and no KYC. Trades happen directly between peers " +
-                    "over Tor. Security is based on reputation rather than escrow — sellers " +
-                    "build verifiable trust over time through bonding and account age.",
+                    "over Tor. This app uses Bisq Easy — a reputation-based trade protocol " +
+                    "where there is no escrow and no security deposit. Instead, sellers " +
+                    "build verifiable trust through bonded BSQ, account age, signed witness " +
+                    "records, and proof-of-burn, all aggregated into a reputation score. " +
+                    "If a dispute arises, mediation is available. Payment is made directly " +
+                    "between traders using local payment methods.",
             indexInList = 0,
         ),
         SimulatedFaq(
@@ -191,30 +207,35 @@ private fun buildFaqList(appType: SimulatedAppType): List<SimulatedFaq> {
         SimulatedFaq(
             question = "How do I increase my profile reputation?",
             answer =
-                "Reputation is built over time through several actions: ageing your " +
-                    "Bisq account, signing your account with other trusted users, burning BSQ, " +
-                    "or bonding BSQ. A higher reputation score makes your offers more attractive " +
-                    "to buyers. Tap \"Reputation\" in the More tab to see your current score " +
-                    "and learn which actions give the most weight.",
+                "Reputation in Bisq Easy is built through several verifiable actions: " +
+                    "ageing your Bisq profile, having your account signed by trusted peers, " +
+                    "burning BSQ, or bonding BSQ. Each source contributes to an aggregated " +
+                    "reputation score shown as a 5-star rating. A higher score makes your " +
+                    "sell offers more attractive, since buyers rely on reputation as their " +
+                    "primary safety signal. Tap \"Reputation\" in the More tab to see your " +
+                    "current score and learn which actions carry the most weight.",
             indexInList = 3,
         ),
         SimulatedFaq(
             question = "Does Bisq hold my bitcoin or personal data?",
             answer =
-                "No. Bisq is non-custodial — bitcoin never leaves your wallet until " +
-                    "you send it directly to your trading counterpart. There are no user accounts, " +
-                    "no email, no identity verification. Your pseudonymous profile exists only on " +
-                    "the Bisq P2P network. Connection privacy is protected by Tor.",
+                "No. Bisq Easy is non-custodial — bitcoin moves directly from the " +
+                    "seller's wallet to the buyer's wallet. There are no user accounts, " +
+                    "no email address, no identity verification of any kind. Your " +
+                    "pseudonymous profile exists only on the Bisq P2P network. All " +
+                    "connections are routed through Tor to protect your IP address.",
             indexInList = 4,
         ),
         SimulatedFaq(
-            question = "What fees does Bisq charge?",
+            question = "What fees does Bisq Easy charge?",
             answer =
-                "Bisq Easy (the protocol used in this app) charges no platform fee. " +
-                    "You only pay the bitcoin network mining fee when sending bitcoin. As a " +
-                    "trade-off for zero fee, trade amounts are limited to smaller sizes. For " +
-                    "larger trades, Bisq2 on desktop supports additional protocols with optional " +
-                    "bonding-based security.",
+                "Bisq Easy charges no platform or trading fee for either side. The " +
+                    "seller pays the Bitcoin network mining fee when sending bitcoin to " +
+                    "the buyer — buyers pay no mining fee. As a trade-off for the zero " +
+                    "platform fee, Bisq Easy is designed for smaller trade amounts based " +
+                    "on the seller's reputation level. Desktop Bisq 2 supports additional " +
+                    "protocols — including MuSig with 2-of-2 multisig escrow — for larger " +
+                    "trades; these are not yet available in the mobile app.",
             indexInList = 5,
         ),
     )
