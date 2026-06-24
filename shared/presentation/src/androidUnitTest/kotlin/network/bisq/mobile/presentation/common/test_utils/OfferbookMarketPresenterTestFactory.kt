@@ -19,14 +19,7 @@ object OfferbookMarketPresenterTestFactory {
             mockk<OffersServiceFacade>(relaxed = true).also {
                 every { it.offerbookMarketItems } returns MutableStateFlow(emptyList())
             },
-    ): OfferbookMarketPresenter {
-        val mainPresenter =
-            MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
-
-        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
-        every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
-
-        val marketPriceServiceFacade =
+        marketPriceServiceFacade: MarketPriceServiceFacade =
             object : MarketPriceServiceFacade(settingsRepository) {
                 override fun findMarketPriceItem(marketVO: MarketVO) = null
 
@@ -36,7 +29,13 @@ object OfferbookMarketPresenterTestFactory {
                 }
 
                 override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
-            }
+            },
+    ): OfferbookMarketPresenter {
+        val mainPresenter =
+            MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
+
+        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
+        every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
 
         return OfferbookMarketPresenter(
             mainPresenter = mainPresenter,

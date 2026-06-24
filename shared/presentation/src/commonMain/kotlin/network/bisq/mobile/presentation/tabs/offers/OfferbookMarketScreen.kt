@@ -31,13 +31,11 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.inputfiel
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import org.koin.compose.koinInject
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 
 @Composable
 fun OfferbookMarketScreen() {
-    val presenter: OfferbookMarketPresenter = koinInject()
-    RememberPresenterLifecycle(presenter)
+    val presenter = RememberPresenterLifecycleBackStackAware<OfferbookMarketPresenter>()
 
     var showFilterDialog by remember { mutableStateOf(false) }
     val searchText by presenter.searchText.collectAsState()
