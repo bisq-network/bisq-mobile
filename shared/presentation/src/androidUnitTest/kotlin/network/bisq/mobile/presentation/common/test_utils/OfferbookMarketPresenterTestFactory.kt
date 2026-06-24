@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.common.test_utils
 
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
@@ -30,6 +32,7 @@ object OfferbookMarketPresenterTestFactory {
 
                 override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
             },
+        computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
     ): OfferbookMarketPresenter {
         val mainPresenter =
             MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
@@ -44,6 +47,7 @@ object OfferbookMarketPresenterTestFactory {
             userProfileServiceFacade = userProfileServiceFacade,
             settingsRepository = settingsRepository,
             computeOfferbookMarketListUseCase = ComputeOfferbookMarketListUseCase(marketPriceServiceFacade),
+            computationDispatcher = computationDispatcher,
         )
     }
 }

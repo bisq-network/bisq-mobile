@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -212,16 +211,15 @@ class OfferbookMarketPresenterLifecycleTest {
                     settingsRepository = settingsRepository,
                     offersServiceFacade = offersServiceFacade,
                     marketPriceServiceFacade = marketPriceServiceFacade,
+                    computationDispatcher = testDispatcher,
                 )
 
             presenter.onViewAttached()
             advanceUntilIdle()
-            waitUntil { presenter.marketCodes() == listOf("USD", "EUR", "BRL") }
             assertEquals(listOf("USD", "EUR", "BRL"), presenter.marketCodes())
 
             presenter.setSearchText("eu")
             advanceUntilIdle()
-            waitUntil { presenter.marketCodes() == listOf("EUR") }
             assertEquals(listOf("EUR"), presenter.marketCodes())
 
             // Back-stack-aware lifecycle hides and reveals without disposing presenterScope.
@@ -232,8 +230,6 @@ class OfferbookMarketPresenterLifecycleTest {
 
             presenter.setSearchText("br")
             advanceUntilIdle()
-            waitUntil { presenter.marketCodes() == listOf("BRL") }
-
             assertEquals(listOf("BRL"), presenter.marketCodes())
         }
 
@@ -273,17 +269,6 @@ class OfferbookMarketPresenterLifecycleTest {
         }
 
     private fun OfferbookMarketPresenter.marketCodes(): List<String> = marketListItemWithNumOffers.value.map { it.market.quoteCurrencyCode }
-
-    private suspend fun waitUntil(
-        timeoutMs: Long = 1000,
-        condition: () -> Boolean,
-    ) {
-        val start = System.currentTimeMillis()
-        while (!condition()) {
-            if (System.currentTimeMillis() - start > timeoutMs) break
-            delay(10)
-        }
-    }
 
     private fun marketItem(
         quoteCode: String,

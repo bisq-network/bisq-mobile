@@ -57,7 +57,6 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -213,6 +212,7 @@ class OfferbookPresenterFilterTest {
                 reputationService,
                 tradeRestrictingAlertServiceFacade,
                 FakeOfferbookFilterConfigRepository(),
+                computationDispatcher = testDispatcher,
             )
         offersFlow.value = allOffers
         presenter.onViewAttached()
@@ -242,7 +242,6 @@ class OfferbookPresenterFilterTest {
     }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_onlyMyOffers_filters_to_user_offers() =
         runTest(testDispatcher) {
             val allOffers =
@@ -274,7 +273,6 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_empty_selection_shows_no_offers() =
         runTest(testDispatcher) {
             val allOffers =
@@ -311,7 +309,6 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_baseline_availability_remains_stable() =
         runTest(testDispatcher) {
             val allOffers =
@@ -344,7 +341,6 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_selection_restoration_shows_all_offers() =
         runTest(testDispatcher) {
             val allOffers =
@@ -377,7 +373,6 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_onlyMyOffers_with_no_own_offers_marks_filters_active() =
         runTest(testDispatcher) {
             val allOffers =
@@ -410,7 +405,6 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_method_filters_mark_filters_active_when_list_empty() =
         runTest(testDispatcher) {
             val allOffers =
@@ -443,7 +437,6 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_onlyMyOffers_respects_method_filters() =
         runTest(testDispatcher) {
             val allOffers =
@@ -550,6 +543,7 @@ class OfferbookPresenterFilterTest {
                     mockk(relaxed = true),
                     mockk(relaxed = true),
                     repository,
+                    computationDispatcher = testDispatcher,
                 )
 
             presenter.onViewAttached()
@@ -572,7 +566,6 @@ class OfferbookPresenterFilterTest {
         }
 
     @Test
-    @Ignore("Flaky on CI/Linux; temporarily disabled until Offerbook filter timing is stabilized")
     fun test_cross_market_payment_filter_persistence() =
         runTest(testDispatcher) {
             // Scenario: User filters to only WISE and REVOLUT,
@@ -643,6 +636,7 @@ class OfferbookPresenterFilterTest {
                     reputationService,
                     tradeRestrictingAlertServiceFacade,
                     FakeOfferbookFilterConfigRepository(),
+                    computationDispatcher = testDispatcher,
                 )
             presenter.onViewAttached()
             runCurrent()

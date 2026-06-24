@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.tabs.offers
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +31,9 @@ class OfferbookMarketPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val settingsRepository: SettingsRepository,
     private val computeOfferbookMarketListUseCase: ComputeOfferbookMarketListUseCase,
+    // Background dispatcher for the (CPU-bound) market-list computation. Injectable so tests can
+    // pass the test dispatcher and keep the pipeline under the test scheduler.
+    private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BasePresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.OfferbookMarket
 
@@ -117,7 +121,7 @@ class OfferbookMarketPresenter(
                 offersServiceFacade.offerbookMarketItems,
             ) { filter, searchText, sortBy, _, languageCode, items ->
                 computeOfferbookMarketListUseCase(filter, searchText, sortBy, languageCode, items)
-            }.flowOn(Dispatchers.Default)
+            }.flowOn(computationDispatcher)
                 .collect { result ->
                     _marketListItemWithNumOffers.value = result
                 }
