@@ -207,6 +207,7 @@ class BasePresenterTest {
         val presenter = TestPresenter(mainPresenter)
 
         val result = runBlocking { presenter.navigateToUrlAwait("https://bisq.network") }
+        testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(result)
         assertFalse(globalUiManager.isLoadingBlocking.value)

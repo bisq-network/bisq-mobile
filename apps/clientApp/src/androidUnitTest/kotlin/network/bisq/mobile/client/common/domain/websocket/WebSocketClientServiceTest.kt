@@ -877,6 +877,33 @@ class WebSocketClientServiceTest {
         }
 
     @Test
+    fun `forceClientRecreation is no-op when no WebSocket client exists`() =
+        runTest(testDispatcher) {
+            val kmpTorService = mockk<KmpTorService>(relaxed = true)
+            coEvery { kmpTorService.signalNewNym() } just Runs
+
+            val torWebSocketClientService =
+                WebSocketClientService(
+                    defaultHost = "abc.onion",
+                    defaultPort = 8090,
+                    httpClientService = httpClientService,
+                    webSocketClientFactory = webSocketClientFactory,
+                    sessionService = sessionService,
+                    sensitiveSettingsRepository = sensitiveSettingsRepository,
+                    kmpTorService = kmpTorService,
+                )
+
+            torWebSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            torWebSocketClientService.forceClientRecreation()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 0) { kmpTorService.signalNewNym() }
+            coVerify(exactly = 0) { httpClientService.recreateClient() }
+        }
+
+    @Test
     fun `forceClientRecreation signals NEWNYM when using Tor proxy`() =
         runTest(testDispatcher) {
             val kmpTorService = mockk<KmpTorService>(relaxed = true)
