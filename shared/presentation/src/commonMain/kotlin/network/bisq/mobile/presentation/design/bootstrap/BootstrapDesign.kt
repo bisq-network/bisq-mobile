@@ -40,7 +40,7 @@
  *     This is more thumb-friendly and readable at 360dp widths.
  *   - Desktop shows elapsed time per step ("3 sec."). On mobile this clutters the
  *     limited vertical space; elapsed time is surfaced only in the slow-path banner
- *     where it becomes meaningful ("still working after 90 seconds").
+ *     where it becomes meaningful ("still working after 75 seconds").
  *   - Desktop has three simultaneous transports (Clear, Tor, I2P). Mobile Node app runs
  *     Tor only. Steps are linearised rather than shown per-transport.
  *   - Connection peer count ("12 connections") is shown as a live count in the
@@ -91,23 +91,34 @@
  * failure state — this is by design, see ClientSplashPresenter.navigateToTrustedNodeSetup.
  * Do not add a Connect failure state here; it would fight the existing navigation logic.
  *
- * Node app — driven by observeTorState() + NodeApplicationBootstrapFacade:
+ * Node app — driven by observeTorState() + NodeApplicationBootstrapFacade. Progress is
+ * COARSE: the facade emits 4 ApplicationService stages (+ Tor %), so the 4-step UI maps
+ * onto the real setProgress() values like this:
  *
- *   Tor progress 0-99%            → step 1 IN_PROGRESS (overallProgress ~0.0–0.3)
- *   Tor complete                  → step 1 DONE, step 2 IN_PROGRESS (~0.35)
- *   Peer count ≥ target           → step 2 DONE, step 3 IN_PROGRESS (~0.6)
- *   Data inventory received       → step 3 DONE, step 4 IN_PROGRESS (~0.85)
- *   overallProgress = 1.0 + success     → step 4 DONE, navigateToNextScreen()
- *   overallProgress = 1.0 + failure     → step 1 FAILED, TorFailureActions shown
+ *   Tor progress 0-99%                     → step 1 IN_PROGRESS  (overallProgress 0.0)
+ *   Tor started                            → step 1 DONE         (0.25)
+ *   ApplicationService INITIALIZE_NETWORK  → step 2 (peers)      (0.5)
+ *   ApplicationService INITIALIZE_SERVICES → step 3 (data)       (0.75)
+ *   APP_INITIALIZED + success              → step 4 DONE, navigateToNextScreen() (1.0)
+ *   overallProgress = 1.0 + failure        → step 1 FAILED, TorFailureActions shown
+ *
+ * NOTE: those are the ONLY progress signals the facade emits — there is no fine-grained
+ * "peer count ≥ target" or "inventory received" progress event. The peers/data step
+ * labels are a UX abstraction over INITIALIZE_NETWORK / INITIALIZE_SERVICES; a live peer
+ * count (step-2 detail) would need extra wiring and is not surfaced by the facade today.
  *
  * ====================================================================================
- * SLOW-PATH TREATMENT
+ * SLOW-PATH TREATMENT  (the generic "silent hang" timeout — distinct from Tor failure)
  * ====================================================================================
- * At 90 seconds the existing SplashPresenter shows a timeout dialog ("Bootstrap is
- * taking longer than usual — restart?"). The PoC adds a non-dismissible amber inline
- * banner that appears at 75 seconds — 15 seconds before the dialog — so the user
- * receives a plausible explanation before the harder interrupt arrives. The 75s offset
- * is intentional: it pre-empts the dialog rather than racing with it.
+ * This covers a stage that simply HANGS with no error — NOT a Tor crash (that is the
+ * 60s torBootstrapFailed path, see FAILURE / RETRY below). At 90 seconds (the existing
+ * BOOTSTRAP_STAGE_TIMEOUT_MS) the SplashPresenter shows the generic timeout dialog
+ * ("taking longer than usual — restart / keep waiting", isTimeoutDialogVisible). The PoC
+ * adds a non-dismissible amber inline banner that appears at 75 seconds — 15 seconds
+ * before the dialog — so the user receives a plausible explanation before the harder
+ * interrupt arrives. The 75s offset is intentional: it pre-empts the dialog rather than
+ * racing with it. NOTE: the 75s banner does NOT exist in production yet — it is new work
+ * this issue introduces; only the 90s dialog exists today.
  *
  * IMPORTANT — the banner's elapsed time counter must measure wall-clock time from
  * bootstrap start, NOT from any individual stage. The per-step timeout timers reset
@@ -121,13 +132,30 @@
  * that by giving the user a plausible explanation first.
  *
  * ====================================================================================
- * FAILURE / RETRY TREATMENT
+ * FAILURE / RETRY TREATMENT  (Node app only — Connect has no local Tor)
  * ====================================================================================
- * The existing Tor failure dialog is kept. The PoC adds a failed step row state
- * (danger-colored icon + strikethrough label) so the user can see WHICH step failed
- * before the dialog pops. The two retry actions (Restart Tor / Clear Tor Data) are
- * unchanged — they correspond to the existing SplashUiAction.OnRestartTor and
- * OnPurgeRestartTor.
+ * The inline Tor-failure state (step 1 FAILED: danger-colored icon + strikethrough
+ * label, plus the retry actions) is driven by ApplicationBootstrapFacade.torBootstrapFailed
+ * — the same flag the existing dialog uses. The PoC just INLINES it; it adds no new
+ * trigger or timer.
+ *
+ * IMPORTANT — the Tor-failure trigger is a 60s grace, NOT 90s:
+ * The facade sets torBootstrapFailed=true only when Tor reaches Stopped WITH an error AND
+ * that error happens after TOR_FAILURE_GRACE_PERIOD_MS (60s) from torStartingTimestamp.
+ * A Tor error within the first 60s is SUPPRESSED (logged, state stays "Tor starting"),
+ * because Tor frequently recovers on slow networks / onion circuits — surfacing it early
+ * is a false alarm. The inline failure must therefore reflect torBootstrapFailed and must
+ * never roll its own timer.
+ *
+ * This is a SEPARATE mechanism from the 90s slow-path timeout above:
+ *   - 60s + an actual Tor error  → torBootstrapFailed → inline FAILED + retry actions
+ *   - 90s silent hang (no error) → isTimeoutDialogVisible → generic timeout dialog
+ * When a real Tor failure fires, the facade calls cancelTimeout(), and
+ * SplashPresenter.computeActiveDialog prioritizes torBootstrapFailed above the timeout —
+ * so the two never collide.
+ *
+ * The two retry actions (Restart Tor / Clear Tor Data) are unchanged — they correspond to
+ * the existing SplashUiAction.OnRestartTor and OnPurgeRestartTor.
  *
  * ====================================================================================
  * I18N KEYS NEEDED (not in current mobile.properties or application.properties)
