@@ -70,7 +70,7 @@ class PaymentAccountReviewPresenterTest {
         }
 
         every { globalUiManager.scheduleShowLoading() } returns Unit
-        every { globalUiManager.hideLoading() } returns Unit
+        every { globalUiManager.scheduleHideLoading() } returns Unit
     }
 
     @AfterTest
@@ -136,7 +136,7 @@ class PaymentAccountReviewPresenterTest {
             // Then
             coVerify(exactly = 1) { paymentAccountsServiceFacade.addAccount(account) }
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 1) { globalUiManager.hideLoading() }
+            verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
             assertEquals(PaymentAccountReviewEffect.CloseCreateAccountFlow, effectDeferred.await())
         }
 
@@ -157,7 +157,7 @@ class PaymentAccountReviewPresenterTest {
             // Then
             coVerify(exactly = 1) { paymentAccountsServiceFacade.addAccount(account) }
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 1) { globalUiManager.hideLoading() }
+            verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
             verify {
                 globalUiManager.showSnackbar(
                     "Account name already exists. Please choose a different one.",
@@ -186,7 +186,7 @@ class PaymentAccountReviewPresenterTest {
             // Then
             coVerify(exactly = 1) { paymentAccountsServiceFacade.addAccount(account) }
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 1) { globalUiManager.hideLoading() }
+            verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
             verify {
                 globalUiManager.showSnackbar(
                     any(),

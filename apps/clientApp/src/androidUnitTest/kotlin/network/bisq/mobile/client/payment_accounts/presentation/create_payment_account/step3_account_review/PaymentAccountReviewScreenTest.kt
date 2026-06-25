@@ -97,7 +97,7 @@ class PaymentAccountReviewScreenTest {
             }
 
         every { globalUiManager.scheduleShowLoading() } returns Unit
-        every { globalUiManager.hideLoading() } returns Unit
+        every { globalUiManager.scheduleHideLoading() } returns Unit
         runCatching { stopKoin() }
         koinApplication =
             startKoin {
@@ -261,7 +261,7 @@ class PaymentAccountReviewScreenTest {
             composeTestRule.waitForIdle()
             coVerify(exactly = 1) { paymentAccountsServiceFacade.addAccount(account) }
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 1) { globalUiManager.hideLoading() }
+            verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
             assertTrue(closeCallbackInvoked)
         }
 

@@ -56,7 +56,8 @@ class GlobalUiManager(
     private val _showLoadingDialog = MutableStateFlow(false)
     val showLoadingDialog: StateFlow<Boolean> = _showLoadingDialog.asStateFlow()
 
-    private var loadingJob: Job? = null
+    private var showLoadingJob: Job? = null
+    private var hideLoadingJob: Job? = null
 
     // Snackbar actions as SharedFlow for one-time events (buffer holds 1, drops oldest on overflow)
     private val _snackbarActions =
@@ -70,12 +71,14 @@ class GlobalUiManager(
      * Schedule showing a loading dialog after a grace delay.
      * Immediately blocks screen interaction. If the operation completes before the delay expires,
      * the dialog never appears (avoiding flicker).
-     * Call hideLoading() when the operation completes to cancel the scheduled show and hide the dialog.
+     * Call [scheduleHideLoading] when the operation completes to cancel the scheduled show and hide the dialog.
      */
     fun scheduleShowLoading() {
+        hideLoadingJob?.cancel()
+        hideLoadingJob = null
         _isLoadingBlocking.value = true
-        loadingJob?.cancel()
-        loadingJob =
+        showLoadingJob?.cancel()
+        showLoadingJob =
             scope.launch {
                 delay(LOADING_DIALOG_GRACE_MS)
                 _showLoadingDialog.value = true
@@ -83,13 +86,20 @@ class GlobalUiManager(
     }
 
     /**
-     * Hide the loading dialog and cancel any scheduled show.
-     * Also removes the blocking overlay.
+     * Schedule hiding the loading dialog and blocking overlay after a grace delay.
+     * Cancels any scheduled show immediately, but keeps blocking interaction for the grace period
+     * so navigation can complete before the user can tap underlying UI.
      */
-    fun hideLoading() {
-        loadingJob?.cancel()
-        _isLoadingBlocking.value = false
-        _showLoadingDialog.value = false
+    fun scheduleHideLoading() {
+        showLoadingJob?.cancel()
+        showLoadingJob = null
+        hideLoadingJob?.cancel()
+        hideLoadingJob =
+            scope.launch {
+                delay(LOADING_DIALOG_GRACE_MS)
+                _isLoadingBlocking.value = false
+                _showLoadingDialog.value = false
+            }
     }
 
     /**
@@ -118,8 +128,17 @@ class GlobalUiManager(
      * Useful for testing scenarios where you want to cleanly tear down the manager.
      */
     fun dispose() {
-        hideLoading()
+        clearLoadingStateNow()
         scope.cancel()
+    }
+
+    private fun clearLoadingStateNow() {
+        showLoadingJob?.cancel()
+        showLoadingJob = null
+        hideLoadingJob?.cancel()
+        hideLoadingJob = null
+        _isLoadingBlocking.value = false
+        _showLoadingDialog.value = false
     }
 
     companion object {

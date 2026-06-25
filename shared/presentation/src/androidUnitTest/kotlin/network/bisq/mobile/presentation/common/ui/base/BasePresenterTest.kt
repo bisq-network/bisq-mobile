@@ -126,7 +126,7 @@ class BasePresenterTest {
         presenter.onViewHidden()
 
         // Loading should be hidden
-        verify(exactly = 1) { globalUiManager.hideLoading() }
+        verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
         // Scope should NOT be disposed (no jobsManager.dispose call via unmanaged scope)
         // The presenter is still alive on the back stack
     }
@@ -233,7 +233,7 @@ class BasePresenterTest {
             advanceUntilIdle()
 
             assertTrue(guard.value)
-            verify(atLeast = 1) { globalUiManager.hideLoading() }
+            verify(atLeast = 1) { globalUiManager.scheduleHideLoading() }
         }
 
     @Test

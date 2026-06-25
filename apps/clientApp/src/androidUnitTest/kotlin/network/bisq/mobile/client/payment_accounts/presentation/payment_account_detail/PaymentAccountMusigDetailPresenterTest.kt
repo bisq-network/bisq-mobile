@@ -70,7 +70,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
         every { paymentAccountsServiceFacade.accountsByName } returns accountsByNameFlow
         every { globalUiManager.scheduleShowLoading() } returns Unit
-        every { globalUiManager.hideLoading() } returns Unit
+        every { globalUiManager.scheduleHideLoading() } returns Unit
         every { navigationManager.navigateBack(any()) } returns Unit
     }
 
@@ -169,7 +169,7 @@ class PaymentAccountMusigDetailPresenterTest {
             coVerify(exactly = 0) { paymentAccountsServiceFacade.deleteAccount(any()) }
             verify(exactly = 0) { navigationManager.navigateBack(any()) }
             verify(exactly = 0) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 0) { globalUiManager.hideLoading() }
+            verify(exactly = 0) { globalUiManager.scheduleHideLoading() }
         }
 
     @Test
@@ -191,7 +191,7 @@ class PaymentAccountMusigDetailPresenterTest {
             // Then
             coVerify(exactly = 1) { paymentAccountsServiceFacade.deleteAccount(account.accountName) }
             verify(exactly = 2) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 1) { globalUiManager.hideLoading() }
+            verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
             verify(exactly = 1) { navigationManager.navigateBack(any()) }
             assertFalse(presenter.uiState.value.showDeleteConfirmationDialog)
         }
@@ -215,7 +215,7 @@ class PaymentAccountMusigDetailPresenterTest {
             // Then
             coVerify(exactly = 1) { paymentAccountsServiceFacade.deleteAccount(account.accountName) }
             verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 1) { globalUiManager.hideLoading() }
+            verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
             verify(exactly = 0) { navigationManager.navigateBack(any()) }
             verify {
                 globalUiManager.showSnackbar(

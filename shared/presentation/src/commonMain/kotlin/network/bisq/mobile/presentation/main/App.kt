@@ -226,7 +226,7 @@ fun App(
                 )
             }
 
-            // Global loading overlay - blocks interaction immediately, shows dialog after grace delay
+            // Global loading overlay - blocks interaction immediately; show/hide dialog after grace delay
             LoadingOverlay(
                 isBlocking = isLoadingBlocking,
                 showDialog = showLoadingDialog,

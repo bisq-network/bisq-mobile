@@ -471,11 +471,11 @@ abstract class BasePresenter(
     }
 
     /**
-     * Hide the loading dialog and cancel any scheduled show.
+     * Schedule hiding the loading dialog after a grace delay.
      * Delegates to GlobalUiManager for app-level loading dialog management.
      */
     protected fun hideLoading() {
-        globalUiManager.hideLoading()
+        globalUiManager.scheduleHideLoading()
     }
 
     /**

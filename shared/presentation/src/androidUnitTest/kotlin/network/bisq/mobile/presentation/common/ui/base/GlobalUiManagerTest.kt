@@ -69,7 +69,7 @@ class GlobalUiManagerTest {
         }
 
     @Test
-    fun hideLoading_cancelsScheduledShow_beforeGraceDelayExpires() =
+    fun scheduleHideLoading_cancelsScheduledShow_beforeGraceDelayExpires() =
         runTest(testDispatcher) {
             // Given
             val globalUiManager = GlobalUiManager(testDispatcher)
@@ -80,27 +80,36 @@ class GlobalUiManagerTest {
             // Then: Not shown yet
             assertFalse(globalUiManager.showLoadingDialog.value)
 
-            // When: Hide before grace delay expires
+            // When: Hide before show grace delay expires
             testScheduler.advanceTimeBy(100) // Only 100ms of 150ms
-            globalUiManager.hideLoading()
+            globalUiManager.scheduleHideLoading()
 
-            // Then: Still false
+            // Then: Still blocked, dialog still false
+            assertTrue(globalUiManager.isLoadingBlocking.value)
             assertFalse(globalUiManager.showLoadingDialog.value)
 
-            // When: Wait past original grace delay
-            testScheduler.advanceTimeBy(100) // Total 200ms
+            // When: Wait for hide grace delay
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
 
-            // Then: Still false (job was cancelled)
+            // Then: Unblocked and dialog still false
+            assertFalse(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+
+            // When: Wait past original show grace delay
+            testScheduler.advanceTimeBy(100)
+
+            // Then: Still false (show job was cancelled)
             assertFalse(globalUiManager.showLoadingDialog.value)
         }
 
     @Test
-    fun hideLoading_hidesDialog_afterGraceDelayExpires() =
+    fun scheduleHideLoading_hidesDialog_afterGraceDelayExpires() =
         runTest(testDispatcher) {
             // Given
             val globalUiManager = GlobalUiManager(testDispatcher)
 
-            // When: Schedule and wait for grace delay
+            // When: Schedule and wait for show grace delay
             globalUiManager.scheduleShowLoading()
             testScheduler.advanceTimeBy(150)
             testScheduler.runCurrent()
@@ -109,9 +118,18 @@ class GlobalUiManagerTest {
             assertTrue(globalUiManager.showLoadingDialog.value)
 
             // When: Hide
-            globalUiManager.hideLoading()
+            globalUiManager.scheduleHideLoading()
 
-            // Then: Dialog hidden immediately
+            // Then: Still visible and blocked during hide grace delay
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+            assertTrue(globalUiManager.showLoadingDialog.value)
+
+            // When: Wait for hide grace delay
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
+
+            // Then: Dialog hidden and unblocked
+            assertFalse(globalUiManager.isLoadingBlocking.value)
             assertFalse(globalUiManager.showLoadingDialog.value)
         }
 
@@ -144,16 +162,25 @@ class GlobalUiManagerTest {
         }
 
     @Test
-    fun hideLoading_whenNotShowing_doesNothing() =
+    fun scheduleHideLoading_whenNotShowing_stillDelaysUnblock() =
         runTest(testDispatcher) {
             // Given
             val globalUiManager = GlobalUiManager(testDispatcher)
 
             // When: Hide without scheduling
-            globalUiManager.hideLoading()
+            globalUiManager.scheduleHideLoading()
 
             // Then: Still false (no error)
             assertFalse(globalUiManager.showLoadingDialog.value)
+            assertFalse(globalUiManager.isLoadingBlocking.value)
+
+            // When: Wait for hide grace delay
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
+
+            // Then: Still false
+            assertFalse(globalUiManager.showLoadingDialog.value)
+            assertFalse(globalUiManager.isLoadingBlocking.value)
         }
 
     @Test
@@ -165,15 +192,24 @@ class GlobalUiManagerTest {
             // When: Simulate fast operation (completes in 50ms)
             globalUiManager.scheduleShowLoading()
             testScheduler.advanceTimeBy(50)
-            globalUiManager.hideLoading()
+            globalUiManager.scheduleHideLoading()
 
-            // Then: Dialog never shown (operation completed before grace delay)
+            // Then: Dialog never shown, still blocked during hide grace delay
+            assertFalse(globalUiManager.showLoadingDialog.value)
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+
+            // When: Wait for hide grace delay
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
+
+            // Then: Unblocked, dialog still not shown
+            assertFalse(globalUiManager.isLoadingBlocking.value)
             assertFalse(globalUiManager.showLoadingDialog.value)
 
-            // When: Wait past grace delay
+            // When: Wait past show grace delay
             testScheduler.advanceTimeBy(200)
 
-            // Then: Still not shown (job was cancelled)
+            // Then: Still not shown (show job was cancelled)
             assertFalse(globalUiManager.showLoadingDialog.value)
         }
 
@@ -185,7 +221,7 @@ class GlobalUiManagerTest {
 
             // When: Simulate slow operation (takes 300ms)
             globalUiManager.scheduleShowLoading()
-            testScheduler.advanceTimeBy(150) // Grace delay expires
+            testScheduler.advanceTimeBy(150) // Show grace delay expires
             testScheduler.runCurrent()
 
             // Then: Dialog shown
@@ -193,10 +229,15 @@ class GlobalUiManagerTest {
 
             // When: Operation completes
             testScheduler.advanceTimeBy(150) // Total 300ms
-            globalUiManager.hideLoading()
+            globalUiManager.scheduleHideLoading()
+
+            // When: Wait for hide grace delay
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
 
             // Then: Dialog hidden
             assertFalse(globalUiManager.showLoadingDialog.value)
+            assertFalse(globalUiManager.isLoadingBlocking.value)
         }
 
     @Test
@@ -224,7 +265,7 @@ class GlobalUiManagerTest {
         }
 
     @Test
-    fun hideLoading_setsIsLoadingBlockingToFalse() =
+    fun scheduleHideLoading_setsIsLoadingBlockingToFalseAfterGraceDelay() =
         runTest(testDispatcher) {
             // Given
             val globalUiManager = GlobalUiManager(testDispatcher)
@@ -234,7 +275,15 @@ class GlobalUiManagerTest {
             assertTrue(globalUiManager.isLoadingBlocking.value)
 
             // When: Hide loading
-            globalUiManager.hideLoading()
+            globalUiManager.scheduleHideLoading()
+
+            // Then: Still blocked during hide grace delay
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+
+            // When: Wait for hide grace delay
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
 
             // Then: Both states are false
             assertFalse(globalUiManager.isLoadingBlocking.value)
@@ -261,5 +310,56 @@ class GlobalUiManagerTest {
             // Then: Both states are true
             assertTrue(globalUiManager.isLoadingBlocking.value)
             assertTrue(globalUiManager.showLoadingDialog.value)
+        }
+
+    @Test
+    fun scheduleShowLoading_cancelsPendingHide() =
+        runTest(testDispatcher) {
+            // Given
+            val globalUiManager = GlobalUiManager(testDispatcher)
+
+            globalUiManager.scheduleShowLoading()
+            testScheduler.advanceTimeBy(50)
+            globalUiManager.scheduleHideLoading()
+            testScheduler.advanceTimeBy(50)
+
+            // When: New operation starts before hide grace delay completes
+            globalUiManager.scheduleShowLoading()
+
+            // Then: Blocking stays active
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+
+            // When: Wait for show grace delay
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
+
+            // Then: Dialog shown again
+            assertTrue(globalUiManager.showLoadingDialog.value)
+        }
+
+    @Test
+    fun dispose_clearsLoadingStateImmediately() =
+        runTest(testDispatcher) {
+            // Given
+            val globalUiManager = GlobalUiManager(testDispatcher)
+
+            globalUiManager.scheduleShowLoading()
+            globalUiManager.scheduleHideLoading()
+
+            // When: Dispose during hide grace delay
+            globalUiManager.dispose()
+
+            // Then: Cleared immediately
+            assertFalse(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+
+            // When: Wait past hide grace delay
+            testScheduler.advanceTimeBy(200)
+            testScheduler.runCurrent()
+
+            // Then: Still cleared
+            assertFalse(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
         }
 }
