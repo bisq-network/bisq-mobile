@@ -16,15 +16,20 @@ import bisq.user.profile.UserProfileService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkObject
+import io.mockk.unmockkStatic
 import io.mockk.verify
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.account.protocol_type.TradeProtocolTypeEnum
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelDto
@@ -82,6 +87,10 @@ class NodeTradeChatMessagesServiceFacadeTest {
 
     @Before
     fun setUp() {
+        mockkStatic(Dispatchers::class)
+        every { Dispatchers.Default } returns testDispatcher
+        Dispatchers.setMain(testDispatcher)
+
         startKoin {
             modules(
                 module {
@@ -143,6 +152,8 @@ class NodeTradeChatMessagesServiceFacadeTest {
     @After
     fun tearDown() {
         unmockkObject(Mappings.BisqEasyOpenTradeMessageModelMapping)
+        unmockkStatic(Dispatchers::class)
+        Dispatchers.resetMain()
         stopKoin()
     }
 

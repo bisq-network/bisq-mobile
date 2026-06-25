@@ -136,6 +136,8 @@ class NodeTradeChatMessagesServiceFacade(
         pins +=
             channel.chatMessages.addObserver(
                 object : CollectionObserver<BisqEasyOpenTradeMessage> {
+                    // INVARIANT: persist=false/onAllAdded vs persist=true/onAdded assumes Bisq2 replays
+                    // existing messages only in onAllAdded; live messages always arrive via onAdded.
                     override fun onAllAdded(values: Collection<out BisqEasyOpenTradeMessage>) {
                         // Override the default (which calls onAdded per element) solely to pass
                         // persist=false, preventing a delayed persist job from being scheduled
@@ -219,7 +221,7 @@ class NodeTradeChatMessagesServiceFacade(
         // PROTOCOL_LOG_MESSAGE's persist() is always rate-limited (arrives ~200 ms after
         // TAKE_BISQ_EASY_OFFER, inside the 1 000 ms window). Force a persist once the window clears.
         if (persist && message.chatMessageType == ChatMessageType.PROTOCOL_LOG_MESSAGE) {
-            serviceScope.launch {
+            serviceScope.launch(Dispatchers.Default) {
                 delay(PERSIST_DELAY_AFTER_PROTOCOL_LOG_MS)
                 bisqEasyOpenTradeChannelService.persist()
             }
