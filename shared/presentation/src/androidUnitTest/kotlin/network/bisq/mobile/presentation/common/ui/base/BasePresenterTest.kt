@@ -10,6 +10,7 @@ import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -38,6 +39,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -226,7 +229,7 @@ class BasePresenterTest {
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
 
-            assertTrue(presenter.runGuarded(guard))
+            assertNotNull(presenter.runGuarded(guard))
             advanceUntilIdle()
 
             assertTrue(guard.value)
@@ -240,12 +243,12 @@ class BasePresenterTest {
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
 
-            assertTrue(presenter.runGuarded(guard, blockForMs = Long.MAX_VALUE))
+            assertNotNull(presenter.runGuarded(guard, blockForMs = Long.MAX_VALUE))
             advanceUntilIdle() // first block enters and suspends on delay
             assertEquals(1, presenter.blockStartCount)
             assertFalse(guard.value)
 
-            assertFalse(presenter.runGuarded(guard, blockForMs = 0))
+            assertNull(presenter.runGuarded(guard, blockForMs = 0))
             assertEquals(1, presenter.blockStartCount)
             assertEquals(0, presenter.completedActions)
         }
@@ -257,7 +260,7 @@ class BasePresenterTest {
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
 
-            assertTrue(presenter.runGuarded(guard, reEnableGuardOnComplete = false))
+            assertNotNull(presenter.runGuarded(guard, reEnableGuardOnComplete = false))
             advanceUntilIdle()
 
             assertFalse(guard.value)
@@ -270,7 +273,7 @@ class BasePresenterTest {
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
 
-            assertTrue(
+            assertNotNull(
                 presenter.runGuarded(reEnableGuardOnComplete = false) {
                     guard.value = true
                 },
@@ -278,6 +281,24 @@ class BasePresenterTest {
             advanceUntilIdle()
 
             assertTrue(guard.value)
+        }
+
+    @Test
+    fun `guardedSuspendAction returns cancellable Job that restores guard on cancel`() =
+        runTest(testDispatcher) {
+            val guard = MutableStateFlow(true)
+            val presenter = GuardTestPresenter(mainPresenter)
+            presenter.onViewAttached()
+
+            val job = assertNotNull(presenter.runGuarded(guard, blockForMs = Long.MAX_VALUE))
+            advanceUntilIdle()
+            assertFalse(guard.value)
+
+            job.cancel()
+            advanceUntilIdle()
+
+            assertTrue(guard.value)
+            verify(atLeast = 1) { globalUiManager.hideLoading() }
         }
 
     private class GuardTestPresenter(
@@ -292,7 +313,7 @@ class BasePresenterTest {
             showLoadingOverlay: Boolean = true,
             reEnableGuardOnComplete: Boolean = true,
             block: (suspend () -> Unit)? = null,
-        ): Boolean =
+        ): Job? =
             guardedSuspendAction(
                 guard,
                 "testAction",

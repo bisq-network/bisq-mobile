@@ -5,6 +5,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -481,7 +482,11 @@ abstract class BasePresenter(
      * Runs [block] on [presenterScope] behind [guard] using compareAndSet.
      * [guard] uses `true` = enabled; it is cleared for the duration of [block]
      * and restored in finally when [reEnableGuardOnComplete] is true.
-     * Returns whether the action was started.
+     *
+     * @return `null` when the guard rejects the call (action already in progress),
+     *   or the [Job] launched on [presenterScope] when the action was started.
+     *   The caller may call [Job.cancel] to abort in-flight work; the `finally`
+     *   block still runs on cancellation, restoring the guard and hiding loading.
      */
     protected fun guardedSuspendAction(
         guard: MutableStateFlow<Boolean>,
@@ -489,15 +494,15 @@ abstract class BasePresenter(
         showLoadingOverlay: Boolean = true,
         reEnableGuardOnComplete: Boolean = true,
         block: suspend () -> Unit,
-    ): Boolean {
+    ): Job? {
         if (!guard.compareAndSet(expect = true, update = false)) {
             log.w { "$actionName called while already in progress; ignoring" }
-            return false
+            return null
         }
         if (showLoadingOverlay) {
             showLoading()
         }
-        presenterScope.launch {
+        return presenterScope.launch {
             try {
                 block()
             } finally {
@@ -509,7 +514,6 @@ abstract class BasePresenter(
                 }
             }
         }
-        return true
     }
 
     protected fun registerChild(child: BasePresenter) {
