@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.main
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
@@ -67,6 +68,8 @@ open class ClientMainPresenter(
                 "mobile.connectivity.disconnected.client.message"
             }
 
+    private val _isConnectivityRecoveryEnabled = MutableStateFlow(true)
+
     override fun onConnectivityRecoveryAction() {
         if (isIOS()) {
             restartServicesAndNavigateToSplash()
@@ -76,10 +79,11 @@ open class ClientMainPresenter(
     }
 
     private fun restartServicesAndNavigateToSplash() {
-        presenterScope.launch {
-            showLoading()
+        guardedSuspendAction(
+            _isConnectivityRecoveryEnabled,
+            "restartServicesAndNavigateToSplash",
+        ) {
             val succeeded = applicationLifecycleService.restartAllServices()
-            hideLoading()
             if (succeeded) {
                 navigateTo(NavRoute.Splash()) {
                     it.popUpTo(NavRoute.TabContainer) { inclusive = true }
