@@ -481,12 +481,13 @@ abstract class BasePresenter(
     /**
      * Runs [block] on [presenterScope] behind [guard] using compareAndSet.
      * [guard] uses `true` = enabled; it is cleared for the duration of [block]
-     * and restored in finally when [reEnableGuardOnComplete] is true.
+     * and restored on job completion when [reEnableGuardOnComplete] is true.
      *
      * @return `null` when the guard rejects the call (action already in progress),
      *   or the [Job] launched on [presenterScope] when the action was started.
-     *   The caller may call [Job.cancel] to abort in-flight work; the `finally`
-     *   block still runs on cancellation, restoring the guard and hiding loading.
+     *   The caller may call [Job.cancel] to abort in-flight work; cleanup registered
+     *   via [Job.invokeOnCompletion] still runs on cancellation, restoring the guard
+     *   and hiding loading even when the coroutine body never started.
      */
     protected fun guardedSuspendAction(
         guard: MutableStateFlow<Boolean>,
@@ -502,18 +503,16 @@ abstract class BasePresenter(
         if (showLoadingOverlay) {
             showLoading()
         }
-        return presenterScope.launch {
-            try {
-                block()
-            } finally {
-                if (reEnableGuardOnComplete) {
-                    guard.value = true
-                }
-                if (showLoadingOverlay) {
-                    hideLoading()
-                }
+        val job = presenterScope.launch { block() }
+        job.invokeOnCompletion {
+            if (reEnableGuardOnComplete) {
+                guard.value = true
+            }
+            if (showLoadingOverlay) {
+                hideLoading()
             }
         }
+        return job
     }
 
     protected fun registerChild(child: BasePresenter) {

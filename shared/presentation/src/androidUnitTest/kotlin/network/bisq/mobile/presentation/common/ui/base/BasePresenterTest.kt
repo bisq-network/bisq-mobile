@@ -243,14 +243,19 @@ class BasePresenterTest {
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
 
-            assertNotNull(presenter.runGuarded(guard, blockForMs = Long.MAX_VALUE))
-            advanceUntilIdle() // first block enters and suspends on delay
-            assertEquals(1, presenter.blockStartCount)
-            assertFalse(guard.value)
+            val job = assertNotNull(presenter.runGuarded(guard, blockForMs = Long.MAX_VALUE))
+            try {
+                advanceUntilIdle() // first block enters and suspends on delay
+                assertEquals(1, presenter.blockStartCount)
+                assertFalse(guard.value)
 
-            assertNull(presenter.runGuarded(guard, blockForMs = 0))
-            assertEquals(1, presenter.blockStartCount)
-            assertEquals(0, presenter.completedActions)
+                assertNull(presenter.runGuarded(guard, blockForMs = 0))
+                assertEquals(1, presenter.blockStartCount)
+                assertEquals(0, presenter.completedActions)
+            } finally {
+                job.cancel()
+                advanceUntilIdle()
+            }
         }
 
     @Test
@@ -274,7 +279,7 @@ class BasePresenterTest {
             presenter.onViewAttached()
 
             assertNotNull(
-                presenter.runGuarded(reEnableGuardOnComplete = false) {
+                presenter.runGuarded(guard = guard, reEnableGuardOnComplete = false) {
                     guard.value = true
                 },
             )
@@ -297,6 +302,25 @@ class BasePresenterTest {
             job.cancel()
             advanceUntilIdle()
 
+            assertTrue(guard.value)
+            verify(atLeast = 1) { globalUiManager.hideLoading() }
+        }
+
+    @Test
+    fun `guardedSuspendAction restores guard and hides loading when cancelled before coroutine starts`() =
+        runTest(testDispatcher) {
+            val guard = MutableStateFlow(true)
+            val presenter = GuardTestPresenter(mainPresenter)
+            presenter.onViewAttached()
+
+            val job = assertNotNull(presenter.runGuarded(guard, blockForMs = Long.MAX_VALUE))
+            assertFalse(guard.value)
+            assertEquals(0, presenter.blockStartCount)
+
+            job.cancel()
+            advanceUntilIdle()
+
+            assertEquals(0, presenter.blockStartCount)
             assertTrue(guard.value)
             verify(atLeast = 1) { globalUiManager.hideLoading() }
         }
