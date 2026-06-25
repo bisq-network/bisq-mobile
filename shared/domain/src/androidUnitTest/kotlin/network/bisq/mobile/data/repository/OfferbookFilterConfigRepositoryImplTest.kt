@@ -2,9 +2,8 @@ package network.bisq.mobile.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +22,7 @@ import network.bisq.mobile.data.model.market.MarketSortBy
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfigs
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -146,18 +145,6 @@ class OfferbookFilterConfigRepositoryImplTest {
         }
     }
 
-    private class TestCoroutineJobsManager(
-        private val scope: CoroutineScope,
-    ) : CoroutineJobsManager {
-        override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null
-
-        override suspend fun dispose() {
-            scope.cancel()
-        }
-
-        override fun getScope(): CoroutineScope = scope
-    }
-
     private data class Fixture(
         val repository: OfferbookFilterConfigRepositoryImpl,
         val store: InMemoryDataStore<OfferbookFilterConfigs>,
@@ -166,14 +153,14 @@ class OfferbookFilterConfigRepositoryImplTest {
     )
 
     private fun fixture(
-        scope: CoroutineScope,
+        dispatcher: CoroutineDispatcher,
         persistedConfigs: OfferbookFilterConfigs = OfferbookFilterConfigs(),
         rememberFilters: Boolean = true,
     ): Fixture {
         val store = InMemoryDataStore(persistedConfigs)
         val settingsRepository =
             FakeSettingsRepository(Settings(rememberOfferbookFilterPreferences = rememberFilters))
-        val jobsManager = TestCoroutineJobsManager(scope)
+        val jobsManager = TestCoroutineJobsManager(dispatcher)
         val repository =
             OfferbookFilterConfigRepositoryImpl(
                 offerbookFilterConfigsStore = store,
@@ -201,7 +188,7 @@ class OfferbookFilterConfigRepositoryImplTest {
             val persistedConfig = config(paymentMethods = setOf("WISE"))
             val fixture =
                 fixture(
-                    scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob()),
+                    dispatcher = StandardTestDispatcher(testScheduler),
                     persistedConfigs = OfferbookFilterConfigs(mapOf("BTC/EUR" to persistedConfig)),
                     rememberFilters = true,
                 )
@@ -220,7 +207,7 @@ class OfferbookFilterConfigRepositoryImplTest {
             val persistedConfigs = OfferbookFilterConfigs(mapOf("BTC/EUR" to persistedConfig))
             val fixture =
                 fixture(
-                    scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob()),
+                    dispatcher = StandardTestDispatcher(testScheduler),
                     persistedConfigs = persistedConfigs,
                     rememberFilters = true,
                 )
@@ -238,7 +225,7 @@ class OfferbookFilterConfigRepositoryImplTest {
                 OfferbookFilterConfigRepositoryImpl(
                     offerbookFilterConfigsStore = store,
                     settingsRepository = settingsRepository,
-                    jobsManager = TestCoroutineJobsManager(CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())),
+                    jobsManager = TestCoroutineJobsManager(StandardTestDispatcher(testScheduler)),
                 )
 
             advanceUntilIdle()
@@ -254,7 +241,7 @@ class OfferbookFilterConfigRepositoryImplTest {
                 OfferbookFilterConfigRepositoryImpl(
                     offerbookFilterConfigsStore = store,
                     settingsRepository = FakeSettingsRepository(fetchException = IllegalStateException("settings unavailable")),
-                    jobsManager = TestCoroutineJobsManager(CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())),
+                    jobsManager = TestCoroutineJobsManager(StandardTestDispatcher(testScheduler)),
                 )
             advanceUntilIdle()
             val usdConfig = config(paymentMethods = setOf("ZELLE"), onlyMyOffers = true)
@@ -270,7 +257,7 @@ class OfferbookFilterConfigRepositoryImplTest {
     @Test
     fun `setConfig persists session config when remembering filters is enabled`() =
         runTest {
-            val fixture = fixture(scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob()), rememberFilters = true)
+            val fixture = fixture(dispatcher = StandardTestDispatcher(testScheduler), rememberFilters = true)
             advanceUntilIdle()
             val usdConfig = config(paymentMethods = setOf("ZELLE"), onlyMyOffers = true)
 
@@ -289,7 +276,7 @@ class OfferbookFilterConfigRepositoryImplTest {
                 OfferbookFilterConfigRepositoryImpl(
                     offerbookFilterConfigsStore = store,
                     settingsRepository = FakeSettingsRepository(Settings(rememberOfferbookFilterPreferences = true)),
-                    jobsManager = TestCoroutineJobsManager(CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())),
+                    jobsManager = TestCoroutineJobsManager(StandardTestDispatcher(testScheduler)),
                 )
             advanceUntilIdle()
             val usdConfig = config(paymentMethods = setOf("ZELLE"), onlyMyOffers = true)
@@ -309,7 +296,7 @@ class OfferbookFilterConfigRepositoryImplTest {
                 OfferbookFilterConfigRepositoryImpl(
                     offerbookFilterConfigsStore = store,
                     settingsRepository = FakeSettingsRepository(Settings(rememberOfferbookFilterPreferences = true)),
-                    jobsManager = TestCoroutineJobsManager(CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())),
+                    jobsManager = TestCoroutineJobsManager(StandardTestDispatcher(testScheduler)),
                 )
             advanceUntilIdle()
             val firstConfig = config(paymentMethods = setOf("ZELLE"), onlyMyOffers = true)
@@ -333,7 +320,7 @@ class OfferbookFilterConfigRepositoryImplTest {
             val persistedConfig = config(paymentMethods = setOf("SEPA", "REVOLUT"))
             val fixture =
                 fixture(
-                    scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob()),
+                    dispatcher = StandardTestDispatcher(testScheduler),
                     persistedConfigs = OfferbookFilterConfigs(mapOf("BTC/EUR" to persistedConfig)),
                     rememberFilters = true,
                 )
@@ -355,7 +342,7 @@ class OfferbookFilterConfigRepositoryImplTest {
             val sessionOnlyConfig = config(paymentMethods = setOf("CASH_APP"))
             val fixture =
                 fixture(
-                    scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob()),
+                    dispatcher = StandardTestDispatcher(testScheduler),
                     persistedConfigs = OfferbookFilterConfigs(mapOf("BTC/USD" to persistedConfig)),
                     rememberFilters = true,
                 )
@@ -379,7 +366,7 @@ class OfferbookFilterConfigRepositoryImplTest {
             val sessionOnlyConfig = config(paymentMethods = setOf("ACH"), onlyMyOffers = true)
             val fixture =
                 fixture(
-                    scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob()),
+                    dispatcher = StandardTestDispatcher(testScheduler),
                     persistedConfigs = OfferbookFilterConfigs(mapOf("BTC/USD" to persistedConfig)),
                     rememberFilters = true,
                 )
@@ -404,7 +391,7 @@ class OfferbookFilterConfigRepositoryImplTest {
             val persistedConfig = config(paymentMethods = setOf("SEPA"))
             val fixture =
                 fixture(
-                    scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob()),
+                    dispatcher = StandardTestDispatcher(testScheduler),
                     persistedConfigs = OfferbookFilterConfigs(mapOf("BTC/USD" to persistedConfig)),
                     rememberFilters = false,
                 )
@@ -423,7 +410,7 @@ class OfferbookFilterConfigRepositoryImplTest {
                 OfferbookFilterConfigRepositoryImpl(
                     offerbookFilterConfigsStore = store,
                     settingsRepository = FakeSettingsRepository(Settings(rememberOfferbookFilterPreferences = false)),
-                    jobsManager = TestCoroutineJobsManager(CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())),
+                    jobsManager = TestCoroutineJobsManager(StandardTestDispatcher(testScheduler)),
                 )
             advanceUntilIdle()
 

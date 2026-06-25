@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.test_utils
+package network.bisq.mobile.test.coroutines
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

@@ -40,7 +40,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.Creat
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.CreateZelleAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.cash_deposit.CashDepositAccountDetailPresenter
-import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
@@ -55,6 +54,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule

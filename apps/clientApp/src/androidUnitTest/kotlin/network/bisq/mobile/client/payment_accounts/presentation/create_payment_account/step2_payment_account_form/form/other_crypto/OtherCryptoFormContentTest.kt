@@ -22,7 +22,6 @@ import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPay
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.CreateOtherCryptoAssetAccount
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
-import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
@@ -33,6 +32,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule

@@ -16,11 +16,11 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.same_bank.S
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.same_bank.SameBankAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.bank.BankAccountDetailPresenter
-import network.bisq.mobile.client.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

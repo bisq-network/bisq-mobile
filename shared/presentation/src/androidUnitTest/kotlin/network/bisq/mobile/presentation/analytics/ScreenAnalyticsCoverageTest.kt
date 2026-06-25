@@ -15,7 +15,6 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
-import network.bisq.mobile.presentation.common.test_utils.TestCoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -36,6 +35,7 @@ import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementPres
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.MyTradesPresenter
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketPresenter
+import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
