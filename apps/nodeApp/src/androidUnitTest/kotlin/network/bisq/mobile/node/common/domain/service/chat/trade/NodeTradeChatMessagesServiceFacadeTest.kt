@@ -58,7 +58,7 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
-import network.bisq.mobile.node.test_utils.TestCoroutineJobsManager
+import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
