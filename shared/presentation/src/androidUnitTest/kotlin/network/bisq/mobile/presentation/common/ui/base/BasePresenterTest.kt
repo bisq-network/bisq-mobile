@@ -304,7 +304,7 @@ class BasePresenterTest {
             advanceUntilIdle()
 
             assertTrue(guard.value)
-            verify(atLeast = 1) { globalUiManager.hideLoading() }
+            verify(atLeast = 1) { globalUiManager.scheduleHideLoading() }
         }
 
     @Test
@@ -323,7 +323,7 @@ class BasePresenterTest {
 
             assertEquals(0, presenter.blockStartCount)
             assertTrue(guard.value)
-            verify(atLeast = 1) { globalUiManager.hideLoading() }
+            verify(atLeast = 1) { globalUiManager.scheduleHideLoading() }
         }
 
     private class GuardTestPresenter(
