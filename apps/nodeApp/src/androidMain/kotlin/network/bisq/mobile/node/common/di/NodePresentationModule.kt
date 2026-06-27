@@ -2,6 +2,7 @@ package network.bisq.mobile.node.common.di
 
 import network.bisq.mobile.node.main.NodeMainPresenter
 import network.bisq.mobile.node.settings.backup.presentation.BackupPresenter
+import network.bisq.mobile.node.settings.faqs.FaqNodePresenter
 import network.bisq.mobile.node.settings.settings.NodeSettingsPresenter
 import network.bisq.mobile.node.startup.onboarding.NodeOnboardingPresenter
 import network.bisq.mobile.node.startup.splash.NodeSplashPresenter
@@ -16,6 +17,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPre
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
+import network.bisq.mobile.presentation.settings.faqs.FaqPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
 import network.bisq.mobile.presentation.startup.onboarding.OnboardingPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
@@ -56,6 +58,8 @@ val androidNodePresentationModule =
         factory<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
 
         factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
+
+        factory<FaqPresenter> { FaqNodePresenter(get()) }
 
         factory<BackupPresenter> { BackupPresenter(get(), get()) }
 

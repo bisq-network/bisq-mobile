@@ -6,7 +6,6 @@ import network.bisq.mobile.client.common.domain.service.push_notification.Client
 import network.bisq.mobile.client.common.domain.service.push_notification.IosPushNotificationTokenProvider
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService

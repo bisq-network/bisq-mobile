@@ -35,6 +35,7 @@ import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOffe
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.offer.take_offer.settlement.TakeOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.offerbook.OfferbookScreen
+import network.bisq.mobile.presentation.settings.faqs.FaqScreen
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersScreen
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsScreen
 import network.bisq.mobile.presentation.settings.reputation.ReputationScreen
@@ -107,6 +108,7 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     addScreen<NavRoute.ChatRules> { ChatRulesScreen() }
     addScreen<NavRoute.Settings> { SettingsScreen() }
     addScreen<NavRoute.Support> { SupportScreen() }
+    addScreen<NavRoute.Faqs> { FaqScreen() }
     addScreen<NavRoute.Reputation> { ReputationScreen() }
     addScreen<NavRoute.UserProfile> { UserProfileScreen() }
     addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }

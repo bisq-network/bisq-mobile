@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.tabs.more
 
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.icon_question_mark
 import bisqapps.shared.presentation.generated.resources.nav_accounts
 import bisqapps.shared.presentation.generated.resources.nav_ignored_users
 import bisqapps.shared.presentation.generated.resources.nav_reputation
@@ -61,6 +62,11 @@ abstract class MiscItemsPresenter(
                     label = "mobile.more.support".i18n(),
                     icon = Res.drawable.nav_support,
                     route = NavRoute.Support,
+                ),
+                MenuItem.Leaf(
+                    label = "mobile.more.faqs".i18n(),
+                    icon = Res.drawable.icon_question_mark,
+                    route = NavRoute.Faqs,
                 ),
                 MenuItem.Leaf(
                     label = "mobile.more.paymentAccounts".i18n(),

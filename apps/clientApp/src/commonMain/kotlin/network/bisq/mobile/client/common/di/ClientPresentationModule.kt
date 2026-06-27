@@ -4,6 +4,7 @@ import network.bisq.mobile.client.common.presentation.support.ClientSupportPrese
 import network.bisq.mobile.client.common.presentation.top_bar.ClientTopBarPresenter
 import network.bisq.mobile.client.main.ClientMainPresenter
 import network.bisq.mobile.client.offerbook.ClientOfferbookPresenter
+import network.bisq.mobile.client.settings.faqs.FaqClientPresenter
 import network.bisq.mobile.client.splash.ClientSplashPresenter
 import network.bisq.mobile.client.tabs.more.ClientMiscItemsPresenter
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupPresenter
@@ -12,6 +13,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPre
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
+import network.bisq.mobile.presentation.settings.faqs.FaqPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 import org.koin.dsl.bind
@@ -83,6 +85,8 @@ val clientPresentationModule =
         } bind ITopBarPresenter::class
 
         factory<MiscItemsPresenter> { ClientMiscItemsPresenter(get(), get()) }
+
+        factory<FaqPresenter> { FaqClientPresenter(get()) }
 
         factory<ClientSupportPresenter> {
             ClientSupportPresenter(

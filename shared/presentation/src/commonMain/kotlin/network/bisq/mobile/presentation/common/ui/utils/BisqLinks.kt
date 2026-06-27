@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.common.ui.utils
 
 object BisqLinks {
     const val BISQ_EASY_WIKI_URL = "https://bisq.wiki/Bisq_Easy"
+    const val FREQUENTLY_ASKED_QUESTIONS_URL = "https://bisq.wiki/Frequently_asked_questions"
     const val REPUTATION_WIKI_URL = "https://bisq.wiki/Reputation"
     const val BUILD_REPUTATION_WIKI_URL = "https://bisq.wiki/Reputation#How_to_Build_Reputation"
     const val BLUE_WALLET_TUTORIAL_1_URL = "https://www.youtube.com/watch?v=NqY3wBhloH4"
