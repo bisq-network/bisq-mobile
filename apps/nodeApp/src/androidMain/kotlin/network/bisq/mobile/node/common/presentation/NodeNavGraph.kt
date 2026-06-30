@@ -7,7 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import network.bisq.mobile.node.settings.backup.presentation.BackupScreen
+import network.bisq.mobile.node.startup.splash.NodeSplashScreen
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
@@ -40,5 +42,8 @@ fun NodeNavGraph(
 }
 
 fun NavGraphBuilder.addNodeAppRoutes() {
+    composable<NavRoute.Splash> {
+        NodeSplashScreen()
+    }
     addScreen<NavRoute.BackupAndRestore> { BackupScreen() }
 }

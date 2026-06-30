@@ -76,7 +76,7 @@ val androidNodePresentationModule =
             )
         } bind AppPresenter::class
 
-        factory<SplashPresenter> {
+        factory<NodeSplashPresenter> {
             NodeSplashPresenter(
                 get(),
                 get(),
@@ -86,7 +86,7 @@ val androidNodePresentationModule =
                 get(),
                 get(),
             )
-        }
+        } bind SplashPresenter::class
 
         factory<DashboardPresenter> {
             NodeDashboardPresenter(

@@ -45,7 +45,6 @@ import network.bisq.mobile.presentation.settings.support.SupportScreen
 import network.bisq.mobile.presentation.settings.user_profile.UserProfileScreen
 import network.bisq.mobile.presentation.startup.create_profile.CreateProfileScreen
 import network.bisq.mobile.presentation.startup.onboarding.OnboardingScreen
-import network.bisq.mobile.presentation.startup.splash.SplashScreen
 import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementDisplayScreen
 import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementScreen
 import network.bisq.mobile.presentation.tabs.tab.TabContainerScreen
@@ -57,11 +56,6 @@ import kotlin.reflect.KType
 const val NAV_ANIM_MS = 300
 
 fun NavGraphBuilder.addCommonAppRoutes() {
-    composable<NavRoute.Splash> { backStackEntry ->
-        val route: NavRoute.Splash = backStackEntry.toRoute()
-        SplashScreen(route)
-    }
-
     addScreen<NavRoute.UserAgreement> { UserAgreementScreen() }
     addScreen<NavRoute.Onboarding> { OnboardingScreen() }
     addScreen<NavRoute.CreateProfile> { backStackEntry ->

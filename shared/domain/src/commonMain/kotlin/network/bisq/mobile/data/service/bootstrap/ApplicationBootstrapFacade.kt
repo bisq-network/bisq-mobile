@@ -22,6 +22,7 @@ abstract class ApplicationBootstrapFacade(
         var isDemo = false
         private const val BOOTSTRAP_STAGE_TIMEOUT_MS =
             90_000L // 90 seconds per stage
+        private const val BOOTSTRAP_ELAPSED_TICK_MS = 1_000L
 
         // Grace period before showing the Tor bootstrap failed dialog.
         // On iOS, kmp-tor can emit transient Stopped(error) events during initial
@@ -42,6 +43,12 @@ abstract class ApplicationBootstrapFacade(
     @Volatile
     private var torStartingTimestamp: Long = 0L
 
+    @Volatile
+    private var elapsedTimerJob: Job? = null
+
+    @Volatile
+    private var bootstrapStartedTimestamp: Long = 0L
+
     // Overridable for testing — allows tests to control time without platform-specific calls
     protected open fun currentTimeMillis(): Long = DateUtils.now()
 
@@ -58,6 +65,16 @@ abstract class ApplicationBootstrapFacade(
     fun setProgress(value: Float) {
         _progress.value = value
     }
+
+    private val _torBootstrapProgress = MutableStateFlow(0)
+    val torBootstrapProgress: StateFlow<Int> = _torBootstrapProgress.asStateFlow()
+
+    fun setTorBootstrapProgress(value: Int) {
+        _torBootstrapProgress.value = value.coerceIn(0, 100)
+    }
+
+    private val _bootstrapElapsedSeconds = MutableStateFlow(0L)
+    val bootstrapElapsedSeconds: StateFlow<Long> = _bootstrapElapsedSeconds.asStateFlow()
 
     private val _isTimeoutDialogVisible = MutableStateFlow(false)
     val isTimeoutDialogVisible: StateFlow<Boolean> = _isTimeoutDialogVisible.asStateFlow()
@@ -104,24 +121,36 @@ abstract class ApplicationBootstrapFacade(
         _isTimeoutDialogVisible.value = false
         _shouldShowProgressToast.value = false
         _currentBootstrapStage.value = ""
+        _torBootstrapProgress.value = 0
+        _bootstrapElapsedSeconds.value = 0L
         bootstrapSuccessful = false
         currentTimeoutJob?.cancel()
         currentTimeoutJob = null
         torProgressCollectJob?.cancel()
         torProgressCollectJob = null
+        elapsedTimerJob?.cancel()
+        elapsedTimerJob = null
         torStartingTimestamp = 0L
+        bootstrapStartedTimestamp = currentTimeMillis()
 
         super.activate()
+        startElapsedTimer()
     }
 
     override suspend fun deactivate() {
         cancelTimeout()
+        cancelElapsedTimer()
         super.deactivate()
     }
 
     fun handleBootstrapFailure(e: Throwable) {
+        log.e(e) { "Bootstrap failed" }
         setBootstrapFailed(true)
         setShouldShowProgressToast(false)
+        // Failure is terminal: stop the in-flight jobs so a pending stage timeout can't later show its
+        // dialog (contradicting the failure state) and the elapsed ticker stops its background work.
+        cancelTimeout(showProgressToast = false)
+        cancelElapsedTimer()
     }
 
     protected fun observeTorState() {
@@ -137,6 +166,7 @@ abstract class ApplicationBootstrapFacade(
                         torProgressCollectJob =
                             serviceScope.launch {
                                 kmpTorService.bootstrapProgress.collect {
+                                    setTorBootstrapProgress(it)
                                     setState("mobile.bootstrap.tor.starting".i18n(it))
                                 }
                             }
@@ -144,6 +174,7 @@ abstract class ApplicationBootstrapFacade(
 
                     is TorState.Started -> {
                         torProgressCollectJob?.cancel()
+                        setTorBootstrapProgress(100)
                         setState("mobile.bootstrap.tor.started".i18n())
                         setProgress(0.25f)
                         onTorStarted()
@@ -244,6 +275,25 @@ abstract class ApplicationBootstrapFacade(
     protected open fun onInitialized() {
         bootstrapSuccessful = true
         cancelTimeout()
+        cancelElapsedTimer()
+    }
+
+    private fun startElapsedTimer() {
+        elapsedTimerJob?.cancel()
+        elapsedTimerJob =
+            serviceScope.launch {
+                while (!bootstrapSuccessful) {
+                    val elapsedMillis = currentTimeMillis() - bootstrapStartedTimestamp
+                    val elapsedSeconds = (elapsedMillis / 1_000L).coerceAtLeast(0L)
+                    _bootstrapElapsedSeconds.value = elapsedSeconds
+                    delay(BOOTSTRAP_ELAPSED_TICK_MS)
+                }
+            }
+    }
+
+    protected fun cancelElapsedTimer() {
+        elapsedTimerJob?.cancel()
+        elapsedTimerJob = null
     }
 
     protected open fun onTorStarted() {}
@@ -251,6 +301,12 @@ abstract class ApplicationBootstrapFacade(
     fun startTor(purgeTorDir: Boolean) {
         serviceScope.launch {
             setTorBootstrapFailed(false)
+            // Restarting Tor is a fresh connection attempt, so reset the slow-path clock:
+            // otherwise the "still connecting, this is normal" banner would reappear immediately
+            // showing the elapsed time of the failed attempt. The elapsed ticker keeps running
+            // (bootstrap has not succeeded), so it simply continues from this new baseline.
+            bootstrapStartedTimestamp = currentTimeMillis()
+            _bootstrapElapsedSeconds.value = 0L
             if (purgeTorDir) {
                 kmpTorService.stopAndPurgeWorkingDir()
             }

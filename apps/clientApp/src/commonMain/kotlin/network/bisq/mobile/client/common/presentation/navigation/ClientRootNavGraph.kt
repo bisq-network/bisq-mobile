@@ -7,11 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import network.bisq.mobile.client.common.presentation.support.ClientSupportScreen
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.CreatePaymentAccountScreen
 import network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail.PaymentAccountMusigDetailScreen
 import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountsMusigScreen
+import network.bisq.mobile.client.splash.ClientSplashScreen
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
@@ -39,6 +41,10 @@ fun ClientRootNavGraph(
         navController = rootNavController,
         startDestination = NavRoute.Splash(),
     ) {
+        composable<NavRoute.Splash> { backStackEntry ->
+            val route: NavRoute.Splash = backStackEntry.toRoute()
+            ClientSplashScreen(route)
+        }
         addCommonAppRoutes()
         addClientAppRoutes()
     }
