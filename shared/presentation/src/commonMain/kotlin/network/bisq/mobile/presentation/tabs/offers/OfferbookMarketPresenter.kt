@@ -1,7 +1,5 @@
 package network.bisq.mobile.presentation.tabs.offers
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +14,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.combine
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -31,9 +30,7 @@ class OfferbookMarketPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val settingsRepository: SettingsRepository,
     private val computeOfferbookMarketListUseCase: ComputeOfferbookMarketListUseCase,
-    // Background dispatcher for the (CPU-bound) market-list computation. Injectable so tests can
-    // pass the test dispatcher and keep the pipeline under the test scheduler.
-    private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val dispatcherProvider: DispatcherProvider,
 ) : BasePresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.OfferbookMarket
 
@@ -121,7 +118,7 @@ class OfferbookMarketPresenter(
                 offersServiceFacade.offerbookMarketItems,
             ) { filter, searchText, sortBy, _, languageCode, items ->
                 computeOfferbookMarketListUseCase(filter, searchText, sortBy, languageCode, items)
-            }.flowOn(computationDispatcher)
+            }.flowOn(dispatcherProvider.default)
                 .collect { result ->
                     _marketListItemWithNumOffers.value = result
                 }

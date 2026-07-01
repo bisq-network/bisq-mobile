@@ -2,6 +2,7 @@ package network.bisq.mobile.data.di
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import network.bisq.mobile.data.coroutines.AppDispatcherProvider
 import network.bisq.mobile.data.datastore.createDataStore
 import network.bisq.mobile.data.datastore.serializer.OfferbookFilterConfigsSerializer
 import network.bisq.mobile.data.datastore.serializer.SettingsSerializer
@@ -17,6 +18,7 @@ import network.bisq.mobile.data.repository.TradeReadStateRepositoryImpl
 import network.bisq.mobile.data.repository.UserRepositoryImpl
 import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.data.utils.getStorageDir
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
@@ -94,4 +96,6 @@ val dataModule =
                 get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
             }
         }
+
+        single<DispatcherProvider> { AppDispatcherProvider() }
     }
