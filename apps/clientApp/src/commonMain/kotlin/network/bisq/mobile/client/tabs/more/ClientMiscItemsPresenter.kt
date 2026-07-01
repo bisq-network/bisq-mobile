@@ -5,9 +5,10 @@ import bisqapps.apps.clientapp.generated.resources.nav_trusted_node
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.tabs.more.MenuItem
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 
 class ClientMiscItemsPresenter(
@@ -16,15 +17,15 @@ class ClientMiscItemsPresenter(
 ) : MiscItemsPresenter(userProfileService, mainPresenter) {
     override fun getPaymentAccountNavRoute(): NavRoute = if (BuildConfig.MU_SIG_ENABLED) ClientNavRoute.PaymentAccountsMusig else NavRoute.PaymentAccounts
 
-    override fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(
-            menuItems.size - 2,
-            MenuItem.Leaf(
-                "mobile.more.trustedNode".i18n(),
+    override fun addCustomSettings(appItems: MutableList<MenuItem>): List<MenuItem> {
+        appItems.add(
+            appItems.size.coerceAtMost(1),
+            MenuItem(
+                label = UiString("mobile.more.trustedNode"),
                 icon = Res.drawable.nav_trusted_node,
-                ClientNavRoute.TrustedNodeSetupSettings,
+                route = ClientNavRoute.TrustedNodeSetupSettings,
             ),
         )
-        return menuItems.toList()
+        return appItems
     }
 }
