@@ -1,0 +1,245 @@
+name: Release Umbrel images
+
+# Builds + pushes the dockerised Bisq 2 trusted-node images for the Umbrel app, then opens a PR to
+# the Umbrel store repo pinning the new image digests:
+#   - bisq2-api          (the headless node)
+#   - bisq2-api-web-ui   (the QR/status web sidecar)
+#
+# DECOUPLED FROM bisq2's RELEASE CADENCE: the node image only needs bisq2 SOURCE at a specific
+# commit. This workflow lives in THIS repo (which we maintain), reads the commit + version we pin
+# in gradle/libs.versions.toml, and builds from there. bisq2 is touched only for rare Dockerfile
+# changes, never for a release.
+#
+# VERSIONING — single source of truth = gradle/libs.versions.toml. The Umbrel image is the bisq2
+# api-app (the trusted node), so it tracks the API pin, NOT bisq-core (which the mobile nodeApp
+# embeds — a separate deployment that can pin a different commit):
+#   bisq-api             -> "2.1.11"          (the bisq2 api version; changes when bisq2 releases)
+#   bisq-api-commit      -> "<hash>"          (the bisq2 source built into the image)
+#   umbrel-image-version -> "2.1.11.1-rc3"    (scheme <bisq2-api>.<umbrel-build>[-rcN])
+# To cut a release: edit `umbrel-image-version`, PR to main, merge -> this fires, builds, and opens
+# a store PR you merge to publish.
+#
+# CONFIG (repo Variables + Secrets):
+#   Variable  GHCR_NAMESPACE
+#   Variable  UMBREL_STORE_REPO
+#   Secret    GHCR_USERNAME
+#   Secret    GHCR_TOKEN          PAT with write:packages for GHCR_NAMESPACE
+#   Secret    UMBREL_STORE_TOKEN  PAT with repo scope on UMBREL_STORE_REPO (push branch + open PR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Override version (blank = use umbrel-image-version from libs.versions.toml)"
+        required: false
+        default: ""
+        type: string
+      platforms:
+        description: "Target platforms"
+        required: true
+        default: "linux/amd64,linux/arm64"
+        type: string
+      update_store:
+        description: "Also open a store PR pinning the new images (push events always do this)"
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [main]
+    paths: [gradle/libs.versions.toml]
+
+permissions:
+  contents: read
+
+jobs:
+  # Decide whether to build, and resolve the version + bisq2 commit from the version catalog.
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.r.outputs.should_build }}
+      version: ${{ steps.r.outputs.version }}
+      bisq2_ref: ${{ steps.r.outputs.bisq2_ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so github.event.before is reachable for the version-change check
+          persist-credentials: false # read-only checkout; don't leave the token in .git/config
+
+      - id: r
+        env:
+          OVERRIDE: ${{ inputs.version }}
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          read_v() { grep -E "^$1 " gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/'; }
+
+          version="${OVERRIDE:-}"
+          [ -n "$version" ] || version="$(read_v umbrel-image-version)"
+          bisq_api="$(read_v bisq-api)"
+          bisq2_ref="$(read_v bisq-api-commit)"
+          [ -n "$version" ]   || { echo "::error::umbrel-image-version not found in libs.versions.toml"; exit 1; }
+          [ -n "$bisq2_ref" ] || { echo "::error::bisq-api-commit not found in libs.versions.toml"; exit 1; }
+
+          # Drift guard: the version's api part must match bisq-api.
+          api_part="$(echo "$version" | cut -d. -f1-3)"
+          if [ "$api_part" != "$bisq_api" ]; then
+            echo "::error::version '$version' api part ($api_part) != bisq-api ($bisq_api) — keep them in sync"
+            exit 1
+          fi
+
+          # Build on manual dispatch always; on push only if the version line actually changed
+          # (libs.versions.toml also changes for unrelated dependency bumps).
+          should_build=true
+          if [ "$EVENT" = "push" ]; then
+            # Compare against the state BEFORE the whole push (github.event.before), not HEAD^ — a
+            # multi-commit / rebase push could carry the version bump in an earlier commit. An empty
+            # or unreachable BEFORE (new branch / zeros) yields "" and falls through to a build.
+            before="$(git show "${BEFORE}:gradle/libs.versions.toml" 2>/dev/null | grep -E '^umbrel-image-version ' || true)"
+            after="$(grep -E '^umbrel-image-version ' gradle/libs.versions.toml || true)"
+            if [ "$before" = "$after" ]; then
+              should_build=false
+              echo "::notice::umbrel-image-version unchanged in this push — skipping build"
+            fi
+          fi
+
+          {
+            echo "version=$version"
+            echo "bisq2_ref=$bisq2_ref"
+            echo "should_build=$should_build"
+          } >> "$GITHUB_OUTPUT"
+          echo "::notice::version=$version bisq2_ref=$bisq2_ref should_build=$should_build"
+
+  build-and-push:
+    needs: resolve
+    if: needs.resolve.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    # packages:write scoped to only the job that publishes images (resolve/update-store stay read-only).
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      node_digest: ${{ steps.node.outputs.digest }}
+      web_digest: ${{ steps.web.outputs.digest }}
+    steps:
+      - name: Validate config
+        run: |
+          [ -n "${{ vars.GHCR_NAMESPACE }}" ] \
+            || { echo "::error::repo variable GHCR_NAMESPACE not set"; exit 1; }
+
+      - name: Checkout bisq2 @ pinned commit
+        uses: actions/checkout@v4
+        with:
+          repository: bisq-network/bisq2
+          ref: ${{ needs.resolve.outputs.bisq2_ref }}
+          path: bisq2
+          fetch-depth: 1
+          persist-credentials: false # read-only source checkout used as a docker context; no token in .git
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      # The node Dockerfile builds the api-app from source (./gradlew installDist, ~<1min) and
+      # its build context MUST be the bisq2 repo root (it does `COPY . .`).
+      - name: Build & push node image
+        id: node
+        uses: docker/build-push-action@v6
+        with:
+          context: bisq2
+          file: bisq2/apps/api-app/docker/Dockerfile
+          platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}
+          push: true
+          tags: ${{ vars.GHCR_NAMESPACE }}/bisq2-api:${{ needs.resolve.outputs.version }}
+          provenance: false
+
+      - name: Build & push web-UI sidecar image
+        id: web
+        uses: docker/build-push-action@v6
+        with:
+          context: bisq2/apps/api-app/docker/qr-ui
+          file: bisq2/apps/api-app/docker/qr-ui/Dockerfile
+          platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}
+          push: true
+          build-args: |
+            APP_VERSION=${{ needs.resolve.outputs.version }}
+          tags: ${{ vars.GHCR_NAMESPACE }}/bisq2-api-web-ui:${{ needs.resolve.outputs.version }}
+          provenance: false
+
+      - name: Summary — pushed images
+        run: |
+          {
+            echo "## Bisq 2 Umbrel images — \`${{ needs.resolve.outputs.version }}\`"
+            echo "Built bisq2 @ \`${{ needs.resolve.outputs.bisq2_ref }}\` for \`${{ inputs.platforms || 'linux/amd64,linux/arm64' }}\`."
+            echo "- ${{ vars.GHCR_NAMESPACE }}/bisq2-api@${{ steps.node.outputs.digest }}"
+            echo "- ${{ vars.GHCR_NAMESPACE }}/bisq2-api-web-ui@${{ steps.web.outputs.digest }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Digest-pin the freshly-built images into the Umbrel store repo + bump the manifest version,
+  # via a PR you merge to publish. Runs on a real version bump (push); on manual runs only if opted in.
+  update-store:
+    needs: [resolve, build-and-push]
+    if: github.event_name == 'push' || inputs.update_store
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate config
+        run: |
+          [ -n "${{ vars.UMBREL_STORE_REPO }}" ] \
+            || { echo "::error::repo variable UMBREL_STORE_REPO not set"; exit 1; }
+
+      - name: Checkout Umbrel store repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.UMBREL_STORE_REPO }}
+          token: ${{ secrets.UMBREL_STORE_TOKEN }}
+          path: store
+
+      - name: Pin image digests + bump version
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          NS: ${{ vars.GHCR_NAMESPACE }}
+          NODE_DIGEST: ${{ needs.build-and-push.outputs.node_digest }}
+          WEB_DIGEST: ${{ needs.build-and-push.outputs.web_digest }}
+        run: |
+          set -euo pipefail
+          cd store/bisq2-node
+          sed -i -E "s#^version: .*#version: \"${VERSION}\"#" umbrel-app.yml
+          # Digest-pin both images (matches an existing tag OR digest; '#' sed delim keeps '/' literal).
+          sed -i -E "s#(image: ${NS}/bisq2-api)([:@])[^[:space:]]*#\1@${NODE_DIGEST}#" docker-compose.yml
+          sed -i -E "s#(image: ${NS}/bisq2-api-web-ui)([:@])[^[:space:]]*#\1@${WEB_DIGEST}#" docker-compose.yml
+          echo "resulting refs:"; grep -E '^\s*image:' docker-compose.yml
+
+      - name: Open store PR
+        env:
+          GH_TOKEN: ${{ secrets.UMBREL_STORE_TOKEN }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+          REPO: ${{ vars.UMBREL_STORE_REPO }}
+        run: |
+          set -euo pipefail
+          cd store
+          branch="release/bisq2-node-${VERSION}"
+          git config user.name "bisq-mobile-ci"
+          git config user.email "ci@bisq.network"
+          git checkout -b "$branch"
+          git commit -am "Release Bisq 2 Node ${VERSION} (pin images, bump version)"
+          git push -f -u origin "$branch"
+          gh pr create --repo "$REPO" --base main --head "$branch" \
+            --title "Release Bisq 2 Node ${VERSION}" \
+            --body "Automated by the Release Umbrel images workflow: digest-pins the freshly-built images and bumps the manifest version to \`${VERSION}\`. Merge to publish to the community store." \
+            || echo "::notice::PR may already exist for $branch"
+
+# ── Notes ─────────────────────────────────────────────────────────────────────────────────────
+# - Retarget to the official store: set GHCR_NAMESPACE=ghcr.io/bisq-network + org-scoped creds, and
+#   UMBREL_STORE_REPO=bisq-network/bisq2-umbrel. No code change.
+# - Fully hands-off instead of a store PR? swap the `gh pr create` for a push to the store's main.
+# - SPEED: if emulated arm64 gets slow, split into a matrix of native runners (ubuntu-latest +
+#   ubuntu-24.04-arm), build per-arch by digest, then merge with `docker buildx imagetools create`.
