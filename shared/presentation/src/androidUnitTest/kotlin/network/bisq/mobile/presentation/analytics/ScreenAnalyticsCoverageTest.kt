@@ -35,6 +35,7 @@ import network.bisq.mobile.presentation.startup.user_agreement.UserAgreementPres
 import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.MyTradesPresenter
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketPresenter
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -78,7 +79,8 @@ import kotlin.test.assertTrue
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScreenAnalyticsCoverageTest {
-    private val testDispatcher = StandardTestDispatcher()
+    private val dispatcherProvider = StandardTestDispatcherProvider()
+    private val testDispatcher = dispatcherProvider.default
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val analyticsService: AnalyticsService = mockk(relaxed = true)
 
@@ -238,6 +240,7 @@ class ScreenAnalyticsCoverageTest {
                 userProfileServiceFacade = mockk(relaxed = true),
                 settingsRepository = mockk(relaxed = true),
                 computeOfferbookMarketListUseCase = mockk(relaxed = true),
+                dispatcherProvider = dispatcherProvider,
             )
         assertEquals(AnalyticsEvent.ScreenOpened.OfferbookMarket, presenter.analyticsScreenEvent())
     }

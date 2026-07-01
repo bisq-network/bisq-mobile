@@ -10,7 +10,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -30,6 +29,7 @@ import network.bisq.mobile.presentation.common.test_utils.OfferbookMarketPresent
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -66,7 +66,8 @@ private class LifecycleAwareTestJobsManager(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OfferbookMarketPresenterLifecycleTest {
-    private val testDispatcher = StandardTestDispatcher()
+    private val dispatcherProvider = StandardTestDispatcherProvider()
+    private val testDispatcher = dispatcherProvider.default
 
     @BeforeTest
     fun setUp() {
@@ -100,7 +101,7 @@ class OfferbookMarketPresenterLifecycleTest {
     fun `filter survives tab switch lifecycle`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository, dispatcherProvider = dispatcherProvider)
 
             // Simulate first tab enter
             presenter.onViewAttached()
@@ -137,7 +138,7 @@ class OfferbookMarketPresenterLifecycleTest {
     fun `sortBy survives tab switch lifecycle`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository, dispatcherProvider = dispatcherProvider)
 
             // Simulate first tab enter
             presenter.onViewAttached()
@@ -176,7 +177,7 @@ class OfferbookMarketPresenterLifecycleTest {
             // Pre-set a non-default filter in DataStore
             settingsRepository.setMarketFilter(MarketFilter.WithOffers)
 
-            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository, dispatcherProvider = dispatcherProvider)
 
             // Simulate tab enter — should sync from DataStore
             presenter.onViewAttached()
@@ -211,7 +212,7 @@ class OfferbookMarketPresenterLifecycleTest {
                     settingsRepository = settingsRepository,
                     offersServiceFacade = offersServiceFacade,
                     marketPriceServiceFacade = marketPriceServiceFacade,
-                    computationDispatcher = testDispatcher,
+                    dispatcherProvider = dispatcherProvider,
                 )
 
             presenter.onViewAttached()
@@ -237,7 +238,7 @@ class OfferbookMarketPresenterLifecycleTest {
     fun `filter and sortBy work through multiple tab switches`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository, dispatcherProvider = dispatcherProvider)
 
             // First cycle
             presenter.onViewAttached()

@@ -47,6 +47,7 @@ object KoverExclusions {
             // gate isn't the right tool to cover.
             "network.bisq.mobile.client.common.di.*",
             "network.bisq.mobile.node.common.di.*",
+            "network.bisq.mobile.data.di.*",
         )
 }
 
