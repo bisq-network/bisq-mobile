@@ -135,6 +135,7 @@ class OfferbookPresenterFilterPersistenceTest {
         val offersService = mockk<OffersServiceFacade>()
         every { offersService.offerbookListItems } returns offersFlow
         every { offersService.selectedOfferbookMarket } returns marketFlow
+        every { offersService.isOfferbookLoading } returns MutableStateFlow(false)
         coEvery { offersService.deleteOffer(any()) } returns Result.success(true)
 
         val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)

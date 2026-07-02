@@ -52,11 +52,12 @@ class ClientOffersServiceFacade(
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
     /**
-     * Guards single OFFERS WebSocket subscription across market selections. Reset to false
-     * on loading timeout or collect error so the next [selectOfferbookMarket] re-attempts
-     * the subscription. Without this reset, a single failed initial subscription leaves the
-     * app unable to ever show offers again until process restart (CRITICAL bug — manifested
-     * when the trusted node does not respond to the OFFERS subscription request).
+     * Guards the single OFFERS WebSocket subscription across market selections. Kept set for the
+     * lifetime of the subscription so that switching markets only re-applies filters against the
+     * cache instead of re-subscribing. It is released only on a genuine collect error (see
+     * [resetOffersSubscriptionState]) or on [deactivate]. Notably it is NOT released on the loading
+     * timeout: the subscription is kept alive so a late snapshot still populates, and re-selecting a
+     * market must not trigger a re-subscribe (which would cancel the in-flight subscription).
      */
     private var hasSubscribedToOffers = atomic(false)
 
@@ -355,17 +356,20 @@ class ClientOffersServiceFacade(
         _offerbookListItems.value = list ?: emptyList()
 
         // Count-aware loading: NUM_OFFERS (from a separate, eagerly-subscribed topic) is the source
-        // of truth for how many offers a market has. If it says this market has offers but the
-        // OFFERS snapshot slice for it is still empty, the snapshot simply hasn't caught up yet — so
-        // we keep the spinner instead of flashing a false "no offers" state, and leave the loading
-        // timeout armed as a safety net. Once the real offers arrive (or NUM_OFFERS reports zero)
-        // the result is authoritative and we clear the loading state.
-        val expectedNumOffers = cachedNumOffersByMarketCode?.get(selectedCurrency) ?: 0
-        if (list.isNullOrEmpty() && expectedNumOffers > 0) {
-            log.d { "Awaiting $expectedNumOffers known offers for $selectedCurrency; keeping loading state" }
-        } else {
+        // of truth for how many offers a market has. We only clear the spinner once the result is
+        // authoritative: either the market has offers, or NUM_OFFERS explicitly reports zero for it.
+        // A missing NUM_OFFERS entry means "not received yet" (unknown) — NOT zero — so in that case
+        // we keep the spinner rather than flashing a false "no offers", and likewise while the count
+        // says there are offers but the OFFERS snapshot slice hasn't caught up. The loading timeout
+        // stays armed as a safety net for both.
+        val knownNumOffers: Int? = cachedNumOffersByMarketCode?.get(selectedCurrency)
+        val hasOffers = !list.isNullOrEmpty()
+        val confirmedEmpty = knownNumOffers == 0
+        if (hasOffers || confirmedEmpty) {
             _isOfferbookLoading.value = false
             loadingTimeoutJob?.cancel()
+        } else {
+            log.d { "Keeping loading state for $selectedCurrency (knownNumOffers=$knownNumOffers, offers=${list?.size ?: 0})" }
         }
     }
 
@@ -401,16 +405,20 @@ class ClientOffersServiceFacade(
                     // job cancelled
                 }
                 if (_isOfferbookLoading.value) {
-                    log.w { "Offerbook loading timed out for market ${selectedOfferbookMarket.value.market.quoteCurrencyCode}" }
-                    // Stop the blocking spinner, but KEEP the OFFERS subscription collector alive:
-                    // on a slow Tor cold start the initial snapshot can arrive after this timeout and
-                    // it must still populate the list reactively. (The old behaviour cancelled the
-                    // in-flight subscription here, throwing away the snapshot that was about to land —
-                    // that was the "offers empty after cold start until you re-enter the market" bug.)
-                    // We only release the guard so a manual re-selection can also re-attempt in the
-                    // rare case the node never responds to the subscription at all.
+                    log.w { "Offerbook loading timed out for market ${selectedOfferbookMarket.value.market.quoteCurrencyCode}; keeping subscription alive for a late snapshot" }
+                    // Only stop the blocking spinner. We deliberately KEEP the OFFERS subscription
+                    // collector alive AND keep the subscription guard set:
+                    //  - On a slow Tor cold start the OFFERS snapshot is queued behind the other
+                    //    topics and can arrive well after this timeout; the alive collector then
+                    //    populates the list reactively with no user action.
+                    //  - We must NOT release the guard here: doing so lets a re-selection call
+                    //    subscribeOffers() again, whose first act is to cancel the in-flight
+                    //    subscription — throwing away the snapshot that is about to land. That churn
+                    //    was exactly why offers only appeared after going back and forth.
+                    // Recovery when the node genuinely never answers happens at the connection layer:
+                    // a reconnect re-applies all registered subscriptions (incl. OFFERS) to the same
+                    // observer, so the alive collector still receives the snapshot.
                     _isOfferbookLoading.value = false
-                    hasSubscribedToOffers.value = false
                 }
             }
     }

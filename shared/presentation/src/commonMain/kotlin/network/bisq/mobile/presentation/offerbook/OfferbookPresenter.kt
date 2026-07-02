@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.offerbook
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -137,6 +138,24 @@ open class OfferbookPresenter(
         launchMarketFilterRestore()
         launchOfferFiltering()
         launchFilterUiStateDerivation()
+        launchSlowLoadingHint()
+    }
+
+    /**
+     * If the offerbook stays in the loading state for more than [SLOW_LOADING_HINT_DELAY_MS], nudge
+     * the user with a snackbar — the OFFERS snapshot can lag on slow/Tor connections (it is queued
+     * behind other subscriptions on a cold start). collectLatest cancels the pending delay whenever
+     * the loading flag changes, so the hint only fires once per sustained loading episode.
+     */
+    private fun launchSlowLoadingHint() {
+        presenterScope.launch {
+            offersServiceFacade.isOfferbookLoading.collectLatest { isLoading ->
+                if (isLoading) {
+                    delay(SLOW_LOADING_HINT_DELAY_MS)
+                    showSnackbar("mobile.offerbook.slowLoadingHint".i18n(), type = SnackbarType.WARNING)
+                }
+            }
+        }
     }
 
     private fun launchMarketFilterRestore() {
@@ -829,5 +848,9 @@ open class OfferbookPresenter(
         _isCreateOfferEnabled.value = true
         _isDeleteOfferEnabled.value = true
         _isTakeOfferEnabled.value = true
+    }
+
+    private companion object {
+        private const val SLOW_LOADING_HINT_DELAY_MS = 5000L
     }
 }

@@ -158,44 +158,13 @@ class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
         }
 
     /**
-     * Regression test for the "stuck subscription guard" bug: if the initial OFFERS
-     * subscription request never produces a payload (e.g. trusted node misbehaving),
-     * the loading timeout fires — and historically `hasSubscribedToOffers` stayed
-     * `true`, leaving every subsequent `selectOfferbookMarket` call stuck showing
-     * zero offers forever (until app restart).
+     * After the loading timeout fires, the OFFERS subscription must stay alive and the guard must
+     * stay set: re-selecting a market must NOT re-subscribe. Re-subscribing would cancel the
+     * in-flight subscription that is about to deliver its snapshot — which is exactly why, before
+     * this fix, offers only appeared after navigating back and forth on a slow Tor cold start.
      */
     @Test
-    fun `loading timeout releases the guard so next selectOfferbookMarket re-subscribes`() =
-        runTest {
-            val firstObserver = WebSocketEventObserver()
-            val secondObserver = WebSocketEventObserver()
-            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
-            coEvery { apiGateway.subscribeOffers() } returnsMany listOf(firstObserver, secondObserver)
-
-            facade.activate()
-            advanceUntilIdle()
-
-            // First market selection — subscribes (and server never delivers an OFFERS payload)
-            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
-            advanceUntilIdle()
-            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
-
-            // Loading timeout (30s) fires — guard must be released
-            advanceTimeBy(31_000L)
-            advanceUntilIdle()
-
-            // Second market selection — must re-subscribe instead of being permanently stuck
-            facade.selectOfferbookMarket(MarketListItem.from(usdMarket, numOffers = 82))
-            advanceUntilIdle()
-            coVerify(exactly = 2) { apiGateway.subscribeOffers() }
-        }
-
-    /**
-     * Happy path control: when the subscription is alive and serving data, switching
-     * markets must NOT re-subscribe (filters are applied in-process against the cache).
-     */
-    @Test
-    fun `subsequent selectOfferbookMarket does not re-subscribe while subscription is alive`() =
+    fun `loading timeout keeps the subscription alive and re-selection does not re-subscribe`() =
         runTest {
             val offersObserver = WebSocketEventObserver()
             coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
@@ -205,9 +174,72 @@ class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
             advanceUntilIdle()
 
             facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+
+            // Loading timeout (30s) fires — spinner stops but the subscription stays alive
+            advanceTimeBy(31_000L)
+            advanceUntilIdle()
+            assertEquals(false, facade.isOfferbookLoading.value)
+
+            // Re-selecting the same market must not trigger a second subscription
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+
+            // The late snapshot still lands on the original (alive) subscription and populates
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "late-offer")))
+            advanceUntilIdle()
+            assertEquals(1, facade.offerbookListItems.value.size)
+        }
+
+    /**
+     * Distinguishes "NUM_OFFERS not received yet" (unknown) from "confirmed zero": an empty OFFERS
+     * snapshot for a market whose count we don't know yet must keep the spinner, not flash a false
+     * "no offers".
+     */
+    @Test
+    fun `empty offers snapshot keeps loading while numOffers is unknown`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+
+            // No NUM_OFFERS event delivered → count for BRL is unknown
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            runCurrent()
+
+            offersObserver.setEvent(offersEvent("[]", sequenceNumber = 1))
+            runCurrent()
+
+            assertTrue(facade.isOfferbookLoading.value)
+        }
+
+    /**
+     * Happy path control: when the subscription is alive and serving data, switching
+     * markets must NOT re-subscribe (filters are applied in-process against the cache).
+     */
+    @Test
+    fun `subsequent selectOfferbookMarket does not re-subscribe while subscription is alive`() =
+        runTest {
+            val numOffersObserver = WebSocketEventObserver()
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns numOffersObserver
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+            // NUM_OFFERS explicitly reports zero for BRL, so an empty snapshot is authoritative.
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 0}"""))
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 0))
             // runCurrent() processes the launches without advancing the virtual clock past
-            // the 12s loading timeout — otherwise the timeout would fire first and reset
-            // the guard, defeating the point of this happy-path test.
+            // the loading timeout — otherwise the timeout would fire first, muddying this
+            // happy-path test.
             runCurrent()
 
             // Delivering an event causes applyOffersToSelectedMarket to set isLoading=false

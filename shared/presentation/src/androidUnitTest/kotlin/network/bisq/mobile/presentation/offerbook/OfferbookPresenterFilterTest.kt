@@ -178,6 +178,7 @@ class OfferbookPresenterFilterTest {
         val offersService = mockk<OffersServiceFacade>()
         every { offersService.offerbookListItems } returns offersFlow
         every { offersService.selectedOfferbookMarket } returns marketFlow
+        every { offersService.isOfferbookLoading } returns MutableStateFlow(false)
         coEvery { offersService.deleteOffer(any()) } returns Result.success(true)
         // User profile facade for OfferbookPresenter
         val offerUserProfileService = mockk<UserProfileServiceFacade>(relaxed = true)
@@ -516,6 +517,7 @@ class OfferbookPresenterFilterTest {
             val offersService = mockk<OffersServiceFacade>()
             every { offersService.offerbookListItems } returns offersFlow
             every { offersService.selectedOfferbookMarket } returns marketFlow
+            every { offersService.isOfferbookLoading } returns MutableStateFlow(false)
             coEvery { offersService.deleteOffer(any()) } returns Result.success(true)
             val offerUserProfileService = mockk<UserProfileServiceFacade>(relaxed = true)
             every { offerUserProfileService.selectedUserProfile } returns MutableStateFlow(createMockUserProfile("me"))
@@ -601,6 +603,7 @@ class OfferbookPresenterFilterTest {
             val offersService = mockk<OffersServiceFacade>()
             every { offersService.offerbookListItems } returns offersFlow
             every { offersService.selectedOfferbookMarket } returns marketFlow
+            every { offersService.isOfferbookLoading } returns MutableStateFlow(false)
             coEvery { offersService.deleteOffer(any()) } returns Result.success(true)
 
             val offerUserProfileService = mockk<UserProfileServiceFacade>(relaxed = true)
