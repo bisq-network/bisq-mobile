@@ -145,7 +145,7 @@ val presentationModule =
         factory { ComputeOfferbookMarketListUseCase(get()) }
 
         // Offerbook
-        single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get(), get(), get()) }
+        single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get(), get(), get(), get()) }
 
         // Take offer
         single { TakeOfferCoordinator(get(), get()) }

@@ -2,17 +2,17 @@ package network.bisq.mobile.presentation.common.test_utils
 
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketPresenter
 import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 
 object OfferbookMarketPresenterTestFactory {
     fun create(
@@ -32,7 +32,7 @@ object OfferbookMarketPresenterTestFactory {
 
                 override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
             },
-        computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
+        dispatcherProvider: DispatcherProvider,
     ): OfferbookMarketPresenter {
         val mainPresenter =
             MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
@@ -47,7 +47,7 @@ object OfferbookMarketPresenterTestFactory {
             userProfileServiceFacade = userProfileServiceFacade,
             settingsRepository = settingsRepository,
             computeOfferbookMarketListUseCase = ComputeOfferbookMarketListUseCase(marketPriceServiceFacade),
-            computationDispatcher = computationDispatcher,
+            dispatcherProvider = dispatcherProvider,
         )
     }
 }

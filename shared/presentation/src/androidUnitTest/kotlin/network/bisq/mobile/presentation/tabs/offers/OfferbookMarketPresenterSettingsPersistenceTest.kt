@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.OfferbookMarketPresenterTestFactory
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.koin.core.context.startKoin
@@ -29,7 +30,8 @@ import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OfferbookMarketPresenterSettingsPersistenceTest {
-    private val testDispatcher = StandardTestDispatcher()
+    private val dispatcherProvider = StandardTestDispatcherProvider()
+    private val testDispatcher = dispatcherProvider.default
 
     @BeforeTest
     fun setUp() {
@@ -63,7 +65,7 @@ class OfferbookMarketPresenterSettingsPersistenceTest {
     fun `changing market sort by from UI persists to SettingsRepository`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository, dispatcherProvider = dispatcherProvider)
 
             presenter.setSortBy(MarketSortBy.NameAZ)
             advanceUntilIdle()
@@ -75,7 +77,7 @@ class OfferbookMarketPresenterSettingsPersistenceTest {
     fun `changing market filter from UI persists to SettingsRepository`() =
         runTest(testDispatcher) {
             val settingsRepository = SettingsRepositoryMock()
-            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository)
+            val presenter = OfferbookMarketPresenterTestFactory.create(settingsRepository, dispatcherProvider = dispatcherProvider)
 
             presenter.setFilter(MarketFilter.WithOffers)
             advanceUntilIdle()
