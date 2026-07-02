@@ -17,6 +17,12 @@ object KoverExclusions {
         listOf(
             "*ComposableSingletons*",
             "bisqapps.*.generated.resources.*",
+            // Auto-generated i18n resource bundles (one giant `mapOf(...)` per language,
+            // produced by the generateResourceBundles task from mobile/*.properties). They are
+            // generated data tables, not logic — the same rationale as the Compose generated
+            // resources above. Beyond that, once a translation batch grows a bundle's initializer
+            // past the coverage engine's per-method instrumentation size limit so this is a key one
+            "network.bisq.mobile.i18n.GeneratedResourceBundles*",
             "network.bisq.mobile.presentation.design.*",
             // Thin wrapper around the Sentry-KMP `Sentry.init { ... }` lambda.
             // The whole point of the SentryClient interface (which DefaultSentryClient
