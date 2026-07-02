@@ -35,7 +35,12 @@ class ClientOffersServiceFacade(
     private val webSocketClientService: WebSocketClientService,
 ) : OffersServiceFacade() {
     private companion object {
-        private const val LOADING_TIMEOUT_MS = 12000L
+        // Upper bound for how long we show the blocking spinner while waiting for the initial
+        // OFFERS snapshot. Aligned with the WebSocket request round-trip timeout (30s): on a cold
+        // Tor connection the OFFERS subscription is queued behind the banner subscriptions and its
+        // snapshot can take well over 10s to arrive. This is only a spinner cap — the subscription
+        // is kept alive past it (see [startLoadingTimeout]), so a late snapshot still populates.
+        private const val LOADING_TIMEOUT_MS = 30000L
     }
 
     private var marketPriceUpdateJob: Job? = null
@@ -348,8 +353,20 @@ class ClientOffersServiceFacade(
         }
 
         _offerbookListItems.value = list ?: emptyList()
-        _isOfferbookLoading.value = false
-        loadingTimeoutJob?.cancel()
+
+        // Count-aware loading: NUM_OFFERS (from a separate, eagerly-subscribed topic) is the source
+        // of truth for how many offers a market has. If it says this market has offers but the
+        // OFFERS snapshot slice for it is still empty, the snapshot simply hasn't caught up yet — so
+        // we keep the spinner instead of flashing a false "no offers" state, and leave the loading
+        // timeout armed as a safety net. Once the real offers arrive (or NUM_OFFERS reports zero)
+        // the result is authoritative and we clear the loading state.
+        val expectedNumOffers = cachedNumOffersByMarketCode?.get(selectedCurrency) ?: 0
+        if (list.isNullOrEmpty() && expectedNumOffers > 0) {
+            log.d { "Awaiting $expectedNumOffers known offers for $selectedCurrency; keeping loading state" }
+        } else {
+            _isOfferbookLoading.value = false
+            loadingTimeoutJob?.cancel()
+        }
     }
 
     private fun scheduleOffersPriceRefresh() {
@@ -385,10 +402,15 @@ class ClientOffersServiceFacade(
                 }
                 if (_isOfferbookLoading.value) {
                     log.w { "Offerbook loading timed out for market ${selectedOfferbookMarket.value.market.quoteCurrencyCode}" }
-                    // Release the subscription guard so the next selectOfferbookMarket
-                    // can re-attempt subscription. Without this, the app would be stuck
-                    // showing 0 offers for every market until process restart.
-                    resetOffersSubscriptionState()
+                    // Stop the blocking spinner, but KEEP the OFFERS subscription collector alive:
+                    // on a slow Tor cold start the initial snapshot can arrive after this timeout and
+                    // it must still populate the list reactively. (The old behaviour cancelled the
+                    // in-flight subscription here, throwing away the snapshot that was about to land —
+                    // that was the "offers empty after cold start until you re-enter the market" bug.)
+                    // We only release the guard so a manual re-selection can also re-attempt in the
+                    // rare case the node never responds to the subscription at all.
+                    _isOfferbookLoading.value = false
+                    hasSubscribedToOffers.value = false
                 }
             }
     }
