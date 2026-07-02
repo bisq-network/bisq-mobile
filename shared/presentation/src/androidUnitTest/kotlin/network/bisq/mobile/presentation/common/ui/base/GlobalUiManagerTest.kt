@@ -362,4 +362,50 @@ class GlobalUiManagerTest {
             assertFalse(globalUiManager.isLoadingBlocking.value)
             assertFalse(globalUiManager.showLoadingDialog.value)
         }
+
+    @Test
+    fun reset_clearsLoadingStateImmediately() =
+        runTest(testDispatcher) {
+            // Given
+            val globalUiManager = GlobalUiManager(testDispatcher)
+
+            globalUiManager.scheduleShowLoading()
+            globalUiManager.scheduleHideLoading()
+
+            // When: Reset during hide grace delay
+            globalUiManager.reset()
+
+            // Then: Cleared immediately
+            assertFalse(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+
+            // When: Wait past hide grace delay
+            testScheduler.advanceTimeBy(200)
+            testScheduler.runCurrent()
+
+            // Then: Still cleared (pending jobs were cancelled)
+            assertFalse(globalUiManager.isLoadingBlocking.value)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+        }
+
+    @Test
+    fun reset_keepsScopeUsable_forSubsequentLoading() =
+        runTest(testDispatcher) {
+            // Given: a manager that was reset on a previous presenter teardown
+            val globalUiManager = GlobalUiManager(testDispatcher)
+            globalUiManager.scheduleShowLoading()
+            globalUiManager.reset()
+
+            // When: a new session schedules loading (regression guard for issue #1562)
+            globalUiManager.scheduleShowLoading()
+
+            // Then: blocking flips true immediately...
+            assertTrue(globalUiManager.isLoadingBlocking.value)
+
+            // ...and the dialog still appears after the grace delay (scope not cancelled)
+            assertFalse(globalUiManager.showLoadingDialog.value)
+            testScheduler.advanceTimeBy(150)
+            testScheduler.runCurrent()
+            assertTrue(globalUiManager.showLoadingDialog.value)
+        }
 }

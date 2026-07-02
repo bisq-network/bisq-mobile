@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -38,12 +39,14 @@ import kotlin.test.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainPresenterCleanupTest {
     private val testDispatcher = UnconfinedTestDispatcher()
+    private lateinit var globalUiManager: GlobalUiManager
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
+        globalUiManager = mockk(relaxed = true)
         startKoin {
             modules(
                 module {
@@ -54,7 +57,7 @@ class MainPresenterCleanupTest {
                         }
                     }
                     single { NoopNavigationManager() as network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager }
-                    single { GlobalUiManager() }
+                    single { globalUiManager }
                 },
             )
         }
@@ -79,6 +82,18 @@ class MainPresenterCleanupTest {
             // Allow fire-and-forget coroutine to complete
             delay(100)
             coVerify { notificationService.stopNotificationService() }
+        }
+
+    @Test
+    fun `onDestroy resets GlobalUiManager without disposing its scope`() =
+        runBlocking {
+            // Regression guard for issue #1562: GlobalUiManager is an app-lifetime singleton, so
+            // teardown must reset() its transient loading state, never dispose() (cancel its scope).
+            val presenter = MainPresenterTestFactory.create()
+            presenter.onDestroy()
+            delay(100)
+            verify(exactly = 1) { globalUiManager.reset() }
+            verify(exactly = 0) { globalUiManager.dispose() }
         }
 
     @Test

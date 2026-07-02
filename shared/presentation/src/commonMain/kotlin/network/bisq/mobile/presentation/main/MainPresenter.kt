@@ -223,7 +223,10 @@ open class MainPresenter(
 
     @CallSuper
     override fun onDestroying() {
-        globalUiManager.dispose()
+        // reset (not dispose) — GlobalUiManager is an app-lifetime singleton that outlives this
+        // presenter. Cancelling its scope here would leave the loading overlay stuck after an
+        // Activity is recreated over a surviving process, freezing the UI (issue #1562).
+        globalUiManager.reset()
         cleanupNotificationService()
         super.onDestroying()
     }

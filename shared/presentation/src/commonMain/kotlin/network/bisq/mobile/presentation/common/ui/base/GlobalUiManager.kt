@@ -124,8 +124,23 @@ class GlobalUiManager(
     }
 
     /**
-     * Dispose of the manager and cancel all pending operations.
-     * Useful for testing scenarios where you want to cleanly tear down the manager.
+     * Reset transient loading state without tearing down the scope.
+     * Cancels any pending show/hide jobs and clears both the blocking overlay and the dialog.
+     *
+     * Use this on presenter teardown: [GlobalUiManager] is an app-lifetime singleton that outlives
+     * any individual presenter, so its [scope] must stay usable for the next session. Cancelling the
+     * scope here (via [dispose]) would permanently break [scheduleShowLoading]/[scheduleHideLoading]
+     * and leave [isLoadingBlocking] stuck `true` after an Activity is recreated over a surviving
+     * process (e.g. foreground-service kill + immediate restart), freezing the UI.
+     */
+    fun reset() {
+        clearLoadingStateNow()
+    }
+
+    /**
+     * Dispose of the manager and cancel all pending operations, including the underlying [scope].
+     * Only for teardown/testing where the instance is discarded — the scope is not recreated, so a
+     * disposed instance can no longer schedule loading. For production presenter teardown use [reset].
      */
     fun dispose() {
         clearLoadingStateNow()
