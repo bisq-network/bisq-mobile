@@ -480,6 +480,48 @@ class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
             )
         }
 
+    /**
+     * Regression for "created offer not visible until re-entering the market": NUM_OFFERS bumps the
+     * count promptly, but the OFFERS ADDED push can lag on a slow connection. On reselect, a count
+     * mismatch (cached offers != NUM_OFFERS) reconciles the cache via REST so the new offer shows.
+     */
+    @Test
+    fun `reselecting a market with a stale cache count reconciles via rest`() =
+        runTest {
+            val numOffersObserver = WebSocketEventObserver()
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns numOffersObserver
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+
+            // First cold select: the subscription delivers a single offer for BRL
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 1))
+            advanceUntilIdle()
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "o1"), sequenceNumber = 1))
+            advanceUntilIdle()
+            assertEquals(1, facade.offerbookListItems.value.size)
+
+            // NUM_OFFERS now reports 2 (an offer was just created) but the OFFERS ADDED hasn't arrived
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 2}"""))
+            advanceUntilIdle()
+
+            // Reselect → count mismatch (cached 1 vs numOffers 2) → REST reconcile returns the real 2
+            coEvery { apiGateway.getOffers("BRL") } returns
+                Result.success(listOf(buildOfferDto("o1", brlMarket), buildOfferDto("o2", brlMarket)))
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 2))
+            advanceUntilIdle()
+
+            assertEquals(2, facade.offerbookListItems.value.size)
+            assertEquals(
+                setOf("o1", "o2"),
+                facade.offerbookListItems.value
+                    .map { it.offerId }
+                    .toSet(),
+            )
+        }
+
     private fun offersEvent(
         payload: String,
         sequenceNumber: Int = 1,
