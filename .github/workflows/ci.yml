@@ -160,7 +160,11 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CI: true
-        run: ./gradlew clean test --no-configuration-cache -x :apps:nodeApp:test --info
+        # --no-build-cache forces test tasks to actually execute rather than being restored as
+        # build-cache hits. Kover's per-test coverage (.ic) binary is only produced when the test
+        # JVM runs with the Kover agent; a cache-hit test task produces no coverage, which then
+        # makes the separate koverVerify step see near-zero coverage intermittently (flaky failures).
+        run: ./gradlew clean test --no-configuration-cache --no-build-cache -x :apps:nodeApp:test --info
 
       - name: Run Kover Verification (Ubuntu only, excluding nodeApp)
         if: startsWith(matrix.os, 'ubuntu')
