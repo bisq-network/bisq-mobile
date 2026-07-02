@@ -62,6 +62,9 @@ class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
 
     override fun onSetup() {
         every { webSocketClientService.connectionState } returns connectionState
+        // Neutral default for the REST fast-path so existing tests are unaffected; an empty result
+        // is a no-op (the subscription remains the source of truth for empty markets).
+        coEvery { apiGateway.getOffers(any()) } returns Result.success(emptyList())
         facade =
             ClientOffersServiceFacade(
                 marketPriceServiceFacade = marketPriceServiceFacade,
@@ -379,6 +382,102 @@ class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
             runCurrent()
 
             assertEquals(false, facade.isOfferbookLoading.value)
+        }
+
+    /**
+     * REST fast-path: on market selection we fetch the market's offers directly, which returns
+     * without waiting for the (serially-applied, cold-start-delayed) OFFERS subscription snapshot.
+     */
+    @Test
+    fun `rest prefetch populates offers before the subscription snapshot arrives`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns WebSocketEventObserver() // never delivers
+            coEvery { apiGateway.getOffers("BRL") } returns Result.success(listOf(buildOfferDto("rest-offer", brlMarket)))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+
+            assertEquals(1, facade.offerbookListItems.value.size)
+            assertEquals(
+                "rest-offer",
+                facade.offerbookListItems.value
+                    .single()
+                    .offerId,
+            )
+            assertEquals(false, facade.isOfferbookLoading.value)
+        }
+
+    /**
+     * The REST fast-path is best-effort: if the endpoint fails (e.g. not supported by the node),
+     * we fall back to the OFFERS subscription exactly as before.
+     */
+    @Test
+    fun `rest prefetch failure is tolerated and the subscription still populates`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            coEvery { apiGateway.getOffers("BRL") } throws RuntimeException("endpoint not available")
+
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "sub-offer")))
+            advanceUntilIdle()
+
+            assertEquals(1, facade.offerbookListItems.value.size)
+            assertEquals(
+                "sub-offer",
+                facade.offerbookListItems.value
+                    .single()
+                    .offerId,
+            )
+        }
+
+    /**
+     * The OFFERS subscription remains the source of truth: when its snapshot arrives it replaces the
+     * REST-prefetched head-start data for that market.
+     */
+    @Test
+    fun `subscription snapshot overrides the rest prefetched offers`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            coEvery { apiGateway.getOffers("BRL") } returns Result.success(listOf(buildOfferDto("rest-offer", brlMarket)))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+
+            // REST head-start populated first
+            assertEquals(
+                "rest-offer",
+                facade.offerbookListItems.value
+                    .single()
+                    .offerId,
+            )
+
+            // Authoritative subscription snapshot (REPLACE) supersedes the REST data
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "sub-offer")))
+            advanceUntilIdle()
+
+            assertEquals(1, facade.offerbookListItems.value.size)
+            assertEquals(
+                "sub-offer",
+                facade.offerbookListItems.value
+                    .single()
+                    .offerId,
+            )
         }
 
     private fun offersEvent(

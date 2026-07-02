@@ -108,6 +108,7 @@ class ClientOffersServiceFacade(
             if (!hasCache) {
                 _isOfferbookLoading.value = true
                 startLoadingTimeout()
+                prefetchOffersViaRest(code)
             }
 
             if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
@@ -237,6 +238,51 @@ class ClientOffersServiceFacade(
             } catch (e: Exception) {
                 log.e(e) { "Error processing numOffers WebSocket event" }
             }
+        }
+    }
+
+    /**
+     * Best-effort REST fast-path for the selected market. On a cold Tor start the OFFERS
+     * subscription snapshot can be delayed many seconds because [WebSocketClientService] applies
+     * subscriptions serially and one slow topic blocks the rest. A direct REST request does not sit
+     * behind that applier, so it typically returns in a few seconds and lets us populate the offers
+     * immediately. This is purely additive: on failure we simply keep waiting for the subscription
+     * (unchanged behaviour), and we never overwrite data the subscription has already delivered.
+     */
+    private fun prefetchOffersViaRest(code: String) {
+        serviceScope.launch {
+            runCatching { apiGateway.getOffers(code).getOrThrow() }
+                .onSuccess { offers -> applyRestPrefetchedOffers(code, offers) }
+                .onFailure { e -> log.w(e) { "REST offers prefetch failed for $code; relying on the OFFERS subscription" } }
+        }
+    }
+
+    private suspend fun applyRestPrefetchedOffers(
+        code: String,
+        offers: List<OfferItemPresentationDto>,
+    ) {
+        // Let the OFFERS subscription be the source of truth for genuinely-empty markets; only the
+        // subscription snapshot can authoritatively confirm "no offers".
+        if (offers.isEmpty()) return
+
+        val models =
+            offers.associate { dto ->
+                val model = OfferItemPresentationModel(dto)
+                model.offerId to model
+            }
+
+        var applied = false
+        offersMutex.withLock {
+            // Don't clobber data the OFFERS subscription may already have delivered for this market.
+            if (offerbookListItemsByMarket[code].isNullOrEmpty()) {
+                offerbookListItemsByMarket.getOrPut(code) { mutableMapOf() }.putAll(models)
+                applied = true
+            }
+        }
+
+        if (applied) {
+            log.d { "REST prefetch populated ${models.size} offers for $code" }
+            applyOffersToSelectedMarket()
         }
     }
 
