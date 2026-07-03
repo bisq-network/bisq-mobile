@@ -37,61 +37,41 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 fun OfferbookMarketScreen() {
     val presenter = RememberPresenterLifecycleBackStackAware<OfferbookMarketPresenter>()
 
-    var showFilterDialog by remember { mutableStateOf(false) }
+    val uiState by presenter.uiState.collectAsState()
     val searchText by presenter.searchText.collectAsState()
-    val hasIgnoredUsers by presenter.hasIgnoredUsers.collectAsState()
-    val marketItems by presenter.marketListItemWithNumOffers.collectAsState()
-    val filter by presenter.filter.collectAsState()
-    val sortBy by presenter.sortBy.collectAsState()
 
     OfferbookMarketScreenContent(
+        uiState = uiState,
         searchText = searchText,
-        hasIgnoredUsers = hasIgnoredUsers,
-        marketItems = marketItems,
-        filter = filter,
-        sortBy = sortBy,
-        showFilterDialog = showFilterDialog,
-        onFilterClick = { showFilterDialog = true },
-        onDismissFilterDialog = { showFilterDialog = false },
-        onSearchTextChange = presenter::setSearchText,
-        onMarketSelect = presenter::onSelectMarket,
-        onSortByFilterChange = presenter::setSortBy,
-        onFilterChange = presenter::setFilter,
+        onAction = presenter::onAction,
     )
 }
 
 @Composable
-private fun OfferbookMarketScreenContent(
+internal fun OfferbookMarketScreenContent(
+    uiState: OfferbookMarketUiState,
     searchText: String,
-    hasIgnoredUsers: Boolean,
-    marketItems: List<MarketListItem>,
-    filter: MarketFilter,
-    sortBy: MarketSortBy,
-    showFilterDialog: Boolean,
-    onSortByFilterChange: (MarketSortBy) -> Unit,
-    onFilterChange: (MarketFilter) -> Unit,
-    onSearchTextChange: (String) -> Unit,
-    onFilterClick: () -> Unit,
-    onMarketSelect: (MarketListItem) -> Unit,
-    onDismissFilterDialog: () -> Unit,
+    onAction: (OfferbookMarketUiAction) -> Unit,
 ) {
+    var showFilterDialog by remember { mutableStateOf(false) }
+
     BisqStaticLayout(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.Top,
     ) {
         BisqSearchField(
             value = searchText,
-            onValueChange = onSearchTextChange,
+            onValueChange = { onAction(OfferbookMarketUiAction.OnSearchTextChanged(it)) },
             rightSuffix = {
                 BisqButton(
                     iconOnly = {
-                        if (filter == MarketFilter.WithOffers) {
+                        if (uiState.filter == MarketFilter.WithOffers) {
                             GreenSortIcon()
                         } else {
                             SortIcon()
                         }
                     },
-                    onClick = onFilterClick,
+                    onClick = { showFilterDialog = true },
                     type = BisqButtonType.Clear,
                     modifier = Modifier.weight(1f),
                 )
@@ -103,29 +83,29 @@ private fun OfferbookMarketScreenContent(
         val listState = rememberLazyListState()
 
         // Scroll to top whenever filter, sort, or search criteria changes
-        LaunchedEffect(filter, sortBy, searchText) {
-            if (marketItems.isNotEmpty()) {
+        LaunchedEffect(uiState.filter, uiState.sortBy, searchText) {
+            if (uiState.marketItems.isNotEmpty()) {
                 listState.scrollToItem(0)
             }
         }
 
         LazyColumn(state = listState) {
-            items(marketItems, key = { it.market.marketCodes }) { item ->
+            items(uiState.marketItems, key = { it.market.marketCodes }) { item ->
                 MarketCard(
                     item = item,
-                    hasIgnoredUsers = hasIgnoredUsers,
-                    onClick = { onMarketSelect(item) },
+                    hasIgnoredUsers = uiState.hasIgnoredUsers,
+                    onClick = { onAction(OfferbookMarketUiAction.OnMarketSelected(item)) },
                 )
             }
         }
 
         if (showFilterDialog) {
-            BisqBottomSheet(onDismissRequest = onDismissFilterDialog) {
+            BisqBottomSheet(onDismissRequest = { showFilterDialog = false }) {
                 MarketFilters(
-                    sortBy = sortBy,
-                    filter = filter,
-                    onSortByChange = onSortByFilterChange,
-                    onFilterChange = onFilterChange,
+                    sortBy = uiState.sortBy,
+                    filter = uiState.filter,
+                    onSortByChange = { onAction(OfferbookMarketUiAction.OnSortByChanged(it)) },
+                    onFilterChange = { onAction(OfferbookMarketUiAction.OnFilterChanged(it)) },
                 )
             }
         }
@@ -155,18 +135,15 @@ private fun OfferbookMarketScreenContentPreview() {
         )
     BisqTheme.Preview {
         OfferbookMarketScreenContent(
+            uiState =
+                OfferbookMarketUiState(
+                    hasIgnoredUsers = false,
+                    filter = MarketFilter.All,
+                    sortBy = MarketSortBy.MostOffers,
+                    marketItems = mockMarketItems,
+                ),
             searchText = "",
-            hasIgnoredUsers = false,
-            marketItems = mockMarketItems,
-            filter = MarketFilter.All,
-            sortBy = MarketSortBy.MostOffers,
-            showFilterDialog = false,
-            onSearchTextChange = {},
-            onFilterClick = {},
-            onMarketSelect = {},
-            onDismissFilterDialog = {},
-            onSortByFilterChange = {},
-            onFilterChange = {},
+            onAction = {},
         )
     }
 }
