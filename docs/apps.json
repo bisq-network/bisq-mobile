@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.6.2",
+          "date": "2026-07-03",
+          "localizedDescription": "# Bisq Connect v0.6.2\n\n## What's New\n\n• Smarter notifications: push notifications now open the relevant screen when you tap them.\nOffers filter remembered: your selected market filter in the Offers tab now persists between sessions.\nSteadier connections over Tor: fewer false \"reconnecting\" states thanks to Tor-aware timing.\nOffers: Improved market offers fetch to better avoid/handle issues on slow tor connections\niOS Clearer reconnection feedback: reconnect services functionality\nAndroid Fixed frozen UI when restarting app right after a force kill\nAndroid Clearer reconnection feedback: Overlay shows every time the system is reconnecting\nPlus other bugfixes, UX and performance improvements",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.6.2/Bisq.Connect.ipa",
+          "size": 54684467,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.6.0",
           "date": "2026-06-16",
           "localizedDescription": "# Bisq Connect v0.6.0\n\n## What's New\n\n• **Critical iOS fix**: resolves the startup crash affecting all 0.5.0 iOS users (missing app resources in the bundle). Please update.\n• **\"Help improve Bisq\" (opt-in)**: new privacy-respecting setting. When enabled, anonymous usage events are sent through Tor to Bisq's self-hosted server — no personal data ever leaves your device. Off by default.\n• **Tor reliability**: no more \"slow network\" banner on Tor startup; market offer counts appear immediately; stuck \"Reconnecting…\" state now times out and recovers automatically.\n• Fixed an issue where two Tor WebSocket connections could briefly open at once during session renewal on startup.\n• Translations refreshed across all 13 supported languages.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 desktop node to pair with",
@@ -62,6 +70,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.6.2 — Smarter Notifications + Filter memory + bugfixes",
+      "identifier": "bisq-connect-0.6.2",
+      "caption": "New features related to push notifications, trding experience + important bugfixes.",
+      "date": "2026-07-03",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.6.0 — Critical iOS fix + opt-in analytics",
       "identifier": "bisq-connect-0.6.0",
