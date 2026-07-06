@@ -60,8 +60,11 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * [OfferbookPresenter] is a Koin singleton. Action guards must reset when the screen
- * re-attaches so a prior navigation or in-flight action cannot leave the FAB/cards disabled.
+ * [OfferbookPresenter] is bound as a Koin `factory` and driven by
+ * [network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware], so
+ * `onViewAttached()` runs once and every later return from the back stack fires `onViewRevealed()`.
+ * Action guards must reset on reveal so a prior navigation or in-flight action (take/create offer,
+ * which deliberately leave their guard disabled) cannot leave the FAB/cards permanently disabled.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OfferbookPresenterActionGuardResetTest {
@@ -91,7 +94,7 @@ class OfferbookPresenterActionGuardResetTest {
     }
 
     @Test
-    fun `onViewAttached resets isCreateOfferEnabled after create offer navigation`() =
+    fun `onViewRevealed resets isCreateOfferEnabled after create offer navigation`() =
         runTest(testDispatcher) {
             val presenter = buildPresenter()
             presenter.onViewAttached()
@@ -102,12 +105,12 @@ class OfferbookPresenterActionGuardResetTest {
 
             assertFalse(presenter.isCreateOfferEnabled.value)
 
-            presenter.onViewAttached()
+            presenter.onViewRevealed()
             assertTrue(presenter.isCreateOfferEnabled.value)
         }
 
     @Test
-    fun `onViewAttached resets isTakeOfferEnabled when guard was left disabled`() =
+    fun `onViewRevealed resets isTakeOfferEnabled when guard was left disabled`() =
         runTest(testDispatcher) {
             val presenter = buildPresenter()
             presenter.onViewAttached()
@@ -116,12 +119,12 @@ class OfferbookPresenterActionGuardResetTest {
             setActionGuardEnabled(presenter, "_isTakeOfferEnabled", enabled = false)
             assertFalse(presenter.isTakeOfferEnabled.value)
 
-            presenter.onViewAttached()
+            presenter.onViewRevealed()
             assertTrue(presenter.isTakeOfferEnabled.value)
         }
 
     @Test
-    fun `onViewAttached resets all action guards`() =
+    fun `onViewRevealed resets all action guards`() =
         runTest(testDispatcher) {
             val presenter = buildPresenter()
             presenter.onViewAttached()
@@ -131,7 +134,7 @@ class OfferbookPresenterActionGuardResetTest {
             setActionGuardEnabled(presenter, "_isDeleteOfferEnabled", enabled = false)
             setActionGuardEnabled(presenter, "_isTakeOfferEnabled", enabled = false)
 
-            presenter.onViewAttached()
+            presenter.onViewRevealed()
 
             assertTrue(presenter.isCreateOfferEnabled.value)
             assertTrue(presenter.isDeleteOfferEnabled.value)
@@ -139,7 +142,7 @@ class OfferbookPresenterActionGuardResetTest {
         }
 
     @Test
-    fun `onViewAttached resets isDeleteOfferEnabled while delete is in progress`() =
+    fun `onViewRevealed resets isDeleteOfferEnabled while delete is in progress`() =
         runTest(testDispatcher) {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val offersService = mockk<OffersServiceFacade>(relaxed = true)
@@ -162,8 +165,43 @@ class OfferbookPresenterActionGuardResetTest {
 
             assertFalse(presenter.isDeleteOfferEnabled.value)
 
-            presenter.onViewAttached()
+            presenter.onViewRevealed()
             assertTrue(presenter.isDeleteOfferEnabled.value)
+        }
+
+    @Test
+    fun `onViewRevealed hides delete confirmation so it cannot reopen against a null selection`() =
+        runTest(testDispatcher) {
+            val myOffer = makeOffer(id = "my-offer", isMy = true)
+            val presenter = buildPresenter(offers = listOf(myOffer))
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onOfferSelected(myOffer)
+            assertTrue(presenter.showDeleteConfirmation.value)
+
+            // Simulate a config change (rotation/dark mode) while the delete dialog is open:
+            // the surviving presenter is revealed and must clear the dialog along with the selection.
+            presenter.onViewRevealed()
+
+            assertFalse(presenter.showDeleteConfirmation.value)
+        }
+
+    @Test
+    fun `onViewAttached resets action guards on first attach`() =
+        runTest(testDispatcher) {
+            val presenter = buildPresenter()
+
+            setActionGuardEnabled(presenter, "_isCreateOfferEnabled", enabled = false)
+            setActionGuardEnabled(presenter, "_isDeleteOfferEnabled", enabled = false)
+            setActionGuardEnabled(presenter, "_isTakeOfferEnabled", enabled = false)
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isCreateOfferEnabled.value)
+            assertTrue(presenter.isDeleteOfferEnabled.value)
+            assertTrue(presenter.isTakeOfferEnabled.value)
         }
 
     private fun buildPresenter(

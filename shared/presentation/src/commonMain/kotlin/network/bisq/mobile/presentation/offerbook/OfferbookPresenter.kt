@@ -133,12 +133,41 @@ open class OfferbookPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        resetActionGuards()
-        selectedOffer = null
+        resetTransientViewState()
         launchMarketFilterRestore()
         launchOfferFiltering()
         launchFilterUiStateDerivation()
         launchSlowLoadingHint()
+    }
+
+    /**
+     * Under [RememberPresenterLifecycleBackStackAware] the scope stays alive while the screen sits on
+     * the back stack (e.g. behind the take/create-offer wizard), so [onViewAttached] runs only once.
+     * The `launch*` subscriptions above therefore must NOT be re-launched here — the scope was never
+     * disposed and re-subscribing would double them. Only the per-visit resets run on every reveal.
+     */
+    override fun onViewRevealed() {
+        super.onViewRevealed()
+        resetTransientViewState()
+    }
+
+    /**
+     * Resets that must run every time the screen becomes visible, not just on first attach.
+     * [takeOffer]/[createOffer] deliberately leave their guards disabled after navigating into their
+     * wizards ([guardedSuspendAction] with `reEnableGuardOnComplete = false`); re-enabling them on
+     * reveal is what keeps the Create FAB and Take action usable after backing out of a wizard.
+     *
+     * We also clear [_showDeleteConfirmation] here to keep it consistent with the [selectedOffer] it
+     * refers to. On a configuration change (rotation, dark mode, language) while the delete dialog is
+     * open, [RememberPresenterLifecycleBackStackAware] fires onViewHidden → onViewRevealed on the
+     * surviving presenter; nulling [selectedOffer] without also hiding the dialog would leave it
+     * visible against a null selection, so confirming would fall into the failure branch of
+     * [onConfirmedDeleteOffer]. Dismissing the dialog on reveal avoids that inconsistent state.
+     */
+    private fun resetTransientViewState() {
+        resetActionGuards()
+        selectedOffer = null
+        _showDeleteConfirmation.value = false
     }
 
     /**

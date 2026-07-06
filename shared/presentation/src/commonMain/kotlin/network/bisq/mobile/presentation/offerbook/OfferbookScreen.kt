@@ -27,7 +27,14 @@ import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.data.model.market.MarketPriceItem
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
+import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.alert.dialog.TradeRestrictedDialog
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -41,13 +48,13 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.We
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
-import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import org.koin.compose.koinInject
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 
+@ExcludeFromCoverage
 @Composable
 fun OfferbookScreen() {
-    val presenter: OfferbookPresenter = koinInject()
-    RememberPresenterLifecycle(presenter)
+    val presenter = RememberPresenterLifecycleBackStackAware<OfferbookPresenter>()
 
     val sortedFilteredOffers by presenter.sortedFilteredOffers.collectAsState()
     val selectedDirection by presenter.selectedDirection.collectAsState()
@@ -58,10 +65,79 @@ fun OfferbookScreen() {
     val isDeleteOfferEnabled by presenter.isDeleteOfferEnabled.collectAsState()
     val isTakeOfferEnabled by presenter.isTakeOfferEnabled.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
-    val isOfferSelectionEnabled = isDeleteOfferEnabled && isTakeOfferEnabled
-
-    // Show a loading overlay only while data is being fetched for the selected market
     val showLoading by presenter.isLoading.collectAsState()
+    val filterUiState by presenter.filterUiState.collectAsState()
+
+    OfferbookContent(
+        sortedFilteredOffers = sortedFilteredOffers,
+        selectedDirection = selectedDirection,
+        selectedMarket = selectedMarket,
+        filterUiState = filterUiState,
+        showLoading = showLoading,
+        showDeleteConfirmation = showDeleteConfirmation,
+        showNotEnoughReputationDialog = showNotEnoughReputationDialog,
+        showTradeRestrictedDialog = showTradeRestrictedDialog,
+        isCreateOfferEnabled = isCreateOfferEnabled,
+        isDeleteOfferEnabled = isDeleteOfferEnabled,
+        isTakeOfferEnabled = isTakeOfferEnabled,
+        isDemo = presenter.isDemo(),
+        userProfileIconProvider = presenter.userProfileIconProvider,
+        isReputationWarningForSellerAsTaker = presenter.isReputationWarningForSellerAsTaker,
+        notEnoughReputationHeadline = presenter.notEnoughReputationHeadline,
+        notEnoughReputationMessage = presenter.notEnoughReputationMessage,
+        onSelectDirection = presenter::onSelectDirection,
+        onCreateOffer = presenter::createOffer,
+        onOfferSelect = presenter::onOfferSelected,
+        onTogglePayment = presenter::togglePaymentMethod,
+        onToggleSettlement = presenter::toggleSettlementMethod,
+        onOnlyMyOffersChange = presenter::setOnlyMyOffers,
+        onClearAllFilters = presenter::clearAllFilters,
+        onSetPaymentSelection = presenter::setPaymentSelection,
+        onSetSettlementSelection = presenter::setSettlementSelection,
+        onConfirmDeleteOffer = presenter::onConfirmedDeleteOffer,
+        onDismissDeleteOffer = presenter::onDismissDeleteOffer,
+        onNavigateToReputation = presenter::onNavigateToReputation,
+        onOpenReputationWiki = presenter::onOpenReputationWiki,
+        onDismissNotEnoughReputationDialog = presenter::onDismissNotEnoughReputationDialog,
+        onTradeRestrictingAlertAction = presenter::onTradeRestrictingAlertAction,
+    )
+}
+
+@Composable
+internal fun OfferbookContent(
+    sortedFilteredOffers: List<OfferItemPresentationModel>,
+    selectedDirection: DirectionEnum,
+    selectedMarket: MarketPriceItem?,
+    filterUiState: OfferbookFilterUiState,
+    showLoading: Boolean,
+    showDeleteConfirmation: Boolean,
+    showNotEnoughReputationDialog: Boolean,
+    showTradeRestrictedDialog: AlertNotificationUiState?,
+    isCreateOfferEnabled: Boolean,
+    isDeleteOfferEnabled: Boolean,
+    isTakeOfferEnabled: Boolean,
+    isDemo: Boolean,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
+    isReputationWarningForSellerAsTaker: Boolean,
+    notEnoughReputationHeadline: String,
+    notEnoughReputationMessage: String,
+    onSelectDirection: (DirectionEnum) -> Unit,
+    onCreateOffer: () -> Unit,
+    onOfferSelect: (OfferItemPresentationModel) -> Unit,
+    onTogglePayment: (String) -> Unit,
+    onToggleSettlement: (String) -> Unit,
+    onOnlyMyOffersChange: (Boolean) -> Unit,
+    onClearAllFilters: () -> Unit,
+    onSetPaymentSelection: (Set<String>) -> Unit,
+    onSetSettlementSelection: (Set<String>) -> Unit,
+    onConfirmDeleteOffer: () -> Unit,
+    onDismissDeleteOffer: () -> Unit,
+    onNavigateToReputation: () -> Unit,
+    onOpenReputationWiki: () -> Unit,
+    onDismissNotEnoughReputationDialog: () -> Unit,
+    onTradeRestrictingAlertAction: (AlertNotificationUiAction) -> Unit,
+) {
+    val isOfferSelectionEnabled = isDeleteOfferEnabled && isTakeOfferEnabled
 
     BisqStaticScaffold(
         topBar = {
@@ -75,42 +151,40 @@ fun OfferbookScreen() {
         },
         floatingButton = {
             BisqFABAddButton(
-                onClick = { presenter.createOffer() },
-                enabled = !presenter.isDemo() && isCreateOfferEnabled,
+                onClick = onCreateOffer,
+                enabled = !isDemo && isCreateOfferEnabled,
             )
         },
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog || showTradeRestrictedDialog != null,
     ) {
         DirectionToggle(
             selectedDirection,
-            onStateChange = { direction -> presenter.onSelectDirection(direction) },
+            onStateChange = onSelectDirection,
         )
-
-        val filterUi by presenter.filterUiState.collectAsState()
 
         // Track bottom sheet expansion at the screen level to avoid auto-closing when we temporarily hide.
         var filterExpanded by remember { mutableStateOf(false) }
 
         // Hide the filter controller when there are no offers and no filters are active,
         // but keep it visible if the bottom sheet is currently expanded.
-        val shouldShowFilter = filterUi.hasActiveFilters || sortedFilteredOffers.isNotEmpty() || filterExpanded
+        val shouldShowFilter = filterUiState.hasActiveFilters || sortedFilteredOffers.isNotEmpty() || filterExpanded
         if (shouldShowFilter) {
             BisqGap.V1()
             OfferbookFilterController(
-                state = filterUi,
-                onTogglePayment = presenter::togglePaymentMethod,
-                onToggleSettlement = presenter::toggleSettlementMethod,
-                onOnlyMyOffersChange = presenter::setOnlyMyOffers,
-                onClearAll = presenter::clearAllFilters,
-                onSetPaymentSelection = presenter::setPaymentSelection,
-                onSetSettlementSelection = presenter::setSettlementSelection,
+                state = filterUiState,
+                onTogglePayment = onTogglePayment,
+                onToggleSettlement = onToggleSettlement,
+                onOnlyMyOffersChange = onOnlyMyOffersChange,
+                onClearAll = onClearAllFilters,
+                onSetPaymentSelection = onSetPaymentSelection,
+                onSetSettlementSelection = onSetSettlementSelection,
                 isExpanded = filterExpanded,
                 onExpandedChange = { filterExpanded = it },
             )
         }
 
         if (sortedFilteredOffers.isEmpty() && !showLoading) {
-            NoOffersSection(presenter)
+            NoOffersSection(onCreateOffer = onCreateOffer)
             return@BisqStaticScaffold
         }
 
@@ -143,9 +217,9 @@ fun OfferbookScreen() {
                     OfferCard(
                         item,
                         onSelectOffer = {
-                            presenter.onOfferSelected(item)
+                            onOfferSelect(item)
                         },
-                        userProfileIconProvider = presenter.userProfileIconProvider,
+                        userProfileIconProvider = userProfileIconProvider,
                         enabled = isOfferSelectionEnabled,
                     )
                 }
@@ -197,48 +271,48 @@ fun OfferbookScreen() {
 
     if (showDeleteConfirmation) {
         ConfirmationDialog(
-            headline = if (presenter.isDemo()) "mobile.demo.action.disabled".i18n() else "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
-            onConfirm = { presenter.onConfirmedDeleteOffer() },
-            onDismiss = { presenter.onDismissDeleteOffer() },
+            headline = if (isDemo) "mobile.demo.action.disabled".i18n() else "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
+            onConfirm = onConfirmDeleteOffer,
+            onDismiss = { onDismissDeleteOffer() },
             confirmButtonLoading = !isDeleteOfferEnabled,
         )
     }
 
     if (showNotEnoughReputationDialog) {
-        if (presenter.isReputationWarningForSellerAsTaker) {
+        if (isReputationWarningForSellerAsTaker) {
             ConfirmationDialog(
-                headline = presenter.notEnoughReputationHeadline,
+                headline = notEnoughReputationHeadline,
                 headlineLeftIcon = { WarningIcon() },
                 headlineColor = BisqTheme.colors.warning,
-                message = presenter.notEnoughReputationMessage,
+                message = notEnoughReputationMessage,
                 confirmButtonText = "confirmation.yes".i18n(),
                 dismissButtonText = "action.cancel".i18n(),
-                onConfirm = { presenter.onNavigateToReputation() },
-                onDismiss = { presenter.onDismissNotEnoughReputationDialog() },
+                onConfirm = onNavigateToReputation,
+                onDismiss = { onDismissNotEnoughReputationDialog() },
             )
         } else {
             WebLinkConfirmationDialog(
                 link = BisqLinks.REPUTATION_WIKI_URL,
-                headline = presenter.notEnoughReputationHeadline,
+                headline = notEnoughReputationHeadline,
                 headlineLeftIcon = { WarningIcon() },
                 headlineColor = BisqTheme.colors.warning,
-                message = presenter.notEnoughReputationMessage,
+                message = notEnoughReputationMessage,
                 confirmButtonText = "confirmation.yes".i18n(),
                 dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
-                onConfirm = { presenter.onOpenReputationWiki() },
-                onDismiss = { presenter.onDismissNotEnoughReputationDialog() },
+                onConfirm = onOpenReputationWiki,
+                onDismiss = onDismissNotEnoughReputationDialog,
             )
         }
     }
 
     TradeRestrictedDialog(
         alert = showTradeRestrictedDialog,
-        onAction = presenter::onTradeRestrictingAlertAction,
+        onAction = onTradeRestrictingAlertAction,
     )
 }
 
 @Composable
-fun NoOffersSection(presenter: OfferbookPresenter) {
+fun NoOffersSection(onCreateOffer: () -> Unit) {
     Column(
         modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding4X).fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -251,7 +325,7 @@ fun NoOffersSection(presenter: OfferbookPresenter) {
         BisqGap.V4()
         BisqButton(
             text = "offer.create".i18n(),
-            onClick = presenter::createOffer,
+            onClick = onCreateOffer,
         )
     }
 }

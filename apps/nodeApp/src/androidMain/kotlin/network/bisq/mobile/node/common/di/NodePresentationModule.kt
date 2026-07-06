@@ -41,7 +41,7 @@ val androidNodePresentationModule =
             )
         } bind OnboardingPresenter::class
 
-        single<OfferbookPresenter> {
+        factory<OfferbookPresenter> {
             OfferbookPresenter(
                 get(),
                 get(),

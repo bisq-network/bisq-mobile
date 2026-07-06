@@ -48,7 +48,7 @@ val clientPresentationModule =
             )
         }
 
-        single<OfferbookPresenter> {
+        factory<OfferbookPresenter> {
             ClientOfferbookPresenter(
                 get(),
                 get(),
