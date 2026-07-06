@@ -31,8 +31,6 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.uiString
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.BisqLogoGrey
@@ -41,7 +39,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.startup.splash.SplashActiveDialog
 import network.bisq.mobile.presentation.startup.splash.SplashDialogs
 import network.bisq.mobile.presentation.startup.splash.SplashUiAction
 import network.bisq.mobile.presentation.startup.splash.SplashUiState
@@ -62,18 +59,11 @@ fun NodeSplashScreen() {
             onAction = presenter::onAction,
         )
         SplashDialogs(
-            uiState = uiState.splashUiState.withoutNodeInlineFailureDialog(),
+            uiState = uiState.splashUiState,
             onAction = presenter::onAction,
         )
     }
 }
-
-private fun SplashUiState.withoutNodeInlineFailureDialog(): SplashUiState =
-    if (activeDialog == SplashActiveDialog.TorBootstrapFailed) {
-        copy(activeDialog = null)
-    } else {
-        this
-    }
 
 @Composable
 private fun NodeBootstrapContent(
@@ -135,13 +125,6 @@ private fun NodeBootstrapContent(
                     )
                     BisqGap.V3()
                     NodeStepList(steps = uiState.steps)
-
-                    if (uiState.showTorFailureActions) {
-                        TorFailureActions(
-                            onRestartTor = { onAction(SplashUiAction.OnRestartTor) },
-                            onPurgeRestart = { onAction(SplashUiAction.OnPurgeRestartTor) },
-                        )
-                    }
 
                     if (slowPath.isVisible) {
                         BisqGap.V2()
@@ -331,44 +314,11 @@ private fun SlowPathBanner(elapsedSeconds: Long) {
     }
 }
 
-@Composable
-private fun TorFailureActions(
-    onRestartTor: () -> Unit,
-    onPurgeRestart: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        BisqGap.V2()
-        BisqButton(
-            text = "mobile.bootstrap.node.failure.restartTor".i18n(),
-            onClick = onRestartTor,
-            fullWidth = true,
-            type = BisqButtonType.Outline,
-        )
-        BisqGap.V1()
-        BisqButton(
-            text = "mobile.bootstrap.node.failure.clearTorData".i18n(),
-            onClick = onPurgeRestart,
-            fullWidth = true,
-            type = BisqButtonType.Danger,
-        )
-        BisqGap.VHalf()
-        BisqText.XSmallLight(
-            text = "mobile.bootstrap.node.failure.hint".i18n(),
-            color = BisqTheme.colors.mid_grey20,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
 private fun previewNodeSplashUiState(
     title: UiString,
     subtitle: UiString = UiString("mobile.bootstrap.node.subtitle"),
     progress: Float,
     steps: List<NodeBootstrapStep>,
-    showTorFailureActions: Boolean = false,
 ): NodeSplashUiState =
     NodeSplashUiState(
         splashUiState =
@@ -379,13 +329,11 @@ private fun previewNodeSplashUiState(
         title = title,
         subtitle = subtitle,
         steps = steps,
-        showTorFailureActions = showTorFailureActions,
     )
 
 private fun previewNodeSteps(
     torStatus: NodeBootstrapStepStatus = NodeBootstrapStepStatus.PENDING,
     torDetail: UiString = UiString(""),
-    torFailed: Boolean = false,
     peersStatus: NodeBootstrapStepStatus = NodeBootstrapStepStatus.PENDING,
     peersDetail: UiString = UiString(""),
     dataStatus: NodeBootstrapStepStatus = NodeBootstrapStepStatus.PENDING,
@@ -395,7 +343,7 @@ private fun previewNodeSteps(
     listOf(
         NodeBootstrapStep(
             icon = NodeBootstrapStepIcon.TOR,
-            label = if (torFailed) UiString("mobile.bootstrap.node.step.tor.failed.label") else UiString("mobile.bootstrap.node.step.tor"),
+            label = UiString("mobile.bootstrap.node.step.tor"),
             detail = torDetail,
             status = torStatus,
         ),
@@ -532,25 +480,5 @@ private fun NodeSplash_SlowPathPreview() {
                     ),
             ),
         slowPath = SlowPathUiState(isVisible = true, elapsedSeconds = 76L),
-    )
-}
-
-@ExcludeFromCoverage
-@Preview(name = "Node bootstrap - Tor failure")
-@Composable
-private fun NodeSplash_TorFailurePreview() {
-    NodeSplashPreview(
-        previewNodeSplashUiState(
-            title = UiString("mobile.bootstrap.node.title.failed"),
-            subtitle = UiString("mobile.bootstrap.node.subtitle.failed"),
-            progress = 0.08f,
-            steps =
-                previewNodeSteps(
-                    torStatus = NodeBootstrapStepStatus.FAILED,
-                    torDetail = UiString("mobile.bootstrap.node.step.tor.failed.detail"),
-                    torFailed = true,
-                ),
-            showTorFailureActions = true,
-        ),
     )
 }

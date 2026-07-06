@@ -8,7 +8,6 @@ data class NodeSplashUiState(
     val title: UiString = UiString(""),
     val subtitle: UiString = UiString(""),
     val steps: List<NodeBootstrapStep> = emptyList(),
-    val showTorFailureActions: Boolean = false,
 )
 
 data class SlowPathUiState(
