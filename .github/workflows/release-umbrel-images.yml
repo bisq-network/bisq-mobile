@@ -23,10 +23,12 @@ name: Release Umbrel images
 #   Variable  GHCR_NAMESPACE      images are pushed here, e.g. ghcr.io/bisq-network
 #   Variable  UMBREL_STORE_REPO   org store = PR TARGET, e.g. bisq-network/bisq2-umbrel (we're pull-only)
 #   Variable  UMBREL_STORE_FORK   our fork = PUSH HEAD, e.g. rodvar/bisq2-umbrel-fork (we own it)
-#   Secret    GHCR_USERNAME
-#   Secret    GHCR_TOKEN          PAT with write:packages for GHCR_NAMESPACE
-#   Secret    UMBREL_STORE_TOKEN  PAT with contents:write on UMBREL_STORE_FORK + able to open a
-#                                 cross-repo PR to UMBREL_STORE_REPO (pull-only there -> fork-and-PR)
+#   Secret    GHCR_USERNAME       GHCR user (also the fork owner for the store push/PR)
+#   Secret    GHCR_TOKEN          ONE classic PAT used by both jobs — needs scopes:
+#                                   * write:packages  -> push images to GHCR_NAMESPACE
+#                                   * public_repo     -> push branch+main to UMBREL_STORE_FORK and
+#                                                        open the cross-repo PR to UMBREL_STORE_REPO
+#                                                        (both stores are public; else use full `repo`)
 #
 # STORE ACCESS MODEL: we have pull-only on the org store, so update-store bases a release branch on the
 # org store's current main, pushes it to OUR fork (also fast-forwarding the fork's main so the fork
@@ -211,7 +213,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ vars.UMBREL_STORE_FORK }}
-          token: ${{ secrets.UMBREL_STORE_TOKEN }}
+          token: ${{ secrets.GHCR_TOKEN }} # classic PAT: public_repo covers fork push + cross-repo PR
           path: store
           fetch-depth: 0 # need real history to branch off upstream/main and push non-shallow
 
@@ -247,7 +249,7 @@ jobs:
 
       - name: Push to fork (branch + fast-lane main) and open cross-repo PR
         env:
-          GH_TOKEN: ${{ secrets.UMBREL_STORE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
           VERSION: ${{ needs.resolve.outputs.version }}
           UPSTREAM: ${{ vars.UMBREL_STORE_REPO }}
           FORK: ${{ vars.UMBREL_STORE_FORK }}
