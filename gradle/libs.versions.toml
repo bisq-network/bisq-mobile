@@ -15,7 +15,7 @@ bisq-api = "2.1.11"
 # nodeApp embeds). Scheme: <bisq2-api>.<umbrel-build>[-rcN].
 # Bump the 4th part for Umbrel-app changes on the same api version; reset to .1 when bisq-api bumps.
 # Editing this line on main triggers the "Release Umbrel images" workflow to build + push.
-umbrel-image-version = "2.1.11.1-rc5"
+umbrel-image-version = "2.1.11.1"
 # Update this commit hash when bisq2 to mark the exact commit recommended for power-user's usage
 # This is helpful for keeping track of
 bisq-api-commit = "285cf42b5259c34f50a586620a75c6a8b1a158ab"
