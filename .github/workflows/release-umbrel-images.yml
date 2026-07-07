@@ -218,6 +218,7 @@ jobs:
           fetch-depth: 0 # need real history to branch off upstream/main and push non-shallow
 
       - name: Pin digests + bump version on a branch based off the org store's main
+        id: pin
         env:
           VERSION: ${{ needs.resolve.outputs.version }}
           NS: ${{ vars.GHCR_NAMESPACE }}
@@ -243,11 +244,26 @@ jobs:
           # so it never matches the longer -web-ui line.
           sed -i -E "s#(image: )[^[:space:]]+/bisq2-api-web-ui[:@][^[:space:]]*#\1${NS}/bisq2-api-web-ui@${WEB_DIGEST}#" docker-compose.yml
           sed -i -E "s#(image: )[^[:space:]]+/bisq2-api[:@][^[:space:]]*#\1${NS}/bisq2-api@${NODE_DIGEST}#" docker-compose.yml
+          # Fail loudly if a pin didn't take (compose format drift / renamed image): sed -i exits 0 even
+          # on no match, which would silently ship a store PR that doesn't actually pin the new images.
+          grep -qF "/bisq2-api-web-ui@${WEB_DIGEST}" docker-compose.yml \
+            || { echo "::error::web-ui image not pinned to ${WEB_DIGEST} — no matching image line?"; exit 1; }
+          grep -qF "/bisq2-api@${NODE_DIGEST}" docker-compose.yml \
+            || { echo "::error::node image not pinned to ${NODE_DIGEST} — no matching image line?"; exit 1; }
           echo "resulting refs:"; grep -E '^\s*image:' docker-compose.yml
           cd ..
-          git commit -am "Release Bisq 2 Node ${VERSION} (pin images, bump version)"
+          # Idempotent: a re-run of an already-published version yields no diff — skip the commit (and,
+          # via the step output, the push/PR below) instead of failing on "nothing to commit".
+          if git diff --quiet; then
+            echo "::notice::store already at ${VERSION} with these digests — nothing to commit"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -am "Release Bisq 2 Node ${VERSION} (pin images, bump version)"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Push to fork (branch + fast-lane main) and open cross-repo PR
+        if: steps.pin.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
           VERSION: ${{ needs.resolve.outputs.version }}
@@ -260,18 +276,31 @@ jobs:
           fork_owner="${FORK%%/*}"
           git push -f -u origin "$branch"
           # Fast-lane: fork main := org main + this release, so the fork URL is an instant community
-          # store for testing on Umbrel without waiting on the upstream maintainer merge.
-          git push -f origin "$branch":main
-          gh pr create --repo "$UPSTREAM" --base main --head "${fork_owner}:${branch}" \
-            --title "Release Bisq 2 Node ${VERSION}" \
-            --body "Automated by the Release Umbrel images workflow, opened from fork \`${FORK}\` (we have pull-only access here). Digest-pins the freshly-built images and bumps the manifest version to \`${VERSION}\`. Merge to publish to the community store." \
-            || echo "::notice::PR may already exist for ${fork_owner}:${branch}"
+          # store for testing on Umbrel without waiting on the upstream maintainer merge. Only ever on
+          # OUR fork — if FORK==UPSTREAM (we somehow have write), force-pushing the org store's main
+          # would bypass the PR review, so skip it.
+          if [ "$FORK" != "$UPSTREAM" ]; then
+            git push -f origin "$branch":main
+          else
+            echo "::notice::FORK == UPSTREAM — skipping fast-lane main push (would bypass review)"
+          fi
+          # Open the cross-repo PR; treat ONLY the duplicate-PR case as a notice and fail on real
+          # errors (auth/permission/API) instead of masking them as success.
+          if out="$(gh pr create --repo "$UPSTREAM" --base main --head "${fork_owner}:${branch}" \
+              --title "Release Bisq 2 Node ${VERSION}" \
+              --body "Automated by the Release Umbrel images workflow, opened from fork \`${FORK}\` (we have pull-only access here). Digest-pins the freshly-built images and bumps the manifest version to \`${VERSION}\`. Merge to publish to the community store." 2>&1)"; then
+            echo "$out"
+          elif printf '%s' "$out" | grep -qi "already exists"; then
+            echo "::notice::PR already exists for ${fork_owner}:${branch}"
+          else
+            echo "::error::gh pr create failed: $out"; exit 1
+          fi
 
 # ── Notes ─────────────────────────────────────────────────────────────────────────────────────
 # - Retarget/handoff is entirely via Variables (no code change): GHCR_NAMESPACE (image registry ns),
 #   UMBREL_STORE_REPO (PR target org store), UMBREL_STORE_FORK (our push head fork).
-# - If we ever get write on the org store: point UMBREL_STORE_FORK at UMBREL_STORE_REPO — the fork push
-#   + fast-lane become a direct push to the store, and the cross-repo PR becomes a same-repo PR.
+# - If we ever get write on the org store: point UMBREL_STORE_FORK at UMBREL_STORE_REPO — the branch
+#   push + (same-repo) PR still work; the fast-lane main push is GUARDED off so review isn't bypassed.
 # - The fork's main is force-updated each release (it is a throwaway contribution fork, not a source of
 #   truth); its only jobs are being the PR head and an instant test store.
 # - SPEED: if emulated arm64 gets slow, split into a matrix of native runners (ubuntu-latest +
