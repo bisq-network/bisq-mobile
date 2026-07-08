@@ -12,6 +12,7 @@ import bisq.network.p2p.services.peer_group.PeerGroupService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -20,7 +21,8 @@ import kotlin.streams.toList
 class NodeNetworkServiceFacade(
     private val provider: AndroidApplicationService.Provider,
     kmpTorService: KmpTorService,
-) : NetworkServiceFacade(kmpTorService),
+    applicationBootstrapFacade: ApplicationBootstrapFacade,
+) : NetworkServiceFacade(kmpTorService, applicationBootstrapFacade),
     Node.Listener {
     // While tor starts up we use -1 to flag as network not available yet
     private val _numConnections = MutableStateFlow(-1)

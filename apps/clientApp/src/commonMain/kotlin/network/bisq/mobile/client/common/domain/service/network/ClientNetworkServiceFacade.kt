@@ -9,6 +9,7 @@ import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
 
@@ -17,7 +18,8 @@ class ClientNetworkServiceFacade(
     private val httpClientService: HttpClientService,
     private val webSocketClientService: WebSocketClientService,
     kmpTorService: KmpTorService,
-) : NetworkServiceFacade(kmpTorService) {
+    applicationBootstrapFacade: ApplicationBootstrapFacade,
+) : NetworkServiceFacade(kmpTorService, applicationBootstrapFacade) {
     override val numConnections: StateFlow<Int> =
         webSocketClientService.connectionState
             .map { if (it is ConnectionState.Connected) 1 else -1 }

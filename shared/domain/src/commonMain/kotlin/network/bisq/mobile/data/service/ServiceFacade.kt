@@ -39,4 +39,13 @@ abstract class ServiceFacade :
             jobsManager.dispose()
         }
     }
+
+    /**
+     * Test-only helper: cancel all managed coroutines regardless of [isActivated].
+     * Used when tests start jobs via [serviceScope] without calling [activate].
+     */
+    protected suspend fun releaseServiceResources() {
+        isActivated.value = false
+        jobsManager.dispose()
+    }
 }

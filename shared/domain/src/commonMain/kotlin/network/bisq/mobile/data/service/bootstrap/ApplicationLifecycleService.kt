@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.BaseService
 import network.bisq.mobile.data.service.network.KmpTorService
+import network.bisq.mobile.data.service.network.TorBootstrapNotReadyException
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
@@ -71,6 +72,7 @@ abstract class ApplicationLifecycleService(
         serviceScope.launch {
             try {
                 activateServiceFacades()
+            } catch (_: TorBootstrapNotReadyException) {
             } catch (e: Exception) {
                 onUnrecoverableError(e)
             }
@@ -242,6 +244,8 @@ abstract class ApplicationLifecycleService(
             deactivateServiceFacades()
             activateServiceFacades()
             true
+        } catch (_: TorBootstrapNotReadyException) {
+            false
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {

@@ -6,31 +6,48 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.di.testModule
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
+import network.bisq.mobile.data.service.network.TorBootstrapNotReadyException
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.test.KoinTest
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NetworkServiceFacadeTest : KoinTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var kmpTorService: KmpTorService
+    private lateinit var applicationBootstrapFacade: ApplicationBootstrapFacade
+    private lateinit var torStateFlow: MutableStateFlow<KmpTorService.TorState>
+    private lateinit var torBootstrapFailedFlow: MutableStateFlow<Boolean>
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         kmpTorService = mockk(relaxed = true)
+        applicationBootstrapFacade = mockk(relaxed = true)
+        torStateFlow = MutableStateFlow(KmpTorService.TorState.Stopped())
+        torBootstrapFailedFlow = MutableStateFlow(false)
+        every { kmpTorService.state } returns torStateFlow
+        every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
+        every { applicationBootstrapFacade.torBootstrapFailed } returns torBootstrapFailedFlow
+        coEvery { kmpTorService.startTor(any(), any()) } returns false
+        coEvery { kmpTorService.stopTor(any()) } returns Unit
         startKoin { modules(testModule) }
     }
 
@@ -40,15 +57,12 @@ class NetworkServiceFacadeTest : KoinTest {
         Dispatchers.resetMain()
     }
 
-    private fun createFacade(torEnabled: Boolean): TestNetworkServiceFacade {
-        every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
-        every { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
-        return TestNetworkServiceFacade(kmpTorService, torEnabled)
-    }
+    private fun createFacade(torEnabled: Boolean): TestNetworkServiceFacade =
+        TestNetworkServiceFacade(kmpTorService, applicationBootstrapFacade, torEnabled)
 
     @Test
     fun `ensureTorRunning starts tor when enabled and stopped`() =
-        runTest {
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = true)
             facade.ensureTorRunning()
             coVerify(exactly = 1) { kmpTorService.startTor(any(), any()) }
@@ -56,7 +70,7 @@ class NetworkServiceFacadeTest : KoinTest {
 
     @Test
     fun `ensureTorRunning does nothing when tor disabled`() =
-        runTest {
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = false)
             facade.ensureTorRunning()
             coVerify(exactly = 0) { kmpTorService.startTor(any(), any()) }
@@ -64,27 +78,24 @@ class NetworkServiceFacadeTest : KoinTest {
 
     @Test
     fun `ensureTorRunning does nothing when tor already started`() =
-        runTest {
-            every { kmpTorService.state } returns
-                MutableStateFlow<KmpTorService.TorState>(KmpTorService.TorState.Started)
-            every { kmpTorService.bootstrapProgress } returns MutableStateFlow(100)
-            val facade = TestNetworkServiceFacade(kmpTorService, torEnabled = true)
+        runTest(testDispatcher) {
+            torStateFlow.value = KmpTorService.TorState.Started
+            val facade = createFacade(torEnabled = true)
             facade.ensureTorRunning()
             coVerify(exactly = 0) { kmpTorService.startTor(any(), any()) }
         }
 
     @Test
     fun `ensureTorRunning catches non-cancellation exception and returns`() =
-        runTest {
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = true)
             coEvery { kmpTorService.startTor(any(), any()) } throws RuntimeException("tor error")
-            // Should not throw - exception is caught and logged
             facade.ensureTorRunning()
         }
 
     @Test
     fun `activate does not start tor when disabled`() =
-        runTest {
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = false)
             facade.activate()
             coVerify(exactly = 0) { kmpTorService.startTor(any(), any()) }
@@ -92,50 +103,108 @@ class NetworkServiceFacadeTest : KoinTest {
 
     @Test
     fun `activate starts tor once when it succeeds first attempt`() =
-        runTest {
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = true)
-            coEvery { kmpTorService.startTor(any(), any()) } returns true
+            coEvery { kmpTorService.startTor(any(), any()) } coAnswers {
+                torStateFlow.value = KmpTorService.TorState.Started
+                true
+            }
             facade.activate()
             coVerify(exactly = 1) { kmpTorService.startTor(any(), any()) }
         }
 
     @Test
     fun `activate retries after a failed start and stops once tor is up`() =
-        runTest {
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = true)
-            // First attempt fails (e.g. stale cookie AUTHENTICATE), second succeeds after cleanup.
-            coEvery { kmpTorService.startTor(any(), any()) } returnsMany listOf(false, true)
+            var attempt = 0
+            coEvery { kmpTorService.startTor(any(), any()) } coAnswers {
+                attempt++
+                if (attempt == 1) {
+                    false
+                } else {
+                    torStateFlow.value = KmpTorService.TorState.Started
+                    true
+                }
+            }
             facade.activate()
             coVerify(exactly = 2) { kmpTorService.startTor(any(), any()) }
         }
 
     @Test
-    fun `activate gives up after max attempts and returns without hanging`() =
-        runTest {
+    fun `activate throws TorBootstrapNotReadyException after max start attempts and bootstrap failure`() =
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = true)
-            // Always fails: activate must return (not suspend forever waiting for Started).
             coEvery { kmpTorService.startTor(any(), any()) } returns false
-            facade.activate()
-            // MAX_TOR_START_ATTEMPTS = 3 (private const in NetworkServiceFacade).
+            val activateJob =
+                launch {
+                    assertFailsWith<TorBootstrapNotReadyException> {
+                        facade.activate()
+                    }
+                }
+            runCurrent()
+            torBootstrapFailedFlow.value = true
+            runCurrent()
+            activateJob.join()
             coVerify(exactly = 3) { kmpTorService.startTor(any(), any()) }
+            coVerify(exactly = 1) { kmpTorService.stopTor(any()) }
         }
 
     @Test
     fun `activate keeps retrying when a start attempt throws`() =
-        runTest {
+        runTest(testDispatcher) {
             val facade = createFacade(torEnabled = true)
-            // Non-cancellation throw on first attempt is caught and treated as a failed attempt,
-            // then the second attempt succeeds.
-            coEvery { kmpTorService.startTor(any(), any()) } throws RuntimeException("tor error") andThen true
+            var attempt = 0
+            coEvery { kmpTorService.startTor(any(), any()) } coAnswers {
+                attempt++
+                if (attempt == 1) {
+                    throw RuntimeException("tor error")
+                } else {
+                    torStateFlow.value = KmpTorService.TorState.Started
+                    true
+                }
+            }
             facade.activate()
             coVerify(exactly = 2) { kmpTorService.startTor(any(), any()) }
+        }
+
+    @Test
+    fun `activate completes when tor reaches started`() =
+        runTest(testDispatcher) {
+            val facade = createFacade(torEnabled = true)
+            val activateJob =
+                launch {
+                    facade.activate()
+                }
+            runCurrent()
+            torStateFlow.value = KmpTorService.TorState.Started
+            activateJob.join()
+            coVerify(atLeast = 1) { kmpTorService.startTor(any(), any()) }
+        }
+
+    @Test
+    fun `activate throws TorBootstrapNotReadyException when bootstrap fails`() =
+        runTest(testDispatcher) {
+            val facade = createFacade(torEnabled = true)
+            val activateJob =
+                launch {
+                    assertFailsWith<TorBootstrapNotReadyException> {
+                        facade.activate()
+                    }
+                }
+            runCurrent()
+            torBootstrapFailedFlow.value = true
+            runCurrent()
+            activateJob.join()
+            coVerify(exactly = 1) { kmpTorService.stopTor(any()) }
         }
 }
 
 private class TestNetworkServiceFacade(
     kmpTorService: KmpTorService,
+    applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val torEnabled: Boolean,
-) : NetworkServiceFacade(kmpTorService) {
+) : NetworkServiceFacade(kmpTorService, applicationBootstrapFacade) {
     override val numConnections: StateFlow<Int> = MutableStateFlow(0)
     override val allDataReceived: StateFlow<Boolean> = MutableStateFlow(false)
 

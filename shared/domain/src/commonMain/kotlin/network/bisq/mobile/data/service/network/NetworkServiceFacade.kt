@@ -4,12 +4,18 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import network.bisq.mobile.data.service.LifeCycleAware
 import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
 
 abstract class NetworkServiceFacade(
     private val kmpTorService: KmpTorService,
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
 ) : ServiceFacade(),
     LifeCycleAware,
     Logging {
@@ -31,6 +37,7 @@ abstract class NetworkServiceFacade(
 
         if (isTorEnabled()) {
             startTorWithRetries()
+            awaitTorStartedOrBootstrapFailed()
         }
     }
 
@@ -89,5 +96,36 @@ abstract class NetworkServiceFacade(
                 currentCoroutineContext().ensureActive()
             }
         }
+    }
+
+    private suspend fun awaitTorStartedOrBootstrapFailed() {
+        if (kmpTorService.state.value is KmpTorService.TorState.Started) {
+            return
+        }
+
+        val torStarted =
+            kmpTorService.state
+                .filter { it is KmpTorService.TorState.Started }
+                .map { TorActivationOutcome.Started }
+
+        val torFailed =
+            applicationBootstrapFacade.torBootstrapFailed
+                .filter { it }
+                .map { TorActivationOutcome.BootstrapFailed }
+
+        when (merge(torStarted, torFailed).first()) {
+            TorActivationOutcome.Started -> Unit
+
+            TorActivationOutcome.BootstrapFailed -> {
+                deactivate()
+                throw TorBootstrapNotReadyException()
+            }
+        }
+    }
+
+    private sealed interface TorActivationOutcome {
+        data object Started : TorActivationOutcome
+
+        data object BootstrapFailed : TorActivationOutcome
     }
 }

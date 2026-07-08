@@ -112,7 +112,7 @@ val androidNodeDomainModule =
 
         single<MessageDeliveryServiceFacade> { NodeMessageDeliveryServiceFacade(get()) }
 
-        single { NodeNetworkServiceFacade(get(), get()) } bind NetworkServiceFacade::class
+        single { NodeNetworkServiceFacade(get(), get(), get()) } bind NetworkServiceFacade::class
 
         single<KmpTorService> {
             val applicationService = get<AndroidApplicationService>()
