@@ -23,8 +23,9 @@ object TorBootstrapErrorClassification {
 
     private fun collectMessages(error: Throwable): List<String> {
         val messages = mutableListOf<String>()
+        val seen = mutableSetOf<Throwable>()
         var current: Throwable? = error
-        while (current != null) {
+        while (current != null && seen.add(current)) {
             current.message?.let { messages.add(it) }
             current = current.cause
         }

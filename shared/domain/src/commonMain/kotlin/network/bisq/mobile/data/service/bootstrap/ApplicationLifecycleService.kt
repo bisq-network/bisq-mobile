@@ -275,7 +275,8 @@ abstract class ApplicationLifecycleService(
             false
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            log.e(e) { "restartTorBootstrap failed" }
             false
         }
     }

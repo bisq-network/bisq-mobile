@@ -197,6 +197,24 @@ class NetworkServiceFacadeTest : KoinTest {
             activateJob.join()
             coVerify(exactly = 1) { kmpTorService.stopTor(any()) }
         }
+
+    @Test
+    fun `activate throws TorBootstrapNotReadyException when bootstrap fails even if stopTor fails`() =
+        runTest(testDispatcher) {
+            coEvery { kmpTorService.stopTor(any()) } throws RuntimeException("stop failed")
+            val facade = createFacade(torEnabled = true)
+            val activateJob =
+                launch {
+                    assertFailsWith<TorBootstrapNotReadyException> {
+                        facade.activate()
+                    }
+                }
+            runCurrent()
+            torBootstrapFailedFlow.value = true
+            runCurrent()
+            activateJob.join()
+            coVerify(exactly = 1) { kmpTorService.stopTor(any()) }
+        }
 }
 
 private class TestNetworkServiceFacade(

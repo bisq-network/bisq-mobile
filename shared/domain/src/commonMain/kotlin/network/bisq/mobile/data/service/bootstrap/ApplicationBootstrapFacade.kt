@@ -285,10 +285,9 @@ abstract class ApplicationBootstrapFacade(
 
     private fun handleTorBootstrapError(error: Throwable) {
         val errorMessage =
-            listOfNotNull(
-                error.message,
-                error.cause?.message,
-            ).firstOrNull()
+            generateSequence(error) { it.cause }
+                .mapNotNull { it.message }
+                .firstOrNull()
                 ?: "Unknown Tor error"
 
         // Possibly stale error - Ignore
@@ -319,6 +318,7 @@ abstract class ApplicationBootstrapFacade(
         setState("mobile.bootstrap.tor.failed".i18n() + ": $errorMessage")
         cancelTimeout(showProgressToast = false)
         setTorBootstrapFailed(true)
+        torStartingTimestamp = 0L
         log.e { "Bootstrap: Tor initialization failed - $errorMessage" }
     }
 
@@ -328,7 +328,8 @@ abstract class ApplicationBootstrapFacade(
                 kmpTorService.startTor()
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                log.w(e) { "Bootstrap: grace-period Tor retry failed" }
             }
         }
     }
@@ -337,6 +338,7 @@ abstract class ApplicationBootstrapFacade(
         serviceScope.launch {
             setTorBootstrapFailed(false)
             torGracePeriodFailureCount = 0
+            torStartingTimestamp = 0L
             // Restarting Tor is a fresh connection attempt, so reset the slow-path clock:
             // otherwise the "still connecting, this is normal" banner would reappear immediately
             // showing the elapsed time of the failed attempt. The elapsed ticker keeps running

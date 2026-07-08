@@ -182,16 +182,19 @@ class ApplicationBootstrapFacadeTest : KoinTest {
             // Deactivate and reactivate
             facade.deactivate()
             facade.activate()
-            // activate() starts a perpetual 1s elapsed-time ticker; advanceUntilIdle() would hang.
-            runCurrent()
 
-            // Now timeouts should work again (bootstrapSuccessful was reset)
-            facade.startTimeoutForStagePublic("stage-after-reactivate")
-            testScheduler.advanceTimeBy(90_001)
-            runCurrent()
-            assertTrue(facade.isTimeoutDialogVisible.value, "Timeout should fire after reactivation")
+            try {
+                // activate() starts a perpetual 1s elapsed-time ticker; advanceUntilIdle() would hang.
+                runCurrent()
 
-            facade.releaseTestResources()
+                // Now timeouts should work again (bootstrapSuccessful was reset)
+                facade.startTimeoutForStagePublic("stage-after-reactivate")
+                testScheduler.advanceTimeBy(90_001)
+                runCurrent()
+                assertTrue(facade.isTimeoutDialogVisible.value, "Timeout should fire after reactivation")
+            } finally {
+                facade.releaseTestResources()
+            }
         }
 
     @Test
@@ -382,27 +385,33 @@ class ApplicationBootstrapFacadeTest : KoinTest {
             // Start bootstrap; the elapsed ticker counts from this baseline.
             facade.fakeTimeMillis = 1_000_000L
             facade.activate()
-            runCurrent()
+            try {
+                runCurrent()
 
-            // Let ~100s accumulate (simulating a slow attempt that then fails).
-            facade.fakeTimeMillis = 1_100_000L
-            testScheduler.advanceTimeBy(1_000)
-            runCurrent()
-            assertTrue(facade.bootstrapElapsedSeconds.value >= 100L, "elapsed should accumulate before restart")
+                // Let ~100s accumulate (simulating a slow attempt that then fails).
+                facade.fakeTimeMillis = 1_100_000L
+                testScheduler.advanceTimeBy(1_000)
+                runCurrent()
+                assertTrue(facade.bootstrapElapsedSeconds.value >= 100L, "elapsed should accumulate before restart")
 
-            // Restart Tor -> the clock resets immediately to 0.
-            facade.startTor(purgeTorDir = false)
-            runCurrent()
-            assertEquals(0L, facade.bootstrapElapsedSeconds.value, "startTor should reset elapsed to 0")
+                // Restart Tor -> the clock resets immediately to 0.
+                facade.startTor(purgeTorDir = false)
+                runCurrent()
+                assertEquals(0L, facade.bootstrapElapsedSeconds.value, "startTor should reset elapsed to 0")
 
-            // Subsequent ticks count from the restart baseline, not the original activate baseline.
-            facade.fakeTimeMillis = 1_110_000L
-            testScheduler.advanceTimeBy(1_000)
-            runCurrent()
-            assertEquals(10L, facade.bootstrapElapsedSeconds.value, "elapsed should count from the restart baseline")
-
-            // Stop the elapsed ticker so runTest's end-of-test idle drain doesn't hang on it.
-            facade.releaseTestResources()
+                // Subsequent ticks count from the restart baseline, not the original activate baseline.
+                facade.fakeTimeMillis = 1_110_000L
+                testScheduler.advanceTimeBy(1_000)
+                runCurrent()
+                assertEquals(
+                    10L,
+                    facade.bootstrapElapsedSeconds.value,
+                    "elapsed should count from the restart baseline",
+                )
+            } finally {
+                // Stop the elapsed ticker so runTest's end-of-test idle drain doesn't hang on it.
+                facade.releaseTestResources()
+            }
         }
 
     @Test

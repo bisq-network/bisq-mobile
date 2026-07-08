@@ -12,6 +12,7 @@ import network.bisq.mobile.data.service.LifeCycleAware
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
+import kotlin.coroutines.cancellation.CancellationException
 
 abstract class NetworkServiceFacade(
     private val kmpTorService: KmpTorService,
@@ -117,7 +118,13 @@ abstract class NetworkServiceFacade(
             TorActivationOutcome.Started -> Unit
 
             TorActivationOutcome.BootstrapFailed -> {
-                deactivate()
+                try {
+                    deactivate()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to deactivate after Tor bootstrap failure" }
+                }
                 throw TorBootstrapNotReadyException()
             }
         }
