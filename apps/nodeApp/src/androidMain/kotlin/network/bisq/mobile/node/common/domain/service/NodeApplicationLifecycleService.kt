@@ -1,6 +1,7 @@
 package network.bisq.mobile.node.common.domain.service
 
 import android.app.Activity
+import bisq.application.State
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
@@ -192,15 +193,29 @@ class NodeApplicationLifecycleService(
         connectivityService.deactivate()
         settingsServiceFacade.deactivate()
 
-        try {
-            log.i { "Stopping applicationService" }
-            provider.applicationService.shutdown().await()
-            log.i { "ApplicationService stopped" }
-        } catch (e: Exception) {
-            log.e("Error at applicationService.shutdown", e)
+        if (shouldShutdownApplicationService()) {
+            try {
+                log.i { "Stopping applicationService" }
+                provider.applicationService.shutdown().await()
+                log.i { "ApplicationService stopped" }
+            } catch (e: Exception) {
+                log.e("Error at applicationService.shutdown", e)
+            }
+        } else {
+            log.i {
+                "Skipping applicationService shutdown — bisq2 never left INITIALIZE_APP; " +
+                    "preserving NetworkService transport nodes for in-process Tor retry"
+            }
         }
 
         applicationBootstrapFacade.deactivate()
         networkServiceFacade.deactivate()
     }
+
+    /**
+     * bisq2 [NetworkService.shutdown] clears transport nodes; they are only recreated in the
+     * [NetworkService] constructor. Avoid shutdown before the first [initialize] so splash
+     * Tor retry can run in-process.
+     */
+    private fun shouldShutdownApplicationService(): Boolean = provider.state.get().get() != State.INITIALIZE_APP
 }

@@ -24,7 +24,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class SplashPresenter(
-    mainPresenter: MainPresenter,
+    private val mainPresenter: MainPresenter,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val userProfileService: UserProfileServiceFacade,
     private val settingsRepository: SettingsRepository,
@@ -207,11 +207,19 @@ abstract class SplashPresenter(
     }
 
     private fun onRestartTor() {
-        applicationBootstrapFacade.startTor(false)
+        restartTorAfterFailure(purgeTorDir = false)
     }
 
     private fun onPurgeRestartTor() {
-        applicationBootstrapFacade.startTor(true)
+        restartTorAfterFailure(purgeTorDir = true)
+    }
+
+    protected open fun restartTorAfterFailure(purgeTorDir: Boolean) {
+        presenterScope.launch {
+            if (!mainPresenter.restartTorBootstrap(purgeTorDir)) {
+                log.w { "Tor bootstrap lifecycle restart failed" }
+            }
+        }
     }
 
     private fun onTerminateApp() {

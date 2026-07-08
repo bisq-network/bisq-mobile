@@ -98,4 +98,16 @@ class ApplicationLifecycleServiceRestartTest {
 
             assertFalse(result)
         }
+
+    @Test
+    fun `restartTorBootstrap deactivates then activates service facades`() =
+        runTest {
+            val service = TrackingLifecycleService()
+
+            val result = service.restartTorBootstrap()
+
+            assertTrue(result)
+            assertEquals(1, service.deactivateCalls)
+            assertEquals(1, service.activateCalls)
+        }
 }

@@ -254,6 +254,34 @@ abstract class ApplicationLifecycleService(
         }
     }
 
+    /**
+     * Full in-process recovery after a Tor bootstrap failure on splash.
+     *
+     * Restarting kmp-tor alone is not enough on Node: bisq2 [activateServiceFacades]
+     * may have aborted before [androidApplicationService.initialize] ran.
+     */
+    suspend fun restartTorBootstrap(purgeTorDir: Boolean = false): Boolean {
+        if (isTerminating.value) {
+            log.w { "Cannot restart Tor bootstrap: app is terminating" }
+            return false
+        }
+        return try {
+            if (purgeTorDir) {
+                kmpTorService.stopAndPurgeWorkingDir()
+            }
+            deactivateServiceFacades()
+            activateServiceFacades()
+            true
+        } catch (_: TorBootstrapNotReadyException) {
+            false
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log.e(e) { "Tor bootstrap restart failed" }
+            false
+        }
+    }
+
     protected open fun onUnrecoverableError(e: Throwable) {
         log.e(e) { "Unrecoverable error detected. Application must be restarted. Stopping services." }
         serviceScope.launch {
