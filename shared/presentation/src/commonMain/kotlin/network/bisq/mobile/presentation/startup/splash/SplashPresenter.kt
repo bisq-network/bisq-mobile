@@ -216,9 +216,7 @@ abstract class SplashPresenter(
 
     protected open fun restartTorAfterFailure(purgeTorDir: Boolean) {
         presenterScope.launch {
-            if (!mainPresenter.restartTorBootstrap(purgeTorDir)) {
-                log.w { "Tor bootstrap lifecycle restart failed" }
-            }
+            mainPresenter.restartTorBootstrap(purgeTorDir)
         }
     }
 

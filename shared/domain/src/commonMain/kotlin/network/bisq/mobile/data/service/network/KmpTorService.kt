@@ -3,7 +3,6 @@ package network.bisq.mobile.data.service.network
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.aSocket
 import io.matthewnelson.kmp.file.File
-import io.matthewnelson.kmp.file.InterruptedException
 import io.matthewnelson.kmp.tor.runtime.Action.Companion.startDaemonAsync
 import io.matthewnelson.kmp.tor.runtime.Action.Companion.stopDaemonAsync
 import io.matthewnelson.kmp.tor.runtime.TorRuntime
@@ -37,7 +36,6 @@ import network.bisq.mobile.i18n.i18n
 import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
-import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 
 /**
@@ -62,19 +60,6 @@ class KmpTorService(
     companion object {
         private const val DEFAULT_DAEMON_START_TIMEOUT_MS = 60_000L
         private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 120_000L // 2 minutes for bootstrap
-
-        /**
-         * DEBUG test hook to reproduce "CtrlConnection Stream Ended" failures.
-         *
-         * When > 0, [configTor] throws after the SOCKS port is known — immediately before
-         * control-port setup. Each injected failure decrements the counter, so the first N
-         * start attempts fail and subsequent attempts proceed normally.
-         *
-         * Set to 1 to reproduce the initial failure while still allowing recovery on retry.
-         * Defaults to 0 (disabled).
-         */
-        @Volatile
-        var simulateCtrlConnectionFailures: Int = 1
     }
 
     sealed class TorState {
@@ -333,22 +318,12 @@ class KmpTorService(
         }
     }
 
-    private fun throwSimulatedCtrlConnectionFailure() {
-        if (simulateCtrlConnectionFailures <= 0) {
-            return
-        }
-        simulateCtrlConnectionFailures--
-        log.w { "DEBUG: Simulating Tor bootstrap failure: CtrlConnection Stream Ended (remaining=$simulateCtrlConnectionFailures)" }
-        throw InterruptedException("CtrlConnection Stream Ended")
-    }
-
     private suspend fun configTor() {
         try {
             // Note: protected by outer withTimeout in startTor()
             val socksPort =
                 awaitSocksPort()
                     ?: throw KmpTorException("Service stopped before SOCKS port available")
-            throwSimulatedCtrlConnectionFailure()
             val controlPort = readControlPort()
 
             writeExternalTorConfig(socksPort, controlPort)

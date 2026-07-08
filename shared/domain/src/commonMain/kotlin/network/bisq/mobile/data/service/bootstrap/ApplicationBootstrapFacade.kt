@@ -293,14 +293,10 @@ abstract class ApplicationBootstrapFacade(
 
         // Possibly stale error - Ignore
         if (torStartingTimestamp == 0L) {
-            log.w {
-                "Bootstrap: Ignoring stale Tor Stopped(error) before first Starting this cycle: $errorMessage"
-            }
             return
         }
 
         if (TorBootstrapErrorClassification.isTerminal(error)) {
-            log.w { "Bootstrap: Terminal Tor error — arming failure dialog: $errorMessage" }
             armTorBootstrapFailed(errorMessage)
             return
         }
@@ -308,10 +304,6 @@ abstract class ApplicationBootstrapFacade(
         val elapsed = currentTimeMillis() - torStartingTimestamp
         if (elapsed < TOR_FAILURE_GRACE_PERIOD_MS) {
             torGracePeriodFailureCount++
-            log.w {
-                "Bootstrap: Tor transient error within grace period (${elapsed / 1000}s), " +
-                    "attempt $torGracePeriodFailureCount/$TOR_MAX_GRACE_RETRIES: $errorMessage — retrying"
-            }
             setState("mobile.bootstrap.tor.starting".i18n(0))
             if (torGracePeriodFailureCount >= TOR_MAX_GRACE_RETRIES) {
                 armTorBootstrapFailed(errorMessage)
@@ -334,12 +326,9 @@ abstract class ApplicationBootstrapFacade(
         serviceScope.launch {
             try {
                 kmpTorService.startTor()
-            } catch (e: Exception) {
-                if (e is CancellationException) {
-                    log.d(e) { "Bootstrap: Grace-period Tor retry cancelled" }
-                } else {
-                    log.e(e) { "Bootstrap: Grace-period Tor retry failed to invoke startTor" }
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
             }
         }
     }

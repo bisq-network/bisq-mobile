@@ -6,9 +6,9 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -57,8 +57,7 @@ class NetworkServiceFacadeTest : KoinTest {
         Dispatchers.resetMain()
     }
 
-    private fun createFacade(torEnabled: Boolean): TestNetworkServiceFacade =
-        TestNetworkServiceFacade(kmpTorService, applicationBootstrapFacade, torEnabled)
+    private fun createFacade(torEnabled: Boolean): TestNetworkServiceFacade = TestNetworkServiceFacade(kmpTorService, applicationBootstrapFacade, torEnabled)
 
     @Test
     fun `ensureTorRunning starts tor when enabled and stopped`() =

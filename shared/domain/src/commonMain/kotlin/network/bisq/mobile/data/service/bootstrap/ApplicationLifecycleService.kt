@@ -262,7 +262,6 @@ abstract class ApplicationLifecycleService(
      */
     suspend fun restartTorBootstrap(purgeTorDir: Boolean = false): Boolean {
         if (isTerminating.value) {
-            log.w { "Cannot restart Tor bootstrap: app is terminating" }
             return false
         }
         return try {
@@ -276,8 +275,7 @@ abstract class ApplicationLifecycleService(
             false
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
-        } catch (e: Exception) {
-            log.e(e) { "Tor bootstrap restart failed" }
+        } catch (_: Exception) {
             false
         }
     }

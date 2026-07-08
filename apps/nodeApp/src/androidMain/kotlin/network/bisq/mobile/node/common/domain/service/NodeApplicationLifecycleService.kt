@@ -201,11 +201,6 @@ class NodeApplicationLifecycleService(
             } catch (e: Exception) {
                 log.e("Error at applicationService.shutdown", e)
             }
-        } else {
-            log.i {
-                "Skipping applicationService shutdown — bisq2 never left INITIALIZE_APP; " +
-                    "preserving NetworkService transport nodes for in-process Tor retry"
-            }
         }
 
         applicationBootstrapFacade.deactivate()
