@@ -199,15 +199,16 @@ val clientDomainModule =
 
         single { json }
 
-        single<ApplicationBootstrapFacade> {
+        single {
             ClientApplicationBootstrapFacade(
                 get(),
                 get(),
                 get(),
                 get(),
                 get(),
+                get(),
             )
-        }
+        } bind ApplicationBootstrapFacade::class
 
         // Opt-in analytics (issue #525). Two locks gate emission:
         //  1. Dev-only build gate: `BuildConfig.ANALYTICS_DEV_ENABLED`. In RELEASE

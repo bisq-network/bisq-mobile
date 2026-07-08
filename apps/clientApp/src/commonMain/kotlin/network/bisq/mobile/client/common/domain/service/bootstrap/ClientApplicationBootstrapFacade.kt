@@ -1,6 +1,10 @@
 package network.bisq.mobile.client.common.domain.service.bootstrap
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
@@ -11,6 +15,8 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 
@@ -20,9 +26,31 @@ class ClientApplicationBootstrapFacade(
     private val httpClientService: HttpClientService,
     kmpTorService: KmpTorService,
     private val sessionService: SessionService,
+    private val connectivityService: ConnectivityService,
 ) : ApplicationBootstrapFacade(kmpTorService) {
+    /**
+     * Typed bootstrap phases for the Connect app, replacing the untyped [state] string as the
+     * source of truth for the 2-phase splash design (Connecting → Loading data). Data-sync, which
+     * previously only lived in the separate [ConnectivityService] state machine, is folded into the
+     * [CONNECTED] transition by observing [ConnectivityService.status] during [LOADING_DATA].
+     */
+    enum class ConnectBootstrapPhase {
+        CONNECTING,
+        LOADING_DATA,
+        CONNECTED,
+    }
+
+    private val _bootstrapPhase = MutableStateFlow(ConnectBootstrapPhase.CONNECTING)
+    val bootstrapPhase: StateFlow<ConnectBootstrapPhase> = _bootstrapPhase.asStateFlow()
+
+    private var connectivityObserverJob: Job? = null
+
     override suspend fun activate() {
         super.activate()
+
+        _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTING
+        connectivityObserverJob?.cancel()
+        connectivityObserverJob = null
 
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
         setProgress(0f)
@@ -120,8 +148,20 @@ class ClientApplicationBootstrapFacade(
         serviceScope.launch {
             val error = webSocketClientService.connect()
             if (error == null) {
-                setState("mobile.bootstrap.connectedToTrustedNode".i18n())
-                setProgress(1.0f)
+                if (isDemo) {
+                    // Demo has no real inventory sync; complete immediately as before so
+                    // ClientSplashPresenter (which skips the connectivity wait in demo) navigates.
+                    _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTED
+                    setState("mobile.bootstrap.connectedToTrustedNode".i18n())
+                    setProgress(1.0f)
+                } else {
+                    // WebSocket is up; enter the "Loading data" phase and let inventory sync
+                    // (observed via ConnectivityService) drive completion.
+                    _bootstrapPhase.value = ConnectBootstrapPhase.LOADING_DATA
+                    setState("mobile.bootstrap.connect.step.loadingData".i18n())
+                    setProgress(0.5f)
+                    observeConnectivityForDataLoad()
+                }
             } else {
                 log.e(error) { "Failed to connect to trusted node: ${error.message}" }
                 setState("mobile.bootstrap.noConnectivity".i18n())
@@ -130,11 +170,53 @@ class ClientApplicationBootstrapFacade(
         }
     }
 
+    /**
+     * While in [ConnectBootstrapPhase.LOADING_DATA], watch [ConnectivityService.status] and complete
+     * bootstrap as soon as the connection is usable — i.e. [ConnectivityStatus.isConnected], which is
+     * already true at [ConnectivityStatus.REQUESTING_INVENTORY]. This mirrors the pre-redesign timing:
+     * the app proceeds to home while remaining inventory streams in the background.
+     *
+     * Do NOT gate completion on the strictly-later [ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED]:
+     * that state requires ClientConnectivityService.isSlow() to become false, i.e. the process-global
+     * round-trip average to drop below threshold — and that average is fed only by REST requests
+     * (WebSocketApiClient), which predominantly happen on the home screen, not while sitting on the
+     * splash. Gating on it deadlocks: the status loops on REQUESTING_INVENTORY until the splash
+     * safety-net timeout redirects to the trusted-node-setup error screen.
+     *
+     * Progress reaching 1.0 triggers the base presenter's navigation; the
+     * [ConnectivityStatus.CONNECTED_WITH_LIMITATIONS] case also satisfies isConnected() and completes,
+     * so ClientSplashPresenter.navigateToNextScreen() runs its existing limitations handling.
+     *
+     * internal (not private) to expose the connectivity→phase mapping as a same-module unit-test seam,
+     * mirroring the base class's protected observeTorState().
+     */
+
+    internal fun observeConnectivityForDataLoad() {
+        connectivityObserverJob?.cancel()
+        connectivityObserverJob =
+            serviceScope.launch {
+                connectivityService.status.collect { status ->
+                    if (status.isConnected()) {
+                        // Only the fully-received state advances the strip to "done"; REQUESTING_INVENTORY
+                        // and CONNECTED_WITH_LIMITATIONS complete bootstrap but keep the LOADING_DATA phase.
+                        if (status == ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED) {
+                            _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTED
+                            setState("mobile.bootstrap.connectedToTrustedNode".i18n())
+                        }
+                        setProgress(1.0f)
+                    }
+                    // BOOTSTRAPPING / DISCONNECTED / RECONNECTING: still connecting — remain in LOADING_DATA.
+                }
+            }
+    }
+
     override fun onTorStarted() {
         onTorStartedOrSkipped()
     }
 
     override suspend fun deactivate() {
+        connectivityObserverJob?.cancel()
+        connectivityObserverJob = null
         super.deactivate()
     }
 

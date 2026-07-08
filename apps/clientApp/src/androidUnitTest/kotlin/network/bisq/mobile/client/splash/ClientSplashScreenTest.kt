@@ -19,12 +19,12 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.startup.splash.SplashActiveDialog
-import network.bisq.mobile.presentation.startup.splash.SplashPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashUiAction
 import network.bisq.mobile.presentation.startup.splash.SplashUiState
 import org.junit.After
@@ -45,24 +45,24 @@ class ClientSplashScreenTest {
     val composeTestRule = createComposeRule()
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var presenter: SplashPresenter
-    private lateinit var uiState: MutableStateFlow<SplashUiState>
+    private lateinit var presenter: ClientSplashPresenter
+    private lateinit var clientUiState: MutableStateFlow<ClientSplashUiState>
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         I18nSupport.setLanguage()
 
-        uiState = MutableStateFlow(SplashUiState())
+        clientUiState = MutableStateFlow(ClientSplashUiState())
         presenter = mockk(relaxed = true)
-        every { presenter.uiState } returns uiState
+        every { presenter.clientUiState } returns clientUiState
 
         // TestApplication already started Koin with clientTestModule; restart it so the screen's
-        // koinInject<SplashPresenter>() resolves to our mock while keeping the standard deps.
+        // koinInject<ClientSplashPresenter>() resolves to our mock while keeping the standard deps.
         runCatching { stopKoin() }
         startKoin {
             modules(
-                module { single<SplashPresenter> { presenter } },
+                module { single<ClientSplashPresenter> { presenter } },
                 clientTestModule,
             )
         }
@@ -75,22 +75,23 @@ class ClientSplashScreenTest {
     }
 
     @Test
-    fun `when uiState has app name and status then renders both`() {
-        uiState.value =
-            SplashUiState(
-                appNameAndVersion = APP_NAME_AND_VERSION,
-                status = STATUS,
+    fun `when uiState has app name and title then renders both`() {
+        clientUiState.value =
+            ClientSplashUiState(
+                splashUiState = SplashUiState(appNameAndVersion = APP_NAME_AND_VERSION),
+                title = UiString(CONNECT_TITLE_KEY),
             )
 
         setContent()
 
         composeTestRule.onNodeWithText(APP_NAME_AND_VERSION).assertIsDisplayed()
-        composeTestRule.onNodeWithText(STATUS).assertIsDisplayed()
+        composeTestRule.onNodeWithText(CONNECT_TITLE_KEY.i18n()).assertIsDisplayed()
     }
 
     @Test
     fun `when active dialog is set then splash dialog is shown`() {
-        uiState.value = SplashUiState(activeDialog = SplashActiveDialog.TorBootstrapFailed)
+        clientUiState.value =
+            ClientSplashUiState(splashUiState = SplashUiState(activeDialog = SplashActiveDialog.TorBootstrapFailed))
 
         setContent()
 
@@ -99,7 +100,7 @@ class ClientSplashScreenTest {
 
     @Test
     fun `when no active dialog then no splash dialog is shown`() {
-        uiState.value = SplashUiState(activeDialog = null)
+        clientUiState.value = ClientSplashUiState(splashUiState = SplashUiState(activeDialog = null))
 
         setContent()
 
@@ -108,7 +109,8 @@ class ClientSplashScreenTest {
 
     @Test
     fun `when dialog action clicked then forwards action to presenter`() {
-        uiState.value = SplashUiState(activeDialog = SplashActiveDialog.TorBootstrapFailed)
+        clientUiState.value =
+            ClientSplashUiState(splashUiState = SplashUiState(activeDialog = SplashActiveDialog.TorBootstrapFailed))
         setContent()
 
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
@@ -139,6 +141,6 @@ class ClientSplashScreenTest {
 
     private companion object {
         const val APP_NAME_AND_VERSION = "Bisq Connect 2.1.0"
-        const val STATUS = "Bootstrap to P2P network"
+        const val CONNECT_TITLE_KEY = "mobile.bootstrap.connect.title"
     }
 }

@@ -16,6 +16,8 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
+import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade
+import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade.ConnectBootstrapPhase
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.data.model.Settings
@@ -30,6 +32,7 @@ import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
+import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -40,6 +43,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * Tests ClientSplashPresenter's connectivity checks and navigation logic.
@@ -52,7 +56,7 @@ class ClientSplashPresenterNavigationTest {
     private lateinit var settingsServiceFacade: SettingsServiceFacade
     private lateinit var userProfileService: UserProfileServiceFacade
     private lateinit var settingsRepository: SettingsRepository
-    private lateinit var applicationBootstrapFacade: ApplicationBootstrapFacade
+    private lateinit var applicationBootstrapFacade: ClientApplicationBootstrapFacade
     private lateinit var mainPresenter: MainPresenter
     private lateinit var versionProvider: VersionProvider
     private lateinit var connectivityService: ConnectivityService
@@ -62,6 +66,7 @@ class ClientSplashPresenterNavigationTest {
     private val connectivityStatusFlow = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)
     private val torBootstrapFailedFlow = MutableStateFlow(false)
     private val bootstrapFailedFlow = MutableStateFlow(false)
+    private val bootstrapPhaseFlow = MutableStateFlow(ConnectBootstrapPhase.CONNECTING)
 
     @Before
     fun setUp() {
@@ -92,6 +97,7 @@ class ClientSplashPresenterNavigationTest {
         every { applicationBootstrapFacade.torBootstrapFailed } returns torBootstrapFailedFlow
         every { applicationBootstrapFacade.currentBootstrapStage } returns MutableStateFlow("")
         every { applicationBootstrapFacade.shouldShowProgressToast } returns MutableStateFlow(false)
+        every { applicationBootstrapFacade.bootstrapPhase } returns bootstrapPhaseFlow
         every { versionProvider.getAppNameAndVersion(any(), any()) } returns "Test 1.0"
 
         every { connectivityService.status } returns connectivityStatusFlow
@@ -346,6 +352,35 @@ class ClientSplashPresenterNavigationTest {
         }
 
     @Test
+    fun `safety net proceeds to home when websocket already connected`() =
+        runTest(testDispatcher) {
+            // Given: WS connected (LOADING_DATA) but connectivity confirmation is slow — status stays
+            // BOOTSTRAPPING so progress never reaches 1.0 on its own.
+            bootstrapPhaseFlow.value = ConnectBootstrapPhase.LOADING_DATA
+            coEvery { settingsServiceFacade.getSettings() } returns
+                Result.success(SettingsVO(isTacAccepted = true))
+            coEvery { settingsRepository.fetch() } returns Settings(firstLaunch = false)
+            coEvery { userProfileService.hasUserProfile() } returns true
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+
+            // When: the safety-net timeout elapses
+            advanceTimeBy(45_000)
+            advanceUntilIdle()
+
+            // Then: proceed into the app (home), NOT the connection-failed error screen.
+            verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
+            verify(exactly = 0) {
+                navigationManager.navigate(
+                    match { navRoute -> navRoute is ClientNavRoute.TrustedNodeSetup },
+                    any(),
+                    any(),
+                )
+            }
+        }
+
+    @Test
     fun `safety net does not trigger in demo mode`() =
         runTest(testDispatcher) {
             // Given: Demo mode is enabled, connectivity is bootstrapping
@@ -488,5 +523,51 @@ class ClientSplashPresenterNavigationTest {
             advanceUntilIdle()
 
             verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
+        }
+
+    @Test
+    fun `clientUiState connecting phase shows connecting detail`() =
+        runTest(testDispatcher) {
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            val state = presenter.clientUiState.value
+            assertEquals(false, state.connectingDone)
+            assertEquals(UiString("mobile.bootstrap.connect.step.connecting.detail"), state.connectingDetail)
+        }
+
+    @Test
+    fun `clientUiState loading data phase marks connecting done and loading active`() =
+        runTest(testDispatcher) {
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            bootstrapPhaseFlow.value = ConnectBootstrapPhase.LOADING_DATA
+            testScheduler.runCurrent()
+
+            val state = presenter.clientUiState.value
+            assertEquals(true, state.connectingDone)
+            assertEquals(true, state.loadingDataActive)
+            assertEquals(false, state.loadingDataDone)
+            assertEquals(UiString("mobile.bootstrap.connect.title.loadingData"), state.title)
+        }
+
+    @Test
+    fun `clientUiState connected phase marks loading done`() =
+        runTest(testDispatcher) {
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            bootstrapPhaseFlow.value = ConnectBootstrapPhase.CONNECTED
+            testScheduler.runCurrent()
+
+            val state = presenter.clientUiState.value
+            assertEquals(true, state.connectingDone)
+            assertEquals(false, state.loadingDataActive)
+            assertEquals(true, state.loadingDataDone)
+            assertEquals(UiString("mobile.bootstrap.connect.title.done"), state.title)
         }
 }

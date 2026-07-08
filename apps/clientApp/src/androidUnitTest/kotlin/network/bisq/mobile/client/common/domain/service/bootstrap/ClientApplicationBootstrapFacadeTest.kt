@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -19,6 +20,8 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.network.ConnectivityService
+import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.data.service.network.KmpTorService
 import org.junit.After
 import org.junit.Before
@@ -26,6 +29,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -37,9 +41,11 @@ class ClientApplicationBootstrapFacadeTest {
     private lateinit var httpClientService: HttpClientService
     private lateinit var kmpTorService: KmpTorService
     private lateinit var sessionService: SessionService
+    private lateinit var connectivityService: ConnectivityService
     private lateinit var facade: ClientApplicationBootstrapFacade
 
     private val settingsFlow = MutableStateFlow(SensitiveSettings())
+    private val connectivityStatusFlow = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)
 
     @Before
     fun setUp() {
@@ -75,6 +81,9 @@ class ClientApplicationBootstrapFacadeTest {
         httpClientService = mockk(relaxed = true)
         coEvery { httpClientService.awaitClientReady(any()) } returns true
 
+        connectivityService = mockk(relaxed = true)
+        coEvery { connectivityService.status } returns connectivityStatusFlow
+
         facade =
             ClientApplicationBootstrapFacade(
                 sensitiveSettingsRepository,
@@ -82,6 +91,7 @@ class ClientApplicationBootstrapFacadeTest {
                 httpClientService,
                 kmpTorService,
                 sessionService,
+                connectivityService,
             )
     }
 
@@ -174,5 +184,57 @@ class ClientApplicationBootstrapFacadeTest {
 
             assertEquals("new-session-id", settingsFlow.value.sessionId)
             assertEquals(expiresAt, settingsFlow.value.sessionExpiresAt)
+        }
+
+    @Test
+    fun `data received during loading completes bootstrap as CONNECTED`() =
+        runTest(testDispatcher) {
+            // Simulate the state right after a successful WebSocket connect.
+            facade.observeConnectivityForDataLoad()
+
+            connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+            advanceUntilIdle()
+
+            assertEquals(
+                ClientApplicationBootstrapFacade.ConnectBootstrapPhase.CONNECTED,
+                facade.bootstrapPhase.value,
+            )
+            assertEquals(1.0f, facade.progress.value)
+        }
+
+    @Test
+    fun `connected with limitations completes progress without marking data received`() =
+        runTest(testDispatcher) {
+            facade.observeConnectivityForDataLoad()
+
+            connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
+            advanceUntilIdle()
+
+            // Progress completes so the presenter's navigateToNextScreen runs its limitations handling,
+            // but the phase is not advanced to CONNECTED (limitations is not "data received").
+            assertEquals(1.0f, facade.progress.value)
+            assertEquals(
+                ClientApplicationBootstrapFacade.ConnectBootstrapPhase.CONNECTING,
+                facade.bootstrapPhase.value,
+            )
+        }
+
+    @Test
+    fun `requesting inventory completes bootstrap without marking data received`() =
+        runTest(testDispatcher) {
+            facade.observeConnectivityForDataLoad()
+
+            connectivityStatusFlow.value = ConnectivityStatus.REQUESTING_INVENTORY
+            advanceUntilIdle()
+
+            // REQUESTING_INVENTORY is already isConnected(), so bootstrap completes (proceed-when-usable,
+            // matching pre-redesign timing) — but the strip is NOT advanced to CONNECTED (not fully
+            // received). This seam is exercised without connect(), so the phase stays at its initial
+            // value; the meaningful invariant is that it did not become CONNECTED.
+            assertEquals(1.0f, facade.progress.value)
+            assertNotEquals(
+                ClientApplicationBootstrapFacade.ConnectBootstrapPhase.CONNECTED,
+                facade.bootstrapPhase.value,
+            )
         }
 }
