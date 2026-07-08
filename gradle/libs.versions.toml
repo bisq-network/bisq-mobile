@@ -21,7 +21,7 @@ umbrel-image-version = "2.1.11.1"
 bisq-api-commit = "285cf42b5259c34f50a586620a75c6a8b1a158ab"
 
 # -------------------- Kotlin & JetBrains --------------------
-kotlin = "2.3.20"
+kotlin = "2.3.21"
 kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.10.0"
