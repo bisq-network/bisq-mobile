@@ -131,26 +131,72 @@
  *   reveal, Connect peer-count-via-node. None of these block the overview landing.
  *
  * ======================================================================================
- * DATA AVAILABILITY — "FREE" vs "NEEDS NEW WIRING"
+ * DATA AVAILABILITY — WHERE EACH FIELD COMES FROM (per issue #1524 review)
  * ======================================================================================
- * Already exposed by NetworkServiceFacade (shared/domain) — Issue A free data:
- *   - numConnections: StateFlow<Int>          ← drives the peer count badge
- *   - allDataReceived: StateFlow<Boolean>     ← drives the "Synced" health label
- *   - isTorEnabled(): suspend fun Boolean     ← drives the transport type label
- *   - KmpTorService.state                     ← drives Tor status display
+ * IMPORTANT distinction for the NODE app: it EMBEDS bisq2 core in-process, so "not yet
+ * available" almost never means "a new upstream bisq2 API must be built by core devs".
+ * It means "add a thin accessor to NodeNetworkServiceFacade that reads a bisq2 object we
+ * already hold in memory" (it already holds `defaultNode: Node` and `networkService`).
+ * Four source tiers, from cheapest to most expensive:
  *
- * Needs new wiring (new API calls / new facade methods) — Issue B scope:
- *   - Per-peer list (address, direction, connected-since)  — Node only, needs bisq2 API
- *   - User's own onion address                             — Node only, needs bisq2 API
- *   - App version string                                   — available via BuildConfig
- *   - WebSocket endpoint host (Connect)                    — available from pairing config
- *   - Trusted node name/alias (Connect)                    — available from pairing config
- *   - WS connection latency (Connect)                      — available from ClientConnectivityService
- *   - Last-seen timestamp (Connect)                        — available from WebSocketClientImpl
- *   - Connect peer-count-via-node                          — needs new WS endpoint or REST
+ *   [APP]        — local app/runtime value. No network. e.g. app version via BuildConfig.
+ *   [FACADE]     — ALREADY exposed by NetworkServiceFacade (shared/domain), wired today.
+ *   [CORE]       — Node only: lives in embedded bisq2 core NOW; needs only a new facade
+ *                  accessor over `defaultNode` / `networkService`. NOT an upstream API.
+ *   [NEW-API]    — Connect only: the client has no embedded core, so the trusted node must
+ *                  expose it over the HTTP/WS API (genuine new endpoint) — OR it is derivable
+ *                  client-side from pairing config / ClientConnectivityService.
  *
- * The overview screen can be shipped with ONLY the "free" data (numConnections + Tor
- * status) as a first iteration, then the sub-pages filled in as the API is extended.
+ * Overview screen (Node):
+ *   - peerCount [FACADE]  numConnections: StateFlow<Int>
+ *   - isDataSynced [FACADE]  allDataReceived: StateFlow<Boolean>
+ *   - isTorEnabled [FACADE]  isTorEnabled(): suspend Boolean
+ *   - isTorRunning [CORE]    bisq2 core transport state — see the Tor-status note below.
+ *                                NOT KmpTorService.state: the node never starts KmpTorService
+ *                                (bisq2 core runs its own Tor; see PR #1579). Reading
+ *                                KmpTorService here would always report "Stopped".
+ *
+ * My Node sub-page (Node) — mirrors desktop `NodeListItem` (see DESKTOP PROVENANCE below):
+ *   - fullOnionAddress [CORE]    defaultNode.findMyAddress().map { it.fullAddress }
+ *   - keyId [CORE]    defaultNode.networkId.keyId  (NetworkId.getKeyId())
+ *   - appVersion [APP]     BuildConfig / ApplicationVersion
+ *   - torStatus [CORE]    same source as isTorRunning above
+ *
+ * Connections sub-page (Node) — mirrors desktop `ConnectionListItem`, all [CORE]:
+ *   - per-peer address    defaultNode.allConnections → connection.peerAddress.fullAddress
+ *   - direction           connection.isOutboundConnection()
+ *   - connectedSince      connection.connectionMetrics.creationDate
+ *   - isSeed              peerGroupService.isSeed(peerAddress)
+ *   (RTT + sent/received bytes exist on connectionMetrics but are dev telemetry — omitted.)
+ *
+ * Connect app (no embedded core):
+ *   - WebSocket endpoint host   [NEW-API-N/A] available from pairing config
+ *   - Trusted node name/alias   [NEW-API-N/A] available from pairing config
+ *   - WS connection latency     [NEW-API-N/A] available from ClientConnectivityService
+ *   - Last-seen timestamp       [NEW-API-N/A] available from WebSocketClientImpl
+ *   - Connect peer-count-via-node [NEW-API]   needs a new WS/REST endpoint on the node
+ *
+ * Ship order: the Overview can go out with [FACADE]-only data first; the [CORE] accessors
+ * for My Node / Connections are a small node-side facade change (no core-dev dependency).
+ *
+ * ======================================================================================
+ * DESKTOP PROVENANCE — "My Node" fields (answers issue #1524 "where is this taken from?")
+ * ======================================================================================
+ * The mobile "My Node" sub-page has no single desktop screen; it composes fields the
+ * desktop shows in its P2P network node table. Source of truth:
+ *   bisq2/apps/desktop/.../content/network/p2p_network/transport/NodeListItem.java
+ *
+ *   - "Identity" (mobile section header) is NOT a data value. It groups the node's network
+ *     identity = its bisq2 `NetworkId` (onion address + Key ID). On desktop the node table's
+ *     `type` column ("active"/"retired"/"default") is derived from IdentityService for that
+ *     same NetworkId; mobile does not surface that column (low value for a single-node app).
+ *   - "Key ID" = NodeListItem.keyId = node.getNetworkId().getKeyId() → PubKey.keyId. It is the
+ *     identifier of the node's public key (the key bundle the node signs/authenticates with),
+ *     NOT the onion address and NOT the profile/user id. Desktop shows it as a sortable column.
+ *   - "Software" (mobile section header) groups the local app/runtime version. Desktop surfaces
+ *     version as a per-peer *distribution* (version rings) — deliberately NOT ported (see
+ *     "WHAT FROM DESKTOP WAS DELIBERATELY NOT BROUGHT TO MOBILE"). Mobile shows only THIS
+ *     device's app version, which is an [APP] value, not network data.
  *
  * ======================================================================================
  * PER-PEER ROLLING COUNTERS — FUTURE ENHANCEMENT NOTE
@@ -220,8 +266,8 @@
  * PREVIEWS IN THIS FILE
  * ======================================================================================
  * Preview 1:  Node — Overview (connected, healthy)              DATA: free (Issue A)
- * Preview 2:  Node — Connections sub-page (populated list)      DATA: requires new bisq2 API (Issue B)
- * Preview 3:  Node — My Node sub-page (full identity details)   DATA: requires new bisq2 API (Issue B)
+ * Preview 2:  Node — Connections sub-page (populated list)      DATA: [CORE] node facade accessor (Issue B)
+ * Preview 3:  Node — My Node sub-page (full identity details)   DATA: [CORE]+[APP] node facade accessor (Issue B)
  * Preview 4:  Node — Overview (disconnected / zero peers)       DATA: free (Issue A)
  * Preview 4b: Node — Connections sub-page (empty / offline)     DATA: free (Issue A)
  * Preview 4c: Node — Overview (syncing / cold-launch state)     DATA: free (Issue A)
@@ -321,11 +367,15 @@ data class SimulatedPeer(
 /**
  * Summary data for the Network Info Overview screen — Node app variant.
  *
- * [peerCount]        — numConnections StateFlow value.
- * [isDataSynced]     — allDataReceived StateFlow value.
- * [isTorEnabled]     — from isTorEnabled() in NetworkServiceFacade.
- * [isTorRunning]     — from KmpTorService.state.
- * [onionAddressPeek] — first 16 chars of the full onion address, or null if not yet known.
+ * [peerCount]        — [FACADE] numConnections StateFlow value.
+ * [isDataSynced]     — [FACADE] allDataReceived StateFlow value.
+ * [isTorEnabled]     — [FACADE] from isTorEnabled() in NetworkServiceFacade.
+ * [isTorRunning]     — [CORE]   from bisq2 core transport state (ServiceNode.State reaching
+ *                      INITIALIZED, and/or a published onion via defaultNode.findMyAddress()).
+ *                      NOT KmpTorService.state — the node never starts KmpTorService (bisq2
+ *                      core owns Tor; see PR #1579), so that flag is permanently Stopped here.
+ * [onionAddressPeek] — [CORE]   first N chars of defaultNode.findMyAddress(), or null if the
+ *                      onion is not yet published (still bootstrapping).
  */
 data class SimulatedNodeOverview(
     val peerCount: Int,
@@ -338,10 +388,17 @@ data class SimulatedNodeOverview(
 /**
  * Full identity data for the My Node sub-page — Node app only.
  *
- * [fullOnionAddress] — complete .onion address string (long, needs copy affordance).
- * [keyId]            — short hex key identifier.
- * [appVersion]       — from BuildConfig / ApplicationVersion.
- * [torStatus]        — human-readable Tor status string.
+ * Source of truth on desktop: NodeListItem.java (P2P network node table). All node fields
+ * are reachable IN-PROCESS from embedded bisq2 core — no upstream API needed, only a thin
+ * accessor on NodeNetworkServiceFacade (which already holds `defaultNode: Node`).
+ *
+ * [fullOnionAddress] — [CORE] defaultNode.findMyAddress().map { it.fullAddress }. Long,
+ *                      needs copy affordance.
+ * [keyId]            — [CORE] defaultNode.networkId.keyId (NetworkId.getKeyId() → PubKey.keyId):
+ *                      the id of the node's public key, NOT the onion address or profile id.
+ * [appVersion]       — [APP]  BuildConfig / ApplicationVersion (this device only).
+ * [torStatus]        — [CORE] bisq2 core transport state (see SimulatedNodeOverview.isTorRunning);
+ *                      NOT KmpTorService, which the node never starts.
  */
 data class SimulatedMyNode(
     val fullOnionAddress: String,
@@ -1253,9 +1310,10 @@ private fun NodeOverview_Healthy_Preview() {
 /**
  * Preview 2: Node app — Connections sub-page (7 peers, mix of inbound/outbound, 2 seeds).
  *
- * DATA: requires new bisq2 API (Issue B scope) — per-peer list (address, direction,
- * connected-since) is not yet exposed by NetworkServiceFacade. This sub-page is
- * non-navigable until the bisq2 API extension lands.
+ * DATA: [CORE] — per-peer list (address, direction, connected-since) is NOT yet exposed by
+ * NetworkServiceFacade, but it is already in memory: defaultNode.allConnections (mirrors
+ * desktop ConnectionListItem). This needs a new node-side facade accessor only — NOT an
+ * upstream bisq2 API. Non-navigable until that accessor + StateFlow land (Issue B).
  *
  * Validates: seed badge appears on the first and third cards, direction dots render in
  * green vs grey correctly, connected-since strings are right-aligned.
@@ -1275,9 +1333,11 @@ private fun NodeConnections_Populated_Preview() {
 /**
  * Preview 3: Node app — My Node sub-page (full identity).
  *
- * DATA: requires new bisq2 API (Issue B scope) — full onion address and key ID need a
- * new facade method exposing the node's NetworkId. App version is available via
- * BuildConfig but the address reveal is the gating dependency.
+ * DATA: [CORE]+[APP] — full onion address and Key ID come from the node's own NetworkId,
+ * already in memory (defaultNode.findMyAddress() / defaultNode.networkId.keyId, mirroring
+ * desktop NodeListItem). These need a new node-side facade accessor only, NOT an upstream
+ * bisq2 API. App version is [APP] via BuildConfig. Tor status is [CORE] (bisq2 transport,
+ * not KmpTorService — see PR #1579).
  *
  * Validates: onion address shows truncated peek by default, tapping "Show full address"
  * expands to the full 56-char string with copy icon active; key ID and app version
