@@ -258,6 +258,7 @@ fun SettingsContent(
                         checked = uiState.useAnimations,
                         disabled = !isUseAnimationsChangeEnabled,
                         onSwitch = { onAction(SettingsUiAction.OnUseAnimationsChange(it)) },
+                        onDisabledTap = { onAction(SettingsUiAction.OnUseAnimationsLockedTap) },
                     )
 
                     BisqGap.V1()

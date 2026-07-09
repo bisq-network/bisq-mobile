@@ -30,6 +30,13 @@ sealed interface SettingsUiAction {
         val value: Boolean,
     ) : SettingsUiAction
 
+    /**
+     * User tapped the animations toggle while it is greyed out because the device is
+     * low-spec ([AnimationSettings.lockedByDevice]). The switch itself stays disabled;
+     * this only surfaces an explanation so the greyed state isn't a dead end.
+     */
+    data object OnUseAnimationsLockedTap : SettingsUiAction
+
     data class OnRememberOfferbookFilterPreferencesChange(
         val enabled: Boolean,
     ) : SettingsUiAction

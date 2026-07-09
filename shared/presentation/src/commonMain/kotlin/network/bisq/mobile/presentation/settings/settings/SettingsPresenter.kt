@@ -198,6 +198,8 @@ open class SettingsPresenter(
             SettingsUiAction.OnTradePriceToleranceSave -> onTradePriceToleranceSave()
             SettingsUiAction.OnTradePriceToleranceCancel -> onTradePriceToleranceCancel()
             is SettingsUiAction.OnUseAnimationsChange -> setUseAnimations(action.value)
+            SettingsUiAction.OnUseAnimationsLockedTap ->
+                showSnackbar("settings.display.useAnimations.lockedByDevice".i18n())
             is SettingsUiAction.OnRememberOfferbookFilterPreferencesChange ->
                 setRememberOfferbookFilterPreferences(action.enabled)
             is SettingsUiAction.OnNumDaysAfterRedactingTradeDataChange ->

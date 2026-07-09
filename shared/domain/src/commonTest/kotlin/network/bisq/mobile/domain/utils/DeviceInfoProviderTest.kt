@@ -35,7 +35,7 @@ class DeviceInfoProviderTest {
     }
 
     @Test
-    fun `unknown ram (zero) is not low-spec`() {
+    fun `unknown ram of zero is not low-spec`() {
         // We don't disable animations on a device we couldn't measure.
         assertFalse(providerWithRam(0L).isLowSpecDevice())
     }

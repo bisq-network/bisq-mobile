@@ -26,6 +26,7 @@ fun BisqSwitch(
     label: String = "",
     disabled: Boolean = false,
     onSwitch: ((Boolean) -> Unit)? = null,
+    onDisabledTap: (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier,
@@ -38,11 +39,16 @@ fun BisqSwitch(
                 Modifier
                     .padding(end = BisqUIConstants.ScreenPadding)
                     .weight(1f)
+                    // When disabled, the label stays tappable only if a disabled-tap handler is
+                    // provided, so a greyed toggle can explain why it can't be changed. The Switch
+                    // itself remains non-interactive (greyed) regardless.
                     .clickable(
-                        enabled = !disabled,
+                        enabled = !disabled || onDisabledTap != null,
                         onClick = {
-                            if (onSwitch != null) {
-                                onSwitch(!checked)
+                            if (disabled) {
+                                onDisabledTap?.invoke()
+                            } else {
+                                onSwitch?.invoke(!checked)
                             }
                         },
                         interactionSource = remember { MutableInteractionSource() },

@@ -199,6 +199,31 @@ class SettingsPresenterTest {
         }
 
     @Test
+    fun `when locked animations toggle is tapped then shows explanation snackbar`() =
+        runTest(testDispatcher) {
+            // Given a low-spec device where the toggle is greyed out
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            presenter = createPresenter(lockedAnimationSettings())
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // When the user taps the disabled toggle
+            presenter.onAction(SettingsUiAction.OnUseAnimationsLockedTap)
+            advanceUntilIdle()
+
+            // Then an explanation is surfaced and the setting is left untouched
+            coVerify {
+                globalUiManager.showSnackbar(
+                    "settings.display.useAnimations.lockedByDevice".i18n(),
+                    any(),
+                    any(),
+                    any(),
+                )
+            }
+            coVerify(exactly = 0) { settingsServiceFacade.setUseAnimations(any()) }
+        }
+
+    @Test
     fun `when initial state then has correct default values`() =
         runTest(testDispatcher) {
             // Given
