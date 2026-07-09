@@ -37,4 +37,13 @@ class AnimationSettings(
 
     val enabled: StateFlow<Boolean> =
         if (lockedByDevice) forcedOff else settingsServiceFacade.useAnimations
+
+    /**
+     * The effective animations-enabled value for a given stored [useAnimations] preference.
+     *
+     * Single source of truth for the "user setting AND not device-locked" rule, matching what
+     * [enabled] exposes. Use this when computing effective state from a freshly-read preference
+     * (e.g. a settings screen) instead of re-deriving `useAnimations && !lockedByDevice` inline.
+     */
+    fun isEffectivelyEnabled(useAnimations: Boolean): Boolean = useAnimations && !lockedByDevice
 }

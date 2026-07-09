@@ -626,7 +626,7 @@ open class SettingsPresenter(
                                 tradePriceTolerance = it.tradePriceTolerance.updateValue(tradePriceToleranceFormatted),
                                 // Show effective state: forced off (and greyed) on low-spec devices,
                                 // without mutating the stored preference. See #1293.
-                                useAnimations = settings.useAnimations && !animationSettings.lockedByDevice,
+                                useAnimations = animationSettings.isEffectivelyEnabled(settings.useAnimations),
                                 rememberOfferbookFilterPreferences = localSettings.rememberOfferbookFilterPreferences,
                                 numDaysAfterRedactingTradeData = it.numDaysAfterRedactingTradeData.updateValue(numDaysFormatted),
                                 powFactor = it.powFactor.updateValue(powFactorFormatted),

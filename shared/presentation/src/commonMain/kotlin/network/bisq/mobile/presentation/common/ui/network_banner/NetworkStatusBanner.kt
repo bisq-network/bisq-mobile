@@ -1,7 +1,10 @@
 package network.bisq.mobile.presentation.common.ui.network_banner
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -75,9 +78,12 @@ private fun NetworkStatusBannerView(
     inventoryRequestInfo: String,
     animationsEnabled: Boolean,
 ) {
+    val targetBackground = if (allDataReceived) BisqTheme.colors.primaryDim else BisqTheme.colors.yellow
+    // Animate the colour transition only when animations are enabled; otherwise snap to the target
+    // so nothing tweens on low-spec devices / when the user turned animations off.
     val backgroundColor by animateColorAsState(
-        targetValue = if (allDataReceived) BisqTheme.colors.primaryDim else BisqTheme.colors.yellow,
-        animationSpec = tween(durationMillis = ANIMATION_DURATION_MS),
+        targetValue = targetBackground,
+        animationSpec = if (animationsEnabled) tween(durationMillis = ANIMATION_DURATION_MS) else snap(),
         label = "bannerBgAnim",
     )
 
@@ -168,16 +174,22 @@ private fun NetworkStatusBannerContent(
 
     AnimatedVisibility(
         visible = shouldBeVisible,
+        // Animate the banner in/out only when animations are enabled; otherwise show/hide instantly
+        // so nothing tweens on low-spec devices / when the user turned animations off.
         enter =
-            fadeIn(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)) +
-                expandVertically(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)),
+            if (animationsEnabled) {
+                fadeIn(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)) +
+                    expandVertically(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS))
+            } else {
+                EnterTransition.None
+            },
         exit =
-            fadeOut(
-                animationSpec = tween(durationMillis = ANIMATION_DURATION_MS),
-            ) +
-                shrinkVertically(
-                    animationSpec = tween(durationMillis = ANIMATION_DURATION_MS),
-                ),
+            if (animationsEnabled) {
+                fadeOut(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS)) +
+                    shrinkVertically(animationSpec = tween(durationMillis = ANIMATION_DURATION_MS))
+            } else {
+                ExitTransition.None
+            },
     ) {
         NetworkStatusBannerView(
             allDataReceived = allDataReceived,
@@ -249,5 +261,5 @@ private object NetworkStatusBannerConstants {
 
     // Fixed sweep for the static (animations-off) ring — a partial arc reads as a frozen spinner
     // rather than a full "complete" circle.
-    const val STATIC_RING_PROGRESS = 0.25f
+    const val STATIC_RING_PROGRESS = 0.9f
 }
