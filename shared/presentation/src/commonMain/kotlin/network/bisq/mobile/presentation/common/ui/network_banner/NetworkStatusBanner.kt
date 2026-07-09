@@ -30,7 +30,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.check_circle
+import bisqapps.shared.presentation.generated.resources.requesting_inventory
 import kotlinx.coroutines.delay
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerConstants.ANIMATION_DURATION_MS
@@ -46,6 +48,9 @@ fun NetworkStatusBanner() {
     val presenter: NetworkStatusBannerPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
+    val animationSettings: AnimationSettings = koinInject()
+    val animationsEnabled by animationSettings.enabled.collectAsState()
+
     val inventoryRequestInfo by presenter.inventoryRequestInfo.collectAsState()
     val allDataReceived by presenter.allDataReceived.collectAsState()
     val numConnections by presenter.numConnections.collectAsState()
@@ -56,6 +61,7 @@ fun NetworkStatusBanner() {
         numConnections = numConnections,
         isMainContentVisible = isMainContentVisible,
         inventoryRequestInfo = inventoryRequestInfo,
+        animationsEnabled = animationsEnabled,
     )
 }
 
@@ -63,6 +69,7 @@ fun NetworkStatusBanner() {
 private fun NetworkStatusBannerView(
     allDataReceived: Boolean,
     inventoryRequestInfo: String,
+    animationsEnabled: Boolean,
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = if (allDataReceived) BisqTheme.colors.primaryDim else BisqTheme.colors.yellow,
@@ -96,11 +103,20 @@ private fun NetworkStatusBannerView(
                 contentDescription = "All data received",
                 modifier = Modifier.size(20.dp),
             )
-        } else {
+        } else if (animationsEnabled) {
             CircularProgressIndicator(
                 color = BisqTheme.colors.white,
                 modifier = Modifier.size(20.dp),
                 strokeWidth = 1.dp,
+            )
+        } else {
+            // Animations off (user setting or low-spec device lock): the indeterminate spinner
+            // animates continuously, so fall back to a static status icon.
+            Image(
+                painter = painterResource(Res.drawable.requesting_inventory),
+                colorFilter = ColorFilter.tint(BisqTheme.colors.white),
+                contentDescription = "Requesting network data",
+                modifier = Modifier.size(20.dp),
             )
         }
 
@@ -121,6 +137,7 @@ private fun NetworkStatusBannerContent(
     numConnections: Int,
     isMainContentVisible: Boolean,
     inventoryRequestInfo: String,
+    animationsEnabled: Boolean,
 ) {
     var shouldBeVisible by remember { mutableStateOf(false) }
 
@@ -157,6 +174,7 @@ private fun NetworkStatusBannerContent(
         NetworkStatusBannerView(
             allDataReceived = allDataReceived,
             inventoryRequestInfo = inventoryRequestInfo,
+            animationsEnabled = animationsEnabled,
         )
     }
 }
@@ -173,10 +191,12 @@ private fun NetworkStatusBannerContent(
 private fun NetworkStatusBannerContentPreview(
     allDataReceived: Boolean,
     inventoryRequestInfo: String,
+    animationsEnabled: Boolean = true,
 ) {
     NetworkStatusBannerView(
         allDataReceived = allDataReceived,
         inventoryRequestInfo = inventoryRequestInfo,
+        animationsEnabled = animationsEnabled,
     )
 }
 
@@ -187,6 +207,18 @@ private fun NetworkStatusBanner_LoadingPreview() {
         NetworkStatusBannerContentPreview(
             allDataReceived = false,
             inventoryRequestInfo = "Requesting initial network data",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun NetworkStatusBanner_LoadingNoAnimationPreview() {
+    BisqTheme.Preview {
+        NetworkStatusBannerContentPreview(
+            allDataReceived = false,
+            inventoryRequestInfo = "Requesting initial network data",
+            animationsEnabled = false,
         )
     }
 }
