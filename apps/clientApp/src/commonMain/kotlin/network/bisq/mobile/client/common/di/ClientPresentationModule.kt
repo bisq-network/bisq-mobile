@@ -8,6 +8,7 @@ import network.bisq.mobile.client.settings.faqs.FaqClientPresenter
 import network.bisq.mobile.client.splash.ClientSplashPresenter
 import network.bisq.mobile.client.tabs.more.ClientMiscItemsPresenter
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupPresenter
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.main.AppPresenter
@@ -21,6 +22,9 @@ import org.koin.dsl.module
 
 val clientPresentationModule =
     module {
+        // Connect is a lightweight client with no embedded node, so don't use device-lock.
+        single { AnimationSettings(get(), get(), applyDeviceLock = false) }
+
         single<MainPresenter> {
             ClientMainPresenter(
                 get(),
@@ -77,6 +81,7 @@ val clientPresentationModule =
 
         factory<TopBarPresenter> {
             ClientTopBarPresenter(
+                get(),
                 get(),
                 get(),
                 get(),

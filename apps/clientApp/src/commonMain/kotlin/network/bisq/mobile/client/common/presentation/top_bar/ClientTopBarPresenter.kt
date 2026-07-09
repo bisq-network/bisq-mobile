@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -18,11 +19,13 @@ class ClientTopBarPresenter(
     userProfileServiceFacade: UserProfileServiceFacade,
     settingsServiceFacade: SettingsServiceFacade,
     connectivityService: ConnectivityService,
+    animationSettings: AnimationSettings,
     mainPresenter: MainPresenter,
 ) : TopBarPresenter(
         userProfileServiceFacade,
         settingsServiceFacade,
         connectivityService,
+        animationSettings,
         mainPresenter,
     ) {
     private val mappedConnectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =

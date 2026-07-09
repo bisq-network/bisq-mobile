@@ -19,6 +19,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
@@ -77,7 +78,14 @@ class TabContainerPresenterDuplicateCallTest {
             createOfferCoordinator,
             settingsServiceFacade,
             tradeRestrictingAlertServiceFacade,
+            AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false),
         )
+    }
+
+    @Test
+    fun `showAnimation reflects the effective animations flag`() {
+        // buildPresenter wires useAnimations = true with no device lock, so the avatar animation is on.
+        assertTrue(buildPresenter().showAnimation.value)
     }
 
     @Test

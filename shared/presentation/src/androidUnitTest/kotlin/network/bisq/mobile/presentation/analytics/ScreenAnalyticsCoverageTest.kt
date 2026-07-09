@@ -263,6 +263,7 @@ class ScreenAnalyticsCoverageTest {
                 languageServiceFacade = mockk(relaxed = true),
                 pushNotificationServiceFacade = mockk(relaxed = true),
                 settingsRepository = mockk(relaxed = true),
+                animationSettings = mockk(relaxed = true),
                 mainPresenter = mainPresenter,
             )
         assertEquals(AnalyticsEvent.ScreenOpened.Settings, presenter.analyticsScreenEvent())

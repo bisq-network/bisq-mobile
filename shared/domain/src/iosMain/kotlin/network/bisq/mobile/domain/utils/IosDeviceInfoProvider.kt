@@ -5,6 +5,7 @@ import network.bisq.mobile.i18n.i18n
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSHomeDirectory
 import platform.Foundation.NSNumber
+import platform.Foundation.NSProcessInfo
 import platform.UIKit.UIDevice
 import kotlin.math.pow
 import kotlin.math.round
@@ -12,6 +13,8 @@ import kotlin.math.round
 class IosDeviceInfoProvider :
     DeviceInfoProvider,
     Logging {
+    override fun getTotalRamBytes(): Long = NSProcessInfo.processInfo.physicalMemory.toLong()
+
     @OptIn(ExperimentalForeignApi::class)
     override fun getDeviceInfo(): String {
         val na = "N/A"

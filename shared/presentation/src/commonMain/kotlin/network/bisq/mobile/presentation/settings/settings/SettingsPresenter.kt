@@ -21,6 +21,7 @@ import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.i18n.DEFAULT_LANGUAGE_CODE
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -33,6 +34,7 @@ open class SettingsPresenter(
     private val languageServiceFacade: LanguageServiceFacade,
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
     private val settingsRepository: SettingsRepository,
+    private val animationSettings: AnimationSettings,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.Settings
@@ -71,7 +73,10 @@ open class SettingsPresenter(
     val isCloseOfferWhenTradeTakenChangeEnabled: StateFlow<Boolean> =
         _isCloseOfferWhenTradeTakenChangeEnabled.asStateFlow()
 
-    private val _isUseAnimationsChangeEnabled = MutableStateFlow(true)
+    // Starts disabled (greyed) when the device is low-spec: animations are force-off
+    // and the toggle can't be turned on. This reuses the existing in-flight guard flag — on a locked
+    // device setUseAnimations is never invoked, so nothing re-enables it.
+    private val _isUseAnimationsChangeEnabled = MutableStateFlow(!animationSettings.lockedByDevice)
     val isUseAnimationsChangeEnabled: StateFlow<Boolean> = _isUseAnimationsChangeEnabled.asStateFlow()
 
     private val _isIgnorePowChangeEnabled = MutableStateFlow(true)
@@ -617,7 +622,9 @@ open class SettingsPresenter(
                                 supportedLanguageCodes = supportedLangCodes,
                                 closeOfferWhenTradeTaken = settings.closeMyOfferWhenTaken,
                                 tradePriceTolerance = it.tradePriceTolerance.updateValue(tradePriceToleranceFormatted),
-                                useAnimations = settings.useAnimations,
+                                // Show effective state: forced off (and greyed) on low-spec devices,
+                                // without mutating the stored preference. See #1293.
+                                useAnimations = settings.useAnimations && !animationSettings.lockedByDevice,
                                 rememberOfferbookFilterPreferences = localSettings.rememberOfferbookFilterPreferences,
                                 numDaysAfterRedactingTradeData = it.numDaysAfterRedactingTradeData.updateValue(numDaysFormatted),
                                 powFactor = it.powFactor.updateValue(powFactorFormatted),

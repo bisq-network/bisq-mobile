@@ -35,7 +35,9 @@ import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -140,14 +142,61 @@ class SettingsPresenterTest {
         }
     }
 
-    private fun createPresenter(): SettingsPresenter =
+    // Capable device by default: no device lock, so animations follow the user setting (this is
+    // also the Connect app's behaviour). Pass a locked instance to exercise the low-spec path.
+    private fun capableAnimationSettings(): AnimationSettings = AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false)
+
+    private fun lockedAnimationSettings(): AnimationSettings {
+        val lowSpecDevice =
+            object : DeviceInfoProvider {
+                override fun getDeviceInfo(): String = ""
+
+                // 3GB device reports ~2.8 GiB, below the low-spec threshold.
+                override fun getTotalRamBytes(): Long = 2_900_000_000L
+            }
+        return AnimationSettings(settingsServiceFacade, lowSpecDevice, applyDeviceLock = true)
+    }
+
+    private fun createPresenter(animationSettings: AnimationSettings = capableAnimationSettings()): SettingsPresenter =
         SettingsPresenter(
             settingsServiceFacade,
             languageServiceFacade,
             pushNotificationServiceFacade,
             settingsRepository,
+            animationSettings,
             mainPresenter,
         )
+
+    @Test
+    fun `when device is low-spec then animations are forced off and toggle is disabled`() =
+        runTest(testDispatcher) {
+            // Given a low-spec (node) device and a stored setting of useAnimations = true
+            coEvery { settingsServiceFacade.getSettings() } returns
+                Result.success(sampleSettings.copy(useAnimations = true))
+
+            // When
+            presenter = createPresenter(lockedAnimationSettings())
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Then the toggle is greyed and shown off despite the stored setting being on.
+            assertFalse(presenter.isUseAnimationsChangeEnabled.value)
+            assertFalse(presenter.uiState.value.useAnimations)
+        }
+
+    @Test
+    fun `when device is capable then animations toggle follows stored setting`() =
+        runTest(testDispatcher) {
+            coEvery { settingsServiceFacade.getSettings() } returns
+                Result.success(sampleSettings.copy(useAnimations = true))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isUseAnimationsChangeEnabled.value)
+            assertTrue(presenter.uiState.value.useAnimations)
+        }
 
     @Test
     fun `when initial state then has correct default values`() =

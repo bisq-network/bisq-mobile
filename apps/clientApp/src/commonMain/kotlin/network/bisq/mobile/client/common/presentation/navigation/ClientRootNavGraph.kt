@@ -16,6 +16,7 @@ import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts
 import network.bisq.mobile.client.splash.ClientSplashScreen
 import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupScreen
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
@@ -35,6 +36,8 @@ fun ClientRootNavGraph(
     modifier: Modifier = Modifier,
 ) {
     val navigationManager: NavigationManager = koinInject()
+    val animationSettings: AnimationSettings = koinInject()
+    val animationsEnabled: () -> Boolean = { animationSettings.enabled.value }
 
     NavHost(
         modifier = modifier.background(color = BisqTheme.colors.backgroundColor),
@@ -45,8 +48,8 @@ fun ClientRootNavGraph(
             val route: NavRoute.Splash = backStackEntry.toRoute()
             ClientSplashScreen(route)
         }
-        addCommonAppRoutes()
-        addClientAppRoutes()
+        addCommonAppRoutes(animationsEnabled)
+        addClientAppRoutes(animationsEnabled)
     }
 
     DisposableEffect(rootNavController) {
@@ -59,13 +62,13 @@ fun ClientRootNavGraph(
 
 // TODO: Coverage exclusion rationale - NavGraphBuilder extension for Compose navigation.
 @ExcludeFromCoverage
-fun NavGraphBuilder.addClientAppRoutes() {
+fun NavGraphBuilder.addClientAppRoutes(animationsEnabled: () -> Boolean) {
     // Override Support screen with client-specific version
-    addScreen<NavRoute.Support> { ClientSupportScreen() }
+    addScreen<NavRoute.Support>(animationsEnabled = animationsEnabled) { ClientSupportScreen() }
 
     // Client-specific screens
-    addScreen<ClientNavRoute.TrustedNodeSetupSettings> { TrustedNodeSetupScreen(isWorkflow = false) }
-    addScreen<ClientNavRoute.TrustedNodeSetup> { entry ->
+    addScreen<ClientNavRoute.TrustedNodeSetupSettings>(animationsEnabled = animationsEnabled) { TrustedNodeSetupScreen(isWorkflow = false) }
+    addScreen<ClientNavRoute.TrustedNodeSetup>(animationsEnabled = animationsEnabled) { entry ->
         val route = entry.toRoute<ClientNavRoute.TrustedNodeSetup>()
         TrustedNodeSetupScreen(
             showConnectionFailed = route.showConnectionFailed,
@@ -74,12 +77,12 @@ fun NavGraphBuilder.addClientAppRoutes() {
         )
     }
 
-    addScreen<ClientNavRoute.PaymentAccountsMusig> { PaymentAccountsMusigScreen() }
-    addScreen<ClientNavRoute.PaymentAccountsMusigDetail> { backStackEntry ->
+    addScreen<ClientNavRoute.PaymentAccountsMusig>(animationsEnabled = animationsEnabled) { PaymentAccountsMusigScreen() }
+    addScreen<ClientNavRoute.PaymentAccountsMusigDetail>(animationsEnabled = animationsEnabled) { backStackEntry ->
         val route: ClientNavRoute.PaymentAccountsMusigDetail = backStackEntry.toRoute()
         PaymentAccountMusigDetailScreen(accountName = route.accountName)
     }
-    addScreen<ClientNavRoute.CreatePaymentAccount> { backStackEntry ->
+    addScreen<ClientNavRoute.CreatePaymentAccount>(animationsEnabled = animationsEnabled) { backStackEntry ->
         val route: ClientNavRoute.CreatePaymentAccount = backStackEntry.toRoute()
         val accountType = runCatching { PaymentAccountType.valueOf(route.accountTypeName) }.getOrNull()
 

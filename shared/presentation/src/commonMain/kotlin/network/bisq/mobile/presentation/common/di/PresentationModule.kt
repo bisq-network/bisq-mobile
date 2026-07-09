@@ -89,7 +89,7 @@ val presentationModule =
             )
         } bind IAgreementPresenter::class
 
-        factory { TabContainerPresenter(get(), get(), get(), get()) } bind ITabContainerPresenter::class
+        factory { TabContainerPresenter(get(), get(), get(), get(), get()) } bind ITabContainerPresenter::class
 
         factory<ReputationPresenter> { ReputationPresenter(get(), get()) }
 
@@ -136,7 +136,7 @@ val presentationModule =
             )
         }
 
-        factory { SettingsPresenter(get(), get(), get(), get(), get()) }
+        factory { SettingsPresenter(get(), get(), get(), get(), get(), get()) }
 
         factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 

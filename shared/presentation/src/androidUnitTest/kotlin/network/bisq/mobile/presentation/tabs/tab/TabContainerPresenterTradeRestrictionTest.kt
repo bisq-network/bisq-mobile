@@ -23,6 +23,7 @@ import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFacto
 import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
@@ -97,6 +98,7 @@ class TabContainerPresenterTradeRestrictionTest {
             createOfferCoordinator = createOfferCoordinator,
             settingsServiceFacade = settingsServiceFacade,
             tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
+            animationSettings = AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false),
         )
     }
 

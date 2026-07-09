@@ -12,6 +12,7 @@ import network.bisq.mobile.presentation.common.platform_settings.PlatformSetting
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
 import network.bisq.mobile.presentation.common.share.ShareFileService
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.main.AppPresenter
@@ -31,7 +32,10 @@ val androidNodePresentationModule =
     module {
         single<ShareFileService> { AndroidShareFileService(androidContext()) }
 
-        factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get(), get(), get()) }
+        // Node embeds the full bisq2 stack, so the low-RAM animation lock applies here
+        single { AnimationSettings(get(), get(), applyDeviceLock = true) }
+
+        factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get(), get(), get(), get()) }
 
         factory {
             NodeOnboardingPresenter(
@@ -55,7 +59,7 @@ val androidNodePresentationModule =
             )
         }
 
-        factory<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
+        factory<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get(), get()) } bind ITopBarPresenter::class
 
         factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
 

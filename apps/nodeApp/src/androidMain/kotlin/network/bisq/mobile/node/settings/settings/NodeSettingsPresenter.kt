@@ -4,6 +4,7 @@ import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
 
@@ -12,12 +13,14 @@ class NodeSettingsPresenter(
     languageServiceFacade: LanguageServiceFacade,
     pushNotificationServiceFacade: PushNotificationServiceFacade,
     settingsRepository: SettingsRepository,
+    animationSettings: AnimationSettings,
     mainPresenter: MainPresenter,
 ) : SettingsPresenter(
         settingsServiceFacade,
         languageServiceFacade,
         pushNotificationServiceFacade,
         settingsRepository,
+        animationSettings,
         mainPresenter,
     ) {
     override val shouldShowPoWAdjustmentFactor: Boolean

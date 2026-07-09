@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.common.ui.navigation.graph
 
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,6 +17,7 @@ import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideOverview
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideProcess
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideSecurity
@@ -55,15 +58,17 @@ import kotlin.reflect.KType
 
 const val NAV_ANIM_MS = 300
 
-fun NavGraphBuilder.addCommonAppRoutes() {
-    addScreen<NavRoute.UserAgreement> { UserAgreementScreen() }
-    addScreen<NavRoute.Onboarding> { OnboardingScreen() }
-    addScreen<NavRoute.CreateProfile> { backStackEntry ->
+@ExcludeFromCoverage // declarative nav wiring (like the DI modules); not unit-testable in isolation
+fun NavGraphBuilder.addCommonAppRoutes(animationsEnabled: () -> Boolean) {
+    addScreen<NavRoute.UserAgreement>(animationsEnabled = animationsEnabled) { UserAgreementScreen() }
+    addScreen<NavRoute.Onboarding>(animationsEnabled = animationsEnabled) { OnboardingScreen() }
+    addScreen<NavRoute.CreateProfile>(animationsEnabled = animationsEnabled) { backStackEntry ->
         val route: NavRoute.CreateProfile = backStackEntry.toRoute()
         CreateProfileScreen(route.isOnboarding)
     }
 
     addScreen<NavRoute.TabContainer>(
+        animationsEnabled = animationsEnabled,
         deepLinks =
             listOf(
                 navDeepLink<NavRoute.TabContainer>(
@@ -73,6 +78,7 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     ) { TabContainerScreen() }
 
     addScreen<NavRoute.OpenTrade>(
+        animationsEnabled = animationsEnabled,
         deepLinks =
             listOf(
                 navDeepLink<NavRoute.OpenTrade>(
@@ -86,6 +92,7 @@ fun NavGraphBuilder.addCommonAppRoutes() {
 
     addScreen<NavRoute.TradeChat>(
         navAnimation = NavAnimation.FADE_IN,
+        animationsEnabled = animationsEnabled,
         deepLinks =
             listOf(
                 navDeepLink<NavRoute.TradeChat>(
@@ -98,44 +105,44 @@ fun NavGraphBuilder.addCommonAppRoutes() {
     }
 
     // --- Other Screens ---
-    addScreen<NavRoute.Offerbook> { OfferbookScreen() }
-    addScreen<NavRoute.ChatRules> { ChatRulesScreen() }
-    addScreen<NavRoute.Settings> { SettingsScreen() }
-    addScreen<NavRoute.Support> { SupportScreen() }
-    addScreen<NavRoute.Faqs> { FaqScreen() }
-    addScreen<NavRoute.Reputation> { ReputationScreen() }
-    addScreen<NavRoute.UserProfile> { UserProfileScreen() }
-    addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
-    addScreen<NavRoute.IgnoredUsers> { IgnoredUsersScreen() }
-    addScreen<NavRoute.Resources> { ResourcesScreen() }
-    addScreen<NavRoute.UserAgreementDisplay> { UserAgreementDisplayScreen() }
+    addScreen<NavRoute.Offerbook>(animationsEnabled = animationsEnabled) { OfferbookScreen() }
+    addScreen<NavRoute.ChatRules>(animationsEnabled = animationsEnabled) { ChatRulesScreen() }
+    addScreen<NavRoute.Settings>(animationsEnabled = animationsEnabled) { SettingsScreen() }
+    addScreen<NavRoute.Support>(animationsEnabled = animationsEnabled) { SupportScreen() }
+    addScreen<NavRoute.Faqs>(animationsEnabled = animationsEnabled) { FaqScreen() }
+    addScreen<NavRoute.Reputation>(animationsEnabled = animationsEnabled) { ReputationScreen() }
+    addScreen<NavRoute.UserProfile>(animationsEnabled = animationsEnabled) { UserProfileScreen() }
+    addScreen<NavRoute.PaymentAccounts>(animationsEnabled = animationsEnabled) { PaymentAccountsScreen() }
+    addScreen<NavRoute.IgnoredUsers>(animationsEnabled = animationsEnabled) { IgnoredUsersScreen() }
+    addScreen<NavRoute.Resources>(animationsEnabled = animationsEnabled) { ResourcesScreen() }
+    addScreen<NavRoute.UserAgreementDisplay>(animationsEnabled = animationsEnabled) { UserAgreementDisplayScreen() }
 
     // --- Take Offer Screens ---
-    addScreen<NavRoute.TakeOfferTradeAmount>(wizardTransition = false) { TakeOfferTradeAmountScreen() }
-    addScreen<NavRoute.TakeOfferPaymentMethod>(wizardTransition = true) { TakeOfferPaymentMethodScreen() }
-    addScreen<NavRoute.TakeOfferSettlementMethod>(wizardTransition = true) { TakeOfferSettlementMethodScreen() }
-    addScreen<NavRoute.TakeOfferReviewTrade>(wizardTransition = true) { TakeOfferReviewTradeScreen() }
+    addScreen<NavRoute.TakeOfferTradeAmount>(wizardTransition = false, animationsEnabled = animationsEnabled) { TakeOfferTradeAmountScreen() }
+    addScreen<NavRoute.TakeOfferPaymentMethod>(wizardTransition = true, animationsEnabled = animationsEnabled) { TakeOfferPaymentMethodScreen() }
+    addScreen<NavRoute.TakeOfferSettlementMethod>(wizardTransition = true, animationsEnabled = animationsEnabled) { TakeOfferSettlementMethodScreen() }
+    addScreen<NavRoute.TakeOfferReviewTrade>(wizardTransition = true, animationsEnabled = animationsEnabled) { TakeOfferReviewTradeScreen() }
 
     // --- Create Offer Screens ---
-    addScreen<NavRoute.CreateOfferDirection>(wizardTransition = false) { CreateOfferDirectionScreen() }
-    addScreen<NavRoute.CreateOfferMarket>(wizardTransition = true) { CreateOfferMarketScreen() }
-    addScreen<NavRoute.CreateOfferAmount>(wizardTransition = true) { CreateOfferAmountScreen() }
-    addScreen<NavRoute.CreateOfferPrice>(wizardTransition = true) { CreateOfferPriceScreen() }
-    addScreen<NavRoute.CreateOfferPaymentMethod>(wizardTransition = true) { CreateOfferPaymentMethodScreen() }
-    addScreen<NavRoute.CreateOfferSettlementMethod>(wizardTransition = true) { CreateOfferSettlementMethodScreen() }
-    addScreen<NavRoute.CreateOfferReviewOffer>(wizardTransition = true) { CreateOfferReviewOfferScreen() }
+    addScreen<NavRoute.CreateOfferDirection>(wizardTransition = false, animationsEnabled = animationsEnabled) { CreateOfferDirectionScreen() }
+    addScreen<NavRoute.CreateOfferMarket>(wizardTransition = true, animationsEnabled = animationsEnabled) { CreateOfferMarketScreen() }
+    addScreen<NavRoute.CreateOfferAmount>(wizardTransition = true, animationsEnabled = animationsEnabled) { CreateOfferAmountScreen() }
+    addScreen<NavRoute.CreateOfferPrice>(wizardTransition = true, animationsEnabled = animationsEnabled) { CreateOfferPriceScreen() }
+    addScreen<NavRoute.CreateOfferPaymentMethod>(wizardTransition = true, animationsEnabled = animationsEnabled) { CreateOfferPaymentMethodScreen() }
+    addScreen<NavRoute.CreateOfferSettlementMethod>(wizardTransition = true, animationsEnabled = animationsEnabled) { CreateOfferSettlementMethodScreen() }
+    addScreen<NavRoute.CreateOfferReviewOffer>(wizardTransition = true, animationsEnabled = animationsEnabled) { CreateOfferReviewOfferScreen() }
 
     // --- Trade Guide Screens ---
-    addScreen<NavRoute.TradeGuideOverview>(wizardTransition = false) { TradeGuideOverview() }
-    addScreen<NavRoute.TradeGuideSecurity>(wizardTransition = true) { TradeGuideSecurity() }
-    addScreen<NavRoute.TradeGuideProcess>(wizardTransition = true) { TradeGuideProcess() }
-    addScreen<NavRoute.TradeGuideTradeRules>(wizardTransition = true) { TradeGuideTradeRules() }
+    addScreen<NavRoute.TradeGuideOverview>(wizardTransition = false, animationsEnabled = animationsEnabled) { TradeGuideOverview() }
+    addScreen<NavRoute.TradeGuideSecurity>(wizardTransition = true, animationsEnabled = animationsEnabled) { TradeGuideSecurity() }
+    addScreen<NavRoute.TradeGuideProcess>(wizardTransition = true, animationsEnabled = animationsEnabled) { TradeGuideProcess() }
+    addScreen<NavRoute.TradeGuideTradeRules>(wizardTransition = true, animationsEnabled = animationsEnabled) { TradeGuideTradeRules() }
 
     // --- Wallet Guide Screens ---
-    addScreen<NavRoute.WalletGuideIntro>(wizardTransition = false) { WalletGuideIntro() }
-    addScreen<NavRoute.WalletGuideDownload>(wizardTransition = true) { WalletGuideDownload() }
-    addScreen<NavRoute.WalletGuideNewWallet>(wizardTransition = true) { WalletGuideNewWallet() }
-    addScreen<NavRoute.WalletGuideReceiving>(wizardTransition = true) { WalletGuideReceiving() }
+    addScreen<NavRoute.WalletGuideIntro>(wizardTransition = false, animationsEnabled = animationsEnabled) { WalletGuideIntro() }
+    addScreen<NavRoute.WalletGuideDownload>(wizardTransition = true, animationsEnabled = animationsEnabled) { WalletGuideDownload() }
+    addScreen<NavRoute.WalletGuideNewWallet>(wizardTransition = true, animationsEnabled = animationsEnabled) { WalletGuideNewWallet() }
+    addScreen<NavRoute.WalletGuideReceiving>(wizardTransition = true, animationsEnabled = animationsEnabled) { WalletGuideReceiving() }
 }
 
 enum class NavAnimation {
@@ -144,11 +151,17 @@ enum class NavAnimation {
     SLIDE_IN_FROM_BOTTOM,
 }
 
+@ExcludeFromCoverage // Compose nav transition wiring; behaviour is exercised via the running app, not unit tests
 inline fun <reified T : NavRoute> NavGraphBuilder.addScreen(
     typeMap: Map<KType, NavType<*>> = emptyMap(),
     deepLinks: List<NavDeepLink> = emptyList(),
     wizardTransition: Boolean = false,
     navAnimation: NavAnimation = if (wizardTransition) NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
+    // Gate for the "use animations" setting. Evaluated per-navigation, so it reflects
+    // the live effective value. When off, transitions are None: the destination swaps in instantly
+    // and only one screen is composed at a time — avoiding the double-composition heap spike that
+    // ANRs low-RAM devices on the offerbook. Defaults to enabled so any un-threaded caller is safe.
+    noinline animationsEnabled: () -> Boolean = { true },
     noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
 ) {
     composable<T>(
@@ -156,20 +169,24 @@ inline fun <reified T : NavRoute> NavGraphBuilder.addScreen(
         deepLinks = deepLinks,
         // 'enter' animation for the 'destination' screen
         enterTransition = {
-            when (navAnimation) {
-                NavAnimation.SLIDE_IN_FROM_RIGHT ->
-                    slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(NAV_ANIM_MS),
-                    )
+            if (!animationsEnabled()) {
+                EnterTransition.None
+            } else {
+                when (navAnimation) {
+                    NavAnimation.SLIDE_IN_FROM_RIGHT ->
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(NAV_ANIM_MS),
+                        )
 
-                NavAnimation.SLIDE_IN_FROM_BOTTOM ->
-                    slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Up,
-                        animationSpec = tween(NAV_ANIM_MS),
-                    )
+                    NavAnimation.SLIDE_IN_FROM_BOTTOM ->
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Up,
+                            animationSpec = tween(NAV_ANIM_MS),
+                        )
 
-                NavAnimation.FADE_IN -> fadeIn(animationSpec = tween(NAV_ANIM_MS))
+                    NavAnimation.FADE_IN -> fadeIn(animationSpec = tween(NAV_ANIM_MS))
+                }
             }
         },
         exitTransition = {
@@ -181,20 +198,24 @@ inline fun <reified T : NavRoute> NavGraphBuilder.addScreen(
             null
         },
         popExitTransition = {
-            when (navAnimation) {
-                NavAnimation.SLIDE_IN_FROM_RIGHT ->
-                    slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(NAV_ANIM_MS),
-                    )
+            if (!animationsEnabled()) {
+                ExitTransition.None
+            } else {
+                when (navAnimation) {
+                    NavAnimation.SLIDE_IN_FROM_RIGHT ->
+                        slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(NAV_ANIM_MS),
+                        )
 
-                NavAnimation.SLIDE_IN_FROM_BOTTOM ->
-                    slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Down,
-                        animationSpec = tween(NAV_ANIM_MS),
-                    )
+                    NavAnimation.SLIDE_IN_FROM_BOTTOM ->
+                        slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Down,
+                            animationSpec = tween(NAV_ANIM_MS),
+                        )
 
-                NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(NAV_ANIM_MS))
+                    NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(NAV_ANIM_MS))
+                }
             }
         },
     ) { backStackEntry ->

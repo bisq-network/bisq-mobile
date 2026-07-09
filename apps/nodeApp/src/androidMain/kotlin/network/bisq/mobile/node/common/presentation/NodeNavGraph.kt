@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import network.bisq.mobile.node.settings.backup.presentation.BackupScreen
 import network.bisq.mobile.node.startup.splash.NodeSplashScreen
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addCommonAppRoutes
 import network.bisq.mobile.presentation.common.ui.navigation.graph.addScreen
@@ -23,14 +24,16 @@ fun NodeNavGraph(
     modifier: Modifier = Modifier,
 ) {
     val navigationManager: NavigationManager = koinInject()
+    val animationSettings: AnimationSettings = koinInject()
+    val animationsEnabled: () -> Boolean = { animationSettings.enabled.value }
 
     NavHost(
         modifier = modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
         startDestination = NavRoute.Splash(),
     ) {
-        addCommonAppRoutes()
-        addNodeAppRoutes()
+        addCommonAppRoutes(animationsEnabled)
+        addNodeAppRoutes(animationsEnabled)
     }
 
     DisposableEffect(rootNavController) {
@@ -41,9 +44,9 @@ fun NodeNavGraph(
     }
 }
 
-fun NavGraphBuilder.addNodeAppRoutes() {
+fun NavGraphBuilder.addNodeAppRoutes(animationsEnabled: () -> Boolean) {
     composable<NavRoute.Splash> {
         NodeSplashScreen()
     }
-    addScreen<NavRoute.BackupAndRestore> { BackupScreen() }
+    addScreen<NavRoute.BackupAndRestore>(animationsEnabled = animationsEnabled) { BackupScreen() }
 }

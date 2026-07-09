@@ -19,6 +19,14 @@ class AndroidDeviceInfoProvider(
     private val appMemInfo: Debug.MemoryInfo = Debug.MemoryInfo()
     private val runtime = Runtime.getRuntime()
 
+    override fun getTotalRamBytes(): Long =
+        (context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)
+            ?.let { activityManager ->
+                val memInfo = ActivityManager.MemoryInfo()
+                activityManager.getMemoryInfo(memInfo)
+                memInfo.totalMem
+            } ?: 0L
+
     override fun getDeviceInfo(): String {
         // Memory info
         val na = "data.na".i18n()

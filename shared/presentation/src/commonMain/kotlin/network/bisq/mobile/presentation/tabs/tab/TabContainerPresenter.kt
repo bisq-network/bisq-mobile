@@ -8,6 +8,7 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.alert.toAlertNotificationUiState
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
@@ -22,9 +23,12 @@ class TabContainerPresenter(
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
+    private val animationSettings: AnimationSettings,
 ) : BasePresenter(mainPresenter),
     ITabContainerPresenter {
-    override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
+    // Effective flag (user setting AND device not low-spec) so the avatar animation honours the
+    // device lock too, not just the raw setting. See #1293.
+    override val showAnimation: StateFlow<Boolean> get() = animationSettings.enabled
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = mainPresenter.tradesWithUnreadMessages
 
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
