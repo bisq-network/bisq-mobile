@@ -164,7 +164,7 @@ buildConfig {
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
         // Note: Update when updating kmp-tor lib
-        buildConfigField("TOR_VERSION", "0.4.8.17") // is TOR DAEMON version
+        buildConfigField("TOR_VERSION", "0.4.9.05") // is TOR DAEMON version
         // Analytics dev-only override (issue #525). See client BuildConfig above
         // for the full rationale. Node app gets its own DSN pointing at GlitchTip
         // project id=2 (bisq-easy-node-android). Same semantics: release builds
