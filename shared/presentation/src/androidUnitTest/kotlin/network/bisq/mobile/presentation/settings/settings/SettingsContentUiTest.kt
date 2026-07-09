@@ -283,6 +283,81 @@ class SettingsContentUiTest {
         verify { mockOnAction(SettingsUiAction.OnCloseOfferWhenTradeTakenChange(true)) }
     }
 
+    // ========== Animations Toggle Tests ==========
+
+    @Test
+    fun `when animations toggle is enabled and tapped then triggers OnUseAnimationsChange action`() {
+        // Given the toggle is interactive and currently off
+        val uiState =
+            SettingsUiState(
+                i18nPairs = i18nPairs,
+                languageCode = "en",
+                supportedLanguageCodes = setOf("en"),
+                closeOfferWhenTradeTaken = true,
+                tradePriceTolerance = DataEntry(value = "5"),
+                useAnimations = false,
+                numDaysAfterRedactingTradeData = DataEntry(value = "90"),
+                powFactor = DataEntry(value = "1"),
+                isFetchingSettings = false,
+            )
+
+        setTestContent {
+            SettingsContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                isUseAnimationsChangeEnabled = true,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // When the user taps the toggle label
+        composeTestRule
+            .onNodeWithText("settings.display.useAnimations".i18n())
+            .performScrollTo()
+            .performClick()
+
+        // Then it toggles the setting on
+        verify { mockOnAction(SettingsUiAction.OnUseAnimationsChange(true)) }
+    }
+
+    @Test
+    fun `when animations toggle is device-locked and tapped then explains instead of toggling`() {
+        // Given a low-spec device where the toggle is greyed out
+        val uiState =
+            SettingsUiState(
+                i18nPairs = i18nPairs,
+                languageCode = "en",
+                supportedLanguageCodes = setOf("en"),
+                closeOfferWhenTradeTaken = true,
+                tradePriceTolerance = DataEntry(value = "5"),
+                useAnimations = false,
+                numDaysAfterRedactingTradeData = DataEntry(value = "90"),
+                powFactor = DataEntry(value = "1"),
+                isFetchingSettings = false,
+            )
+
+        setTestContent {
+            SettingsContent(
+                uiState = uiState,
+                onAction = mockOnAction,
+                isUseAnimationsChangeEnabled = false,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        // When the user taps the greyed toggle label
+        composeTestRule
+            .onNodeWithText("settings.display.useAnimations".i18n())
+            .performScrollTo()
+            .performClick()
+
+        // Then an explanation is surfaced and the setting is NOT changed
+        verify { mockOnAction(SettingsUiAction.OnUseAnimationsLockedTap) }
+        verify(exactly = 0) { mockOnAction(ofType<SettingsUiAction.OnUseAnimationsChange>()) }
+    }
+
     // ========== Trade Price Tolerance Tests ==========
 
     @Test
