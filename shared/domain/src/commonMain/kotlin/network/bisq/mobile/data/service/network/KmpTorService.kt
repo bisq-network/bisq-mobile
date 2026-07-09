@@ -124,6 +124,11 @@ class KmpTorService(
                         _state.value = TorState.Starting
                         val newStartDefer =
                             serviceScope.async {
+                                // Remove ephemeral control-plane leftovers from a previous run before
+                                // starting, so kmp-tor's control AUTHENTICATE can't read a stale cookie
+                                // (which fails with "515 Authentication cookie did not match expected
+                                // value" and hangs bootstrap). Preserves onion identity — see method doc.
+                                cleanStaleControlState()
                                 val runtime = getTorRuntime()
                                 withTimeout(daemonStartTimeoutMs) {
                                     runtime.startDaemonAsync()
@@ -410,7 +415,7 @@ class KmpTorService(
     ) {
         try {
             val torDir = getTorDir()
-            val cookieFile = torDir / "control_auth_cookie"
+            val cookieFile = getControlAuthCookieFile()
             val configContent =
                 buildString {
                     appendLine("UseExternalTor 1")
@@ -505,6 +510,44 @@ class KmpTorService(
     private fun getControlPortFile(): Path = getTorDir() / "control-port.txt"
 
     private fun getControlPortBackupFile(): Path = getTorDir() / "control-port-backup.txt"
+
+    private fun getControlAuthCookieFile(): Path = getTorDir() / "control_auth_cookie"
+
+    /**
+     * Removes ephemeral control-plane files left over from a previous (possibly unclean) Tor run:
+     * the control auth cookie and the control-port files. Tor regenerates all of these on every
+     * daemon start; a stale cookie makes kmp-tor's control-port AUTHENTICATE fail with
+     * "515 Authentication cookie did not match expected value", which hangs bootstrap.
+     *
+     * Deliberately does NOT touch the rest of the Tor data directory (onion service keys, cached
+     * descriptors), so the node's persistent onion identity is preserved. Contrast with
+     * [purgeWorkingDir], which wipes everything and rotates the onion address.
+     *
+     * Best-effort: a file that can't be deleted is logged and skipped rather than failing the start.
+     *
+     * `internal` (not `private`) so the same-module test can verify the preserve-identity contract
+     * without starting a real Tor daemon.
+     */
+    internal suspend fun cleanStaleControlState() {
+        val staleFiles =
+            listOf(
+                getControlAuthCookieFile(),
+                getControlPortFile(),
+                getControlPortBackupFile(),
+            )
+        withContext(Dispatchers.IO) {
+            staleFiles.forEach { path ->
+                try {
+                    if (FileSystem.SYSTEM.exists(path)) {
+                        FileSystem.SYSTEM.delete(path)
+                        log.i { "Removed stale Tor control file before start: ${path.name}" }
+                    }
+                } catch (e: Exception) {
+                    log.w(e) { "Failed to remove stale Tor control file ${path.name}; continuing" }
+                }
+            }
+        }
+    }
 
     /**
      * Deletes the Tor working directory (including cache) to allow a fresh start on next run.

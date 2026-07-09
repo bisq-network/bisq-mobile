@@ -81,6 +81,55 @@ class NetworkServiceFacadeTest : KoinTest {
             // Should not throw - exception is caught and logged
             facade.ensureTorRunning()
         }
+
+    @Test
+    fun `activate does not start tor when disabled`() =
+        runTest {
+            val facade = createFacade(torEnabled = false)
+            facade.activate()
+            coVerify(exactly = 0) { kmpTorService.startTor(any(), any()) }
+        }
+
+    @Test
+    fun `activate starts tor once when it succeeds first attempt`() =
+        runTest {
+            val facade = createFacade(torEnabled = true)
+            coEvery { kmpTorService.startTor(any(), any()) } returns true
+            facade.activate()
+            coVerify(exactly = 1) { kmpTorService.startTor(any(), any()) }
+        }
+
+    @Test
+    fun `activate retries after a failed start and stops once tor is up`() =
+        runTest {
+            val facade = createFacade(torEnabled = true)
+            // First attempt fails (e.g. stale cookie AUTHENTICATE), second succeeds after cleanup.
+            coEvery { kmpTorService.startTor(any(), any()) } returnsMany listOf(false, true)
+            facade.activate()
+            coVerify(exactly = 2) { kmpTorService.startTor(any(), any()) }
+        }
+
+    @Test
+    fun `activate gives up after max attempts and returns without hanging`() =
+        runTest {
+            val facade = createFacade(torEnabled = true)
+            // Always fails: activate must return (not suspend forever waiting for Started).
+            coEvery { kmpTorService.startTor(any(), any()) } returns false
+            facade.activate()
+            // MAX_TOR_START_ATTEMPTS = 3 (private const in NetworkServiceFacade).
+            coVerify(exactly = 3) { kmpTorService.startTor(any(), any()) }
+        }
+
+    @Test
+    fun `activate keeps retrying when a start attempt throws`() =
+        runTest {
+            val facade = createFacade(torEnabled = true)
+            // Non-cancellation throw on first attempt is caught and treated as a failed attempt,
+            // then the second attempt succeeds.
+            coEvery { kmpTorService.startTor(any(), any()) } throws RuntimeException("tor error") andThen true
+            facade.activate()
+            coVerify(exactly = 2) { kmpTorService.startTor(any(), any()) }
+        }
 }
 
 private class TestNetworkServiceFacade(
