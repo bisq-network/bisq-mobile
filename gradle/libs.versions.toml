@@ -65,15 +65,12 @@ coil-compose = "3.4.0"
 # -------------------- Multiplatform Libraries --------------------
 bignum-lib = "0.3.10"
 # kmp-tor for embedded Tor support
-kmp-tor = "2.4.1"
-kmp-tor-resource = "408.17.0"
-## we can't upgrade to 2.5.0 - it breaks iOS
-#kmp-tor = "2.5.0"
-#kmp-tor-resource = "408.19.0"
+kmp-tor = "2.6.0"
+kmp-tor-resource = "409.5.0"
 kermit = "2.1.0"
 kphonenumber = "0.11.0"
 # Sentry KMP — opt-in analytics SDK (issue #525). Communicates with self-hosted
-# GlitchTip backend over Tor (TODO). Currently uses localhost:8000 via SSH
+# GlitchTip backend over Tor
 # tunnel for end-to-end verification.
 sentry-kotlin-multiplatform = "0.26.0"
 

@@ -53,24 +53,35 @@ class NodeSplashPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
+        // isBootstrapFailed / torBootstrapFailed are the source of truth for the two failure UIs.
+        // The typed combine below is already at its 6-arg max, so fold the two failure flags into a
+        // single input here rather than inferring Tor failure from SplashPresenter.resolveActiveDialog's
+        // dialog priority (which would silently break this path if that priority were reordered).
+        val failureFlags =
+            combine(
+                nodeApplicationBootstrapFacade.isBootstrapFailed,
+                nodeApplicationBootstrapFacade.torBootstrapFailed,
+            ) { appFailed, torFailed -> BootstrapFailureFlags(appFailed, torFailed) }
+
         presenterScope.launch {
             // 6-arg combine: use the project's typed combine (kotlinx only types up to 5);
-            // imported kotlinx.combine stays for the slow-path collector below.
+            // imported kotlinx.combine stays for the 3-arg slow-path collector below.
             combine(
                 uiState,
                 nodeApplicationBootstrapFacade.bootstrapPhase,
                 nodeApplicationBootstrapFacade.torBootstrapProgress,
                 numConnections,
                 allDataReceived,
-                nodeApplicationBootstrapFacade.isBootstrapFailed,
-            ) { splashUiState, phase, torProgress, peerCount, dataReceived, appBootstrapFailed ->
+                failureFlags,
+            ) { splashUiState, phase, torProgress, peerCount, dataReceived, failure ->
                 buildNodeUiState(
                     splashUiState = splashUiState,
                     phase = phase,
                     torProgress = torProgress,
                     peerCount = peerCount,
                     dataReceived = dataReceived,
-                    appBootstrapFailed = appBootstrapFailed,
+                    appBootstrapFailed = failure.appBootstrapFailed,
+                    torBootstrapFailed = failure.torBootstrapFailed,
                 )
             }.collect { nodeUiState ->
                 _nodeUiState.value = nodeUiState
@@ -85,9 +96,11 @@ class NodeSplashPresenter(
         presenterScope.launch {
             combine(
                 nodeApplicationBootstrapFacade.bootstrapElapsedSeconds,
+                nodeApplicationBootstrapFacade.torBootstrapFailed,
                 nodeApplicationBootstrapFacade.isBootstrapFailed,
-            ) { elapsed, bootstrapFailed ->
-                if (!bootstrapFailed && elapsed >= SLOW_PATH_THRESHOLD_SECONDS) {
+            ) { elapsed, torFailed, bootstrapFailed ->
+                val failed = torFailed || bootstrapFailed
+                if (!failed && elapsed >= SLOW_PATH_THRESHOLD_SECONDS) {
                     SlowPathUiState(isVisible = true, elapsedSeconds = elapsed)
                 } else {
                     SlowPathUiState()
@@ -105,7 +118,13 @@ class NodeSplashPresenter(
         peerCount: Int,
         dataReceived: Boolean,
         appBootstrapFailed: Boolean,
+        torBootstrapFailed: Boolean,
     ): NodeSplashUiState {
+        // A general bootstrap failure supersedes the inline Tor-failure UI, mirroring
+        // SplashPresenter's dialog priority (isBootstrapFailed outranks torBootstrapFailed) —
+        // but sourced from the facade flags so this no longer depends on resolveActiveDialog.
+        val torFailed = torBootstrapFailed && !appBootstrapFailed
+        val title = titleFor(phase, torFailed, appBootstrapFailed)
         val safePeerCount = peerCount.coerceAtLeast(0)
 
         return NodeSplashUiState(
@@ -113,9 +132,10 @@ class NodeSplashPresenter(
                 splashUiState.copy(
                     appNameAndVersion = appNameAndVersion,
                 ),
-            title = titleFor(phase, appBootstrapFailed),
-            subtitle = subtitleFor(phase, appBootstrapFailed),
-            steps = buildSteps(phase, torProgress, safePeerCount, dataReceived),
+            title = title,
+            subtitle = subtitleFor(phase, torFailed, appBootstrapFailed),
+            steps = buildSteps(phase, torProgress, safePeerCount, dataReceived, torFailed),
+            showTorFailureActions = torFailed,
         )
     }
 
@@ -124,13 +144,14 @@ class NodeSplashPresenter(
         torProgress: Int,
         peerCount: Int,
         dataReceived: Boolean,
+        torFailed: Boolean,
     ): List<NodeBootstrapStep> =
         listOf(
             NodeBootstrapStep(
                 icon = NodeBootstrapStepIcon.TOR,
-                label = UiString("mobile.bootstrap.node.step.tor"),
-                detail = torDetail(phase, torProgress),
-                status = torStatus(phase),
+                label = if (torFailed) UiString("mobile.bootstrap.node.step.tor.failed.label") else UiString("mobile.bootstrap.node.step.tor"),
+                detail = torDetail(phase, torProgress, torFailed),
+                status = torStatus(phase, torFailed),
             ),
             NodeBootstrapStep(
                 icon = NodeBootstrapStepIcon.PEERS,
@@ -164,8 +185,12 @@ class NodeSplashPresenter(
             -> true
         }
 
-    private fun torStatus(phase: BootstrapPhase): NodeBootstrapStepStatus =
+    private fun torStatus(
+        phase: BootstrapPhase,
+        torFailed: Boolean,
+    ): NodeBootstrapStepStatus =
         when {
+            torFailed -> NodeBootstrapStepStatus.FAILED
             isTorStageDone(phase) -> NodeBootstrapStepStatus.DONE
             else -> NodeBootstrapStepStatus.IN_PROGRESS
         }
@@ -198,8 +223,10 @@ class NodeSplashPresenter(
     private fun torDetail(
         phase: BootstrapPhase,
         torProgress: Int,
+        torFailed: Boolean,
     ): UiString =
         when {
+            torFailed -> UiString("mobile.bootstrap.node.step.tor.failed.detail")
             isTorStageDone(phase) -> UiString("mobile.bootstrap.node.step.tor.done.detail")
             else -> uiString("mobile.bootstrap.node.step.tor.detail", torProgress)
         }
@@ -236,9 +263,11 @@ class NodeSplashPresenter(
 
     private fun titleFor(
         phase: BootstrapPhase,
+        torFailed: Boolean,
         appBootstrapFailed: Boolean,
     ): UiString =
         when {
+            torFailed -> UiString("mobile.bootstrap.node.title.torFailed")
             appBootstrapFailed -> UiString("mobile.bootstrap.node.title.failed")
             phase == BootstrapPhase.INITIALIZE_NETWORK -> UiString("mobile.bootstrap.node.title.peers")
             phase == BootstrapPhase.INITIALIZE_SERVICES -> UiString("mobile.bootstrap.node.title.data")
@@ -248,14 +277,22 @@ class NodeSplashPresenter(
 
     private fun subtitleFor(
         phase: BootstrapPhase,
+        torFailed: Boolean,
         appBootstrapFailed: Boolean,
     ): UiString =
         when {
+            torFailed -> UiString("mobile.bootstrap.node.subtitle.failed")
             appBootstrapFailed -> UiString("mobile.bootstrap.node.subtitle.appFailed")
             phase == BootstrapPhase.INITIALIZE_SERVICES -> UiString("mobile.bootstrap.node.subtitle.data")
             phase == BootstrapPhase.APP_INITIALIZED -> UiString("mobile.bootstrap.node.subtitle.ready")
             else -> UiString("mobile.bootstrap.node.subtitle")
         }
+
+    // Folds the two facade failure flags into one input so the main combine stays at its 6-arg max.
+    private data class BootstrapFailureFlags(
+        val appBootstrapFailed: Boolean,
+        val torBootstrapFailed: Boolean,
+    )
 
     companion object {
         // Show the slow-path reassurance banner once bootstrap has been running this long

@@ -7,12 +7,17 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
 /**
- * [AnalyticsSocksPortProvider] for the bisq-easy Node app. The embedded bisq2
- * stack runs its own Tor instance via `bisq.network.tor.TorService` — kmp-tor
- * is bound in the node app's DI but is NEVER started there (kmp-tor's
- * `startTor()` is only called from the Connect-side `TrustedNodeSetupUseCase`).
- * Polling kmp-tor's flow would suspend forever on the node app — which is
- * exactly what the user hit when they first tested Phase 1 analytics.
+ * [AnalyticsSocksPortProvider] for the bisq-easy Node app. On the node, kmp-tor
+ * runs the Tor daemon (NetworkServiceFacade.activate() -> kmpTorService.startTor())
+ * and bisq2 core is configured to use it as external Tor (UseExternalTor). This
+ * provider reports the SOCKS proxy that bisq2 core is routing through, read from
+ * its own NetworkService rather than from kmp-tor directly.
+ *
+ * (Historical note: an earlier version of this comment claimed kmp-tor is never
+ * started on the node — that is FALSE; it is started. kmp-tor's own SOCKS port
+ * is in fact available earlier than bisq2 core's, so a KmpTorSocksPortProvider
+ * would resolve sooner — a possible future optimization. This provider is kept
+ * for coherence with bisq2's routing.)
  *
  * bisq2's `NetworkService` does not expose an observable SOCKS-port flow; it
  * makes the SOCKS proxy available synchronously via

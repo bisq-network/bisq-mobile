@@ -127,11 +127,12 @@ val androidNodeDomainModule =
         // pattern. Node app sends to the bisq-easy-node-android GlitchTip
         // project (DSN from gradle.properties / local.properties).
         single<NativeSentryInitializer> { SentryJavaNativeSentryInitializer() }
-        // SOCKS port source: bisq2's embedded NetworkService. The node app's
-        // KmpTorService binding is NEVER started (its startTor() is only
-        // called from the Connect-side TrustedNodeSetupUseCase) — so we must
-        // NOT wire KmpTorSocksPortProvider here or analytics would suspend
-        // forever waiting on a Tor instance nobody ever starts.
+        // SOCKS port source: bisq2's embedded NetworkService. This provider polls the SOCKS proxy
+        // that bisq2 core is actually routing through (its Node.getSocksProxy()), which resolves once
+        // bisq2 core's node is up. NOTE: kmp-tor IS started on the node (NetworkServiceFacade.activate()
+        // -> kmpTorService.startTor(); bisq2 core then uses it as external Tor). So its own SOCKS port
+        // is available earlier — switching to KmpTorSocksPortProvider would resolve sooner and is a
+        // valid future optimization; the current provider is kept for coherence with bisq2's routing.
         single<AnalyticsSocksPortProvider> { Bisq2SocksPortProvider(get()) }
         single {
             // See ClientDomainModule for the matching pattern + rationale.

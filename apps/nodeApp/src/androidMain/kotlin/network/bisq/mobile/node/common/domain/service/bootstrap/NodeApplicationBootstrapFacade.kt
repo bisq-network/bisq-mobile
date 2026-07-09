@@ -32,14 +32,18 @@ class NodeApplicationBootstrapFacade(
         super.activate()
         log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
 
-        // Set initial state before observing; bisq2 core's application State drives progress from here.
+        // Set initial state before observing - Tor progress will update this
         _bootstrapPhase.value = BootstrapPhase.INITIALIZE_APP
         setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
         setProgress(0f)
 
-        // The node embeds bisq2 core's own Tor via NetworkService and never starts KmpTorService
-        // (see NodeDomainModule) — so the base observeTorState() would be a dead no-op here. Tor and
-        // network failures surface through observeApplicationState() -> State.FAILED instead.
+        // The node DOES run kmp-tor: NetworkServiceFacade.activate() calls kmpTorService.startTor(),
+        // and bisq2 core is configured to use that external Tor. observeTorState() is therefore the
+        // (only) feeder of the Tor bootstrap % (setTorBootstrapProgress) and of torBootstrapFailed on
+        // a Tor start failure — it is NOT a no-op here. Removing it (PR #1579, on a wrong "node never
+        // starts kmp-tor" premise) froze the splash Tor % at 0 and dropped the Tor-failure signal.
+        // App/network failures still surface via observeApplicationState() -> State.FAILED.
+        observeTorState()
         observeApplicationState()
     }
 
