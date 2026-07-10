@@ -146,7 +146,15 @@ abstract class SplashPresenter(
             currentCoroutineContext().ensureActive()
         }
 
-        // Navigation failed — fall back to onboarding to unblock the user
+        onNavigationDataUnavailable(error)
+    }
+
+    /**
+     * Reached when the profile/settings needed to route the user could not be loaded (e.g. transient
+     * connectivity loss). Default unblocks first-time users via onboarding; apps that know the node is
+     * already configured can override to route to their retry/setup screen instead.
+     */
+    protected open suspend fun onNavigationDataUnavailable(error: Throwable) {
         log.e(error) { "Navigation failed, falling back to onboarding" }
         navigateToOnboarding()
     }

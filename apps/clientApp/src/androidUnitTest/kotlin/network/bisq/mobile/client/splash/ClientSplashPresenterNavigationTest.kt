@@ -98,6 +98,8 @@ class ClientSplashPresenterNavigationTest {
         every { applicationBootstrapFacade.currentBootstrapStage } returns MutableStateFlow("")
         every { applicationBootstrapFacade.shouldShowProgressToast } returns MutableStateFlow(false)
         every { applicationBootstrapFacade.bootstrapPhase } returns bootstrapPhaseFlow
+        every { applicationBootstrapFacade.torBootstrapProgress } returns MutableStateFlow(0)
+        every { applicationBootstrapFacade.usesInternalTor } returns MutableStateFlow(false)
         every { versionProvider.getAppNameAndVersion(any(), any()) } returns "Test 1.0"
 
         every { connectivityService.status } returns connectivityStatusFlow
@@ -302,6 +304,38 @@ class ClientSplashPresenterNavigationTest {
 
             // Then: should navigate to TabContainer (home)
             verify { navigationManager.navigate(NavRoute.TabContainer, any(), any()) }
+        }
+
+    @Test
+    fun `navigates to trusted node setup when profile data fetch fails after connecting`() =
+        runTest(testDispatcher) {
+            // Given: connectivity is established, but the profile/settings fetch fails (e.g. the user
+            // enabled Airplane mode right after connecting). An already-configured user must NOT be
+            // sent to onboarding.
+            connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+            coEvery { settingsServiceFacade.getSettings() } returns
+                Result.failure(RuntimeException("Network error"))
+            coEvery { settingsRepository.fetch() } returns Settings(firstLaunch = false)
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            testScheduler.runCurrent()
+
+            // When: progress reaches 1.0 and navigation proceeds into super.navigateToNextScreen()
+            progressFlow.value = 1.0f
+            advanceUntilIdle()
+
+            // Then: route to trusted node setup (retry/pair), never onboarding
+            verify {
+                navigationManager.navigate(
+                    match { navRoute ->
+                        navRoute is ClientNavRoute.TrustedNodeSetup && navRoute.showConnectionFailed
+                    },
+                    any(),
+                    any(),
+                )
+            }
+            verify(exactly = 0) { navigationManager.navigate(NavRoute.Onboarding, any(), any()) }
         }
 
     @Test

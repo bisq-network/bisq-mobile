@@ -22,9 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.uiString
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.BisqLogoGrey
@@ -65,9 +67,15 @@ private fun ClientSplashContent(uiState: ClientSplashUiState) {
         progress = uiState.progress,
     ) {
         ConnectBootstrapStrip(
+            showTor = uiState.showTorPhase,
+            torLabel = "mobile.bootstrap.connect.step.tor".i18n(),
+            torActive = uiState.torActive,
+            torDone = uiState.torDone,
+            torDetail = uiState.torDetail.i18n(),
             connectingLabel = "mobile.bootstrap.connect.step.connecting".i18n(),
-            loadingDataLabel = "mobile.bootstrap.connect.step.loadingData".i18n(),
+            connectingActive = uiState.connectingActive,
             connectingDone = uiState.connectingDone,
+            loadingDataLabel = "mobile.bootstrap.connect.step.loadingData".i18n(),
             loadingDataActive = uiState.loadingDataActive,
             loadingDataDone = uiState.loadingDataDone,
             connectingDetail = uiState.connectingDetail.i18n(),
@@ -136,20 +144,30 @@ private fun BootstrapShell(
 }
 
 /**
- * Connect bootstrap: two phases only (Connect WebSocket → Load data). A horizontal strip of
- * dot + label, a connector line, dot + label. Deliberately simpler than the Node step list —
- * there is no local Tor, no peer graph, no inventory download shown to the user.
+ * Connect bootstrap strip: a horizontal row of dot + label nodes joined by connector lines. Two
+ * phases by default (Connect WebSocket → Load data); when the phone bootstraps its own embedded Tor
+ * ([showTor]) a dedicated Tor node is prepended, giving Tor → Connect → Load data. On clearnet /
+ * external-proxy connections there is no on-device Tor bootstrap, so the Tor node is hidden. A single
+ * detail line under the row reflects whichever node is currently active.
  */
 @Composable
 private fun ConnectBootstrapStrip(
+    showTor: Boolean,
+    torLabel: String,
+    torActive: Boolean,
+    torDone: Boolean,
+    torDetail: String,
     connectingLabel: String,
-    loadingDataLabel: String,
+    connectingActive: Boolean,
     connectingDone: Boolean,
+    loadingDataLabel: String,
     loadingDataActive: Boolean,
     loadingDataDone: Boolean,
     connectingDetail: String,
     loadingDetail: String,
 ) {
+    // Narrower connectors when three nodes are shown so the row stays centred on narrow screens.
+    val connectorWidth = if (showTor) 44.dp else 60.dp
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -159,12 +177,20 @@ private fun ConnectBootstrapStrip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
+            if (showTor) {
+                ConnectPhaseNode(
+                    label = torLabel,
+                    done = torDone,
+                    active = torActive,
+                )
+                ConnectPhaseConnector(active = torDone, width = connectorWidth)
+            }
             ConnectPhaseNode(
                 label = connectingLabel,
                 done = connectingDone,
-                active = !connectingDone && !loadingDataActive,
+                active = connectingActive,
             )
-            ConnectPhaseConnector(active = connectingDone)
+            ConnectPhaseConnector(active = connectingDone, width = connectorWidth)
             ConnectPhaseNode(
                 label = loadingDataLabel,
                 done = loadingDataDone,
@@ -172,7 +198,13 @@ private fun ConnectBootstrapStrip(
             )
         }
 
-        val activeDetail = if (connectingDone) loadingDetail else connectingDetail
+        val activeDetail =
+            when {
+                torActive -> torDetail
+                connectingActive -> connectingDetail
+                loadingDataActive -> loadingDetail
+                else -> ""
+            }
         if (activeDetail.isNotEmpty()) {
             BisqGap.V1()
             BisqText.SmallLight(
@@ -237,11 +269,14 @@ private fun ConnectPhaseNode(
 }
 
 @Composable
-private fun ConnectPhaseConnector(active: Boolean) {
+private fun ConnectPhaseConnector(
+    active: Boolean,
+    width: Dp = 60.dp,
+) {
     Box(
         modifier =
             Modifier
-                .width(60.dp)
+                .width(width)
                 .padding(bottom = 18.dp) // offset to align with circle centres
                 .height(2.dp)
                 .background(if (active) BisqTheme.colors.primary else BisqTheme.colors.dark_grey40),
@@ -256,6 +291,11 @@ private fun previewClientUiState(
     title: UiString,
     subtitle: UiString,
     progress: Float,
+    showTorPhase: Boolean = false,
+    torActive: Boolean = false,
+    torDone: Boolean = false,
+    torDetail: UiString = UiString(""),
+    connectingActive: Boolean = false,
     connectingDone: Boolean = false,
     loadingDataActive: Boolean = false,
     loadingDataDone: Boolean = false,
@@ -267,12 +307,36 @@ private fun previewClientUiState(
         progress = progress,
         title = title,
         subtitle = subtitle,
+        showTorPhase = showTorPhase,
+        torActive = torActive,
+        torDone = torDone,
+        torDetail = torDetail,
+        connectingActive = connectingActive,
         connectingDone = connectingDone,
         loadingDataActive = loadingDataActive,
         loadingDataDone = loadingDataDone,
         connectingDetail = connectingDetail,
         loadingDetail = loadingDetail,
     )
+
+@ExcludeFromCoverage
+@Preview(name = "Connect 0: starting Tor")
+@Composable
+private fun ClientSplash_StartingTor_Preview() {
+    BisqTheme.Preview {
+        ClientSplashContent(
+            uiState =
+                previewClientUiState(
+                    title = UiString("mobile.bootstrap.connect.title.startingTor"),
+                    subtitle = UiString("mobile.bootstrap.connect.subtitle.startingTor"),
+                    progress = 0.16f,
+                    showTorPhase = true,
+                    torActive = true,
+                    torDetail = uiString("mobile.bootstrap.connect.step.tor.detail", 45),
+                ),
+        )
+    }
+}
 
 @ExcludeFromCoverage
 @Preview(name = "Connect 1: connecting")
@@ -284,7 +348,8 @@ private fun ClientSplash_Connecting_Preview() {
                 previewClientUiState(
                     title = UiString("mobile.bootstrap.connect.title"),
                     subtitle = UiString("mobile.bootstrap.connect.subtitle"),
-                    progress = 0.3f,
+                    progress = 0.45f,
+                    connectingActive = true,
                     connectingDetail = UiString("mobile.bootstrap.connect.step.connecting.detail"),
                 ),
         )
@@ -301,7 +366,7 @@ private fun ClientSplash_LoadingData_Preview() {
                 previewClientUiState(
                     title = UiString("mobile.bootstrap.connect.title.loadingData"),
                     subtitle = UiString("mobile.bootstrap.connect.subtitle.loadingData"),
-                    progress = 0.6f,
+                    progress = 0.7f,
                     connectingDone = true,
                     loadingDataActive = true,
                     loadingDetail = UiString("mobile.bootstrap.connect.step.loadingData.detail"),

@@ -2,9 +2,11 @@ package network.bisq.mobile.client.common.domain.service.bootstrap
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
@@ -28,6 +30,12 @@ class ClientApplicationBootstrapFacade(
     private val sessionService: SessionService,
     private val connectivityService: ConnectivityService,
 ) : ApplicationBootstrapFacade(kmpTorService) {
+    private companion object {
+        // How long the completed "Load data" step (✓ / "Ready") is held on screen before navigating,
+        // so the second step is perceptible instead of flashing by on fast (clearnet) connections.
+        const val LOADING_DATA_DONE_DWELL_MS = 700L
+    }
+
     /**
      * Typed bootstrap phases for the Connect app, replacing the untyped [state] string as the
      * source of truth for the 2-phase splash design (Connecting → Loading data). Data-sync, which
@@ -35,6 +43,7 @@ class ClientApplicationBootstrapFacade(
      * [CONNECTED] transition by observing [ConnectivityService.status] during [LOADING_DATA].
      */
     enum class ConnectBootstrapPhase {
+        STARTING_TOR,
         CONNECTING,
         LOADING_DATA,
         CONNECTED,
@@ -43,12 +52,16 @@ class ClientApplicationBootstrapFacade(
     private val _bootstrapPhase = MutableStateFlow(ConnectBootstrapPhase.CONNECTING)
     val bootstrapPhase: StateFlow<ConnectBootstrapPhase> = _bootstrapPhase.asStateFlow()
 
+    // True only when the phone bootstraps its own embedded Tor (INTERNAL_TOR) to reach the node.
+    // Drives whether the splash strip shows the dedicated Tor phase node.
+    private val _usesInternalTor = MutableStateFlow(false)
+    val usesInternalTor: StateFlow<Boolean> = _usesInternalTor.asStateFlow()
+
     private var connectivityObserverJob: Job? = null
 
     override suspend fun activate() {
         super.activate()
 
-        _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTING
         connectivityObserverJob?.cancel()
         connectivityObserverJob = null
 
@@ -57,8 +70,12 @@ class ClientApplicationBootstrapFacade(
 
         val settings = sensitiveSettingsRepository.fetch()
         if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
+            _usesInternalTor.value = true
+            _bootstrapPhase.value = ConnectBootstrapPhase.STARTING_TOR
             observeTorState()
         } else {
+            _usesInternalTor.value = false
+            _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTING
             onTorStartedOrSkipped()
         }
     }
@@ -195,22 +212,24 @@ class ClientApplicationBootstrapFacade(
         connectivityObserverJob?.cancel()
         connectivityObserverJob =
             serviceScope.launch {
-                connectivityService.status.collect { status ->
-                    if (status.isConnected()) {
-                        // Only the fully-received state advances the strip to "done"; REQUESTING_INVENTORY
-                        // and CONNECTED_WITH_LIMITATIONS complete bootstrap but keep the LOADING_DATA phase.
-                        if (status == ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED) {
-                            _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTED
-                            setState("mobile.bootstrap.connectedToTrustedNode".i18n())
-                        }
-                        setProgress(1.0f)
-                    }
-                    // BOOTSTRAPPING / DISCONNECTED / RECONNECTING: still connecting — remain in LOADING_DATA.
+                // Await the first usable connection (isConnected() is already true at REQUESTING_INVENTORY);
+                // BOOTSTRAPPING / DISCONNECTED / RECONNECTING simply keep us in LOADING_DATA.
+                val status = connectivityService.status.first { it.isConnected() }
+                // Only the fully-received state advances the strip to "done"; REQUESTING_INVENTORY and
+                // CONNECTED_WITH_LIMITATIONS complete bootstrap but keep the LOADING_DATA phase.
+                if (status == ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED) {
+                    _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTED
+                    setState("mobile.bootstrap.connectedToTrustedNode".i18n())
                 }
+                // Hold the completed step (✓ / "Ready") on screen for a beat so it doesn't flash by on
+                // fast (clearnet) connections before navigation triggers on progress = 1.0.
+                delay(LOADING_DATA_DONE_DWELL_MS)
+                setProgress(1.0f)
             }
     }
 
     override fun onTorStarted() {
+        _bootstrapPhase.value = ConnectBootstrapPhase.CONNECTING
         onTorStartedOrSkipped()
     }
 

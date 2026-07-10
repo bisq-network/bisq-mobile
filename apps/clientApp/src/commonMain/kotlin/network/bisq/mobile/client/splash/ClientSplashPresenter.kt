@@ -21,6 +21,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.UiString
+import network.bisq.mobile.i18n.uiString
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.startup.splash.SplashPresenter
@@ -84,8 +85,10 @@ class ClientSplashPresenter(
             combine(
                 uiState,
                 applicationBootstrapFacade.bootstrapPhase,
-            ) { splashUiState, phase ->
-                buildClientUiState(splashUiState, phase)
+                applicationBootstrapFacade.torBootstrapProgress,
+                applicationBootstrapFacade.usesInternalTor,
+            ) { splashUiState, phase, torProgress, usesTor ->
+                buildClientUiState(splashUiState, phase, torProgress, usesTor)
             }.collect { clientUiState ->
                 _clientUiState.value = clientUiState
             }
@@ -141,8 +144,12 @@ class ClientSplashPresenter(
                     delay(safetyNetTimeoutMs)
                     if (!hasNavigated) {
                         hasNavigated = true
-                        if (applicationBootstrapFacade.bootstrapPhase.value == ConnectBootstrapPhase.CONNECTING) {
-                            // WebSocket never connected — genuine connection failure.
+                        val phase = applicationBootstrapFacade.bootstrapPhase.value
+                        val wsConnected =
+                            phase == ConnectBootstrapPhase.LOADING_DATA ||
+                                phase == ConnectBootstrapPhase.CONNECTED
+                        if (!wsConnected) {
+                            // Still starting Tor or connecting — WebSocket never connected, genuine failure.
                             log.d { "Connectivity safety net triggered (${safetyNetTimeoutMs}ms, tor=$isTorConnection), navigating to trusted node setup" }
                             navigateToTrustedNodeSetup(showConnectionFailed = true)
                         } else {
@@ -203,13 +210,22 @@ class ClientSplashPresenter(
     private fun buildClientUiState(
         splashUiState: SplashUiState,
         phase: ConnectBootstrapPhase,
+        torProgress: Int,
+        usesTor: Boolean,
     ): ClientSplashUiState =
         ClientSplashUiState(
             splashUiState = splashUiState,
             title = titleFor(phase),
             subtitle = subtitleFor(phase),
-            progress = progressFor(phase),
-            connectingDone = phase != ConnectBootstrapPhase.CONNECTING,
+            progress = progressFor(phase, torProgress),
+            showTorPhase = usesTor,
+            torActive = phase == ConnectBootstrapPhase.STARTING_TOR,
+            torDone = usesTor && phase != ConnectBootstrapPhase.STARTING_TOR,
+            torDetail = torDetailFor(torProgress),
+            connectingActive = phase == ConnectBootstrapPhase.CONNECTING,
+            connectingDone =
+                phase == ConnectBootstrapPhase.LOADING_DATA ||
+                    phase == ConnectBootstrapPhase.CONNECTED,
             loadingDataActive = phase == ConnectBootstrapPhase.LOADING_DATA,
             loadingDataDone = phase == ConnectBootstrapPhase.CONNECTED,
             connectingDetail = connectingDetailFor(phase),
@@ -218,16 +234,22 @@ class ClientSplashPresenter(
 
     // Visual progress for the bottom bar, derived from the phase so a failure-driven
     // splashUiState.progress = 1.0 never fills the bar while the strip is still connecting.
-    private fun progressFor(phase: ConnectBootstrapPhase): Float =
+    // During STARTING_TOR the live Tor % animates the bar continuously within the Tor band.
+    private fun progressFor(
+        phase: ConnectBootstrapPhase,
+        torProgress: Int,
+    ): Float =
         when (phase) {
-            ConnectBootstrapPhase.CONNECTING -> 0.3f
-            ConnectBootstrapPhase.LOADING_DATA -> 0.6f
+            ConnectBootstrapPhase.STARTING_TOR -> (torProgress / 100f) * 0.35f
+            ConnectBootstrapPhase.CONNECTING -> 0.45f
+            ConnectBootstrapPhase.LOADING_DATA -> 0.7f
             ConnectBootstrapPhase.CONNECTED -> 1.0f
         }
 
     // Exhaustive when over the phase (no ordinal arithmetic) so a new phase is a compile error here.
     private fun titleFor(phase: ConnectBootstrapPhase): UiString =
         when (phase) {
+            ConnectBootstrapPhase.STARTING_TOR -> UiString("mobile.bootstrap.connect.title.startingTor")
             ConnectBootstrapPhase.CONNECTING -> UiString("mobile.bootstrap.connect.title")
             ConnectBootstrapPhase.LOADING_DATA -> UiString("mobile.bootstrap.connect.title.loadingData")
             ConnectBootstrapPhase.CONNECTED -> UiString("mobile.bootstrap.connect.title.done")
@@ -235,24 +257,38 @@ class ClientSplashPresenter(
 
     private fun subtitleFor(phase: ConnectBootstrapPhase): UiString =
         when (phase) {
+            ConnectBootstrapPhase.STARTING_TOR -> UiString("mobile.bootstrap.connect.subtitle.startingTor")
             ConnectBootstrapPhase.CONNECTING -> UiString("mobile.bootstrap.connect.subtitle")
             ConnectBootstrapPhase.LOADING_DATA -> UiString("mobile.bootstrap.connect.subtitle.loadingData")
             ConnectBootstrapPhase.CONNECTED -> UiString("mobile.bootstrap.connect.subtitle.done")
         }
 
-    // Only phase 1 shows a connecting detail; other phases have none.
+    // Only the Connect phase shows a connecting detail; other phases have none (Tor has its own).
     private fun connectingDetailFor(phase: ConnectBootstrapPhase): UiString =
         when (phase) {
             ConnectBootstrapPhase.CONNECTING -> UiString("mobile.bootstrap.connect.step.connecting.detail")
+            ConnectBootstrapPhase.STARTING_TOR,
             ConnectBootstrapPhase.LOADING_DATA,
             ConnectBootstrapPhase.CONNECTED,
             -> UiString("")
         }
 
+    // Tor node detail, mirroring the node splash: "NN% — building circuit". Presenter emits the key +
+    // the percentage arg; the composable resolves it.
+    private fun torDetailFor(torProgress: Int): UiString = uiString("mobile.bootstrap.connect.step.tor.detail", torProgress)
+
     private suspend fun proceedToAppSkippingConnectivityCheck() {
         // WS is already connected; bypass navigateToNextScreen()'s connectivity re-check and route via
         // the base logic (home / onboarding / create-profile / agreement) as usual.
         super.navigateToNextScreen()
+    }
+
+    override suspend fun onNavigationDataUnavailable(error: Throwable) {
+        // We got past the early no-config check, so the node IS configured; a failure here means we
+        // couldn't reach it to load profile/settings. Route to the retry/pair screen rather than
+        // sending an existing user through onboarding — regardless of any cached data.
+        log.w(error) { "Could not load profile/settings; routing to trusted node setup" }
+        navigateToTrustedNodeSetup(showConnectionFailed = true)
     }
 
     private fun isTorConnection(bisqApiUrl: String): Boolean = bisqApiUrl.contains(".onion", ignoreCase = true)
