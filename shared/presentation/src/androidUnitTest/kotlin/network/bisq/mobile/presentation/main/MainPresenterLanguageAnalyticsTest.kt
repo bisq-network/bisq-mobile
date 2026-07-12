@@ -14,7 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
-import network.bisq.mobile.presentation.common.di.presentationTestModule
+import network.bisq.mobile.presentation.common.test_utils.di.presentationTestModule
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
@@ -49,7 +49,7 @@ class MainPresenterLanguageAnalyticsTest {
         every0Px()
         startKoin {
             modules(
-                presentationTestModule,
+                presentationTestModule(),
                 module {
                     single<AnalyticsService> { analyticsService }
                 },

@@ -119,6 +119,7 @@ kotlin {
             implementation(libs.androidx.test.compose.manifest)
 
             // Kotlin
+            implementation(libs.kotlin.test)
             implementation(libs.kotlin.test.junit)
 
             // KotlinX

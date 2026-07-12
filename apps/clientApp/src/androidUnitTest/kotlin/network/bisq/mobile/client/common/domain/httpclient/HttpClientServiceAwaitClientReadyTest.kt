@@ -11,7 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.VersionProvider
 import org.koin.core.module.Module
@@ -21,7 +21,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HttpClientServiceAwaitClientReadyTest : KoinIntegrationTestBase() {
+class HttpClientServiceAwaitClientReadyTest : ClientKoinIntegrationTestBase() {
     private lateinit var kmpTorService: KmpTorService
     private lateinit var settingsRepository: SensitiveSettingsRepository
     private lateinit var versionProvider: VersionProvider

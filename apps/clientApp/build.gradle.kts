@@ -236,6 +236,7 @@ kotlin {
             implementation(libs.androidx.test.compose.manifest)
 
             // Kotlin
+            implementation(libs.kotlin.test)
             implementation(libs.kotlin.test.junit)
 
             // KotlinX
@@ -248,6 +249,19 @@ kotlin {
 
             // Test utilities
             implementation(project(sharedTestUtilsModule))
+        }
+
+        // Share presentation's Android unit-test helpers with clientApp tests.
+        androidUnitTest {
+            val presentationUnitTestUtils =
+                project(sharedPresentationModule).projectDir.resolve(
+                    "src/androidUnitTest/kotlin/network/bisq/mobile/presentation/common/test_utils",
+                )
+            kotlin.srcDirs(
+                presentationUnitTestUtils.resolve("coroutines"),
+                presentationUnitTestUtils.resolve("di"),
+                presentationUnitTestUtils,
+            )
         }
     }
 }

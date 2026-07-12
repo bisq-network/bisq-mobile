@@ -11,14 +11,14 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEven
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import org.junit.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientAlertNotificationsServiceFacadeTest : KoinIntegrationTestBase() {
+class ClientAlertNotificationsServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private val apiGateway: AlertNotificationsApiGateway = mockk(relaxed = true)
     private val json = Json { ignoreUnknownKeys = true }
     private lateinit var facade: ClientAlertNotificationsServiceFacade

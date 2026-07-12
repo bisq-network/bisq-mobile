@@ -18,7 +18,7 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEven
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
@@ -40,7 +40,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientOffersServiceFacadeTest : KoinIntegrationTestBase() {
+class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private val marketPriceServiceFacade =
         object : MarketPriceServiceFacade(mockk(relaxed = true)) {
             override fun findMarketPriceItem(marketVO: MarketVO) = null

@@ -25,8 +25,12 @@ kotlin {
         }
 
         androidMain.dependencies {
-            // JUnit annotations for AndroidCoroutineTestBase
+            // JUnit annotations for Android test bases
             implementation(libs.junit)
+
+            // Koin for KoinIntegrationTestBase — api so subclasses can use KoinTest
+            api(libs.koin.core)
+            api(libs.koin.test)
         }
     }
 }

@@ -7,7 +7,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.repository.SettingsRepository
@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ClientSettingsServiceFacadeTest : KoinIntegrationTestBase() {
+class ClientSettingsServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private lateinit var facade: ClientSettingsServiceFacade
     private lateinit var apiGateway: SettingsApiGateway
     private lateinit var settingsRepository: SettingsRepositoryMock

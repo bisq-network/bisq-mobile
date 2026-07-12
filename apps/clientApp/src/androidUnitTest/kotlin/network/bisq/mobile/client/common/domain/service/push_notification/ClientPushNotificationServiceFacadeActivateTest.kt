@@ -15,7 +15,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
-import network.bisq.mobile.client.common.test_utils.KoinIntegrationTestBase
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
 import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
@@ -37,7 +37,7 @@ import kotlin.test.assertTrue
  * which depends on CoroutineJobsManager injected via Koin.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientPushNotificationServiceFacadeActivateTest : KoinIntegrationTestBase() {
+class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTestBase() {
     private lateinit var facade: ClientPushNotificationServiceFacade
     private lateinit var apiGateway: PushNotificationApiGateway
     private lateinit var settingsRepository: SettingsRepositoryMock
