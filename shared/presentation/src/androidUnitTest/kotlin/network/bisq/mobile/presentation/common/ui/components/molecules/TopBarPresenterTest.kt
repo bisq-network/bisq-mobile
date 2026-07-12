@@ -2,58 +2,17 @@ package network.bisq.mobile.presentation.common.ui.components.molecules
 
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
-import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.presentation.common.test_utils.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class TopBarPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { NoopNavigationManager() }
-                    single { GlobalUiManager(testDispatcher) }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
-        stopKoin()
-    }
-
+class TopBarPresenterTest : PlatformPresentationKoinTestBase() {
     private fun device(ramBytes: Long): DeviceInfoProvider =
         object : DeviceInfoProvider {
             override fun getDeviceInfo(): String = ""

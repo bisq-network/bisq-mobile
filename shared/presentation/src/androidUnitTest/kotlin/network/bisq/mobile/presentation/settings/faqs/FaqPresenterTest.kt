@@ -3,64 +3,28 @@ package network.bisq.mobile.presentation.settings.faqs
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.presentation.common.test_utils.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class FaqPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var globalUiManager: GlobalUiManager
+class FaqPresenterTest : PresentationKoinTestBase() {
     private lateinit var mainPresenter: MainPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun onKoinReady() {
         I18nSupport.initialize("en")
-
         mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single { globalUiManager }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
     }
 
     @Test
     fun `when presenter is created then ui state contains localized FAQ items`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given / When
             val presenter =
                 createPresenter(
@@ -81,7 +45,7 @@ class FaqPresenterTest {
 
     @Test
     fun `when want to know more clicked then opens FAQ url`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val presenter = createPresenter()
 

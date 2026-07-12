@@ -3,21 +3,14 @@ package network.bisq.mobile.presentation.offerbook
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfigs
@@ -43,55 +36,17 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
-import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.presentation.common.test_utils.coroutines.PlatformPresentationKoinTestBase
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class OfferbookPresenterFilterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    // Minimal Koin setup to satisfy BasePresenter injections
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    // Test CoroutineJobsManager uses the provided dispatcher for both UI and IO
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    // Navigation is not exercised in these tests, but BasePresenter injects it lazily
-                    single<NavigationManager> { NoopNavigationManager() }
-                },
-            )
-        }
-        // Avoid touching Android-specific density in MainPresenter.init
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-    }
-
-    @AfterTest
-    fun tearDown() {
-        // Restore any static mocks to prevent bleed-over into other tests
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
-        stopKoin()
-    }
-
+class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
     // --- Shared helpers for building presenters and awaiting state ---
     private class FakeOfferbookFilterConfigRepository(
         initialConfigs: OfferbookFilterConfigs = OfferbookFilterConfigs(),
@@ -244,7 +199,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_onlyMyOffers_filters_to_user_offers() =
-        runTest(testDispatcher) {
+        runTest {
             val allOffers =
                 listOf(
                     makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
@@ -275,7 +230,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_empty_selection_shows_no_offers() =
-        runTest(testDispatcher) {
+        runTest {
             val allOffers =
                 listOf(
                     makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
@@ -311,7 +266,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_baseline_availability_remains_stable() =
-        runTest(testDispatcher) {
+        runTest {
             val allOffers =
                 listOf(
                     makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
@@ -343,7 +298,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_selection_restoration_shows_all_offers() =
-        runTest(testDispatcher) {
+        runTest {
             val allOffers =
                 listOf(
                     makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
@@ -375,7 +330,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_onlyMyOffers_with_no_own_offers_marks_filters_active() =
-        runTest(testDispatcher) {
+        runTest {
             val allOffers =
                 listOf(
                     makeOffer("o1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
@@ -407,7 +362,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_method_filters_mark_filters_active_when_list_empty() =
-        runTest(testDispatcher) {
+        runTest {
             val allOffers =
                 listOf(
                     makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
@@ -439,7 +394,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_onlyMyOffers_respects_method_filters() =
-        runTest(testDispatcher) {
+        runTest {
             val allOffers =
                 listOf(
                     makeOffer(
@@ -480,7 +435,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_restores_initial_market_filter_config_from_repository_and_persists_changes() =
-        runTest(testDispatcher) {
+        runTest {
             val initialOffers =
                 listOf(
                     makeOffer("wise", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN")),
@@ -569,7 +524,7 @@ class OfferbookPresenterFilterTest {
 
     @Test
     fun test_cross_market_payment_filter_persistence() =
-        runTest(testDispatcher) {
+        runTest {
             // Scenario: User filters to only WISE and REVOLUT,
             // then the available payment methods change (simulating market switch).
             // Expected: Offers with WISE or REVOLUT should still be visible.

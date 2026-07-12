@@ -5,71 +5,29 @@ import bisqapps.shared.presentation.generated.resources.nav_settings
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.UiString
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.presentation.common.test_utils.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MiscItemsPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
+class MiscItemsPresenterTest : PresentationKoinTestBase() {
     private lateinit var userProfileService: UserProfileServiceFacade
     private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
-    private lateinit var navigationManager: NavigationManager
 
     private lateinit var presenter: MiscItemsPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
+    override fun onKoinReady() {
         userProfileService = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-        navigationManager = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { navigationManager }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    single<GlobalUiManager> { globalUiManager }
-                },
-            )
-        }
-
         coEvery { userProfileService.getIgnoredUserProfileIds() } returns emptySet()
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     private fun createPresenter(): MiscItemsPresenter = TestMiscItemsPresenter(userProfileService, mainPresenter)
@@ -81,7 +39,7 @@ class MiscItemsPresenterTest {
 
     @Test
     fun `when attached then exposes the four sections in order`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
 
@@ -106,7 +64,7 @@ class MiscItemsPresenterTest {
 
     @Test
     fun `when no ignored users then ignored users item is disabled`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userProfileService.getIgnoredUserProfileIds() } returns emptySet()
             presenter = createPresenter()
@@ -121,7 +79,7 @@ class MiscItemsPresenterTest {
 
     @Test
     fun `when ignored users exist then ignored users item is enabled`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userProfileService.getIgnoredUserProfileIds() } returns setOf("ignored-user-id")
             presenter = createPresenter()
@@ -136,7 +94,7 @@ class MiscItemsPresenterTest {
 
     @Test
     fun `when menu item clicked then navigates to its route`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -152,7 +110,7 @@ class MiscItemsPresenterTest {
 
     @Test
     fun `when custom app items added then they appear in the app section`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
 
