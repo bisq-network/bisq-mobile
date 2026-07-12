@@ -57,6 +57,12 @@ abstract class NetworkServiceFacade(
      */
     private suspend fun startTorWithRetries() {
         repeat(MAX_TOR_START_ATTEMPTS) { attempt ->
+            if (applicationBootstrapFacade.torBootstrapFailed.value) {
+                log.i { "Tor bootstrap failed (terminal); skipping remaining start attempts" }
+                return
+            }
+            currentCoroutineContext().ensureActive()
+
             val started =
                 try {
                     kmpTorService.startTor()
@@ -66,6 +72,15 @@ abstract class NetworkServiceFacade(
                     false
                 }
             if (started) return
+
+            if (applicationBootstrapFacade.torBootstrapFailed.value) {
+                log.i {
+                    "Tor bootstrap failed (terminal) after attempt ${attempt + 1}/$MAX_TOR_START_ATTEMPTS; " +
+                        "skipping remaining retries"
+                }
+                return
+            }
+
             if (attempt < MAX_TOR_START_ATTEMPTS - 1) {
                 log.w { "Tor did not start (attempt ${attempt + 1}/$MAX_TOR_START_ATTEMPTS); retrying in ${TOR_START_RETRY_DELAY_MS}ms" }
                 delay(TOR_START_RETRY_DELAY_MS)

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -131,6 +131,25 @@ class NetworkServiceFacadeTest : KoinTest {
         }
 
     @Test
+    fun `startTorWithRetries stops when terminal bootstrap failure is flagged`() =
+        runTest(testDispatcher) {
+            val facade = createFacade(torEnabled = true)
+            coEvery { kmpTorService.startTor(any(), any()) } coAnswers {
+                torBootstrapFailedFlow.value = true
+                false
+            }
+            val activateJob =
+                launch {
+                    assertFailsWith<TorBootstrapNotReadyException> {
+                        facade.activate()
+                    }
+                }
+            runCurrent()
+            activateJob.join()
+            coVerify(exactly = 1) { kmpTorService.startTor(any(), any()) }
+        }
+
+    @Test
     fun `activate throws TorBootstrapNotReadyException after max start attempts and bootstrap failure`() =
         runTest(testDispatcher) {
             val facade = createFacade(torEnabled = true)
@@ -141,6 +160,8 @@ class NetworkServiceFacadeTest : KoinTest {
                         facade.activate()
                     }
                 }
+            runCurrent()
+            advanceTimeBy(2_000L)
             runCurrent()
             torBootstrapFailedFlow.value = true
             runCurrent()

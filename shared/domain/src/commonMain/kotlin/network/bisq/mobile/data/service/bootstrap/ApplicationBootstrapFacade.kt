@@ -1,5 +1,6 @@
 package network.bisq.mobile.data.service.bootstrap
 
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -12,7 +13,6 @@ import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.KmpTorService.TorState
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.i18n
-import androidx.annotation.VisibleForTesting
 import kotlin.concurrent.Volatile
 
 abstract class ApplicationBootstrapFacade(
