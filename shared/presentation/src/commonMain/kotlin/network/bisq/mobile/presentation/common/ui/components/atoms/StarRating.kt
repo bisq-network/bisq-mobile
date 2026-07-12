@@ -33,6 +33,18 @@ data class StarPainters(
     val empty: Painter,
 )
 
+@Stable
+internal data class StarRatingDisplay(
+    val fullStars: Int,
+    val hasHalfStar: Boolean,
+)
+
+internal fun starRatingDisplayFor(rating: Double): StarRatingDisplay {
+    val fullStars = rating.toInt().coerceIn(0, 5)
+    val hasHalfStar = (rating - fullStars) >= 0.5 && fullStars < 5
+    return StarRatingDisplay(fullStars = fullStars, hasHalfStar = hasHalfStar)
+}
+
 @Composable
 fun rememberStarPainters(): StarPainters {
     val fill = painterResource(Res.drawable.icon_star_green)
@@ -59,8 +71,9 @@ fun StarRating(
     modifier: Modifier = Modifier,
     painters: StarPainters = rememberStarPainters(),
 ) {
-    val fullStars = rating.toInt().coerceIn(0, 5)
-    val hasHalfStar = (rating - fullStars) >= 0.5 && fullStars < 5
+    val display = starRatingDisplayFor(rating)
+    val fullStars = display.fullStars
+    val hasHalfStar = display.hasHalfStar
     val starSizeDp = BisqUIConstants.ScreenPadding
     val spacingDp = 1.dp
     val density = LocalDensity.current
