@@ -1,49 +1,50 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.verify
-import network.bisq.mobile.i18n.I18nSupport
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import network.bisq.mobile.i18n.i18n
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.presentation.common.test_utils.compose.PresentationKoinComposeTestBase
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
+import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 
 /**
  * UI tests for [WebLinkConfirmationDialog] using Robolectric.
  *
  * These tests verify that the dialog composable renders correctly for default and custom strings
- * and that user interactions trigger the appropriate callbacks. Koin is not used; test-only
- * composition locals supply fallbacks instead of production services.
+ * and that user interactions trigger the appropriate callbacks. Settings and the main presenter
+ * are provided via [additionalModules] / [onKoinReady], matching [PresentationKoinComposeTestBase].
  */
-@RunWith(AndroidJUnit4::class)
-class WebLinkDialogUiIsolatedTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+@OptIn(ExperimentalCoroutinesApi::class)
+class WebLinkDialogUiIsolatedTest : PresentationKoinComposeTestBase() {
+    private lateinit var mainPresenter: MainPresenter
+    private lateinit var settingsFacade: WebLinkDialogSettingsServiceFake
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-        startKoinWithWebLinkDeps()
+    override fun additionalModules(): List<Module> =
+        listOf(webLinkConfirmationTestModule({ mainPresenter }, { settingsFacade }))
+
+    override fun onKoinReady() {
+        settingsFacade = WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true)
+        mainPresenter = mockk(relaxed = true)
+        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns true
     }
 
-    @After
-    fun tearDown() {
-        runCatching { stopKoin() }
-    }
-
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            IsolatedTestHost(content)
+    private fun setIsolatedTestContent(content: @Composable () -> Unit) {
+        setTestContent {
+            CompositionLocalProvider(
+                LocalExternalUrlOpener provides WebLinkDialogTestFixtures.noopExternalUrlOpener,
+            ) {
+                content()
+            }
         }
     }
 
@@ -60,7 +61,7 @@ class WebLinkDialogUiIsolatedTest {
         val expectedDontShowAgain = "action.dontShowAgain".i18n()
 
         // When
-        setTestContent {
+        setIsolatedTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -89,7 +90,7 @@ class WebLinkDialogUiIsolatedTest {
         val expectedDontShowAgain = "action.dontShowAgain".i18n()
 
         // When
-        setTestContent {
+        setIsolatedTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -125,7 +126,7 @@ class WebLinkDialogUiIsolatedTest {
         val onDismiss = mockk<() -> Unit>(relaxed = true)
 
         // When
-        setTestContent {
+        setIsolatedTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -159,7 +160,7 @@ class WebLinkDialogUiIsolatedTest {
         val onConfirm = mockk<() -> Unit>(relaxed = true)
 
         // When
-        setTestContent {
+        setIsolatedTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,

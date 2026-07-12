@@ -1,37 +1,16 @@
 package network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.ui
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Rule
+import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class PaymentAccountMethodIconUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    content()
-                }
-            }
-        }
-    }
-
+class PaymentAccountMethodIconUiTest : BisqComposeUiTestBase() {
     @Test
     fun `when payment method has icon then image with content description is displayed`() {
         // Given

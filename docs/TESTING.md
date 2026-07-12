@@ -23,8 +23,8 @@ BisqComposeUiTestBase — Compose UI, no Koin
 | Needs screen width mock | `PlatformPresentationKoinTestBase` | `OfferbookPresenterFilterTest` |
 | Compose UI, no Koin | `BisqComposeUiTestBase` | `SwitchUiTest` |
 | Compose UI + Koin | `PresentationKoinComposeTestBase` | `LinkButtonUiTest` |
-| Compose + Koin + platform mocks | `PlatformPresentationKoinComposeTestBase` | — |
-| Client Compose + `TestApplication` | Robolectric `@Config(application = TestApplication::class)` | — |
+| Compose + Koin + platform mocks | `PlatformPresentationKoinComposeTestBase` | — (deferred) |
+| Client Compose + `TestApplication` | Robolectric `@Config(application = TestApplication::class)` | `PaymentAccountMethodIconUiTest` |
 
 ## Rules
 

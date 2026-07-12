@@ -7,7 +7,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
@@ -83,7 +82,7 @@ class HttpClientServiceAwaitClientReadyTest : ClientKoinIntegrationTestBase() {
 
     @Test
     fun `awaitClientReady returns false on timeout when no client is built`() =
-        runTest(testDispatcher) {
+        runTest {
             val service = createService()
             val result = service.awaitClientReady(timeoutMs = 100)
             assertFalse(result)

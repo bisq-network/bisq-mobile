@@ -48,6 +48,15 @@ internal class WebLinkDialogSettingsServiceFake(
         return Result.success(Unit)
     }
 
+    fun setShowWebLinkConfirmation(value: Boolean) {
+        _showWebLinkConfirmation.value = value
+    }
+
+    /** Test helper to set [permitOpeningBrowser] without going through the suspend API. */
+    fun setPermitOpeningBrowserState(value: Boolean) {
+        _permitOpeningBrowser.value = value
+    }
+
     override suspend fun getSettings(): Result<SettingsVO> = Result.success(settingsVODemoObj)
 
     override suspend fun confirmTacAccepted(value: Boolean): Result<Unit> = Result.success(Unit)

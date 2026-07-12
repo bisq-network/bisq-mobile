@@ -2,82 +2,43 @@ package network.bisq.mobile.presentation.common.ui.components.atoms.button
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import network.bisq.mobile.data.service.settings.SettingsServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.di.presentationTestModule
+import network.bisq.mobile.presentation.common.test_utils.compose.PresentationKoinComposeTestBase
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
-import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkDialogSettingsServiceFake
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.mockNavigateToUrlBehavior
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.webLinkConfirmationTestModule
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
+import org.koin.core.module.Module
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@RunWith(AndroidJUnit4::class)
-class LinkButtonUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+@OptIn(ExperimentalCoroutinesApi::class)
+class LinkButtonUiTest : PresentationKoinComposeTestBase() {
     private lateinit var mainPresenter: MainPresenter
+    private lateinit var settingsFacade: WebLinkDialogSettingsServiceFake
 
     private val dialogTitle get() = "hyperlinks.openInBrowser.attention.headline".i18n()
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-        initKoin(showWebLinkConfirmation = true)
-    }
+    override fun additionalModules(): List<Module> =
+        listOf(webLinkConfirmationTestModule({ mainPresenter }, { settingsFacade }))
 
-    private fun initKoin(
-        showWebLinkConfirmation: Boolean,
-        openUrlResult: Boolean = true,
-    ) {
-        runCatching { stopKoin() }
+    override fun onKoinReady() {
+        settingsFacade = WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true)
         mainPresenter = mockk(relaxed = true)
-        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } answers {
-            if (!openUrlResult) {
-                mainPresenter.showSnackbar("mobile.error.cannotOpenUrl".i18n(), SnackbarType.ERROR)
-            }
-            openUrlResult
-        }
-        val settingsFacade =
-            WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = showWebLinkConfirmation)
-        startKoin {
-            modules(
-                module {
-                    single<MainPresenter> { mainPresenter }
-                    single<SettingsServiceFacade> { settingsFacade }
-                    factory { WebLinkConfirmationDialogPresenter(get(), get()) }
-                },
-                presentationTestModule,
-            )
-        }
-    }
-
-    @After
-    fun tearDown() {
-        runCatching { stopKoin() }
+        coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns true
     }
 
     private fun setLinkButton(
@@ -88,17 +49,15 @@ class LinkButtonUiTest {
         openConfirmation: Boolean = true,
         forceConfirm: Boolean = false,
     ) {
-        composeTestRule.setContent {
+        setTestContent {
             CompositionLocalProvider(LocalExternalUrlOpener provides externalUrlOpener) {
-                BisqTheme {
-                    LinkButton(
-                        text = text,
-                        link = link,
-                        onClick = onClick,
-                        openConfirmation = openConfirmation,
-                        forceConfirm = forceConfirm,
-                    )
-                }
+                LinkButton(
+                    text = text,
+                    link = link,
+                    onClick = onClick,
+                    openConfirmation = openConfirmation,
+                    forceConfirm = forceConfirm,
+                )
             }
         }
     }
@@ -116,7 +75,7 @@ class LinkButtonUiTest {
 
     @Test
     fun `when forceConfirm true and showWebLinkConfirmation false then shows confirmation dialog`() {
-        initKoin(false)
+        settingsFacade.setShowWebLinkConfirmation(false)
         setLinkButton(externalUrlOpener = noopExternalOpener(), forceConfirm = true)
 
         composeTestRule.onNodeWithText("Open docs").performClick()
@@ -234,7 +193,7 @@ class LinkButtonUiTest {
 
     @Test
     fun `when uri open fails then shows snackbar via main presenter and closes dialog without invoking onClick`() {
-        initKoin(showWebLinkConfirmation = true, openUrlResult = false)
+        mockNavigateToUrlBehavior(mainPresenter, openUrlResult = false)
         val onClick = mockk<() -> Unit>(relaxed = true)
         setLinkButton(
             externalUrlOpener = noopExternalOpener(),

@@ -1,35 +1,22 @@
 package network.bisq.mobile.presentation.settings.faqs
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-class FaqScreenContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class FaqScreenContentUiTest : BisqComposeUiTestBase() {
     private lateinit var mockOnAction: (FaqUiAction) -> Unit
     private lateinit var faqUiState: FaqUiState
 
     @Before
     fun setup() {
-        I18nSupport.setLanguage()
         mockOnAction = mockk(relaxed = true)
         faqUiState = sampleFaqUiState()
     }
@@ -52,16 +39,6 @@ class FaqScreenContentUiTest {
                     ),
                 ),
         )
-
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    content()
-                }
-            }
-        }
-    }
 
     @Test
     fun `when faq content renders then shows header questions and footer link`() {

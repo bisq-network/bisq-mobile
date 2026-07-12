@@ -82,11 +82,11 @@ shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/
 
 `:shared:presentation-test-utils` was removed.
 
-`clientApp` reuses the same sources via `kotlin.srcDir` in `apps/clientApp/build.gradle.kts` — not a module dependency, so no cycle:
+`clientApp` reuses selected helpers via a filtered `kotlin.srcDir` in `apps/clientApp/build.gradle.kts` — not a module dependency, so no cycle. The bridge allowlists `compose/`, `coroutines/`, `di/`, and root `NoopNavigationManager.kt` (required by `presentationTestModule`). It does **not** include other root helpers or `StateFlowProbeTest`.
 
 ```
 presentation main ← clientApp (implementation)
-presentation test_utils sources ← clientApp androidUnitTest (srcDir only)
+presentation test_utils/{compose,coroutines,di,+NoopNavigationManager} ← clientApp androidUnitTest (filtered srcDir)
 ```
 
 Explicit `implementation(libs.kotlin.test)` on `androidUnitTest` avoids IDE gaps when only `kotlin-test-junit` is declared.

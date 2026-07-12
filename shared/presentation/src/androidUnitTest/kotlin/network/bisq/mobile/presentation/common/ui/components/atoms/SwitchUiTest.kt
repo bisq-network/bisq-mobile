@@ -1,54 +1,30 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
-import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * UI tests for [BisqSwitch], focused on the disabled-tap routing added for the greyed
  * animations toggle: a disabled switch should route taps (both on the label and on the
  * greyed switch itself) to [BisqSwitch.onDisabledTap] rather than silently swallowing them.
  */
-@RunWith(AndroidJUnit4::class)
-class SwitchUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class SwitchUiTest : BisqComposeUiTestBase() {
     private val label = "Use animations"
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            BisqTheme {
-                content()
-            }
-        }
-    }
 
     @Test
     fun `when enabled and switch tapped then toggles`() {
         val onSwitch = mockk<(Boolean) -> Unit>(relaxed = true)
         val onDisabledTap = mockk<() -> Unit>(relaxed = true)
 
-        setContent {
+        setTestContent {
             BisqSwitch(
                 checked = false,
                 label = label,
@@ -69,7 +45,7 @@ class SwitchUiTest {
         val onSwitch = mockk<(Boolean) -> Unit>(relaxed = true)
         val onDisabledTap = mockk<() -> Unit>(relaxed = true)
 
-        setContent {
+        setTestContent {
             BisqSwitch(
                 checked = false,
                 label = label,
@@ -93,7 +69,7 @@ class SwitchUiTest {
         val onSwitch = mockk<(Boolean) -> Unit>(relaxed = true)
         val onDisabledTap = mockk<() -> Unit>(relaxed = true)
 
-        setContent {
+        setTestContent {
             BisqSwitch(
                 checked = false,
                 label = label,
@@ -113,7 +89,7 @@ class SwitchUiTest {
     fun `when disabled without handler then tap is inert`() {
         val onSwitch = mockk<(Boolean) -> Unit>(relaxed = true)
 
-        setContent {
+        setTestContent {
             BisqSwitch(
                 checked = false,
                 label = label,

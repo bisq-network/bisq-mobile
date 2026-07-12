@@ -6,7 +6,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO

@@ -1,84 +1,43 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
-import network.bisq.mobile.data.service.settings.SettingsServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.common.di.presentationTestModule
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import network.bisq.mobile.presentation.common.test_utils.compose.PresentationKoinComposeTestBase
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkDialogSettingsServiceFake
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.webLinkConfirmationTestModule
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import kotlin.test.assertEquals
 
-@RunWith(AndroidJUnit4::class)
-class NoteTextLinkInteractionUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    @After
-    fun tearDown() {
-        runCatching { stopKoin() }
-    }
-
-    private fun webLinkTestModules(
-        settings: SettingsServiceFacade,
-        mainPresenter: MainPresenter,
-    ) = module {
-        single<SettingsServiceFacade> { settings }
-        single<MainPresenter> { mainPresenter }
-    }
-
+@OptIn(ExperimentalCoroutinesApi::class)
+class NoteTextLinkInteractionUiTest : PresentationKoinComposeTestBase() {
     @Test
     fun `when uri link clicked without confirmation then opens uri`() {
         val settings = WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true)
         val mainPresenter = mockk<MainPresenter>(relaxed = true)
         coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns true
-        startKoin {
-            modules(
-                webLinkTestModules(settings, mainPresenter),
-                module {
-                    factory { WebLinkConfirmationDialogPresenter(get(), get()) }
-                },
-                presentationTestModule,
-            )
-        }
+        restartKoinWith(webLinkConfirmationTestModule({ mainPresenter }, { settings }))
 
         val opener = CapturingExternalUrlOpener()
-        composeTestRule.setContent {
+        setTestContent {
             CompositionLocalProvider(LocalExternalUrlOpener provides opener) {
-                BisqTheme {
-                    NoteText(
-                        notes = "Read docs",
-                        linkText = "Open link",
-                        uri = "https://example.com/note-direct",
-                        openConfirmation = false,
-                    )
-                }
+                NoteText(
+                    notes = "Read docs",
+                    linkText = "Open link",
+                    uri = "https://example.com/note-direct",
+                    openConfirmation = false,
+                )
             }
         }
 
@@ -93,30 +52,24 @@ class NoteTextLinkInteractionUiTest {
         val settings = WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true)
         val mainPresenter = mockk<MainPresenter>(relaxed = true)
         coEvery { mainPresenter.navigateToUrlWithLauncher(any()) } returns true
+        val presenterSpy = spyk(WebLinkConfirmationDialogPresenter(settings, mainPresenter))
 
-        val presenterSpy =
-            spyk(WebLinkConfirmationDialogPresenter(settings, mainPresenter))
+        restartKoinWith(
+            module {
+                single { settings }
+                single { mainPresenter }
+                single<WebLinkConfirmationDialogPresenter> { presenterSpy }
+            },
+        )
 
-        startKoin {
-            modules(
-                webLinkTestModules(settings, mainPresenter),
-                module {
-                    single<WebLinkConfirmationDialogPresenter> { presenterSpy }
-                },
-                presentationTestModule,
-            )
-        }
-
-        composeTestRule.setContent {
+        setTestContent {
             CompositionLocalProvider(LocalExternalUrlOpener provides ExternalUrlOpener { true }) {
-                BisqTheme {
-                    NoteText(
-                        notes = "Read docs",
-                        linkText = "Open link",
-                        uri = "https://example.com/note-confirm",
-                        openConfirmation = true,
-                    )
-                }
+                NoteText(
+                    notes = "Read docs",
+                    linkText = "Open link",
+                    uri = "https://example.com/note-confirm",
+                    openConfirmation = true,
+                )
             }
         }
 

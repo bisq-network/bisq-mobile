@@ -4,7 +4,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType

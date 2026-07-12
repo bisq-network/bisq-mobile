@@ -4,76 +4,35 @@ import android.app.Application
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.di.presentationTestModule
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
-import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import kotlin.test.assertTrue
 
 /**
  * Shared setup for [WebLinkConfirmationDialog] Android UI tests.
- *
- * Test classes use a private `setTestContent` helper that calls `composeTestRule.setContent` with
- * [IsolatedTestHost] or [KoinTestHost].
  */
 internal object WebLinkDialogTestFixtures {
     val noopExternalUrlOpener: ExternalUrlOpener = ExternalUrlOpener { false }
 }
 
-/** Records URLs passed to [ExternalUrlOpener.openUrl]. */
-internal class WebLinkDialogCapturingExternalUrlOpener : ExternalUrlOpener {
-    val openedUrls = mutableListOf<String>()
-
-    override suspend fun openUrl(url: String): Boolean {
-        openedUrls.add(url)
-        return true
-    }
-}
-
-/** [LocalIsTest] + noop [LocalExternalUrlOpener] + [BisqTheme] for isolated (no Koin) UI tests. */
-@Composable
-internal fun IsolatedTestHost(content: @Composable () -> Unit) {
-    CompositionLocalProvider(
-        LocalIsTest provides true,
-        LocalExternalUrlOpener provides WebLinkDialogTestFixtures.noopExternalUrlOpener,
-    ) {
-        BisqTheme {
-            content()
-        }
-    }
-}
-
-/** [LocalExternalUrlOpener] + [BisqTheme] for Koin-backed tests ([LocalIsTest] remains default). */
-@Composable
-internal fun KoinTestHost(
-    externalUrlOpener: ExternalUrlOpener,
-    content: @Composable () -> Unit,
-) {
-    CompositionLocalProvider(LocalExternalUrlOpener provides externalUrlOpener) {
-        BisqTheme {
-            content()
-        }
-    }
-}
-
 /** Stubs [MainPresenter.navigateToUrlWithLauncher] when opening fails ([openUrlResult] false). */
+internal fun webLinkConfirmationTestModule(
+    mainPresenter: () -> MainPresenter,
+    settings: () -> SettingsServiceFacade,
+) = module {
+    single<MainPresenter> { mainPresenter() }
+    single<SettingsServiceFacade> { settings() }
+    factory { WebLinkConfirmationDialogPresenter(get(), get()) }
+}
+
 internal fun mockNavigateToUrlBehavior(
     presenter: MainPresenter,
     openUrlResult: Boolean,
@@ -84,59 +43,6 @@ internal fun mockNavigateToUrlBehavior(
         }
         openUrlResult
     }
-}
-
-internal fun startKoinWithWebLinkDeps(
-    showWebLinkConfirmation: Boolean = true,
-    permitOpeningBrowser: Boolean = true,
-    setPermitResult: Result<Unit> = Result.success(Unit),
-    setDontShowAgainResult: Result<Unit> = Result.success(Unit),
-    openUrlResult: Boolean = true,
-): Pair<SettingsServiceFacade, MainPresenter> {
-    runCatching { stopKoin() }
-    val showFlow = MutableStateFlow(showWebLinkConfirmation)
-    val permitFlow = MutableStateFlow(permitOpeningBrowser)
-    val facade = mockk<SettingsServiceFacade>(relaxed = true)
-    every { facade.showWebLinkConfirmation } returns showFlow
-    every { facade.permitOpeningBrowser } returns permitFlow
-    coEvery { facade.setPermitOpeningBrowser(true) } returns setPermitResult
-    coEvery { facade.setPermitOpeningBrowser(false) } returns setPermitResult
-    coEvery { facade.setWebLinkDontShowAgain() } returns setDontShowAgainResult
-    val presenter = mockk<MainPresenter>(relaxed = true)
-    mockNavigateToUrlBehavior(presenter, openUrlResult)
-    startKoin {
-        modules(
-            module {
-                single<SettingsServiceFacade> { facade }
-                single<MainPresenter> { presenter }
-            },
-            // BasePresenter dependencies (GlobalUiManager, NavigationManager, CoroutineJobsManager...)
-            presentationTestModule,
-            // Presenter under test
-            module { factory { WebLinkConfirmationDialogPresenter(get(), get()) } },
-        )
-    }
-    return facade to presenter
-}
-
-internal fun startKoinWithWebLinkDialogFake(
-    fake: WebLinkDialogSettingsServiceFake = WebLinkDialogSettingsServiceFake(),
-    openUrlResult: Boolean = true,
-): Pair<WebLinkDialogSettingsServiceFake, MainPresenter> {
-    runCatching { stopKoin() }
-    val presenter = mockk<MainPresenter>(relaxed = true)
-    mockNavigateToUrlBehavior(presenter, openUrlResult)
-    startKoin {
-        modules(
-            module {
-                single<SettingsServiceFacade> { fake }
-                single<MainPresenter> { presenter }
-            },
-            presentationTestModule,
-            module { factory { WebLinkConfirmationDialogPresenter(get(), get()) } },
-        )
-    }
-    return fake to presenter
 }
 
 internal fun clipboardPrimaryText(): String? {

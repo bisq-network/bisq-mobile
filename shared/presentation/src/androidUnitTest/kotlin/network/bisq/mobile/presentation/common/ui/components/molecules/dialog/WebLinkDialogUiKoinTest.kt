@@ -2,28 +2,28 @@ package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import io.mockk.verify
-import network.bisq.mobile.i18n.I18nSupport
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.test_utils.compose.PresentationKoinComposeTestBase
 import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.presentation.main.MainPresenter
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import kotlin.test.assertEquals
 
 /**
@@ -33,27 +33,28 @@ import kotlin.test.assertEquals
  * the main presenter are provided via Koin, including persistence, clipboard and snackbar side
  * effects, auto-handling when confirmation is suppressed, and user interactions on the dialog.
  */
-@RunWith(AndroidJUnit4::class)
-class WebLinkDialogUiKoinTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+@OptIn(ExperimentalCoroutinesApi::class)
+class WebLinkDialogUiKoinTest : PresentationKoinComposeTestBase() {
+    private lateinit var presenter: MainPresenter
+    private lateinit var settingsFacade: WebLinkDialogSettingsServiceFake
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
+    override fun additionalModules(): List<Module> =
+        listOf(webLinkConfirmationTestModule({ presenter }, { settingsFacade }))
 
-    @After
-    fun tearDown() {
-        runCatching { stopKoin() }
+    override fun onKoinReady() {
+        settingsFacade = spyk(WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true))
+        presenter = mockk(relaxed = true)
+        mockNavigateToUrlBehavior(presenter, openUrlResult = true)
     }
 
     private fun setTestContent(
-        externalUrlOpener: ExternalUrlOpener,
+        externalUrlOpener: ExternalUrlOpener = WebLinkDialogTestFixtures.noopExternalUrlOpener,
         content: @Composable () -> Unit,
     ) {
-        composeTestRule.setContent {
-            KoinTestHost(externalUrlOpener, content)
+        setTestContent {
+            CompositionLocalProvider(LocalExternalUrlOpener provides externalUrlOpener) {
+                content()
+            }
         }
     }
 
@@ -66,14 +67,11 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/auto"
         val onConfirm = mockk<() -> Unit>(relaxed = true)
-        val (_, presenter) =
-            startKoinWithWebLinkDeps(
-                showWebLinkConfirmation = false,
-                permitOpeningBrowser = true,
-            )
+        settingsFacade.setShowWebLinkConfirmation(false)
+        settingsFacade.setPermitOpeningBrowserState(true)
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,
@@ -97,15 +95,12 @@ class WebLinkDialogUiKoinTest {
         val link = "https://example.com/auto-fail"
         val onConfirm = mockk<() -> Unit>(relaxed = true)
         val onError = mockk<() -> Unit>(relaxed = true)
-        val (_, presenter) =
-            startKoinWithWebLinkDeps(
-                showWebLinkConfirmation = false,
-                permitOpeningBrowser = true,
-                openUrlResult = false,
-            )
+        settingsFacade.setShowWebLinkConfirmation(false)
+        settingsFacade.setPermitOpeningBrowserState(true)
+        mockNavigateToUrlBehavior(presenter, openUrlResult = false)
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,
@@ -142,14 +137,11 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/copy-path"
         val onDismiss = mockk<() -> Unit>(relaxed = true)
-        val (_, presenter) =
-            startKoinWithWebLinkDeps(
-                showWebLinkConfirmation = false,
-                permitOpeningBrowser = false,
-            )
+        settingsFacade.setShowWebLinkConfirmation(false)
+        settingsFacade.setPermitOpeningBrowserState(false)
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -182,10 +174,9 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/no"
         val onDismiss = mockk<() -> Unit>(relaxed = true)
-        val (facade, _) = startKoinWithWebLinkDeps()
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -204,8 +195,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(false) }
-        coVerify(exactly = 0) { facade.setWebLinkDontShowAgain() }
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(false) }
+        coVerify(exactly = 0) { settingsFacade.setWebLinkDontShowAgain() }
         verify(exactly = 1) { onDismiss() }
         assertEquals(link, clipboardPrimaryText())
     }
@@ -215,10 +206,9 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/no-dsa"
         val onDismiss = mockk<() -> Unit>(relaxed = true)
-        val (facade, _) = startKoinWithWebLinkDeps()
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -238,8 +228,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(false) }
-        coVerify(exactly = 1) { facade.setWebLinkDontShowAgain() }
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(false) }
+        coVerify(exactly = 1) { settingsFacade.setWebLinkDontShowAgain() }
         verify(exactly = 1) { onDismiss() }
     }
 
@@ -248,13 +238,10 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/fail-dismiss"
         val onDismiss = mockk<() -> Unit>(relaxed = true)
-        val (facade, presenter) =
-            startKoinWithWebLinkDeps(
-                setPermitResult = Result.failure(RuntimeException("network")),
-            )
+        coEvery { settingsFacade.setPermitOpeningBrowser(false) } returns Result.failure(RuntimeException("network"))
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -273,7 +260,7 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(false) } // but this errors
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(false) } // but this errors
         verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.error.generic".i18n(),
@@ -291,13 +278,10 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/fail-dismiss-dsa"
         val onDismiss = mockk<() -> Unit>(relaxed = true)
-        val (facade, presenter) =
-            startKoinWithWebLinkDeps(
-                setDontShowAgainResult = Result.failure(RuntimeException("network")),
-            )
+        coEvery { settingsFacade.setWebLinkDontShowAgain() } returns Result.failure(RuntimeException("network"))
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -317,8 +301,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(false) }
-        coVerify(exactly = 1) { facade.setWebLinkDontShowAgain() } // but this errors
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(false) }
+        coVerify(exactly = 1) { settingsFacade.setWebLinkDontShowAgain() } // but this errors
         verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.error.generic".i18n(),
@@ -337,7 +321,6 @@ class WebLinkDialogUiKoinTest {
         val link = "https://example.com/copy-throws"
         val onDismiss = mockk<() -> Unit>(relaxed = true)
         val onError = mockk<() -> Unit>(relaxed = true)
-        val (_, presenter) = startKoinWithWebLinkDeps()
         every {
             presenter.showSnackbar(
                 "mobile.components.copyIconButton.copied".i18n(),
@@ -348,7 +331,7 @@ class WebLinkDialogUiKoinTest {
         } throws RuntimeException("forced copy snackbar failure")
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -386,10 +369,9 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/yes"
         val onConfirm = mockk<() -> Unit>(relaxed = true)
-        val (facade, presenter) = startKoinWithWebLinkDeps()
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,
@@ -408,8 +390,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
-        coVerify(exactly = 0) { facade.setWebLinkDontShowAgain() }
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(true) }
+        coVerify(exactly = 0) { settingsFacade.setWebLinkDontShowAgain() }
         coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onConfirm() }
     }
@@ -419,10 +401,9 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/yes-dsa"
         val onConfirm = mockk<() -> Unit>(relaxed = true)
-        val (facade, presenter) = startKoinWithWebLinkDeps()
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,
@@ -442,8 +423,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
-        coVerify(exactly = 1) { facade.setWebLinkDontShowAgain() }
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(true) }
+        coVerify(exactly = 1) { settingsFacade.setWebLinkDontShowAgain() }
         coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onConfirm() }
     }
@@ -453,13 +434,10 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/fail-confirm"
         val onConfirm = mockk<() -> Unit>(relaxed = true)
-        val (facade, presenter) =
-            startKoinWithWebLinkDeps(
-                setPermitResult = Result.failure(RuntimeException("network")),
-            )
+        coEvery { settingsFacade.setPermitOpeningBrowser(true) } returns Result.failure(RuntimeException("network"))
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,
@@ -478,7 +456,7 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) } // but this errors
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(true) } // but this errors
         verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.error.generic".i18n(),
@@ -496,13 +474,10 @@ class WebLinkDialogUiKoinTest {
         // Given
         val link = "https://example.com/fail-confirm-dsa"
         val onConfirm = mockk<() -> Unit>(relaxed = true)
-        val (facade, presenter) =
-            startKoinWithWebLinkDeps(
-                setDontShowAgainResult = Result.failure(RuntimeException("network")),
-            )
+        coEvery { settingsFacade.setWebLinkDontShowAgain() } returns Result.failure(RuntimeException("network"))
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,
@@ -522,8 +497,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
-        coVerify(exactly = 1) { facade.setWebLinkDontShowAgain() } // but this errors
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(true) }
+        coVerify(exactly = 1) { settingsFacade.setWebLinkDontShowAgain() } // but this errors
         verify(exactly = 1) {
             presenter.showSnackbar(
                 "mobile.error.generic".i18n(),
@@ -542,13 +517,10 @@ class WebLinkDialogUiKoinTest {
         val link = "https://example.com/yes-fail-open"
         val onConfirm = mockk<() -> Unit>(relaxed = true)
         val onError = mockk<() -> Unit>(relaxed = true)
-        val (facade, presenter) =
-            startKoinWithWebLinkDeps(
-                openUrlResult = false,
-            )
+        mockNavigateToUrlBehavior(presenter, openUrlResult = false)
 
         // When
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = onConfirm,
@@ -568,7 +540,7 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        coVerify(exactly = 1) { facade.setPermitOpeningBrowser(true) }
+        coVerify(exactly = 1) { settingsFacade.setPermitOpeningBrowser(true) }
         coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onError() }
         verify(exactly = 0) { onConfirm() }
@@ -598,26 +570,22 @@ class WebLinkDialogUiKoinTest {
         val message = "Message"
         val confirmButtonText = "Yes"
         val dismissButtonText = "No"
-        val fake = WebLinkDialogSettingsServiceFake()
         val onConfirm = mockk<() -> Unit>(relaxed = true)
-        val (_, presenter) = startKoinWithWebLinkDialogFake(fake)
 
         // One setContent per test (Compose rule); drive second navigation by changing link state.
         val linkState = mutableStateOf(link1)
-        composeTestRule.setContent {
-            KoinTestHost(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
-                key(linkState.value) {
-                    WebLinkConfirmationDialog(
-                        link = linkState.value,
-                        onConfirm = onConfirm,
-                        onDismiss = {},
-                        headline = headline,
-                        headlineLeftIcon = null,
-                        message = message,
-                        confirmButtonText = confirmButtonText,
-                        dismissButtonText = dismissButtonText,
-                    )
-                }
+        setTestContent {
+            key(linkState.value) {
+                WebLinkConfirmationDialog(
+                    link = linkState.value,
+                    onConfirm = onConfirm,
+                    onDismiss = {},
+                    headline = headline,
+                    headlineLeftIcon = null,
+                    message = message,
+                    confirmButtonText = confirmButtonText,
+                    dismissButtonText = dismissButtonText,
+                )
             }
         }
 
@@ -628,8 +596,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then — persisted state matches production semantics
-        assertEquals(false, fake.showWebLinkConfirmation.value)
-        assertEquals(true, fake.permitOpeningBrowser.value)
+        assertEquals(false, settingsFacade.showWebLinkConfirmation.value)
+        assertEquals(true, settingsFacade.permitOpeningBrowser.value)
         coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link1) }
         verify(exactly = 1) { onConfirm() }
 
@@ -659,25 +627,21 @@ class WebLinkDialogUiKoinTest {
         val message = "Message"
         val confirmButtonText = "Yes"
         val dismissButtonText = "No"
-        val fake = WebLinkDialogSettingsServiceFake()
         val onDismiss = mockk<() -> Unit>(relaxed = true)
-        val (_, presenter) = startKoinWithWebLinkDialogFake(fake)
 
         val linkState = mutableStateOf(link1)
-        composeTestRule.setContent {
-            KoinTestHost(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
-                key(linkState.value) {
-                    WebLinkConfirmationDialog(
-                        link = linkState.value,
-                        onConfirm = {},
-                        onDismiss = onDismiss,
-                        headline = headline,
-                        headlineLeftIcon = null,
-                        message = message,
-                        confirmButtonText = confirmButtonText,
-                        dismissButtonText = dismissButtonText,
-                    )
-                }
+        setTestContent {
+            key(linkState.value) {
+                WebLinkConfirmationDialog(
+                    link = linkState.value,
+                    onConfirm = {},
+                    onDismiss = onDismiss,
+                    headline = headline,
+                    headlineLeftIcon = null,
+                    message = message,
+                    confirmButtonText = confirmButtonText,
+                    dismissButtonText = dismissButtonText,
+                )
             }
         }
 
@@ -688,8 +652,8 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.waitForIdle()
 
         // Then
-        assertEquals(false, fake.showWebLinkConfirmation.value)
-        assertEquals(false, fake.permitOpeningBrowser.value)
+        assertEquals(false, settingsFacade.showWebLinkConfirmation.value)
+        assertEquals(false, settingsFacade.permitOpeningBrowser.value)
         assertEquals(link1, clipboardPrimaryText())
         verify(exactly = 1) { onDismiss() }
         verify(exactly = 1) {
@@ -723,9 +687,9 @@ class WebLinkDialogUiKoinTest {
     fun `when confirm clicked and launcher fails then attempts navigation and invokes onError`() {
         val link = "https://example.com/launcher-fails"
         val onError = mockk<() -> Unit>(relaxed = true)
-        val (_, mainPresenter) = startKoinWithWebLinkDialogFake(openUrlResult = false)
+        mockNavigateToUrlBehavior(presenter, openUrlResult = false)
 
-        setTestContent(WebLinkDialogTestFixtures.noopExternalUrlOpener) {
+        setTestContent {
             WebLinkConfirmationDialog(
                 link = link,
                 onConfirm = {},
@@ -738,7 +702,7 @@ class WebLinkDialogUiKoinTest {
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
         composeTestRule.waitForIdle()
 
-        coVerify(exactly = 1) { mainPresenter.navigateToUrlWithLauncher(link) }
+        coVerify(exactly = 1) { presenter.navigateToUrlWithLauncher(link) }
         verify(exactly = 1) { onError() }
     }
 }
