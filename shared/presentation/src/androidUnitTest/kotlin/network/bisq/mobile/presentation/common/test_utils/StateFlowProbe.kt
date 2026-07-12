@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.test_utils
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -24,6 +25,7 @@ class StateFlowProbe<T> internal constructor(
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 fun <T> TestScope.probeStateFlow(stateFlow: StateFlow<T>): StateFlowProbe<T> {
     val recordedValues = mutableListOf<T>()
     val job =

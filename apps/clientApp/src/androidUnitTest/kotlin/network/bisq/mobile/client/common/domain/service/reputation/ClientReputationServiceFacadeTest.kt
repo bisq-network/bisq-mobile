@@ -11,6 +11,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -100,17 +101,56 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(facade.scoreByUserProfileId.isEmpty())
         }
 
+    // getReputation is gated on BuildConfig.IS_DEBUG (compile-time const). Assert the
+    // live path only — both branches cannot run on one classpath without a seam.
+
     @Test
-    fun `getReputation delegates to api gateway in debug builds`() =
+    fun `getReputation returns success on the live BuildConfig path`() =
         runTest {
-            val score = ReputationScoreVO(totalScore = 42, fiveSystemScore = 3.5, ranking = 2)
-            coEvery { apiGateway.getReputationScore("user-1") } returns Result.success(score)
+            if (BuildConfig.IS_DEBUG) {
+                val score = ReputationScoreVO(totalScore = 42, fiveSystemScore = 3.5, ranking = 2)
+                coEvery { apiGateway.getReputationScore("user-1") } returns Result.success(score)
 
-            val result = facade.getReputation("user-1")
+                val result = facade.getReputation("user-1")
 
-            assertTrue(result.isSuccess)
-            assertEquals(score, result.getOrNull())
-            coVerify { apiGateway.getReputationScore("user-1") }
+                assertTrue(result.isSuccess)
+                assertEquals(score, result.getOrNull())
+                coVerify(exactly = 1) { apiGateway.getReputationScore("user-1") }
+            } else {
+                val observer = WebSocketEventObserver()
+                coEvery { apiGateway.subscribeUserReputation() } returns observer
+
+                facade.activate()
+                advanceUntilIdle()
+
+                observer.setEvent(reputationEvent("""{"user-1":{"totalScore":120,"fiveSystemScore":4.2,"ranking":5}}"""))
+                advanceUntilIdle()
+
+                val result = facade.getReputation("user-1")
+
+                assertTrue(result.isSuccess)
+                assertEquals(
+                    ReputationScoreVO(totalScore = 120, fiveSystemScore = 4.2, ranking = 5),
+                    result.getOrNull(),
+                )
+                coVerify(exactly = 0) { apiGateway.getReputationScore(any()) }
+            }
+        }
+
+    @Test
+    fun `getReputation returns failure on the live BuildConfig path`() =
+        runTest {
+            if (BuildConfig.IS_DEBUG) {
+                coEvery { apiGateway.getReputationScore("user-1") } returns Result.failure(Exception("not found"))
+
+                val result = facade.getReputation("user-1")
+
+                assertTrue(result.isFailure)
+            } else {
+                val result = facade.getReputation("missing-user")
+
+                assertTrue(result.isFailure)
+            }
         }
 
     @Test
@@ -122,6 +162,7 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
             assertTrue(result.isSuccess)
             assertEquals(1_700_000_000_000L, result.getOrNull())
+            coVerify(exactly = 1) { apiGateway.getProfileAge("user-1") }
         }
 
     @Test

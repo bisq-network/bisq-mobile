@@ -23,7 +23,7 @@ internal object WebLinkDialogTestFixtures {
     val noopExternalUrlOpener: ExternalUrlOpener = ExternalUrlOpener { false }
 }
 
-/** Stubs [MainPresenter.navigateToUrlWithLauncher] when opening fails ([openUrlResult] false). */
+/** Builds a Koin module wiring [MainPresenter], [SettingsServiceFacade], and [WebLinkConfirmationDialogPresenter] for tests. */
 internal fun webLinkConfirmationTestModule(
     mainPresenter: () -> MainPresenter,
     settings: () -> SettingsServiceFacade,
@@ -33,6 +33,7 @@ internal fun webLinkConfirmationTestModule(
     factory { WebLinkConfirmationDialogPresenter(get(), get()) }
 }
 
+/** Stubs [MainPresenter.navigateToUrlWithLauncher] when opening fails ([openUrlResult] false). */
 internal fun mockNavigateToUrlBehavior(
     presenter: MainPresenter,
     openUrlResult: Boolean,
