@@ -22,8 +22,7 @@ abstract class PresentationKoinTestBase : KoinIntegrationTestBase() {
 
     protected open fun onKoinReady() {}
 
-    override fun baseModules(): List<Module> =
-        listOf(presentationTestModule(testDispatcher, navigationManager, globalUiManager))
+    override fun baseModules(): List<Module> = listOf(presentationTestModule(testDispatcher, navigationManager, globalUiManager))
 
     override fun beforeStartKoin() {
         setUpPlatformMocks()

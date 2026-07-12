@@ -32,8 +32,7 @@ class LinkButtonUiTest : PresentationKoinComposeTestBase() {
 
     private val dialogTitle get() = "hyperlinks.openInBrowser.attention.headline".i18n()
 
-    override fun additionalModules(): List<Module> =
-        listOf(webLinkConfirmationTestModule({ mainPresenter }, { settingsFacade }))
+    override fun additionalModules(): List<Module> = listOf(webLinkConfirmationTestModule({ mainPresenter }, { settingsFacade }))
 
     override fun onKoinReady() {
         settingsFacade = WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true)

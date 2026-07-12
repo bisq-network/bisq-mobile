@@ -10,8 +10,8 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.test_utils.coroutines.PlatformPresentationKoinTestBase
+import network.bisq.mobile.presentation.main.MainPresenter
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

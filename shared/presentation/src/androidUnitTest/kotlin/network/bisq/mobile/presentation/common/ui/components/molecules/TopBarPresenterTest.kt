@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
-import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.test_utils.coroutines.PlatformPresentationKoinTestBase
+import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

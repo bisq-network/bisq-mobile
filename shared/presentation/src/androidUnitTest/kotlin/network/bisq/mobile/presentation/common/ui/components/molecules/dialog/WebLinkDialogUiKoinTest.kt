@@ -38,8 +38,7 @@ class WebLinkDialogUiKoinTest : PresentationKoinComposeTestBase() {
     private lateinit var presenter: MainPresenter
     private lateinit var settingsFacade: WebLinkDialogSettingsServiceFake
 
-    override fun additionalModules(): List<Module> =
-        listOf(webLinkConfirmationTestModule({ presenter }, { settingsFacade }))
+    override fun additionalModules(): List<Module> = listOf(webLinkConfirmationTestModule({ presenter }, { settingsFacade }))
 
     override fun onKoinReady() {
         settingsFacade = spyk(WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true))

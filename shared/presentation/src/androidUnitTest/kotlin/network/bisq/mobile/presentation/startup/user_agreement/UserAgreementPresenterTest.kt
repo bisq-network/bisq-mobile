@@ -8,8 +8,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.common.test_utils.coroutines.PresentationKoinTestBase
+import network.bisq.mobile.presentation.main.MainPresenter
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
