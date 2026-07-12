@@ -258,6 +258,7 @@ kotlin {
                     "src/androidUnitTest/kotlin/network/bisq/mobile/presentation/common/test_utils",
                 )
             kotlin.srcDirs(
+                presentationUnitTestUtils.resolve("compose"),
                 presentationUnitTestUtils.resolve("coroutines"),
                 presentationUnitTestUtils.resolve("di"),
                 presentationUnitTestUtils,
