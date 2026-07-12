@@ -44,7 +44,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class BasePresenterTest {
+class BasePresenterLifecycleTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var mainPresenter: MainPresenter

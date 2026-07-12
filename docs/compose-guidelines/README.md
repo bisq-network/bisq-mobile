@@ -99,6 +99,10 @@ fun Screen(presenter: Presenter) {
 - Control reading order and grouping with semantics/traversal where needed.
 - Offer reduced motion options; avoid excessive or disorienting animations.
 
+## Testing Compose UI (UiTest)
+
+Compose screens and content should have `*UiTest` coverage for visible states and primary interactions. See [recipes.md#compose](../testing/recipes.md#compose) and [catalog.md](../testing/catalog.md).
+
 ## References for follow-up reading
 
 - [Android docs: Compose best practices](https://developer.android.com/develop/ui/compose/performance/bestpractices)

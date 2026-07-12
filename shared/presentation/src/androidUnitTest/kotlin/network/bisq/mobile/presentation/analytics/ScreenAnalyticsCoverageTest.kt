@@ -68,7 +68,7 @@ import kotlin.test.assertTrue
  * presenter wiring (subscriptions, navigation, etc.) and need broader mock
  * setup. The override return value is the contract; the BasePresenter wiring
  * that emits the event on view-attach is tested separately in
- * `BasePresenterTest`.
+ * `BasePresenterLifecycleTest`.
  *
  * Adding a new screen:
  *  1. Add `data object NewScreen : ScreenViewed("screen.new_screen_opened")`

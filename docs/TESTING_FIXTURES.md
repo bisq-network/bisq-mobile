@@ -82,11 +82,11 @@ shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/
 
 `:shared:presentation-test-utils` was removed.
 
-`clientApp` reuses selected helpers via a filtered `kotlin.srcDir` in `apps/clientApp/build.gradle.kts` — not a module dependency, so no cycle. The bridge allowlists `compose/`, `coroutines/`, `di/`, and root `NoopNavigationManager.kt` (required by `presentationTestModule`). It does **not** include other root helpers or `StateFlowProbeTest`.
+`clientApp` reuses helpers via `kotlin.srcDirs` grafts in `apps/clientApp/build.gradle.kts` — not a module dependency, so no cycle. Point at `compose/`, `coroutines/`, `di/`, and the `test_utils` root (for `NoopNavigationManager`). Do **not** use `kotlin.include` on that source set: it replaces the default `**/*` and drops clientApp's own `androidUnitTest` sources.
 
 ```
 presentation main ← clientApp (implementation)
-presentation test_utils/{compose,coroutines,di,+NoopNavigationManager} ← clientApp androidUnitTest (filtered srcDir)
+presentation test_utils/{compose,coroutines,di,root} ← clientApp androidUnitTest (srcDirs graft)
 ```
 
 Explicit `implementation(libs.kotlin.test)` on `androidUnitTest` avoids IDE gaps when only `kotlin-test-junit` is declared.
@@ -99,7 +99,7 @@ Try AGP test fixtures again when **KMP** publishes Kotlin classes into the testF
 2. `testFixtures { enable = true }` on `:shared:presentation`
 3. `android.experimental.enableTestFixturesKotlinSupport=true` in `gradle.properties` (until non-experimental)
 4. `clientApp`: `implementation(testFixtures(project(":shared:presentation")))`
-5. Remove `kotlin.srcDir` bridge
+5. Remove `kotlin.srcDirs` graft
 6. Smoke-check: `assembleDebugTestFixtures` → `classes.jar` contains helper `.class` files; presentation + clientApp unit tests still resolve bases in the IDE
 
 ## References

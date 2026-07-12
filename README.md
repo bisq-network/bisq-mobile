@@ -77,6 +77,10 @@
 
 5. [Why KMP](#why-kmp)
 
+6. [Compose guidelines](./docs/compose-guidelines/README.md)
+
+7. [Testing guide](./docs/TESTING.md) — agents: [AGENTS.md](./AGENTS.md)
+
 ## Goal
 
 This project aims to make Bisq Network accesible in Mobile Platforms following the philosofy of Bisq2 - to make it

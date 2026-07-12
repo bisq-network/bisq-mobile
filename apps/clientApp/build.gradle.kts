@@ -252,19 +252,19 @@ kotlin {
         }
 
         // Share presentation's Android unit-test helpers with clientApp tests.
-        // Allowlist compose/coroutines/di plus NoopNavigationManager (needed by
-        // presentationTestModule). Do not pull other root helpers or StateFlowProbeTest.
+        // Graft compose/coroutines/di plus the test_utils root (NoopNavigationManager).
+        // Do not use kotlin.include here — it replaces the source set's default **/*
+        // and would drop clientApp's own androidUnitTest sources.
         androidUnitTest {
             val presentationUnitTestUtils =
                 project(sharedPresentationModule).projectDir.resolve(
                     "src/androidUnitTest/kotlin/network/bisq/mobile/presentation/common/test_utils",
                 )
-            kotlin.srcDir(presentationUnitTestUtils)
-            kotlin.include(
-                "**/compose/**",
-                "**/coroutines/**",
-                "**/di/**",
-                "NoopNavigationManager.kt",
+            kotlin.srcDirs(
+                presentationUnitTestUtils.resolve("compose"),
+                presentationUnitTestUtils.resolve("coroutines"),
+                presentationUnitTestUtils.resolve("di"),
+                presentationUnitTestUtils,
             )
         }
     }
