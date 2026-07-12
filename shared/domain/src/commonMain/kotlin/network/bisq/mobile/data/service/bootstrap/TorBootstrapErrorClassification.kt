@@ -6,7 +6,7 @@ import kotlinx.coroutines.CancellationException
  * Classifies Tor bootstrap [Throwable]s for grace-period handling in [ApplicationBootstrapFacade].
  *
  * Terminal failures must surface [ApplicationBootstrapFacade.torBootstrapFailed] immediately.
- * Transient circuit-establishment errors may be retried during the grace window (P1).
+ * Transient circuit-establishment errors are suppressed until the grace window elapses.
  */
 object TorBootstrapErrorClassification {
     fun isTerminal(error: Throwable): Boolean {
