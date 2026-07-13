@@ -21,6 +21,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.kover)
 }
@@ -71,6 +72,12 @@ kotlin {
             // Kotlin
             implementation(libs.kotlin.test.junit)
             implementation(libs.kotlinx.coroutines.test)
+
+            // Compose UI test
+            implementation(libs.androidx.test.compose.junit4)
+            implementation(libs.androidx.test.junit)
+            implementation(libs.androidx.test.compose.manifest)
+            implementation(libs.compose.ui.test)
 
             // Other libraries
             implementation(libs.junit)
@@ -407,6 +414,7 @@ dependencies {
 
     // Debug tools
     debugImplementation(libs.compose.ui.tooling)
+    implementation(libs.androidx.test.compose.manifest)
 
     // Android libraries
     implementation(libs.androidx.multidex)

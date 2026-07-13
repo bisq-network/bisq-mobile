@@ -1,6 +1,7 @@
 package network.bisq.mobile.node.common.di
 
 import network.bisq.mobile.node.main.NodeMainPresenter
+import network.bisq.mobile.node.network.presentation.network.NetworkPresenter
 import network.bisq.mobile.node.settings.backup.presentation.BackupPresenter
 import network.bisq.mobile.node.settings.faqs.FaqNodePresenter
 import network.bisq.mobile.node.settings.settings.NodeSettingsPresenter
@@ -64,6 +65,8 @@ val androidNodePresentationModule =
         factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
 
         factory<FaqPresenter> { FaqNodePresenter(get()) }
+
+        factory { NetworkPresenter(get(), get(), get()) }
 
         factory<BackupPresenter> { BackupPresenter(get(), get()) }
 
