@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
+import network.bisq.mobile.node.common.domain.utils.bindTo
 import java.util.Locale
 
 class NodeSettingsServiceFacade(
@@ -152,42 +153,32 @@ class NodeSettingsServiceFacade(
         }
 
     // Misc
-    private var tradeRulesConfirmedPin: Pin? = null
-    private var cookieChangedPin: Pin? = null
+    private val pins = mutableListOf<Pin>()
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
-        settingsService.languageTag.addObserver { code: String? ->
-            // Normalise the raw bisq2 code (`en_US`, `pt_BR`, `pcm`) into the
-            // canonical Transifex form (`en`, `pt-BR`, `pcm-NG`) BEFORE
-            // publishing into the wire flow. Without this, downstream observers
-            // (UI language selector, analytics) see codes that don't match the
-            // supported-code set and silently drop them.
-            //
-            // The `code: String?` is load-bearing: bisq2 fires this observer
-            // synchronously on subscription with the CURRENT value, which is
-            // null when settings haven't loaded from disk yet (verified in
-            // bisq2 Observable.java:42-50). The previous `(String) -> Unit`
-            // signature NPE'd inside `normalizeLanguageCode(code)`, which bisq2
-            // silently caught — leaving _languageCode.value stuck at the empty
-            // initial state. With null tolerated and the helper's blank-input
-            // branch returning "en", we end up with a real language for the
-            // analytics baseline AND any downstream observer.
-            _languageCode.value = normalizeLanguageCode(code.orEmpty())
-        }
-        tradeRulesConfirmedPin =
-            settingsService.bisqEasyTradeRulesConfirmed.addObserver { isConfirmed ->
-                _tradeRulesConfirmed.value = isConfirmed
+        pins +=
+            settingsService.languageTag.bindTo(_languageCode) { code ->
+                // Normalise the raw bisq2 code (`en_US`, `pt_BR`, `pcm`) into the
+                // canonical Transifex form (`en`, `pt-BR`, `pcm-NG`) BEFORE
+                // publishing into the wire flow. Without this, downstream observers
+                // (UI language selector, analytics) see codes that don't match the
+                // supported-code set and silently drop them.
+                //
+                // The null tolerance (`code.orEmpty()`) is load-bearing: bisq2 fires
+                // this observer synchronously on subscription with the CURRENT value,
+                // which is null when settings haven't loaded from disk yet (verified
+                // in bisq2 Observable.java:42-50). An NPE here is silently caught by
+                // bisq2 — leaving _languageCode.value stuck at the empty initial
+                // state. With null tolerated and the helper's blank-input branch
+                // returning "en", we end up with a real language for the analytics
+                // baseline AND any downstream observer.
+                normalizeLanguageCode(code.orEmpty())
             }
-        settingsService.useAnimations.addObserver { value ->
-            _useAnimations.value = value
-        }
-        settingsService.difficultyAdjustmentFactor.addObserver { value ->
-            _difficultyAdjustmentFactor.value = value
-        }
-        settingsService.ignoreDiffAdjustmentFromSecManager.addObserver { value ->
-            _ignoreDiffAdjustmentFromSecManager.value = value
-        }
+        pins += settingsService.bisqEasyTradeRulesConfirmed.bindTo(_tradeRulesConfirmed)
+        pins += settingsService.useAnimations.bindTo(_useAnimations)
+        pins += settingsService.difficultyAdjustmentFactor.bindTo(_difficultyAdjustmentFactor)
+        pins += settingsService.ignoreDiffAdjustmentFromSecManager.bindTo(_ignoreDiffAdjustmentFromSecManager)
 
         _showWebLinkConfirmation.value =
             dontShowAgainService.showAgain(
@@ -197,7 +188,7 @@ class NodeSettingsServiceFacade(
             settingsService.cookie
                 .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
                 .orElse(false)
-        cookieChangedPin =
+        pins +=
             settingsService.cookieChanged.addObserver { value ->
                 _permitOpeningBrowser.value =
                     settingsService.cookie
@@ -207,8 +198,8 @@ class NodeSettingsServiceFacade(
     }
 
     override suspend fun deactivate() {
-        tradeRulesConfirmedPin?.unbind()
-        cookieChangedPin?.unbind()
+        pins.forEach { it.unbind() }
+        pins.clear()
 
         super<ServiceFacade>.deactivate()
     }

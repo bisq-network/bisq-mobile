@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.tabs.more.MenuItem
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 
 // TODO Temporary flag — flip to true once the Network Info screens are complete (issue #1524).
-private const val NETWORK_INFO_ENABLED = false
+private const val NETWORK_INFO_ENABLED = true
 
 class NodeMiscItemsPresenter(
     userProfileService: UserProfileServiceFacade,

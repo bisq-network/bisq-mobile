@@ -2,9 +2,6 @@ package network.bisq.mobile.client.common.di
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -110,7 +107,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.AnalyticsSettingsBaseline
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
-import network.bisq.mobile.domain.analytics.SentryAnalyticsService
+import network.bisq.mobile.domain.analytics.createBufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
@@ -240,31 +237,10 @@ val clientDomainModule =
         // and evict by FIFO with no clearnet leak.
         single<AnalyticsSocksPortProvider> { KmpTorSocksPortProvider(get()) }
         single {
-            // Independent scope so the buffer's periodic flusher survives any
-            // individual feature-scope cancellation. SupervisorJob so a single
-            // failed enqueue doesn't kill the flusher. Reused for the
-            // settings-derived analyticsEnabled StateFlow so its hot-share
-            // lives exactly as long as the BufferedAnalyticsService instance.
-            val analyticsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-            val settingsRepository = get<SettingsRepository>()
-            // Hot StateFlow view of `Settings.analyticsEnabled`. Backed by
-            // DataStore so a settings flip from any UI surface propagates
-            // immediately to this `.value` read in the runtime gate.
-            val analyticsEnabledFlow = settingsRepository.analyticsEnabledIn(analyticsScope)
-            BufferedAnalyticsService(
-                downstream =
-                    SentryAnalyticsService(
-                        nativeInitializer = get(),
-                        // Two gates AND'd together:
-                        //  1) Dev-only build flag — release builds const-fold
-                        //     this to true at BuildConfig generation time.
-                        //  2) User-settings toggle — flipped from Settings UI.
-                        // Both must be true for the SDK to emit anything.
-                        runtimeOptInProvider = {
-                            BuildConfig.ANALYTICS_DEV_ENABLED && analyticsEnabledFlow.value
-                        },
-                    ),
-                scope = analyticsScope,
+            createBufferedAnalyticsService(
+                settingsRepository = get(),
+                nativeInitializer = get(),
+                analyticsDevEnabled = BuildConfig.ANALYTICS_DEV_ENABLED,
             )
         }
         single<AnalyticsService> { get<BufferedAnalyticsService>() }

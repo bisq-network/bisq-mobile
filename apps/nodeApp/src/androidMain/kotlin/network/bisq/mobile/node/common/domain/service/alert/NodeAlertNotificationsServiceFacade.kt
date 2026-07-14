@@ -1,7 +1,6 @@
 package network.bisq.mobile.node.common.domain.service.alert
 
 import bisq.common.observable.Pin
-import bisq.common.observable.collection.CollectionObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,7 +8,6 @@ import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.node.common.domain.mapping.alert.toDomainOrNull
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
-import bisq.bonded_roles.security_manager.alert.AuthorizedAlertData as BisqAuthorizedAlertData
 
 class NodeAlertNotificationsServiceFacade(
     private val provider: AndroidApplicationService.Provider,
@@ -24,23 +22,8 @@ class NodeAlertNotificationsServiceFacade(
     override suspend fun activate() {
         super.activate()
 
-        refreshAlerts()
-        unconsumedAlertsPin =
-            alertNotificationsService.unconsumedAlerts.addObserver(
-                object : CollectionObserver<BisqAuthorizedAlertData> {
-                    override fun onAdded(bisqAuthorizedAlertData: BisqAuthorizedAlertData) {
-                        refreshAlerts()
-                    }
-
-                    override fun onRemoved(element: Any) {
-                        refreshAlerts()
-                    }
-
-                    override fun onCleared() {
-                        refreshAlerts()
-                    }
-                },
-            )
+        // The Runnable observer fires once at subscription, covering the initial refresh
+        unconsumedAlertsPin = alertNotificationsService.unconsumedAlerts.addObserver(Runnable { refreshAlerts() })
     }
 
     override suspend fun deactivate() {

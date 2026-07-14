@@ -42,19 +42,17 @@ import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcome
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.common.ui.components.ListStateSection
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.common.ui.components.atoms.StarPainters
-import network.bisq.mobile.presentation.common.ui.components.atoms.icons.GreenSortIcon
-import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.rememberStarPainters
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileRow
-import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
+import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.SearchWithFilterField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -111,24 +109,12 @@ fun ClosedTradeListScreen() {
     ) {
         BisqGap.V1()
 
-        BisqSearchField(
+        SearchWithFilterField(
             value = uiState.searchQuery,
             onValueChange = { presenter.onAction(ClosedTradeListUiAction.OnSearchQueryChange(it)) },
             placeholder = "mobile.tradeHistory.search.placeholder".i18n(),
-            rightSuffix = {
-                BisqButton(
-                    iconOnly = {
-                        if (uiState.isFilterActive) {
-                            GreenSortIcon()
-                        } else {
-                            SortIcon()
-                        }
-                    },
-                    onClick = { presenter.onAction(ClosedTradeListUiAction.OnShowFilterSheet) },
-                    type = BisqButtonType.Clear,
-                    modifier = Modifier.weight(1f),
-                )
-            },
+            isFilterActive = uiState.isFilterActive,
+            onFilterClick = { presenter.onAction(ClosedTradeListUiAction.OnShowFilterSheet) },
         )
 
         TradeResultBar(
@@ -413,37 +399,25 @@ private fun ClosedTradeListEmptyState(
     onBrowseOffers: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding2X,
-                    vertical = BisqUIConstants.ScreenPadding4X,
-                ),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    ListStateSection(
+        title = "mobile.tradeHistory.empty.noTrades".i18n(),
+        subtitle = "mobile.tradeHistory.empty.noTrades.sub".i18n(),
+        icon = {
+            Box(
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                        .background(BisqTheme.colors.dark_grey40),
+                contentAlignment = Alignment.Center,
+            ) { BisqText.H4LightGrey("?") }
+        },
+        buttonText = "action.browseOffers".i18n(),
+        onButtonClick = onBrowseOffers,
         verticalArrangement = Arrangement.Center,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-                    .background(BisqTheme.colors.dark_grey40),
-            contentAlignment = Alignment.Center,
-        ) { BisqText.H4LightGrey("?") }
-        BisqGap.V2()
-        BisqText.H5Light(
-            text = "mobile.tradeHistory.empty.noTrades".i18n(),
-            textAlign = TextAlign.Center,
-        )
-        BisqGap.V1()
-        BisqText.SmallLightGrey(
-            text = "mobile.tradeHistory.empty.noTrades.sub".i18n(),
-            textAlign = TextAlign.Center,
-        )
-        BisqGap.V2()
-        BisqButton(text = "action.browseOffers".i18n(), onClick = onBrowseOffers)
-    }
+        verticalPadding = BisqUIConstants.ScreenPadding4X,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -451,28 +425,14 @@ private fun ClosedTradeListNoResultsState(
     onClearSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding2X,
-                    vertical = BisqUIConstants.ScreenPadding3X,
-                ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-    ) {
-        BisqGap.V2()
-        BisqText.BaseLight(
-            text = "mobile.tradeHistory.empty.noResults".i18n(),
-            textAlign = TextAlign.Center,
-        )
-        BisqGap.V1()
-        BisqButton(
-            text = "action.clearSearch".i18n(),
-            type = BisqButtonType.Grey,
-            onClick = onClearSearch,
-        )
-    }
+    ListStateSection(
+        title = "mobile.tradeHistory.empty.noResults".i18n(),
+        useHeadlineStyle = false,
+        buttonText = "action.clearSearch".i18n(),
+        buttonType = BisqButtonType.Grey,
+        onButtonClick = onClearSearch,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -480,33 +440,14 @@ private fun ClosedTradeListErrorState(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding2X,
-                    vertical = BisqUIConstants.ScreenPadding3X,
-                ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-    ) {
-        BisqGap.V2()
-        BisqText.H5Light(
-            text = "mobile.tradeHistory.error.title".i18n(),
-            textAlign = TextAlign.Center,
-        )
-        BisqGap.V1()
-        BisqText.SmallLightGrey(
-            text = "mobile.tradeHistory.error.sub".i18n(),
-            textAlign = TextAlign.Center,
-        )
-        BisqGap.V2()
-        BisqButton(
-            text = "mobile.tradeHistory.error.retry".i18n(),
-            type = BisqButtonType.Grey,
-            onClick = onRetry,
-        )
-    }
+    ListStateSection(
+        title = "mobile.tradeHistory.error.title".i18n(),
+        subtitle = "mobile.tradeHistory.error.sub".i18n(),
+        buttonText = "mobile.tradeHistory.error.retry".i18n(),
+        buttonType = BisqButtonType.Grey,
+        onButtonClick = onRetry,
+        modifier = modifier,
+    )
 }
 
 // -------------------------------------------------------------------------------------

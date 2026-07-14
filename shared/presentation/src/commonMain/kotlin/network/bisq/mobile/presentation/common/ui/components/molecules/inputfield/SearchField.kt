@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.common.ui.components.molecules.inputfie
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -34,7 +35,7 @@ fun BisqSearchField(
     fieldModifier: Modifier = Modifier,
     label: String = "",
     placeholder: String = "action.search".i18n(),
-    rightSuffix: (@Composable () -> Unit)? = null,
+    rightSuffix: (@Composable RowScope.() -> Unit)? = null,
     disabled: Boolean = false,
 ) {
     // Custom layout: text field is measured first and dictates the height.

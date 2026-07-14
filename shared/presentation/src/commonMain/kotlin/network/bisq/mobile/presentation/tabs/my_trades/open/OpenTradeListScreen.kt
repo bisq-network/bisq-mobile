@@ -1,17 +1,12 @@
 package network.bisq.mobile.presentation.tabs.my_trades.open
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -39,23 +34,21 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.ListStateSection
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.icons.GreenSortIcon
-import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.common.ui.components.molecules.IconTextRow
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.InformationConfirmationDialog
-import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
+import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.SearchWithFilterField
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.tabs.my_trades.open.components.OpenTradeListItem
 import network.bisq.mobile.presentation.tabs.my_trades.open.components.OpenTradesFilterSheet
 import network.bisq.mobile.presentation.tabs.my_trades.shared.TradeResultBar
-import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -137,24 +130,12 @@ private fun OpenTradeListContent(
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
                     BisqGap.V1()
-                    BisqSearchField(
+                    SearchWithFilterField(
                         value = uiState.searchQuery,
                         onValueChange = { onAction(OpenTradeListUiAction.OnSearchQueryChange(it)) },
                         placeholder = "mobile.tradeHistory.search.placeholder".i18n(),
-                        rightSuffix = {
-                            BisqButton(
-                                iconOnly = {
-                                    if (uiState.isFilterActive) {
-                                        GreenSortIcon()
-                                    } else {
-                                        SortIcon()
-                                    }
-                                },
-                                onClick = { onAction(OpenTradeListUiAction.OnShowFilterSheet) },
-                                type = BisqButtonType.Clear,
-                                modifier = Modifier.weight(1f),
-                            )
-                        },
+                        isFilterActive = uiState.isFilterActive,
+                        onFilterClick = { onAction(OpenTradeListUiAction.OnShowFilterSheet) },
                     )
 
                     TradeResultBar(
@@ -260,28 +241,14 @@ private fun OpenTradeListNoResultsState(
     onClearSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding2X,
-                    vertical = BisqUIConstants.ScreenPadding3X,
-                ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-    ) {
-        BisqGap.V2()
-        BisqText.BaseLight(
-            text = "mobile.tradeHistory.empty.noResults".i18n(),
-            textAlign = TextAlign.Center,
-        )
-        BisqGap.V1()
-        BisqButton(
-            text = "action.clearSearch".i18n(),
-            type = BisqButtonType.Grey,
-            onClick = onClearSearch,
-        )
-    }
+    ListStateSection(
+        title = "mobile.tradeHistory.empty.noResults".i18n(),
+        useHeadlineStyle = false,
+        buttonText = "action.clearSearch".i18n(),
+        buttonType = BisqButtonType.Grey,
+        onButtonClick = onClearSearch,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -304,17 +271,17 @@ fun WelcomeToFirstTradePane(onOpenTradeGuide: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.Start,
         ) {
-            IconWithTextLine(
-                image = Res.drawable.reputation,
-                title = "bisqEasy.openTrades.welcome.line1".i18n(),
+            IconTextRow(
+                icon = Res.drawable.reputation,
+                text = "bisqEasy.openTrades.welcome.line1".i18n(),
             )
-            IconWithTextLine(
-                image = Res.drawable.fiat_btc,
-                title = "bisqEasy.openTrades.welcome.line2".i18n(),
+            IconTextRow(
+                icon = Res.drawable.fiat_btc,
+                text = "bisqEasy.openTrades.welcome.line2".i18n(),
             )
-            IconWithTextLine(
-                image = Res.drawable.thumbs_up,
-                title = "bisqEasy.openTrades.welcome.line3".i18n(),
+            IconTextRow(
+                icon = Res.drawable.thumbs_up,
+                text = "bisqEasy.openTrades.welcome.line3".i18n(),
             )
         }
         BisqGap.V1()
@@ -322,18 +289,6 @@ fun WelcomeToFirstTradePane(onOpenTradeGuide: () -> Unit) {
             text = "bisqEasy.tradeGuide.open".i18n(),
             onClick = onOpenTradeGuide,
         )
-    }
-}
-
-@Composable
-fun IconWithTextLine(
-    image: DrawableResource,
-    title: String,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Image(painterResource(image), null, Modifier.size(30.dp))
-        Spacer(modifier = Modifier.width(15.dp))
-        BisqText.BaseLight(title)
     }
 }
 

@@ -3,9 +3,6 @@ package network.bisq.mobile.node.common.di
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Debug
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
@@ -37,8 +34,8 @@ import network.bisq.mobile.domain.analytics.AnalyticsSettingsBaseline
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.analytics.NativeSentryInitializer
-import network.bisq.mobile.domain.analytics.SentryAnalyticsService
 import network.bisq.mobile.domain.analytics.SentryJavaNativeSentryInitializer
+import network.bisq.mobile.domain.analytics.createBufferedAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
@@ -135,19 +132,10 @@ val androidNodeDomainModule =
         // valid future optimization; the current provider is kept for coherence with bisq2's routing.
         single<AnalyticsSocksPortProvider> { Bisq2SocksPortProvider(get()) }
         single {
-            // See ClientDomainModule for the matching pattern + rationale.
-            val analyticsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-            val settingsRepository = get<SettingsRepository>()
-            val analyticsEnabledFlow = settingsRepository.analyticsEnabledIn(analyticsScope)
-            BufferedAnalyticsService(
-                downstream =
-                    SentryAnalyticsService(
-                        nativeInitializer = get(),
-                        runtimeOptInProvider = {
-                            BuildNodeConfig.ANALYTICS_DEV_ENABLED && analyticsEnabledFlow.value
-                        },
-                    ),
-                scope = analyticsScope,
+            createBufferedAnalyticsService(
+                settingsRepository = get(),
+                nativeInitializer = get(),
+                analyticsDevEnabled = BuildNodeConfig.ANALYTICS_DEV_ENABLED,
             )
         }
         single<AnalyticsService> { get<BufferedAnalyticsService>() }

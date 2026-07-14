@@ -20,14 +20,10 @@ import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.presentation.common.ui.components.MarketCard
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.common.ui.components.atoms.icons.GreenSortIcon
-import network.bisq.mobile.presentation.common.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet.BisqBottomSheet
-import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BisqSearchField
+import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.SearchWithFilterField
 import network.bisq.mobile.presentation.common.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -59,23 +55,11 @@ internal fun OfferbookMarketScreenContent(
         contentPadding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.Top,
     ) {
-        BisqSearchField(
+        SearchWithFilterField(
             value = searchText,
             onValueChange = { onAction(OfferbookMarketUiAction.OnSearchTextChanged(it)) },
-            rightSuffix = {
-                BisqButton(
-                    iconOnly = {
-                        if (uiState.filter == MarketFilter.WithOffers) {
-                            GreenSortIcon()
-                        } else {
-                            SortIcon()
-                        }
-                    },
-                    onClick = { showFilterDialog = true },
-                    type = BisqButtonType.Clear,
-                    modifier = Modifier.weight(1f),
-                )
-            },
+            isFilterActive = uiState.filter == MarketFilter.WithOffers,
+            onFilterClick = { showFilterDialog = true },
         )
 
         BisqGap.V1()

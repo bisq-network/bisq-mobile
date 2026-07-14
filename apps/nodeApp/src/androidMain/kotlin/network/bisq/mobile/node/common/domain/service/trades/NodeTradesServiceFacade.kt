@@ -55,6 +55,7 @@ import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.TradeItemPresentationDtoFactory
 import network.bisq.mobile.node.common.domain.mapping.trade.toClosedTradeListItem
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
+import network.bisq.mobile.node.common.domain.utils.bindNonNullTo
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.seconds
@@ -713,54 +714,16 @@ class NodeTradesServiceFacade(
                 }
             }
         pins +=
-            trade.interruptTradeInitiator.addObserver { interruptTradeInitiator ->
-                if (interruptTradeInitiator != null) {
-                    openTradeItem.bisqEasyTradeModel.interruptTradeInitiator.value =
-                        Mappings.RoleMapping.fromBisq2Model(interruptTradeInitiator)
-                }
+            trade.interruptTradeInitiator.bindNonNullTo(openTradeItem.bisqEasyTradeModel.interruptTradeInitiator) {
+                Mappings.RoleMapping.fromBisq2Model(it)
             }
-        pins +=
-            trade.paymentAccountData.addObserver { value ->
-                if (value != null) {
-                    openTradeItem.bisqEasyTradeModel.paymentAccountData.value = value
-                }
-            }
-        pins +=
-            trade.bitcoinPaymentData.addObserver { value ->
-                if (value != null) {
-                    openTradeItem.bisqEasyTradeModel.bitcoinPaymentData.value = value
-                }
-            }
-        pins +=
-            trade.paymentProof.addObserver { value ->
-                if (value != null) {
-                    openTradeItem.bisqEasyTradeModel.paymentProof.value = value
-                }
-            }
-        pins +=
-            trade.errorMessageObservable().addObserver { value ->
-                if (value != null) {
-                    openTradeItem.bisqEasyTradeModel.errorMessage.value = value
-                }
-            }
-        pins +=
-            trade.errorStackTraceObservable().addObserver { value ->
-                if (value != null) {
-                    openTradeItem.bisqEasyTradeModel.errorStackTrace.value = value
-                }
-            }
-        pins +=
-            trade.peersErrorMessageObservable().addObserver { value ->
-                if (value != null) {
-                    openTradeItem.bisqEasyTradeModel.peersErrorMessage.value = value
-                }
-            }
-        pins +=
-            trade.peersErrorStackTraceObservable().addObserver { value ->
-                if (value != null) {
-                    openTradeItem.bisqEasyTradeModel.peersErrorStackTrace.value = value
-                }
-            }
+        pins += trade.paymentAccountData.bindNonNullTo(openTradeItem.bisqEasyTradeModel.paymentAccountData)
+        pins += trade.bitcoinPaymentData.bindNonNullTo(openTradeItem.bisqEasyTradeModel.bitcoinPaymentData)
+        pins += trade.paymentProof.bindNonNullTo(openTradeItem.bisqEasyTradeModel.paymentProof)
+        pins += trade.errorMessageObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.errorMessage)
+        pins += trade.errorStackTraceObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.errorStackTrace)
+        pins += trade.peersErrorMessageObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.peersErrorMessage)
+        pins += trade.peersErrorStackTraceObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.peersErrorStackTrace)
 
         pins +=
             channel.isInMediationObservable().addObserver { isInMediation ->
