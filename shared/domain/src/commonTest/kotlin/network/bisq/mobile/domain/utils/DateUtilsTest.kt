@@ -193,6 +193,18 @@ class DateUtilsTest {
     }
 
     @Test
+    fun `toMediumDateTime with seconds should include the seconds component`() {
+        val result = DateUtils.toMediumDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC, includeSeconds = true)
+        assertEquals("Jan 15, 2024  12:00:00", result)
+    }
+
+    @Test
+    fun `toMediumDateTime without seconds should omit the seconds component`() {
+        val result = DateUtils.toMediumDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC)
+        assertEquals("Jan 15, 2024  12:00", result)
+    }
+
+    @Test
     fun `toDateTime should format timestamp correctly`() {
         val result = DateUtils.toDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC)
         // The format is locale-dependent (e.g., "Jan 15, 2024" or "15/01/2024")

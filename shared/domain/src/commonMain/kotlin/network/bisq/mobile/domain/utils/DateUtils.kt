@@ -89,12 +89,30 @@ object DateUtils {
             minute()
         }
 
+    private val mediumDateTimeWithSecondsFormat =
+        LocalDateTime.Format {
+            monthName(MonthNames.ENGLISH_ABBREVIATED)
+            char(' ')
+            day(Padding.NONE)
+            chars(", ")
+            year()
+            // the double space is intentional
+            chars("  ")
+            hour()
+            char(':')
+            minute()
+            char(':')
+            second()
+        }
+
     fun toMediumDateTime(
         epochMillis: Long,
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
+        includeSeconds: Boolean = false,
     ): String {
         val instant = Instant.fromEpochMilliseconds(epochMillis)
-        return mediumDateTimeFormat.format(instant.toLocalDateTime(timeZone))
+        val format = if (includeSeconds) mediumDateTimeWithSecondsFormat else mediumDateTimeFormat
+        return format.format(instant.toLocalDateTime(timeZone))
     }
 
     /**
