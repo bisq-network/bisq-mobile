@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
+import network.bisq.mobile.node.common.domain.utils.bindNonNullTo
 import network.bisq.mobile.node.common.domain.utils.bindTo
 import java.util.Locale
 
@@ -175,10 +176,14 @@ class NodeSettingsServiceFacade(
                 // baseline AND any downstream observer.
                 normalizeLanguageCode(code.orEmpty())
             }
-        pins += settingsService.bisqEasyTradeRulesConfirmed.bindTo(_tradeRulesConfirmed)
-        pins += settingsService.useAnimations.bindTo(_useAnimations)
-        pins += settingsService.difficultyAdjustmentFactor.bindTo(_difficultyAdjustmentFactor)
-        pins += settingsService.ignoreDiffAdjustmentFromSecManager.bindTo(_ignoreDiffAdjustmentFromSecManager)
+        // bindNonNullTo: these bisq2 observables are null-initialized (SettingsStore uses
+        // `new Observable<>()`) and fire synchronously at subscription with that null before
+        // settings load from disk. bindTo would push null into these non-null StateFlows; ignore
+        // it instead and keep the sensible defaults until a real value arrives.
+        pins += settingsService.bisqEasyTradeRulesConfirmed.bindNonNullTo(_tradeRulesConfirmed)
+        pins += settingsService.useAnimations.bindNonNullTo(_useAnimations)
+        pins += settingsService.difficultyAdjustmentFactor.bindNonNullTo(_difficultyAdjustmentFactor)
+        pins += settingsService.ignoreDiffAdjustmentFromSecManager.bindNonNullTo(_ignoreDiffAdjustmentFromSecManager)
 
         _showWebLinkConfirmation.value =
             dontShowAgainService.showAgain(

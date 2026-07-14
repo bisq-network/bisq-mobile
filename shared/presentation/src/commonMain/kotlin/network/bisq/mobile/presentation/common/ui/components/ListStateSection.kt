@@ -43,8 +43,10 @@ fun ListStateSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = verticalArrangement,
     ) {
-        icon?.invoke()
-        BisqGap.V2()
+        if (icon != null) {
+            icon()
+            BisqGap.V2()
+        }
         if (useHeadlineStyle) {
             BisqText.H5Light(text = title, textAlign = TextAlign.Center)
         } else {

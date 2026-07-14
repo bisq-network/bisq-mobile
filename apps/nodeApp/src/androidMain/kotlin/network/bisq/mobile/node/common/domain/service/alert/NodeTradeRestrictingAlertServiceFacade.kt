@@ -29,10 +29,11 @@ class NodeTradeRestrictingAlertServiceFacade(
     }
 
     override suspend fun deactivate() {
+        // Tear down our own state before delegating to the base (mirror of activate()).
         unconsumedAlertsPin?.unbind()
         unconsumedAlertsPin = null
-        super.deactivate()
         _alert.value = null
+        super.deactivate()
     }
 
     private fun refreshAlert() {
