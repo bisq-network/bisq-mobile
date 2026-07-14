@@ -252,7 +252,8 @@ kotlin {
         }
 
         // Share presentation's Android unit-test helpers with clientApp tests.
-        // Graft compose/coroutines/di plus the test_utils root (NoopNavigationManager).
+        // Graft only the subdirs clientApp consumes — not the test_utils root, so
+        // presentation-only helpers and test classes there cannot break client builds.
         // Do not use kotlin.include here — it replaces the source set's default **/*
         // and would drop clientApp's own androidUnitTest sources.
         androidUnitTest {
@@ -264,7 +265,6 @@ kotlin {
                 presentationUnitTestUtils.resolve("compose"),
                 presentationUnitTestUtils.resolve("coroutines"),
                 presentationUnitTestUtils.resolve("di"),
-                presentationUnitTestUtils,
             )
         }
     }

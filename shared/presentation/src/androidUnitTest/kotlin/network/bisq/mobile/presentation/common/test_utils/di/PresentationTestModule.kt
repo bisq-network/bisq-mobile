@@ -6,7 +6,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider

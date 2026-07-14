@@ -44,7 +44,7 @@ import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.test_utils.NoopNavigationManager
+import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
