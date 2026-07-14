@@ -12,6 +12,9 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 class ClientReputationServiceFacade(
     val apiGateway: ReputationApiGateway,
     private val json: Json,
+    // Seam for tests: BuildConfig.IS_DEBUG is a compile-time const, so both getReputation
+    // branches cannot be exercised without injecting the flag.
+    private val isDebug: Boolean = BuildConfig.IS_DEBUG,
 ) : ServiceFacade(),
     ReputationServiceFacade {
     // MutableStateFlow is only used as there is no kmp compatible concurrent map. The ConcurrentMap from ktor is not recommended to be
@@ -48,11 +51,11 @@ class ClientReputationServiceFacade(
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        // We do not have access to the config data, thus we check with BuildConfig.IS_DEBUG if we are in dev mode and if so,
+        // We do not have access to the config data, thus we check with isDebug if we are in dev mode and if so,
         // we request the reputation score from the API instead of looking up the MutableStateFlow field which would contain only
         // scores of profiles which have real reputation. By calling the getReputationScore on the backend we will get the
         // devModeReputationScore in case the user has set that at the backend apps config and is in devMode.
-        if (BuildConfig.IS_DEBUG) {
+        if (isDebug) {
             return apiGateway.getReputationScore(userProfileId)
         }
         return reputationByUserProfileId.value[userProfileId]?.let { Result.success(it) }

@@ -23,8 +23,10 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private lateinit var facade: ClientReputationServiceFacade
 
     override fun onSetup() {
-        facade = ClientReputationServiceFacade(apiGateway, json)
+        facade = ClientReputationServiceFacade(apiGateway, json, isDebug = false)
     }
+
+    private fun facade(isDebug: Boolean) = ClientReputationServiceFacade(apiGateway, json, isDebug = isDebug)
 
     @Test
     fun `activate subscribes to user reputation`() =
@@ -100,16 +102,13 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(facade.scoreByUserProfileId.isEmpty())
         }
 
-    // getReputation calls the API when BuildConfig.IS_DEBUG is true (debug unit-test classpath).
-    // Release cache lookup is not exercised here; websocket tests above cover cache population.
-
     @Test
-    fun `getReputation returns gateway result on success`() =
+    fun `getReputation returns gateway result when isDebug`() =
         runTest {
             val score = ReputationScoreVO(totalScore = 42, fiveSystemScore = 3.5, ranking = 2)
             coEvery { apiGateway.getReputationScore("user-1") } returns Result.success(score)
 
-            val result = facade.getReputation("user-1")
+            val result = facade(isDebug = true).getReputation("user-1")
 
             assertTrue(result.isSuccess)
             assertEquals(score, result.getOrNull())
@@ -117,14 +116,46 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `getReputation returns failure when gateway fails`() =
+    fun `getReputation returns gateway failure when isDebug`() =
         runTest {
             coEvery { apiGateway.getReputationScore("user-1") } returns Result.failure(Exception("not found"))
 
-            val result = facade.getReputation("user-1")
+            val result = facade(isDebug = true).getReputation("user-1")
 
             assertTrue(result.isFailure)
             coVerify(exactly = 1) { apiGateway.getReputationScore("user-1") }
+        }
+
+    @Test
+    fun `getReputation returns cached score when not debug`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeUserReputation() } returns observer
+            val cacheFacade = facade(isDebug = false)
+
+            cacheFacade.activate()
+            advanceUntilIdle()
+
+            observer.setEvent(reputationEvent("""{"user-1":{"totalScore":120,"fiveSystemScore":4.2,"ranking":5}}"""))
+            advanceUntilIdle()
+
+            val result = cacheFacade.getReputation("user-1")
+
+            assertTrue(result.isSuccess)
+            assertEquals(
+                ReputationScoreVO(totalScore = 120, fiveSystemScore = 4.2, ranking = 5),
+                result.getOrNull(),
+            )
+            coVerify(exactly = 0) { apiGateway.getReputationScore(any()) }
+        }
+
+    @Test
+    fun `getReputation returns failure when not debug and user missing from cache`() =
+        runTest {
+            val result = facade(isDebug = false).getReputation("missing-user")
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 0) { apiGateway.getReputationScore(any()) }
         }
 
     @Test
