@@ -44,6 +44,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreateOfferAmountPresenterTest {
@@ -312,5 +314,78 @@ class CreateOfferAmountPresenterTest {
             runCurrent()
 
             assertEquals(savedMinText, recreatedPresenter.formattedQuoteSideMinRangeAmount.value)
+        }
+
+    @Test
+    fun seller_with_reputation_below_market_min_clamps_slider_max_and_does_not_crash() =
+        runTest(testDispatcher) {
+            val marketUSD = MarketVOFactory.USD
+            val marketUSDItem =
+                MarketPriceItem(
+                    marketUSD,
+                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
+                    formattedPrice = "100 USD",
+                )
+            val prices = mapOf(marketUSD to marketUSDItem)
+
+            val marketPriceServiceFacade =
+                mockk<MarketPriceServiceFacade>(relaxed = true).apply {
+                    every { findMarketPriceItem(any()) } answers {
+                        val arg = firstArg<MarketVO>()
+                        prices.values.firstOrNull { it.market.baseCurrencyCode == arg.baseCurrencyCode && it.market.quoteCurrencyCode == arg.quoteCurrencyCode }
+                    }
+                    every { findUSDMarketPriceItem() } returns prices[marketUSD]
+                    every { refreshSelectedFormattedMarketPrice() } returns Unit
+                    every { selectMarket(any()) } returns Result.success(Unit)
+                }
+
+            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+            every { getScreenWidthDp() } returns 480
+
+            val mainPresenter =
+                MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
+            val createOfferCoordinator =
+                CreateOfferCoordinator(
+                    marketPriceServiceFacade,
+                    mockk<OffersServiceFacade>(relaxed = true),
+                    mockk<SettingsServiceFacade>(relaxed = true),
+                )
+            createOfferCoordinator.createOfferModel =
+                CreateOfferCoordinator.CreateOfferModel().also { m ->
+                    m.market = marketUSD
+                    m.direction = DirectionEnum.SELL
+                    m.amountType = CreateOfferCoordinator.AmountType.RANGE_AMOUNT
+                }
+
+            val userProfile = createMockUserProfile("seller-profile")
+            val userProfileServiceFacade =
+                mockk<UserProfileServiceFacade>(relaxed = true).apply {
+                    every { selectedUserProfile } returns MutableStateFlow(userProfile)
+                }
+            // Zero reputation -> reputation-based max amount is ~0, below the market minimum, so the
+            // raw slider fraction (amount - min) / range is negative. Pre-fix this produced an
+            // inverted RangeSlider valueRange (0f..negative) and crashed on measure (issue #1571).
+            val reputationServiceFacade =
+                mockk<ReputationServiceFacade>(relaxed = true).apply {
+                    coEvery { getReputation(userProfile.id) } returns
+                        Result.success(ReputationScoreVO(totalScore = 0L, fiveSystemScore = 0.0, ranking = 0))
+                }
+
+            val presenter =
+                CreateOfferAmountPresenter(
+                    mainPresenter,
+                    marketPriceServiceFacade,
+                    createOfferCoordinator,
+                    userProfileServiceFacade,
+                    reputationServiceFacade,
+                )
+            runCurrent()
+
+            val repMax = presenter.reputationBasedMaxSliderValue.value
+            assertNotNull(repMax)
+            // Clamped into a valid [0, 1] fraction instead of going negative.
+            assertTrue(repMax in 0f..1f, "reputation-based max slider value must be clamped, was $repMax")
+            // The selected max stays within the reputation-based bound.
+            assertTrue(presenter.maxRangeSliderValue.value <= repMax)
         }
 }

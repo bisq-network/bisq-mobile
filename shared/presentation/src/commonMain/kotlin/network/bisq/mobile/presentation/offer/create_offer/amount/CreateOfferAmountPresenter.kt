@@ -554,9 +554,27 @@ class CreateOfferAmountPresenter(
                     _requiredReputation.value,
                 ) ?: return@launch
 
-            val reputationBasedMaxValue = (amount.value.toFloat() - minAmount) / range
+            // Clamp to a valid [0, 1] fraction: when a low-reputation seller's max allowed amount
+            // is below the market minimum this would go negative (or NaN when range == 0), which
+            // produces an inverted slider valueRange (0f..negative) that crashes Material3's
+            // RangeSlider during measure (issue #1571).
+            val reputationBasedMaxValue =
+                if (range > 0L) {
+                    ((amount.value.toFloat() - minAmount) / range).coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
             _reputationBasedMaxSliderValue.value = reputationBasedMaxValue
             _rightMarkerValue.value = reputationBasedMaxValue
+
+            // Keep the selected range within the reputation-based bounds so the slider never
+            // receives a selection outside [0, max].
+            if (_maxRangeSliderValue.value > reputationBasedMaxValue) {
+                _maxRangeSliderValue.value = reputationBasedMaxValue
+            }
+            if (_minRangeSliderValue.value > _maxRangeSliderValue.value) {
+                _minRangeSliderValue.value = _maxRangeSliderValue.value
+            }
 
             _formattedReputationBasedMaxAmount.value =
                 AmountFormatter.formatAmount(

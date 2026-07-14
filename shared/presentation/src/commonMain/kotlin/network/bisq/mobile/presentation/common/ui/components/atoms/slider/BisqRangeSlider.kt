@@ -31,7 +31,26 @@ fun BisqRangeSlider(
     onValueChangeFinished: (() -> Unit)? = null,
     enabled: Boolean = true,
 ) {
-    val thumbColor = if (enabled) BisqTheme.colors.primary else BisqTheme.colors.mid_grey20
+    // Guard against inverted / non-finite ranges (issue #1571): Material3 RangeSlider runs the
+    // thumb values through coerceIn during measure, which throws IllegalArgumentException when the
+    // bounds are inverted (end < start) or non-finite (NaN/Infinity) — e.g. a reputation-based max
+    // that collapses below the selected min. Sanitize here so a bad caller state degrades to a
+    // disabled slider instead of crashing the whole screen.
+    val boundsUsable =
+        valueRange.start.isFinite() &&
+            valueRange.endInclusive.isFinite() &&
+            valueRange.endInclusive > valueRange.start
+    val safeValueRange = if (boundsUsable) valueRange else 0f..1f
+    val safeStart =
+        (if (value.start.isFinite()) value.start else safeValueRange.start)
+            .coerceIn(safeValueRange.start, safeValueRange.endInclusive)
+    val safeEnd =
+        (if (value.endInclusive.isFinite()) value.endInclusive else safeValueRange.endInclusive)
+            .coerceIn(safeStart, safeValueRange.endInclusive)
+    val safeValue = safeStart..safeEnd
+    val effectivelyEnabled = enabled && boundsUsable
+
+    val thumbColor = if (effectivelyEnabled) BisqTheme.colors.primary else BisqTheme.colors.mid_grey20
 
     val customThumb: @Composable (RangeSliderState) -> Unit = { _ ->
         Box(
@@ -47,12 +66,12 @@ fun BisqRangeSlider(
     }
 
     RangeSlider(
-        value = value,
+        value = safeValue,
         onValueChange = onValueChange,
         modifier = modifier,
-        valueRange = valueRange,
+        valueRange = safeValueRange,
         onValueChangeFinished = onValueChangeFinished,
-        enabled = enabled,
+        enabled = effectivelyEnabled,
         startThumb = customThumb,
         endThumb = customThumb,
         colors =
