@@ -7,6 +7,10 @@ import kotlinx.coroutines.CancellationException
  *
  * Terminal failures must surface [ApplicationBootstrapFacade.torBootstrapFailed] immediately.
  * Transient circuit-establishment errors are suppressed until the grace window elapses.
+ *
+ * String matching notes (kmp-tor has no structured failure kinds today):
+ * - Markers validated against kmp-tor **2.6.0** and kmp-tor-resource **409.5.0** (`gradle/libs.versions.toml`).
+ * - Re-check [TERMINAL_MESSAGE_MARKERS] after any kmp-tor upgrade — wording can change between releases.
  */
 object TorBootstrapErrorClassification {
     fun isTerminal(error: Throwable): Boolean {

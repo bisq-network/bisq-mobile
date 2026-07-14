@@ -58,8 +58,8 @@ class KmpTorService(
 ) : BaseService(),
     Logging {
     companion object {
-        private const val DEFAULT_DAEMON_START_TIMEOUT_MS = 60_000L
-        private const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 120_000L // 2 minutes for bootstrap
+        internal const val DEFAULT_DAEMON_START_TIMEOUT_MS = 60_000L
+        internal const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 120_000L // 2 minutes for bootstrap
     }
 
     sealed class TorState {

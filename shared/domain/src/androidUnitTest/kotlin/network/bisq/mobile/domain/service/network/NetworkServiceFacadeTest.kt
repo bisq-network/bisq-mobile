@@ -220,6 +220,26 @@ class NetworkServiceFacadeTest : KoinTest {
         }
 
     @Test
+    fun `activate throws TorBootstrapNotReadyException when await times out without started or failure signal`() =
+        runTest(testDispatcher) {
+            val facade = createFacade(torEnabled = true)
+            val activateJob =
+                launch {
+                    assertFailsWith<TorBootstrapNotReadyException> {
+                        facade.activate()
+                    }
+                }
+            runCurrent()
+            advanceTimeBy(2_000L)
+            runCurrent()
+            advanceTimeBy(KmpTorService.DEFAULT_DAEMON_START_TIMEOUT_MS + KmpTorService.DEFAULT_BOOTSTRAP_TIMEOUT_MS)
+            runCurrent()
+            activateJob.join()
+            coVerify(exactly = 3) { kmpTorService.startTor(any(), any()) }
+            coVerify(exactly = 1) { kmpTorService.stopTor(any()) }
+        }
+
+    @Test
     fun `activate throws TorBootstrapNotReadyException when bootstrap fails even if stopTor fails`() =
         runTest(testDispatcher) {
             coEvery { kmpTorService.stopTor(any()) } throws RuntimeException("stop failed")
