@@ -84,7 +84,7 @@ shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/
 
 `clientApp` reuses helpers via `kotlin.srcDirs` grafts in `apps/clientApp/build.gradle.kts` — not a module dependency, so no cycle. Point only at `compose/`, `coroutines/`, and `di/` (not the `test_utils` root). Do **not** use `kotlin.include` on that source set: it replaces the default `**/*` and drops clientApp's own `androidUnitTest` sources.
 
-```
+```text
 presentation main ← clientApp (implementation)
 presentation test_utils/{compose,coroutines,di} ← clientApp androidUnitTest (srcDirs graft)
 ```
