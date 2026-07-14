@@ -13,6 +13,7 @@ class TestCoroutineJobsManager(
     private var scope = CoroutineScope(dispatcher + SupervisorJob())
 
     override suspend fun dispose() {
+        // Test-only: recreate scope after cancel so one Koin instance can be reused across cases.
         scope.cancel()
         scope = CoroutineScope(dispatcher + SupervisorJob())
     }
