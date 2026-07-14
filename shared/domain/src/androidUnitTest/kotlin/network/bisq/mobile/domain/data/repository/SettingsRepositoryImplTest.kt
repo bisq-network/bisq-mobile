@@ -10,7 +10,11 @@ import io.mockk.slot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
+import network.bisq.mobile.data.model.market.MarketFilter
+import network.bisq.mobile.data.model.market.MarketSortBy
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -278,5 +282,24 @@ class SettingsRepositoryImplTest {
             val updated = updateSlot.captured(originalSettings)
             assertEquals(true, updated.analyticsPromptSeen)
             assertEquals(false, updated.analyticsEnabled, "promptSeen flip must NOT enable analytics — privacy contract")
+        }
+
+    @Test
+    fun `remaining setters each delegate to datastore updateData`() =
+        runTest {
+            coEvery { mockDataStore.updateData(any()) } returns Settings()
+
+            repository.setSelectedMarketCode("BTC/USD")
+            repository.setNotificationPermissionState(PermissionState.entries.first())
+            repository.setBatteryOptimizationPermissionState(BatteryOptimizationState.entries.first())
+            repository.setMarketSortBy(MarketSortBy.entries.first())
+            repository.setMarketFilter(MarketFilter.entries.first())
+            repository.setDontShowAgainHyperlinksOpenInBrowser(true)
+            repository.setPermitOpeningBrowser(true)
+            repository.setAnalyticsBaselineSent(true)
+            repository.setRememberOfferbookFilterPreferences(true)
+            repository.update { it }
+
+            coVerify(exactly = 10) { mockDataStore.updateData(any()) }
         }
 }
