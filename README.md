@@ -79,7 +79,9 @@
 
 6. [Compose guidelines](./docs/compose-guidelines/README.md)
 
-7. [Testing guide](./docs/TESTING.md) — agents: [AGENTS.md](./AGENTS.md)
+7. [Architecture & conventions](./docs/architecture.md) — agents: [AGENTS.md](./AGENTS.md)
+
+8. [Testing guide](./docs/TESTING.md) — agents: [AGENTS.md](./AGENTS.md)
 
 ## Goal
 
