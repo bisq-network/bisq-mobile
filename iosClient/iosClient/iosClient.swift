@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import UserNotifications
 import ClientApp
+import Darwin
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
@@ -106,6 +107,14 @@ struct iosClient: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     init() {
+        // Ignore SIGPIPE process-wide so a socket write to an already-closed peer returns EPIPE
+        // instead of terminating the app (or being reported as a crash by SentryCrash, which lists
+        // SIGPIPE as a fatal signal). iOS Connect churns network connections over Tor, and the
+        // native socket I/O underneath raises SIGPIPE on a broken pipe. This launch-time call
+        // covers opted-out users; the Sentry initializer reclaims it after SentrySDK.start for
+        // opted-in users. See ignoreSigPipe() in shared/domain PlatformDomainAbstractions.ios.kt.
+        signal(SIGPIPE, SIG_IGN)
+
         // Initialize Koin dependency injection
         DependenciesProviderHelper().doInitKoin()
     }

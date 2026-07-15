@@ -4,6 +4,7 @@ package network.bisq.mobile.client.common.domain.analytics
 
 import io.sentry.kotlin.multiplatform.Sentry
 import kotlinx.cinterop.ExperimentalForeignApi
+import network.bisq.mobile.data.utils.ignoreSigPipe
 import network.bisq.mobile.domain.analytics.AnalyticsRedactor
 import network.bisq.mobile.domain.analytics.NativeSentryInitializer
 import network.bisq.mobile.domain.utils.Logging
@@ -104,6 +105,12 @@ class SentryCocoaNativeSentryInitializer :
             setupPrivacy(options, redactor, runtimeOptInProvider)
             setupTransport(options, socksProxyHost, socksProxyPort)
         }
+        // Sentry keeps enableCrashHandler on, and SentryCrash lists SIGPIPE in its fatal-signal
+        // set — installing SentrySDK.start above (re)claims the SIGPIPE disposition and would turn
+        // a benign broken-pipe socket write into a reported crash. Reclaim it to SIG_IGN so those
+        // writes surface as EPIPE instead. The launch-time ignoreSigPipe() in the iOS app entry
+        // covers opted-out users (who never reach this init); this call covers opted-in users.
+        ignoreSigPipe()
         log.d {
             if (socksProxyHost != null) {
                 "Sentry-Cocoa initialized (SOCKS5 $socksProxyHost:$socksProxyPort)"

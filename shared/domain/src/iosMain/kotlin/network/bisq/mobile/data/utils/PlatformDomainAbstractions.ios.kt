@@ -90,7 +90,9 @@ import platform.UIKit.systemRedColor
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import platform.posix.SIGABRT
+import platform.posix.SIGPIPE
 import platform.posix.SIG_DFL
+import platform.posix.SIG_IGN
 import platform.posix.memcpy
 import platform.posix.raise
 import platform.posix.signal
@@ -131,6 +133,27 @@ fun exitApp() {
     // and then abort (the default behavior of uncaught kotlin exception)
     signal(SIGABRT, SIG_DFL)
     raise(SIGABRT)
+}
+
+/**
+ * Ignore SIGPIPE process-wide so a socket/pipe write to a peer that already closed its end
+ * returns EPIPE instead of raising signal 13.
+ *
+ * Why this exists: iOS Connect churns network connections (unreliable dead-socket detection +
+ * Tor reconnect loops), and the native socket I/O underneath (kmp-tor / Kotlin/Native networking)
+ * can write to a just-closed connection. With the default disposition SIGPIPE terminates the
+ * process; worse, once Sentry-Cocoa starts, SentryCrash lists SIGPIPE in its fatal-signal set and
+ * reports it as a hard crash (see GlitchTip bisq-connect@0.6.0 SIGPIPE events). Disarming it is
+ * the textbook fix for any BSD-socket app: write() then returns -1/EPIPE which the networking
+ * layer already handles as an ordinary I/O error.
+ *
+ * Must be invoked BOTH at app launch (covers opted-out users, for whom Sentry never installs its
+ * handler) AND right after Sentry init (SentryCrash overwrites the disposition when it installs,
+ * so we reclaim it). Idempotent.
+ */
+@OptIn(ExperimentalForeignApi::class)
+fun ignoreSigPipe() {
+    signal(SIGPIPE, SIG_IGN)
 }
 
 @OptIn(ExperimentalForeignApi::class)
