@@ -51,3 +51,8 @@ apps/clientApp/google-services.json
 # Templates (sentry.properties.template) ARE committed; the real file with
 # a personal auth.token is per-developer and must not be.
 **/sentry.properties
+
+# AI: devs are welcomed (and encouraged) to use different AIs. They can get fed/use
+# the existing md's documentation. Main sourcefile shouldn't be part of the codebase
+# Best approach is to simply add `@AGENTS.md` into the AI root sourcefile
+**/CLAUDE.md
