@@ -29,7 +29,7 @@ Android-only APIs cannot go in `commonTest`. iOS: `iosSimulatorArm64Test` (macOS
 
 ## Decision tree {#decision-tree}
 
-```
+```text
 Changed file layer?
 ├── Pure Kotlin → commonTest (*Test.kt); ServiceFacades: inline setMain + testModule → recipes.md#domain
 ├── Presenter (:shared:presentation) → *PresenterTest.kt, PresentationKoinTestBase / PlatformPresentationKoinTestBase → recipes.md#presenter
@@ -46,7 +46,7 @@ Do not extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 
 ## File placement
 
-```
+```text
 Production: <module>/src/<sourceSet>/kotlin/<package>/<Name>.kt
 Test:       <module>/src/<testSourceSet>/kotlin/<same package>/<Name><Suffix>.kt
 ```
@@ -71,14 +71,21 @@ Never combine `TestApplication` with a Koin-starting base. Load exactly one modu
 
 ## Commands {#commands}
 
+Module-scoped (prefer these):
+
 ```bash
 ./gradlew :shared:presentation:testDebugUnitTest --tests "network.bisq.mobile.presentation.settings.faqs.FaqPresenterTest"
 ./gradlew :shared:presentation:testDebugUnitTest --tests "network.bisq.mobile.presentation.offerbook.OfferbookPresenterFilterTest"
 ./gradlew :apps:clientApp:testDebugUnitTest --tests "network.bisq.mobile.client.common.domain.service.settings.ClientSettingsServiceFacadeTest"
+./gradlew :shared:domain:iosSimulatorArm64Test   # macOS only
+```
+
+Repository-wide (full suite / coverage — not for day-to-day iteration):
+
+```bash
 ./gradlew clean test -x :apps:nodeApp:test --no-configuration-cache
 ./gradlew testDebugUnitTest koverVerify
 ./scripts/coverage.sh
-./gradlew :shared:domain:iosSimulatorArm64Test   # macOS only
 ```
 
 ## Coverage

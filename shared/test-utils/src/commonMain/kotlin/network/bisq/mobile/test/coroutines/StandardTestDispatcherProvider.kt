@@ -5,11 +5,10 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 
 class StandardTestDispatcherProvider(
-    dispatcher: CoroutineDispatcher = StandardTestDispatcher(),
+    private val dispatcher: CoroutineDispatcher = StandardTestDispatcher(),
 ) : DispatcherProvider {
-    private val testDispatcher = dispatcher
-    override val main get() = testDispatcher
-    override val io get() = testDispatcher
-    override val default get() = testDispatcher
-    override val unconfined get() = testDispatcher
+    override val main get() = dispatcher
+    override val io get() = dispatcher
+    override val default get() = dispatcher
+    override val unconfined get() = dispatcher
 }

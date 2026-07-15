@@ -126,6 +126,8 @@ class MyClientFacadeTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `when getSettings succeeds then updates flows`() = runTest {
         coEvery { apiGateway.getSettings() } returns Result.success(settingsVo) // VERIFY
+        facade.activate()
+        advanceUntilIdle()
         val result = facade.getSettings()
         advanceUntilIdle()
         assertTrue(result.isSuccess)

@@ -16,7 +16,7 @@ Convention (confirmed): New screens always ship with `*UiState` + `*UiAction` + 
 | `:apps:clientApp` + `iosClient/` | Bisq Connect — thin client to a trusted node (Tor/clearnet) |
 | `:shared:domain` | Service facade contracts, repositories, replicated VO/Dto/Model, i18n |
 | `:shared:presentation` | Compose UI, presenters, navigation, shared DI |
-| `:shared:test-utils` | Shared test mocks |
+| `:shared:test-utils` | Shared testing infrastructure |
 | `:shared:kscan` | QR scanning (client) |
 
 Package note: Gradle module `:shared:domain` hosts both `network.bisq.mobile.data.*` and `network.bisq.mobile.domain.*`.
@@ -47,7 +47,7 @@ Proof-style examples: `FaqPresenter` / `SettingsPresenter` / payment-account pre
 
 ## Client vs Node `ServiceFacade`
 
-```
+```text
 shared/domain  →  *ServiceFacade (interface or abstract)
 apps/clientApp →  Client*ServiceFacade  (HTTP + WebSocket to trusted node)
 apps/nodeApp   →  Node*ServiceFacade    (bisq2 core via AndroidApplicationService)

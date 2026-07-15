@@ -26,7 +26,7 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
         facade = ClientReputationServiceFacade(apiGateway, json, isDebug = false)
     }
 
-    private fun facade(isDebug: Boolean) = ClientReputationServiceFacade(apiGateway, json, isDebug = isDebug)
+    private fun createFacade(isDebug: Boolean) = ClientReputationServiceFacade(apiGateway, json, isDebug = isDebug)
 
     @Test
     fun `activate subscribes to user reputation`() =
@@ -108,7 +108,7 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
             val score = ReputationScoreVO(totalScore = 42, fiveSystemScore = 3.5, ranking = 2)
             coEvery { apiGateway.getReputationScore("user-1") } returns Result.success(score)
 
-            val result = facade(isDebug = true).getReputation("user-1")
+            val result = createFacade(isDebug = true).getReputation("user-1")
 
             assertTrue(result.isSuccess)
             assertEquals(score, result.getOrNull())
@@ -120,7 +120,7 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
         runTest {
             coEvery { apiGateway.getReputationScore("user-1") } returns Result.failure(Exception("not found"))
 
-            val result = facade(isDebug = true).getReputation("user-1")
+            val result = createFacade(isDebug = true).getReputation("user-1")
 
             assertTrue(result.isFailure)
             coVerify(exactly = 1) { apiGateway.getReputationScore("user-1") }
@@ -131,15 +131,14 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
         runTest {
             val observer = WebSocketEventObserver()
             coEvery { apiGateway.subscribeUserReputation() } returns observer
-            val cacheFacade = facade(isDebug = false)
 
-            cacheFacade.activate()
+            facade.activate()
             advanceUntilIdle()
 
             observer.setEvent(reputationEvent("""{"user-1":{"totalScore":120,"fiveSystemScore":4.2,"ranking":5}}"""))
             advanceUntilIdle()
 
-            val result = cacheFacade.getReputation("user-1")
+            val result = facade.getReputation("user-1")
 
             assertTrue(result.isSuccess)
             assertEquals(
@@ -152,7 +151,7 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `getReputation returns failure when not debug and user missing from cache`() =
         runTest {
-            val result = facade(isDebug = false).getReputation("missing-user")
+            val result = facade.getReputation("missing-user")
 
             assertTrue(result.isFailure)
             coVerify(exactly = 0) { apiGateway.getReputationScore(any()) }

@@ -15,7 +15,7 @@ Gradle can sometimes compile circular test deps; Android Studio often cannot ind
 
 Test fixtures (AGP `android { testFixtures { enable = true } }`) are the intended fix: publish test utilities *from* a library *to* downstream test classpaths, one-way:
 
-```
+```text
 presentation (main) ← testFixtures
 clientApp androidUnitTest → testFixtures(presentation)
 ```
@@ -28,7 +28,7 @@ Gradle's `java-test-fixtures` plugin is not for Kotlin Multiplatform modules. Us
 
 A dedicated module held `PresentationKoinTestBase`, `BisqComposeUiTestBase`, `presentationTestModule`, etc.
 
-```
+```text
 presentation androidUnitTest → presentation-test-utils → presentation main
 ```
 
@@ -73,7 +73,7 @@ Do not re-enable `testFixtures` on `:shared:presentation` until KGP registers `c
 
 Helpers live in presentation's `androidUnitTest`:
 
-```
+```text
 shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/
   compose/     BisqComposeUiTestBase, PresentationKoinComposeTestBase, …
   coroutines/  PresentationKoinTestBase, PlatformPresentationKoinTestBase
