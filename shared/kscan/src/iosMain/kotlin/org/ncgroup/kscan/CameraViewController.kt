@@ -17,7 +17,10 @@ import platform.AVFoundation.AVCaptureVideoPreviewLayer
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
+import platform.AVFoundation.AVMetadataObjectTypeQRCode
+import platform.AVFoundation.descriptor
 import platform.AVFoundation.videoZoomFactor
+import platform.CoreImage.CIQRCodeDescriptor
 import platform.Foundation.NSLog
 import platform.UIKit.UIApplication
 import platform.UIKit.UIColor
@@ -162,23 +165,35 @@ class CameraViewController(
             }.filter { barcodeObject ->
                 isRequestedFormat(barcodeObject.type)
             }.forEach { barcodeObject ->
-                processDetectedBarcode(barcodeObject.stringValue ?: "", barcodeObject.type)
+                processDetectedBarcode(barcodeObject)
             }
     }
 
-    private fun processDetectedBarcode(
-        value: String,
-        type: AVMetadataObjectType,
-    ) {
-        barcodesDetected[value] = (barcodesDetected[value] ?: 0) + 1
+    private fun processDetectedBarcode(barcodeObject: AVMetadataMachineReadableCodeObject) {
+        val value = barcodeObject.stringValue ?: ""
+        val type = barcodeObject.type
+        val key = value.ifEmpty { type.toString() }
 
-        if ((barcodesDetected[value] ?: 0) >= 2) {
+        barcodesDetected[key] = (barcodesDetected[key] ?: 0) + 1
+
+        if ((barcodesDetected[key] ?: 0) >= 2) {
             val appSpecificFormat = type.toFormat()
+            val rawBytes = extractRawBytes(barcodeObject, value)
+
+            // Build string from rawBytes, replacing null bytes to prevent UI truncation
+            val data =
+                buildString {
+                    for (byte in rawBytes) {
+                        val char = (byte.toInt() and 0xFF).toChar()
+                        append(if (char == '\u0000') ' ' else char)
+                    }
+                }
+
             val barcode =
                 Barcode(
-                    data = value,
+                    data = data,
                     format = appSpecificFormat.toString(),
-                    rawBytes = stringToRawBytes(value),
+                    rawBytes = rawBytes,
                 )
 
             if (!filter(barcode)) return
@@ -191,6 +206,27 @@ class CameraViewController(
                 }
             }
         }
+    }
+
+    /**
+     * Extracts raw bytes from a barcode object.
+     * For QR codes, uses CIQRCodeDescriptor to preserve null bytes.
+     * For other formats, falls back to string conversion.
+     */
+    @OptIn(ExperimentalForeignApi::class)
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    private fun extractRawBytes(
+        barcodeObject: AVMetadataMachineReadableCodeObject,
+        fallbackValue: String,
+    ): ByteArray {
+        if (barcodeObject.type == AVMetadataObjectTypeQRCode) {
+            val descriptor = barcodeObject.descriptor as? CIQRCodeDescriptor
+            if (descriptor != null) {
+                val bytes = QRCodePayloadParser.extractRawBytes(descriptor)
+                if (bytes != null) return bytes
+            }
+        }
+        return stringToRawBytes(fallbackValue)
     }
 
     @OptIn(ExperimentalForeignApi::class)

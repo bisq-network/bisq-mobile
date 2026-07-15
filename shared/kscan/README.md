@@ -6,5 +6,5 @@ Mobile.
 
 Based on:
 
-- Commit: [de1ed36860](https://github.com/ismai117/KScan/commit/de1ed36860b074605b510dabe5bcd0fd8e1358ef)
-- Release tag: [0.6.0](https://github.com/ismai117/KScan/releases/tag/0.6.0)
+- Commit: [754b88e8bf](https://github.com/ismai117/KScan/commit/754b88e8bf3841d608308d5bc3f97b7e208cea65)
+- Release tag: [0.9.2](https://github.com/ismai117/KScan/releases/tag/0.9.2)
