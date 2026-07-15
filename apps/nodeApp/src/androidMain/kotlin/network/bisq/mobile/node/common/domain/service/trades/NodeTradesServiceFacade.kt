@@ -127,6 +127,12 @@ class NodeTradesServiceFacade(
     private var channelsPin: Pin? = null
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
 
+    // Serializes all combined _openTradeItems + pinsByTradeId mutation sequences. The trade
+    // observer, the channel observer, and deactivate() can run on different threads (bisq2
+    // dispatch vs coroutines); without one lock the findListItem check-then-act races and
+    // pinsByTradeId (plain HashMap) is mutated concurrently.
+    private val tradeItemsLock = Any()
+
     override suspend fun activate() {
         super<ServiceFacade>.activate()
 
@@ -671,6 +677,14 @@ class NodeTradesServiceFacade(
     private fun handleTradeAndChannelAdded(
         trade: BisqEasyTrade,
         channel: BisqEasyOpenTradeChannel,
+    ): Unit =
+        synchronized(tradeItemsLock) {
+            handleTradeAndChannelAddedLocked(trade, channel)
+        }
+
+    private fun handleTradeAndChannelAddedLocked(
+        trade: BisqEasyTrade,
+        channel: BisqEasyOpenTradeChannel,
     ) {
         if (findListItem(trade).isPresent) {
             log.d {
@@ -696,11 +710,10 @@ class NodeTradesServiceFacade(
         }
 
         // handleTradeAndChannelAdded is invoked twice per trade (once for the trade, once for the
-        // associated channel — see the early-return log above). The findListItem guard is a
-        // check-then-act that does not close the race: both invocations can pass it before either
-        // reaches this add, appending the same tradeId twice. That produces a duplicate key which
-        // crashes OpenTradeListScreen's keyed LazyColumn (key = tradeId). Dedup atomically inside
-        // the update block (last write wins, mirroring addChatMessages / client facade).
+        // associated channel — see the early-return log above). tradeItemsLock serializes the two
+        // invocations so the findListItem guard closes that race; the atomic dedup below stays as
+        // defence-in-depth against a duplicate tradeId, which would crash OpenTradeListScreen's
+        // keyed LazyColumn (key = tradeId). Last write wins, mirroring addChatMessages / client facade.
         _openTradeItems.update { current -> current.filterNot { it.tradeId == openTradeItem.tradeId } + openTradeItem }
 
         val tradeId = trade.id
@@ -740,22 +753,26 @@ class NodeTradesServiceFacade(
     }
 
     private fun handleTradeAndChannelRemoved(trade: BisqEasyTrade) {
-        val tradeId = trade.id
-        if (!findListItem(trade).isPresent) {
-            log.w { "We got called handleTradeAndChannelRemoved but we have not found any trade list item with tradeId $tradeId" }
-            return
+        synchronized(tradeItemsLock) {
+            val tradeId = trade.id
+            if (!findListItem(trade).isPresent) {
+                log.w { "We got called handleTradeAndChannelRemoved but we have not found any trade list item with tradeId $tradeId" }
+                return
+            }
+
+            val item = findListItem(trade).get()
+            _openTradeItems.update { it - item }
+
+            unbindPinByTradeId(tradeId)
         }
-
-        val item = findListItem(trade).get()
-        _openTradeItems.update { it - item }
-
-        unbindPinByTradeId(tradeId)
     }
 
     private fun handleClearTradesAndChannels() {
-        _openTradeItems.value = emptyList()
-        _selectedTrade.value = null
-        unbindAllPinsByTradeId()
+        synchronized(tradeItemsLock) {
+            _openTradeItems.value = emptyList()
+            _selectedTrade.value = null
+            unbindAllPinsByTradeId()
+        }
     }
 
     // Misc
@@ -767,16 +784,19 @@ class NodeTradesServiceFacade(
             .filter { it.bisqEasyTradeModel.id == tradeId }
             .findAny()
 
+    // synchronized is reentrant, so these are safe both from the locked handlers above and
+    // from deactivate(), which calls unbindAllPinsByTradeId directly.
     private fun unbindPinByTradeId(tradeId: String) {
-        if (pinsByTradeId.containsKey(tradeId)) {
-            pinsByTradeId[tradeId]?.forEach { it.unbind() }
-            pinsByTradeId.remove(tradeId)
+        synchronized(tradeItemsLock) {
+            pinsByTradeId.remove(tradeId)?.forEach { it.unbind() }
         }
     }
 
     private fun unbindAllPinsByTradeId() {
-        pinsByTradeId.values.forEach { pins -> pins.forEach { it.unbind() } }
-        pinsByTradeId.clear()
+        synchronized(tradeItemsLock) {
+            pinsByTradeId.values.forEach { pins -> pins.forEach { it.unbind() } }
+            pinsByTradeId.clear()
+        }
     }
 
     private fun getTradeChannelUserNameTriple(): Triple<BisqEasyOpenTradeChannel, BisqEasyTrade, String> {
