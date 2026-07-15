@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.node.common.test_utils.TestApplication
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
@@ -101,7 +102,18 @@ class NetworkContentTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithText("mobile.networkInfo.overview.connections".i18n(7))
+            .onNodeWithText("mobile.networkInfo.overview.connections".i18nPlural(7))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when there is a single peer then the connections subtitle uses singular grammar`() {
+        setTestContent(uiState = sampleUiState(peerCount = 1))
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("mobile.networkInfo.overview.connections".i18nPlural(1))
             .performScrollTo()
             .assertIsDisplayed()
     }

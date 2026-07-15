@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.node.common.domain.service.network.NodePeerInfo
 import network.bisq.mobile.node.common.test_utils.TestApplication
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -58,7 +59,17 @@ class NetworkConnectionsContentTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithText("mobile.networkInfo.connections.peers".i18n(2))
+            .onNodeWithText("mobile.networkInfo.connections.peers".i18nPlural(2))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when there is a single peer then the peer count line uses singular grammar`() {
+        setTestContent(singlePeerState())
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("mobile.networkInfo.connections.peers".i18nPlural(1))
             .assertIsDisplayed()
     }
 
@@ -122,6 +133,21 @@ class NetworkConnectionsContentTest {
                         connectionId = "2",
                         address = "inbound.onion:1234",
                         isOutbound = false,
+                        establishedAtMillis = 0L,
+                        isSeed = false,
+                    ),
+                ),
+        )
+
+    private fun singlePeerState(): NetworkConnectionsUiState =
+        NetworkConnectionsUiState(
+            peerCount = 1,
+            peers =
+                listOf(
+                    NodePeerInfo(
+                        connectionId = "1",
+                        address = "outbound.onion:1234",
+                        isOutbound = true,
                         establishedAtMillis = 0L,
                         isSeed = false,
                     ),

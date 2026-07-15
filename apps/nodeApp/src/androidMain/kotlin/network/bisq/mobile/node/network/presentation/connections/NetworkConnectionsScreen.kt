@@ -29,6 +29,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.no_connections
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.node.common.domain.service.network.NodePeerInfo
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -73,7 +74,7 @@ internal fun NetworkConnectionsContent(
             ) {
                 item {
                     BisqText.SmallRegular(
-                        text = "mobile.networkInfo.connections.peers".i18n(uiState.peerCount),
+                        text = "mobile.networkInfo.connections.peers".i18nPlural(uiState.peerCount),
                         color = BisqTheme.colors.mid_grey20,
                     )
                 }

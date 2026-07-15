@@ -26,14 +26,14 @@ class NetworkPresenter(
                 networkServiceFacade.numConnections,
                 networkServiceFacade.allDataReceived,
                 kmpTorService.state,
-                networkServiceFacade.myNodeAddress,
-            ) { numConnections, dataReceived, torState, myNodeAddress ->
+                networkServiceFacade.myNodeInfo,
+            ) { numConnections, dataReceived, torState, myNodeInfo ->
                 val peerCount = numConnections.coerceAtLeast(0)
                 val isTorRunning = torState is KmpTorService.TorState.Started
                 NetworkUiState(
                     peerCount = peerCount,
                     isTorRunning = isTorRunning,
-                    onionAddress = myNodeAddress,
+                    onionAddress = myNodeInfo.onionAddress,
                     healthState = computeHealthState(peerCount, dataReceived, isTorRunning),
                 )
             }.collect { state -> _uiState.value = state }

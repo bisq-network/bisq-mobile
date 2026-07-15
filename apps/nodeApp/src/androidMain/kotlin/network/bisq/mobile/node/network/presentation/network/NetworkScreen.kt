@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.node.network.presentation.network.NetworkHealthState.HEALTHY
 import network.bisq.mobile.node.network.presentation.network.NetworkHealthState.OFFLINE
 import network.bisq.mobile.node.network.presentation.network.NetworkHealthState.SYNCING
@@ -88,12 +89,12 @@ internal fun NetworkContent(
                 )
                 StatChip(
                     label = "mobile.networkInfo.overview.transport".i18n(),
-                    value = "mobile.networkInfo.overview.tor".i18n(),
+                    value = "mobile.networkInfo.overview.daemon".i18n(),
                     valueColor = BisqTheme.colors.white,
                     modifier = Modifier.weight(1f),
                 )
                 StatChip(
-                    label = "mobile.networkInfo.overview.tor".i18n(),
+                    label = "mobile.networkInfo.overview.daemon".i18n(),
                     value =
                         if (uiState.isTorRunning) {
                             "mobile.networkInfo.overview.torRunning".i18n()
@@ -115,7 +116,7 @@ internal fun NetworkContent(
                     BisqText.BaseRegular(text = "mobile.networkInfo.connections.title".i18n(), color = BisqTheme.colors.white)
                     BisqGap.VQuarter()
                     BisqText.SmallLight(
-                        text = "mobile.networkInfo.overview.connections".i18n(uiState.peerCount),
+                        text = "mobile.networkInfo.overview.connections".i18nPlural(uiState.peerCount),
                         color = BisqTheme.colors.mid_grey20,
                     )
                 }

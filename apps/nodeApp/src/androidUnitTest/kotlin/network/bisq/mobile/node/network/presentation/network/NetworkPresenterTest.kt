@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.node.common.domain.service.network.NodeInfo
 import network.bisq.mobile.node.common.domain.service.network.NodeNetworkServiceFacade
 import network.bisq.mobile.node.common.presentation.navigation.NodeNavRoute
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -41,7 +42,7 @@ class NetworkPresenterTest {
 
     private lateinit var numConnections: MutableStateFlow<Int>
     private lateinit var allDataReceived: MutableStateFlow<Boolean>
-    private lateinit var myNodeAddress: MutableStateFlow<String?>
+    private lateinit var myNodeInfo: MutableStateFlow<NodeInfo>
     private lateinit var torState: MutableStateFlow<KmpTorService.TorState>
 
     private lateinit var presenter: NetworkPresenter
@@ -58,12 +59,12 @@ class NetworkPresenterTest {
 
         numConnections = MutableStateFlow(0)
         allDataReceived = MutableStateFlow(false)
-        myNodeAddress = MutableStateFlow(null)
+        myNodeInfo = MutableStateFlow(NodeInfo())
         torState = MutableStateFlow(KmpTorService.TorState.Stopped())
 
         every { networkServiceFacade.numConnections } returns numConnections
         every { networkServiceFacade.allDataReceived } returns allDataReceived
-        every { networkServiceFacade.myNodeAddress } returns myNodeAddress
+        every { networkServiceFacade.myNodeInfo } returns myNodeInfo
         every { kmpTorService.state } returns torState
 
         startKoin {
@@ -100,7 +101,7 @@ class NetworkPresenterTest {
             numConnections.value = 5
             allDataReceived.value = true
             torState.value = KmpTorService.TorState.Started
-            myNodeAddress.value = "abcd.onion:1234"
+            myNodeInfo.value = NodeInfo(onionAddress = "abcd.onion:1234")
 
             // When
             presenter = createPresenter()

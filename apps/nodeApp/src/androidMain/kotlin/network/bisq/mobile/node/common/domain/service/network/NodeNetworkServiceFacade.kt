@@ -34,8 +34,8 @@ class NodeNetworkServiceFacade(
     private val _connectedPeers = MutableStateFlow<List<NodePeerInfo>>(emptyList())
     val connectedPeers: StateFlow<List<NodePeerInfo>> = _connectedPeers.asStateFlow()
 
-    private val _myNodeAddress = MutableStateFlow<String?>(null)
-    val myNodeAddress: StateFlow<String?> = _myNodeAddress.asStateFlow()
+    private val _myNodeInfo = MutableStateFlow(NodeInfo())
+    val myNodeInfo: StateFlow<NodeInfo> = _myNodeInfo.asStateFlow()
 
     private var defaultNode: Node? = null
     private var peerGroupService: PeerGroupService? = null
@@ -67,7 +67,7 @@ class NodeNetworkServiceFacade(
                         peerGroupService = serviceNode.peerGroupManager.map { it.peerGroupService }.orElse(null)
                         updateNumConnections()
                         updateConnectedPeers()
-                        updateMyNodeAddress()
+                        updateMyNodeInfo()
 
                         observeInventoryData(serviceNode)
 
@@ -86,7 +86,7 @@ class NodeNetworkServiceFacade(
         defaultNode = null
         peerGroupService = null
         _connectedPeers.value = emptyList()
-        _myNodeAddress.value = null
+        _myNodeInfo.value = NodeInfo()
 
         allDataReceivedPin?.unbind()
         allDataReceivedPin = null
@@ -104,7 +104,7 @@ class NodeNetworkServiceFacade(
         log.i { "onConnection: ${connection.peerAddress}, total: ${defaultNode?.numConnections ?: -1}" }
         updateNumConnections()
         updateConnectedPeers()
-        updateMyNodeAddress()
+        updateMyNodeInfo()
     }
 
     override fun onDisconnect(
@@ -132,11 +132,16 @@ class NodeNetworkServiceFacade(
         log.d { "connectedPeers updated: ${_connectedPeers.value.size} peers" }
     }
 
-    private fun updateMyNodeAddress() {
-        // The node's own onion address is stable once the server binds, so resolve it once.
-        if (_myNodeAddress.value != null) return
-        _myNodeAddress.value = defaultNode?.findMyAddress()?.map { it.fullAddress }?.orElse(null)
-        log.d { "myNodeAddress resolved: ${_myNodeAddress.value != null}" }
+    private fun updateMyNodeInfo() {
+        val current = _myNodeInfo.value
+        // keyId is available as soon as defaultNode is set; the onion address only after the server binds. Resolve each once.
+        val keyId = current.keyId ?: defaultNode?.networkId?.keyId
+        val address = current.onionAddress ?: defaultNode?.findMyAddress()?.map { it.fullAddress }?.orElse(null)
+        val updated = NodeInfo(onionAddress = address, keyId = keyId)
+        if (updated != current) {
+            _myNodeInfo.value = updated
+            log.d { "myNodeInfo resolved: address=${address != null}, keyId=${keyId != null}" }
+        }
     }
 
     private fun Connection.toNodePeerInfo(): NodePeerInfo =
