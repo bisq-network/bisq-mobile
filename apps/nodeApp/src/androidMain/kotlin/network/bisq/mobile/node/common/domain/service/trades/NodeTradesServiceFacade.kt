@@ -695,7 +695,13 @@ class NodeTradesServiceFacade(
             return
         }
 
-        _openTradeItems.update { it + openTradeItem }
+        // handleTradeAndChannelAdded is invoked twice per trade (once for the trade, once for the
+        // associated channel — see the early-return log above). The findListItem guard is a
+        // check-then-act that does not close the race: both invocations can pass it before either
+        // reaches this add, appending the same tradeId twice. That produces a duplicate key which
+        // crashes OpenTradeListScreen's keyed LazyColumn (key = tradeId). Dedup atomically inside
+        // the update block (last write wins, mirroring addChatMessages / client facade).
+        _openTradeItems.update { current -> current.filterNot { it.tradeId == openTradeItem.tradeId } + openTradeItem }
 
         val tradeId = trade.id
         pinsByTradeId[tradeId]?.forEach { it.unbind() }
