@@ -402,4 +402,59 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             assertTrue(result.isFailure)
             assertFalse(facade.isDeviceRegistered.value)
         }
+
+    // ---- Transient device-identifier unavailability (GlitchTip #1597) ----
+    //
+    // iOS UIDevice.identifierForVendor is nil right after a device restart, before the first
+    // unlock, so getDeviceId() throws IllegalStateException. That must NOT crash the app: the
+    // facade's public API is Result-based, so the failure has to surface as Result.failure and
+    // the next registration attempt (auto-register on activate) recovers once the id is available.
+
+    private fun facadeWithFailingDeviceId(): ClientPushNotificationServiceFacade =
+        ClientPushNotificationServiceFacade(
+            apiGateway = apiGateway,
+            settingsRepository = settingsRepository,
+            sensitiveSettingsRepository = sensitiveSettingsRepository,
+            pushNotificationTokenProvider = tokenProvider,
+            userProfileServiceFacade = userProfileServiceFacade,
+            deviceIdProvider =
+                DeviceIdProvider {
+                    throw IllegalStateException(
+                        "Unable to get device identifier. This can happen during device restart. Please try again.",
+                    )
+                },
+        )
+
+    @Test
+    fun `registerForPushNotifications returns failure without throwing when device id unavailable`() =
+        runTest {
+            // Given
+            coEvery { tokenProvider.requestPermission() } returns true
+            coEvery { tokenProvider.requestDeviceToken() } returns Result.success("valid-token")
+            val failingFacade = facadeWithFailingDeviceId()
+
+            // When — must not throw (previously an uncaught IllegalStateException crashed the app)
+            val result = failingFacade.registerForPushNotifications()
+
+            // Then — graceful failure, no server call, not marked registered
+            assertTrue(result.isFailure)
+            assertFalse(failingFacade.isDeviceRegistered.value)
+            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `unregisterFromPushNotifications returns failure and clears state when device id unavailable`() =
+        runTest {
+            // Given
+            val failingFacade = facadeWithFailingDeviceId()
+
+            // When — must not throw
+            val result = failingFacade.unregisterFromPushNotifications()
+
+            // Then — graceful failure, but local opt-out state is still cleared
+            assertTrue(result.isFailure)
+            assertFalse(failingFacade.isDeviceRegistered.value)
+            assertFalse(settingsRepository.fetch().pushNotificationsEnabled)
+            coVerify(exactly = 0) { apiGateway.unregisterDevice(any()) }
+        }
 }

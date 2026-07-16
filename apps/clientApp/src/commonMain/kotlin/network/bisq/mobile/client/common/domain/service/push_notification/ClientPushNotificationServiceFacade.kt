@@ -37,6 +37,9 @@ class ClientPushNotificationServiceFacade(
     // tests can pass the test dispatcher and keep it under the test scheduler — otherwise the
     // Dispatchers.Default hop escapes runTest/advanceUntilIdle and makes registration tests flaky.
     private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    // Injectable so tests can drive the transient-nil-identifier failure path (iOS
+    // identifierForVendor after a restart). Production delegates to the platform getDeviceId().
+    private val deviceIdProvider: DeviceIdProvider = DeviceIdProvider { getDeviceId() },
 ) : ServiceFacade(),
     PushNotificationServiceFacade,
     Logging {
@@ -132,6 +135,22 @@ class ClientPushNotificationServiceFacade(
         return registerTokenWithTrustedNode(token)
     }
 
+    /**
+     * Resolves the platform device identifier, converting the transient-unavailability throw into a
+     * [Result.failure] so it degrades to a recoverable error instead of an uncaught crash
+     * (GlitchTip #1597). On iOS `identifierForVendor` is nil right after a device restart, before
+     * the first unlock; the next registration attempt (auto-register on `activate()`) recovers once
+     * the identifier is available. We deliberately do NOT synthesize a fallback id — a random id
+     * would register a phantom device with the trusted node that never matches the real one.
+     */
+    private fun resolveDeviceId(): Result<String> =
+        try {
+            Result.success(deviceIdProvider.getDeviceId())
+        } catch (e: IllegalStateException) {
+            log.w(e) { "Device identifier temporarily unavailable — deferring; will retry when available." }
+            Result.failure(PushNotificationException("Device identifier temporarily unavailable", e))
+        }
+
     private suspend fun registerTokenWithTrustedNode(token: String): Result<Unit> {
         // Get the current user profile (needed for publicKeyBase64)
         val userProfile = userProfileServiceFacade.selectedUserProfile.value
@@ -143,8 +162,10 @@ class ClientPushNotificationServiceFacade(
         // publicKey.encoded is already a base64-encoded String from Bisq2
         val publicKeyBase64 = userProfile.networkId.pubKey.publicKey.encoded
 
-        // Get deterministic device-specific deviceId (based on hardware identifiers)
-        val deviceId = getDeviceId()
+        // Get deterministic device-specific deviceId (based on hardware identifiers). Can be
+        // transiently unavailable on iOS (see resolveDeviceId); surface it as a Result.failure
+        // instead of an uncaught crash — auto-register on the next activate() recovers.
+        val deviceId = resolveDeviceId().getOrElse { return Result.failure(it) }
         _deviceId.value = deviceId
 
         // Get device descriptor and platform dynamically
@@ -191,10 +212,14 @@ class ClientPushNotificationServiceFacade(
     override suspend fun unregisterFromPushNotifications(): Result<Unit> {
         log.i { "Unregistering from push notifications..." }
 
-        // Get deterministic device-specific deviceId (always available from hardware)
-        val deviceIdToUnregister = getDeviceId()
-
-        val apiResult = apiGateway.unregisterDevice(deviceIdToUnregister)
+        // deviceId tells the server which device to unregister. On iOS it can be transiently
+        // unavailable (post-restart, pre-first-unlock); if so we still honor the local opt-out
+        // (state is cleared below) but can't reach the server — treat that as an apiResult failure.
+        val apiResult =
+            resolveDeviceId().fold(
+                onSuccess = { apiGateway.unregisterDevice(it) },
+                onFailure = { Result.failure(it) },
+            )
         // Always update local state regardless of API result
         _isDeviceRegistered.value = false
         _deviceId.value = null
