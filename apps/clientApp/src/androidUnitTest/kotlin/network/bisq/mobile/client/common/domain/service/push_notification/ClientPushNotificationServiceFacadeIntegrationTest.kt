@@ -113,6 +113,10 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
                 sensitiveSettingsRepository = sensitiveSettingsRepository,
                 pushNotificationTokenProvider = tokenProvider,
                 userProfileServiceFacade = userProfileServiceFacade,
+                // Keep the symmetric-key init's withContext hop under the test scheduler instead of
+                // Dispatchers.Default, so registration tests stay deterministic (runTest adopts the
+                // scheduler of the TestDispatcher set via Dispatchers.setMain above).
+                backgroundDispatcher = testDispatcher,
             )
     }
 
@@ -417,6 +421,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
             sensitiveSettingsRepository = sensitiveSettingsRepository,
             pushNotificationTokenProvider = tokenProvider,
             userProfileServiceFacade = userProfileServiceFacade,
+            backgroundDispatcher = testDispatcher,
             deviceIdProvider =
                 DeviceIdProvider {
                     throw IllegalStateException(
