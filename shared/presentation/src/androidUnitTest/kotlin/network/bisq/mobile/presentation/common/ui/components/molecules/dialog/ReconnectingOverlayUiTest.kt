@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import io.mockk.mockk
 import io.mockk.verify
@@ -19,14 +20,15 @@ import org.junit.Test
  */
 class ReconnectingOverlayUiTest : BisqComposeUiTestBase() {
     @Test
-    fun `when viewport is short then restart services button stays displayed`() {
+    fun `when viewport is short then details scroll and restart services button stays displayed`() {
         val onClick = mockk<() -> Unit>(relaxed = true)
         val buttonText = "mobile.connectivity.reconnecting.restartServices".i18n()
+        val detailsText = "mobile.connectivity.reconnecting.client.details.ios".i18n()
 
         setTestContent {
-            // Roughly an iPhone X content height after chrome/safe-area, narrow enough that
-            // the long iOS Connect details copy would push a non-sticky button off-screen.
-            Box(modifier = Modifier.size(width = 320.dp, height = 480.dp)) {
+            // Short enough that long iOS Connect details must scroll; sticky button stays outside
+            // the scroll viewport (non-sticky layout would push it off-screen).
+            Box(modifier = Modifier.size(width = 320.dp, height = 360.dp)) {
                 ReconnectingOverlay(
                     onClick = onClick,
                     infoKey = "mobile.connectivity.reconnecting.client.info",
@@ -35,6 +37,16 @@ class ReconnectingOverlayUiTest : BisqComposeUiTestBase() {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(buttonText).assertIsDisplayed()
+
+        // useUnmergedTree: verticalScroll merges descendant text; the unmerged Text node
+        // still has the scrollable Column as a parent for performScrollTo.
+        composeTestRule
+            .onNodeWithText(detailsText, useUnmergedTree = true)
+            .performScrollTo()
+            .assertIsDisplayed()
 
         composeTestRule.onNodeWithText(buttonText).assertIsDisplayed()
         composeTestRule.onNodeWithText(buttonText).performClick()
