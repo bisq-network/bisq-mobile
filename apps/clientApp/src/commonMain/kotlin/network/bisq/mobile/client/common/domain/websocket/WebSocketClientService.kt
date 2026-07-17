@@ -6,7 +6,10 @@ import io.ktor.http.parseUrl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -493,23 +496,33 @@ class WebSocketClientService(
                 return@withLock
             }
             val subs = requestedSubscriptions.value
-            log.d { "applying subscriptions on WS client, entry count: ${subs.size}" }
-            subscriptionEntriesInApplyOrder(subs).forEach { entry ->
-                try {
-                    entry.value.resetSequence()
-                    client.subscribe(
-                        entry.key.topic,
-                        entry.key.parameter,
-                        entry.value,
-                    )
-                    clearSubscriptionFailure(entry.key)
-                } catch (e: Exception) {
-                    if (e !is CancellationException) {
-                        log.e(e) { "Failed to subscribe to topic ${entry.key.topic}; skipping" }
-                        markSubscriptionFailed(entry.key)
-                    }
-                    currentCoroutineContext().ensureActive()
-                }
+            val entries = subscriptionEntriesInApplyOrder(subs)
+            log.d { "applying subscriptions on WS client concurrently, entry count: ${entries.size}" }
+            // Fire all subscribe requests concurrently so a single slow/timed-out topic (up to
+            // ~30s round-trip) cannot gate the rest. The mutex stays held for the duration so a
+            // concurrent [subscribe] call cannot race with [subscriptionsAreApplied]; the actual
+            // awaits run in parallel via async.
+            coroutineScope {
+                entries
+                    .map { entry ->
+                        async {
+                            try {
+                                entry.value.resetSequence()
+                                client.subscribe(
+                                    entry.key.topic,
+                                    entry.key.parameter,
+                                    entry.value,
+                                )
+                                clearSubscriptionFailure(entry.key)
+                            } catch (e: Exception) {
+                                if (e !is CancellationException) {
+                                    log.e(e) { "Failed to subscribe to topic ${entry.key.topic}; skipping" }
+                                    markSubscriptionFailed(entry.key)
+                                }
+                                currentCoroutineContext().ensureActive()
+                            }
+                        }
+                    }.awaitAll()
             }
             subscriptionsAreApplied = true
         }

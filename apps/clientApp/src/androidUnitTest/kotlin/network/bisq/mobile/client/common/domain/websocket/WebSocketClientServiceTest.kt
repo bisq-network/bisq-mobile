@@ -749,6 +749,65 @@ class WebSocketClientServiceTest {
         }
 
     @Test
+    fun `applySubscriptions does not let a slow subscription gate unrelated topics`() =
+        runTest(testDispatcher) {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
+            every { mockWsClient.apiUrl } returns
+                mockk {
+                    every { host } returns "localhost"
+                }
+            val closedTradesGate = CompletableDeferred<Unit>()
+            val completedTopics = mutableListOf<Topic>()
+            coEvery { mockWsClient.subscribe(any(), any(), any()) } coAnswers {
+                val topic = firstArg<Topic>()
+                if (topic == Topic.CLOSED_TRADES) {
+                    closedTradesGate.await()
+                }
+                completedTopics.add(topic)
+                thirdArg()
+            }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(
+                HttpClientSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    tlsFingerprint = null,
+                    clientId = "client-id",
+                    sessionId = "session-id",
+                    sessionExpiresAt = Long.MAX_VALUE,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.subscribe(Topic.CLOSED_TRADES)
+            webSocketClientService.subscribe(Topic.OFFERS)
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            connectedStateFlow.value = ConnectionState.Connected
+            // Run pending work but do not release CLOSED_TRADES yet — OFFERS/MARKET_PRICE must
+            // still complete concurrently instead of waiting behind the gated topic.
+            testDispatcher.scheduler.runCurrent()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(
+                completedTopics.containsAll(listOf(Topic.OFFERS, Topic.MARKET_PRICE)),
+                "OFFERS and MARKET_PRICE must complete while CLOSED_TRADES is still blocked, got $completedTopics",
+            )
+            assertFalse(completedTopics.contains(Topic.CLOSED_TRADES))
+
+            closedTradesGate.complete(Unit)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(completedTopics.contains(Topic.CLOSED_TRADES))
+        }
+
+    @Test
     fun `applySubscriptions tracks queued subscription failure on connect and clears it after retry`() =
         runTest(testDispatcher) {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
