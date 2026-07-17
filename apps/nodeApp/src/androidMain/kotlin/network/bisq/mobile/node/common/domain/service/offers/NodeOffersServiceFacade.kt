@@ -43,6 +43,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
@@ -60,6 +61,7 @@ class NodeOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val settingsRepository: SettingsRepository,
+    private val configServiceFacade: ConfigServiceFacade,
 ) : OffersServiceFacade() {
     companion object {
         private val DEFAULT_MARKET = Market("BTC", "USD", "Bitcoin", "US Dollar")
@@ -541,6 +543,7 @@ class NodeOffersServiceFacade(
             BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
                 marketPriceServiceFacade,
                 offerVO,
+                configServiceFacade.tradeAmountLimits.value,
             )
 
         // If we cannot determine required score (missing market prices), we err on the safe side

@@ -18,6 +18,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -26,8 +27,6 @@ import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
-import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT
-import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.MAX_USD_TRADE_AMOUNT
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.findRequiredReputationScoreByFiatAmount
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.withTolerance
@@ -49,6 +48,7 @@ class CreateOfferAmountPresenter(
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
+    private val configServiceFacade: ConfigServiceFacade,
 ) : OfferFlowPresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CreateOfferAmount
 
@@ -104,9 +104,11 @@ class CreateOfferAmountPresenter(
     private val _shouldShowWarningIcon = MutableStateFlow(false)
     val shouldShowWarningIcon: StateFlow<Boolean> = _shouldShowWarningIcon.asStateFlow()
 
+    private val tradeAmountLimits get() = configServiceFacade.tradeAmountLimits.value
+
     private var createOfferModel: CreateOfferCoordinator.CreateOfferModel
-    private var minAmount: Long = DEFAULT_MIN_USD_TRADE_AMOUNT.value
-    private var maxAmount: Long = MAX_USD_TRADE_AMOUNT.value
+    private var minAmount: Long = tradeAmountLimits.defaultMinUsdTradeAmount.value
+    private var maxAmount: Long = tradeAmountLimits.maxUsdTradeAmount.value
     private lateinit var priceQuote: PriceQuoteVO
     private lateinit var quoteSideFixedAmount: FiatVO
     private lateinit var baseSideFixedAmount: CoinVO
@@ -162,8 +164,8 @@ class CreateOfferAmountPresenter(
                 "bisqEasy.tradeWizard.amount.headline.seller".i18n()
             }
 
-        minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
-        maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
+        minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode, tradeAmountLimits)
+        maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode, tradeAmountLimits)
 
         formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
         formattedMinAmountWithCode =
@@ -493,6 +495,7 @@ class CreateOfferAmountPresenter(
                 marketPriceServiceFacade,
                 market,
                 fixedOrMinAmount,
+                tradeAmountLimits,
             ) ?: 0L
         _requiredReputation.value = requiredReputation
 
@@ -501,7 +504,7 @@ class CreateOfferAmountPresenter(
         presenterScope.launch {
             val peersScoreByUserProfileId = getPeersScoreByUserProfileId()
             val numPotentialTakers =
-                peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value) >= requiredReputation }.count()
+                peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value, tradeAmountLimits) >= requiredReputation }.count()
             _shouldShowWarningIcon.value = numPotentialTakers == 0
 
             val numSellers = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(numPotentialTakers)
@@ -509,8 +512,8 @@ class CreateOfferAmountPresenter(
 
             val highestScore = peersScoreByUserProfileId.maxOfOrNull { it.value } ?: 0L
             val highestPossibleAmountFromSellers =
-                getReputationBasedQuoteSideAmount(marketPriceServiceFacade, market, highestScore)?.value ?: 0
-            val highestPossibleAmountWithTolerance: Float = withTolerance(highestPossibleAmountFromSellers).toFloat()
+                getReputationBasedQuoteSideAmount(marketPriceServiceFacade, market, highestScore, tradeAmountLimits)?.value ?: 0
+            val highestPossibleAmountWithTolerance: Float = withTolerance(highestPossibleAmountFromSellers, tradeAmountLimits).toFloat()
             val range = maxAmount - minAmount
             _rightMarkerValue.value = (highestPossibleAmountWithTolerance - minAmount) / range
 
@@ -552,6 +555,7 @@ class CreateOfferAmountPresenter(
                     marketPriceServiceFacade,
                     market,
                     _requiredReputation.value,
+                    tradeAmountLimits,
                 ) ?: return@launch
 
             // Clamp to a valid [0, 1] fraction: when a low-reputation seller's max allowed amount
@@ -596,7 +600,7 @@ class CreateOfferAmountPresenter(
 
     private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int =
         getPeersScoreByUserProfileId()
-            .filter { (_, value) -> withTolerance(value) >= requiredReputationScore }
+            .filter { (_, value) -> withTolerance(value, tradeAmountLimits) >= requiredReputationScore }
             .count()
 
     private suspend fun getPeersScoreByUserProfileId(): Map<String, Long> {

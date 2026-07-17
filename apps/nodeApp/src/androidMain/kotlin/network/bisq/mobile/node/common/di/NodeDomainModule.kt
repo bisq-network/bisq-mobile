@@ -13,6 +13,7 @@ import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
@@ -53,6 +54,7 @@ import network.bisq.mobile.node.common.domain.service.capabilities.NodeBackendCa
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import network.bisq.mobile.node.common.domain.service.chat.trade.NodeTradeChatMessagesServiceFacade
 import network.bisq.mobile.node.common.domain.service.common.NodeLanguageServiceFacade
+import network.bisq.mobile.node.common.domain.service.config.NodeConfigServiceFacade
 import network.bisq.mobile.node.common.domain.service.explorer.NodeExplorerServiceFacade
 import network.bisq.mobile.node.common.domain.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.node.common.domain.service.mediation.NodeMediationServiceFacade
@@ -165,7 +167,7 @@ val androidNodeDomainModule =
 
         single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
 
-        single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get(), get(), get()) }
+        single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get(), get(), get(), get()) }
 
         single<ExplorerServiceFacade> { NodeExplorerServiceFacade(get()) }
 
@@ -194,6 +196,8 @@ val androidNodeDomainModule =
         single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get()) }
 
         single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
+
+        single<ConfigServiceFacade> { NodeConfigServiceFacade() }
 
         single { NodeConnectivityService(get()) } bind ConnectivityService::class
 

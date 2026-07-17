@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.clientTestModule
+import network.bisq.mobile.client.common.domain.service.config.ClientConfigServiceFacade
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
@@ -173,6 +174,7 @@ class ClientOfferbookPresenterTest {
             userProfileServiceFacade = userProfileServiceFacade,
             tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
             offerbookFilterConfigRepository = offerbookFilterConfigRepository,
+            configServiceFacade = ClientConfigServiceFacade(),
         )
     }
 

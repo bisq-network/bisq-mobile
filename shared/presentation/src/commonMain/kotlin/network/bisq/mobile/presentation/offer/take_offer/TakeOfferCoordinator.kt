@@ -17,6 +17,7 @@ import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideFixedAmoun
 import network.bisq.mobile.data.replicated.offer.amount.spec.RangeAmountSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -47,6 +48,7 @@ import network.bisq.mobile.domain.utils.Logging
 class TakeOfferCoordinator(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
+    private val configServiceFacade: ConfigServiceFacade,
 ) : Logging {
     class TakeOfferModel {
         lateinit var offerItemPresentationVO: OfferItemPresentationModel
@@ -97,8 +99,9 @@ class TakeOfferCoordinator(
         var hasEffectiveRange = false
         if (amountSpec is RangeAmountSpecVO) {
             val sliderStep = 10_000L
-            val tradeLimitMin = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
-            val tradeLimitMax = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
+            val limits = configServiceFacade.tradeAmountLimits.value
+            val tradeLimitMin = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode, limits)
+            val tradeLimitMax = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode, limits)
 
             // If market price data is unavailable, getMin/MaxAmountValue return 0.
             // In that case, fall back to showing the amount screen and let

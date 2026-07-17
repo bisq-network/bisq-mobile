@@ -29,6 +29,7 @@ import network.bisq.mobile.client.common.domain.service.capabilities.ClientBacke
 import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
 import network.bisq.mobile.client.common.domain.service.common.ClientLanguageServiceFacade
+import network.bisq.mobile.client.common.domain.service.config.ClientConfigServiceFacade
 import network.bisq.mobile.client.common.domain.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.common.domain.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.common.domain.service.market.ClientMarketPriceServiceFacade
@@ -87,6 +88,7 @@ import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
@@ -419,6 +421,8 @@ val clientDomainModule =
                 get(),
             )
         }
+
+        single<ConfigServiceFacade> { ClientConfigServiceFacade() }
 
         single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
 

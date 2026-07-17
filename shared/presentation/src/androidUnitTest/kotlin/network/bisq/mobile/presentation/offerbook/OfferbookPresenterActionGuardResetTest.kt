@@ -41,6 +41,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
@@ -278,6 +279,7 @@ class OfferbookPresenterActionGuardResetTest {
             reputationService,
             tradeRestrictingAlertServiceFacade,
             offerbookFilterConfigRepository,
+            configServiceFacade = FakeConfigServiceFacade(),
         )
     }
 

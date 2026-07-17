@@ -30,6 +30,7 @@ import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
@@ -156,6 +157,7 @@ class OfferbookPresenterTradeRestrictionTest {
             reputationService,
             tradeRestrictingAlertServiceFacade,
             FakeOfferbookFilterConfigRepository(),
+            configServiceFacade = FakeConfigServiceFacade(),
         )
     }
 

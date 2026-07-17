@@ -14,6 +14,7 @@ import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.data.replicated.offer.amount.spec.RangeAmountSpecVO
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.utils.getGroupingSeparator
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
@@ -32,6 +33,7 @@ class TakeOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferCoordinator: TakeOfferCoordinator,
+    private val configServiceFacade: ConfigServiceFacade,
 ) : OfferFlowPresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.TakeOfferAmount
 
@@ -51,6 +53,8 @@ class TakeOfferAmountPresenter(
     private var initializationFailed: Boolean = false
 
     private lateinit var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
+    private val tradeAmountLimits get() = configServiceFacade.tradeAmountLimits.value
+
     private var minAmount: Long = 0L
     private var maxAmount: Long = 0L
 
@@ -77,8 +81,8 @@ class TakeOfferAmountPresenter(
             val rangeAmountSpec: RangeAmountSpecVO =
                 offerListItem.bisqEasyOffer.amountSpec as RangeAmountSpecVO
 
-            minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
-            maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
+            minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode, tradeAmountLimits)
+            maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode, tradeAmountLimits)
 
             minAmount = maxOf(minAmount, rangeAmountSpec.minAmount)
             maxAmount = minOf(maxAmount, rangeAmountSpec.maxAmount)

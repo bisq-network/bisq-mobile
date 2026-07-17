@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
+import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -353,6 +354,7 @@ class ScreenAnalyticsCoverageTest {
                 mainPresenter = mainPresenter,
                 marketPriceServiceFacade = mockk(relaxed = true),
                 takeOfferCoordinator = mockk(relaxed = true),
+                configServiceFacade = FakeConfigServiceFacade(),
             )
         assertEquals(AnalyticsEvent.ScreenOpened.TakeOfferAmount, presenter.analyticsScreenEvent())
     }

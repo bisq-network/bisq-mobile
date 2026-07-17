@@ -31,6 +31,7 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -125,6 +126,7 @@ class CreateOfferAmountPresenterTest {
                     createOfferCoordinator,
                     mockk<UserProfileServiceFacade>(relaxed = true),
                     mockk<ReputationServiceFacade>(relaxed = true),
+                    FakeConfigServiceFacade(),
                 )
 
             // Let initial init coroutines run
@@ -205,6 +207,7 @@ class CreateOfferAmountPresenterTest {
                     createOfferCoordinator,
                     mockk<UserProfileServiceFacade>(relaxed = true),
                     mockk<ReputationServiceFacade>(relaxed = true),
+                    FakeConfigServiceFacade(),
                 )
 
             // Let initial init coroutines run
@@ -297,6 +300,7 @@ class CreateOfferAmountPresenterTest {
                     createOfferCoordinator,
                     userProfileServiceFacade,
                     reputationServiceFacade,
+                    FakeConfigServiceFacade(),
                 )
             runCurrent()
 
@@ -310,6 +314,7 @@ class CreateOfferAmountPresenterTest {
                     createOfferCoordinator,
                     userProfileServiceFacade,
                     reputationServiceFacade,
+                    FakeConfigServiceFacade(),
                 )
             runCurrent()
 
@@ -378,6 +383,7 @@ class CreateOfferAmountPresenterTest {
                     createOfferCoordinator,
                     userProfileServiceFacade,
                     reputationServiceFacade,
+                    FakeConfigServiceFacade(),
                 )
             runCurrent()
 

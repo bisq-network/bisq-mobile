@@ -66,6 +66,7 @@ import network.bisq.mobile.presentation.common.notification.ForegroundServiceCon
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -271,7 +272,7 @@ class TakeOfferCoordinatorTest {
         every { getScreenWidthDp() } returns 480
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade())
 
         // Act: Select offer with fixed amount
         val fixedAmountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L)
@@ -305,7 +306,7 @@ class TakeOfferCoordinatorTest {
         every { getScreenWidthDp() } returns 480
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade())
 
         // Act: Select offer with wide range (100_000 to 5_000_000)
         // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
@@ -339,7 +340,7 @@ class TakeOfferCoordinatorTest {
         every { getScreenWidthDp() } returns 480
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade())
 
         // Act: Select offer where range collapses after clamping
         // Offer range: 1_070_000 to 1_075_000 (difference = 5_000, which is < 10_000 slider step)
@@ -369,7 +370,7 @@ class TakeOfferCoordinatorTest {
         every { getScreenWidthDp() } returns 480
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade())
 
         // Act: Select offer with range spec
         val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
@@ -401,7 +402,7 @@ class TakeOfferCoordinatorTest {
         every { getScreenWidthDp() } returns 480
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade())
 
         // Act: Select offer where min > max trade limit
         // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
@@ -436,7 +437,7 @@ class TakeOfferCoordinatorTest {
         every { getScreenWidthDp() } returns 480
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade())
 
         // Act: Select offer with wide range and 2 quote payment methods
         val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)

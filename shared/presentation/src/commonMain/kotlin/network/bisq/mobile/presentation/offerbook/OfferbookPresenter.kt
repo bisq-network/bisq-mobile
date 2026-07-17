@@ -30,6 +30,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
@@ -63,6 +64,7 @@ open class OfferbookPresenter(
     private val reputationServiceFacade: ReputationServiceFacade,
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
     private val offerbookFilterConfigRepository: OfferbookFilterConfigRepository,
+    private val configServiceFacade: ConfigServiceFacade,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BasePresenter(mainPresenter) {
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
@@ -457,6 +459,7 @@ open class OfferbookPresenter(
                     marketPriceServiceFacade = marketPriceServiceFacade,
                     reputationServiceFacade = reputationServiceFacade,
                     userProfileId = userProfile.id,
+                    limits = configServiceFacade.tradeAmountLimits.value,
                 )
             } else {
                 false
@@ -605,16 +608,19 @@ open class OfferbookPresenter(
     ): Boolean =
         withContext(computationDispatcher) {
             val bisqEasyOffer = item.bisqEasyOffer
+            val limits = configServiceFacade.tradeAmountLimits.value
             val requiredReputationScoreForMaxOrFixed =
                 BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
                     marketPriceServiceFacade,
                     bisqEasyOffer,
+                    limits,
                 )
             require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
             val requiredReputationScoreForMinOrFixed =
                 BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
                     marketPriceServiceFacade,
                     bisqEasyOffer,
+                    limits,
                 )
             require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
 
