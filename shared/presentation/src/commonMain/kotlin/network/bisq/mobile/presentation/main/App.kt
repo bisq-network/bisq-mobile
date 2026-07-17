@@ -1,9 +1,6 @@
 package network.bisq.mobile.presentation.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -11,13 +8,9 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -25,12 +18,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -44,14 +34,11 @@ import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.base.SnackbarAction
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.SwipeBackIOSNavigationHandler
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.asExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.LoadingOverlay
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ReconnectingOverlay
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbar
 import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbarVisuals
@@ -60,7 +47,6 @@ import network.bisq.mobile.presentation.common.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBanner
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
@@ -245,79 +231,6 @@ fun App(
         }
         onDispose {
             ExternalUriHandler.listener = null
-        }
-    }
-}
-
-@Composable
-fun ReconnectingOverlay(
-    onClick: (() -> Unit)? = null,
-    infoKey: String = "mobile.connectivity.reconnecting.info",
-    detailsKey: String = "mobile.connectivity.reconnecting.details",
-    buttonTextKey: String = "mobile.connectivity.reconnecting.restart",
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(BisqTheme.colors.backgroundColor.copy(alpha = 0.85f))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                ) { /* consume clicks */ },
-    ) {
-        Surface(
-            shape = RoundedCornerShape(BisqUIConstants.ScreenPadding),
-            color = BisqTheme.colors.dark_grey40,
-            modifier =
-                Modifier
-                    .align(Alignment.Center)
-                    .padding(
-                        horizontal = BisqUIConstants.ScreenPadding4X,
-                        vertical = BisqUIConstants.ScreenPadding2X,
-                    ),
-        ) {
-            Column(
-                modifier =
-                    Modifier.padding(
-                        horizontal = BisqUIConstants.ScreenPadding2X,
-                        vertical = BisqUIConstants.ScreenPadding4X,
-                    ),
-                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                BisqText.H3Light(
-                    text = "mobile.connectivity.reconnecting.title".i18n(),
-                    color = BisqTheme.colors.white,
-                    textAlign = TextAlign.Center,
-                )
-
-                BisqGap.VQuarter()
-                CircularProgressIndicator(
-                    color = BisqTheme.colors.primary,
-                    modifier = Modifier.size(70.dp),
-                    strokeWidth = 1.dp,
-                )
-                BisqGap.VQuarter()
-
-                BisqText.LargeLight(
-                    text = infoKey.i18n(),
-                    color = BisqTheme.colors.light_grey50,
-                    textAlign = TextAlign.Center,
-                )
-
-                BisqText.BaseLight(
-                    text = detailsKey.i18n(),
-                    color = BisqTheme.colors.light_grey50,
-                    textAlign = TextAlign.Center,
-                )
-                BisqGap.VHalf()
-                BisqButton(
-                    text = buttonTextKey.i18n(),
-                    type = BisqButtonType.Outline,
-                    onClick = onClick,
-                )
-            }
         }
     }
 }
