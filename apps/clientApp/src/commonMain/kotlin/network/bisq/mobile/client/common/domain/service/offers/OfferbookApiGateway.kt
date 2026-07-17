@@ -7,7 +7,6 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocket
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.utils.Logging
 
 class OfferbookApiGateway(
@@ -20,8 +19,6 @@ class OfferbookApiGateway(
     suspend fun getMarkets(): Result<List<network.bisq.mobile.data.replicated.common.currency.MarketVO>> = webSocketApiClient.get("$basePath/markets")
 
     suspend fun getNumOffersByMarketCode(): Result<Map<String, Int>> = webSocketApiClient.get("$basePath/markets/offers/count")
-
-    suspend fun getOffers(code: String): Result<List<OfferItemPresentationDto>> = webSocketApiClient.get("$basePath/markets/$code/offers")
 
     suspend fun deleteOffer(offerId: String): Result<Unit> = webSocketApiClient.delete("$basePath/offers/$offerId")
 
