@@ -204,9 +204,8 @@ object BisqEasyTradeAmountLimits {
         limits: TradeAmountLimitsVO,
     ): FiatVO {
         val maxAmountAllowedByReputation = getUsdAmountFromReputationScore(totalScore, limits)
-        val value: Double =
-            minOf(limits.maxUsdTradeAmount.value, maxAmountAllowedByReputation.value).toDouble()
-        return FiatVOFactory.from(value.toLong(), "USD")
+        val value: Long = minOf(limits.maxUsdTradeAmount.value, maxAmountAllowedByReputation.value)
+        return FiatVOFactory.from(value, "USD")
     }
 
     fun getUsdAmountFromReputationScore(
