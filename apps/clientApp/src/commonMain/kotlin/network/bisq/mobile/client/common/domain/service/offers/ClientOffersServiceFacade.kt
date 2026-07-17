@@ -37,9 +37,9 @@ class ClientOffersServiceFacade(
     private companion object {
         // Upper bound for how long we show the blocking spinner while waiting for the initial
         // OFFERS snapshot. Aligned with the WebSocket request round-trip timeout (30s): on a cold
-        // Tor connection the OFFERS subscription is queued behind the banner subscriptions and its
-        // snapshot can take well over 10s to arrive. This is only a spinner cap — the subscription
-        // is kept alive past it (see [startLoadingTimeout]), so a late snapshot still populates.
+        // Tor connection the OFFERS snapshot can still take well over 10s to arrive. This is only
+        // a spinner cap — the subscription is kept alive past it (see [startLoadingTimeout]), so a
+        // late snapshot still populates.
         private const val LOADING_TIMEOUT_MS = 30000L
     }
 
@@ -52,12 +52,10 @@ class ClientOffersServiceFacade(
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
     /**
-     * Guards the single OFFERS WebSocket subscription across market selections. Kept set for the
-     * lifetime of the subscription so that switching markets only re-applies filters against the
-     * cache instead of re-subscribing. It is released only on a genuine collect error (see
-     * [resetOffersSubscriptionState]) or on [deactivate]. Notably it is NOT released on the loading
-     * timeout: the subscription is kept alive so a late snapshot still populates, and re-selecting a
-     * market must not trigger a re-subscribe (which would cancel the in-flight subscription).
+     * Guards the single OFFERS WebSocket subscription for the facade lifetime. Set at [activate]
+     * when the all-markets collector starts, so market selection only applies filters against the
+     * cache instead of re-subscribing. Released only on a genuine collect error (see
+     * [resetOffersSubscriptionState]) or on [deactivate].
      */
     private var hasSubscribedToOffers = atomic(false)
 
@@ -81,6 +79,7 @@ class ClientOffersServiceFacade(
         observeMarketPrice()
         observeAvailableMarkets()
         observeNumOffers()
+        observeOffers()
     }
 
     override suspend fun deactivate() {
@@ -122,10 +121,7 @@ class ClientOffersServiceFacade(
                 }
             }
 
-            if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
-                log.d { "First time subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
-                subscribeOffers()
-            } else {
+            if (hasSubscribedToOffers.value) {
                 log.d { "Already subscribed to offers, applying filters for market ${marketListItem.market.quoteCurrencyCode}" }
                 serviceScope.launch {
                     try {
@@ -136,6 +132,9 @@ class ClientOffersServiceFacade(
                         loadingTimeoutJob?.cancel()
                     }
                 }
+            } else if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
+                log.d { "Subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
+                subscribeOffers()
             }
             Unit
         }.onFailure { e ->
@@ -226,6 +225,17 @@ class ClientOffersServiceFacade(
             } catch (e: Exception) {
                 log.e(e) { "Failed to subscribe to numOffers" }
             }
+        }
+    }
+
+    /**
+     * Registers the all-markets OFFERS subscription at activate so it joins the connect-time
+     * subscription batch and the collector is ready before the first market is selected.
+     */
+    private fun observeOffers() {
+        if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
+            log.d { "Subscribing to offers at activate" }
+            subscribeOffers()
         }
     }
 

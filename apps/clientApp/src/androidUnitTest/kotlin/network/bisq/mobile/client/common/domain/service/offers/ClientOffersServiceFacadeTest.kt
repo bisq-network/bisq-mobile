@@ -64,6 +64,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         // Neutral default for the REST fast-path so existing tests are unaffected; an empty result
         // is a no-op (the subscription remains the source of truth for empty markets).
         coEvery { apiGateway.getOffers(any()) } returns Result.success(emptyList())
+        coEvery { apiGateway.subscribeOffers() } returns WebSocketEventObserver()
         facade =
             ClientOffersServiceFacade(
                 marketPriceServiceFacade = marketPriceServiceFacade,
@@ -83,6 +84,35 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             advanceUntilIdle()
 
             coVerify { apiGateway.subscribeNumOffers() }
+        }
+
+    @Test
+    fun `activate subscribes to offers`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+        }
+
+    @Test
+    fun `selectOfferbookMarket does not re-subscribe when offers subscription started at activate`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
         }
 
     @Test

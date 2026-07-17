@@ -76,7 +76,9 @@ class WebSocketClientService(
     companion object {
         private const val SESSION_RENEWAL_COOLDOWN_MS = 30_000L
 
-        // Banner-critical subscriptions — applied first so the network banner can dismiss early.
+        // Banner-critical subscriptions — tracked for network-banner dismissal. Kept separate from
+        // [subscriptionApplyPriorityOrder] so OFFERS can be applied first without gating the banner
+        // on the (often large) OFFERS snapshot.
         private val bannerSubscriptionPriorityOrder =
             listOf(
                 SubscriptionType(Topic.MARKET_PRICE, null),
@@ -84,8 +86,16 @@ class WebSocketClientService(
                 SubscriptionType(Topic.NUM_OFFERS, null),
             )
 
+        // Apply-order priority: OFFERS first, then banner topics, then everything else. Requires
+        // OFFERS to be registered in requestedSubscriptions before connect apply (see
+        // ClientOffersServiceFacade.observeOffers).
+        private val subscriptionApplyPriorityOrder =
+            listOf(SubscriptionType(Topic.OFFERS, null)) + bannerSubscriptionPriorityOrder
+
         // Initial subscriptions tracked for network banner:
         private val initialSubscriptionTypes = bannerSubscriptionPriorityOrder.toSet()
+
+        private val prioritizedSubscriptionTypes = subscriptionApplyPriorityOrder.toSet()
     }
 
     @Volatile
@@ -532,12 +542,12 @@ class WebSocketClientService(
         subs: Map<SubscriptionType, WebSocketEventObserver>,
     ): List<Map.Entry<SubscriptionType, WebSocketEventObserver>> {
         val prioritized =
-            bannerSubscriptionPriorityOrder.mapNotNull { type ->
+            subscriptionApplyPriorityOrder.mapNotNull { type ->
                 subs.entries.find { it.key == type }
             }
         val rest =
             subs.entries.filter { entry ->
-                entry.key !in initialSubscriptionTypes
+                entry.key !in prioritizedSubscriptionTypes
             }
         return prioritized + rest
     }

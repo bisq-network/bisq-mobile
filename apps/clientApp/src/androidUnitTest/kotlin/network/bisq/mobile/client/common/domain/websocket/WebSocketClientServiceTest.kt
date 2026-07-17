@@ -690,7 +690,7 @@ class WebSocketClientServiceTest {
         }
 
     @Test
-    fun `applySubscriptions subscribes banner-critical topics before other topics`() =
+    fun `applySubscriptions prioritizes OFFERS then banner-critical topics before other topics`() =
         runTest(testDispatcher) {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
@@ -722,6 +722,7 @@ class WebSocketClientServiceTest {
 
             webSocketClientService.subscribe(Topic.CLOSED_TRADES)
             webSocketClientService.subscribe(Topic.TRADES)
+            webSocketClientService.subscribe(Topic.OFFERS)
             webSocketClientService.subscribe(Topic.NUM_OFFERS)
             webSocketClientService.subscribe(Topic.NUM_USER_PROFILES)
             webSocketClientService.subscribe(Topic.MARKET_PRICE)
@@ -732,6 +733,7 @@ class WebSocketClientServiceTest {
 
             assertEquals(
                 listOf(
+                    Topic.OFFERS,
                     Topic.MARKET_PRICE,
                     Topic.NUM_USER_PROFILES,
                     Topic.NUM_OFFERS,
@@ -740,11 +742,12 @@ class WebSocketClientServiceTest {
                 ),
                 subscribeOrder,
             )
+            val offersIndex = subscribeOrder.indexOf(Topic.OFFERS)
             val bannerEndIndex = subscribeOrder.indexOf(Topic.NUM_OFFERS)
             val slowTopicStartIndex = subscribeOrder.indexOf(Topic.CLOSED_TRADES)
             assertTrue(
-                bannerEndIndex in 0 until slowTopicStartIndex,
-                "Banner topics must be subscribed before CLOSED_TRADES, got order=$subscribeOrder",
+                offersIndex == 0 && bannerEndIndex in 1 until slowTopicStartIndex,
+                "OFFERS then banner topics must be subscribed before CLOSED_TRADES, got order=$subscribeOrder",
             )
         }
 
