@@ -699,9 +699,11 @@ class WebSocketClientServiceTest {
                 mockk {
                     every { host } returns "localhost"
                 }
-            val subscribeOrder = mutableListOf<Topic>()
+            val subscribeStartOrder = mutableListOf<Topic>()
+            val releaseSubscriptions = CompletableDeferred<Unit>()
             coEvery { mockWsClient.subscribe(any(), any(), any()) } coAnswers {
-                subscribeOrder.add(firstArg())
+                subscribeStartOrder.add(firstArg())
+                releaseSubscriptions.await()
                 thirdArg()
             }
             every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
@@ -729,6 +731,8 @@ class WebSocketClientServiceTest {
             testDispatcher.scheduler.advanceUntilIdle()
 
             connectedStateFlow.value = ConnectionState.Connected
+            // applySubscriptions launches one async per topic; gate every subscribe call so we
+            // record start order under concurrent scheduling instead of immediate completion order.
             testDispatcher.scheduler.advanceUntilIdle()
 
             assertEquals(
@@ -740,15 +744,11 @@ class WebSocketClientServiceTest {
                     Topic.CLOSED_TRADES,
                     Topic.TRADES,
                 ),
-                subscribeOrder,
+                subscribeStartOrder,
             )
-            val offersIndex = subscribeOrder.indexOf(Topic.OFFERS)
-            val bannerEndIndex = subscribeOrder.indexOf(Topic.NUM_OFFERS)
-            val slowTopicStartIndex = subscribeOrder.indexOf(Topic.CLOSED_TRADES)
-            assertTrue(
-                offersIndex == 0 && bannerEndIndex in 1 until slowTopicStartIndex,
-                "OFFERS then banner topics must be subscribed before CLOSED_TRADES, got order=$subscribeOrder",
-            )
+
+            releaseSubscriptions.complete(Unit)
+            testDispatcher.scheduler.advanceUntilIdle()
         }
 
     @Test

@@ -122,6 +122,43 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `activate tolerates offers subscription failure`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } throws RuntimeException("subscribe failed")
+
+            facade.activate()
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `failed offers subscription at activate allows retry on market select`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } throws RuntimeException("subscribe failed") andThen offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { apiGateway.subscribeOffers() }
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "retry-offer")))
+            advanceUntilIdle()
+
+            assertEquals(1, facade.offerbookListItems.value.size)
+            assertEquals(
+                "retry-offer",
+                facade.offerbookListItems.value
+                    .single()
+                    .offerId,
+            )
+        }
+
+    @Test
     fun `num offers websocket event updates market list`() =
         runTest {
             val numOffersObserver = WebSocketEventObserver()

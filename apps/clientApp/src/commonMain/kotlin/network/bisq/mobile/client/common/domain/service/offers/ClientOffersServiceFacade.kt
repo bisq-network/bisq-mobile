@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.offers
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -52,12 +53,14 @@ class ClientOffersServiceFacade(
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
     /**
-     * Guards the single OFFERS WebSocket subscription for the facade lifetime. Set at [activate]
-     * when the all-markets collector starts, so market selection only applies filters against the
-     * cache instead of re-subscribing. Released only on a genuine collect error (see
-     * [resetOffersSubscriptionState]) or on [deactivate].
+     * Guards the single OFFERS WebSocket subscription for the facade lifetime. Set only after
+     * [apiGateway.subscribeOffers] succeeds so market selection applies filters against the cache
+     * instead of re-subscribing. Released on collector failure (see [resetOffersSubscriptionState])
+     * or on [deactivate].
      */
     private var hasSubscribedToOffers = atomic(false)
+
+    private val offersSubscriptionMutex = Mutex()
 
     /**
      * Coroutine handle for the active OFFERS subscription collector. Captured so it can be
@@ -120,9 +123,18 @@ class ClientOffersServiceFacade(
                         loadingTimeoutJob?.cancel()
                     }
                 }
-            } else if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
+            } else {
                 log.d { "Subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
-                subscribeOffers()
+                serviceScope.launch {
+                    try {
+                        startOffersSubscription("market select")
+                        applyOffersToSelectedMarket()
+                    } catch (t: Throwable) {
+                        log.e(t) { "Error subscribing to offers for selected market" }
+                        _isOfferbookLoading.value = false
+                        loadingTimeoutJob?.cancel()
+                    }
+                }
             }
             Unit
         }.onFailure { e ->
@@ -220,10 +232,63 @@ class ClientOffersServiceFacade(
      * Registers the all-markets OFFERS subscription at activate so it joins the connect-time
      * subscription batch and the collector is ready before the first market is selected.
      */
-    private fun observeOffers() {
-        if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
-            log.d { "Subscribing to offers at activate" }
-            subscribeOffers()
+    private suspend fun observeOffers() {
+        try {
+            startOffersSubscription("activate")
+        } catch (e: Exception) {
+            log.e(e) { "Failed to subscribe to offers at activate" }
+        }
+    }
+
+    private suspend fun startOffersSubscription(source: String) {
+        offersSubscriptionMutex.withLock {
+            if (hasSubscribedToOffers.value) {
+                return
+            }
+
+            offersSubscriptionJob?.cancel()
+            offersSubscriptionJob = null
+
+            log.d { "Subscribing to offers at $source" }
+            val observer = apiGateway.subscribeOffers()
+            hasSubscribedToOffers.value = true
+
+            offersSubscriptionJob =
+                serviceScope.launch {
+                    try {
+                        collectOffers(observer)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        log.e(e) { "Offers subscription collector failed" }
+                        resetOffersSubscriptionState()
+                    }
+                }
+        }
+    }
+
+    private suspend fun collectOffers(observer: WebSocketEventObserver) {
+        observer.webSocketEvent.collect { webSocketEvent ->
+            if (webSocketEvent?.deferredPayload == null) {
+                return@collect
+            }
+
+            runCatching {
+                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
+                    WebSocketEventPayload.from(
+                        json,
+                        webSocketEvent,
+                    )
+                val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
+                log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
+                updateOffersByMarket(webSocketEvent, payload)
+                applyOffersToSelectedMarket()
+            }.onFailure { e ->
+                log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
+                // Release the guard so the next selectOfferbookMarket re-subscribes
+                // (otherwise switching markets just re-applies filters on empty cache).
+                resetOffersSubscriptionState()
+            }
         }
     }
 
@@ -248,37 +313,6 @@ class ClientOffersServiceFacade(
                 log.e(e) { "Error processing numOffers WebSocket event" }
             }
         }
-    }
-
-    private fun subscribeOffers() {
-        offersSubscriptionJob?.cancel()
-        offersSubscriptionJob =
-            serviceScope.launch {
-                // We subscribe for all markets
-                val observer = apiGateway.subscribeOffers()
-                observer.webSocketEvent.collect { webSocketEvent ->
-                    if (webSocketEvent?.deferredPayload == null) {
-                        return@collect
-                    }
-
-                    runCatching {
-                        val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
-                            WebSocketEventPayload.from(
-                                json,
-                                webSocketEvent,
-                            )
-                        val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
-                        log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
-                        updateOffersByMarket(webSocketEvent, payload)
-                        applyOffersToSelectedMarket()
-                    }.onFailure { e ->
-                        log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
-                        // Release the guard so the next selectOfferbookMarket re-subscribes
-                        // (otherwise switching markets just re-applies filters on empty cache).
-                        resetOffersSubscriptionState()
-                    }
-                }
-            }
     }
 
     /**
