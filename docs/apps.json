@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.7.0",
+          "date": "2026-07-18",
+          "localizedDescription": "# Bisq Connect v0.7.0\n\n## What's New\n\n• **Redesigned startup**: clearer Tor connection progress, with graceful handling of slow or failed connections.\n• **More reliable startup over Tor**: fixes for market data failing to load on a cold start and the splash occasionally getting stuck.\n• **Stability fixes**: resolves several iOS crashes and a frozen UI after app restart.\n• **New \"reduce animations\" setting** — enabled automatically on low-memory devices for smoother performance.\n• Cleaner, better-organized **More** tab.\n• Plus other UX and performance improvements.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node to pair with",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.7.0/Bisq.Connect.ipa",
+          "size": 56921791,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.6.2",
           "date": "2026-07-03",
           "localizedDescription": "# Bisq Connect v0.6.2\n\n## What's New\n\n• Smarter notifications: push notifications now open the relevant screen when you tap them.\nOffers filter remembered: your selected market filter in the Offers tab now persists between sessions.\nSteadier connections over Tor: fewer false \"reconnecting\" states thanks to Tor-aware timing.\nOffers: Improved market offers fetch to better avoid/handle issues on slow tor connections\niOS Clearer reconnection feedback: reconnect services functionality\nAndroid Fixed frozen UI when restarting app right after a force kill\nAndroid Clearer reconnection feedback: Overlay shows every time the system is reconnecting\nPlus other bugfixes, UX and performance improvements",
@@ -70,6 +78,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.7.0 — Redesigned startup + Tor reliability",
+      "identifier": "bisq-connect-0.7.0",
+      "caption": "A redesigned startup screen, more reliable Tor connections, and several stability fixes.",
+      "date": "2026-07-18",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.6.2 — Smarter Notifications + Filter memory + bugfixes",
       "identifier": "bisq-connect-0.6.2",
