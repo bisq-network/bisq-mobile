@@ -110,6 +110,18 @@ class ClientOffersServiceFacade(
             if (!hasCache) {
                 _isOfferbookLoading.value = true
                 startLoadingTimeout()
+                prefetchOffersViaRest(code)
+            } else {
+                // We have cached offers, but if NUM_OFFERS reports a different count our cached
+                // offers are stale — e.g. an offer the user just created (count already bumped)
+                // whose OFFERS ADDED push hasn't arrived yet on a slow/Tor connection. Reconcile
+                // via REST in the background (no spinner); the corrected list updates in place.
+                val cachedCount = offerbookListItemsByMarket[code]?.size ?: 0
+                val knownCount = cachedNumOffersByMarketCode?.get(code)
+                if (knownCount != null && knownCount != cachedCount) {
+                    log.d { "Cached offers for $code look stale (cached=$cachedCount, numOffers=$knownCount); reconciling via REST" }
+                    prefetchOffersViaRest(code, replaceExisting = true)
+                }
             }
 
             if (hasSubscribedToOffers.value) {
@@ -312,6 +324,63 @@ class ClientOffersServiceFacade(
             } catch (e: Exception) {
                 log.e(e) { "Error processing numOffers WebSocket event" }
             }
+        }
+    }
+
+    /**
+     * Best-effort REST fast-path for the selected market. A direct REST request does not wait on
+     * the OFFERS subscription snapshot and typically returns in a few seconds on slow connections.
+     * This is purely additive: on failure we simply keep waiting for the subscription (unchanged
+     * behaviour), and we never overwrite data the subscription has already delivered.
+     */
+    private fun prefetchOffersViaRest(
+        code: String,
+        replaceExisting: Boolean = false,
+    ) {
+        serviceScope.launch {
+            runCatching { apiGateway.getOffers(code).getOrThrow() }
+                .onSuccess { offers -> applyRestPrefetchedOffers(code, offers, replaceExisting) }
+                .onFailure { e -> log.w(e) { "REST offers prefetch failed for $code; relying on the OFFERS subscription" } }
+        }
+    }
+
+    private suspend fun applyRestPrefetchedOffers(
+        code: String,
+        offers: List<OfferItemPresentationDto>,
+        replaceExisting: Boolean,
+    ) {
+        // Let the OFFERS subscription be the source of truth for genuinely-empty markets; only the
+        // subscription snapshot (or its REMOVED events) can authoritatively confirm "no offers".
+        if (offers.isEmpty()) return
+
+        val models =
+            offers.associate { dto ->
+                val model = OfferItemPresentationModel(dto)
+                model.offerId to model
+            }
+
+        var applied = false
+        offersMutex.withLock {
+            val marketMap = offerbookListItemsByMarket.getOrPut(code) { mutableMapOf() }
+            when {
+                // Reconcile: authoritative REST result replaces a stale cache (count mismatch).
+                replaceExisting -> {
+                    marketMap.clear()
+                    marketMap.putAll(models)
+                    applied = true
+                }
+                // Cold prefetch: only populate if the subscription hasn't delivered anything yet,
+                // so we never clobber fresher subscription data.
+                marketMap.isEmpty() -> {
+                    marketMap.putAll(models)
+                    applied = true
+                }
+            }
+        }
+
+        if (applied) {
+            log.d { "REST prefetch (${if (replaceExisting) "reconcile" else "cold"}) populated ${models.size} offers for $code" }
+            applyOffersToSelectedMarket()
         }
     }
 
