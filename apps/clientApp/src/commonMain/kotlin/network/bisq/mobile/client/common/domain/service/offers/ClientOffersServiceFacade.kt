@@ -77,7 +77,7 @@ class ClientOffersServiceFacade(
 
     // Life cycle
     override suspend fun activate() {
-        super<OffersServiceFacade>.activate()
+        super.activate()
 
         observeMarketPrice()
         observeAvailableMarkets()
@@ -93,7 +93,7 @@ class ClientOffersServiceFacade(
         loadingTimeoutJob?.cancel()
         loadingTimeoutJob = null
         hasSubscribedToOffers.value = false
-        super<OffersServiceFacade>.deactivate()
+        super.deactivate()
     }
 
     // API
@@ -243,12 +243,17 @@ class ClientOffersServiceFacade(
     /**
      * Registers the all-markets OFFERS subscription at activate so it joins the connect-time
      * subscription batch and the collector is ready before the first market is selected.
+     * Launched instead of awaited: when the WS is already connected (lifecycle restart),
+     * subscribing performs an immediate round-trip that can take ~30s over Tor and must not
+     * block the serial facade-activation chain.
      */
-    private suspend fun observeOffers() {
-        try {
-            startOffersSubscription("activate")
-        } catch (e: Exception) {
-            log.e(e) { "Failed to subscribe to offers at activate" }
+    private fun observeOffers() {
+        serviceScope.launch {
+            try {
+                startOffersSubscription("activate")
+            } catch (e: Exception) {
+                log.e(e) { "Failed to subscribe to offers at activate" }
+            }
         }
     }
 
@@ -296,10 +301,10 @@ class ClientOffersServiceFacade(
                 updateOffersByMarket(webSocketEvent, payload)
                 applyOffersToSelectedMarket()
             }.onFailure { e ->
-                log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
-                // Release the guard so the next selectOfferbookMarket re-subscribes
-                // (otherwise switching markets just re-applies filters on empty cache).
-                resetOffersSubscriptionState()
+                // Log and skip: one malformed event must not tear down the subscription for all
+                // markets. Genuine collector failures reset via the catch in
+                // [startOffersSubscription] so the next market select can re-subscribe.
+                log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber}); skipping event" }
             }
         }
     }

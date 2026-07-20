@@ -135,6 +135,35 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `malformed offers event is skipped and the subscription keeps delivering later events`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            advanceUntilIdle()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 15))
+            advanceUntilIdle()
+
+            offersObserver.setEvent(offersEvent("not-a-valid-offers-payload", sequenceNumber = 1))
+            advanceUntilIdle()
+
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "good-offer"), sequenceNumber = 2))
+            advanceUntilIdle()
+
+            // The malformed event must not tear down the subscription (no re-subscribe) and the
+            // following valid event must still populate the offerbook.
+            coVerify(exactly = 1) { apiGateway.subscribeOffers() }
+            assertEquals(
+                "good-offer",
+                facade.offerbookListItems.value
+                    .single()
+                    .offerId,
+            )
+        }
+
+    @Test
     fun `failed offers subscription at activate allows retry on market select`() =
         runTest {
             val offersObserver = WebSocketEventObserver()
