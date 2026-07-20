@@ -124,7 +124,7 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
                     .first { it.title.key == "mobile.more.section.app" }
             val appLabels = appSection.items.map { it.label.key }
             assertEquals(
-                listOf("mobile.more.settings", "mobile.more.custom", "mobile.more.resources"),
+                listOf("mobile.more.settings", "mobile.more.custom", "mobile.more.network", "mobile.more.resources"),
                 appLabels,
             )
         }

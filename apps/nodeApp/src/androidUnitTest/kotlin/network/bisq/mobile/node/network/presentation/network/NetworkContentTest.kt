@@ -11,6 +11,7 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.node.common.test_utils.TestApplication
+import network.bisq.mobile.presentation.common.ui.components.network.NetworkHealthState
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import org.junit.Before
@@ -32,8 +33,8 @@ class NetworkContentTest {
     }
 
     private fun setTestContent(
-        uiState: NetworkUiState,
-        onAction: (NetworkUiAction) -> Unit = {},
+        uiState: NodeNetworkOverviewUiState,
+        onAction: (NodeNetworkOverviewUiAction) -> Unit = {},
     ) {
         composeTestRule.setContent {
             CompositionLocalProvider(LocalIsTest provides true) {
@@ -143,7 +144,7 @@ class NetworkContentTest {
 
     @Test
     fun `when connections card is clicked then OnConnectionsClick is dispatched`() {
-        var captured: NetworkUiAction? = null
+        var captured: NodeNetworkOverviewUiAction? = null
         setTestContent(uiState = sampleUiState(), onAction = { captured = it })
         composeTestRule.waitForIdle()
 
@@ -153,12 +154,12 @@ class NetworkContentTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(NetworkUiAction.OnConnectionsClick, captured)
+        assertEquals(NodeNetworkOverviewUiAction.OnConnectionsClick, captured)
     }
 
     @Test
     fun `when my node card is clicked then OnMyNodeClick is dispatched`() {
-        var captured: NetworkUiAction? = null
+        var captured: NodeNetworkOverviewUiAction? = null
         setTestContent(uiState = sampleUiState(), onAction = { captured = it })
         composeTestRule.waitForIdle()
 
@@ -168,7 +169,7 @@ class NetworkContentTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(NetworkUiAction.OnMyNodeClick, captured)
+        assertEquals(NodeNetworkOverviewUiAction.OnMyNodeClick, captured)
     }
 
     private fun sampleUiState(
@@ -176,8 +177,8 @@ class NetworkContentTest {
         isTorRunning: Boolean = true,
         onionAddress: String? = "jd4tx3nljykg5z3vqy7w2m8n4p6r0t2u4w6y8a0c2e4g6i8k.onion:1234",
         healthState: NetworkHealthState = NetworkHealthState.HEALTHY,
-    ): NetworkUiState =
-        NetworkUiState(
+    ): NodeNetworkOverviewUiState =
+        NodeNetworkOverviewUiState(
             peerCount = peerCount,
             isTorRunning = isTorRunning,
             onionAddress = onionAddress,

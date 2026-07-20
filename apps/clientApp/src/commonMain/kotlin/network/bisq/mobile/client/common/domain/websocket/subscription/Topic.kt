@@ -2,6 +2,7 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
+import network.bisq.mobile.client.common.domain.service.network.NetworkInfoDto
 import network.bisq.mobile.client.common.domain.service.trades.TradePropertiesDto
 import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
@@ -92,6 +93,12 @@ enum class Topic(
         TopicImportance.COSMETIC,
         "mobile.client.topic.trade_restricting_alert.title",
         "mobile.client.topic.trade_restricting_alert.desc",
+    ),
+    NETWORK_INFO(
+        typeOf<NetworkInfoDto>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.network_info.title",
+        "mobile.client.topic.network_info.desc",
     ),
     ;
 

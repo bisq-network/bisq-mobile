@@ -149,7 +149,7 @@ interface NavRoute {
     data object BackupAndRestore : NavRoute
 
     @Serializable
-    data object NetworkInfo : NavRoute
+    data object NetworkOverview : NavRoute
 
     // --- Trade Guide Flow ---
     @Serializable

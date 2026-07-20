@@ -2,7 +2,6 @@ package network.bisq.mobile.node.tabs.more
 
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.backup
-import bisqapps.shared.presentation.generated.resources.nav_network
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -23,14 +22,6 @@ class NodeMiscItemsPresenter(
                 label = UiString("mobile.more.backupAndRestore"),
                 icon = Res.drawable.backup,
                 route = NavRoute.BackupAndRestore,
-            ),
-        )
-        appItems.add(
-            appItems.size.coerceAtMost(2),
-            MenuItem(
-                label = UiString("mobile.more.network"),
-                icon = Res.drawable.nav_network,
-                route = NavRoute.NetworkInfo,
             ),
         )
         return appItems

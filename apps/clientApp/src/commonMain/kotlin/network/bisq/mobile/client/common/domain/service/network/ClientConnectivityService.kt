@@ -85,6 +85,13 @@ open class ClientConnectivityService(
         }
     }
 
+    /**
+     * Current average request round-trip time in ms, or a negative sentinel if no API request has
+     * completed yet. Only REST-over-WS requests update this (not health checks or subscriptions),
+     * so it is a point-in-time snapshot — read it when a screen is shown rather than observing it.
+     */
+    fun currentAverageRoundTripTimeMs(): Long = averageTripTime
+
     internal var job: Job? = null
     private val pendingJobs = mutableListOf<Job>()
     private val pendingConnectivityBlocks = mutableListOf<suspend () -> Unit>()

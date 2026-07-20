@@ -16,6 +16,12 @@ interface ClientNavRoute : NavRoute {
     data object TrustedNodeSetupSettings : ClientNavRoute
 
     @Serializable
+    data object NetworkConnections : ClientNavRoute
+
+    @Serializable
+    data object NetworkMyConnection : ClientNavRoute
+
+    @Serializable
     data object PaymentAccountsMusig : ClientNavRoute
 
     @Serializable

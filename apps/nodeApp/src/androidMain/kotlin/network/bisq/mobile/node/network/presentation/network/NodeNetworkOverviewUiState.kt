@@ -1,8 +1,8 @@
 package network.bisq.mobile.node.network.presentation.network
 
-enum class NetworkHealthState { HEALTHY, SYNCING, OFFLINE }
+import network.bisq.mobile.presentation.common.ui.components.network.NetworkHealthState
 
-data class NetworkUiState(
+data class NodeNetworkOverviewUiState(
     val peerCount: Int = 0,
     val isTorRunning: Boolean = false,
     val onionAddress: String? = null,

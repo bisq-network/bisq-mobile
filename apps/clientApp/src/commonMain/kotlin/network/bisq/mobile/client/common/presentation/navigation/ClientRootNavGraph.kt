@@ -10,6 +10,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import network.bisq.mobile.client.common.presentation.support.ClientSupportScreen
+import network.bisq.mobile.client.network.presentation.network.ClientNetworkConnectionsScreen
+import network.bisq.mobile.client.network.presentation.network.ClientNetworkMyConnectionScreen
+import network.bisq.mobile.client.network.presentation.network.ClientNetworkOverviewScreen
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.CreatePaymentAccountScreen
 import network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail.PaymentAccountMusigDetailScreen
 import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.PaymentAccountsMusigScreen
@@ -76,6 +79,10 @@ fun NavGraphBuilder.addClientAppRoutes(animationsEnabled: () -> Boolean) {
             showSubscriptionsFailed = route.showSubscriptionsFailed,
         )
     }
+
+    addScreen<NavRoute.NetworkOverview>(animationsEnabled = animationsEnabled) { ClientNetworkOverviewScreen() }
+    addScreen<ClientNavRoute.NetworkConnections>(animationsEnabled = animationsEnabled) { ClientNetworkConnectionsScreen() }
+    addScreen<ClientNavRoute.NetworkMyConnection>(animationsEnabled = animationsEnabled) { ClientNetworkMyConnectionScreen() }
 
     addScreen<ClientNavRoute.PaymentAccountsMusig>(animationsEnabled = animationsEnabled) { PaymentAccountsMusigScreen() }
     addScreen<ClientNavRoute.PaymentAccountsMusigDetail>(animationsEnabled = animationsEnabled) { backStackEntry ->

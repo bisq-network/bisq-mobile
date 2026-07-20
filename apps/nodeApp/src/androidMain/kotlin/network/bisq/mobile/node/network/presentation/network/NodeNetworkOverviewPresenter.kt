@@ -9,15 +9,16 @@ import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.node.common.domain.service.network.NodeNetworkServiceFacade
 import network.bisq.mobile.node.common.presentation.navigation.NodeNavRoute
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.network.NetworkHealthState
 import network.bisq.mobile.presentation.main.MainPresenter
 
-class NetworkPresenter(
+class NodeNetworkOverviewPresenter(
     private val networkServiceFacade: NodeNetworkServiceFacade,
     private val kmpTorService: KmpTorService,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
-    private val _uiState = MutableStateFlow(NetworkUiState())
-    val uiState: StateFlow<NetworkUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(NodeNetworkOverviewUiState())
+    val uiState: StateFlow<NodeNetworkOverviewUiState> = _uiState.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -30,7 +31,7 @@ class NetworkPresenter(
             ) { numConnections, dataReceived, torState, myNodeInfo ->
                 val peerCount = numConnections.coerceAtLeast(0)
                 val isTorRunning = torState is KmpTorService.TorState.Started
-                NetworkUiState(
+                NodeNetworkOverviewUiState(
                     peerCount = peerCount,
                     isTorRunning = isTorRunning,
                     onionAddress = myNodeInfo.onionAddress,
@@ -40,10 +41,10 @@ class NetworkPresenter(
         }
     }
 
-    fun onAction(action: NetworkUiAction) {
+    fun onAction(action: NodeNetworkOverviewUiAction) {
         when (action) {
-            NetworkUiAction.OnConnectionsClick -> navigateTo(NodeNavRoute.NetworkPeerConnections)
-            NetworkUiAction.OnMyNodeClick -> navigateTo(NodeNavRoute.NetworkMyNode)
+            NodeNetworkOverviewUiAction.OnConnectionsClick -> navigateTo(NodeNavRoute.NetworkPeerConnections)
+            NodeNetworkOverviewUiAction.OnMyNodeClick -> navigateTo(NodeNavRoute.NetworkMyNode)
         }
     }
 

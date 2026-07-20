@@ -11,7 +11,7 @@ import androidx.navigation.compose.composable
 import network.bisq.mobile.node.common.presentation.navigation.NodeNavRoute
 import network.bisq.mobile.node.network.presentation.connections.NetworkConnectionsScreen
 import network.bisq.mobile.node.network.presentation.my_node.NetworkMyNodeScreen
-import network.bisq.mobile.node.network.presentation.network.NetworkScreen
+import network.bisq.mobile.node.network.presentation.network.NodeNetworkOverviewScreen
 import network.bisq.mobile.node.settings.backup.presentation.BackupScreen
 import network.bisq.mobile.node.startup.splash.NodeSplashScreen
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
@@ -53,7 +53,7 @@ fun NavGraphBuilder.addNodeAppRoutes(animationsEnabled: () -> Boolean) {
         NodeSplashScreen()
     }
     addScreen<NavRoute.BackupAndRestore>(animationsEnabled = animationsEnabled) { BackupScreen() }
-    addScreen<NavRoute.NetworkInfo> { NetworkScreen() }
+    addScreen<NavRoute.NetworkOverview> { NodeNetworkOverviewScreen() }
     addScreen<NodeNavRoute.NetworkPeerConnections> { NetworkConnectionsScreen() }
     addScreen<NodeNavRoute.NetworkMyNode> { NetworkMyNodeScreen() }
 }

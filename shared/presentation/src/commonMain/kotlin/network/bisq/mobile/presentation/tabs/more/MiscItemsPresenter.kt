@@ -4,6 +4,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_question_mark
 import bisqapps.shared.presentation.generated.resources.nav_accounts
 import bisqapps.shared.presentation.generated.resources.nav_ignored_users
+import bisqapps.shared.presentation.generated.resources.nav_network
 import bisqapps.shared.presentation.generated.resources.nav_reputation
 import bisqapps.shared.presentation.generated.resources.nav_resources
 import bisqapps.shared.presentation.generated.resources.nav_settings
@@ -90,11 +91,20 @@ abstract class MiscItemsPresenter(
                     route = NavRoute.Resources,
                 ),
             )
+        val appMenuItems = addCustomSettings(appItems).toMutableList()
+        appMenuItems.add(
+            appMenuItems.size.coerceAtMost(2),
+            MenuItem(
+                label = UiString("mobile.more.network"),
+                icon = Res.drawable.nav_network,
+                route = NavRoute.NetworkOverview,
+            ),
+        )
         return listOf(
             MenuSection(title = UiString("mobile.more.section.identity"), items = identityItems),
             MenuSection(title = UiString("mobile.more.section.tradingSetup"), items = tradingSetupItems),
             MenuSection(title = UiString("mobile.more.section.help"), items = helpItems),
-            MenuSection(title = UiString("mobile.more.section.app"), items = addCustomSettings(appItems)),
+            MenuSection(title = UiString("mobile.more.section.app"), items = appMenuItems),
         )
     }
 

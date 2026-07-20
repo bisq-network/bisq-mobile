@@ -39,6 +39,7 @@ import network.bisq.mobile.client.common.domain.service.mediation.MediationApiGa
 import network.bisq.mobile.client.common.domain.service.message_delivery.ClientMessageDeliveryServiceFacade
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.service.network.ClientNetworkServiceFacade
+import network.bisq.mobile.client.common.domain.service.network.NetworkApiGateway
 import network.bisq.mobile.client.common.domain.service.offers.ClientOffersServiceFacade
 import network.bisq.mobile.client.common.domain.service.offers.OfferbookApiGateway
 import network.bisq.mobile.client.common.domain.service.reputation.ClientReputationServiceFacade
@@ -337,15 +338,18 @@ val clientDomainModule =
             ClientBackendCapabilitiesService(get(), get())
         }
 
-        single<NetworkServiceFacade> {
+        single { NetworkApiGateway(get()) }
+        single {
             ClientNetworkServiceFacade(
                 get(),
                 get(),
                 get(),
                 get(),
                 get(),
+                get(),
+                get(),
             )
-        }
+        } bind NetworkServiceFacade::class
 
         single { MarketPriceApiGateway(get(), get()) }
         single<MarketPriceServiceFacade> {

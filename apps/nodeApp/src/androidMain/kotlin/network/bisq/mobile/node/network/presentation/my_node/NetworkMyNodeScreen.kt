@@ -23,6 +23,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.components.network.NetworkSectionLabel
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -107,14 +108,6 @@ internal fun NetworkMyNodeContent(
             }
         }
     }
-}
-
-@Composable
-private fun NetworkSectionLabel(text: String) {
-    BisqText.XSmallMedium(
-        text = text.uppercase(),
-        color = BisqTheme.colors.mid_grey20,
-    )
 }
 
 @Composable

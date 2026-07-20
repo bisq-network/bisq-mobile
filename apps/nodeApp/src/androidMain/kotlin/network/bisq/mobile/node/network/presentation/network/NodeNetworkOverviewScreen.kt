@@ -1,9 +1,7 @@
 package network.bisq.mobile.node.network.presentation.network
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,22 +21,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
-import network.bisq.mobile.node.network.presentation.network.NetworkHealthState.HEALTHY
-import network.bisq.mobile.node.network.presentation.network.NetworkHealthState.OFFLINE
-import network.bisq.mobile.node.network.presentation.network.NetworkHealthState.SYNCING
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ArrowRightIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.components.network.HealthBadge
+import network.bisq.mobile.presentation.common.ui.components.network.NetworkHealthState
+import network.bisq.mobile.presentation.common.ui.components.network.NetworkSectionLabel
+import network.bisq.mobile.presentation.common.ui.components.network.SubPageEntryCard
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 
 @Composable
-fun NetworkScreen() {
-    val presenter = RememberPresenterLifecycleBackStackAware<NetworkPresenter>()
+fun NodeNetworkOverviewScreen() {
+    val presenter = RememberPresenterLifecycleBackStackAware<NodeNetworkOverviewPresenter>()
     val uiState by presenter.uiState.collectAsState()
 
     NetworkContent(
@@ -50,8 +48,8 @@ fun NetworkScreen() {
 
 @Composable
 internal fun NetworkContent(
-    uiState: NetworkUiState,
-    onAction: (NetworkUiAction) -> Unit,
+    uiState: NodeNetworkOverviewUiState,
+    onAction: (NodeNetworkOverviewUiAction) -> Unit,
     topBar: @Composable () -> Unit,
 ) {
     BisqScaffold(topBar = topBar) { paddingValues ->
@@ -111,7 +109,7 @@ internal fun NetworkContent(
             NetworkSectionLabel(text = "mobile.networkInfo.overview.details".i18n())
             BisqGap.VHalf()
 
-            SubPageEntryCard(onClick = { onAction(NetworkUiAction.OnConnectionsClick) }) {
+            SubPageEntryCard(onClick = { onAction(NodeNetworkOverviewUiAction.OnConnectionsClick) }) {
                 Column {
                     BisqText.BaseRegular(text = "mobile.networkInfo.connections.title".i18n(), color = BisqTheme.colors.white)
                     BisqGap.VQuarter()
@@ -124,7 +122,7 @@ internal fun NetworkContent(
 
             BisqGap.VHalf()
 
-            SubPageEntryCard(onClick = { onAction(NetworkUiAction.OnMyNodeClick) }) {
+            SubPageEntryCard(onClick = { onAction(NodeNetworkOverviewUiAction.OnMyNodeClick) }) {
                 Column {
                     BisqText.BaseRegular(text = "mobile.networkInfo.myNode.title".i18n(), color = BisqTheme.colors.white)
                     BisqGap.VQuarter()
@@ -140,27 +138,6 @@ internal fun NetworkContent(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun HealthBadge(state: NetworkHealthState) {
-    val (bgColor, labelKey) =
-        when (state) {
-            HEALTHY -> BisqTheme.colors.primary to "mobile.networkInfo.overview.health.healthy"
-            SYNCING -> BisqTheme.colors.warning to "mobile.networkInfo.overview.health.syncing"
-            OFFLINE -> BisqTheme.colors.danger to "mobile.networkInfo.overview.health.offline"
-        }
-    Box(
-        modifier =
-            Modifier
-                .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-                .background(bgColor)
-                .fillMaxWidth()
-                .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingQuarter),
-        contentAlignment = Alignment.Center,
-    ) {
-        BisqText.XSmallMedium(text = labelKey.i18n(), color = BisqTheme.colors.dark_grey20)
     }
 }
 
@@ -188,52 +165,6 @@ private fun StatChip(
     }
 }
 
-@Composable
-private fun NetworkSectionLabel(text: String) {
-    BisqText.XSmallMedium(
-        text = text.uppercase(),
-        color = BisqTheme.colors.mid_grey20,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    top = BisqUIConstants.ScreenPadding,
-                    bottom = BisqUIConstants.ScreenPaddingHalf,
-                ),
-    )
-}
-
-@Composable
-private fun SubPageEntryCard(
-    onClick: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-                .background(BisqTheme.colors.dark_grey40)
-                .clickable { onClick() }
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding,
-                    vertical = BisqUIConstants.ScreenPadding,
-                ),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                content()
-            }
-            BisqGap.H1()
-            ArrowRightIcon()
-        }
-    }
-}
-
 @ExcludeFromCoverage
 @Preview
 @Composable
@@ -241,7 +172,7 @@ private fun NetworkContentHealthyPreview() {
     BisqTheme.Preview {
         NetworkContent(
             uiState =
-                NetworkUiState(
+                NodeNetworkOverviewUiState(
                     peerCount = 7,
                     isTorRunning = true,
                     onionAddress = "jd4tx3nljykg5z3vqy7w2m8n4p6r0t2u4w6y8a0c2e4g6i8k.onion:1234",
@@ -259,7 +190,7 @@ private fun NetworkContentHealthyPreview() {
 private fun NetworkContentOfflinePreview() {
     BisqTheme.Preview {
         NetworkContent(
-            uiState = NetworkUiState(),
+            uiState = NodeNetworkOverviewUiState(),
             onAction = {},
             topBar = {},
         )
