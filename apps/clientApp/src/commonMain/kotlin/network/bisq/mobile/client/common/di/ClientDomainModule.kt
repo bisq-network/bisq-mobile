@@ -31,6 +31,10 @@ import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMess
 import network.bisq.mobile.client.common.domain.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.common.domain.service.config.ClientConfigServiceFacade
 import network.bisq.mobile.client.common.domain.service.config.ConfigApiGateway
+import network.bisq.mobile.client.common.domain.service.config.ConfigCache
+import network.bisq.mobile.client.common.domain.service.config.ConfigCacheRepository
+import network.bisq.mobile.client.common.domain.service.config.ConfigCacheRepositoryImpl
+import network.bisq.mobile.client.common.domain.service.config.ConfigCacheSerializer
 import network.bisq.mobile.client.common.domain.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.common.domain.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.common.domain.service.market.ClientMarketPriceServiceFacade
@@ -424,7 +428,16 @@ val clientDomainModule =
         }
 
         single { ConfigApiGateway(get()) }
-        single<ConfigServiceFacade> { ClientConfigServiceFacade(get()) }
+        single<DataStore<ConfigCache>>(named("ConfigCache")) {
+            createDataStore(
+                "ConfigCache",
+                getStorageDir(),
+                ConfigCacheSerializer,
+                ReplaceFileCorruptionHandler { ConfigCache() },
+            )
+        }
+        single<ConfigCacheRepository> { ConfigCacheRepositoryImpl(get(named("ConfigCache"))) }
+        single<ConfigServiceFacade> { ClientConfigServiceFacade(get(), get(), get(), get()) }
 
         single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
 
