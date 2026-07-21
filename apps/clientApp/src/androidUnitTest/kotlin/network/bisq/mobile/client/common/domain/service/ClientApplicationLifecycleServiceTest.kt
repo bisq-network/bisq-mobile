@@ -14,6 +14,7 @@ import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
@@ -51,6 +52,7 @@ class ClientApplicationLifecycleServiceTest {
     private val mediationServiceFacade: MediationServiceFacade = mockk(relaxed = true)
     private val offersServiceFacade: OffersServiceFacade = mockk(relaxed = true)
     private val reputationServiceFacade: ReputationServiceFacade = mockk(relaxed = true)
+    private val configServiceFacade: ConfigServiceFacade = mockk(relaxed = true)
     private val alertNotificationsServiceFacade: AlertNotificationsServiceFacade = mockk(relaxed = true)
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade = mockk(relaxed = true)
     private val settingsServiceFacade: SettingsServiceFacade = mockk(relaxed = true)
@@ -99,6 +101,7 @@ class ClientApplicationLifecycleServiceTest {
                 connectivityService = connectivityService,
                 apiAccessService = apiAccessService,
                 pushNotificationServiceFacade = pushNotificationServiceFacade,
+                configServiceFacade = configServiceFacade,
                 settingsRepository = settingsRepository,
                 notificationController = notificationController,
                 // Analytics is irrelevant to the suppressor / activation-order
@@ -131,6 +134,7 @@ class ClientApplicationLifecycleServiceTest {
                     "explorer.activate",
                     "mediation.activate",
                     "reputation.activate",
+                    "config.activate",
                     "alert.activate",
                     "tradeRestrictingAlert.activate",
                     "userProfile.activate",
@@ -331,6 +335,7 @@ class ClientApplicationLifecycleServiceTest {
                     "userProfile.deactivate",
                     "tradeRestrictingAlert.deactivate",
                     "alert.deactivate",
+                    "config.deactivate",
                     "reputation.deactivate",
                     "mediation.deactivate",
                     "explorer.deactivate",
@@ -371,6 +376,7 @@ class ClientApplicationLifecycleServiceTest {
                     "userProfile.deactivate",
                     "tradeRestrictingAlert.deactivate",
                     "alert.deactivate",
+                    "config.deactivate",
                     "reputation.deactivate",
                     "mediation.deactivate",
                     "explorer.deactivate",
@@ -412,6 +418,7 @@ class ClientApplicationLifecycleServiceTest {
         coEvery { explorerServiceFacade.activate() } answers { order += "explorer.activate" }
         coEvery { mediationServiceFacade.activate() } answers { order += "mediation.activate" }
         coEvery { reputationServiceFacade.activate() } answers { order += "reputation.activate" }
+        coEvery { configServiceFacade.activate() } answers { order += "config.activate" }
         coEvery { alertNotificationsServiceFacade.activate() } answers { order += "alert.activate" }
         coEvery { tradeRestrictingAlertServiceFacade.activate() } answers { order += "tradeRestrictingAlert.activate" }
         coEvery { userProfileServiceFacade.activate() } answers { order += "userProfile.activate" }
@@ -426,6 +433,7 @@ class ClientApplicationLifecycleServiceTest {
         coEvery { userProfileServiceFacade.deactivate() } answers { order += "userProfile.deactivate" }
         coEvery { tradeRestrictingAlertServiceFacade.deactivate() } answers { order += "tradeRestrictingAlert.deactivate" }
         coEvery { alertNotificationsServiceFacade.deactivate() } answers { order += "alert.deactivate" }
+        coEvery { configServiceFacade.deactivate() } answers { order += "config.deactivate" }
         coEvery { reputationServiceFacade.deactivate() } answers { order += "reputation.deactivate" }
         coEvery { mediationServiceFacade.deactivate() } answers { order += "mediation.deactivate" }
         coEvery { explorerServiceFacade.deactivate() } answers { order += "explorer.deactivate" }

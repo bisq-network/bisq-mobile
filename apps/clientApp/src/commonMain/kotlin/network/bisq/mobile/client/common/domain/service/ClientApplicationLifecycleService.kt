@@ -17,6 +17,7 @@ import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
@@ -63,6 +64,7 @@ class ClientApplicationLifecycleService(
     private val connectivityService: ConnectivityService,
     private val apiAccessService: ApiAccessService,
     private val pushNotificationServiceFacade: PushNotificationServiceFacade,
+    private val configServiceFacade: ConfigServiceFacade,
     private val settingsRepository: SettingsRepository,
     private val notificationController: NotificationController,
     analyticsService: AnalyticsService,
@@ -124,6 +126,9 @@ class ClientApplicationLifecycleService(
         explorerServiceFacade.activate()
         mediationServiceFacade.activate()
         reputationServiceFacade.activate()
+        // Static config fetch (trade-amount limits): part of the data-load step, kept off the
+        // onboarding-critical path since it degrades to the bundled default on older/offline nodes.
+        configServiceFacade.activate()
         alertNotificationsServiceFacade.activate()
         tradeRestrictingAlertServiceFacade.activate()
         userProfileServiceFacade.activate()
@@ -165,6 +170,7 @@ class ClientApplicationLifecycleService(
         userProfileServiceFacade.deactivate()
         tradeRestrictingAlertServiceFacade.deactivate()
         alertNotificationsServiceFacade.deactivate()
+        configServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         explorerServiceFacade.deactivate()

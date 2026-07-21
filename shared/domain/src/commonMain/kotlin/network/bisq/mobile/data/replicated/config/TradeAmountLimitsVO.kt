@@ -7,10 +7,8 @@ import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.fromFac
 
 /**
  * Static Bisq Easy trade-amount configuration. These values are fixed for a given bisq2 core/api
- * version and are the same across the P2P network, so the client should not hardcode them long term.
- *
- * TODO: source these from the trusted node's config endpoint (config facade) instead of the bundled
- *  [DEFAULT] fallback below.
+ * version and are the same across the P2P network. The client fetches them from the node's `/config`
+ * endpoint (see ConfigServiceFacade); [DEFAULT] is the bundled fallback for older/offline nodes.
  */
 @Serializable
 data class TradeAmountLimitsVO(
@@ -21,8 +19,8 @@ data class TradeAmountLimitsVO(
 ) {
     companion object {
         /**
-         * Bundled fallback, mirrored from bisq2 core's `BisqEasyTradeAmountLimits`. Used until the
-         * config facade can supply the values from the node, and as the permanent offline fallback.
+         * Bundled fallback, mirrored from bisq2 core's `BisqEasyTradeAmountLimits`. Used until a
+         * successful fetch, and as the permanent fallback for nodes that predate the endpoint.
          */
         val DEFAULT =
             TradeAmountLimitsVO(

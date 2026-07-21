@@ -30,6 +30,7 @@ import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeCh
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
 import network.bisq.mobile.client.common.domain.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.common.domain.service.config.ClientConfigServiceFacade
+import network.bisq.mobile.client.common.domain.service.config.ConfigApiGateway
 import network.bisq.mobile.client.common.domain.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.common.domain.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.common.domain.service.market.ClientMarketPriceServiceFacade
@@ -422,7 +423,8 @@ val clientDomainModule =
             )
         }
 
-        single<ConfigServiceFacade> { ClientConfigServiceFacade() }
+        single { ConfigApiGateway(get()) }
+        single<ConfigServiceFacade> { ClientConfigServiceFacade(get()) }
 
         single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
 

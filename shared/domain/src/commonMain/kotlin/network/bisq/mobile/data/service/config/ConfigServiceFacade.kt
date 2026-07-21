@@ -9,11 +9,8 @@ import network.bisq.mobile.data.service.LifeCycleAware
  * values that bisq2 core owns.
  *
  * The value always resolves to something usable: the bundled default, then a cached value, then the
- * live value from the node. The client fetches it over HTTP; the node reads it straight from bisq2
- * core.
- *
- * TODO: back [tradeAmountLimits] with a fetched+cached value (client) / a direct core read (node);
- *  currently both impls emit [TradeAmountLimitsVO.DEFAULT].
+ * live value from the node. The client fetches it over the `/config` endpoint; the node reads it
+ * straight from bisq2 core.
  */
 interface ConfigServiceFacade : LifeCycleAware {
     val tradeAmountLimits: StateFlow<TradeAmountLimitsVO>

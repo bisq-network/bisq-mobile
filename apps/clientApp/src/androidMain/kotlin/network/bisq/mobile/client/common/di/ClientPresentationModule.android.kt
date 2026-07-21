@@ -67,6 +67,7 @@ val androidClientPresentationModule =
                 get(),
                 get(),
                 get(), // pushNotificationServiceFacade
+                get(), // configServiceFacade
                 get(), // settingsRepository
                 get(), // notificationController
                 get(), // analyticsService

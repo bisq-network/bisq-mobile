@@ -33,6 +33,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `StateFlowProbe` | `.../test_utils/StateFlowProbe.kt` |
 | `NoopNavigationManager` | `.../test_utils/di/NoopNavigationManager.kt` |
 | `PlatformStaticMocks` | `.../test_utils/coroutines/PlatformStaticMocks.kt` |
+| `FakeConfigServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/FakeConfigServiceFacade.kt` |
 | `SettingsRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../mocks/SettingsRepositoryMock.kt` |
 | `UserRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../mocks/UserRepositoryMock.kt` |
 | `TradeStatePresenterTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../trade/trade_detail/states/TradeStatePresenterTestSupport.kt` |

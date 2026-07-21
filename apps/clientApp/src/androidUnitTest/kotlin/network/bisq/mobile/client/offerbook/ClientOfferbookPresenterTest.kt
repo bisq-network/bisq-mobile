@@ -14,17 +14,18 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.clientTestModule
-import network.bisq.mobile.client.common.domain.service.config.ClientConfigServiceFacade
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
@@ -174,7 +175,10 @@ class ClientOfferbookPresenterTest {
             userProfileServiceFacade = userProfileServiceFacade,
             tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
             offerbookFilterConfigRepository = offerbookFilterConfigRepository,
-            configServiceFacade = ClientConfigServiceFacade(),
+            configServiceFacade =
+                mockk<ConfigServiceFacade> {
+                    every { tradeAmountLimits } returns MutableStateFlow(TradeAmountLimitsVO.DEFAULT)
+                },
         )
     }
 

@@ -62,6 +62,7 @@ val iosClientDomainModule =
                 get(), // connectivityService
                 get(), // apiAccessService
                 get(), // pushNotificationServiceFacade
+                get(), // configServiceFacade
                 get(), // settingsRepository
                 get(), // notificationController
                 get(), // analyticsService

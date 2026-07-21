@@ -1,21 +1,32 @@
 package network.bisq.mobile.node.common.domain.service.config
 
+import bisq.bisq_easy.BisqEasyTradeAmountLimits
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
+import network.bisq.mobile.node.common.domain.mapping.Mappings
 
 /**
  * Node implementation of [ConfigServiceFacade].
  *
- * TODO: read the values straight from bisq2 core's BisqEasyTradeAmountLimits (no HTTP, no
- *  hardcoding) so the node is the single source of truth. For now it emits the bundled default.
+ * Reads the values straight from bisq2 core's [BisqEasyTradeAmountLimits] (the same code the node
+ * runs), so the node is the single source of truth — no HTTP, no duplicated literals. The client
+ * fetches the equivalent values over the `/config` endpoint backed by the same core class.
  */
 class NodeConfigServiceFacade :
     ServiceFacade(),
     ConfigServiceFacade {
-    private val _tradeAmountLimits = MutableStateFlow(TradeAmountLimitsVO.DEFAULT)
+    private val _tradeAmountLimits =
+        MutableStateFlow(
+            TradeAmountLimitsVO(
+                defaultMinUsdTradeAmount = Mappings.FiatMapping.fromBisq2Model(BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT),
+                maxUsdTradeAmount = Mappings.FiatMapping.fromBisq2Model(BisqEasyTradeAmountLimits.MAX_USD_TRADE_AMOUNT),
+                tolerance = BisqEasyTradeAmountLimits.TOLERANCE,
+                requiredReputationScorePerUsd = BisqEasyTradeAmountLimits.getRequiredReputationScorePerUsd(),
+            ),
+        )
     override val tradeAmountLimits: StateFlow<TradeAmountLimitsVO> = _tradeAmountLimits.asStateFlow()
 }
