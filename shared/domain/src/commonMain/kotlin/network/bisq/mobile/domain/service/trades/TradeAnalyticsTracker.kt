@@ -124,15 +124,22 @@ class TradeAnalyticsTracker(
                 }
         }
 
-        // Errors: the trade's own or the peer's error message appearing.
+        // Errors: the trade's own error OR the peer's error appearing. These are independent
+        // observables — a peer-side failure sets peersErrorMessage without ever touching errorMessage —
+        // so we observe both per trade and let the per-trade `errored` guard collapse them to a single
+        // Errored (whichever surfaces first wins).
         scope.launch {
             openTradeItems
                 .flatMapLatest { trades ->
                     merge(
                         *trades
-                            .map { item ->
+                            .flatMap { item ->
+                                val id = tradeId(item)
                                 val model = item.bisqEasyTradeModel
-                                model.errorMessage.map { Triple(tradeId(item), it ?: model.peersErrorMessage.value, model.errorStackTrace.value) }
+                                listOf(
+                                    model.errorMessage.map { Triple(id, it, model.errorStackTrace.value) },
+                                    model.peersErrorMessage.map { Triple(id, it, model.peersErrorStackTrace.value) },
+                                )
                             }.toTypedArray(),
                     )
                 }.collect { (id, message, stackTrace) ->
