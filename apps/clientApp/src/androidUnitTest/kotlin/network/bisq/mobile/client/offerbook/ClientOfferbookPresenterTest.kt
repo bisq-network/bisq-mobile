@@ -32,6 +32,8 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
+import network.bisq.mobile.data.utils.AppUpdateUrls
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
@@ -165,6 +167,9 @@ class ClientOfferbookPresenterTest {
         coEvery { offerbookFilterConfigRepository.getConfig(any()) } returns OfferbookFilterConfig()
         coEvery { offerbookFilterConfigRepository.setConfig(any(), any()) } returns Unit
 
+        val appUpdateLinker = mockk<AppUpdateLinker>()
+        every { appUpdateLinker.getUpdateUrl() } returns AppUpdateUrls.GITHUB_RELEASES
+
         return ClientOfferbookPresenter(
             mainPresenter = mainPresenter,
             offersServiceFacade = offersService,
@@ -175,6 +180,7 @@ class ClientOfferbookPresenterTest {
             userProfileServiceFacade = userProfileServiceFacade,
             tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
             offerbookFilterConfigRepository = offerbookFilterConfigRepository,
+            appUpdateLinker = appUpdateLinker,
             configServiceFacade =
                 mockk<ConfigServiceFacade> {
                     every { tradeAmountLimits } returns MutableStateFlow(TradeAmountLimitsVO.DEFAULT)

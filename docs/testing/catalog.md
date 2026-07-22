@@ -30,6 +30,8 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `TestApplication` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/TestApplication.kt` |
 | `TestDoubles` | `apps/clientApp/src/androidUnitTest/kotlin/.../client/test_utils/TestDoubles.kt` |
 | `MainPresenterTestFactory` | `.../test_utils/MainPresenterTestFactory.kt` |
+| `FakeAppUpdateLinker` | `.../test_utils/FakeAppUpdateLinker.kt` |
+| `TEST_APP_UPDATE_URL` | `.../test_utils/FakeAppUpdateLinker.kt` |
 | `StateFlowProbe` | `.../test_utils/StateFlowProbe.kt` |
 | `NoopNavigationManager` | `.../test_utils/di/NoopNavigationManager.kt` |
 | `PlatformStaticMocks` | `.../test_utils/coroutines/PlatformStaticMocks.kt` |

@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
@@ -24,12 +26,13 @@ import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
+import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
 import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.probeStateFlow
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -88,7 +91,7 @@ class AlertNotificationBannerPresenterTest {
             val mainPresenter = MainPresenterTestFactory.create()
             mainPresenter.setIsMainContentVisible(true)
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade, FakeAppUpdateLinker())
             val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()
@@ -108,7 +111,7 @@ class AlertNotificationBannerPresenterTest {
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade, FakeAppUpdateLinker())
             presenter.onAction(AlertNotificationUiAction.OnDismissAlertNotification("warn"))
 
             assertEquals("warn", alertServiceFacade.lastDismissedAlertId)
@@ -121,7 +124,7 @@ class AlertNotificationBannerPresenterTest {
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade, FakeAppUpdateLinker())
             val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()
@@ -147,7 +150,7 @@ class AlertNotificationBannerPresenterTest {
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade, FakeAppUpdateLinker())
             val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()
@@ -174,20 +177,28 @@ class AlertNotificationBannerPresenterTest {
         }
 
     @Test
-    fun `update now opens releases url`() =
+    fun `update now opens app update url`() =
         runTest(testDispatcher) {
+            val appUpdateLinker = mockk<AppUpdateLinker>()
+            every { appUpdateLinker.getUpdateUrl() } returns TEST_APP_UPDATE_URL
             val urlLauncher = mockk<UrlLauncher>(relaxed = true)
             coEvery { urlLauncher.openUrl(any()) } returns true
             val alertsFlow = MutableStateFlow(listOf(alert(id = "emergency", type = AlertType.EMERGENCY, date = 5L)))
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create(urlLauncher = urlLauncher)
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter =
+                AlertNotificationBannerPresenter(
+                    mainPresenter,
+                    alertServiceFacade,
+                    appUpdateLinker,
+                )
 
             presenter.onAction(AlertNotificationUiAction.OnUpdateNow)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_RELEASES) }
+            verify(exactly = 1) { appUpdateLinker.getUpdateUrl() }
+            coVerify(exactly = 1) { urlLauncher.openUrl(TEST_APP_UPDATE_URL) }
         }
 
     @Test
@@ -198,7 +209,7 @@ class AlertNotificationBannerPresenterTest {
             val mainPresenter = MainPresenterTestFactory.create()
             mainPresenter.setIsMainContentVisible(false)
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade, FakeAppUpdateLinker())
             val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()
@@ -229,7 +240,7 @@ class AlertNotificationBannerPresenterTest {
             val mainPresenter = MainPresenterTestFactory.create()
             mainPresenter.setIsMainContentVisible(true)
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade, FakeAppUpdateLinker())
             val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()
@@ -280,7 +291,7 @@ class AlertNotificationBannerPresenterTest {
             val mainPresenter = MainPresenterTestFactory.create()
             mainPresenter.setIsMainContentVisible(true)
 
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertServiceFacade, FakeAppUpdateLinker())
             val uiStateProbe = probeStateFlow(presenter.uiState)
 
             advanceUntilIdle()

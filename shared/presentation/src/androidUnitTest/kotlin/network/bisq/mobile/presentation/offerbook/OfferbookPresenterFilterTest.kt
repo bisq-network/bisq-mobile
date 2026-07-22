@@ -36,6 +36,7 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
+import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
@@ -170,6 +171,7 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
                 tradeRestrictingAlertServiceFacade,
                 FakeOfferbookFilterConfigRepository(),
                 configServiceFacade = FakeConfigServiceFacade(),
+                appUpdateLinker = FakeAppUpdateLinker(),
                 computationDispatcher = testDispatcher,
             )
         offersFlow.value = allOffers
@@ -503,6 +505,7 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
                     mockk(relaxed = true),
                     repository,
                     configServiceFacade = FakeConfigServiceFacade(),
+                    appUpdateLinker = FakeAppUpdateLinker(),
                     computationDispatcher = testDispatcher,
                 )
 
@@ -598,6 +601,7 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
                     tradeRestrictingAlertServiceFacade,
                     FakeOfferbookFilterConfigRepository(),
                     configServiceFacade = FakeConfigServiceFacade(),
+                    appUpdateLinker = FakeAppUpdateLinker(),
                     computationDispatcher = testDispatcher,
                 )
             presenter.onViewAttached()

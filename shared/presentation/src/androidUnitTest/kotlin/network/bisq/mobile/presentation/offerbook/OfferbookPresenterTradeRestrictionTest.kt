@@ -1,10 +1,12 @@
 package network.bisq.mobile.presentation.offerbook
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,13 +27,16 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
+import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
@@ -105,13 +110,19 @@ class OfferbookPresenterTradeRestrictionTest {
         }
     }
 
-    private fun buildPresenter(activeAlert: AuthorizedAlertData? = null): OfferbookPresenter {
-        val urlLauncher = mockk<UrlLauncher>()
-        coEvery { urlLauncher.openUrl(any()) } returns true
+    private fun buildPresenter(
+        activeAlert: AuthorizedAlertData? = null,
+        urlLauncher: UrlLauncher? = null,
+        appUpdateLinker: AppUpdateLinker = FakeAppUpdateLinker(),
+    ): OfferbookPresenter {
+        val resolvedUrlLauncher =
+            urlLauncher ?: mockk<UrlLauncher>().also { launcher ->
+                coEvery { launcher.openUrl(any()) } returns true
+            }
         val mainPresenter =
             MainPresenterTestFactory.create(
                 applicationLifecycleService = TestApplicationLifecycleService(),
-                urlLauncher = urlLauncher,
+                urlLauncher = resolvedUrlLauncher,
             )
 
         val offersFlow =
@@ -158,6 +169,7 @@ class OfferbookPresenterTradeRestrictionTest {
             tradeRestrictingAlertServiceFacade,
             FakeOfferbookFilterConfigRepository(),
             configServiceFacade = FakeConfigServiceFacade(),
+            appUpdateLinker = appUpdateLinker,
         )
     }
 
@@ -210,9 +222,18 @@ class OfferbookPresenterTradeRestrictionTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `OnUpdateNow clears showTradeRestrictedDialog`() =
+    fun `OnUpdateNow clears showTradeRestrictedDialog and opens update URL`() =
         runTest(testDispatcher) {
-            val presenter = buildPresenter(activeAlert = makeAlert())
+            val appUpdateLinker = mockk<AppUpdateLinker>()
+            every { appUpdateLinker.getUpdateUrl() } returns TEST_APP_UPDATE_URL
+            val urlLauncher = mockk<UrlLauncher>()
+            coEvery { urlLauncher.openUrl(any()) } returns true
+            val presenter =
+                buildPresenter(
+                    activeAlert = makeAlert(),
+                    urlLauncher = urlLauncher,
+                    appUpdateLinker = appUpdateLinker,
+                )
 
             presenter.createOffer()
             advanceUntilIdle()
@@ -222,6 +243,8 @@ class OfferbookPresenterTradeRestrictionTest {
             advanceUntilIdle()
 
             assertNull(presenter.showTradeRestrictedDialog.value)
+            verify(exactly = 1) { appUpdateLinker.getUpdateUrl() }
+            coVerify(exactly = 1) { urlLauncher.openUrl(TEST_APP_UPDATE_URL) }
         }
 
     // -------------------------------------------------------------------------

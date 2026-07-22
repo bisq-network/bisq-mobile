@@ -44,6 +44,7 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
@@ -157,6 +158,7 @@ class OfferbookPresenterFilterPersistenceTest {
                 tradeRestrictingAlertServiceFacade = mockk<TradeRestrictingAlertServiceFacade>(relaxed = true),
                 offerbookFilterConfigRepository = repository,
                 configServiceFacade = FakeConfigServiceFacade(),
+                appUpdateLinker = FakeAppUpdateLinker(),
                 computationDispatcher = testDispatcher,
             )
         presenter.onViewAttached()

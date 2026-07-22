@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
@@ -78,6 +79,7 @@ class TabContainerPresenterDuplicateCallTest {
             createOfferCoordinator,
             settingsServiceFacade,
             tradeRestrictingAlertServiceFacade,
+            FakeAppUpdateLinker(),
             AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false),
         )
     }

@@ -18,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
@@ -37,7 +39,9 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
+import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
 import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationBannerPresenter
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
@@ -45,7 +49,6 @@ import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import org.junit.After
 import org.junit.Before
@@ -98,6 +101,8 @@ class AlertNotificationDialogUiTest {
     @Test
     fun `update dialog renders version details and supports update plus dismiss`() =
         runTest(testDispatcher) {
+            val appUpdateLinker = mockk<AppUpdateLinker>()
+            every { appUpdateLinker.getUpdateUrl() } returns TEST_APP_UPDATE_URL
             val urlLauncher = mockk<UrlLauncher>(relaxed = true)
             coEvery { urlLauncher.openUrl(any()) } returns true
             val alertsFlow =
@@ -116,7 +121,12 @@ class AlertNotificationDialogUiTest {
                 )
             val alertFacade = MutableAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create(urlLauncher = urlLauncher)
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertFacade)
+            val presenter =
+                AlertNotificationBannerPresenter(
+                    mainPresenter,
+                    alertFacade,
+                    appUpdateLinker,
+                )
 
             presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("update"))
 
@@ -137,7 +147,8 @@ class AlertNotificationDialogUiTest {
 
             composeTestRule.onNodeWithText("mobile.alert.update.button".i18n()).performClick()
             advanceUntilIdle()
-            coVerify(exactly = 1) { urlLauncher.openUrl(BisqLinks.BISQ_MOBILE_RELEASES) }
+            coVerify(exactly = 1) { urlLauncher.openUrl(TEST_APP_UPDATE_URL) }
+            verify(exactly = 1) { appUpdateLinker.getUpdateUrl() }
 
             composeTestRule
                 .onNode(
@@ -169,7 +180,7 @@ class AlertNotificationDialogUiTest {
                 )
             val alertFacade = MutableAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
-            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertFacade)
+            val presenter = AlertNotificationBannerPresenter(mainPresenter, alertFacade, FakeAppUpdateLinker())
 
             presenter.onAction(AlertNotificationUiAction.ExpandAlertNotification("halt"))
 

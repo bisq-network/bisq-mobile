@@ -1,10 +1,12 @@
 package network.bisq.mobile.presentation.tabs.tab
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,11 +17,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
+import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
@@ -75,14 +80,19 @@ class TabContainerPresenterTradeRestrictionTest {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private fun buildPresenter(activeAlert: AuthorizedAlertData? = null): TabContainerPresenter {
-        // Relaxed UrlLauncher defaults openUrl to false → cannot-open snackbar → GlobalUiManager Koin; these tests are about dialog state, not URL failure.
-        val urlLauncher = mockk<UrlLauncher>()
-        coEvery { urlLauncher.openUrl(any()) } returns true
+    private fun buildPresenter(
+        activeAlert: AuthorizedAlertData? = null,
+        urlLauncher: UrlLauncher? = null,
+        appUpdateLinker: AppUpdateLinker = FakeAppUpdateLinker(),
+    ): TabContainerPresenter {
+        val resolvedUrlLauncher =
+            urlLauncher ?: mockk<UrlLauncher>().also { launcher ->
+                coEvery { launcher.openUrl(any()) } returns true
+            }
         val mainPresenter =
             MainPresenterTestFactory.create(
                 applicationLifecycleService = TestApplicationLifecycleService(),
-                urlLauncher = urlLauncher,
+                urlLauncher = resolvedUrlLauncher,
             )
         val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
 
@@ -98,6 +108,7 @@ class TabContainerPresenterTradeRestrictionTest {
             createOfferCoordinator = createOfferCoordinator,
             settingsServiceFacade = settingsServiceFacade,
             tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
+            appUpdateLinker = appUpdateLinker,
             animationSettings = AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false),
         )
     }
@@ -152,9 +163,18 @@ class TabContainerPresenterTradeRestrictionTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `OnUpdateNow clears showTradeRestrictedDialog`() =
+    fun `OnUpdateNow clears showTradeRestrictedDialog and opens update URL`() =
         runTest(testDispatcher) {
-            val presenter = buildPresenter(activeAlert = makeAlert())
+            val appUpdateLinker = mockk<AppUpdateLinker>()
+            every { appUpdateLinker.getUpdateUrl() } returns TEST_APP_UPDATE_URL
+            val urlLauncher = mockk<UrlLauncher>()
+            coEvery { urlLauncher.openUrl(any()) } returns true
+            val presenter =
+                buildPresenter(
+                    activeAlert = makeAlert(),
+                    urlLauncher = urlLauncher,
+                    appUpdateLinker = appUpdateLinker,
+                )
             presenter.createOffer()
             advanceUntilIdle()
             assertNotNull(presenter.showTradeRestrictedDialog.value)
@@ -163,6 +183,8 @@ class TabContainerPresenterTradeRestrictionTest {
             advanceUntilIdle()
 
             assertNull(presenter.showTradeRestrictedDialog.value)
+            verify(exactly = 1) { appUpdateLinker.getUpdateUrl() }
+            coVerify(exactly = 1) { urlLauncher.openUrl(TEST_APP_UPDATE_URL) }
         }
 
     // -------------------------------------------------------------------------
