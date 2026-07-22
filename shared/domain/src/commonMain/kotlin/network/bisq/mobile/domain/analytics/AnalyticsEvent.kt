@@ -33,7 +33,103 @@ sealed class AnalyticsEvent(
          * Every declared event across all families. Used by the contract test
          * to assert names are unique and follow the convention.
          */
-        val all: List<AnalyticsEvent> by lazy { ScreenOpened.all + Settings.all }
+        val all: List<AnalyticsEvent> by lazy { ScreenOpened.all + Settings.all + Trade.all }
+    }
+
+    /**
+     * Trade-protocol analytics — the trading funnel and the health of each user-driven step.
+     *
+     * Privacy: sealed slugs only, NO trade id / amount / peer / user. We record the STEP and its
+     * OUTCOME, never which trade. Cardinality is bounded (see [all]).
+     *
+     * Four signals:
+     *  - [PhaseOpened]: the user VIEWED a phase screen — the funnel of how far users navigate.
+     *  - [PhaseReached]: a trade ENTERED a phase (state-based, every open trade). Comparing reached vs
+     *    opened volumes surfaces gaps — e.g. a phase trades reach but users never open.
+     *  - [Action]: outcome of a user-driven step — [Outcome.CONFIRMED] (the user's own next state
+     *    advanced), [Outcome.FAILED] (the request errored), [Outcome.STALLED] (request accepted but the
+     *    local state never advanced within the watch window — the "it didn't work" symptom). We only
+     *    watch the user's OWN next state, a fast local dispatch — never the counterparty's, which can
+     *    legitimately take hours/days.
+     *  - lifecycle ([Taken]/[Completed]/[Cancelled]/[Rejected]/[Errored]) for trade volume and
+     *    success-vs-fail ratios.
+     */
+    sealed class Trade(
+        name: String,
+    ) : AnalyticsEvent(name) {
+        enum class Phase(
+            val slug: String,
+        ) {
+            // The number keeps GlitchTip `ORDER BY title` in funnel order and mirrors bisq2's own
+            // phase1/2/3 vocabulary; the trailing word makes the slug self-documenting in the dashboard.
+            BUYER_1("buyer_1_setup"),
+            BUYER_2("buyer_2_fiat"),
+            BUYER_3("buyer_3_btc"),
+            BUYER_4("buyer_4_complete"),
+            SELLER_1("seller_1_setup"),
+            SELLER_2("seller_2_fiat"),
+            SELLER_3("seller_3_btc"),
+            SELLER_4("seller_4_complete"),
+        }
+
+        enum class Step(
+            val slug: String,
+        ) {
+            ACCOUNT_DATA("account_data"),
+            BTC_ADDRESS("btc_address"),
+            FIAT_SENT("fiat_sent"),
+            FIAT_RECEIPT("fiat_receipt"),
+            BTC_SENT("btc_sent"),
+            BTC_RECEIVED("btc_received"),
+        }
+
+        enum class Outcome(
+            val slug: String,
+        ) {
+            CONFIRMED("confirmed"),
+            FAILED("failed"),
+            STALLED("stalled"),
+        }
+
+        /** The user VIEWED this phase's screen (view-based; emitted from the trade-detail presenter). */
+        data class PhaseOpened(
+            val phase: Phase,
+        ) : Trade("trade.phase_${phase.slug}_opened")
+
+        /**
+         * A trade ENTERED this phase (state-based; emitted from the facade for every open trade,
+         * whether or not the user is viewing it). Comparing `reached` vs `opened` volumes surfaces
+         * gaps — e.g. trades that reached a step but were never opened.
+         */
+        data class PhaseReached(
+            val phase: Phase,
+        ) : Trade("trade.phase_${phase.slug}_reached")
+
+        data class Action(
+            val step: Step,
+            val outcome: Outcome,
+        ) : Trade("trade.${step.slug}_${outcome.slug}")
+
+        data object Taken : Trade("trade.taken")
+
+        data object Completed : Trade("trade.completed")
+
+        data object Cancelled : Trade("trade.cancelled")
+
+        data object Rejected : Trade("trade.rejected")
+
+        /** A protocol/peer error surfaced on the trade (from the trade model's error flows). */
+        data object Errored : Trade("trade.errored")
+
+        companion object {
+            // `by lazy` for the same class-init-cycle reason as [ScreenOpened.all].
+            val all: List<Trade> by lazy {
+                Phase.entries.map { PhaseOpened(it) } +
+                    Phase.entries.map { PhaseReached(it) } +
+                    Step.entries.flatMap { step -> Outcome.entries.map { outcome -> Action(step, outcome) } } +
+                    listOf(Taken, Completed, Cancelled, Rejected, Errored)
+            }
+        }
     }
 
     /**

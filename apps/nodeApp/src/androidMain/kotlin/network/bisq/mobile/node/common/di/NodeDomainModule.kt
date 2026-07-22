@@ -171,7 +171,7 @@ val androidNodeDomainModule =
 
         single<ExplorerServiceFacade> { NodeExplorerServiceFacade(get()) }
 
-        single<TradesServiceFacade> { NodeTradesServiceFacade(get()) }
+        single<TradesServiceFacade> { NodeTradesServiceFacade(get(), get()) }
 
         single<TradeChatMessagesServiceFacade> {
             NodeTradeChatMessagesServiceFacade(

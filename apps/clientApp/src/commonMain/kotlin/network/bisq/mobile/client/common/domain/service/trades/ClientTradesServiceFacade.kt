@@ -16,9 +16,10 @@ import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.data.service.ServiceFacade
+import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
-import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
 import network.bisq.mobile.domain.core.pagination.PaginationParams
 import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
@@ -51,8 +52,8 @@ class ClientTradesServiceFacade(
     webSocketClientService: WebSocketClientService,
     json: Json,
     private val globalUiManager: GlobalUiManager,
-) : ServiceFacade(),
-    TradesServiceFacade {
+    analyticsService: AnalyticsService,
+) : BaseTradesServiceFacade(analyticsService) {
     companion object {
         private const val MAX_CACHED_TRADE_PROPERTIES = 500
     }
@@ -92,11 +93,13 @@ class ClientTradesServiceFacade(
         Subscription(webSocketClientService, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
 
     override suspend fun activate() {
-        super<ServiceFacade>.activate()
+        super.activate()
 
         openTradesSubscription.subscribe()
         closedTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
+
+        observeTradesForAnalytics()
     }
 
     override suspend fun deactivate() {
@@ -104,7 +107,7 @@ class ClientTradesServiceFacade(
         closedTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
 
-        super<ServiceFacade>.deactivate()
+        super.deactivate()
     }
 
     // API
@@ -127,6 +130,7 @@ class ClientTradesServiceFacade(
             )
         if (apiResult.isSuccess) {
             takeOfferStatus.value = TakeOfferStatus.SUCCESS
+            trackTrade(AnalyticsEvent.Trade.Taken)
             return Result.success(apiResult.getOrThrow().tradeId)
         } else {
             return Result.failure(apiResult.exceptionOrNull()!!)
@@ -139,12 +143,12 @@ class ClientTradesServiceFacade(
 
     override suspend fun rejectTrade(): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.rejectTrade(requireNotNull(tradeId))
+        return apiGateway.rejectTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected) }
     }
 
     override suspend fun cancelTrade(): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.cancelTrade(requireNotNull(tradeId))
+        return apiGateway.cancelTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled) }
     }
 
     override suspend fun closeTrade(): Result<Unit> {
@@ -158,38 +162,44 @@ class ClientTradesServiceFacade(
 
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        val result = apiGateway.sellerSendsPaymentAccount(requireNotNull(tradeId), paymentAccountData)
-        return result
+        return trackedAction(AnalyticsEvent.Trade.Step.ACCOUNT_DATA) {
+            apiGateway.sellerSendsPaymentAccount(requireNotNull(tradeId), paymentAccountData)
+        }
     }
 
     override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        val result = apiGateway.buyerSendBitcoinPaymentData(requireNotNull(tradeId), bitcoinPaymentData)
-        return result
+        return trackedAction(AnalyticsEvent.Trade.Step.BTC_ADDRESS) {
+            apiGateway.buyerSendBitcoinPaymentData(requireNotNull(tradeId), bitcoinPaymentData)
+        }
     }
 
     override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        val result = apiGateway.sellerConfirmFiatReceipt(requireNotNull(tradeId))
-        return result
+        return trackedAction(AnalyticsEvent.Trade.Step.FIAT_RECEIPT) {
+            apiGateway.sellerConfirmFiatReceipt(requireNotNull(tradeId))
+        }
     }
 
     override suspend fun buyerConfirmFiatSent(): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        val result = apiGateway.buyerConfirmFiatSent(requireNotNull(tradeId))
-        return result
+        return trackedAction(AnalyticsEvent.Trade.Step.FIAT_SENT) {
+            apiGateway.buyerConfirmFiatSent(requireNotNull(tradeId))
+        }
     }
 
     override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        val result = apiGateway.sellerConfirmBtcSent(requireNotNull(tradeId), paymentProof)
-        return result
+        return trackedAction(AnalyticsEvent.Trade.Step.BTC_SENT) {
+            apiGateway.sellerConfirmBtcSent(requireNotNull(tradeId), paymentProof)
+        }
     }
 
     override suspend fun btcConfirmed(): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        val result = apiGateway.btcConfirmed(requireNotNull(tradeId))
-        return result
+        return trackedAction(AnalyticsEvent.Trade.Step.BTC_RECEIVED) {
+            apiGateway.btcConfirmed(requireNotNull(tradeId))
+        }
     }
 
     override suspend fun exportTradeDate(): Result<Unit> {

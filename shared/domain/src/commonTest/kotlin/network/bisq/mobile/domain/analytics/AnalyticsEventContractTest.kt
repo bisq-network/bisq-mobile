@@ -165,13 +165,23 @@ class AnalyticsEventContractTest {
 
     @Test
     fun `AnalyticsEvent_all is the union of every family list`() {
-        val sum = AnalyticsEvent.ScreenOpened.all.size + AnalyticsEvent.Settings.all.size
+        val sum = AnalyticsEvent.ScreenOpened.all.size + AnalyticsEvent.Settings.all.size + AnalyticsEvent.Trade.all.size
         assertEquals(
             sum,
             AnalyticsEvent.all.size,
             "AnalyticsEvent.all must equal the union of family lists. " +
                 "If you add a new family (e.g. Trade events), extend AnalyticsEvent.all AND this assertion.",
         )
+    }
+
+    @Test
+    fun `every Trade event name uses the trade dot lowercase snake_case alphabet`() {
+        AnalyticsEvent.Trade.all.forEach { event ->
+            assertTrue(
+                event.name.matches(Regex("^trade\\.[a-z][a-z0-9_]*$")),
+                "Trade event name '${event.name}' must match trade.<a-z0-9_>",
+            )
+        }
     }
 
     @Test

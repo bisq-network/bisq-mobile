@@ -3,6 +3,8 @@ package network.bisq.mobile.presentation.trade.trade_detail
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.TradeRoleEnumExtensions.isSeller
@@ -47,6 +49,7 @@ import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTrad
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.trade.trade_detail.TradeFlowPresenter.TradePhaseState.BUYER_STATE1A
@@ -103,7 +106,23 @@ class TradeFlowPresenter(
                 tradeStateChanged(tradeState)
             }
         }
+
+        // Trade-funnel phase-shown analytics: emit once per phase the user views (the denominator for
+        // "reached the step but didn't complete it"). The per-step action outcomes are the numerator.
+        presenterScope.launch {
+            tradePhaseState
+                .map { it.toTradePhase() }
+                .distinctUntilChanged()
+                .collect { phase -> phase?.let { analyticsService?.track(AnalyticsEvent.Trade.PhaseOpened(it)) } }
+        }
     }
+
+    private fun TradePhaseState.toTradePhase(): AnalyticsEvent.Trade.Phase? =
+        when {
+            this == TradePhaseState.INIT -> null
+            name.startsWith("SELLER") -> AnalyticsEvent.Trade.Phase.valueOf("SELLER_${index + 1}")
+            else -> AnalyticsEvent.Trade.Phase.valueOf("BUYER_${index + 1}")
+        }
 
     override fun onViewUnattaching() {
         _tradePhaseState.value = TradePhaseState.INIT
