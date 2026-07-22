@@ -17,7 +17,9 @@ interface ConfigServiceFacade : LifeCycleAware {
 
     /**
      * Keys of the recent API features the paired node supports, from its `/config/capabilities`
-     * manifest. Empty when the node predates the manifest (fail closed). Consumed by
+     * manifest. When the manifest is absent the client falls back to
+     * [network.bisq.mobile.domain.service.capabilities.Feature.LEGACY_BASELINE_KEYS] so pre-manifest
+     * features aren't lost; newer/unknown features fail closed. Consumed by
      * [network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService].
      */
     val supportedFeatures: StateFlow<Set<String>>

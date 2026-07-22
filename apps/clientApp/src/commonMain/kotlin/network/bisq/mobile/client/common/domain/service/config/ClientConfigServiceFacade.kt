@@ -2,6 +2,8 @@ package network.bisq.mobile.client.common.domain.service.config
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.parseUrl
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,9 +27,10 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  *  3. otherwise fetch, emit, and re-persist tagged with the new version.
  *
  * Each field resolves independently. A genuine 404 is definitive: trade-amount limits fall back to
- * [TradeAmountLimitsVO.DEFAULT] (still usable), the features manifest falls back to empty (fail
- * closed). A transient failure keeps the last good value and retries on the next bootstrap; we only
- * persist a version's entry once both fields have a definitive answer.
+ * [TradeAmountLimitsVO.DEFAULT] (still usable), and the features manifest falls back to
+ * [Feature.LEGACY_BASELINE_KEYS] so features that predate the manifest stay available (newer/unknown
+ * features are absent, hence hidden). A transient failure keeps the last good value and retries on the
+ * next bootstrap; we only persist a version's entry once both fields have a definitive answer.
  */
 class ClientConfigServiceFacade(
     private val configApiGateway: ConfigApiGateway,
@@ -79,8 +82,14 @@ class ClientConfigServiceFacade(
             return
         }
 
-        val limits = resolveLimits(configApiGateway.getTradeAmountLimits())
-        val features = resolveFeatures(configApiGateway.getCapabilities())
+        // The two reads are independent — fetch them concurrently so bootstrap pays one Tor round-trip,
+        // not two.
+        val (limits, features) =
+            coroutineScope {
+                val limitsDeferred = async { resolveLimits(configApiGateway.getTradeAmountLimits()) }
+                val featuresDeferred = async { resolveFeatures(configApiGateway.getCapabilities()) }
+                limitsDeferred.await() to featuresDeferred.await()
+            }
         _tradeAmountLimits.value = limits.value
         _supportedFeatures.value = features.value
 
