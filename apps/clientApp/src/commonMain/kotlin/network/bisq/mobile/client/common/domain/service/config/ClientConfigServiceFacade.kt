@@ -12,19 +12,22 @@ import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRes
 import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
+import network.bisq.mobile.domain.service.capabilities.Feature
 
 /**
  * Client implementation of [ConfigServiceFacade].
  *
- * Static config changes only with the trusted node's API version, so we cache it on disk keyed by
- * (node host, api version) and follow a stale-while-revalidate flow on [activate]:
- *  1. surface the cached value immediately for fast render;
- *  2. read the node's current API version; if it matches the cache we skip the fetch entirely;
+ * Static config (trade-amount limits + the supported-features manifest) changes only with the trusted
+ * node's API version, so we cache it on disk keyed by (node host, api version) and follow a
+ * stale-while-revalidate flow on [activate]:
+ *  1. surface the cached values immediately for fast render;
+ *  2. read the node's current API version; if it matches the cache we skip the fetches entirely;
  *  3. otherwise fetch, emit, and re-persist tagged with the new version.
  *
- * The value always resolves to something usable: a genuine 404 (older node without the endpoint)
- * caches [TradeAmountLimitsVO.DEFAULT] for that version so we don't re-hit it; a transient failure
- * keeps the last good value and retries on the next bootstrap.
+ * Each field resolves independently. A genuine 404 is definitive: trade-amount limits fall back to
+ * [TradeAmountLimitsVO.DEFAULT] (still usable), the features manifest falls back to empty (fail
+ * closed). A transient failure keeps the last good value and retries on the next bootstrap; we only
+ * persist a version's entry once both fields have a definitive answer.
  */
 class ClientConfigServiceFacade(
     private val configApiGateway: ConfigApiGateway,
@@ -35,6 +38,11 @@ class ClientConfigServiceFacade(
     ConfigServiceFacade {
     private val _tradeAmountLimits = MutableStateFlow(TradeAmountLimitsVO.DEFAULT)
     override val tradeAmountLimits: StateFlow<TradeAmountLimitsVO> = _tradeAmountLimits.asStateFlow()
+
+    // Start from the legacy baseline so features that predate the manifest (closed-trades) aren't
+    // hidden while paired with a node that has them but not yet the /config/capabilities endpoint.
+    private val _supportedFeatures = MutableStateFlow(Feature.LEGACY_BASELINE_KEYS)
+    override val supportedFeatures: StateFlow<Set<String>> = _supportedFeatures.asStateFlow()
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
@@ -52,15 +60,17 @@ class ClientConfigServiceFacade(
             log.d { "Config: cached entry belongs to a different node; invalidating" }
             runCatching { configCacheRepository.clear() }
         }
-        // Stale-while-revalidate: show the current node's last good value instantly so the screen never
-        // waits on a fetch.
-        validCached?.let { _tradeAmountLimits.value = it.tradeAmountLimits }
+        // Stale-while-revalidate: show the current node's last good values instantly.
+        validCached?.let {
+            _tradeAmountLimits.value = it.tradeAmountLimits
+            _supportedFeatures.value = it.supportedFeatures
+        }
 
         val version = settingsApiGateway.getApiVersion().getOrNull()?.version
         if (version == null) {
-            // Node unreachable / version unknown — can't validate freshness. Keep the cached value (or
-            // DEFAULT) and retry on the next bootstrap.
-            log.d { "Config: node version unavailable; keeping ${if (validCached != null) "cached" else "default"} limits" }
+            // Node unreachable / version unknown — can't validate freshness. Keep the cached values (or
+            // defaults) and retry on the next bootstrap.
+            log.d { "Config: node version unavailable; keeping ${if (validCached != null) "cached" else "default"} config" }
             return
         }
 
@@ -69,34 +79,52 @@ class ClientConfigServiceFacade(
             return
         }
 
-        configApiGateway
-            .getTradeAmountLimits()
-            .onSuccess { limits ->
-                _tradeAmountLimits.value = limits
-                persist(hostHash, version, limits)
-            }.onFailure { e ->
-                if (e.isEndpointAbsent()) {
-                    // Definitive: this node/version has no config endpoint. Expose the safe default and
-                    // cache it for the version so the 404 isn't re-hit until the node upgrades.
-                    _tradeAmountLimits.value = TradeAmountLimitsVO.DEFAULT
-                    persist(hostHash, version, TradeAmountLimitsVO.DEFAULT)
-                } else {
-                    // Transient (timeout / connection). Don't cache; keep the cached/DEFAULT value and
-                    // retry on the next bootstrap.
-                    log.d(e) { "Config: transient fetch failure; will retry next bootstrap" }
-                }
-            }
+        val limits = resolveLimits(configApiGateway.getTradeAmountLimits())
+        val features = resolveFeatures(configApiGateway.getCapabilities())
+        _tradeAmountLimits.value = limits.value
+        _supportedFeatures.value = features.value
+
+        // Only persist when both fields are definitive — a transient failure on either must not cache a
+        // wrong value for the version (it would suppress the retry).
+        if (hostHash != null && limits.definitive && features.definitive) {
+            configCacheRepository.set(ConfigCacheEntry(hostHash, version, limits.value, features.value))
+        }
     }
 
-    private suspend fun persist(
-        hostHash: String?,
-        version: String,
-        limits: TradeAmountLimitsVO,
-    ) {
-        // No stable host means no stable cache key (unpaired / malformed url) — skip caching, just emit.
-        if (hostHash == null) return
-        configCacheRepository.set(ConfigCacheEntry(hostHash, version, limits))
-    }
+    private fun resolveLimits(result: Result<TradeAmountLimitsVO>): Resolved<TradeAmountLimitsVO> =
+        result.fold(
+            onSuccess = { Resolved(it, definitive = true) },
+            onFailure = { e ->
+                if (e.isEndpointAbsent()) {
+                    Resolved(TradeAmountLimitsVO.DEFAULT, definitive = true)
+                } else {
+                    log.d(e) { "Config: transient trade-amount-limits failure; will retry next bootstrap" }
+                    Resolved(_tradeAmountLimits.value, definitive = false)
+                }
+            },
+        )
+
+    private fun resolveFeatures(result: Result<ApiCapabilitiesDto>): Resolved<Set<String>> =
+        result.fold(
+            onSuccess = { Resolved(it.features.toSet(), definitive = true) },
+            onFailure = { e ->
+                if (e.isEndpointAbsent()) {
+                    // Node predates the manifest: assume the legacy baseline so pre-manifest features
+                    // (closed-trades) stay available; newer features are absent, hence hidden.
+                    Resolved(Feature.LEGACY_BASELINE_KEYS, definitive = true)
+                } else {
+                    // Transient (or an ambiguous non-404 error): keep the current value — which is the
+                    // legacy baseline until a manifest succeeds — and retry on the next bootstrap.
+                    log.d(e) { "Config: transient capabilities failure; will retry next bootstrap" }
+                    Resolved(_supportedFeatures.value, definitive = false)
+                }
+            },
+        )
 
     private fun Throwable.isEndpointAbsent(): Boolean = this is WebSocketRestApiException && httpStatusCode == HttpStatusCode.NotFound
+
+    private data class Resolved<T>(
+        val value: T,
+        val definitive: Boolean,
+    )
 }

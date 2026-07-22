@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
+import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -35,7 +36,7 @@ class MyTradesPresenter(
      */
     val showHistoryTab: StateFlow<Boolean> =
         backendCapabilitiesService.capabilities
-            .map { it.hasClosedTradesApi }
+            .map { it.isSupported(Feature.CLOSED_TRADES) }
             .stateIn(presenterScope, SharingStarted.Eagerly, false)
 
     override fun onViewAttached() {

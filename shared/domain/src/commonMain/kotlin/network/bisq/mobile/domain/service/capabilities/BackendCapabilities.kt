@@ -1,19 +1,15 @@
 package network.bisq.mobile.domain.service.capabilities
 
 /**
- * Backend feature capabilities determined by probing the trusted Bisq2 node's
- * actual REST surface. See [BackendCapabilitiesService] for the workflow.
- *
- * To add a new gated capability, append a boolean field with a KDoc that
- * names the bisq2 PR / release that introduced the endpoint.
+ * Snapshot of the trusted node's supported feature set, sourced from its `/config/capabilities`
+ * manifest (see [BackendCapabilitiesService]). A node without the manifest reports no features, so
+ * gating fails closed — better to hide a feature than render a broken screen against an older node.
  */
 data class BackendCapabilities(
-    /**
-     * `GET /trades/closed` paginated REST endpoint + `CLOSED_TRADES`
-     * WebSocket topic. Introduced in bisq2 PR #4700.
-     */
-    val hasClosedTradesApi: Boolean = false,
+    val supportedFeatures: Set<String> = emptySet(),
 ) {
+    fun isSupported(feature: Feature): Boolean = feature.key in supportedFeatures
+
     companion object {
         val UNAVAILABLE = BackendCapabilities()
     }

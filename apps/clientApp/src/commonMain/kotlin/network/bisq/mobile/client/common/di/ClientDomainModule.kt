@@ -25,7 +25,6 @@ import network.bisq.mobile.client.common.domain.service.alert.ClientAlertNotific
 import network.bisq.mobile.client.common.domain.service.alert.ClientTradeRestrictingAlertServiceFacade
 import network.bisq.mobile.client.common.domain.service.alert.TradeRestrictingAlertApiGateway
 import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade
-import network.bisq.mobile.client.common.domain.service.capabilities.ClientBackendCapabilitiesService
 import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
 import network.bisq.mobile.client.common.domain.service.common.ClientLanguageServiceFacade
@@ -118,6 +117,7 @@ import network.bisq.mobile.domain.analytics.createBufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
+import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
 import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
@@ -338,9 +338,7 @@ val clientDomainModule =
 
         single { ClientConnectivityService(get()) } bind ConnectivityService::class
 
-        single<BackendCapabilitiesService> {
-            ClientBackendCapabilitiesService(get(), get())
-        }
+        single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
 
         single<NetworkServiceFacade> {
             ClientNetworkServiceFacade(

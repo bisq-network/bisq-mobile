@@ -19,6 +19,7 @@ data class ConfigCacheEntry(
     val trustedNodeHostHash: String,
     val apiVersion: String,
     val tradeAmountLimits: TradeAmountLimitsVO,
+    val supportedFeatures: Set<String> = emptySet(),
 )
 
 @OptIn(ExperimentalStdlibApi::class)

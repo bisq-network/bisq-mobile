@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
+import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 
 /**
@@ -15,6 +16,9 @@ import network.bisq.mobile.node.common.domain.mapping.Mappings
  * Reads the values straight from bisq2 core's [BisqEasyTradeAmountLimits] (the same code the node
  * runs), so the node is the single source of truth — no HTTP, no duplicated literals. The client
  * fetches the equivalent values over the `/config` endpoint backed by the same core class.
+ *
+ * The node runs the current core version, so it supports every known [Feature] — [supportedFeatures]
+ * is the full key set, and the shared capabilities service gates nothing on the node app.
  */
 class NodeConfigServiceFacade :
     ServiceFacade(),
@@ -29,4 +33,7 @@ class NodeConfigServiceFacade :
             ),
         )
     override val tradeAmountLimits: StateFlow<TradeAmountLimitsVO> = _tradeAmountLimits.asStateFlow()
+
+    override val supportedFeatures: StateFlow<Set<String>> =
+        MutableStateFlow(Feature.entries.map { it.key }.toSet()).asStateFlow()
 }

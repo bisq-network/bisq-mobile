@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.service.config.ApiCapabilitiesDto
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketResponse
@@ -28,6 +29,7 @@ import network.bisq.mobile.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.replicated.contract.BisqEasyContractVO
 import network.bisq.mobile.data.replicated.contract.PartyVO
 import network.bisq.mobile.data.replicated.contract.RoleEnum
@@ -61,6 +63,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
+import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.createUuid
 
@@ -140,6 +143,13 @@ class WebSocketClientDemo(
                 webSocketRequest.path.endsWith("settings/version") ->
                     json.encodeToString(apiVersionSettingsVO)
 
+                // Config - static config the app fetches at bootstrap. Capabilities advertises
+                // closed-trades so the demo shows the history tab (App Review); limits are the defaults.
+                webSocketRequest.path.endsWith("config/capabilities") ->
+                    json.encodeToString(ApiCapabilitiesDto(apiVersionSettingsVO.version, listOf(Feature.CLOSED_TRADES.key)))
+                webSocketRequest.path.endsWith("config/trade-amount-limits") ->
+                    json.encodeToString(TradeAmountLimitsVO.DEFAULT)
+
                 // User identities
                 webSocketRequest.path.endsWith("user-identities/ids") ->
                     json.encodeToString(identitiesDemoObj)
@@ -162,9 +172,8 @@ class WebSocketClientDemo(
                 webSocketRequest.path.contains("payment-accounts/fiat") ->
                     json.encodeToString(FakeSubscriptionData.paymentAccounts)
 
-                // Trades - closed trades paginated REST endpoint. Demo returns an
-                // empty page so (a) the BackendCapabilitiesService probe succeeds
-                // and (b) the closed-trades tab renders without parse errors.
+                // Trades - closed trades paginated REST endpoint. Demo returns an empty page so the
+                // closed-trades tab renders without parse errors (it's advertised via config/capabilities).
                 webSocketRequest.path.contains("trades/closed") ->
                     json.encodeToString(emptyClosedTradesPage)
 

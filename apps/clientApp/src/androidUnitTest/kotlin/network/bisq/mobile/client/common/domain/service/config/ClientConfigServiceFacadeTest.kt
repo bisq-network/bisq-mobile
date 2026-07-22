@@ -14,6 +14,7 @@ import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRes
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.replicated.settings.ApiVersionSettingsVO
+import network.bisq.mobile.domain.service.capabilities.Feature
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -37,6 +38,7 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
             SensitiveSettings(bisqApiUrl = "http://$host:8090", selectedProxyOption = BisqProxyOption.INTERNAL_TOR)
         coEvery { settingsApiGateway.getApiVersion() } returns Result.success(ApiVersionSettingsVO(version))
         coEvery { configApiGateway.getTradeAmountLimits() } returns Result.success(fetched)
+        coEvery { configApiGateway.getCapabilities() } returns Result.success(ApiCapabilitiesDto(version, emptyList()))
         facade = ClientConfigServiceFacade(configApiGateway, settingsApiGateway, sensitiveSettingsRepository, cacheRepository)
     }
 
@@ -92,6 +94,63 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
             assertEquals(hostHash, cacheRepository.get()?.trustedNodeHostHash)
             coVerify(exactly = 1) { configApiGateway.getTradeAmountLimits() }
+        }
+
+    @Test
+    fun `cold start fetches the capabilities manifest and exposes and caches the features`() =
+        runTest {
+            coEvery { configApiGateway.getCapabilities() } returns
+                Result.success(ApiCapabilitiesDto(version, listOf("closed-trades", "network-info")))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(setOf("closed-trades", "network-info"), facade.supportedFeatures.value)
+            assertEquals(setOf("closed-trades", "network-info"), cacheRepository.get()?.supportedFeatures)
+        }
+
+    @Test
+    fun `capabilities endpoint 404 falls back to the legacy baseline and caches it`() =
+        runTest {
+            coEvery { configApiGateway.getCapabilities() } returns
+                Result.failure(WebSocketRestApiException(HttpStatusCode.NotFound, "no manifest"))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            // Node predates the manifest but may still run pre-manifest features (closed-trades): assume
+            // the legacy baseline so they aren't hidden, and cache it so we don't re-hit.
+            assertEquals(Feature.LEGACY_BASELINE_KEYS, facade.supportedFeatures.value)
+            assertEquals(Feature.LEGACY_BASELINE_KEYS, cacheRepository.get()?.supportedFeatures)
+        }
+
+    @Test
+    fun `non-404 capabilities error keeps the legacy baseline visible`() =
+        runTest {
+            // Reproduces a node without the endpoint that returns a non-404 error (e.g. a proxy 500):
+            // classified transient, so we keep the current value — which is the legacy baseline — and
+            // the pre-manifest feature stays visible instead of vanishing.
+            coEvery { configApiGateway.getCapabilities() } returns
+                Result.failure(WebSocketRestApiException(HttpStatusCode.InternalServerError, ""))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(Feature.LEGACY_BASELINE_KEYS, facade.supportedFeatures.value)
+        }
+
+    @Test
+    fun `transient capabilities failure keeps cached features and does not persist`() =
+        runTest {
+            cacheRepository.set(ConfigCacheEntry(hostHash, "2.1.11", fetched, setOf("closed-trades")))
+            coEvery { configApiGateway.getCapabilities() } returns Result.failure(RuntimeException("timeout"))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            // Keep the last good feature set; leave the cache untouched so the next bootstrap retries.
+            assertEquals(setOf("closed-trades"), facade.supportedFeatures.value)
+            assertEquals(ConfigCacheEntry(hostHash, "2.1.11", fetched, setOf("closed-trades")), cacheRepository.get())
         }
 
     @Test

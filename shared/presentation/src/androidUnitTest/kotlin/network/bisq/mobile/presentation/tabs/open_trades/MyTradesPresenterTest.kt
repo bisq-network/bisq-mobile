@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
+import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -84,14 +85,14 @@ class MyTradesPresenterTest {
 
     @Test
     fun `setInitialTab with valid index updates selectedTab when history available`() {
-        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
+        capabilitiesFlow.value = BackendCapabilities(setOf(Feature.CLOSED_TRADES.key))
         presenter.setInitialTab(1)
         assertEquals(1, presenter.uiState.value.selectedTab)
     }
 
     @Test
     fun `setInitialTab with index above LAST_TAB clamps to LAST_TAB when history available`() {
-        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
+        capabilitiesFlow.value = BackendCapabilities(setOf(Feature.CLOSED_TRADES.key))
         presenter.setInitialTab(99)
         assertEquals(1, presenter.uiState.value.selectedTab)
     }
@@ -113,14 +114,14 @@ class MyTradesPresenterTest {
 
     @Test
     fun `OnSelectTab action above LAST_TAB clamps to LAST_TAB when history available`() {
-        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
+        capabilitiesFlow.value = BackendCapabilities(setOf(Feature.CLOSED_TRADES.key))
         presenter.onAction(MyTradesUiAction.OnSelectTab(99))
         assertEquals(1, presenter.uiState.value.selectedTab)
     }
 
     @Test
     fun `OnSelectTab action with valid index updates selectedTab when history available`() {
-        capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
+        capabilitiesFlow.value = BackendCapabilities(setOf(Feature.CLOSED_TRADES.key))
         presenter.onAction(MyTradesUiAction.OnSelectTab(1))
         assertEquals(1, presenter.uiState.value.selectedTab)
     }
@@ -141,7 +142,7 @@ class MyTradesPresenterTest {
     @Test
     fun `showHistoryTab reflects hasClosedTradesApi true when capability enabled`() =
         runTest {
-            capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
+            capabilitiesFlow.value = BackendCapabilities(setOf(Feature.CLOSED_TRADES.key))
             assertTrue(presenter.showHistoryTab.value)
         }
 
@@ -149,21 +150,21 @@ class MyTradesPresenterTest {
     fun `when showHistoryTab flips false while on history tab, presenter clamps to 0`() =
         runTest {
             // Enable history and navigate to tab 1
-            capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
+            capabilitiesFlow.value = BackendCapabilities(setOf(Feature.CLOSED_TRADES.key))
             presenter.setInitialTab(1)
             assertEquals(1, presenter.uiState.value.selectedTab)
 
             // Capability goes away — presenter should clamp back to 0
-            capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = false)
+            capabilitiesFlow.value = BackendCapabilities()
             assertEquals(0, presenter.uiState.value.selectedTab)
         }
 
     @Test
     fun `when showHistoryTab flips false while on open tab, selectedTab stays at 0`() =
         runTest {
-            capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = true)
+            capabilitiesFlow.value = BackendCapabilities(setOf(Feature.CLOSED_TRADES.key))
             presenter.setInitialTab(0)
-            capabilitiesFlow.value = BackendCapabilities(hasClosedTradesApi = false)
+            capabilitiesFlow.value = BackendCapabilities()
             assertEquals(0, presenter.uiState.value.selectedTab)
         }
 }

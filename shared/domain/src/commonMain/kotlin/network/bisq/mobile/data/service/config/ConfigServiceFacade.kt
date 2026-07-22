@@ -14,4 +14,11 @@ import network.bisq.mobile.data.service.LifeCycleAware
  */
 interface ConfigServiceFacade : LifeCycleAware {
     val tradeAmountLimits: StateFlow<TradeAmountLimitsVO>
+
+    /**
+     * Keys of the recent API features the paired node supports, from its `/config/capabilities`
+     * manifest. Empty when the node predates the manifest (fail closed). Consumed by
+     * [network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService].
+     */
+    val supportedFeatures: StateFlow<Set<String>>
 }

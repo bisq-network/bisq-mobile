@@ -11,6 +11,8 @@ import network.bisq.mobile.data.service.config.ConfigServiceFacade
  */
 class FakeConfigServiceFacade(
     limits: TradeAmountLimitsVO = TradeAmountLimitsVO.DEFAULT,
+    features: Set<String> = emptySet(),
 ) : ConfigServiceFacade {
     override val tradeAmountLimits: StateFlow<TradeAmountLimitsVO> = MutableStateFlow(limits)
+    override val supportedFeatures: StateFlow<Set<String>> = MutableStateFlow(features)
 }

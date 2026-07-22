@@ -39,6 +39,7 @@ import network.bisq.mobile.domain.analytics.SentryJavaNativeSentryInitializer
 import network.bisq.mobile.domain.analytics.createBufferedAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
+import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -50,7 +51,6 @@ import network.bisq.mobile.node.common.domain.service.accounts.NodeUserDefinedAc
 import network.bisq.mobile.node.common.domain.service.alert.NodeAlertNotificationsServiceFacade
 import network.bisq.mobile.node.common.domain.service.alert.NodeTradeRestrictingAlertServiceFacade
 import network.bisq.mobile.node.common.domain.service.bootstrap.NodeApplicationBootstrapFacade
-import network.bisq.mobile.node.common.domain.service.capabilities.NodeBackendCapabilitiesService
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
 import network.bisq.mobile.node.common.domain.service.chat.trade.NodeTradeChatMessagesServiceFacade
 import network.bisq.mobile.node.common.domain.service.common.NodeLanguageServiceFacade
@@ -201,7 +201,7 @@ val androidNodeDomainModule =
 
         single { NodeConnectivityService(get()) } bind ConnectivityService::class
 
-        single<BackendCapabilitiesService> { NodeBackendCapabilitiesService() }
+        single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
 
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
