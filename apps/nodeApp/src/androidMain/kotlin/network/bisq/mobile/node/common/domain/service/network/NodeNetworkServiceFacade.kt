@@ -160,9 +160,9 @@ class NodeNetworkServiceFacade(
         val inventoryService = serviceNode.inventoryService.get()
 
         allDataReceivedPin =
-            inventoryService.numPendingInventoryRequests.addObserver { numPendingRequests ->
-                log.d { "Node inventory pending requests: $numPendingRequests" }
-                _allDataReceived.value = numPendingRequests == 0
+            inventoryService.initialInventoryRequestsCompleted.addObserver {
+                log.d { "Node inventory initial requests completed: $it" }
+                _allDataReceived.value = it
             }
     }
 }
