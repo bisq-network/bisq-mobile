@@ -22,6 +22,12 @@ kotlin {
             // Coroutines for StateFlow in mocks and test dispatchers
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.coroutines.test)
+
+            // DataStore serializer contract tests
+            implementation(libs.androidx.datastore.okio)
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
         }
 
         androidMain.dependencies {

@@ -5,8 +5,7 @@ import androidx.datastore.core.CorruptionException
 import io.ktor.utils.io.core.toByteArray
 import io.mockk.coEvery
 import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import kotlinx.coroutines.flow.MutableStateFlow
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
@@ -26,10 +25,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
- * IllegalArgumentException wrapping ("Cannot read …") is intentionally not tested: post-decrypt
- * JSON failures surface as [SerializationException], and [SensitiveSettings] has no init validation
- * that would throw plain [IllegalArgumentException] during decode.
- *
  * Keystore invalidation covers every type in [SensitiveSettingsSerializer]'s
  * `isKeystoreInvalidation()` set: direct [AEADBadTagException], direct
  * [KeyPermanentlyInvalidatedException], and nested [BadPaddingException].
@@ -38,7 +33,7 @@ import kotlin.test.assertTrue
 class SensitiveSettingsSerializerTest {
     @Before
     fun setUp() {
-        resetKeystoreInvalidatedFlag()
+        SensitiveSettingsSerializer.resetKeystoreInvalidatedForTest()
         mockkStatic(::encrypt, ::decrypt)
         coEvery { encrypt(any()) } answers {
             val plaintext = firstArg<ByteArray>()
@@ -59,8 +54,8 @@ class SensitiveSettingsSerializerTest {
 
     @After
     fun tearDown() {
-        resetKeystoreInvalidatedFlag()
-        unmockkAll()
+        SensitiveSettingsSerializer.resetKeystoreInvalidatedForTest()
+        unmockkStatic(::encrypt, ::decrypt)
     }
 
     @Test
@@ -125,6 +120,20 @@ class SensitiveSettingsSerializerTest {
 
             assertEquals("Cannot decrypt SensitiveSettings", exception.message)
             assertIs<IllegalStateException>(exception.cause)
+        }
+
+    @Test
+    fun `readFrom wraps IllegalArgumentException in CorruptionException`() =
+        runTest {
+            val exception =
+                assertFailsWith<CorruptionException> {
+                    SensitiveSettingsSerializer.readFrom(
+                        Buffer().write(ByteArray(MOCK_MIN_ENCRYPTED_SIZE_BYTES)),
+                    )
+                }
+
+            assertEquals("Cannot read SensitiveSettings", exception.message)
+            assertIs<IllegalArgumentException>(exception.cause)
         }
 
     @Test
@@ -219,17 +228,5 @@ class SensitiveSettingsSerializerTest {
     private fun assertKeystoreInvalidatedCorruption(exception: CorruptionException) {
         assertTrue(SensitiveSettingsSerializer.keystoreInvalidated.value)
         assertEquals(KEYSTORE_INVALIDATED_MESSAGE, exception.message)
-    }
-
-    private fun resetKeystoreInvalidatedFlag() {
-        try {
-            val field = SensitiveSettingsSerializer::class.java.getDeclaredField("_keystoreInvalidated")
-            field.isAccessible = true
-            @Suppress("UNCHECKED_CAST")
-            val flow = field.get(SensitiveSettingsSerializer) as MutableStateFlow<Boolean>
-            flow.value = false
-        } catch (_: Exception) {
-            // Ignore if reflection fails — flag may already be false
-        }
     }
 }

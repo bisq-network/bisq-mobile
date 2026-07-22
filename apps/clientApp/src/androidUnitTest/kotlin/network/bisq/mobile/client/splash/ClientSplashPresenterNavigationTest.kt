@@ -132,20 +132,8 @@ class ClientSplashPresenterNavigationTest {
         Dispatchers.resetMain()
     }
 
-    /**
-     * Resets the static [SensitiveSettingsSerializer.keystoreInvalidated] flag between tests
-     * using reflection, since there is no public reset method on the object singleton.
-     */
     private fun resetKeystoreInvalidatedFlag() {
-        try {
-            val field = SensitiveSettingsSerializer::class.java.getDeclaredField("_keystoreInvalidated")
-            field.isAccessible = true
-            @Suppress("UNCHECKED_CAST")
-            val flow = field.get(SensitiveSettingsSerializer) as MutableStateFlow<Boolean>
-            flow.value = false
-        } catch (_: Exception) {
-            // Ignore if reflection fails — flag may already be false
-        }
+        SensitiveSettingsSerializer.resetKeystoreInvalidatedForTest()
     }
 
     private fun createPresenter(): ClientSplashPresenter =
@@ -469,10 +457,7 @@ class ClientSplashPresenterNavigationTest {
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
 
             // Simulate the keystoreInvalidated flag being set by the serializer
-            val field = SensitiveSettingsSerializer::class.java.getDeclaredField("_keystoreInvalidated")
-            field.isAccessible = true
-            @Suppress("UNCHECKED_CAST")
-            (field.get(SensitiveSettingsSerializer) as MutableStateFlow<Boolean>).value = true
+            SensitiveSettingsSerializer.setKeystoreInvalidatedForTest(true)
 
             val presenter = createPresenter()
             presenter.onViewAttached()

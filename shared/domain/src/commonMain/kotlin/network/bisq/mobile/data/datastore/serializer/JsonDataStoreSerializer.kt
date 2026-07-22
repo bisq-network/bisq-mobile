@@ -15,11 +15,13 @@ inline fun <reified T> jsonDataStoreSerializer(
     serializer: KSerializer<T> = serializer(),
 ): OkioSerializer<T> =
     object : OkioSerializer<T> {
+        private val storedDefault: T = defaultValue
+
         override val defaultValue: T
-            get() = defaultValue
+            get() = storedDefault
 
         override suspend fun readFrom(source: BufferedSource): T {
-            if (source.exhausted()) return defaultValue
+            if (source.exhausted()) return storedDefault
             return try {
                 dataStoreJson.decodeFromString(serializer, source.readUtf8())
             } catch (e: SerializationException) {

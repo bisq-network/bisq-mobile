@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.sensitive_settings
 
+import androidx.annotation.VisibleForTesting
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.okio.OkioSerializer
 import io.ktor.utils.io.core.toByteArray
@@ -83,5 +84,15 @@ object SensitiveSettingsSerializer : OkioSerializer<SensitiveSettings> {
         val payload = dataStoreJson.encodeToString(SensitiveSettings.serializer(), t)
         val encryptedPayload = encrypt(payload.toByteArray())
         sink.write(encryptedPayload)
+    }
+
+    @VisibleForTesting
+    internal fun resetKeystoreInvalidatedForTest() {
+        _keystoreInvalidated.value = false
+    }
+
+    @VisibleForTesting
+    internal fun setKeystoreInvalidatedForTest(invalidated: Boolean) {
+        _keystoreInvalidated.value = invalidated
     }
 }

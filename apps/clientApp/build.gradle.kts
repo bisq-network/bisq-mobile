@@ -205,6 +205,9 @@ kotlin {
 
             // Koin
             implementation(libs.koin.test)
+
+            // Test utilities
+            implementation(project(sharedTestUtilsModule))
         }
 
         androidMain.dependencies {
