@@ -12,6 +12,7 @@ import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSett
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.domain.service.network.ClientNetworkServiceFacade
+import network.bisq.mobile.client.common.domain.service.network.ConnectionDto
 import network.bisq.mobile.client.common.domain.service.network.NetworkInfoDto
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
@@ -62,12 +63,33 @@ class ClientNetworkOverviewPresenterTest : ClientKoinIntegrationTestBase() {
             mainPresenter = mainPresenter,
         )
 
+    // The peer count is derived from connections.size, so build a list of the desired size.
+    private fun networkInfoWith(
+        connectionCount: Int,
+        allDataReceived: Boolean = true,
+        torRunning: Boolean = true,
+    ): NetworkInfoDto =
+        NetworkInfoDto(
+            allDataReceived = allDataReceived,
+            torRunning = torRunning,
+            connections =
+                List(connectionCount) { i ->
+                    ConnectionDto(
+                        connectionId = "c$i",
+                        address = "peer$i.onion",
+                        outbound = true,
+                        seed = false,
+                        establishedAtMillis = 0L,
+                    )
+                },
+        )
+
     @Test
     fun `when connected and data received then uiState is healthy with peer count and host`() =
         runTest {
             // Given
             status.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-            networkInfo.value = NetworkInfoDto(numConnections = 12, allDataReceived = true, torRunning = true)
+            networkInfo.value = networkInfoWith(connectionCount = 12)
             every { connectivityService.currentAverageRoundTripTimeMs() } returns 340L
 
             // When
@@ -83,6 +105,25 @@ class ClientNetworkOverviewPresenterTest : ClientKoinIntegrationTestBase() {
             assertTrue(state.isTorRouted)
             assertEquals(340L, state.latencyMs)
             assertEquals(NetworkHealthState.HEALTHY, state.healthState)
+        }
+
+    @Test
+    fun `when connected and data received but zero peers then health is offline`() =
+        runTest {
+            // Given the node is reachable and synced but reports no peers (no mesh connectivity)
+            status.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+            networkInfo.value = networkInfoWith(connectionCount = 0, allDataReceived = true)
+
+            // When
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Then — mirrors the node presenter: 0 peers is OFFLINE, not HEALTHY
+            val state = presenter.uiState.value
+            assertTrue(state.isReachable)
+            assertEquals(0, state.peerCountViaNode)
+            assertEquals(NetworkHealthState.OFFLINE, state.healthState)
         }
 
     @Test
@@ -148,7 +189,7 @@ class ClientNetworkOverviewPresenterTest : ClientKoinIntegrationTestBase() {
 
             // When the link comes up and the node pushes data
             status.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-            networkInfo.value = NetworkInfoDto(numConnections = 8, allDataReceived = true, torRunning = true)
+            networkInfo.value = networkInfoWith(connectionCount = 8)
             advanceUntilIdle()
 
             // Then
@@ -162,7 +203,7 @@ class ClientNetworkOverviewPresenterTest : ClientKoinIntegrationTestBase() {
         runTest {
             // Given a reachable link with a pushed snapshot
             status.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-            networkInfo.value = NetworkInfoDto(numConnections = 8, allDataReceived = true, torRunning = true)
+            networkInfo.value = networkInfoWith(connectionCount = 8)
             presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()

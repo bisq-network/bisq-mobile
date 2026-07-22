@@ -13,6 +13,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `PresentationKoinTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter tests |
 | `PlatformPresentationKoinTestBase` | `.../coroutines/PlatformPresentationKoinTestBase.kt` | + static platform mocks (`getScreenWidthDp`) |
 | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services |
+| `NodeKoinIntegrationTestBase` | `apps/nodeApp/src/androidUnitTest/kotlin/.../test_utils/NodeKoinIntegrationTestBase.kt` | Node presenters/facades |
 | `BisqComposeUiTestBase` | `.../test_utils/compose/BisqComposeUiTestBase.kt` | Compose UI, no Koin |
 | `PresentationKoinComposeTestBase` | `.../test_utils/compose/PresentationKoinComposeTestBase.kt` | Compose + `presentationTestModule` |
 | `PlatformPresentationKoinComposeTestBase` | `.../test_utils/compose/PlatformPresentationKoinComposeTestBase.kt` | Compose + Koin + platform mocks |

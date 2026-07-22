@@ -53,7 +53,7 @@ class ClientNetworkOverviewPresenter(
                 val isReachable = status.isConnected()
                 // Only trust the last snapshot's peer count while the link is up; otherwise the
                 // stale count would show beneath an OFFLINE badge (networkInfo is not cleared on drop).
-                val peerCount = if (isReachable) info?.numConnections else null
+                val peerCount = if (isReachable) info?.connections?.size else null
                 val dataReceived = info?.allDataReceived == true
                 Triple(isReachable, peerCount, computeHealthState(isReachable, peerCount, dataReceived))
             }.distinctUntilChanged()
@@ -84,6 +84,7 @@ class ClientNetworkOverviewPresenter(
     ): NetworkHealthState =
         when {
             !isReachable -> NetworkHealthState.OFFLINE
+            peerCount == 0 -> NetworkHealthState.OFFLINE
             peerCount == null || !isDataReceived -> NetworkHealthState.SYNCING
             else -> NetworkHealthState.HEALTHY
         }

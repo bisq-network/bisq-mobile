@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class NetworkInfoDto(
-    val numConnections: Int,
     val allDataReceived: Boolean,
     val torRunning: Boolean,
     val myAddress: String? = null,

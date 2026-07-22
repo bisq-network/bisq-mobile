@@ -71,7 +71,7 @@ class ClientNetworkServiceFacade(
                     val info = payload.payload
                     _networkInfo.value = info
                     log.i {
-                        "NETWORK_INFO received: numConnections=${info.numConnections}, torRunning=${info.torRunning}, " +
+                        "NETWORK_INFO received: torRunning=${info.torRunning}, " +
                             "allDataReceived=${info.allDataReceived}, myAddress=${info.myAddress}, keyId=${info.keyId}, " +
                             "connections=${info.connections.size}"
                     }
