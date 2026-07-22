@@ -19,6 +19,10 @@ interface UrlLauncher {
     suspend fun openUrl(url: String): Boolean
 }
 
+interface AppUpdateLinker {
+    fun getUpdateUrl(): String
+}
+
 expect fun formatDateTime(dateTime: LocalDateTime): String
 
 expect fun encodeURIParam(param: String): String

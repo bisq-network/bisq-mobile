@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.common.ui.utils
 
+import network.bisq.mobile.data.utils.AppUpdateUrls
+
 object BisqLinks {
     const val BISQ_EASY_WIKI_URL = "https://bisq.wiki/Bisq_Easy"
     const val FREQUENTLY_ASKED_QUESTIONS_URL = "https://bisq.wiki/Frequently_asked_questions"
@@ -9,7 +11,7 @@ object BisqLinks {
     const val BLUE_WALLET_TUTORIAL_2_URL = "https://www.youtube.com/watch?v=imMX7i4qpmg"
     const val BISQ_MOBILE_GH = "https://github.com/bisq-network/bisq-mobile"
     const val BISQ_MOBILE_GH_ISSUES = "https://github.com/bisq-network/bisq-mobile/issues"
-    const val BISQ_MOBILE_RELEASES = "https://github.com/bisq-network/bisq-mobile/releases"
+    const val BISQ_MOBILE_RELEASES = AppUpdateUrls.GITHUB_RELEASES
     const val WEBPAGE = "https://bisq.network/"
     const val LICENSE = "https://github.com/bisq-network/bisq-mobile/blob/main/LICENSE"
     const val DAO = "https://bisq.network/dao"

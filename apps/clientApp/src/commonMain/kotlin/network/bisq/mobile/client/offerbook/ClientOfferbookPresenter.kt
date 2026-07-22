@@ -7,6 +7,7 @@ import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
@@ -24,6 +25,7 @@ class ClientOfferbookPresenter(
     tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
     offerbookFilterConfigRepository: OfferbookFilterConfigRepository,
     configServiceFacade: ConfigServiceFacade,
+    appUpdateLinker: AppUpdateLinker,
 ) : OfferbookPresenter(
         mainPresenter,
         offersServiceFacade,
@@ -35,6 +37,7 @@ class ClientOfferbookPresenter(
         tradeRestrictingAlertServiceFacade,
         offerbookFilterConfigRepository,
         configServiceFacade,
+        appUpdateLinker,
     ) {
     override fun isOfferFromIgnoredUserCached(offer: BisqEasyOfferVO): Boolean {
         val makerUserProfileId = offer.makerNetworkId.pubKey.id

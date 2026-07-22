@@ -7,15 +7,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.presentation.common.ui.alert.banner.AlertNotificationBannerUiState
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 
 @Stable
 class AlertNotificationBannerPresenter(
     mainPresenter: MainPresenter,
     private val alertNotificationsServiceFacade: AlertNotificationsServiceFacade,
+    private val appUpdateLinker: AppUpdateLinker,
 ) : BasePresenter(mainPresenter) {
     private val currentAlertDialogId = MutableStateFlow<String?>(null)
 
@@ -47,7 +48,7 @@ class AlertNotificationBannerPresenter(
         when (action) {
             is AlertNotificationUiAction.OnDismissAlertNotification -> dismissAlert(action.alertId)
             is AlertNotificationUiAction.ExpandAlertNotification -> expandAlert(action.alertId)
-            AlertNotificationUiAction.OnUpdateNow -> navigateToUrl(BisqLinks.BISQ_MOBILE_RELEASES)
+            AlertNotificationUiAction.OnUpdateNow -> navigateToUrl(appUpdateLinker.getUpdateUrl())
             AlertNotificationUiAction.OnCloseDialog -> currentAlertDialogId.value = null
         }
     }

@@ -7,7 +7,9 @@ import network.bisq.mobile.client.common.domain.utils.ClientVersionProvider
 import network.bisq.mobile.client.main.AndroidClientMainPresenter
 import network.bisq.mobile.client.onboarding.ClientOnboardingPresenter
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.utils.AndroidAppUpdateLinker
 import network.bisq.mobile.data.utils.AndroidUrlLauncher
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
@@ -26,6 +28,7 @@ import org.koin.dsl.module
 val androidClientPresentationModule =
     module {
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
+        single<AppUpdateLinker> { AndroidAppUpdateLinker(androidContext()) }
         single {
             val context = androidContext()
             val filesDir = context.filesDir.absolutePath

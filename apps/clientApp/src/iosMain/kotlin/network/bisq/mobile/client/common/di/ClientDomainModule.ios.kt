@@ -10,6 +10,8 @@ import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
+import network.bisq.mobile.data.utils.IOSAppUpdateLinker
 import network.bisq.mobile.data.utils.IOSUrlLauncher
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.analytics.NativeSentryInitializer
@@ -73,6 +75,7 @@ val iosClientDomainModule =
             )
         }
         single<UrlLauncher> { IOSUrlLauncher() }
+        single<AppUpdateLinker> { IOSAppUpdateLinker() }
         single<VersionProvider> { ClientVersionProvider() }
 
         // Native Sentry SDK initializer. Unconditionally bound — the

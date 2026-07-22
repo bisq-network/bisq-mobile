@@ -35,6 +35,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
@@ -65,6 +66,7 @@ open class OfferbookPresenter(
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
     private val offerbookFilterConfigRepository: OfferbookFilterConfigRepository,
     private val configServiceFacade: ConfigServiceFacade,
+    private val appUpdateLinker: AppUpdateLinker,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BasePresenter(mainPresenter) {
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
@@ -866,7 +868,7 @@ open class OfferbookPresenter(
         when (action) {
             AlertNotificationUiAction.OnUpdateNow -> {
                 _showTradeRestrictedDialog.value = null
-                navigateToUrl(BisqLinks.BISQ_MOBILE_RELEASES)
+                navigateToUrl(appUpdateLinker.getUpdateUrl())
             }
             AlertNotificationUiAction.OnCloseDialog -> _showTradeRestrictedDialog.value = null
             else -> Unit

@@ -80,7 +80,7 @@ val presentationModule =
         single<GlobalUiManager> { GlobalUiManager() }
 
         factory<NetworkStatusBannerPresenter> { NetworkStatusBannerPresenter(get(), get()) }
-        factory<AlertNotificationBannerPresenter> { AlertNotificationBannerPresenter(get(), get()) }
+        factory<AlertNotificationBannerPresenter> { AlertNotificationBannerPresenter(get(), get(), get()) }
 
         factory<UserAgreementPresenter> {
             UserAgreementPresenter(
@@ -89,7 +89,7 @@ val presentationModule =
             )
         } bind IAgreementPresenter::class
 
-        factory { TabContainerPresenter(get(), get(), get(), get(), get()) } bind ITabContainerPresenter::class
+        factory { TabContainerPresenter(get(), get(), get(), get(), get(), get()) } bind ITabContainerPresenter::class
 
         factory<ReputationPresenter> { ReputationPresenter(get(), get()) }
 

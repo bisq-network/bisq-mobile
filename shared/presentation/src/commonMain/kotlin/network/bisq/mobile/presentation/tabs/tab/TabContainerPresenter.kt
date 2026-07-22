@@ -5,13 +5,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.alert.toAlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 
@@ -23,6 +23,7 @@ class TabContainerPresenter(
     private val createOfferCoordinator: CreateOfferCoordinator,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
+    private val appUpdateLinker: AppUpdateLinker,
     private val animationSettings: AnimationSettings,
 ) : BasePresenter(mainPresenter),
     ITabContainerPresenter {
@@ -64,7 +65,7 @@ class TabContainerPresenter(
         when (action) {
             AlertNotificationUiAction.OnUpdateNow -> {
                 _showTradeRestrictedDialog.value = null
-                navigateToUrl(BisqLinks.BISQ_MOBILE_RELEASES)
+                navigateToUrl(appUpdateLinker.getUpdateUrl())
             }
             AlertNotificationUiAction.OnCloseDialog -> _showTradeRestrictedDialog.value = null
             else -> Unit

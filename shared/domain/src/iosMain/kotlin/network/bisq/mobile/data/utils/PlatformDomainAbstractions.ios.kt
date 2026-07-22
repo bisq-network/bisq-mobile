@@ -402,6 +402,10 @@ class IOSUrlLauncher : UrlLauncher {
     private fun sanitizeUrlForLog(rawUrl: String): String = rawUrl.take(256).ifEmpty { "invalid-url" }
 }
 
+class IOSAppUpdateLinker : AppUpdateLinker {
+    override fun getUpdateUrl(): String = AppUpdateUrls.BISQ_CONNECT_IOS_INSTALL_PAGE
+}
+
 class IOSPlatformInfo : PlatformInfo {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
     override val type = PlatformType.IOS

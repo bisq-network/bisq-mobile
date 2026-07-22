@@ -27,7 +27,9 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.AndroidAppUpdateLinker
 import network.bisq.mobile.data.utils.AndroidUrlLauncher
+import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.AnalyticsService
@@ -204,6 +206,7 @@ val androidNodeDomainModule =
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
 
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
+        single<AppUpdateLinker> { AndroidAppUpdateLinker(androidContext()) }
 
         single<NodeApplicationLifecycleService> {
             NodeApplicationLifecycleService(

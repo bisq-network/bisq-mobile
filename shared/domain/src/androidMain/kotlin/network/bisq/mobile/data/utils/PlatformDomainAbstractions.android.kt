@@ -99,6 +99,40 @@ class AndroidUrlLauncher(
     }
 }
 
+class AndroidAppUpdateLinker(
+    private val context: Context,
+    private val installingPackageNameProvider: (Context) -> String? = ::resolveInstallingPackageName,
+) : AppUpdateLinker {
+    private companion object {
+        private const val GOOGLE_PLAY_INSTALLER = "com.android.vending"
+        private const val GOOGLE_PLAY_FEEDBACK = "com.google.android.feedback"
+
+        fun resolveInstallingPackageName(context: Context): String? =
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    context.packageManager
+                        .getInstallSourceInfo(context.packageName)
+                        .installingPackageName
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.packageManager.getInstallerPackageName(context.packageName)
+                }
+            }.getOrNull()
+    }
+
+    override fun getUpdateUrl(): String =
+        if (isGooglePlayInstall()) {
+            AppUpdateUrls.playStoreDetailsUrl(context.packageName)
+        } else {
+            AppUpdateUrls.GITHUB_RELEASES
+        }
+
+    private fun isGooglePlayInstall(): Boolean {
+        val installer = runCatching { installingPackageNameProvider(context) }.getOrNull() ?: return false
+        return installer == GOOGLE_PLAY_INSTALLER || installer == GOOGLE_PLAY_FEEDBACK
+    }
+}
+
 class AndroidPlatformInfo : PlatformInfo {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
     override val type = PlatformType.ANDROID
