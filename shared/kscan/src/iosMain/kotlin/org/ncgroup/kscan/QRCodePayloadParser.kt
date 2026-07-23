@@ -134,12 +134,21 @@ internal object QRCodePayloadParser {
                         break
                     }
                     val eciFirstByte = reader.readBits(8)
-                    if ((eciFirstByte and 0x80) != 0) {
-                        if (!reader.hasAvailable(8)) {
-                            aborted = true
-                            break
+                    when {
+                        (eciFirstByte and 0xC0) == 0xC0 -> {
+                            if (!reader.hasAvailable(16)) {
+                                aborted = true
+                                break
+                            }
+                            reader.readBits(16)
                         }
-                        reader.readBits(8)
+                        (eciFirstByte and 0x80) != 0 -> {
+                            if (!reader.hasAvailable(8)) {
+                                aborted = true
+                                break
+                            }
+                            reader.readBits(8)
+                        }
                     }
                 }
 

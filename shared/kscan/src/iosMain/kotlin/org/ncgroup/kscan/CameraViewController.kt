@@ -207,7 +207,7 @@ class CameraViewController(
         if (rawBytes.isEmpty()) {
             type.toString()
         } else {
-            rawBytes.joinToString(separator = ",") { (it.toInt() and 0xFF).toString() }
+            "${rawBytes.contentHashCode()}:${rawBytes.size}"
         }
 
     private fun barcodeDataFromRawBytes(

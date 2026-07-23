@@ -233,6 +233,23 @@ class QRCodePayloadParserTest {
         assertContentEquals(data, result)
     }
 
+    @Test
+    fun `GIVEN 24-bit eci then byte segments WHEN decodeDataStream THEN byte data preserved`() {
+        val data = byteArrayOf(0x48, 0x69, 0x21)
+        val payload =
+            buildEciThenBytePayload(
+                data = data,
+                byteCountBits = 8,
+                eciFirstByte = 0xC0,
+                eciContinuationBytes = 2,
+            )
+
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
+
+        assertNotNull(result)
+        assertContentEquals(data, result)
+    }
+
     // region Helpers
 
     private sealed class Segment {
@@ -346,10 +363,13 @@ class QRCodePayloadParserTest {
     private fun buildEciThenBytePayload(
         data: ByteArray,
         byteCountBits: Int,
+        eciFirstByte: Int = 0,
+        eciContinuationBytes: Int = 0,
     ): ByteArray {
         val bits = mutableListOf<Int>()
         bits.addAll(listOf(0, 1, 1, 1)) // Mode: 0111 (ECI)
-        addBits(bits, 0, 8) // 8-bit ECI assignment number
+        addBits(bits, eciFirstByte, 8)
+        repeat(eciContinuationBytes) { addBits(bits, 0, 8) }
         bits.addAll(listOf(0, 1, 0, 0)) // Mode: 0100 (byte)
         addBits(bits, data.size, byteCountBits)
         data.forEach { addBits(bits, it.toInt() and 0xFF, 8) }
