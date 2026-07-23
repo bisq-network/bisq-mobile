@@ -63,16 +63,61 @@ class AndroidUrlLauncherTest {
         assertEquals("https://bisq.network", intent.dataString)
     }
 
+    @Test
+    fun `openUrl falls back from market deep link to Play Store HTTPS when market has no handler`() {
+        val packageName = "network.bisq.mobile.client"
+        val context =
+            TestContext { intent ->
+                if (intent.data?.scheme == "market") {
+                    ActivityNotFoundException("No Play Store")
+                } else {
+                    null
+                }
+            }
+        val launcher = AndroidUrlLauncher(context)
+
+        val result = runBlocking { launcher.openUrl(AppUpdateUrls.playStoreMarketUrl(packageName)) }
+
+        assertTrue(result)
+        assertEquals(2, context.startActivityCalls)
+        assertEquals(AppUpdateUrls.playStoreDetailsUrl(packageName), context.lastIntent?.dataString)
+    }
+
+    @Test
+    fun `openUrl returns false when market deep link and HTTPS fallback both fail`() {
+        val packageName = "network.bisq.mobile.client"
+        val context = TestContext(ActivityNotFoundException("No handler"))
+        val launcher = AndroidUrlLauncher(context)
+
+        val result = runBlocking { launcher.openUrl(AppUpdateUrls.playStoreMarketUrl(packageName)) }
+
+        assertFalse(result)
+        assertEquals(2, context.startActivityCalls)
+    }
+
+    @Test
+    fun `openUrl does not fall back for non-market URLs`() {
+        val context = TestContext(ActivityNotFoundException("No handler"))
+        val launcher = AndroidUrlLauncher(context)
+
+        val result = runBlocking { launcher.openUrl("https://bisq.network") }
+
+        assertFalse(result)
+        assertEquals(1, context.startActivityCalls)
+    }
+
     private class TestContext(
-        private val exceptionToThrow: Exception? = null,
+        private val exceptionForIntent: (Intent) -> Exception? = { null },
     ) : ContextWrapper(RuntimeEnvironment.getApplication()) {
         var startActivityCalls: Int = 0
         var lastIntent: Intent? = null
 
+        constructor(exceptionToThrow: Exception) : this({ exceptionToThrow })
+
         override fun startActivity(intent: Intent) {
             startActivityCalls++
             lastIntent = intent
-            exceptionToThrow?.let { throw it }
+            exceptionForIntent(intent)?.let { throw it }
         }
     }
 }

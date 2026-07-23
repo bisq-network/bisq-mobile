@@ -70,6 +70,13 @@ class AndroidUrlLauncher(
     private val log = getLogger("AndroidUrlLauncher")
 
     override suspend fun openUrl(url: String): Boolean {
+        if (tryOpenUrl(url)) return true
+        val fallback = playStoreHttpsFallback(url) ?: return false
+        log.w { "No handler for market:// URL; falling back to Play Store HTTPS listing" }
+        return tryOpenUrl(fallback)
+    }
+
+    private fun tryOpenUrl(url: String): Boolean {
         val safeUrl = sanitizeUrlForLog(url)
         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -83,6 +90,13 @@ class AndroidUrlLauncher(
             log.e(e) { "Failed to open URL: $safeUrl" }
             return false
         }
+    }
+
+    private fun playStoreHttpsFallback(url: String): String? {
+        val uri = runCatching { url.toUri() }.getOrNull() ?: return null
+        if (uri.scheme != "market") return null
+        val packageName = uri.getQueryParameter("id")?.takeIf { it.isNotBlank() } ?: return null
+        return AppUpdateUrls.playStoreDetailsUrl(packageName)
     }
 
     private fun sanitizeUrlForLog(rawUrl: String): String {
@@ -122,7 +136,7 @@ class AndroidAppUpdateLinker(
 
     override fun getUpdateUrl(): String =
         if (isGooglePlayInstall()) {
-            AppUpdateUrls.playStoreDetailsUrl(context.packageName)
+            AppUpdateUrls.playStoreMarketUrl(context.packageName)
         } else {
             AppUpdateUrls.GITHUB_RELEASES
         }

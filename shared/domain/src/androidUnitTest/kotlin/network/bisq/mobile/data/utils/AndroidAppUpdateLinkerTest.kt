@@ -3,6 +3,7 @@ package network.bisq.mobile.data.utils
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -14,25 +15,25 @@ class AndroidAppUpdateLinkerTest {
     }
 
     @Test
-    fun `returns Play Store URL when installed from Google Play`() {
+    fun `returns Play Store market deep link when installed from Google Play`() {
         val context = RuntimeEnvironment.getApplication()
         val linker =
             AndroidAppUpdateLinker(context) { GOOGLE_PLAY_INSTALLER }
 
         assertEquals(
-            AppUpdateUrls.playStoreDetailsUrl(context.packageName),
+            AppUpdateUrls.playStoreMarketUrl(context.packageName),
             linker.getUpdateUrl(),
         )
     }
 
     @Test
-    fun `returns Play Store URL when installed from Google Play feedback installer`() {
+    fun `returns Play Store market deep link when installed from Google Play feedback installer`() {
         val context = RuntimeEnvironment.getApplication()
         val linker =
             AndroidAppUpdateLinker(context) { GOOGLE_PLAY_FEEDBACK }
 
         assertEquals(
-            AppUpdateUrls.playStoreDetailsUrl(context.packageName),
+            AppUpdateUrls.playStoreMarketUrl(context.packageName),
             linker.getUpdateUrl(),
         )
     }
@@ -52,6 +53,23 @@ class AndroidAppUpdateLinkerTest {
             AndroidAppUpdateLinker(context) {
                 throw RuntimeException("PackageManager lookup failed")
             }
+
+        assertEquals(AppUpdateUrls.GITHUB_RELEASES, linker.getUpdateUrl())
+    }
+
+    @Test
+    fun `default installer lookup on API R+ returns GitHub releases under Robolectric`() {
+        val context = RuntimeEnvironment.getApplication()
+        val linker = AndroidAppUpdateLinker(context)
+
+        assertEquals(AppUpdateUrls.GITHUB_RELEASES, linker.getUpdateUrl())
+    }
+
+    @Test
+    @Config(sdk = [28])
+    fun `default installer lookup on pre-R API returns GitHub releases under Robolectric`() {
+        val context = RuntimeEnvironment.getApplication()
+        val linker = AndroidAppUpdateLinker(context)
 
         assertEquals(AppUpdateUrls.GITHUB_RELEASES, linker.getUpdateUrl())
     }
