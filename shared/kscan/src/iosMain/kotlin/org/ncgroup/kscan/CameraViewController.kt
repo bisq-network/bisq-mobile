@@ -172,22 +172,14 @@ class CameraViewController(
     private fun processDetectedBarcode(barcodeObject: AVMetadataMachineReadableCodeObject) {
         val value = barcodeObject.stringValue ?: ""
         val type = barcodeObject.type
-        val key = value.ifEmpty { type.toString() }
+        val rawBytes = extractRawBytes(barcodeObject, value)
+        val key = dedupKey(rawBytes, type)
 
         barcodesDetected[key] = (barcodesDetected[key] ?: 0) + 1
 
         if ((barcodesDetected[key] ?: 0) >= 2) {
             val appSpecificFormat = type.toFormat()
-            val rawBytes = extractRawBytes(barcodeObject, value)
-
-            // Build string from rawBytes, replacing null bytes to prevent UI truncation
-            val data =
-                buildString {
-                    for (byte in rawBytes) {
-                        val char = (byte.toInt() and 0xFF).toChar()
-                        append(if (char == '\u0000') ' ' else char)
-                    }
-                }
+            val data = barcodeDataFromRawBytes(rawBytes, value)
 
             val barcode =
                 Barcode(
@@ -207,6 +199,31 @@ class CameraViewController(
             }
         }
     }
+
+    private fun dedupKey(
+        rawBytes: ByteArray,
+        type: AVMetadataObjectType,
+    ): String =
+        if (rawBytes.isEmpty()) {
+            type.toString()
+        } else {
+            rawBytes.joinToString(separator = ",") { (it.toInt() and 0xFF).toString() }
+        }
+
+    private fun barcodeDataFromRawBytes(
+        rawBytes: ByteArray,
+        stringValue: String,
+    ): String =
+        if (0 !in rawBytes) {
+            stringValue
+        } else {
+            buildString {
+                for (byte in rawBytes) {
+                    val char = (byte.toInt() and 0xFF).toChar()
+                    append(if (char == '\u0000') ' ' else char)
+                }
+            }
+        }
 
     /**
      * Extracts raw bytes from a barcode object.

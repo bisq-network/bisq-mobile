@@ -26,6 +26,7 @@ internal object QRCodePayloadParser {
     private const val MODE_NUMERIC = 1
     private const val MODE_ALPHANUMERIC = 2
     private const val MODE_BYTE = 4
+    private const val MODE_ECI = 7
 
     private const val ALPHANUMERIC_TABLE =
         "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ \$%*+-./:"
@@ -35,15 +36,12 @@ internal object QRCodePayloadParser {
         val payload = descriptor.errorCorrectedPayload
         val codewords = payload.toByteArray()
         if (codewords.isEmpty()) return null
-        return decodeDataStream(codewords)
+        val symbolVersion = descriptor.symbolVersion.toInt()
+        return decodeDataStream(codewords, symbolVersion)
     }
 
     /**
      * Character-count indicator widths per QR version group (ISO/IEC 18004 Table 3).
-     *
-     * Within a single QR symbol all segments share the same version, so all three
-     * widths must come from the same row. We try each row in turn; the first one
-     * that decodes cleanly and contains at least one byte segment wins.
      */
     private data class VersionWidths(
         val byteCount: Int,
@@ -58,13 +56,21 @@ internal object QRCodePayloadParser {
             VersionWidths(byteCount = 16, alphaCount = 13, numericCount = 14), // v27–40
         )
 
-    internal fun decodeDataStream(codewords: ByteArray): ByteArray? {
-        for (widths in VERSION_GROUPS) {
-            val result = tryDecodeWithWidths(codewords, widths)
-            if (result != null) return result
-        }
-        return null
+    internal fun decodeDataStream(
+        codewords: ByteArray,
+        symbolVersion: Int,
+    ): ByteArray? {
+        val widths = widthsForSymbolVersion(symbolVersion) ?: return null
+        return tryDecodeWithWidths(codewords, widths)
     }
+
+    private fun widthsForSymbolVersion(symbolVersion: Int): VersionWidths? =
+        when {
+            symbolVersion in 1..9 -> VERSION_GROUPS[0]
+            symbolVersion in 10..26 -> VERSION_GROUPS[1]
+            symbolVersion in 27..40 -> VERSION_GROUPS[2]
+            else -> null
+        }
 
     private fun tryDecodeWithWidths(
         codewords: ByteArray,
@@ -122,11 +128,23 @@ internal object QRCodePayloadParser {
                     appendIsoLatin1(result, decoded)
                 }
 
+                MODE_ECI -> {
+                    if (!reader.hasAvailable(8)) {
+                        aborted = true
+                        break
+                    }
+                    val eciFirstByte = reader.readBits(8)
+                    if ((eciFirstByte and 0x80) != 0) {
+                        if (!reader.hasAvailable(8)) {
+                            aborted = true
+                            break
+                        }
+                        reader.readBits(8)
+                    }
+                }
+
                 else -> {
-                    // Kanji, ECI, structured-append, FNC1, or unknown — can't
-                    // safely decode here. Abort this attempt; the next version
-                    // group may still succeed. If all attempts fail we return
-                    // null and the caller falls back to stringValue.
+                    // Kanji, structured-append, FNC1, or unknown — can't safely decode here.
                     aborted = true
                     break
                 }

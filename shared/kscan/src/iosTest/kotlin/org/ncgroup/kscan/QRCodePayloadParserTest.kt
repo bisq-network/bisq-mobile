@@ -11,7 +11,7 @@ class QRCodePayloadParserTest {
     fun `GIVEN byte mode payload WHEN decodeDataStream THEN returns correct bytes`() {
         val payload = buildByteModePayload(byteArrayOf(0x41, 0x42, 0x43))
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNotNull(result)
         assertEquals(3, result.size)
@@ -25,7 +25,7 @@ class QRCodePayloadParserTest {
                 byteArrayOf('H'.code.toByte(), 'i'.code.toByte(), 0x00, '!'.code.toByte()),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNotNull(result)
         assertEquals(4, result.size)
@@ -39,7 +39,7 @@ class QRCodePayloadParserTest {
     fun `GIVEN numeric mode WHEN decodeDataStream THEN returns null`() {
         val payload = buildNumericModePayload("123")
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNull(result) // Numeric can't have null bytes, use stringValue fallback
     }
@@ -48,14 +48,14 @@ class QRCodePayloadParserTest {
     fun `GIVEN alphanumeric mode WHEN decodeDataStream THEN returns null`() {
         val payload = buildAlphanumericModePayload("AB")
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNull(result) // Alphanumeric can't have null bytes, use stringValue fallback
     }
 
     @Test
     fun `GIVEN empty payload WHEN decodeDataStream THEN returns null`() {
-        assertNull(QRCodePayloadParser.decodeDataStream(byteArrayOf()))
+        assertNull(QRCodePayloadParser.decodeDataStream(byteArrayOf(), symbolVersion = 1))
     }
 
     @Test
@@ -65,7 +65,7 @@ class QRCodePayloadParserTest {
                 byteArrayOf(0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0x57, 0x6F, 0x72, 0x6C, 0x64),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNotNull(result)
         assertEquals(11, result.size)
@@ -90,18 +90,18 @@ class QRCodePayloadParserTest {
                 ),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNotNull(result)
         assertEquals(url + serial, result.decodeToString())
     }
 
     @Test
-    fun `GIVEN byte mode payload with 16-bit count WHEN decodeDataStream THEN retries and decodes`() {
+    fun `GIVEN byte mode payload with 16-bit count WHEN decodeDataStream THEN decodes with v10 widths`() {
         val data = "QR v10+ byte segment".encodeToByteArray()
         val payload = buildByteModePayload(data, countBits = 16)
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 10)
 
         assertNotNull(result)
         assertContentEquals(data, result)
@@ -119,7 +119,7 @@ class QRCodePayloadParserTest {
                 ),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNotNull(result)
         assertEquals(prefix + digits, result.decodeToString())
@@ -136,7 +136,7 @@ class QRCodePayloadParserTest {
                 ),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNotNull(result)
         assertEquals("X12345", result.decodeToString())
@@ -153,7 +153,7 @@ class QRCodePayloadParserTest {
                 ),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
 
         assertNotNull(result)
         assertEquals("u=ABC", result.decodeToString())
@@ -174,7 +174,7 @@ class QRCodePayloadParserTest {
                 ),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 10)
 
         assertNotNull(result)
         assertEquals(prefix + suffix, result.decodeToString())
@@ -193,7 +193,7 @@ class QRCodePayloadParserTest {
                 ),
             )
 
-        val result = QRCodePayloadParser.decodeDataStream(payload)
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 10)
 
         assertNotNull(result)
         assertEquals(prefix + digits, result.decodeToString())
@@ -208,7 +208,29 @@ class QRCodePayloadParserTest {
         bits.addAll(listOf(0, 0, 0, 0))
         val payload = packBits(bits)
 
-        assertNull(QRCodePayloadParser.decodeDataStream(payload))
+        assertNull(QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1))
+    }
+
+    @Test
+    fun `GIVEN v10 byte count with leading null WHEN decodeDataStream THEN preserves full payload`() {
+        val data = byteArrayOf(0x00, 0x01, 0x02, 0x03, 0x04)
+        val payload = buildByteModePayload(data, countBits = 16)
+
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 10)
+
+        assertNotNull(result)
+        assertContentEquals(data, result)
+    }
+
+    @Test
+    fun `GIVEN eci then byte segments WHEN decodeDataStream THEN byte data preserved`() {
+        val data = byteArrayOf(0x48, 0x69)
+        val payload = buildEciThenBytePayload(data, byteCountBits = 8)
+
+        val result = QRCodePayloadParser.decodeDataStream(payload, symbolVersion = 1)
+
+        assertNotNull(result)
+        assertContentEquals(data, result)
     }
 
     // region Helpers
@@ -317,6 +339,20 @@ class QRCodePayloadParserTest {
         if (text.length - i == 1) {
             addBits(bits, chars.indexOf(text[i]), 6)
         }
+        bits.addAll(listOf(0, 0, 0, 0))
+        return packBits(bits)
+    }
+
+    private fun buildEciThenBytePayload(
+        data: ByteArray,
+        byteCountBits: Int,
+    ): ByteArray {
+        val bits = mutableListOf<Int>()
+        bits.addAll(listOf(0, 1, 1, 1)) // Mode: 0111 (ECI)
+        addBits(bits, 0, 8) // 8-bit ECI assignment number
+        bits.addAll(listOf(0, 1, 0, 0)) // Mode: 0100 (byte)
+        addBits(bits, data.size, byteCountBits)
+        data.forEach { addBits(bits, it.toInt() and 0xFF, 8) }
         bits.addAll(listOf(0, 0, 0, 0))
         return packBits(bits)
     }
