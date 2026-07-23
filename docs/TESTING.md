@@ -5,7 +5,7 @@ Agents: [AGENTS.md](../AGENTS.md) → [docs/testing/README.md](testing/README.md
 ## Rules
 
 - Mirror production package paths in test source sets.
-- Extend a leaf base — do not copy inline `startKoin` / `Dispatchers.setMain` from unmigrated siblings (~80% of existing tests are legacy).
+- When the [decision tree](#decision-tree) / [catalog](testing/catalog.md) lists a leaf base for that layer, extend it — do not copy inline `startKoin` / `Dispatchers.setMain` from unmigrated siblings (~80% of existing tests are legacy). Layers with no cataloged leaf base (domain `commonTest`, domain `androidUnitTest` Robolectric) need no leaf base — do not invent a base.
 - Grep [catalog.md](testing/catalog.md) and `*TestFactory.kt` / `*TestSupport.kt` before creating mocks.
 - Assert behavior (state, side effects, visible UI) — not implementation details.
 - Read production control flow before writing assertions — do not invent branch behavior from comments or names (`IS_DEBUG`, “dev mode”, etc.).
@@ -32,6 +32,7 @@ Android-only APIs cannot go in `commonTest`. iOS: `iosSimulatorArm64Test` (macOS
 ```text
 Changed file layer?
 ├── Pure Kotlin → commonTest (*Test.kt); ServiceFacades: inline setMain + testModule → recipes.md#domain
+├── Domain Android-only API (androidMain) → androidUnitTest + @RunWith(RobolectricTestRunner) — no leaf base
 ├── Presenter (:shared:presentation) → *PresenterTest.kt, PresentationKoinTestBase / PlatformPresentationKoinTestBase → recipes.md#presenter
 ├── Composable (:shared:presentation) → *UiTest.kt, BisqComposeUiTestBase or PresentationKoinComposeTestBase → recipes.md#compose
 ├── Client facade/service → ClientKoinIntegrationTestBase → recipes.md#client
