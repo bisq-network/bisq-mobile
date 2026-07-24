@@ -83,8 +83,14 @@
  * LOCAL (rich) COPY — new keys, mirroring openTradeNotifications' title/body split
  * ======================================================================================
  * Only shown when the app generates the notification itself (foreground service alive,
- * non-relayed) — full content is safe here because no third party (Google/Apple) ever
- * sees it; the trust boundary is the same as the running app.
+ * non-relayed). Bypassing FCM/APNs only removes the THIRD-PARTY (Google/Apple) interception
+ * risk — it does NOT prevent the OS notification chrome from rendering this content on the
+ * lock screen / notification shade, where anyone with physical access to the device sees it.
+ * So "full content" here is NOT automatically safe. Production MUST define and document an
+ * explicit visibility/redaction policy before relying on this as a privacy boundary — e.g.
+ * Android `NotificationCompat.VISIBILITY_PRIVATE` with a redacted public form, and the iOS
+ * equivalent (hidden preview / redacted `content` on the lock screen) — mirroring the app's
+ * existing privacy posture for trade-message notifications.
  *
  * Private message (#590, fast-follow):
  * ```
@@ -263,7 +269,7 @@ private fun MockSystemNotificationCard(
         ) {
             BisqText.SmallMedium(text = "B", color = BisqTheme.colors.white)
         }
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.weight(1f)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 BisqText.XSmallMedium(text = appName.uppercase(), color = BisqTheme.colors.mid_grey20)
                 BisqText.XSmallMedium(text = timeLabel, color = BisqTheme.colors.mid_grey20)

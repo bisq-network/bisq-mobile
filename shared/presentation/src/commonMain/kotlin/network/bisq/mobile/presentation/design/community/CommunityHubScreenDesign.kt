@@ -490,6 +490,7 @@ private fun ChannelRow(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .clickable(onClick = onClick)
                 .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalfQuarter),
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         verticalAlignment = Alignment.CenterVertically,

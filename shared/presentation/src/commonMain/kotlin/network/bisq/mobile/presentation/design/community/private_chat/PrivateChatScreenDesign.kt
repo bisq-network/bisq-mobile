@@ -116,6 +116,7 @@
 package network.bisq.mobile.presentation.design.community.private_chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -302,6 +303,7 @@ private fun SimulatedPeerChatHeader(
             Modifier
                 .fillMaxWidth()
                 .background(BisqTheme.colors.backgroundColor)
+                .clickable(onClick = onClick)
                 .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf)
                 .testTag("private_chat_peer_header"),
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
@@ -322,10 +324,6 @@ private fun SimulatedPeerChatHeader(
         }
     }
     HorizontalDivider(thickness = 0.5.dp, color = BisqTheme.colors.dark_grey50)
-    // onClick is intentionally unused visually here — a real implementation wraps this
-    // Row in Modifier.clickable(onClick = onClick); kept as a param so the PoC's action
-    // wiring documents the tap-through requirement without adding ripple-only chrome
-    // that would be confusing to evaluate in a static preview.
 }
 
 @Composable
