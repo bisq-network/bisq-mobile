@@ -57,6 +57,7 @@ enum class FiatPaymentRail(
     STRIKE(listOf("USD")),
     SWIFT(allFiatCurrencyCodes),
     SWISH(listOf("SEK")),
+    TELE_BIRR(listOf("ETB")),
     UPHOLD(FiatPaymentRailUtil.upholdCurrencyCodes),
     UPI(listOf("INR")),
     US_POSTAL_MONEY_ORDER(listOf("USD")),

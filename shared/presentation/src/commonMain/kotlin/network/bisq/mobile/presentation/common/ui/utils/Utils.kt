@@ -47,6 +47,7 @@ private val KNOWN_FIAT_PAYMENT_ICONS =
         "SEPA_INSTANT",
         "STRIKE",
         "SWIFT",
+        "TELE_BIRR",
         "UPI",
         "US_POSTAL_MONEY_ORDER",
         "WISE",
