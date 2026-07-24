@@ -1,14 +1,40 @@
 /**
- * # OpenPrivateChatButton
+ * OpenPrivateChatButtonDesign.kt — Design PoC (Milestone 11 "Bisq community", issue #590)
  *
+ * STATUS: Design proof-of-concept. NOT wired to any presenter or production code.
+ *
+ * ======================================================================================
+ * REVISION NOTE (refresh pass)
+ * ======================================================================================
+ * Originally authored 2026-06-11 as `design/privatechat/OpenPrivateChatButton.kt`, before
+ * this milestone's community IA was decided. Relocated under `design/community/
+ * private_chat/` to sit alongside the rest of the community set, and refreshed to current
+ * PoC conventions: `internal` visibility on all top-level declarations, `Modifier.testTag`
+ * instead of `semantics { contentDescription }`, `@ExcludeFromCoverage` on previews, and
+ * hardcoded English preview strings (documented as i18n keys below) instead of live
+ * `i18n()` lookups — matching every other file in the community set (see
+ * CommunityHubScreenDesign.kt's rationale: PoC strings stay hardcoded until
+ * productionised and sent to Transifex). No functional change to the component design
+ * itself — the original rationale below is unchanged and still holds.
+ *
+ * `OpenPrivateChatTextButton` (the TEXT_BUTTON variant) is now the button reused directly
+ * by `peer_profile/PeerProfileScreenDesign.kt` for its "Send private message" action —
+ * see that file's KDoc for how the disabled/"coming soon" state maps onto this component's
+ * existing `isLoading`-driven disabled styling this milestone.
+ *
+ * ======================================================================================
+ * PURPOSE
+ * ======================================================================================
  * The entry-point component for starting or resuming a private chat with any peer.
  *
  * This component is designed to be **placed inline wherever a user's profile avatar
  * appears** in the app — offerbook offer rows, trade peer headers, reputation cards,
  * user profile detail sheets, etc. Tapping it navigates directly to the private chat
- * thread with that peer.
+ * thread with that peer (`PrivateChatScreenDesign.kt` in this same package).
  *
- * ## Desktop reference
+ * ======================================================================================
+ * DESKTOP REFERENCE
+ * ======================================================================================
  * On the desktop, "private message" is initiated via a context menu that appears
  * when hovering over a user profile. There is no mobile analogue for hover.
  * Mobile pattern: a small icon button adjacent to the avatar.
@@ -18,27 +44,24 @@
  * 2. Long-press is not discoverable — many users never find it.
  * 3. Icon buttons are always visible and affordant.
  *
- * ## Placement in the app
+ * ======================================================================================
+ * PLACEMENT IN THE APP
+ * ======================================================================================
+ * 1. Offerbook offer rows — the peer avatar is shown in each offer card. The chat
+ *    button sits to the right of the avatar. This is the SAME generalized tap-target
+ *    requirement documented in DiscussionsChannelScreenDesign.kt and
+ *    PeerProfileScreenDesign.kt: every peer-identity render should be actionable.
+ * 2. Trade peer header (OpenTradeScreen) — appended as a trailing action on the
+ *    existing UserProfileRow.
+ * 3. User Profile detail sheet / bottom sheet — "Send private message" is a primary
+ *    CTA action button at the bottom of the sheet (TEXT_BUTTON variant).
+ * 4. Peer Profile screen (#545) — same TEXT_BUTTON variant, see
+ *    peer_profile/PeerProfileScreenDesign.kt.
  *
- * ### 1. Offerbook offer rows
- * The peer avatar is shown in each offer card. The chat button sits to the right
- * of the avatar, replacing or supplementing the existing action. Implementation
- * note: check the OfferItemView for where to inject this.
- *
- * ### 2. Trade peer header (OpenTradeScreen)
- * The trade partner's profile row already uses UserProfileRow. The button can
- * be appended as a trailing action on that row.
- *
- * ### 3. User Profile detail sheet / bottom sheet
- * When tapping any user avatar to see full profile details, "Send private message"
- * is a primary CTA action button at the bottom of the sheet.
- *
- * ### 4. Reputation / user detail screens
- * Same pattern — a prominent button.
- *
- * ## Two visual variants
- *
- * The component has two visual modes controlled by [variant]:
+ * ======================================================================================
+ * TWO VISUAL VARIANTS
+ * ======================================================================================
+ * The component has two visual modes controlled by [OpenPrivateChatVariant]:
  *
  * **ICON_BUTTON** (default for inline placement)
  * A small circular icon button (32 dp) showing a chat bubble icon.
@@ -50,25 +73,39 @@
  * This is the right choice for user profile bottom sheets and detail screens
  * where there is more space to communicate the intent clearly to first-time users.
  *
- * ## Loading state
+ * ======================================================================================
+ * LOADING STATE
+ * ======================================================================================
  * Opening a chat requires a round-trip to create/find the channel on the backend.
- * During this window (typically < 200 ms on clearnet, up to 2–3 s over Tor):
+ * During this window (typically < 200 ms on clearnet, up to 2-3 s over Tor):
  * - ICON_BUTTON: icon is replaced with a small CircularProgressIndicator.
  * - TEXT_BUTTON: button shows standard BisqButton loading state (spinner in text).
  *
- * ## Privacy consideration
+ * ======================================================================================
+ * PRIVACY CONSIDERATION
+ * ======================================================================================
  * The button should only be shown for profiles that are NOT the local user's own
  * profile. The presenter must enforce this by not rendering the button for own profiles.
  *
- * ## i18n
- * mobile.privateChats.openChat = "Send private message"
- * mobile.privateChats.openChat.loading = "Opening..."
+ * ======================================================================================
+ * i18n KEYS NEEDED
+ * ======================================================================================
+ * mobile.privateChats.openChat          → "Send private message"
+ * mobile.privateChats.openChat.loading  → "Opening..."
+ * mobile.privateChats.openChat.testTag  → not user-visible; identifies the icon button
+ *   for testing via `Modifier.testTag(...)` (see this project's PoC convention — test
+ *   IDs use testTag, not semantics-as-a-test-hook).
  *
- * ## Accessibility
- * Content description for icon variant: "mobile.privateChats.openChat".i18n() + " " + peerName
- * This gives screen readers: "Send private message to SatoshiFan#1234"
+ * ======================================================================================
+ * ACCESSIBILITY
+ * ======================================================================================
+ * Production should give the icon variant a real accessibility label combining the
+ * "Send private message" string with the peer's name (e.g. "Send private message to
+ * SatoshiFan#1234"). Intentionally not modeled via `semantics { contentDescription }`
+ * here — that mechanism is reserved for real a11y wiring at implementation time, not
+ * as a PoC test-identification shortcut (`testTag` is used for that instead).
  */
-package network.bisq.mobile.presentation.design.privatechat
+package network.bisq.mobile.presentation.design.community.private_chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -90,17 +127,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.StarRating
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 // ---------------------------------------------------------------------------
 // Variant enum
@@ -111,9 +147,9 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
  *
  * Choose based on available screen space and context:
  * - [ICON_BUTTON] for tight row layouts (offerbook, trade header)
- * - [TEXT_BUTTON] for spacious contexts (bottom sheets, user profile cards)
+ * - [TEXT_BUTTON] for spacious contexts (bottom sheets, Peer Profile)
  */
-enum class OpenPrivateChatVariant {
+internal enum class OpenPrivateChatVariant {
     /**
      * A 32 dp circular icon button. Low visual weight, fits inline with avatars.
      * Shows a chat bubble icon. Loading state: replaces icon with a spinner.
@@ -138,13 +174,13 @@ enum class OpenPrivateChatVariant {
 /**
  * Stateless implementation. Renders either variant based on [variant] parameter.
  *
- * @param peerName       Used in accessibility labels.
+ * @param peerName       Used in accessibility labels (see file KDoc — not wired here).
  * @param isOpeningChat  True while the channel is being created/fetched.
  * @param variant        ICON_BUTTON or TEXT_BUTTON.
  * @param onOpenChat     Click handler — triggers channel creation + navigation.
  */
 @Composable
-fun OpenPrivateChatContent(
+internal fun OpenPrivateChatContent(
     peerName: String,
     isOpeningChat: Boolean,
     variant: OpenPrivateChatVariant,
@@ -190,22 +226,22 @@ fun OpenPrivateChatContent(
  * Icons.Filled.ChatBubbleOutline communicates "send a message" clearly.
  * The outline style (not filled) avoids visual heaviness next to a filled avatar icon.
  *
- * @param peerName  Used in the content description for accessibility.
+ * @param peerName  Identifies the peer for testing (`testTag`); see file KDoc for the
+ *   real accessibility-label follow-up this implies.
  * @param isLoading True while the backend channel operation is in flight.
  * @param onClick   Invoked when the user taps the button.
  */
 @Composable
-fun OpenPrivateChatIconButton(
+internal fun OpenPrivateChatIconButton(
     peerName: String,
     isLoading: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val contentDesc = "mobile.privateChats.openChat".i18n() + " $peerName"
     IconButton(
         onClick = onClick,
         enabled = !isLoading,
-        modifier = modifier.semantics { contentDescription = contentDesc },
+        modifier = modifier.testTag("open_private_chat_icon_$peerName"),
     ) {
         Surface(
             shape = CircleShape,
@@ -244,26 +280,28 @@ fun OpenPrivateChatIconButton(
  *
  * This variant is appropriate when there is enough space to explain what the
  * action does — important for first-time users who have never sent a private
- * message on Bisq.
+ * message on Bisq. Reused directly by peer_profile/PeerProfileScreenDesign.kt.
  *
  * @param isLoading True while the backend channel operation is in flight.
  * @param onClick   Invoked when the user taps the button.
  */
 @Composable
-fun OpenPrivateChatTextButton(
+internal fun OpenPrivateChatTextButton(
     isLoading: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    disabled: Boolean = false,
+    disabledLabel: String? = null,
 ) {
     BisqButton(
         text =
-            if (isLoading) {
-                "mobile.privateChats.openChat.loading".i18n() // "Opening..."
-            } else {
-                "mobile.privateChats.openChat".i18n() // "Send private message"
+            when {
+                isLoading -> "Opening..."
+                disabled && disabledLabel != null -> disabledLabel
+                else -> "Send private message"
             },
         onClick = onClick,
-        disabled = isLoading,
+        disabled = isLoading || disabled,
         modifier = modifier.fillMaxWidth(),
     )
 }
@@ -276,7 +314,8 @@ fun OpenPrivateChatTextButton(
  * Preview: icon button in its default idle state next to a simulated offer row.
  * Shows the button in context — inline with a peer avatar and username.
  */
-@Preview
+@ExcludeFromCoverage
+@Preview(name = "Open private chat — Icon variant, idle, in offer row context")
 @Composable
 private fun OpenPrivateChatButton_IconVariant_IdlePreview() {
     BisqTheme.Preview {
@@ -331,7 +370,8 @@ private fun OpenPrivateChatButton_IconVariant_IdlePreview() {
  * Preview: icon button while loading (channel creation in progress).
  * Shows the spinner replacing the chat icon.
  */
-@Preview
+@ExcludeFromCoverage
+@Preview(name = "Open private chat — Icon variant, loading")
 @Composable
 private fun OpenPrivateChatButton_IconVariant_LoadingPreview() {
     BisqTheme.Preview {
@@ -364,9 +404,10 @@ private fun OpenPrivateChatButton_IconVariant_LoadingPreview() {
 
 /**
  * Preview: text button variant in idle state, as it would appear in a bottom sheet
- * or user profile detail card.
+ * or the Peer Profile screen.
  */
-@Preview
+@ExcludeFromCoverage
+@Preview(name = "Open private chat — Text variant, idle")
 @Composable
 private fun OpenPrivateChatButton_TextVariant_IdlePreview() {
     BisqTheme.Preview {
@@ -404,7 +445,8 @@ private fun OpenPrivateChatButton_TextVariant_IdlePreview() {
 /**
  * Preview: text button variant while loading.
  */
-@Preview
+@ExcludeFromCoverage
+@Preview(name = "Open private chat — Text variant, loading")
 @Composable
 private fun OpenPrivateChatButton_TextVariant_LoadingPreview() {
     BisqTheme.Preview {
@@ -420,9 +462,36 @@ private fun OpenPrivateChatButton_TextVariant_LoadingPreview() {
 }
 
 /**
+ * Preview: text button variant disabled with a custom label — this is exactly how
+ * PeerProfileScreenDesign.kt uses this component this milestone, since #590 hasn't
+ * shipped yet ("Send private message (soon)").
+ */
+@ExcludeFromCoverage
+@Preview(name = "Open private chat — Text variant, disabled with custom label (Peer Profile, this milestone)")
+@Composable
+private fun OpenPrivateChatButton_TextVariant_DisabledCustomLabelPreview() {
+    BisqTheme.Preview {
+        Box(
+            modifier =
+                Modifier
+                    .background(BisqTheme.colors.dark_grey50)
+                    .padding(BisqUIConstants.ScreenPadding),
+        ) {
+            OpenPrivateChatTextButton(
+                isLoading = false,
+                disabled = true,
+                disabledLabel = "Send private message (soon)",
+                onClick = {},
+            )
+        }
+    }
+}
+
+/**
  * Preview: both variants side by side for direct visual comparison.
  */
-@Preview
+@ExcludeFromCoverage
+@Preview(name = "Open private chat — Variant comparison")
 @Composable
 private fun OpenPrivateChatButton_BothVariantsComparisonPreview() {
     BisqTheme.Preview {
@@ -457,8 +526,10 @@ private fun OpenPrivateChatButton_BothVariantsComparisonPreview() {
 /**
  * Preview: isOwnProfile = true should render nothing.
  * This verifies the guard that prevents showing the button for the user's own avatar.
+ * Same defensive pattern as PeerProfileScreenDesign.kt's own-profile guard preview.
  */
-@Preview
+@ExcludeFromCoverage
+@Preview(name = "Open private chat — Own profile renders nothing")
 @Composable
 private fun OpenPrivateChatButton_OwnProfile_RenderNothingPreview() {
     BisqTheme.Preview {
