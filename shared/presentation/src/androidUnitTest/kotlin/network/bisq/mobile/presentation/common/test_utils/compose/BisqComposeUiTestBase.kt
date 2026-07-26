@@ -1,7 +1,7 @@
 package network.bisq.mobile.presentation.common.test_utils.compose
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeTestSupport.setBisqTestContent

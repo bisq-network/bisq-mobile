@@ -1,7 +1,7 @@
 package network.bisq.mobile.presentation.common.ui.components.context
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import org.junit.Rule

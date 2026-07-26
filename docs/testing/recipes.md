@@ -91,7 +91,7 @@ class MyScreenUiTest : PresentationKoinComposeTestBase() {
 
 ### Client + TestApplication
 
-Base: `BisqComposeUiTestBase` with Robolectric `@Config(application = TestApplication::class)`. Do **not** call `startKoin` / `createComposeRule` yourself — the leaf base owns Compose setup; `TestApplication.onCreate()` owns Koin. Proof: `PaymentAccountMethodIconUiTest`.
+Base: `BisqComposeUiTestBase` with Robolectric `@Config(application = TestApplication::class)`. Do **not** call `startKoin` / `createComposeRule` yourself — the leaf base owns Compose UI Test v2 setup (`junit4.v2.createComposeRule`); `TestApplication.onCreate()` owns Koin. Proof: `PaymentAccountMethodIconUiTest`.
 
 ```kotlin
 @Config(application = TestApplication::class)
@@ -105,7 +105,7 @@ class MyClientContentUiTest : BisqComposeUiTestBase() {
 }
 ```
 
-Pitfalls: no double `startKoin`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase`; use `waitForIdle()` not `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
+Pitfalls: no double `startKoin`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase`; use Compose UI Test v2 (`androidx.compose.ui.test.junit4.v2.createComposeRule`) — leaf bases already do; if a test owns both `Dispatchers.setMain(testDispatcher)` and a local compose rule, pass `createComposeRule(effectContext = testDispatcher)` so composition and Main share one scheduler; use `waitForIdle()` not `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
 
 ---
 

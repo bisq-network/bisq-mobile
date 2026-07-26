@@ -15,7 +15,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services |
 | `NodeKoinIntegrationTestBase` | `apps/nodeApp/src/androidUnitTest/kotlin/.../test_utils/NodeKoinIntegrationTestBase.kt` | Node presenters/facades |
 | `BisqComposeUiTestBase` | `.../test_utils/compose/BisqComposeUiTestBase.kt` | Compose UI, no Koin |
-| `PresentationKoinComposeTestBase` | `.../test_utils/compose/PresentationKoinComposeTestBase.kt` | Compose + `presentationTestModule` |
+| `PresentationKoinComposeTestBase` | `.../test_utils/compose/PresentationKoinComposeTestBase.kt` | Compose + `presentationTestModule` (shared `StandardTestDispatcher`) |
 | `PlatformPresentationKoinComposeTestBase` | `.../test_utils/compose/PlatformPresentationKoinComposeTestBase.kt` | Compose + Koin + platform mocks |
 | `AlertNotificationKoinComposeTestBase` | `.../test_utils/compose/AlertNotificationKoinComposeTestBase.kt` | Alert UI — dedicated Koin module |
 
