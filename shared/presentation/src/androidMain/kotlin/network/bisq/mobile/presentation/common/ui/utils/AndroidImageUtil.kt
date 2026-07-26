@@ -10,7 +10,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
 import network.bisq.mobile.domain.utils.Logging
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -42,7 +41,7 @@ object AndroidImageUtil : Logging {
             }
 
         paths.forEach { path ->
-            val bitmap = getImageByPath(context, basePath, path)
+            val bitmap = getImageByPath(context, basePath, path, width, height)
             if (bitmap != null) {
                 // Only scale if necessary to avoid unnecessary operations
                 val scaledBitmap =
@@ -87,15 +86,62 @@ object AndroidImageUtil : Logging {
         }
     }
 
+    internal fun calculateInSampleSize(
+        options: BitmapFactory.Options,
+        reqWidth: Int,
+        reqHeight: Int,
+    ): Int {
+        // Guards the loop below: with a non-positive requested size its condition never fails, so
+        // inSampleSize doubles until it overflows to 0 and the following division throws.
+        if (reqWidth <= 0 || reqHeight <= 0) {
+            return 1
+        }
+
+        val height = options.outHeight
+        val width = options.outWidth
+        if (height <= 0 || width <= 0) {
+            return 1
+        }
+
+        var inSampleSize = 1
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
+    }
+
     internal fun getImageByPath(
         context: Context,
         basePath: String,
         path: String,
+        reqWidth: Int,
+        reqHeight: Int,
     ): Bitmap? =
         try {
             val fullPath = basePath + path
-            val inputStream = context.assets.open(fullPath)
-            BitmapFactory.decodeStream(inputStream)
+            // Bounds-then-sampled decode per
+            // https://developer.android.com/topic/performance/graphics/load-bitmap.
+            // The asset is opened twice because the bounds pass consumes the stream; unlike the
+            // decodeResource form in that guide, a stream cannot be replayed for the second decode.
+            val boundsOptions =
+                BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+            context.assets.open(fullPath).use { inputStream ->
+                BitmapFactory.decodeStream(inputStream, null, boundsOptions)
+            }
+
+            val decodeOptions =
+                BitmapFactory.Options().apply {
+                    inSampleSize = calculateInSampleSize(boundsOptions, reqWidth, reqHeight)
+                }
+            context.assets.open(fullPath).use { inputStream ->
+                BitmapFactory.decodeStream(inputStream, null, decodeOptions)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -108,8 +154,8 @@ object AndroidImageUtil : Logging {
     }
 
     fun byteArrayToBitmap(data: ByteArray): Bitmap? {
-        val inputStream = ByteArrayInputStream(data)
-        return BitmapFactory.decodeStream(inputStream)
+        val decodeOptions = BitmapFactory.Options()
+        return BitmapFactory.decodeByteArray(data, 0, data.size, decodeOptions)
     }
 
     fun bitmapToPngByteArray(bitmap: Bitmap): ByteArray {
@@ -118,7 +164,10 @@ object AndroidImageUtil : Logging {
         return outputStream.toByteArray()
     }
 
-    fun decodePngToImageBitmap(pngByteArray: ByteArray): Bitmap = BitmapFactory.decodeByteArray(pngByteArray, 0, pngByteArray.size)
+    fun decodePngToImageBitmap(pngByteArray: ByteArray): Bitmap {
+        val decodeOptions = BitmapFactory.Options()
+        return BitmapFactory.decodeByteArray(pngByteArray, 0, pngByteArray.size, decodeOptions)
+    }
 
     fun saveByteArrayAsPng(
         data: ByteArray,

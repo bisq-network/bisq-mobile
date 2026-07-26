@@ -174,8 +174,9 @@ actual class PlatformImage(
 ) {
     actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
+            val decodeOptions = BitmapFactory.Options()
             val bitmap =
-                BitmapFactory.decodeByteArray(data, 0, data.size)
+                BitmapFactory.decodeByteArray(data, 0, data.size, decodeOptions)
                     ?: throw IllegalArgumentException("Failed to decode image data")
             return PlatformImage(bitmap.asImageBitmap())
         }
