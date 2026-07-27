@@ -8,7 +8,7 @@
 
 ## Download
 
-This project generates 3 apps with the same codebase. Bisq Node (1 Android App) and Bisq Connect (Android/iOS app):
+This project generates 3 apps from the same codebase: **Bisq Easy Node** (an Android app) and **Bisq Connect** (Android + iOS):
 
 <table align="center">
   <tr>
@@ -52,10 +52,12 @@ Bisq Connect is a thin client — it trades against a **Bisq 2 node that you, or
 |---|---|---|
 | **Umbrel — App Store** | One-click install with auto-updates — **recommended** | [apps.umbrel.com](https://apps.umbrel.com/app/bisq2-node) |
 | **Bisq 2 Desktop** | Already running Bisq 2 on a desktop? Pair straight to it | [bisq.network/downloads](https://bisq.network/downloads/) |
-| **Umbrel — community store** | Trying release-candidate node builds before they reach the App Store | [bisq-network/bisq2-umbrel](https://github.com/bisq-network/bisq2-umbrel) |
-| **Docker** | Self-managed / advanced hosts — image `ghcr.io/bisq-network/bisq2-api` | [Docker guide](https://github.com/bisq-network/bisq2/tree/main/apps/api-app/docker) |
+| **Umbrel — community store** | Community / release-candidate node builds | [bisq-network/bisq2-umbrel](https://github.com/bisq-network/bisq2-umbrel) |
+| **Docker** | Self-managed / advanced hosts — build from source | [Docker guide](https://github.com/bisq-network/bisq2/tree/main/apps/api-app/docker) |
 
 The node reaches Bisq's P2P network over its own bundled Tor; pair the mobile app by scanning the QR code the node shows. Full walkthrough: [How to use Bisq Connect](https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect).
+
+> **Keep your pairing code private.** The pairing QR / token is a credential that grants control over the node's trades — treat it like a password. Never expose the node's pairing UI or API to an untrusted or public network; keep it on your LAN or reach it over Tor.
 
 
 ## Docs Index

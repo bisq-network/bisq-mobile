@@ -262,6 +262,7 @@ jobs:
         with:
           repository: ${{ steps.target.outputs.fork }}
           token: ${{ secrets.GHCR_TOKEN }} # classic PAT: public_repo covers fork push + cross-repo PR
+          persist-credentials: true # keep the token in store/.git/config for the later `git push` to origin
           path: store
           fetch-depth: 0 # need real history to branch off the store's default branch and push non-shallow
 
