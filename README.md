@@ -40,7 +40,7 @@ This project generates 3 apps with the same codebase. Bisq Node (1 Android App) 
 <p align="center">
   <strong><a href="https://github.com/bisq-network/bisq-mobile/releases">All releases & changelogs on GitHub</a></strong>
   <br/>
-  <a href="https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)">Learn how to use Bisq Connect</a>
+  <a href="https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect">Learn how to use Bisq Connect</a>
 </p>
 
 
@@ -55,7 +55,7 @@ Bisq Connect is a thin client — it trades against a **Bisq 2 node that you, or
 | **Umbrel — community store** | Trying release-candidate node builds before they reach the App Store | [bisq-network/bisq2-umbrel](https://github.com/bisq-network/bisq2-umbrel) |
 | **Docker** | Self-managed / advanced hosts — image `ghcr.io/bisq-network/bisq2-api` | [Docker guide](https://github.com/bisq-network/bisq2/tree/main/apps/api-app/docker) |
 
-The node reaches Bisq's P2P network over its own bundled Tor; pair the mobile app by scanning the QR code the node shows. Full walkthrough: [How to use Bisq Connect](https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)).
+The node reaches Bisq's P2P network over its own bundled Tor; pair the mobile app by scanning the QR code the node shows. Full walkthrough: [How to use Bisq Connect](https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect).
 
 
 ## Docs Index
