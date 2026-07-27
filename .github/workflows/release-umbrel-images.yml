@@ -1,7 +1,7 @@
 name: Release Umbrel images
 
 # Builds + pushes the dockerised Bisq 2 trusted-node images for the Umbrel app, then opens a PR to
-# the Umbrel store repo pinning the new image digests:
+# each configured Umbrel store repo pinning the new image digests:
 #   - bisq2-api          (the headless node)
 #   - bisq2-api-web-ui   (the QR/status web sidecar)
 #
@@ -17,23 +17,35 @@ name: Release Umbrel images
 #   bisq-api-commit      -> "<hash>"          (the bisq2 source built into the image)
 #   umbrel-image-version -> "2.1.11.1-rc3"    (scheme <bisq2-api>.<umbrel-build>[-rcN])
 # To cut a release: edit `umbrel-image-version`, PR to main, merge -> this fires, builds, and opens
-# a store PR you merge to publish.
+# a store PR (per channel) you merge to publish.
+#
+# TWO STORE CHANNELS (fanned out by the update-store matrix, each independent + optional):
+#   community  our own store (default branch `main`) — the fast-lane fork main gives an INSTANT test/RC
+#              store users can add manually; good for smoke-testing a build before it hits everyone.
+#   official   getumbrel/umbrel-apps (default branch `master`) — the DEFAULT Umbrel App Store, reviewed
+#              by Umbrel maintainers. No fast-lane (users get it via the store once the PR merges).
+# A channel SKIPS ITSELF if its repo/fork Variables are unset, so `official` stays dormant until you
+# configure UMBREL_OFFICIAL_REPO/FORK — no failed runs in the meantime.
 #
 # CONFIG (repo Variables + Secrets):
-#   Variable  GHCR_NAMESPACE      images are pushed here, e.g. ghcr.io/bisq-network
-#   Variable  UMBREL_STORE_REPO   org store = PR TARGET, e.g. bisq-network/bisq2-umbrel (we're pull-only)
-#   Variable  UMBREL_STORE_FORK   our fork = PUSH HEAD, e.g. rodvar/bisq2-umbrel-fork (we own it)
-#   Secret    GHCR_USERNAME       GHCR user (also the fork owner for the store push/PR)
-#   Secret    GHCR_TOKEN          ONE classic PAT used by both jobs — needs scopes:
-#                                   * write:packages  -> push images to GHCR_NAMESPACE
-#                                   * public_repo     -> push branch+main to UMBREL_STORE_FORK and
-#                                                        open the cross-repo PR to UMBREL_STORE_REPO
-#                                                        (both stores are public; else use full `repo`)
+#   Variable  GHCR_NAMESPACE        images are pushed here, e.g. ghcr.io/bisq-network
+#   Variable  UMBREL_STORE_REPO     COMMUNITY store = PR TARGET, e.g. bisq-network/bisq2-umbrel (pull-only)
+#   Variable  UMBREL_STORE_FORK     our community fork = PUSH HEAD, e.g. rodvar/bisq2-umbrel-fork (we own it)
+#   Variable  UMBREL_OFFICIAL_REPO  OFFICIAL store = PR TARGET, e.g. getumbrel/umbrel-apps (optional; pull-only)
+#   Variable  UMBREL_OFFICIAL_FORK  our official fork = PUSH HEAD, e.g. rodvar/umbrel-apps (optional; we own it)
+#   Secret    GHCR_USERNAME         GHCR user (also the fork owner for the store push/PR)
+#   Secret    GHCR_TOKEN            ONE classic PAT used by all jobs — needs scopes:
+#                                     * write:packages  -> push images to GHCR_NAMESPACE
+#                                     * public_repo     -> push branch(+main) to the fork(s) and open the
+#                                                          cross-repo PR to each store (all public; else `repo`)
+#                                   The PAT owner must own BOTH forks (community + official).
 #
-# STORE ACCESS MODEL: we have pull-only on the org store, so update-store bases a release branch on the
-# org store's current main, pushes it to OUR fork (also fast-forwarding the fork's main so the fork
-# doubles as an instant community store for local testing), then opens a cross-repo PR a maintainer
-# merges to publish. Retarget/handoff is entirely via the three Variables above — no code change.
+# STORE ACCESS MODEL: we have pull-only on both stores, so per channel update-store bases a release branch
+# on the store's CURRENT default branch (so any manifest fields the maintainers curated are preserved —
+# we only rewrite version, releaseNotes, and the two image digests), pushes it to OUR fork, and opens a
+# cross-repo PR a maintainer merges to publish. For community it ALSO fast-forwards the fork's default
+# branch so the fork doubles as an instant community store for local testing. Retarget/handoff is entirely
+# via the Variables above — no code change.
 
 on:
   workflow_dispatch:
@@ -49,10 +61,15 @@ on:
         default: "linux/amd64,linux/arm64"
         type: string
       update_store:
-        description: "Also open a store PR pinning the new images (push events always do this)"
+        description: "Also open store PRs pinning the new images (push events always do this)"
         required: false
         default: false
         type: boolean
+      release_notes:
+        description: "Release notes for the store manifest (blank = generated default)"
+        required: false
+        default: ""
+        type: string
   push:
     branches: [main]
     paths: [gradle/libs.versions.toml]
@@ -193,51 +210,123 @@ jobs:
             echo "- ${{ vars.GHCR_NAMESPACE }}/bisq2-api-web-ui@${{ steps.web.outputs.digest }}"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Digest-pin the freshly-built images into the Umbrel store + bump the manifest version. We have
-  # pull-only access to the org store, so we base the release branch on the org store's current main,
-  # push it to OUR fork (+ fast-forward the fork's main = instant test store), and open a cross-repo
-  # PR a maintainer merges to publish. Runs on a real version bump (push); on manual runs if opted in.
+  # Digest-pin the freshly-built images into each configured store + bump the manifest version & notes.
+  # Fans out over both channels (community + official); each is independent (fail-fast: false) and skips
+  # itself if its repo/fork Variables are unset. We have pull-only access, so per channel we base a
+  # release branch on the store's CURRENT default branch (preserving maintainer-curated fields), push it
+  # to OUR fork, and open a cross-repo PR a maintainer merges to publish. Community also fast-lanes the
+  # fork's default branch (= instant test store). Runs on a real version bump (push); manual if opted in.
   update-store:
     needs: [resolve, build-and-push]
     if: github.event_name == 'push' || inputs.update_store
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # a community failure must not cancel the official PR, and vice versa
+      matrix:
+        channel: [community, official]
     steps:
-      - name: Validate config
+      - name: Resolve channel target (repo / fork / base branch / fast-lane)
+        id: target
+        env:
+          CHANNEL: ${{ matrix.channel }}
+          COMMUNITY_REPO: ${{ vars.UMBREL_STORE_REPO }}
+          COMMUNITY_FORK: ${{ vars.UMBREL_STORE_FORK }}
+          OFFICIAL_REPO: ${{ vars.UMBREL_OFFICIAL_REPO }}
+          OFFICIAL_FORK: ${{ vars.UMBREL_OFFICIAL_FORK }}
         run: |
-          [ -n "${{ vars.UMBREL_STORE_REPO }}" ] \
-            || { echo "::error::repo variable UMBREL_STORE_REPO not set (PR target = org store)"; exit 1; }
-          [ -n "${{ vars.UMBREL_STORE_FORK }}" ] \
-            || { echo "::error::repo variable UMBREL_STORE_FORK not set (push head = our fork)"; exit 1; }
+          set -euo pipefail
+          case "$CHANNEL" in
+            community) REPO="$COMMUNITY_REPO"; FORK="$COMMUNITY_FORK"; BASE="main";   FAST=true  ;;
+            official)  REPO="$OFFICIAL_REPO";  FORK="$OFFICIAL_FORK";  BASE="master"; FAST=false ;;
+            *) echo "::error::unknown channel '$CHANNEL'"; exit 1 ;;
+          esac
+          # A channel with unset repo/fork Variables is simply not configured yet — skip it (not a failure)
+          # so `official` stays dormant until UMBREL_OFFICIAL_REPO/FORK are added.
+          if [ -z "$REPO" ] || [ -z "$FORK" ]; then
+            echo "::notice::channel '$CHANNEL' not configured (repo/fork Variables unset) — skipping"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "enabled=true"
+            echo "repo=$REPO"
+            echo "fork=$FORK"
+            echo "base=$BASE"
+            echo "fast=$FAST"
+          } >> "$GITHUB_OUTPUT"
+          echo "::notice::channel=$CHANNEL repo=$REPO fork=$FORK base=$BASE fast=$FAST"
 
       - name: Checkout our fork
+        if: steps.target.outputs.enabled == 'true'
         uses: actions/checkout@v4
         with:
-          repository: ${{ vars.UMBREL_STORE_FORK }}
+          repository: ${{ steps.target.outputs.fork }}
           token: ${{ secrets.GHCR_TOKEN }} # classic PAT: public_repo covers fork push + cross-repo PR
           path: store
-          fetch-depth: 0 # need real history to branch off upstream/main and push non-shallow
+          fetch-depth: 0 # need real history to branch off the store's default branch and push non-shallow
 
-      - name: Pin digests + bump version on a branch based off the org store's main
+      - name: Pin digests + bump version & release notes on a branch off the store's default branch
         id: pin
+        if: steps.target.outputs.enabled == 'true'
         env:
           VERSION: ${{ needs.resolve.outputs.version }}
+          BISQ2_REF: ${{ needs.resolve.outputs.bisq2_ref }}
           NS: ${{ vars.GHCR_NAMESPACE }}
           NODE_DIGEST: ${{ needs.build-and-push.outputs.node_digest }}
           WEB_DIGEST: ${{ needs.build-and-push.outputs.web_digest }}
-          UPSTREAM: ${{ vars.UMBREL_STORE_REPO }}
+          UPSTREAM: ${{ steps.target.outputs.repo }}
+          BASE: ${{ steps.target.outputs.base }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
         run: |
           set -euo pipefail
           cd store
           git config user.name "bisq-mobile-ci"
           git config user.email "ci@bisq.network"
-          # Base on the ORG store's current main (not the fork's, which may be stale) so the PR always
-          # diffs cleanly against upstream regardless of fork drift.
+          # Base on the store's CURRENT default branch (not the fork's, which may be stale) so the PR
+          # always diffs cleanly against upstream and preserves any fields the maintainers curated.
           git remote add upstream "https://github.com/${UPSTREAM}.git"
-          git fetch upstream main
+          git fetch upstream "$BASE"
           branch="release/bisq2-node-${VERSION}"
-          git checkout -B "$branch" upstream/main
+          git checkout -B "$branch" "upstream/${BASE}"
           cd bisq2-node
-          sed -i -E "s#^version: .*#version: \"${VERSION}\"#" umbrel-app.yml
+
+          # Release notes: workflow_dispatch override if given, else a generated default.
+          API_PART="$(echo "$VERSION" | cut -d. -f1-3)"
+          SHORT="$(echo "$BISQ2_REF" | cut -c1-7)"
+          NOTES="${RELEASE_NOTES:-}"
+          if [ -z "$NOTES" ]; then
+            NOTES="Bisq 2 Node ${VERSION} — tracks Bisq 2 API ${API_PART} (bisq2 @ ${SHORT}). Changelog: https://github.com/bisq-network/bisq2/releases"
+          fi
+
+          # Set version + releaseNotes in umbrel-app.yml via Python (not sed) so it handles BOTH the
+          # official store's single-line `releaseNotes: ""` and our community store's `releaseNotes: >-`
+          # folded block, and so arbitrary note text needs no shell/sed escaping (passed via env). Only
+          # these two keys are rewritten; every other line (and the digest lines below) is left untouched.
+          NOTES="$NOTES" VERSION="$VERSION" python3 - <<'PY'
+          import os, json, re
+          version = os.environ["VERSION"]
+          notes = " ".join(os.environ["NOTES"].split())  # collapse any newlines -> single line
+          path = "umbrel-app.yml"
+          src = open(path).read().split("\n")
+          out, i = [], 0
+          def indent(s): return len(s) - len(s.lstrip(" "))
+          while i < len(src):
+              line = src[i]
+              if re.match(r'^version:\s', line):
+                  out.append('version: ' + json.dumps(version, ensure_ascii=False)); i += 1; continue
+              m = re.match(r'^(\s*)releaseNotes:\s*(.*)$', line)
+              if m:
+                  key_indent, val = len(m.group(1)), m.group(2).strip()
+                  out.append(m.group(1) + 'releaseNotes: ' + json.dumps(notes, ensure_ascii=False)); i += 1
+                  if val[:1] in ('|', '>'):  # folded/literal block -> drop its continuation lines
+                      while i < len(src) and (src[i].strip() == '' or indent(src[i]) > key_indent):
+                          i += 1
+                  continue
+              out.append(line); i += 1
+          open(path, "w").write("\n".join(out))
+          print("umbrel-app.yml: version=%s notes=%r" % (version, notes))
+          PY
+
           # Namespace-AGNOSTIC digest pin: matches any current namespace and rewrites to ${NS}@<digest>,
           # so the first bisq-network release also migrates the refs (e.g. rodvar -> bisq-network).
           # web-ui first (more specific); the node regex requires /bisq2-api immediately followed by :/@,
@@ -258,37 +347,39 @@ jobs:
             echo "::notice::store already at ${VERSION} with these digests — nothing to commit"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
-            git commit -am "Release Bisq 2 Node ${VERSION} (pin images, bump version)"
+            git commit -am "Release Bisq 2 Node ${VERSION} (pin images, bump version + notes)"
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Push to fork (branch + fast-lane main) and open cross-repo PR
-        if: steps.pin.outputs.changed == 'true'
+      - name: Push to fork (branch + optional fast-lane) and open cross-repo PR
+        if: steps.target.outputs.enabled == 'true' && steps.pin.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
           VERSION: ${{ needs.resolve.outputs.version }}
-          UPSTREAM: ${{ vars.UMBREL_STORE_REPO }}
-          FORK: ${{ vars.UMBREL_STORE_FORK }}
+          UPSTREAM: ${{ steps.target.outputs.repo }}
+          FORK: ${{ steps.target.outputs.fork }}
+          BASE: ${{ steps.target.outputs.base }}
+          FAST: ${{ steps.target.outputs.fast }}
+          CHANNEL: ${{ matrix.channel }}
         run: |
           set -euo pipefail
           cd store
           branch="release/bisq2-node-${VERSION}"
           fork_owner="${FORK%%/*}"
           git push -f -u origin "$branch"
-          # Fast-lane: fork main := org main + this release, so the fork URL is an instant community
-          # store for testing on Umbrel without waiting on the upstream maintainer merge. Only ever on
-          # OUR fork — if FORK==UPSTREAM (we somehow have write), force-pushing the org store's main
-          # would bypass the PR review, so skip it.
-          if [ "$FORK" != "$UPSTREAM" ]; then
-            git push -f origin "$branch":main
+          # Fast-lane (community only): fork's default branch := store default + this release, so the fork
+          # URL is an instant community store for testing on Umbrel without waiting on a maintainer merge.
+          # Guarded off when the channel disables it (official) or if FORK==UPSTREAM (would bypass review).
+          if [ "$FAST" = "true" ] && [ "$FORK" != "$UPSTREAM" ]; then
+            git push -f origin "$branch":"$BASE"
           else
-            echo "::notice::FORK == UPSTREAM — skipping fast-lane main push (would bypass review)"
+            echo "::notice::fast-lane off for channel '$CHANNEL' (or FORK==UPSTREAM) — skipping default-branch push"
           fi
           # Open the cross-repo PR; treat ONLY the duplicate-PR case as a notice and fail on real
           # errors (auth/permission/API) instead of masking them as success.
-          if out="$(gh pr create --repo "$UPSTREAM" --base main --head "${fork_owner}:${branch}" \
+          if out="$(gh pr create --repo "$UPSTREAM" --base "$BASE" --head "${fork_owner}:${branch}" \
               --title "Release Bisq 2 Node ${VERSION}" \
-              --body "Automated by the Release Umbrel images workflow, opened from fork \`${FORK}\` (we have pull-only access here). Digest-pins the freshly-built images and bumps the manifest version to \`${VERSION}\`. Merge to publish to the community store." 2>&1)"; then
+              --body "Automated by the Release Umbrel images workflow (channel: ${CHANNEL}), opened from fork \`${FORK}\` (we have pull-only access to \`${UPSTREAM}\`). Digest-pins the freshly-built images and bumps the manifest version to \`${VERSION}\`. Merge to publish." 2>&1)"; then
             echo "$out"
           elif printf '%s' "$out" | grep -qi "already exists"; then
             echo "::notice::PR already exists for ${fork_owner}:${branch}"
@@ -298,10 +389,15 @@ jobs:
 
 # ── Notes ─────────────────────────────────────────────────────────────────────────────────────
 # - Retarget/handoff is entirely via Variables (no code change): GHCR_NAMESPACE (image registry ns),
-#   UMBREL_STORE_REPO (PR target org store), UMBREL_STORE_FORK (our push head fork).
-# - If we ever get write on the org store: point UMBREL_STORE_FORK at UMBREL_STORE_REPO — the branch
-#   push + (same-repo) PR still work; the fast-lane main push is GUARDED off so review isn't bypassed.
-# - The fork's main is force-updated each release (it is a throwaway contribution fork, not a source of
-#   truth); its only jobs are being the PR head and an instant test store.
+#   UMBREL_STORE_REPO/FORK (community channel), UMBREL_OFFICIAL_REPO/FORK (official channel).
+# - Each channel is optional + independent (matrix, fail-fast: false): an unset channel is skipped with a
+#   notice, and one channel failing does not cancel the other.
+# - If we ever get write on a store: point that channel's *_FORK at its *_REPO — the branch push +
+#   (same-repo) PR still work; the fast-lane push is GUARDED off (FORK==UPSTREAM) so review isn't bypassed.
+# - The community fork's default branch is force-updated each release (it is a throwaway contribution fork,
+#   not a source of truth); its only jobs are being the PR head and an instant test store. The official
+#   fork is NOT fast-laned, so its default branch is left alone.
+# - Release notes: pass `release_notes` on a manual run to set the store manifest note; otherwise a default
+#   is generated from the version + bisq2 commit. Edit the opened PR if you want richer notes before merge.
 # - SPEED: if emulated arm64 gets slow, split into a matrix of native runners (ubuntu-latest +
 #   ubuntu-24.04-arm), build per-arch by digest, then merge with `docker buildx imagetools create`.

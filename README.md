@@ -8,6 +8,8 @@
 
 ## Download
 
+This project generates 3 apps with the same codebase. Bisq Node (1 Android App) and Bisq Connect (Android/iOS app):
+
 <table align="center">
   <tr>
     <th>Bisq Easy Node <em>(Android)</em></th>
@@ -42,9 +44,24 @@
 </p>
 
 
+## Run a trusted Bisq 2 node
+
+Bisq Connect is a thin client — it trades against a **Bisq 2 node that you, or someone you trust, run** ([why?](#share-a-trusted-bisq-node)). The easiest ways to stand one up, most convenient first:
+
+| Where to run it | Best for | Get it |
+|---|---|---|
+| **Umbrel — App Store** | One-click install with auto-updates — **recommended** | [apps.umbrel.com](https://apps.umbrel.com/app/bisq2-node) |
+| **Bisq 2 Desktop** | Already running Bisq 2 on a desktop? Pair straight to it | [bisq.network/downloads](https://bisq.network/downloads/) |
+| **Umbrel — community store** | Trying release-candidate node builds before they reach the App Store | [bisq-network/bisq2-umbrel](https://github.com/bisq-network/bisq2-umbrel) |
+| **Docker** | Self-managed / advanced hosts — image `ghcr.io/bisq-network/bisq2-api` | [Docker guide](https://github.com/bisq-network/bisq2/tree/main/apps/api-app/docker) |
+
+The node reaches Bisq's P2P network over its own bundled Tor; pair the mobile app by scanning the QR code the node shows. Full walkthrough: [How to use Bisq Connect](https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect-(WIP)).
+
+
 ## Docs Index
 
 1. [Bisq Mobile](#bisq-mobile)
+   - [Run a trusted Bisq 2 node](#run-a-trusted-bisq-2-node)
    - [Goal](#goal)
    - [How to contribute](#how-to-contribute)
      - [Project dev requirements](#project-dev-requirements)
@@ -97,6 +114,8 @@ To achieve this goal, we are building a total of 3 mobile apps that can be divid
 ### Share a trusted Bisq Node
 
  - **Bisq Connect** (Gradle module `:apps:clientApp` for Android and the `iosClient` Xcode project for iOS), a thin Bisq client app that can be configured to connect to a trusted Bisq2 node (over Tor or clearnet) to cater for people willing to try Bisq from somebody they really trust (popularily described as "Uncle Jim") who is willing to share their Bisq node with them.
+
+Want to host that node yourself? See [Run a trusted Bisq 2 node](#run-a-trusted-bisq-2-node) for the ways to run one.
 
 ## How to contribute
 
