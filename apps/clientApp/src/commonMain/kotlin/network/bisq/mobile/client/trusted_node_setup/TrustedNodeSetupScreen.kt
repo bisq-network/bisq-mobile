@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.client.common.presentation.ui.security.SecureScreenEffect
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialog
 import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiState
@@ -62,6 +63,11 @@ fun TrustedNodeSetupScreen(
 ) {
     val presenter: TrustedNodeSetupPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
+
+    // The pairing code shown here embeds the Tor client-auth secret, TLS fingerprint and
+    // node URLs, and the API URL is shown in full. Block screenshots / Recents-thumbnail
+    // leaks while this screen (onboarding pairing and Settings "pair with new node") is shown.
+    SecureScreenEffect()
 
     LaunchedEffect(isWorkflow, showConnectionFailed, showKeystoreError, showSubscriptionsFailed) {
         presenter.initialize(isWorkflow, showConnectionFailed, showKeystoreError, showSubscriptionsFailed)
