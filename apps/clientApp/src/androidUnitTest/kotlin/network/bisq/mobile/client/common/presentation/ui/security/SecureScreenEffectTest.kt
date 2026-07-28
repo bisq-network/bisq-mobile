@@ -54,4 +54,46 @@ class SecureScreenEffectTest {
 
         assertFalse("FLAG_SECURE should be cleared once the secure screen is gone", isWindowSecure())
     }
+
+    @Test
+    fun `when two concurrent effects share a window then flag stays until the last one leaves`() {
+        var showFirst by mutableStateOf(true)
+        var showSecond by mutableStateOf(true)
+        composeTestRule.setContent {
+            if (showFirst) SecureScreenEffect()
+            if (showSecond) SecureScreenEffect()
+        }
+        composeTestRule.waitForIdle()
+        assertTrue("precondition: window secure while both shown", isWindowSecure())
+
+        // First owner leaves — the second still needs the flag.
+        showFirst = false
+        composeTestRule.waitForIdle()
+        assertTrue("FLAG_SECURE must remain while another owner is active", isWindowSecure())
+
+        // Last owner leaves — now it may be cleared.
+        showSecond = false
+        composeTestRule.waitForIdle()
+        assertFalse("FLAG_SECURE should be cleared only after the last owner leaves", isWindowSecure())
+    }
+
+    @Test
+    fun `when window is already secured by host then effect preserves the flag on dispose`() {
+        // Host secures the window before any secure screen is shown.
+        composeTestRule.activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+
+        var showSecureScreen by mutableStateOf(true)
+        composeTestRule.setContent {
+            if (showSecureScreen) {
+                SecureScreenEffect()
+            }
+        }
+        composeTestRule.waitForIdle()
+        assertTrue("precondition: window secure", isWindowSecure())
+
+        showSecureScreen = false
+        composeTestRule.waitForIdle()
+
+        assertTrue("host-owned FLAG_SECURE must survive the effect's lifecycle", isWindowSecure())
+    }
 }
