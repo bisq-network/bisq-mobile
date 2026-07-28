@@ -41,10 +41,10 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 @Config(application = TestApplication::class)
 class ClientSplashScreenTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
     private val testDispatcher = StandardTestDispatcher()
+
+    @get:Rule
+    val composeTestRule = createComposeRule(effectContext = testDispatcher)
     private lateinit var presenter: ClientSplashPresenter
     private lateinit var clientUiState: MutableStateFlow<ClientSplashUiState>
 

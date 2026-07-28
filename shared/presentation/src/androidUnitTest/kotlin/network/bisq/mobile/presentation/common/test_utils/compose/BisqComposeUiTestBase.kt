@@ -21,5 +21,6 @@ abstract class BisqComposeUiTestBase {
 
     protected fun setTestContent(content: @Composable () -> Unit) {
         composeTestRule.setBisqTestContent(content)
+        composeTestRule.waitForIdle()
     }
 }

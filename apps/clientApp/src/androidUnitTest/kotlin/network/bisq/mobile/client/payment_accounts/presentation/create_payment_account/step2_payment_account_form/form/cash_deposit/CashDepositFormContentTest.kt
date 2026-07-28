@@ -57,10 +57,10 @@ import kotlin.test.assertNotNull
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class CashDepositFormContentTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
     private val testDispatcher = StandardTestDispatcher()
+
+    @get:Rule
+    val composeTestRule = createComposeRule(effectContext = testDispatcher)
     private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
     private lateinit var mainPresenter: MainPresenter
 
@@ -156,7 +156,6 @@ class CashDepositFormContentTest {
         setTestContent()
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country.prompt".i18n()).performClick()
         composeTestRule.onNodeWithText("United States").performClick()
-        testDispatcher.scheduler.advanceUntilIdle()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("paymentAccounts.currency".i18n()).assertIsDisplayed()
@@ -179,7 +178,6 @@ class CashDepositFormContentTest {
         setTestContent()
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country.prompt".i18n()).performClick()
         composeTestRule.onNodeWithText("United States").performClick()
-        testDispatcher.scheduler.advanceUntilIdle()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("mobile.error.title".i18n()).assertIsDisplayed()
@@ -280,7 +278,6 @@ class CashDepositFormContentTest {
     private fun selectUnitedStates() {
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country.prompt".i18n()).performClick()
         composeTestRule.onNodeWithText("United States").performClick()
-        testDispatcher.scheduler.advanceUntilIdle()
         composeTestRule.waitForIdle()
     }
 

@@ -23,8 +23,9 @@ import org.koin.core.module.Module
  * platform APIs must be mocked (e.g. [network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp]).
  *
  * Uses Compose UI Test v2 ([createComposeRule] with [StandardTestDispatcher]) so composition
- * effects share [testDispatcher] with Koin/Main. Pump the UI via [composeTestRule.waitForIdle]
- * rather than [kotlinx.coroutines.test.advanceUntilIdle].
+ * effects share [testDispatcher] with Koin/Main. [setTestContent] pumps via
+ * [composeTestRule.waitForIdle] after set; call [composeTestRule.waitForIdle] again after
+ * interactions. Prefer that over [kotlinx.coroutines.test.advanceUntilIdle].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -48,6 +49,7 @@ abstract class PresentationKoinComposeTestBase : PresentationKoinTestBase() {
 
     protected fun setTestContent(content: @Composable () -> Unit) {
         composeTestRule.setBisqTestContent(content)
+        composeTestRule.waitForIdle()
     }
 
     /**

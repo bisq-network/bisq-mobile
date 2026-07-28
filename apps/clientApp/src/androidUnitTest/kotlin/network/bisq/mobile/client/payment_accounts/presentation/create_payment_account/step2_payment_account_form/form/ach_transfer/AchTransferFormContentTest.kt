@@ -51,10 +51,10 @@ import kotlin.test.assertNotNull
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class AchTransferFormContentTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
     private val testDispatcher = StandardTestDispatcher()
+
+    @get:Rule
+    val composeTestRule = createComposeRule(effectContext = testDispatcher)
     private lateinit var mainPresenter: MainPresenter
 
     @Before

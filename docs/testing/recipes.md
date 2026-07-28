@@ -49,7 +49,7 @@ Pitfalls: no `startKoin` in test class; no `ClientKoinIntegrationTestBase` for `
 | Presentation + Koin | `PresentationKoinComposeTestBase` / `PlatformPresentationKoinComposeTestBase` |
 | Client + `TestApplication` | `BisqComposeUiTestBase` + `@Config(application = TestApplication::class)` — Koin from Application |
 
-Always set content via `setBisqTestContent` / `setTestContent` (`LocalIsTest` + `BisqTheme`). Proof: `SwitchUiTest`, `LinkButtonUiTest`, `PaymentAccountMethodIconUiTest` (client + `TestApplication`).
+Always set content via `setBisqTestContent` / `setTestContent` (`LocalIsTest` + `BisqTheme`). Leaf-base `setTestContent` calls `waitForIdle()` after set — still `waitForIdle()` after interactions. Proof: `SwitchUiTest`, `LinkButtonUiTest`, `PaymentAccountMethodIconUiTest` (client + `TestApplication`).
 
 ### No Koin
 
@@ -99,13 +99,12 @@ class MyClientContentUiTest : BisqComposeUiTestBase() {
     @Test
     fun `when card renders then shows account name`() {
         setTestContent { MyClientCard(account = sampleAccount()) } // VERIFY
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Account A").assertIsDisplayed()
     }
 }
 ```
 
-Pitfalls: no double `startKoin`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase`; use Compose UI Test v2 (`androidx.compose.ui.test.junit4.v2.createComposeRule`) — leaf bases already do; if a test owns both `Dispatchers.setMain(testDispatcher)` and a local compose rule, pass `createComposeRule(effectContext = testDispatcher)` so composition and Main share one scheduler; use `waitForIdle()` not `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
+Pitfalls: no double `startKoin`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase`; use Compose UI Test v2 (`androidx.compose.ui.test.junit4.v2.createComposeRule`) — leaf bases already do; if a test owns both `Dispatchers.setMain(testDispatcher)` and a local compose rule, pass `createComposeRule(effectContext = testDispatcher)` so composition and Main share one scheduler; leaf-base `setTestContent` already idles — still `waitForIdle()` after clicks/actions; prefer that over `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
 
 ---
 

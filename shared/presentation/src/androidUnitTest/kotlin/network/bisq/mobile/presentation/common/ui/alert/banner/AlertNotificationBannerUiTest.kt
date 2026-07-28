@@ -55,10 +55,10 @@ import kotlin.test.assertEquals
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class AlertNotificationBannerUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
     private val testDispatcher = StandardTestDispatcher()
+
+    @get:Rule
+    val composeTestRule = createComposeRule(effectContext = testDispatcher)
 
     @Before
     fun setUp() {

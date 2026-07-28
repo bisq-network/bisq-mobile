@@ -65,10 +65,10 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class PaymentAccountFormScreenTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
     private val testDispatcher = StandardTestDispatcher()
+
+    @get:Rule
+    val composeTestRule = createComposeRule(effectContext = testDispatcher)
     private lateinit var mainPresenter: MainPresenter
     private lateinit var koinApplication: KoinApplication
     private lateinit var viewModelStore: ViewModelStore

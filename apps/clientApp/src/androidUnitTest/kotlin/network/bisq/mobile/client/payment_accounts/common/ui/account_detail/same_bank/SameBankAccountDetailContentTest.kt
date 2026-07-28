@@ -50,10 +50,10 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class SameBankAccountDetailContentTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
     private val testDispatcher = StandardTestDispatcher()
+
+    @get:Rule
+    val composeTestRule = createComposeRule(effectContext = testDispatcher)
     private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
     private lateinit var koinApplication: KoinApplication
 
@@ -104,7 +104,6 @@ class SameBankAccountDetailContentTest {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
         setTestContent()
-        testDispatcher.scheduler.advanceUntilIdle()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Same Bank").assertIsDisplayed()
@@ -124,7 +123,6 @@ class SameBankAccountDetailContentTest {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.failure(RuntimeException("boom"))
 
         setTestContent()
-        testDispatcher.scheduler.advanceUntilIdle()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("mobile.action.retry".i18n()).assertIsDisplayed()
@@ -148,7 +146,6 @@ class SameBankAccountDetailContentTest {
                 chargebackRisk = null,
             ),
         )
-        testDispatcher.scheduler.advanceUntilIdle()
         composeTestRule.waitForIdle()
 
         composeTestRule.onAllNodesWithText("paymentAccounts.holderName".i18n()).assertCountEquals(0)
@@ -165,7 +162,6 @@ class SameBankAccountDetailContentTest {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
         setTestContent(sampleAccount(chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE))
-        testDispatcher.scheduler.advanceUntilIdle()
         composeTestRule.waitForIdle()
 
         composeTestRule
