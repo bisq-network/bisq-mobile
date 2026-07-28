@@ -69,4 +69,48 @@ class ObservableExtensionsTest {
         observable.set(8)
         assertEquals("v7", target.value, "unbound pin must stop propagation")
     }
+
+    @Test
+    fun `bindTo with setter pushes current value at subscription and follows updates`() {
+        val observable = Observable("a")
+        val received = mutableListOf<String>()
+
+        val pin = observable.bindTo { received += it }
+
+        assertEquals(listOf("a"), received)
+        observable.set("b")
+        assertEquals(listOf("a", "b"), received)
+
+        pin.unbind()
+        observable.set("c")
+        assertEquals(listOf("a", "b"), received, "unbound pin must stop propagation")
+    }
+
+    @Test
+    fun `bindNonNullTo with setter ignores null current value at subscription`() {
+        val observable = Observable<String>()
+        val received = mutableListOf<String>()
+
+        observable.bindNonNullTo { received += it }
+
+        assertEquals(emptyList(), received)
+        observable.set("a")
+        assertEquals(listOf("a"), received)
+    }
+
+    @Test
+    fun `bindNonNullTo with map and setter ignores nulls and transforms values`() {
+        val observable = Observable<Int>()
+        val received = mutableListOf<String>()
+
+        val pin = observable.bindNonNullTo({ "v$it" }) { received += it }
+
+        assertEquals(emptyList(), received)
+        observable.set(7)
+        assertEquals(listOf("v7"), received)
+
+        pin.unbind()
+        observable.set(8)
+        assertEquals(listOf("v7"), received, "unbound pin must stop propagation")
+    }
 }

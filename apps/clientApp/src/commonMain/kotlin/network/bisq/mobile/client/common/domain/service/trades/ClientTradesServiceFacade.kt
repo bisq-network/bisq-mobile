@@ -346,15 +346,16 @@ class ClientTradesServiceFacade(
         data: TradePropertiesDto,
     ) {
         log.i { "Apply mutable data to trade with ID $tradeId - new state: ${data.tradeState}" }
+        val tradeModel = trade.bisqEasyTradeModel
         data.tradeState?.let {
-            log.i { "Updating trade $tradeId state from ${trade.bisqEasyTradeModel.tradeState.value} to $it" }
-            trade.bisqEasyTradeModel.tradeState.value = it
+            log.i { "Updating trade $tradeId state from ${tradeModel.tradeState.value} to $it" }
+            tradeModel.setTradeState(it)
         }
-        data.tradeCompletedDate?.let { trade.bisqEasyTradeModel.tradeCompletedDate.value = it }
-        data.paymentAccountData?.let { trade.bisqEasyTradeModel.paymentAccountData.value = it }
-        data.bitcoinPaymentData?.let { trade.bisqEasyTradeModel.bitcoinPaymentData.value = it }
-        data.paymentProof?.let { trade.bisqEasyTradeModel.paymentProof.value = it }
-        data.interruptTradeInitiator?.let { trade.bisqEasyTradeModel.interruptTradeInitiator.value = it }
+        data.tradeCompletedDate?.let { tradeModel.setTradeCompletedDate(it) }
+        data.paymentAccountData?.let { tradeModel.setPaymentAccountData(it) }
+        data.bitcoinPaymentData?.let { tradeModel.setBitcoinPaymentData(it) }
+        data.paymentProof?.let { tradeModel.setPaymentProof(it) }
+        data.interruptTradeInitiator?.let { tradeModel.setInterruptTradeInitiator(it) }
     }
 
     private fun findOpenTradeItemModel(tradeId: String): TradeItemPresentationModel? {

@@ -1,6 +1,8 @@
 package network.bisq.mobile.data.replicated.trade.bisq_easy
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.replicated.contract.BisqEasyContractVO
 import network.bisq.mobile.data.replicated.contract.RoleEnum
 import network.bisq.mobile.data.replicated.identity.IdentityVO
@@ -57,21 +59,80 @@ class BisqEasyTradeModel(
             return id.substring(0, 8)
         }
 
-    // MutableStateFlow
-    val tradeState: MutableStateFlow<BisqEasyTradeStateEnum> = MutableStateFlow(bisqEasyTradeDto.tradeState)
+    // Mutable trade data. Backed by private MutableStateFlow and exposed as read-only StateFlow;
+    // updates go through the setters below so state can only be mutated via the owning model.
+    // Kept as per-field flows (rather than a single snapshot) to preserve fine-grained observation:
+    // a consumer watching only tradeState is not notified when e.g. errorStackTrace changes.
+    private val _tradeState: MutableStateFlow<BisqEasyTradeStateEnum> = MutableStateFlow(bisqEasyTradeDto.tradeState)
+    val tradeState: StateFlow<BisqEasyTradeStateEnum> = _tradeState.asStateFlow()
 
     // The role who cancelled or rejected the trade
-    val interruptTradeInitiator: MutableStateFlow<RoleEnum?> = MutableStateFlow(bisqEasyTradeDto.interruptTradeInitiator)
-    val paymentAccountData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.paymentAccountData)
+    private val _interruptTradeInitiator: MutableStateFlow<RoleEnum?> = MutableStateFlow(bisqEasyTradeDto.interruptTradeInitiator)
+    val interruptTradeInitiator: StateFlow<RoleEnum?> = _interruptTradeInitiator.asStateFlow()
+
+    private val _paymentAccountData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.paymentAccountData)
+    val paymentAccountData: StateFlow<String?> = _paymentAccountData.asStateFlow()
 
     // btc address in case of mainChain, or LN invoice if LN is used
-    val bitcoinPaymentData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.bitcoinPaymentData)
+    private val _bitcoinPaymentData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.bitcoinPaymentData)
+    val bitcoinPaymentData: StateFlow<String?> = _bitcoinPaymentData.asStateFlow()
 
     // txId in case of mainChain, or preimage if LN is used
-    val paymentProof: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.paymentProof)
-    val errorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.errorMessage)
-    val errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.errorStackTrace)
-    val peersErrorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorMessage)
-    val peersErrorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorStackTrace)
-    val tradeCompletedDate: MutableStateFlow<Long?> = MutableStateFlow(bisqEasyTradeDto.tradeCompletedDate)
+    private val _paymentProof: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.paymentProof)
+    val paymentProof: StateFlow<String?> = _paymentProof.asStateFlow()
+
+    private val _errorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.errorMessage)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.errorStackTrace)
+    val errorStackTrace: StateFlow<String?> = _errorStackTrace.asStateFlow()
+
+    private val _peersErrorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorMessage)
+    val peersErrorMessage: StateFlow<String?> = _peersErrorMessage.asStateFlow()
+
+    private val _peersErrorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorStackTrace)
+    val peersErrorStackTrace: StateFlow<String?> = _peersErrorStackTrace.asStateFlow()
+
+    private val _tradeCompletedDate: MutableStateFlow<Long?> = MutableStateFlow(bisqEasyTradeDto.tradeCompletedDate)
+    val tradeCompletedDate: StateFlow<Long?> = _tradeCompletedDate.asStateFlow()
+
+    fun setTradeState(value: BisqEasyTradeStateEnum) {
+        _tradeState.value = value
+    }
+
+    fun setInterruptTradeInitiator(value: RoleEnum?) {
+        _interruptTradeInitiator.value = value
+    }
+
+    fun setPaymentAccountData(value: String?) {
+        _paymentAccountData.value = value
+    }
+
+    fun setBitcoinPaymentData(value: String?) {
+        _bitcoinPaymentData.value = value
+    }
+
+    fun setPaymentProof(value: String?) {
+        _paymentProof.value = value
+    }
+
+    fun setErrorMessage(value: String?) {
+        _errorMessage.value = value
+    }
+
+    fun setErrorStackTrace(value: String?) {
+        _errorStackTrace.value = value
+    }
+
+    fun setPeersErrorMessage(value: String?) {
+        _peersErrorMessage.value = value
+    }
+
+    fun setPeersErrorStackTrace(value: String?) {
+        _peersErrorStackTrace.value = value
+    }
+
+    fun setTradeCompletedDate(value: Long?) {
+        _tradeCompletedDate.value = value
+    }
 }

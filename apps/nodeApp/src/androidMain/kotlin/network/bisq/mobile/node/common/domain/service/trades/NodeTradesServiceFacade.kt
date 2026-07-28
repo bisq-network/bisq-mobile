@@ -741,24 +741,25 @@ class NodeTradesServiceFacade(
         pins +=
             trade.tradeStateObservable().addObserver { tradeState ->
                 val mappedState = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(tradeState)
-                openTradeItem.bisqEasyTradeModel.tradeState.value = mappedState
-                openTradeItem.bisqEasyTradeModel.tradeCompletedDate.value = trade.tradeCompletedDate.orElse(null)
+                openTradeItem.bisqEasyTradeModel.setTradeState(mappedState)
+                openTradeItem.bisqEasyTradeModel.setTradeCompletedDate(trade.tradeCompletedDate.orElse(null))
                 if (mappedState.isFinalState) {
                     _openTradeItems.update { list -> list.filter { it.tradeId != trade.id } }
                     bumpClosedTradesTick()
                 }
             }
+        val tradeModel = openTradeItem.bisqEasyTradeModel
         pins +=
-            trade.interruptTradeInitiator.bindNonNullTo(openTradeItem.bisqEasyTradeModel.interruptTradeInitiator) {
-                Mappings.RoleMapping.fromBisq2Model(it)
+            trade.interruptTradeInitiator.bindNonNullTo({ Mappings.RoleMapping.fromBisq2Model(it) }) {
+                tradeModel.setInterruptTradeInitiator(it)
             }
-        pins += trade.paymentAccountData.bindNonNullTo(openTradeItem.bisqEasyTradeModel.paymentAccountData)
-        pins += trade.bitcoinPaymentData.bindNonNullTo(openTradeItem.bisqEasyTradeModel.bitcoinPaymentData)
-        pins += trade.paymentProof.bindNonNullTo(openTradeItem.bisqEasyTradeModel.paymentProof)
-        pins += trade.errorMessageObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.errorMessage)
-        pins += trade.errorStackTraceObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.errorStackTrace)
-        pins += trade.peersErrorMessageObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.peersErrorMessage)
-        pins += trade.peersErrorStackTraceObservable().bindNonNullTo(openTradeItem.bisqEasyTradeModel.peersErrorStackTrace)
+        pins += trade.paymentAccountData.bindNonNullTo(tradeModel::setPaymentAccountData)
+        pins += trade.bitcoinPaymentData.bindNonNullTo(tradeModel::setBitcoinPaymentData)
+        pins += trade.paymentProof.bindNonNullTo(tradeModel::setPaymentProof)
+        pins += trade.errorMessageObservable().bindNonNullTo(tradeModel::setErrorMessage)
+        pins += trade.errorStackTraceObservable().bindNonNullTo(tradeModel::setErrorStackTrace)
+        pins += trade.peersErrorMessageObservable().bindNonNullTo(tradeModel::setPeersErrorMessage)
+        pins += trade.peersErrorStackTraceObservable().bindNonNullTo(tradeModel::setPeersErrorStackTrace)
 
         pins +=
             channel.isInMediationObservable().addObserver { isInMediation ->

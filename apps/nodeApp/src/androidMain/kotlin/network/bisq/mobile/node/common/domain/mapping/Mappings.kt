@@ -1165,24 +1165,13 @@ class Mappings {
     }
 
     object BisqEasyTradeModelMapping {
+        // The mutable trade fields are seeded from the DTO in the BisqEasyTradeModel constructor
+        // (BisqEasyTradeVOMapping already maps them from the bisq2 model), so no post-construction
+        // initialization is needed here. Live updates are wired via observers in NodeTradesServiceFacade.
         fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeModel =
             BisqEasyTradeModel(
                 BisqEasyTradeVOMapping.fromBisq2Model(value),
-            ).apply {
-                // We set initial values if mutable data
-                // We update the data with observers
-                tradeState.value = BisqEasyTradeStateMapping.fromBisq2Model(value.tradeState)
-                interruptTradeInitiator.value =
-                    value.interruptTradeInitiator.get()?.let { RoleMapping.fromBisq2Model(it) }
-                paymentAccountData.value = value.paymentAccountData.get()
-                bitcoinPaymentData.value = value.bitcoinPaymentData.get()
-                paymentProof.value = value.paymentProof.get()
-                errorMessage.value = value.errorMessage
-                errorStackTrace.value = value.errorStackTrace
-                peersErrorMessage.value = value.peersErrorMessage
-                peersErrorStackTrace.value = value.peersErrorStackTrace
-                tradeCompletedDate.value = value.tradeCompletedDate.orElse(null)
-            }
+            )
     }
 
     object BisqEasyTradePartyVOMapping {

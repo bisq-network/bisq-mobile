@@ -41,3 +41,33 @@ fun <B : Any, D> ReadOnlyObservable<B>.bindNonNullTo(
             target.value = map(value)
         }
     }
+
+/**
+ * Like [bindTo] but pushes each value into [set] instead of a [MutableStateFlow].
+ *
+ * Use this to bridge into a model that only exposes read-only state plus explicit
+ * setters (e.g. `BisqEasyTradeModel`), keeping the backing flow encapsulated.
+ */
+fun <T> ReadOnlyObservable<T>.bindTo(set: (T) -> Unit): Pin =
+    addObserver { value ->
+        set(value)
+    }
+
+/** Like [bindNonNullTo] but pushes each non-null value into [set]. */
+fun <T : Any> ReadOnlyObservable<T>.bindNonNullTo(set: (T) -> Unit): Pin =
+    addObserver { value ->
+        if (value != null) {
+            set(value)
+        }
+    }
+
+/** Like [bindNonNullTo] with map but pushes each transformed non-null value into [set]. */
+fun <B : Any, D> ReadOnlyObservable<B>.bindNonNullTo(
+    map: (B) -> D,
+    set: (D) -> Unit,
+): Pin =
+    addObserver { value ->
+        if (value != null) {
+            set(map(value))
+        }
+    }
