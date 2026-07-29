@@ -18,8 +18,11 @@
   None of it is safe or useful to back up. Recovery on a new device is done by
   re-pairing with the trusted node, which owns the profile and keys.
 
-  Note: android:allowBackup="false" in the manifest already blocks this path.
-  These rules are the second layer, in case that attribute is ever relaxed.
+  Note: on this API range android:allowBackup="false" does block Auto Backup,
+  `adb backup` and D2D, so these rules are a second layer in case that
+  attribute is ever relaxed. That is specific to API 24-30 - from API 31 the
+  attribute no longer opts out of device-to-device transfer, which is why
+  data_extraction_rules.xml carries a load-bearing <device-transfer> section.
 -->
 <full-backup-content>
     <exclude domain="root" path="." />

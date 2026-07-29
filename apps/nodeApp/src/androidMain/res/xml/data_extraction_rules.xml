@@ -11,10 +11,19 @@
   POLICY: nothing leaves the device through the platform backup pipeline.
   ============================================================================
 
-  The manifest also sets android:allowBackup="false", which already blocks
-  cloud backup and D2D transfer. These rules are the second layer: if
-  allowBackup is ever flipped back to true (directly, or by a library manifest
-  merge), the excludes below still hold, and they document the audit.
+  The manifest also sets android:allowBackup="false", but that attribute alone
+  is NOT sufficient here. On Android 12+ it disables cloud backup yet does not
+  disable device-to-device transfer - many OEM D2D implementations migrate the
+  app regardless. See https://developer.android.com/identity/data/autobackup.
+  Since nodeApp is minSdk 33, every supported device is in that window.
+
+  So the two sections below are not decoration:
+    - <cloud-backup>   is a second layer behind allowBackup, and stays correct
+                       if that attribute is ever flipped back to true directly
+                       or by a library manifest merge.
+    - <device-transfer> is the ONLY control that keeps db/private off the D2D
+                       pipeline. It is load-bearing. Do not remove it on the
+                       assumption that allowBackup="false" covers it.
 
   The node app runs a full Bisq 2 node on the handset. Unlike the client, the
   private keys really are here - there is no trusted node to re-pair with. That
@@ -135,7 +144,11 @@
     </cloud-backup>
 
     <!--
-      Device-to-device transfer. Excluded as well - see the rationale above.
+      Device-to-device transfer. This section is the only thing that keeps the
+      bisq2 key bundles out of a D2D migration on API 31+ -
+      android:allowBackup="false" does not. Rationale for excluding rather than
+      allowing is above: it would fan out the identity without the user
+      choosing to, and nothing guarantees the source device is retired.
       Phone migration is handled by Settings -> Backup / Restore, which keeps
       the user in control of when their identity is copied.
     -->

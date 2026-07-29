@@ -7,10 +7,19 @@
   POLICY: nothing leaves the device through the platform backup pipeline.
   ============================================================================
 
-  The manifest also sets android:allowBackup="false", which already blocks
-  cloud backup, D2D transfer and `adb backup`. These rules are kept as a second
-  layer: if allowBackup is ever flipped back to true (directly, or by a library
-  manifest merge), the excludes below still hold, and they document the audit.
+  The manifest also sets android:allowBackup="false", but that attribute alone
+  is NOT sufficient here. On Android 12+ it disables cloud backup (and, on
+  API 24-30, `adb backup`) yet does not disable device-to-device transfer -
+  many OEM D2D implementations migrate the app regardless. See
+  https://developer.android.com/identity/data/autobackup.
+
+  So the two sections below are not decoration:
+    - <cloud-backup>   is a second layer behind allowBackup, and stays correct
+                       if that attribute is ever flipped back to true directly
+                       or by a library manifest merge.
+    - <device-transfer> is the ONLY control that governs D2D on API 31+. It is
+                       load-bearing. Do not remove it on the assumption that
+                       allowBackup="false" covers it.
 
   Two independent reasons drive the deny-all stance:
 
@@ -128,11 +137,14 @@
     </cloud-backup>
 
     <!--
-      Device-to-device transfer. Local and encrypted, so materially safer than
-      the cloud - but still nothing to gain here: the pairing credentials are
-      Keystore-sealed and cannot be transferred, and without them every other
-      file is either stale device state or a cache. The supported migration
-      path is to re-pair with the trusted node on the new device.
+      Device-to-device transfer. This section is the only thing that opts the
+      app out of D2D on API 31+ - android:allowBackup="false" does not.
+
+      D2D is local and encrypted, so materially safer than the cloud, but there
+      is still nothing to gain: the pairing credentials are Keystore-sealed and
+      cannot be transferred, and without them every other file is either stale
+      device state or a cache. The supported migration path is to re-pair with
+      the trusted node on the new device.
     -->
     <device-transfer>
         <exclude domain="root" path="." />
