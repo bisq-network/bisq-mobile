@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy backup rules for Android 11 and lower (API 24-30).
+
+  Needed because clientApp minSdk is 24: android:dataExtractionRules is only
+  honoured from API 31, so without this file API 24-30 devices would fall back
+  to "back up everything". That window is also the one where `adb backup` can
+  pull the whole sandbox off a USB-debuggable device without root, and where
+  Auto Backup archives are not guaranteed to be encrypted with the device
+  secret - i.e. exactly the devices where a leak would be worst.
+
+  This must mirror the <cloud-backup> section of res/xml/data_extraction_rules.xml.
+  The full per-file audit and the reasoning for the deny-all policy live in that
+  file; it is not duplicated here so the two cannot drift apart.
+
+  Summary: the sandbox holds trusted-node bearer credentials, trade metadata,
+  Tor state and Keystore-sealed blobs that cannot be decrypted after a restore.
+  None of it is safe or useful to back up. Recovery on a new device is done by
+  re-pairing with the trusted node, which owns the profile and keys.
+
+  Note: android:allowBackup="false" in the manifest already blocks this path.
+  These rules are the second layer, in case that attribute is ever relaxed.
+-->
+<full-backup-content>
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+    <exclude domain="device_root" path="." />
+    <exclude domain="device_file" path="." />
+    <exclude domain="device_database" path="." />
+    <exclude domain="device_sharedpref" path="." />
+</full-backup-content>

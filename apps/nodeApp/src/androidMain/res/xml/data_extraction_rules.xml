@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup / device-transfer policy for the Bisq node app.
+
+  No legacy res/xml/backup_rules.xml counterpart exists here on purpose:
+  nodeApp minSdk is 33, so android:dataExtractionRules (API 31+) governs every
+  supported device and a fullBackupContent file would be dead configuration.
+  If minSdk is ever lowered below 31, add one mirroring <cloud-backup> below.
+
+  ============================================================================
+  POLICY: nothing leaves the device through the platform backup pipeline.
+  ============================================================================
+
+  The manifest also sets android:allowBackup="false", which already blocks
+  cloud backup and D2D transfer. These rules are the second layer: if
+  allowBackup is ever flipped back to true (directly, or by a library manifest
+  merge), the excludes below still hold, and they document the audit.
+
+  The node app runs a full Bisq 2 node on the handset. Unlike the client, the
+  private keys really are here - there is no trusted node to re-pair with. That
+  raises the stakes in both directions:
+
+  1. CONFIDENTIALITY. files/Bisq2_mobile/db/private holds the bisq2 key
+     bundles: identity private keys, the Tor onion private key, payment
+     account details, contracts and private trade chat. Whoever holds that
+     directory *is* the user on the network, and can also impersonate them for
+     their accumulated reputation. Auto Backup uploads to Google Drive; even
+     with client-side encryption, handing a P2P trading identity to a cloud
+     provider is exactly what Bisq exists to avoid.
+
+  2. USER CONTROL. The app already ships the right mechanism:
+     Settings -> Backup (NodeBackupServiceFacade) exports db/private and
+     db/settings as a zip the user can optionally password-encrypt, and
+     NodeMainApplication.maybeRestoreDataDirectory() consumes it on the next
+     launch. That is deliberate, auditable and user-initiated. A silent
+     platform backup would duplicate it without the deliberation.
+
+  Device-to-device transfer is also excluded, even though it is a local
+  encrypted channel and copying db/private is what a phone migration wants.
+  Reasons: it would silently fan out the identity without the user choosing to,
+  and nothing guarantees the source device is retired - two live nodes sharing
+  one identity and onion address conflict on the P2P network. The explicit
+  export/restore flow above covers the migration case with the user in the loop.
+
+  ============================================================================
+  AUDIT - every path under the app sandbox, and why it is excluded
+  ============================================================================
+
+  files/Bisq2_mobile/db/private/
+      bisq2 key bundles (identity + Tor onion private keys), payment accounts,
+      contracts, trades, private chat.
+      -> The crown jewels. Never back up. Use Settings -> Backup instead.
+
+  files/Bisq2_mobile/db/settings/
+      bisq2 settings, favourite markets, don't-show-again flags.
+      -> Low value on its own and meaningless without private/. Excluded so
+         the two always move together through the explicit backup flow.
+
+  files/Bisq2_mobile/db/cache/
+  files/Bisq2_mobile/db/network_db/
+      Public chat channel stores and P2P inventory. Hundreds of MB, and fully
+      re-syncable from the network. NodeBackupServiceFacade explicitly skips
+      both for the same reason.
+      -> Regenerable bulk. Would blow the backup quota for zero benefit.
+         Also the source of the deprecated-enum corruption that
+         maybeCleanupCorruptedChatData() has to repair - stale copies are a
+         liability, not an asset.
+
+  files/Bisq2_mobile/tor/
+      kmp-tor data dir: cached consensus, control_auth_cookie,
+      control-port.txt.
+      -> Regenerable and device/network bound. A stale control auth cookie
+         makes control-port AUTHENTICATE fail and hangs Tor bootstrap
+         (see KmpTorService). The durable onion identity is not here - it
+         lives in the bisq2 key bundle under db/private.
+
+  files/Bisq2_mobile/bisq.log (+ rotations, 1MB x 3)
+      INFO-level logs containing peer onion addresses, trade ids and profile
+      ids.
+      -> PII / network graph. Never leaves the device automatically.
+
+  files/bisq_db_from_backup/
+      Staging directory for a pending user-initiated restore, consumed and
+      deleted on the next launch by maybeRestoreDataDirectory().
+      -> Actively dangerous to back up: a snapshot taken between restore and
+         next launch would replay a stale restore over freshly created keys on
+         the target device.
+
+  files/Settings.preferences_pb
+  files/User.preferences_pb
+  files/TradeReadStateMap.preferences_pb
+  files/OfferbookFilterConfigs.preferences_pb
+      The shared DataStores from :shared:domain dataModule.
+      -> Same verdicts as the client app: Settings mirrors OS permission grants
+         and gates onboarding (restoring it silently suppresses the
+         notification prompt), the rest is either user-identifying content or
+         leaks trade ids / trading interests. See
+         apps/clientApp/src/androidMain/res/xml/data_extraction_rules.xml for
+         the field-level breakdown.
+
+  shared_prefs/     - nothing sensitive today; excluded by deny-by-default.
+  cache/            - never included by the platform. No rule needed.
+  no_backup/        - never included by the platform. No rule needed.
+
+  ============================================================================
+  MAINTENANCE
+  ============================================================================
+  Deny-by-default: every domain is excluded wholesale rather than file by file,
+  so storage added later is opted out until someone deliberately allows it and
+  records the reasoning here. This matters concretely - android.conf currently
+  has wallet.enabled = false, and whenever the bisq2 wallet is switched on its
+  seed/keys land under the same data dir. They are covered from day one under
+  these rules. If you ever add an <include>, note that a single <include> flips
+  the section to allowlist semantics for that domain.
+-->
+<data-extraction-rules>
+
+    <!--
+      Cloud backup (Google Drive). Nothing is eligible.
+      disableIfNoEncryptionCapabilities is redundant while everything is
+      excluded, but it is the correct safety net if this section is ever
+      narrowed: it suppresses the backup entirely on devices that cannot
+      client-side encrypt it.
+    -->
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+        <exclude domain="device_root" path="." />
+        <exclude domain="device_file" path="." />
+        <exclude domain="device_database" path="." />
+        <exclude domain="device_sharedpref" path="." />
+    </cloud-backup>
+
+    <!--
+      Device-to-device transfer. Excluded as well - see the rationale above.
+      Phone migration is handled by Settings -> Backup / Restore, which keeps
+      the user in control of when their identity is copied.
+    -->
+    <device-transfer>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+        <exclude domain="device_root" path="." />
+        <exclude domain="device_file" path="." />
+        <exclude domain="device_database" path="." />
+        <exclude domain="device_sharedpref" path="." />
+    </device-transfer>
+
+</data-extraction-rules>

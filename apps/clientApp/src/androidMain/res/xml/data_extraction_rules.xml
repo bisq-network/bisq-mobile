@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup / device-transfer policy for the Bisq client app (Android 12+, API 31+).
+  API 24-30 is governed by res/xml/backup_rules.xml instead - keep both in sync.
+
+  ============================================================================
+  POLICY: nothing leaves the device through the platform backup pipeline.
+  ============================================================================
+
+  The manifest also sets android:allowBackup="false", which already blocks
+  cloud backup, D2D transfer and `adb backup`. These rules are kept as a second
+  layer: if allowBackup is ever flipped back to true (directly, or by a library
+  manifest merge), the excludes below still hold, and they document the audit.
+
+  Two independent reasons drive the deny-all stance:
+
+  1. CONFIDENTIALITY. This app stores trusted-node bearer credentials, trade
+     metadata and Tor state. Auto Backup uploads to the user's Google Drive.
+     End-to-end encryption with the device secret is only guaranteed on
+     Android 9+ *with a screen lock configured*; minSdk here is 24, so a
+     meaningful share of installs would upload data that Google can decrypt.
+     Bisq exists so that no third party holds your trading identity - routing
+     it through a cloud provider contradicts the product's threat model.
+
+  2. CORRECTNESS. The two most valuable-looking artifacts are AES-GCM
+     ciphertext sealed with an AndroidKeyStore key. Keystore keys are
+     non-exportable and never travel with a backup, so a restored copy is
+     undecryptable noise on the target device. Restoring buys nothing and
+     forces the app down its "keystore invalidated -> re-pair" path anyway.
+
+  RECOVERY STORY: the client is a thin front-end. Profile, keys, offers, trades
+  and chat all live on the user's trusted node. Re-pairing on a new device
+  restores everything that matters. There is no user data here that only exists
+  on the handset, so there is nothing worth risking a cloud copy for.
+
+  ============================================================================
+  AUDIT - every path under the app sandbox, and why it is excluded
+  ============================================================================
+
+  files/SensitiveSettings.preferences_pb
+      bisqApiUrl, clientId, clientSecret, sessionId, tlsFingerprint - i.e. the
+      bearer credentials for the trusted node. Encrypted at rest via
+      LocalEncryption.android.kt (AndroidKeyStore AES/GCM).
+      -> Credentials. Also unreadable off-device. Never back up.
+
+  files/Settings.preferences_pb
+      UI preferences, but also notificationPermissionState and
+      batteryOptimizationState, which are persisted *mirrors* of OS grants.
+      DashboardPresenter / WelcomeCarouselPresenter read them straight from
+      the DataStore and never re-sync from the OS, so a restored "GRANTED"
+      on a device that never granted the permission silently suppresses the
+      prompt and notifications just never arrive. firstLaunch=false likewise
+      skips onboarding - and since SensitiveSettings cannot be restored, the
+      user would land unpaired in a post-onboarding state. Also carries
+      analyticsEnabled, an opt-in consent flag that should not silently
+      migrate to a new install.
+      -> Device-coupled state. Restoring it produces broken installs.
+
+  files/User.preferences_pb
+      User-authored trade terms and profile statement. Owned by the profile on
+      the trusted node and re-fetched after pairing.
+      -> Redundant, and user-identifying content.
+
+  files/TradeReadStateMap.preferences_pb
+      Trade id -> read message count.
+      -> Leaks the set of trade ids to the cloud. Re-derivable after pairing.
+
+  files/OfferbookFilterConfigs.preferences_pb
+      Saved offerbook filters (markets, payment methods, amount ranges).
+      -> Discloses trading interests. The app exposes an explicit
+         "remember filter preferences" toggle; silently shipping these to a
+         cloud provider would undercut that control.
+
+  files/ConfigCache.preferences_pb
+  files/BankAccountCountryDetailsCache.preferences_pb
+      Caches of data fetched from the node/server.
+      -> Regenerable, and a stale restore can mislead the UI.
+
+  files/tor/
+      kmp-tor data dir: cached consensus, control_auth_cookie,
+      control-port.txt, hidden-service key material.
+      -> Network/device bound and fully regenerable. Worse, the control-plane
+         files are ephemeral: a stale auth cookie makes control-port
+         AUTHENTICATE fail and hangs bootstrap (see KmpTorService).
+
+  files/Bisq2_mobile/
+      Generated CatHash avatar PNGs (BaseClientCatHashService).
+      -> Deterministic from the profile id. Pure backup-quota waste.
+
+  shared_prefs/bisq_push_notification_keystore.xml
+      EncryptedSharedPreferences holding the AES-256 push notification
+      symmetric key, wrapped by a Keystore MasterKey (Tink keyset).
+      -> Key material, and the Tink keyset is unreadable on another device.
+         The key is rotated on every registration anyway.
+
+  cache/            - never included by the platform. No rule needed.
+  no_backup/        - never included by the platform. No rule needed. This is
+                      the correct future home for the Keystore-sealed blobs
+                      above, since they can never survive a restore.
+
+  ============================================================================
+  MAINTENANCE
+  ============================================================================
+  Deny-by-default: every domain is excluded wholesale rather than file by file,
+  so any storage added later is opted out until someone deliberately allows it
+  and records the reasoning here. If you ever add an <include>, note that a
+  single <include> flips the section to allowlist semantics for that domain.
+-->
+<data-extraction-rules>
+
+    <!--
+      Cloud backup (Google Drive). Nothing is eligible.
+      disableIfNoEncryptionCapabilities is redundant while everything is
+      excluded, but it is the correct safety net if this section is ever
+      narrowed: it suppresses the backup entirely on devices that cannot
+      client-side encrypt it.
+    -->
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+        <exclude domain="device_root" path="." />
+        <exclude domain="device_file" path="." />
+        <exclude domain="device_database" path="." />
+        <exclude domain="device_sharedpref" path="." />
+    </cloud-backup>
+
+    <!--
+      Device-to-device transfer. Local and encrypted, so materially safer than
+      the cloud - but still nothing to gain here: the pairing credentials are
+      Keystore-sealed and cannot be transferred, and without them every other
+      file is either stale device state or a cache. The supported migration
+      path is to re-pair with the trusted node on the new device.
+    -->
+    <device-transfer>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+        <exclude domain="device_root" path="." />
+        <exclude domain="device_file" path="." />
+        <exclude domain="device_database" path="." />
+        <exclude domain="device_sharedpref" path="." />
+    </device-transfer>
+
+</data-extraction-rules>
