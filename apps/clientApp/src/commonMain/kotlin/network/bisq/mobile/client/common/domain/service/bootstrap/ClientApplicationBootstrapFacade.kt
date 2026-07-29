@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.bootstrap
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,6 +30,11 @@ class ClientApplicationBootstrapFacade(
     kmpTorService: KmpTorService,
     private val sessionService: SessionService,
     private val connectivityService: ConnectivityService,
+    // Dispatcher for the auth/session-resolution work kicked off after Tor is up. Injectable so tests
+    // can pin it to their test scheduler; defaults to Dispatchers.Default in production. Keeping it off
+    // the test scheduler is what made ClientApplicationBootstrapFacadeTest flaky (escaped coroutines
+    // outliving runTest).
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ApplicationBootstrapFacade(kmpTorService) {
     private companion object {
         // How long the completed "Load data" step (✓ / "Ready") is held on screen before navigating,
@@ -82,7 +88,7 @@ class ClientApplicationBootstrapFacade(
 
     fun onTorStartedOrSkipped() {
         onInitialized()
-        serviceScope.launch(Dispatchers.Default) {
+        serviceScope.launch(defaultDispatcher) {
             val currentSettings = sensitiveSettingsRepository.fetch()
 
             val clientAuthState: ClientAuthState =

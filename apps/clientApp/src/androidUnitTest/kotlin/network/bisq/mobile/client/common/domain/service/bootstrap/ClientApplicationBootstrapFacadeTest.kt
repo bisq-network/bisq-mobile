@@ -92,6 +92,7 @@ class ClientApplicationBootstrapFacadeTest {
                 kmpTorService,
                 sessionService,
                 connectivityService,
+                testDispatcher,
             )
     }
 
@@ -175,12 +176,8 @@ class ClientApplicationBootstrapFacadeTest {
                 )
 
             facade.onTorStartedOrSkipped()
-            // onTorStartedOrSkipped uses Dispatchers.Default — advanceUntilIdle() won't drive it.
-            val deadline = System.currentTimeMillis() + 2_000L
-            while (settingsFlow.value.sessionId != "new-session-id") {
-                check(System.currentTimeMillis() < deadline) { "Timed out waiting for session renewal" }
-                Thread.sleep(5)
-            }
+            // onTorStartedOrSkipped now runs on the injected testDispatcher, so advanceUntilIdle() drives it.
+            advanceUntilIdle()
 
             assertEquals("new-session-id", settingsFlow.value.sessionId)
             assertEquals(expiresAt, settingsFlow.value.sessionExpiresAt)
