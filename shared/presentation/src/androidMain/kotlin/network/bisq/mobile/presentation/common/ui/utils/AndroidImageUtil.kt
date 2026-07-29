@@ -157,42 +157,4 @@ object AndroidImageUtil : Logging {
         val decodeOptions = BitmapFactory.Options()
         return BitmapFactory.decodeByteArray(data, 0, data.size, decodeOptions)
     }
-
-    fun bitmapToPngByteArray(bitmap: Bitmap): ByteArray {
-        val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-        return outputStream.toByteArray()
-    }
-
-    fun decodePngToImageBitmap(pngByteArray: ByteArray): Bitmap {
-        val decodeOptions = BitmapFactory.Options()
-        return BitmapFactory.decodeByteArray(pngByteArray, 0, pngByteArray.size, decodeOptions)
-    }
-
-    fun saveByteArrayAsPng(
-        data: ByteArray,
-        file: File,
-    ) {
-        val bitmap = byteArrayToBitmap(data)
-        if (bitmap != null) {
-            saveBitmapAsPng(bitmap, file)
-        }
-    }
-
-    fun saveBitmapAsPng(
-        bitmap: Bitmap,
-        file: File,
-    ) {
-        FileOutputStream(file).use { fos ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
-        }
-    }
-
-    fun readPngByteArray(file: File): ByteArray? =
-        try {
-            file.readBytes()
-        } catch (e: IOException) {
-            log.e("Reading $file failed", e)
-            null
-        }
 }
