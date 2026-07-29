@@ -55,7 +55,10 @@ jobs:
     name: Build & Test (No Secrets)
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-14]
+        # macos-26 (Xcode 26 / iOS 26 SDK) is required for the iOS link step: Compose Multiplatform 1.11's
+        # ui-uikit references iOS 26-only UIKit symbols (e.g. UIViewLayoutRegion), so linking the iOS test
+        # binary on the older macos-14 image (Xcode 15/16) fails with "Undefined symbols for architecture arm64".
+        os: [ubuntu-latest, macos-26]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -194,7 +197,7 @@ jobs:
         # cinterop bindings reference symbols from the Sentry Cocoa SDK.
         # Without a real `pod install`, the K/N linker fails the iOS test
         # binaries with `ld: framework 'Sentry' not found`. `podInstall`
-        # is a superset of `generateDummyFramework`; macos-14 runners have
+        # is a superset of `generateDummyFramework`; macos-26 runners have
         # CocoaPods preinstalled, so no extra setup is required.
         if: startsWith(matrix.os, 'macos')
         run: ./gradlew :apps:clientApp:podInstall
