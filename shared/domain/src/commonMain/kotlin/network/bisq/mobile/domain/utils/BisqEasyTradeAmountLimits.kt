@@ -1,5 +1,8 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
@@ -97,17 +100,26 @@ object BisqEasyTradeAmountLimits {
                 return false
             }
 
-        // Safely get seller's reputation score with proper error handling
+        // Safely get seller's reputation score with proper error handling.
+        // A genuinely cancelled caller (e.g. a superseded mapLatest pipeline run) must propagate its
+        // cancellation - treating it as "no reputation" would log noise and wrongly cache valid offers
+        // as invalid below. ensureActive() gates the rethrow so a CancellationException that does NOT
+        // stem from our own cancellation (e.g. a request timeout) still falls through to the plain
+        // failure handling.
+        val reputationResult =
+            runCatching { reputationServiceFacade.getReputation(userProfileId) }
+                .getOrElse { Result.failure(it) }
+        if (reputationResult.exceptionOrNull() is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
         val myScore: Long =
-            runCatching {
-                reputationServiceFacade.getReputation(userProfileId).fold(
-                    onSuccess = { it.totalScore },
-                    onFailure = { exception ->
-                        logger.d("Exception at reputationServiceFacade.getReputation", exception)
-                        0L // Default to zero score on failure
-                    },
-                )
-            }.getOrDefault(0L)
+            reputationResult.fold(
+                onSuccess = { it.totalScore },
+                onFailure = { exception ->
+                    logger.d("Exception at reputationServiceFacade.getReputation", exception)
+                    0L // Default to zero score on failure
+                },
+            )
 
         val isInvalid = myScore < requiredReputationScoreForMinOrFixed
         if (isInvalid) {

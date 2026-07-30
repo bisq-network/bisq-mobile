@@ -2,6 +2,8 @@ package network.bisq.mobile.client.common.domain.websocket.api_proxy
 
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
@@ -155,7 +157,14 @@ class WebSocketApiClient(
                 }
             }
         } catch (e: CancellationException) {
-            // no log on cancellation
+            // If OUR job is cancelled, propagate instead of wrapping in Result.failure: a cancelled
+            // caller must stop, not carry on treating its own cancellation as a request failure (which
+            // spams logs and lets superseded work keep running with bogus fallback values).
+            currentCoroutineContext().ensureActive()
+            // Reached only when the coroutine is still active, i.e. this is NOT our cancellation -
+            // e.g. the request timeout (sendRequestAndAwaitResponse uses withTimeout, and
+            // TimeoutCancellationException IS a CancellationException). Keep reporting those as a
+            // plain request failure, as before.
             return Result.failure(e)
         } catch (e: Exception) {
             log.e(e) { "Failed to get WS request result: ${e.message}" }

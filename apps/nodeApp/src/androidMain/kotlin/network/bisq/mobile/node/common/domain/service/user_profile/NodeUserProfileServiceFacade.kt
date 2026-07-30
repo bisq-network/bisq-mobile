@@ -10,6 +10,7 @@ import bisq.support.moderator.ModerationRequestService
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfileService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -217,10 +218,10 @@ class NodeUserProfileServiceFacade(
         userProfile: UserProfileVO,
         size: Number,
     ): PlatformImage =
-        try {
-            // In case we create the image we want to run it in IO context.
-            // We cache the images in the catHashService if its <=120 px
-            withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
+            try {
+                // In case we create the image we want to run it in IO context.
+                // We cache the images in the catHashService if its <=120 px
                 val ts = System.currentTimeMillis()
                 catHashService
                     .getImage(
@@ -229,10 +230,12 @@ class NodeUserProfileServiceFacade(
                     ).also {
                         log.d { "Get userProfileIcon for ${userProfile.userName} took ${System.currentTimeMillis() - ts} ms. User profile ID=${userProfile.id}" }
                     }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.e(e) { "Failed to get user profile icon; returning fallback" }
+                fallbackProfileImage()
             }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to get user profile icon; returning fallback" }
-            fallbackProfileImage()
         }
 
     private fun fallbackProfileImage(): PlatformImage =

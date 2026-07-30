@@ -271,10 +271,10 @@ class ClientUserProfileServiceFacade(
         userProfile: UserProfileVO,
         size: Number,
     ): PlatformImage =
-        try {
-            // In case we create the image we want to run it in IO context.
-            // We cache the images in the catHashService if its <=120 px
-            withContext(Dispatchers.IO) {
+        // In case we create the image we want to run it in IO context.
+        // We cache the images in the catHashService if its <=120 px
+        withContext(Dispatchers.IO) {
+            try {
                 val ts = Clock.System.now().toEpochMilliseconds()
                 clientCatHashService.getImage(userProfile, size.toInt()).also {
                     log.d {
@@ -283,10 +283,12 @@ class ClientUserProfileServiceFacade(
                         } ms. User profile ID=${userProfile.id}"
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.e(e) { "Failed to get user profile icon; returning fallback" }
+                fallbackProfileImage()
             }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to get user profile icon; returning fallback" }
-            fallbackProfileImage()
         }
 
     @OptIn(ExperimentalEncodingApi::class)
