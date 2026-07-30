@@ -13,7 +13,6 @@ import network.bisq.mobile.data.service.push_notification.PushNotificationServic
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.getPlatformInfo
-import network.bisq.mobile.data.utils.setDefaultLocale
 import network.bisq.mobile.data.utils.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.NumberFormatter
@@ -332,12 +331,7 @@ open class SettingsPresenter(
             settingsServiceFacade
                 .setLanguageCode(langCode)
                 .onSuccess {
-                    try {
-                        setDefaultLocale(langCode)
-                        _uiState.update { it.copy(languageCode = langCode) }
-                    } catch (e: Exception) {
-                        showSnackbar(e.message ?: "mobile.error.generic".i18n(), SnackbarType.ERROR)
-                    }
+                    _uiState.update { it.copy(languageCode = langCode) }
                 }.onFailure { exception ->
                     handleError(exception)
                 }

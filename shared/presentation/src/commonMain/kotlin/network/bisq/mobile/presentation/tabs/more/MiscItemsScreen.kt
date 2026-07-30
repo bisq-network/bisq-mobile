@@ -27,7 +27,7 @@ import bisqapps.shared.presentation.generated.resources.nav_settings
 import bisqapps.shared.presentation.generated.resources.nav_support
 import bisqapps.shared.presentation.generated.resources.nav_user
 import network.bisq.mobile.i18n.UiString
-import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.i18n.resolve
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ArrowRightIcon
@@ -64,7 +64,7 @@ internal fun MiscItemsContent(
                     .verticalScroll(rememberScrollState()),
         ) {
             uiState.sections.forEach { section ->
-                SectionHeader(title = section.title.i18n())
+                SectionHeader(title = section.title.resolve())
                 section.items.forEach { item ->
                     ItemButton(item = item) { onAction(MiscItemsUiAction.OnMenuItemClick(item.route)) }
                     BisqGap.VHalf()
@@ -96,7 +96,7 @@ private fun ItemButton(
     item: MenuItem,
     onClick: () -> Unit,
 ) {
-    val label = item.label.i18n()
+    val label = item.label.resolve()
     val iconTint = if (item.isEnabled) null else ColorFilter.tint(BisqTheme.colors.mid_grey20)
     BisqButton(
         text = label,

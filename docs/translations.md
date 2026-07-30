@@ -10,6 +10,8 @@ Bisq Mobile uses a custom i18n system where `.properties` files are compiled int
 shared/domain/src/commonMain/resources/mobile/
 ```
 
+For Compose language invalidation and the Category A / B / A-with-B-args taxonomy, see [architecture.md § i18n in Compose](architecture.md#i18n-in-compose-locallanguagecode).
+
 ### Currently Supported Languages (14 total)
 
 | Code | Language |

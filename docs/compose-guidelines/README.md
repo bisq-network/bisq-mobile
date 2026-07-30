@@ -99,6 +99,15 @@ fun Screen(presenter: Presenter) {
 - Control reading order and grouping with semantics/traversal where needed.
 - Offer reduced motion options; avoid excessive or disorienting animations.
 
+### i18n and language changes
+
+See [architecture.md § i18n in Compose](../architecture.md#i18n-in-compose-locallanguagecode).
+
+- [`LocalLanguageCode`](../shared/presentation/src/commonMain/kotlin/network/bisq/mobile/presentation/common/ui/components/context/LocalLanguageCode.kt) is provided at the app root in `App`; do not read `MainPresenter.languageCode` in composables for string resolution.
+- **Category A:** presenters emit `UiString` keys; composables resolve with `.resolve()` or `i18nText`.
+- **Category B / A-with-B-args:** keep observing `languageCode` in presenters for locale formatting or localized arguments.
+- Resolve with `i18nText` / `.resolve()`; do not read `LocalLanguageCode.current` directly at call sites. When caching derived lists, key `remember` on the resolved label strings.
+
 ## Testing Compose UI (UiTest)
 
 Compose screens and content should have `*UiTest` coverage for visible states and primary interactions. See [recipes.md#compose](../testing/recipes.md#compose) and [catalog.md](../testing/catalog.md).

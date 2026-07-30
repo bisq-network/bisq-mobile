@@ -130,7 +130,7 @@ class ClientSettingsServiceFacade(
     }
 
     private fun updateLanguage(code: String) {
-        if (I18nSupport.currentLanguage != code || _languageCode.value != code) {
+        if (I18nSupport.currentLanguage.value != code || _languageCode.value != code) {
             I18nSupport.setLanguage(code)
             _languageCode.value = code
         }

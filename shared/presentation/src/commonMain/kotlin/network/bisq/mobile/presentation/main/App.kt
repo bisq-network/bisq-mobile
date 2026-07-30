@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.utils.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationBannerPresenter
@@ -36,6 +35,7 @@ import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.common.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalLanguageCode
 import network.bisq.mobile.presentation.common.ui.components.context.asExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.LoadingOverlay
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ReconnectingOverlay
@@ -134,7 +134,7 @@ fun App(
     val navigationManager: NavigationManager = koinInject()
     val globalUiManager: GlobalUiManager = koinInject()
 
-    val languageCode by presenter.languageCode.collectAsState()
+    val currentLanguageCode by I18nSupport.currentLanguage.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
     val showAllConnectionsLostDialogue by presenter.showAllConnectionsLostDialogue.collectAsState()
     val showReconnectOverlay by presenter.showReconnectOverlay.collectAsState()
@@ -170,58 +170,51 @@ fun App(
         }
     }
 
-    LaunchedEffect(languageCode) {
-        if (languageCode.isNotBlank()) {
-            // TODO is that needed? We set the language for i18n in the SettingsServiceFacade
-            I18nSupport.setLanguage(languageCode)
-            setDefaultLocale(languageCode)
-        }
-    }
-
     BisqTheme {
-        SafeInsetsContainer {
-            SwipeBackIOSNavigationHandler(rootNavController) {
-                CompositionLocalProvider(
-                    LocalAnimationsEnabled provides showAnimation,
-                    LocalExternalUrlOpener provides externalUrlOpener,
-                ) {
+        CompositionLocalProvider(
+            LocalLanguageCode provides currentLanguageCode,
+            LocalAnimationsEnabled provides showAnimation,
+            LocalExternalUrlOpener provides externalUrlOpener,
+        ) {
+            SafeInsetsContainer {
+                SwipeBackIOSNavigationHandler(rootNavController) {
                     Column {
                         NetworkStatusBanner()
                         AlertNotificationBanner(alertNotificationPresenter)
                         navGraphContent()
                     }
                 }
-            }
 
-            GenericErrorOverlay()
+                GenericErrorOverlay()
 
-            if (showAllConnectionsLostDialogue) {
-                WarningConfirmationDialog(
-                    headline = mainPresenter.connectionsLostDialogTitleKey.i18n(),
-                    message = mainPresenter.connectionsLostDialogMessageKey.i18n(),
-                    confirmButtonText = mainPresenter.reconnectOverlayButtonKey.i18n(),
-                    onConfirm = { mainPresenter.onConnectivityRecoveryAction() },
-                    onDismiss = { presenter.onCloseConnectionLostDialogue() },
+                if (showAllConnectionsLostDialogue) {
+                    WarningConfirmationDialog(
+                        headline = mainPresenter.connectionsLostDialogTitleKey.i18n(),
+                        message = mainPresenter.connectionsLostDialogMessageKey.i18n(),
+                        confirmButtonText = mainPresenter.reconnectOverlayButtonKey.i18n(),
+                        onConfirm = { mainPresenter.onConnectivityRecoveryAction() },
+                        onDismiss = { presenter.onCloseConnectionLostDialogue() },
+                    )
+                } else if (showReconnectOverlay) {
+                    ReconnectingOverlay(
+                        onClick = { mainPresenter.onConnectivityRecoveryAction() },
+                        infoKey = mainPresenter.reconnectOverlayInfoKey,
+                        detailsKey = mainPresenter.reconnectOverlayDetailsKey,
+                        buttonTextKey = mainPresenter.reconnectOverlayButtonKey,
+                    )
+                }
+
+                // Global loading overlay - blocks interaction immediately; show/hide dialog after grace delay
+                LoadingOverlay(
+                    isBlocking = isLoadingBlocking,
+                    showDialog = showLoadingDialog,
                 )
-            } else if (showReconnectOverlay) {
-                ReconnectingOverlay(
-                    onClick = { mainPresenter.onConnectivityRecoveryAction() },
-                    infoKey = mainPresenter.reconnectOverlayInfoKey,
-                    detailsKey = mainPresenter.reconnectOverlayDetailsKey,
-                    buttonTextKey = mainPresenter.reconnectOverlayButtonKey,
-                )
+
+                AlertNotificationDialog(alertNotificationPresenter)
+
+                // Global snackbar - displays app-wide snackbar notifications
+                BisqSnackbar(snackbarHostState = snackbarHostState)
             }
-
-            // Global loading overlay - blocks interaction immediately; show/hide dialog after grace delay
-            LoadingOverlay(
-                isBlocking = isLoadingBlocking,
-                showDialog = showLoadingDialog,
-            )
-
-            AlertNotificationDialog(alertNotificationPresenter)
-
-            // Global snackbar - displays app-wide snackbar notifications
-            BisqSnackbar(snackbarHostState = snackbarHostState)
         }
     }
 

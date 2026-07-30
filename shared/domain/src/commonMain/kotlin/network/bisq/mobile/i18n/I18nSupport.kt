@@ -1,6 +1,10 @@
 package network.bisq.mobile.i18n
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.data.utils.setDefaultLocale
 
 // We use non-printing characters as separator. See: https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
 const val ARGS_SEPARATOR: Char = 0x1f.toChar()
@@ -32,8 +36,13 @@ class I18nSupport {
         var isReady: Boolean = false
             private set
 
-        var currentLanguage: String = DEFAULT_LANGUAGE_CODE
-            private set
+        private val _currentLanguage = MutableStateFlow(DEFAULT_LANGUAGE_CODE)
+
+        /**
+         * Resolved language code matching the currently loaded [bundles].
+         * Updated only after bundles and platform default locale are applied in [setLanguage].
+         */
+        val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
 
         fun initialize(languageCode: String = DEFAULT_LANGUAGE_CODE) {
             setLanguage(languageCode)
@@ -43,9 +52,11 @@ class I18nSupport {
         fun setLanguage(languageCode: String = DEFAULT_LANGUAGE_CODE) {
             val bundleMapsByName = LANGUAGE_CODE_TO_BUNDLE_MAP[languageCode]
             val resolvedLanguageCode = if (bundleMapsByName == null) DEFAULT_LANGUAGE_CODE else languageCode
-            currentLanguage = resolvedLanguageCode
             val resolvedBundles = bundleMapsByName ?: GeneratedResourceBundles_en.bundles
             bundles = resolvedBundles.values.map { ResourceBundle(it) }
+            // Locale before emit so observers never see a language ahead of bundles or formatting locale.
+            setDefaultLocale(resolvedLanguageCode)
+            _currentLanguage.value = resolvedLanguageCode
         }
 
         fun has(key: String): Boolean = bundles.any { it.containsKey(key) }

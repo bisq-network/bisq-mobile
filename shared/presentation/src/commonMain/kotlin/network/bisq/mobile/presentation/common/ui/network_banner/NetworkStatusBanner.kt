@@ -35,9 +35,11 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.check_circle
 import kotlinx.coroutines.delay
+import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.i18n.resolve
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerConstants.ANIMATION_DURATION_MS
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerConstants.HIDE_DELAY_MS
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerConstants.STATIC_RING_PROGRESS
@@ -57,7 +59,8 @@ fun NetworkStatusBanner() {
     val animationSettings: AnimationSettings = koinInject()
     val animationsEnabled by animationSettings.enabled.collectAsState()
 
-    val inventoryRequestInfo by presenter.inventoryRequestInfo.collectAsState()
+    val infoUiString by presenter.inventoryRequestInfo.collectAsState()
+    val infoText = infoUiString.resolve()
     val allDataReceived by presenter.allDataReceived.collectAsState()
     val numConnections by presenter.numConnections.collectAsState()
     val isMainContentVisible by presenter.isMainContentVisible.collectAsState()
@@ -66,7 +69,7 @@ fun NetworkStatusBanner() {
         allDataReceived = allDataReceived,
         numConnections = numConnections,
         isMainContentVisible = isMainContentVisible,
-        inventoryRequestInfo = inventoryRequestInfo,
+        inventoryRequestInfo = infoText,
         animationsEnabled = animationsEnabled,
     )
 }

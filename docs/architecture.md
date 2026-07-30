@@ -128,6 +128,24 @@ Node mapping from bisq2: `apps/nodeApp/.../mapping/Mappings.kt` (`fromBisq2Model
 
 ---
 
+## i18n in Compose (`LocalLanguageCode`)
+
+In-app language changes update global `I18nSupport` bundles. Compose does not recompose when bundles change unless something in the tree observes language.
+
+**Root provider:** `LocalLanguageCode` is a `staticCompositionLocalOf` provided under `BisqTheme` in `App.kt` from `I18nSupport.currentLanguage` (`StateFlow`, advanced only after bundles are swapped).
+
+| Category | What | Presenter keeps `languageCode`? |
+|----------|------|----------------------------------|
+| **A** | Key-only strings → emit `UiString`; resolve in composable via `.resolve()` / `i18nText` | No |
+| **B** | Locale formatting (amounts, dates, localized market names) | Yes |
+| **A-with-B-args** | Key is A but args come from B (e.g. headline interpolating localized market name) | Yes — migrating the key does not drop `languageCode` |
+
+Forward path: Category A migrations delete presenter `languageCode` threading. The static local backstops unmigrated `.i18n()` call sites **resolved inside composition** (full subtree recomposition on language change). It does **not** refresh strings that presenters resolve into `StateFlow`s outside composition (`OfferbookPresenter`, `TradeDetailsHeaderPresenter`, etc.) — those still need `languageCode` threading. Do not inject `MainPresenter` solely to read language in UI.
+
+Reference migrations: Splash screens, MiscItems menu (`UiString` in presenter, resolve in composable).
+
+---
+
 ## Agent checklist
 
 When changing or testing code:

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
+import network.bisq.mobile.presentation.common.ui.components.context.LocalLanguageCode
 
 object BisqTheme {
     private val LocalBisqTypography =
@@ -59,6 +60,7 @@ object BisqTheme {
         I18nSupport.setLanguage(language)
         BisqTheme {
             CompositionLocalProvider(
+                LocalLanguageCode provides I18nSupport.currentLanguage.value,
                 LocalExternalUrlOpener provides ExternalUrlOpener { false },
             ) {
                 Box(modifier = Modifier.background(BisqTheme.colors.backgroundColor)) {

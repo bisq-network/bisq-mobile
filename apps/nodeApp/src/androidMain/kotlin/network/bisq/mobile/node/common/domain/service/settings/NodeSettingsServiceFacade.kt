@@ -213,7 +213,7 @@ class NodeSettingsServiceFacade(
         // Normalize the language code to ensure consistency across all systems
         val normalizedCode = Companion.normalizeLanguageCode(code)
 
-        if (I18nSupport.currentLanguage != normalizedCode || _languageCode.value != normalizedCode) {
+        if (I18nSupport.currentLanguage.value != normalizedCode || _languageCode.value != normalizedCode) {
             val locale = languageCodeToLocale(normalizedCode)
             LocaleRepository.setDefaultLocale(locale)
             I18nSupport.setLanguage(normalizedCode)
