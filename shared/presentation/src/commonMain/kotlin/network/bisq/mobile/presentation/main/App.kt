@@ -213,14 +213,6 @@ fun App(
 
                 // Global snackbar - displays app-wide snackbar notifications
                 BisqSnackbar(snackbarHostState = snackbarHostState)
-
-                // TEMP: language_comp_tree testing — remove before merge
-                // FloatingLanguagePicker(
-                //     modifier =
-                //         Modifier
-                //             .align(Alignment.TopEnd)
-                //             .padding(BisqUIConstants.ScreenPadding),
-                // )
             }
         }
     }
