@@ -27,12 +27,12 @@ import bisqapps.shared.presentation.generated.resources.nav_settings
 import bisqapps.shared.presentation.generated.resources.nav_support
 import bisqapps.shared.presentation.generated.resources.nav_user
 import network.bisq.mobile.i18n.UiString
-import network.bisq.mobile.presentation.common.ui.i18n.resolve
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ArrowRightIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
+import network.bisq.mobile.presentation.common.ui.i18n.resolve
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants

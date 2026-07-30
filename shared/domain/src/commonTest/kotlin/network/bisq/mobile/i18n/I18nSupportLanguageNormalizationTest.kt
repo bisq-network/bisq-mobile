@@ -136,5 +136,4 @@ class I18nSupportLanguageNormalizationTest {
         I18nSupport.setLanguage("de")
         assertEquals("de", I18nSupport.currentLanguage.value)
     }
-
 }

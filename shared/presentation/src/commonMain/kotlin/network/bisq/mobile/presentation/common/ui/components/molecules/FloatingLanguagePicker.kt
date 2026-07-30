@@ -115,8 +115,7 @@ fun FloatingLanguagePicker(modifier: Modifier = Modifier) {
                                             isChanging = false
                                         }
                                     }
-                                }
-                                .padding(
+                                }.padding(
                                     horizontal = BisqUIConstants.ScreenPadding,
                                     vertical = BisqUIConstants.ScreenPaddingHalfQuarter,
                                 ),

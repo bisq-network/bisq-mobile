@@ -159,22 +159,21 @@ class NodeSettingsServiceFacade(
     override suspend fun activate() {
         super<ServiceFacade>.activate()
         pins +=
-            settingsService.languageTag.bindTo(_languageCode) { code ->
-                // Normalise the raw bisq2 code (`en_US`, `pt_BR`, `pcm`) into the
-                // canonical Transifex form (`en`, `pt-BR`, `pcm-NG`) BEFORE
-                // publishing into the wire flow. Without this, downstream observers
-                // (UI language selector, analytics) see codes that don't match the
-                // supported-code set and silently drop them.
+            settingsService.languageTag.bindTo { code ->
+                // Route through updateLanguage so platform locale + I18nSupport are
+                // applied BEFORE _languageCode emits. Binding straight into the
+                // StateFlow races Category B formatters (offerbook currency names)
+                // which read Locale.getDefault() on a background combine and end up
+                // one language behind.
                 //
-                // The null tolerance (`code.orEmpty()`) is load-bearing: bisq2 fires
-                // this observer synchronously on subscription with the CURRENT value,
-                // which is null when settings haven't loaded from disk yet (verified
-                // in bisq2 Observable.java:42-50). An NPE here is silently caught by
-                // bisq2 — leaving _languageCode.value stuck at the empty initial
-                // state. With null tolerated and the helper's blank-input branch
-                // returning "en", we end up with a real language for the analytics
-                // baseline AND any downstream observer.
-                normalizeLanguageCode(code.orEmpty())
+                // Normalise the raw bisq2 code (`en_US`, `pt_BR`, `pcm`) into the
+                // canonical Transifex form (`en`, `pt-BR`, `pcm-NG`) inside
+                // updateLanguage. Null tolerance (`code.orEmpty()`) is load-bearing:
+                // bisq2 fires this observer synchronously on subscription with the
+                // CURRENT value, which is null when settings haven't loaded from
+                // disk yet (verified in bisq2 Observable.java:42-50). An NPE here is
+                // silently caught by bisq2 — leaving _languageCode stuck empty.
+                updateLanguage(code.orEmpty())
             }
         // bindNonNullTo: these bisq2 observables are null-initialized (SettingsStore uses
         // `new Observable<>()`) and fire synchronously at subscription with that null before
