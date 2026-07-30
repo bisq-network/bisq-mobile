@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -93,7 +94,7 @@ fun WindowInsets.bottomPaddingDp(): Dp {
 
 @Composable
 fun SafeInsetsContainer(
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     // Outer container consumes insets and paints the background
     Box(
@@ -214,6 +215,14 @@ fun App(
 
                 // Global snackbar - displays app-wide snackbar notifications
                 BisqSnackbar(snackbarHostState = snackbarHostState)
+
+                // TEMP: language_comp_tree testing — remove before merge
+                // FloatingLanguagePicker(
+                //     modifier =
+                //         Modifier
+                //             .align(Alignment.TopEnd)
+                //             .padding(BisqUIConstants.ScreenPadding),
+                // )
             }
         }
     }
