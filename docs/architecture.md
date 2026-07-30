@@ -134,13 +134,13 @@ In-app language changes update global `I18nSupport` bundles. Compose does not re
 
 **Root provider:** `LocalLanguageCode` is a `staticCompositionLocalOf` provided under `BisqTheme` in `App.kt` from `I18nSupport.currentLanguage` (`StateFlow`, advanced only after bundles are swapped).
 
-| Category | What | Presenter keeps `languageCode`? |
-|----------|------|----------------------------------|
+| Category | What | Observes applied language? |
+|----------|------|----------------------------|
 | **A** | Key-only strings → emit `UiString`; resolve in composable via `.resolve()` / `i18nText` | No |
-| **B** | Locale formatting (amounts, dates, localized market names) | Yes |
-| **A-with-B-args** | Key is A but args come from B (e.g. headline interpolating localized market name) | Yes — migrating the key does not drop `languageCode` |
+| **B** | Locale formatting (amounts, dates, localized market names) | Yes — observe `I18nSupport.currentLanguage` |
+| **A-with-B-args** | Key is A but args come from B (e.g. headline interpolating localized market name) | Yes — observe `I18nSupport.currentLanguage`; migrating the key does not drop it |
 
-Forward path: Category A migrations delete presenter `languageCode` threading. The static local backstops unmigrated `.i18n()` call sites **resolved inside composition** (full subtree recomposition on language change). It does **not** refresh strings that presenters resolve into `StateFlow`s outside composition (`OfferbookPresenter`, `TradeDetailsHeaderPresenter`, etc.) — those still need `languageCode` threading. Do not inject `MainPresenter` solely to read language in UI.
+Forward path: Category A migrations delete presenter language threading. The static local backstops unmigrated `.i18n()` call sites **resolved inside composition** (full subtree recomposition on language change). Category B / A-with-B-args presenters observe `I18nSupport.currentLanguage` (applied signal), not `MainPresenter` / settings passthrough. Persisted settings remain on `SettingsServiceFacade.languageCode`. Do not inject `MainPresenter` solely to read language in UI.
 
 Reference migrations: Splash screens, MiscItems menu (`UiString` in presenter, resolve in composable).
 

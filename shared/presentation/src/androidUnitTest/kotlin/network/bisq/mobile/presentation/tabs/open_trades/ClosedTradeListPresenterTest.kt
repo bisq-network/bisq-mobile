@@ -70,7 +70,6 @@ class ClosedTradeListPresenterTest {
         I18nSupport.initialize("en")
         GenericErrorHandler.clearGenericError()
         every { tradesServiceFacade.closedTradesChangeTick } returns closedTradesTickFlow
-        every { mainPresenter.languageCode } returns MutableStateFlow("en")
         coEvery {
             tradesServiceFacade.getClosedTradesPaginated(any(), any(), any(), any(), any())
         } returns

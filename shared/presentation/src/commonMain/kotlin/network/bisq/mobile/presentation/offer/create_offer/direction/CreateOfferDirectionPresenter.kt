@@ -16,6 +16,7 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.utils.CurrencyUtils
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -34,7 +35,7 @@ class CreateOfferDirectionPresenter(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val marketName: StateFlow<String?> =
-        mainPresenter.languageCode
+        I18nSupport.currentLanguage
             .mapLatest { _ ->
                 createOfferCoordinator.createOfferModel.market?.let { market ->
                     CurrencyUtils.getLocaleFiatCurrencyName(

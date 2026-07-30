@@ -88,7 +88,6 @@ class TradeDetailsHeaderPresenterTradeStateParameterizedTest(
         startKoin { modules(testKoinModule) }
         GenericErrorHandler.clearGenericError()
 
-        every { mainPresenter.languageCode } returns MutableStateFlow("en")
         every { mainPresenter.isSmallScreen } returns MutableStateFlow(false)
     }
 

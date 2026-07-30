@@ -20,6 +20,7 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.formatters.TradeDurationFormatter
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -81,7 +82,7 @@ class TradeDetailsHeaderPresenter(
 
         presenterScope.launch {
             combine(
-                mainPresenter.languageCode,
+                I18nSupport.currentLanguage,
                 mainPresenter.isSmallScreen,
                 tradesServiceFacade.selectedTrade,
             ) { _, isSmall, trade ->
@@ -137,7 +138,7 @@ class TradeDetailsHeaderPresenter(
                     } else {
                         val takeOfferDate = trade.bisqEasyTradeModel.takeOfferDate
                         combine(
-                            mainPresenter.languageCode,
+                            I18nSupport.currentLanguage,
                             trade.bisqEasyTradeModel.tradeState,
                             trade.bisqEasyTradeModel.tradeCompletedDate,
                         ) { _: String, _: BisqEasyTradeStateEnum, completedDate: Long? ->

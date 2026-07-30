@@ -22,6 +22,7 @@ import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.usecase.trade.FilterOpenTradesUseCase
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -72,7 +73,7 @@ class OpenTradeListPresenter(
             combine(
                 mainPresenter.tradesWithUnreadMessages,
                 tradesServiceFacade.openTradeItems,
-                mainPresenter.languageCode,
+                I18nSupport.currentLanguage,
                 searchKey,
                 filterKey,
             ) { _, openTrades, _, query, (sort, role) ->

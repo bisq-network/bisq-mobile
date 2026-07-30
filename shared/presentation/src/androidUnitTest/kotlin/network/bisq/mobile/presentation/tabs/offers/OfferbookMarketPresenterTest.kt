@@ -247,10 +247,7 @@ class OfferbookMarketPresenterTest {
             FakeMarketPriceServiceFacade(settingsRepository, marketsWithPrice = emptySet()),
         userProfileServiceFacade: UserProfileServiceFacade = this.userProfileServiceFacade,
     ): OfferbookMarketPresenter {
-        val mainPresenter =
-            mockk<MainPresenter>(relaxed = true) {
-                every { languageCode } returns MutableStateFlow("en")
-            }
+        val mainPresenter = mockk<MainPresenter>(relaxed = true)
         return OfferbookMarketPresenter(
             mainPresenter = mainPresenter,
             offersServiceFacade = offersServiceFacade,

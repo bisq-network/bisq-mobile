@@ -86,7 +86,6 @@ class OpenTradeListPresenterTest {
         every { tradesServiceFacade.openTradeItems } returns openTradeItemsFlow
         every { settingsServiceFacade.tradeRulesConfirmed } returns tradeRulesConfirmedFlow
         every { mainPresenter.tradesWithUnreadMessages } returns tradesWithUnreadFlow
-        every { mainPresenter.languageCode } returns MutableStateFlow("en")
     }
 
     @AfterTest

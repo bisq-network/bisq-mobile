@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.combine
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -54,7 +55,7 @@ class OfferbookMarketPresenter(
             _searchText,
             // globalPriceUpdate is a trigger only: it re-runs the compute when prices refresh.
             marketPriceServiceFacade.globalPriceUpdate,
-            mainPresenter.languageCode,
+            I18nSupport.currentLanguage,
             offersServiceFacade.offerbookMarketItems,
         ) { settings, ignoredProfileIds, searchText, _, languageCode, items ->
             OfferbookMarketUiState(

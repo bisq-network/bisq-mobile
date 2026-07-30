@@ -41,6 +41,7 @@ import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
@@ -215,7 +216,7 @@ open class OfferbookPresenter(
                 offersServiceFacade.offerbookListItems,
                 selectedDirection,
                 offersServiceFacade.selectedOfferbookMarket,
-                mainPresenter.languageCode, // included to refresh formatting when language changes
+                I18nSupport.currentLanguage, // included to refresh formatting when language changes
                 userProfileServiceFacade.selectedUserProfile,
                 selectedPaymentMethodIds,
                 selectedSettlementMethodIds,

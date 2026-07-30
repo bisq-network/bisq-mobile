@@ -56,8 +56,6 @@ interface AppPresenter : ViewPresenter {
     // Observables for state
     val isMainContentVisible: StateFlow<Boolean>
 
-    val languageCode: StateFlow<String>
-
     val isSmallScreen: StateFlow<Boolean>
 
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>

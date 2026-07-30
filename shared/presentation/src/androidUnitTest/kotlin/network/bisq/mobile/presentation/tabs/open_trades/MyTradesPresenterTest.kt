@@ -68,7 +68,6 @@ class MyTradesPresenterTest {
         startKoin { modules(testModule) }
         I18nSupport.initialize("en")
         GenericErrorHandler.clearGenericError()
-        every { mainPresenter.languageCode } returns MutableStateFlow("en")
         presenter = MyTradesPresenter(mainPresenter, backendCapabilitiesService)
         presenter.onViewAttached()
     }

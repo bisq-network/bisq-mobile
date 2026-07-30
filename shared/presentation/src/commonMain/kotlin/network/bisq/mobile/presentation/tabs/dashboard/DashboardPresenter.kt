@@ -20,6 +20,7 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
@@ -193,7 +194,7 @@ open class DashboardPresenter(
 
     private fun launchLanguageChangeListenerJob() {
         presenterScope.launch {
-            mainPresenter.languageCode.collect {
+            I18nSupport.currentLanguage.collect {
                 marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
             }
         }

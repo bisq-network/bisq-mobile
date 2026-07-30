@@ -81,7 +81,6 @@ class TradeDetailsHeaderPresenterTest {
         GenericErrorHandler.clearGenericError()
         I18nSupport.initialize("en")
 
-        every { mainPresenter.languageCode } returns MutableStateFlow("en")
         every { mainPresenter.isSmallScreen } returns MutableStateFlow(false)
     }
 

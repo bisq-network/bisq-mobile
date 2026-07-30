@@ -78,8 +78,6 @@ open class MainPresenter(
     open val connectionsLostDialogTitleKey: String = "mobile.connectivity.disconnected.title"
     open val connectionsLostDialogMessageKey: String = "mobile.connectivity.disconnected.message"
 
-    final override val languageCode: StateFlow<String> get() = settingsService.languageCode
-
     var view: Any? = null
         private set
 
@@ -160,7 +158,7 @@ open class MainPresenter(
 
         log.i { "Lifecycle: View ${if (view != null) view!!::class.simpleName else ""} attached to presenter ${this::class.simpleName}" }
 
-        languageCode
+        settingsService.languageCode
             .filter { it.isNotEmpty() }
             .onEach {
                 settingsService.setLanguageCode(it)
@@ -200,7 +198,7 @@ open class MainPresenter(
         if (languageAnalyticsObserverStarted) return
         languageAnalyticsObserverStarted = true
 
-        languageCode
+        settingsService.languageCode
             .mapNotNull { AnalyticsEvent.Settings.normalizeLanguageCode(it) }
             .distinctUntilChanged()
             .onEach { code ->

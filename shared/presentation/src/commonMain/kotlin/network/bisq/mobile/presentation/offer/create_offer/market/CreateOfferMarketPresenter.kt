@@ -14,6 +14,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -65,7 +66,7 @@ class CreateOfferMarketPresenter(
             _searchText,
             offersServiceFacade.offerbookMarketItems,
             _marketPriceUpdated,
-            mainPresenter.languageCode,
+            I18nSupport.currentLanguage,
         ) { searchText, marketList, _, languageCode ->
             // Use shared filtering utility for consistent behavior
             MarketFilterUtil.filterAndSortMarketsForCreateOffer(
