@@ -1,0 +1,33 @@
+# Dependabot configuration.
+#
+# Scope note: only the standalone Maven test harness is configured for scheduled version updates.
+# The Gradle/KMP app builds are intentionally NOT listed - dependency bumps there are done manually
+# with review (Compose/Ktor/bisq2 jars have cross-cutting compatibility concerns a bot can't judge).
+# GitHub security-update PRs (like #1651, CVE-triggered) are independent of this file and keep
+# working for the whole repo; the groups below also apply to them where configured.
+version: 2
+updates:
+  # support/testing is a standalone Maven test harness (BrowserStack/Appium E2E) - never part of
+  # the shipped app artifacts, so bumps here are low-risk and can be batched monthly.
+  #
+  # appium java-client and selenium have a HARD version coupling: java-client releases raise the
+  # minimum required Selenium version (e.g. 10.1.x requires Selenium >= 4.42.0), while the pom pins
+  # selenium.version directly - and a direct pin wins Maven resolution over the transitive
+  # requirement. Bumps of either must therefore arrive as ONE grouped PR; ungrouped they desync the
+  # pins and break the harness at runtime (NoSuchMethodError), not at resolution time.
+  - package-ecosystem: "maven"
+    directory: "/support/testing"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    groups:
+      appium-selenium:
+        applies-to: version-updates
+        patterns:
+          - "io.appium:*"
+          - "org.seleniumhq.selenium:*"
+      appium-selenium-security:
+        applies-to: security-updates
+        patterns:
+          - "io.appium:*"
+          - "org.seleniumhq.selenium:*"
