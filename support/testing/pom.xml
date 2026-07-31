@@ -18,7 +18,7 @@
              tested by upstream against 4.44 (appium/java-client#2410). The direct pin here wins Maven
              resolution over java-client's transitive requirement, so an out-of-sync bump of either
              property alone breaks the harness at runtime. -->
-        <selenium.version>4.44.0</selenium.version>
+        <selenium.version>4.46.0</selenium.version>
         <appium.version>10.1.1</appium.version>
         <browserstack.version>1.40.3</browserstack.version>
         <commons-io.version>2.16.1</commons-io.version>
