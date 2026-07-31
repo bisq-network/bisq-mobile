@@ -302,6 +302,35 @@ class WebSocketClientImpl(
         }
 
         try {
+            // Redundant against a current node and kept only for older ones. bisq2 now takes the
+            // identity of a proxied REST call from the authenticated upgrade request and strips
+            // whatever the message carries, but a node released before that change reads it from here
+            // and answers 401 without it.
+            //
+            // Why they are still sent rather than gated on the node: doing it now needs bridging code
+            // for the period where both node generations are in the field (probe the node, then decide
+            // per connection), and that bridge has its own failure mode — guess "new node" wrongly and
+            // every call fails. Waiting costs one line instead: once BISQ_API_VERSION requires a node
+            // with the change, an older node is refused at connect with a clear version error and this
+            // block is simply deleted, no fallback and no probe.
+            //
+            // The cost of waiting: if the connection negotiated permessage-deflate, the session id is
+            // inside a compressed frame, and compressed sizes leak information about the plaintext
+            // (CRIME/BREACH). What makes it hard to exploit here is the attacker model: recovering the
+            // id takes an adaptive chosen-plaintext oracle — many requests carrying attacker-chosen
+            // bytes next to the credential, each observed on the wire. A browser gives that away
+            // through scripting; this app issues requests only in response to what the user does. Over
+            // Tor the length signal such an attack reads is further blunted by the fixed 514-byte cells
+            // traffic is padded into.
+            //
+            // bisq2 currently answers the handshake with server_no_context_takeover and
+            // client_no_context_takeover, which resets the deflate window per message and confines
+            // probing to the message the credential is in. Those are negotiated parameters that this
+            // client neither requests nor inspects, so it is context, not a guarantee to rely on.
+            //
+            // Nothing above is conditional on compression: whether a node compresses says nothing
+            // about whether it still needs these headers, and the trigger for deleting this block is
+            // the node version alone.
             if (webSocketRequest is WebSocketRestApiRequest) {
                 val headers = mutableMapOf<String, String>()
                 sessionId?.let { headers[Headers.SESSION_ID] = it }
