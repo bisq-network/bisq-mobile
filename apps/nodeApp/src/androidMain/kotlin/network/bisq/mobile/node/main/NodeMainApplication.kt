@@ -17,6 +17,7 @@ import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.node.common.di.androidNodeDomainModule
 import network.bisq.mobile.node.common.di.androidNodePresentationModule
+import network.bisq.mobile.node.common.domain.logging.Bisq2LoggingSetup
 import network.bisq.mobile.node.common.domain.utils.moveDirReplace
 import network.bisq.mobile.node.settings.backup.domain.BACKUP_FILE_NAME
 import network.bisq.mobile.presentation.common.di.presentationModule
@@ -34,6 +35,11 @@ class NodeMainApplication : MainApplication() {
     override fun getKoinModules(): List<Module> = listOf(dataModule, androidNodeDomainModule, presentationModule, androidNodePresentationModule)
 
     override fun onCreated() {
+        // Route bisq2 core (slf4j/logback) logs to logcat in debug builds / silence them in release
+        // (issue #767). Must run before any bisq2 service logs - i.e. before setupBisqCoreStatics()
+        // and the lifecycle service below - so the jar-bundled logback config never takes effect.
+        Bisq2LoggingSetup.setup(isDebug())
+
         // Use runBlocking for essential system initialization that must complete before app continues
         // This is acceptable here because:
         // 1. It's Application.onCreate() - the right place for critical setup

@@ -468,6 +468,9 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.koin.android)
     implementation(libs.logging.kermit)
+    // Compile-classpath access to the logback API the bisq2 jars already ship at runtime
+    // (their POMs publish it runtime-scoped), for Bisq2LogcatAppender / Bisq2LoggingSetup.
+    implementation(libs.logging.logback.classic)
 }
 
 // -------------------- Build Tasks Configuration --------------------

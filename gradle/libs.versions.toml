@@ -68,6 +68,10 @@ bignum-lib = "0.3.10"
 kmp-tor = "2.6.0"
 kmp-tor-resource = "409.5.0"
 kermit = "2.1.0"
+# Keep in sync with the logback-classic the bisq2 jars pull transitively (they pin it strictly);
+# a mismatch fails resolution loudly, which is the desired failure mode. Used by the nodeApp only,
+# to compile against the logback API for routing bisq2 core logs to logcat (issue #767).
+logback = "1.5.32"
 kphonenumber = "0.11.0"
 # Sentry KMP — opt-in analytics SDK (issue #525). Communicates with self-hosted
 # GlitchTip backend over Tor
@@ -179,6 +183,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 # -------------------- Multiplatform Libraries --------------------
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+logging-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 kmp-tor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmp-tor" }
 kmp-tor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor-gpl", version.ref = "kmp-tor-resource" }
 kmp-tor-resource-noexec = { module = "io.matthewnelson.kmp-tor:resource-noexec-tor-gpl", version.ref = "kmp-tor-resource" }

@@ -180,6 +180,69 @@ class SystemOutFilter(
         }
     }
 
+    // ------------------------------------------------------------------------------------------------
+    // Raw-byte writes. PrintStream inherits these from FilterOutputStream, which would drain them into
+    // the NullOutputStream this class is constructed with - a silent black hole. That is not a
+    // theoretical path: logback's ConsoleAppender (the bisq2 jars bundle a logback.xml using it) emits
+    // exclusively via OutputStream.write(byte[], off, len), never print/println, so every bisq2 core
+    // log line was discarded wholesale - debug and release alike (issue #767). Buffer bytes into lines
+    // and route each completed line through the same filter logic as println().
+    // ------------------------------------------------------------------------------------------------
+
+    private val lineBuffer = StringBuilder()
+
+    @Synchronized
+    override fun write(b: Int) {
+        appendBytes(byteArrayOf(b.toByte()), 0, 1)
+    }
+
+    @Synchronized
+    override fun write(
+        buf: ByteArray,
+        off: Int,
+        len: Int,
+    ) {
+        appendBytes(buf, off, len)
+    }
+
+    @Synchronized
+    override fun flush() {
+        // Emit any buffered partial line so content is not held back indefinitely (writers like
+        // logback flush after each event).
+        if (lineBuffer.isNotEmpty()) {
+            val partial = lineBuffer.toString()
+            lineBuffer.setLength(0)
+            emitLine(partial)
+        }
+        originalStream.flush()
+    }
+
+    private fun appendBytes(
+        buf: ByteArray,
+        off: Int,
+        len: Int,
+    ) {
+        lineBuffer.append(String(buf, off, len))
+        var newlineIndex = lineBuffer.indexOf("\n")
+        while (newlineIndex >= 0) {
+            // Drop the newline itself; emitLine prints with println.
+            val endExclusive = if (newlineIndex > 0 && lineBuffer[newlineIndex - 1] == '\r') newlineIndex - 1 else newlineIndex
+            emitLine(lineBuffer.substring(0, endExclusive))
+            lineBuffer.delete(0, newlineIndex + 1)
+            newlineIndex = lineBuffer.indexOf("\n")
+        }
+    }
+
+    private fun emitLine(line: String) {
+        if (shouldFilter(line)) {
+            if (isDebugBuild) {
+                originalStream.println("[$tag][FILTERED] $line")
+            }
+        } else {
+            originalStream.println(line)
+        }
+    }
+
     private fun shouldFilter(content: String?): Boolean {
         if (content == null) return false
         return FILTER_REGEX.containsMatchIn(content)
