@@ -12,7 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <surefire.version>3.2.5</surefire.version>
+        <surefire.version>3.5.6</surefire.version>
         <config.file>browserstack.yml</config.file>
         <!-- Keep in sync with appium.version: java-client 10.1.1 requires Selenium >= 4.42.0 and is
              tested by upstream against 4.44 (appium/java-client#2410). The direct pin here wins Maven
