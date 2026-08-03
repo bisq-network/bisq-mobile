@@ -40,9 +40,9 @@ import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.test_utils.coroutines.PlatformPresentationKoinTestBase
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

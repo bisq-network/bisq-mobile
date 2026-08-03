@@ -5,7 +5,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeVO
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 import org.robolectric.annotation.Config
 

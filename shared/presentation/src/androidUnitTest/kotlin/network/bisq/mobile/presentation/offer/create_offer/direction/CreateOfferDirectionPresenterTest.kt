@@ -22,11 +22,11 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.test_utils.coroutines.PlatformPresentationKoinTestBase
 import network.bisq.mobile.presentation.common.test_utils.probeStateFlow
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

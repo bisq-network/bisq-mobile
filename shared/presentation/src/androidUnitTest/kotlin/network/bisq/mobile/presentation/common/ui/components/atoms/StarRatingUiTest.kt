@@ -8,8 +8,8 @@ import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
 class StarRatingUiTest : BisqComposeUiTestBase() {

@@ -1,6 +1,6 @@
-package network.bisq.mobile.presentation.common.test_utils.compose
+package network.bisq.mobile.test.presentation.compose
 
-import network.bisq.mobile.presentation.common.test_utils.coroutines.PlatformStaticMocks
+import network.bisq.mobile.test.presentation.coroutines.PlatformStaticMocks
 
 /**
  * Compose + Koin base for presentation UI tests that also need platform static mocks

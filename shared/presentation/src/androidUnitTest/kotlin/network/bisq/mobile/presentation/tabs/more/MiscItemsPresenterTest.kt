@@ -14,9 +14,9 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.i18n.UiString
-import network.bisq.mobile.presentation.common.test_utils.coroutines.PresentationKoinTestBase
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

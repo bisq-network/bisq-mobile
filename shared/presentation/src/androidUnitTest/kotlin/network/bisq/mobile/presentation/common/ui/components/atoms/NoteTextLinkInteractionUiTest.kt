@@ -9,13 +9,13 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import network.bisq.mobile.presentation.common.test_utils.compose.PresentationKoinComposeTestBase
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkDialogSettingsServiceFake
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.webLinkConfirmationTestModule
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
 import org.junit.Test
 import org.koin.dsl.module
 import kotlin.test.assertEquals

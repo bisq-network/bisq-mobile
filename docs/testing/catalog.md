@@ -2,7 +2,7 @@
 
 Ground-truth index of shared test helpers. Do not invent utilities or paths not listed here.
 
-> `:shared:presentation-test-utils` was removed (`2cb248bb`). Helpers live under `shared/presentation/src/androidUnitTest/.../common/test_utils/`.
+> Shared presentation test bases live in `shared/test-utils/src/androidMain/.../test/presentation/` (packages `network.bisq.mobile.test.presentation.*`). Presentation-only fakes/factories stay in `shared/presentation/src/androidUnitTest/.../common/test_utils/`.
 
 ## Leaf bases
 
@@ -10,21 +10,20 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 
 | Base | Path | Use when |
 | --- | --- | --- |
-| `PresentationKoinTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter tests |
-| `PlatformPresentationKoinTestBase` | `.../coroutines/PlatformPresentationKoinTestBase.kt` | + static platform mocks (`getScreenWidthDp`) |
+| `PresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter tests |
+| `PlatformPresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PlatformPresentationKoinTestBase.kt` | + static platform mocks (`getScreenWidthDp`) |
 | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services |
 | `NodeKoinIntegrationTestBase` | `apps/nodeApp/src/androidUnitTest/kotlin/.../test_utils/NodeKoinIntegrationTestBase.kt` | Node presenters/facades |
-| `BisqComposeUiTestBase` | `.../test_utils/compose/BisqComposeUiTestBase.kt` | Compose UI, no Koin |
-| `PresentationKoinComposeTestBase` | `.../test_utils/compose/PresentationKoinComposeTestBase.kt` | Compose + `presentationTestModule` (shared `StandardTestDispatcher`) |
-| `PlatformPresentationKoinComposeTestBase` | `.../test_utils/compose/PlatformPresentationKoinComposeTestBase.kt` | Compose + Koin + platform mocks |
-| `AlertNotificationKoinComposeTestBase` | `.../test_utils/compose/AlertNotificationKoinComposeTestBase.kt` | Alert UI — dedicated Koin module |
+| `BisqComposeUiTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/BisqComposeUiTestBase.kt` | Compose UI, no Koin |
+| `PresentationKoinComposeTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/PresentationKoinComposeTestBase.kt` | Compose + `presentationTestModule` (shared `StandardTestDispatcher`) |
+| `PlatformPresentationKoinComposeTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/PlatformPresentationKoinComposeTestBase.kt` | Compose + Koin + platform mocks |
 
 ## Key helpers
 
 | Symbol | Path |
 | --- | --- |
-| `BisqComposeTestSupport` | `.../test_utils/compose/BisqComposeTestSupport.kt` |
-| `presentationTestModule(...)` | `.../test_utils/di/PresentationTestModule.kt` |
+| `BisqComposeTestSupport` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/BisqComposeTestSupport.kt` |
+| `presentationTestModule(...)` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/di/PresentationTestModule.kt` |
 | `analyticsTestModule` | `shared/test-utils/src/androidMain/kotlin/.../test/koin/AnalyticsTestModule.kt` |
 | `clientTestModule` | `apps/clientApp/src/androidUnitTest/kotlin/.../client/common/di/TestModule.kt` |
 | `commonTestModule` | `apps/clientApp/src/commonTest/kotlin/.../client/common/di/CommonTestModule.kt` |
@@ -35,8 +34,8 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `FakeAppUpdateLinker` | `.../test_utils/FakeAppUpdateLinker.kt` |
 | `TEST_APP_UPDATE_URL` | `.../test_utils/FakeAppUpdateLinker.kt` |
 | `StateFlowProbe` | `.../test_utils/StateFlowProbe.kt` |
-| `NoopNavigationManager` | `.../test_utils/di/NoopNavigationManager.kt` |
-| `PlatformStaticMocks` | `.../test_utils/coroutines/PlatformStaticMocks.kt` |
+| `NoopNavigationManager` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/di/NoopNavigationManager.kt` |
+| `PlatformStaticMocks` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PlatformStaticMocks.kt` |
 | `FakeConfigServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/FakeConfigServiceFacade.kt` |
 | `FakeMarketPriceServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/FakeMarketPriceServiceFacade.kt` |
 | `OfferTestFactory` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/OfferTestFactory.kt` |

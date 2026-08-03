@@ -16,8 +16,8 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.test_utils.di.presentationTestModule
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.test.presentation.di.presentationTestModule
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module

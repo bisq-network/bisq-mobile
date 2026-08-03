@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.common.test_utils.di
+package network.bisq.mobile.test.presentation.di
 
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder

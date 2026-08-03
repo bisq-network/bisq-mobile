@@ -6,7 +6,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
 /**

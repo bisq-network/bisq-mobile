@@ -9,8 +9,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.UiString
-import network.bisq.mobile.presentation.common.test_utils.coroutines.PresentationKoinTestBase
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import org.junit.Test
 import kotlin.test.assertEquals
 

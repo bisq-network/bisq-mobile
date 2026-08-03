@@ -1,10 +1,10 @@
-package network.bisq.mobile.presentation.common.test_utils.coroutines
+package network.bisq.mobile.test.presentation.coroutines
 
 import io.mockk.mockk
-import network.bisq.mobile.presentation.common.test_utils.di.presentationTestModule
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.test.koin.KoinIntegrationTestBase
+import network.bisq.mobile.test.presentation.di.presentationTestModule
 import org.koin.core.module.Module
 
 /**

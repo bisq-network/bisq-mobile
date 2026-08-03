@@ -38,7 +38,6 @@ import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacad
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
@@ -46,6 +45,7 @@ import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
+import network.bisq.mobile.test.presentation.di.NoopNavigationManager
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module

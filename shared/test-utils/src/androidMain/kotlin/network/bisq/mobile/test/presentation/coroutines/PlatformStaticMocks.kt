@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.common.test_utils.coroutines
+package network.bisq.mobile.test.presentation.coroutines
 
 import io.mockk.every
 import io.mockk.mockkStatic

@@ -12,8 +12,8 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithTag
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
 import network.bisq.mobile.presentation.common.ui.components.context.LocalLanguageCode
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.After
 import org.junit.Test
 

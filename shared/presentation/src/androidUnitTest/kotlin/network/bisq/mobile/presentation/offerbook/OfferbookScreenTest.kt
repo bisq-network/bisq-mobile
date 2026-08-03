@@ -44,7 +44,6 @@ import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -55,6 +54,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
+import network.bisq.mobile.test.presentation.di.NoopNavigationManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule

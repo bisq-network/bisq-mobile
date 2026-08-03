@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.common.test_utils.compose
+package network.bisq.mobile.test.presentation.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeTestSupport.setBisqTestContent
-import network.bisq.mobile.presentation.common.test_utils.coroutines.PresentationKoinTestBase
+import network.bisq.mobile.test.presentation.compose.BisqComposeTestSupport.setBisqTestContent
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.koin.core.context.startKoin

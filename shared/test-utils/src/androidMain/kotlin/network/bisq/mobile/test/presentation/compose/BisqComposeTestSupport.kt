@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.common.test_utils.compose
+package network.bisq.mobile.test.presentation.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

@@ -42,7 +42,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
-import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationBannerPresenter
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -50,6 +49,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationM
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import network.bisq.mobile.test.presentation.di.NoopNavigationManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule

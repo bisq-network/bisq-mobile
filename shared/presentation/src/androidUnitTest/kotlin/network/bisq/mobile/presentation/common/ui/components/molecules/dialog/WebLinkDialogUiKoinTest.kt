@@ -16,12 +16,12 @@ import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.test_utils.compose.PresentationKoinComposeTestBase
 import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
 import org.junit.Test
 import org.koin.core.module.Module
 import kotlin.test.assertEquals

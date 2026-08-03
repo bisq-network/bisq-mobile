@@ -46,7 +46,7 @@ Issues hit (KGP + AGP 8.13, Kotlin 2.4):
 | `kotlin.srcDir("src/testFixtures/kotlin")` bridge | Gradle compiled fine; Android Studio did not index `presentation.test.*` or `kotlin.test.*` reliably |
 | Fixtures are Android/JVM-only | Correct for presenter/Compose helpers; `commonTest` / `iosTest` cannot consume them |
 
-Cross-platform bases (`CoroutineTestBase`, `KoinIntegrationTestBase`) stay in `:shared:test-utils` `commonMain`. Android-only presenter/UI/Koin bases belong with presentation tests.
+Cross-platform bases (`CoroutineTestBase`, dispatcher providers, repository mocks) live in `:shared:test-utils` `commonMain`; Android-only bases (`KoinIntegrationTestBase`, presenter/UI/Compose bases) live in its `androidMain` — see [Current approach](#current-approach).
 
 ### 3. Re-check with `enableTestFixturesKotlinSupport` (Jul 2026)
 
@@ -69,25 +69,43 @@ So AGP's experimental Kotlin fixtures support applies to pure `kotlin-android` m
 
 Do not re-enable `testFixtures` on `:shared:presentation` until KGP registers `compile*TestFixturesKotlin` for KMP Android libraries (or AGP built-in Kotlin / a later KGP release documents that path).
 
+### 4. `kotlin.srcDirs` graft from clientApp (removed Jul 2026)
+
+`clientApp` grafted presentation's `test_utils/{compose,coroutines,di}` directories into its own
+`androidUnitTest` source set via `kotlin.srcDirs`. Gradle compiled fine (each module compiles its
+own copy), but the IDE broke: **Android Studio assigns each directory to exactly one module**, and
+the most specific content root wins. The grafted subdirectories were claimed by
+`clientApp.unitTest`, so presentation's own tests could no longer resolve
+`PresentationKoinTestBase` and friends — "Unresolved reference `test_utils`" on every presenter
+test, on every machine, surviving cache invalidation (plus duplicated-PSI `different providers`
+exceptions in `idea.log`). Diagnosed 2026-07-29; do not reintroduce source-dir grafts across
+modules.
+
 ## Current approach
 
-Helpers live in presentation's `androidUnitTest`:
+Android presentation test bases live in `:shared:test-utils` `androidMain`:
 
 ```text
-shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/
+shared/test-utils/src/androidMain/kotlin/.../test/presentation/
   compose/     BisqComposeUiTestBase, PresentationKoinComposeTestBase, …
   coroutines/  PresentationKoinTestBase, PlatformPresentationKoinTestBase
-  di/          presentationTestModule(...)
+  di/          presentationTestModule(...), NoopNavigationManager
 ```
 
-`:shared:presentation-test-utils` was removed.
+Packages: `network.bisq.mobile.test.presentation.*`.
 
-`clientApp` reuses helpers via `kotlin.srcDirs` grafts in `apps/clientApp/build.gradle.kts` — not a module dependency, so no cycle. Point only at `compose/`, `coroutines/`, and `di/` (not the `test_utils` root). Do **not** use `kotlin.include` on that source set: it replaces the default `**/*` and drops clientApp's own `androidUnitTest` sources.
+`:shared:test-utils` `androidMain` has `api(project(":shared:presentation"))` — a one-way
+dependency on presentation's production code. Presentation's `androidUnitTest` depends back on
+`:shared:test-utils`'s *main* compilation; at source-set granularity this is acyclic
+(`test-utils androidMain → presentation main`; `presentation androidUnitTest → test-utils
+androidMain`), and both Gradle and the IDE handle it. This differs from the removed
+`:shared:presentation-test-utils` era (attempt 1) mainly in that helpers live in the existing
+shared test module and consumers resolve them as a normal module dependency instead of shared
+source directories.
 
-```text
-presentation main ← clientApp (implementation)
-presentation test_utils/{compose,coroutines,di} ← clientApp androidUnitTest (srcDirs graft)
-```
+Presentation-only fakes/factories (`FakeConfigServiceFacade`, `OfferTestFactory`, `StateFlowProbe`,
+…) stay in `shared/presentation/src/androidUnitTest/.../common/test_utils/` — they are not needed
+outside that module.
 
 Explicit `implementation(libs.kotlin.test)` on `androidUnitTest` avoids IDE gaps when only `kotlin-test-junit` is declared.
 
@@ -95,12 +113,11 @@ Explicit `implementation(libs.kotlin.test)` on `androidUnitTest` avoids IDE gaps
 
 Try AGP test fixtures again when **KMP** publishes Kotlin classes into the testFixtures AAR (look for a real `compileDebugTestFixturesKotlin` task on `:shared:presentation`, not only the experimental AGP flag). Migration would be:
 
-1. Move `common/test_utils/{compose,coroutines,di}` → `src/testFixtures/kotlin/`
+1. Move `test-utils/src/androidMain/.../test/presentation/{compose,coroutines,di}` → presentation's `src/testFixtures/kotlin/`
 2. `testFixtures { enable = true }` on `:shared:presentation`
 3. `android.experimental.enableTestFixturesKotlinSupport=true` in `gradle.properties` (until non-experimental)
-4. `clientApp`: `implementation(testFixtures(project(":shared:presentation")))`
-5. Remove `kotlin.srcDirs` graft
-6. Smoke-check: `assembleDebugTestFixtures` → `classes.jar` contains helper `.class` files; presentation + clientApp unit tests still resolve bases in the IDE
+4. Consumers: `implementation(testFixtures(project(":shared:presentation")))`; drop `api(project(":shared:presentation"))` from `:shared:test-utils` `androidMain`
+5. Smoke-check: `assembleDebugTestFixtures` → `classes.jar` contains helper `.class` files; presentation + clientApp unit tests still resolve bases in the IDE
 
 ## References
 

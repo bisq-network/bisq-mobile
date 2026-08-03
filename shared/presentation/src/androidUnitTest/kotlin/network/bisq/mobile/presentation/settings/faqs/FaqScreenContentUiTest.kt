@@ -7,7 +7,7 @@ import androidx.compose.ui.test.performScrollTo
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Before
 import org.junit.Test
 

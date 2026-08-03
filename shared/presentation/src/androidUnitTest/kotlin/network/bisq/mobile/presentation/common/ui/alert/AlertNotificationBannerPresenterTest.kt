@@ -29,10 +29,10 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
-import network.bisq.mobile.presentation.common.test_utils.di.NoopNavigationManager
 import network.bisq.mobile.presentation.common.test_utils.probeStateFlow
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.test.presentation.di.NoopNavigationManager
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module

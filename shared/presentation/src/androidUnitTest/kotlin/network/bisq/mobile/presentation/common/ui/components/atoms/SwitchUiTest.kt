@@ -8,7 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import io.mockk.mockk
 import io.mockk.verify
-import network.bisq.mobile.presentation.common.test_utils.compose.BisqComposeUiTestBase
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
 /**
