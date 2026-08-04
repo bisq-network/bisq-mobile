@@ -34,7 +34,7 @@ kover = "0.9.7"
 #noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
 agp = "8.13.2"
 android-ndk = "26.1.10909125"
-android-compileSdk = "36"
+android-compileSdk = "37"
 android-targetSdk = "36"
 android-minSdk = "24"
 # TODO analyse lowering back to API 31 when Bisq2 full J17 support is returned and we can get rid of desugaring
