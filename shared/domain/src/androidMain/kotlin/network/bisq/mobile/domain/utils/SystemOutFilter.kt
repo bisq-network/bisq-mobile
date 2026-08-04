@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.utils
 
+import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
 
@@ -189,7 +190,11 @@ class SystemOutFilter(
     // and route each completed line through the same filter logic as println().
     // ------------------------------------------------------------------------------------------------
 
-    private val lineBuffer = StringBuilder()
+    // Bytes are buffered raw and decoded only once a full line is available, so a multi-byte
+    // UTF-8 character split across write() calls survives intact. UTF-8 matches logback's
+    // effective console encoding here (no explicit charset configured -> platform default,
+    // which is UTF-8 on Android).
+    private val lineBuffer = ByteArrayOutputStream()
 
     @Synchronized
     override fun write(b: Int) {
@@ -209,9 +214,9 @@ class SystemOutFilter(
     override fun flush() {
         // Emit any buffered partial line so content is not held back indefinitely (writers like
         // logback flush after each event).
-        if (lineBuffer.isNotEmpty()) {
-            val partial = lineBuffer.toString()
-            lineBuffer.setLength(0)
+        if (lineBuffer.size() > 0) {
+            val partial = String(lineBuffer.toByteArray(), Charsets.UTF_8)
+            lineBuffer.reset()
             emitLine(partial)
         }
         originalStream.flush()
@@ -222,14 +227,18 @@ class SystemOutFilter(
         off: Int,
         len: Int,
     ) {
-        lineBuffer.append(String(buf, off, len))
-        var newlineIndex = lineBuffer.indexOf("\n")
-        while (newlineIndex >= 0) {
-            // Drop the newline itself; emitLine prints with println.
-            val endExclusive = if (newlineIndex > 0 && lineBuffer[newlineIndex - 1] == '\r') newlineIndex - 1 else newlineIndex
-            emitLine(lineBuffer.substring(0, endExclusive))
-            lineBuffer.delete(0, newlineIndex + 1)
-            newlineIndex = lineBuffer.indexOf("\n")
+        for (i in off until off + len) {
+            val byte = buf[i]
+            if (byte == '\n'.code.toByte()) {
+                val bytes = lineBuffer.toByteArray()
+                lineBuffer.reset()
+                // Drop a trailing CR so CRLF lines emit clean; emitLine prints with println.
+                val endExclusive =
+                    if (bytes.isNotEmpty() && bytes[bytes.size - 1] == '\r'.code.toByte()) bytes.size - 1 else bytes.size
+                emitLine(String(bytes, 0, endExclusive, Charsets.UTF_8))
+            } else {
+                lineBuffer.write(byte.toInt())
+            }
         }
     }
 

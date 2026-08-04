@@ -96,7 +96,18 @@ class SystemOutFilterTest {
         filter.write(line, 0, line.size)
 
         assertTrue(output().contains("windows style"))
-        assertFalse(output().contains("\r\r"), "the CR must be stripped, not doubled by println")
+        assertFalse(output().contains("\r"), "the CR must be stripped entirely")
+    }
+
+    @Test
+    fun `multi-byte character split across writes is not corrupted`() {
+        val filter = debugFilter()
+        val bytes = "café line\n".toByteArray(Charsets.UTF_8)
+        // 'é' is two bytes in UTF-8 (indices 3..4); split the write between them.
+        filter.write(bytes, 0, 4)
+        filter.write(bytes, 4, bytes.size - 4)
+
+        assertTrue(output().contains("café line"), "a split multi-byte char must decode intact")
     }
 
     @Test
