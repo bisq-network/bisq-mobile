@@ -2,6 +2,7 @@ package network.bisq.mobile.node.common.domain.logging
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
+import network.bisq.mobile.node.BuildConfig
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -21,11 +22,14 @@ object Bisq2LoggingSetup {
     /**
      * ============================ TWEAK ME (debug builds) =============================
      * The bisq2 core is very verbose by default (the jar's logback.xml leaves root at DEBUG).
-     * [DEBUG_ROOT_LEVEL] is the baseline; [DEBUG_LOGGER_LEVELS] raises/lowers specific subtrees.
-     * Chasing something specific? Set its package to DEBUG/TRACE here - entries win over root.
+     * [DEBUG_ROOT_LEVEL] is the baseline - set it WITHOUT touching code via
+     * `BISQ2_LOG_LEVEL=DEBUG` in local.properties (default lives in gradle.properties as
+     * `node.bisq2.log.level`; unparseable values fall back to INFO).
+     * [DEBUG_LOGGER_LEVELS] raises/lowers specific subtrees. Chasing something specific?
+     * Set its package to DEBUG/TRACE here - entries win over root.
      * ==================================================================================
      */
-    val DEBUG_ROOT_LEVEL: Level = Level.INFO
+    val DEBUG_ROOT_LEVEL: Level = Level.toLevel(BuildConfig.BISQ2_LOG_LEVEL, Level.INFO)
     val DEBUG_LOGGER_LEVELS: Map<String, Level> =
         mapOf(
             // Per-connection / inventory-request chatter floods logcat at INFO during bootstrap.

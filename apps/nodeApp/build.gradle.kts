@@ -156,6 +156,15 @@ android {
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
 
+        // bisq2 core root log level, only honored in debug builds (release/profile silence the
+        // core - see Bisq2LoggingSetup). Default in gradle.properties, per-dev override via
+        // BISQ2_LOG_LEVEL in local.properties. Defined in defaultConfig because the consuming
+        // code compiles in every variant.
+        val bisq2LogLevel =
+            localProperties.getProperty("BISQ2_LOG_LEVEL")
+                ?: (project.findProperty("node.bisq2.log.level") as? String ?: "INFO")
+        buildConfigField("String", "BISQ2_LOG_LEVEL", "\"$bisq2LogLevel\"")
+
         // Memory management configuration
         // Default: extended heap. Turn false to test for mem leaks reducing heap size.
         manifestPlaceholders["largeHeap"] = "true"
