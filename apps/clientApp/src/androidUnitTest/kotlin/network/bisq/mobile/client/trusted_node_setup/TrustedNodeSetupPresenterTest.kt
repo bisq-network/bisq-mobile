@@ -2,6 +2,7 @@ package network.bisq.mobile.client.trusted_node_setup
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -836,6 +837,23 @@ class TrustedNodeSetupPresenterTest {
 
             // Then
             assertFalse(presenter.uiState.value.showChangeNodeWarning)
+        }
+
+    @Test
+    fun `when OnChangeNodeWarningConfirm action then hides main content before clearing settings`() =
+        runTest(testDispatcher) {
+            coEvery { sensitiveSettingsRepository.clear() } returns Unit
+            setupPresenter()
+            presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
+            advanceUntilIdle()
+
+            presenter.onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm)
+            advanceUntilIdle()
+
+            coVerifyOrder {
+                mainPresenter.setIsMainContentVisible(false)
+                sensitiveSettingsRepository.clear()
+            }
         }
 
     @Test

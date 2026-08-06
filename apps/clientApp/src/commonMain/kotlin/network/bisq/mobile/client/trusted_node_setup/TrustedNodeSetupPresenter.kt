@@ -29,7 +29,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
  * Presenter for the Trusted Node Setup screen.
  */
 class TrustedNodeSetupPresenter(
-    mainPresenter: MainPresenter,
+    private val mainPresenter: MainPresenter,
     private val kmpTorService: KmpTorService,
     private val trustedNodeSetupUseCase: TrustedNodeSetupUseCase,
     private val apiAccessService: ApiAccessService,
@@ -324,6 +324,7 @@ class TrustedNodeSetupPresenter(
 
     private fun onChangeNodeWarningConfirm() {
         presenterScope.launch {
+            mainPresenter.setIsMainContentVisible(false)
             sensitiveSettingsRepository.clear()
             pairingQrCode = null
             _uiState.value = TrustedNodeSetupUiState()

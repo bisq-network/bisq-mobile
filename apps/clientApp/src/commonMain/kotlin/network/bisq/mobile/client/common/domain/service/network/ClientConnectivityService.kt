@@ -192,20 +192,27 @@ open class ClientConnectivityService(
                         // be down even though the TCP socket looks alive (half-open connection).
                         // We must verify with a real round-trip before trusting the connection.
                         if (!connected) {
-                            // A dropped connection ends the current trusted session, so restart
-                            // the health-check grace counter — the next reconnected session must
-                            // get a fresh single-miss tolerance rather than inheriting a stale count.
-                            consecutiveHealthCheckFailures = 0
-                            consecutiveReconnectingCycles++
-                            log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
-                            if (shouldForceClientRecreation()) {
-                                log.i { "Forcing client recreation after $consecutiveReconnectingCycles failed cycles (platform=${platformInfo.type})" }
-                                webSocketClientService.forceClientRecreation()
+                            if (webSocketClientService.isAwaitingPairingCredentials.value) {
+                                consecutiveHealthCheckFailures = 0
                                 consecutiveReconnectingCycles = 0
+                                connectionUntrusted = false
+                                ConnectivityStatus.DISCONNECTED
                             } else {
-                                webSocketClientService.triggerReconnect()
+                                // A dropped connection ends the current trusted session, so restart
+                                // the health-check grace counter — the next reconnected session must
+                                // get a fresh single-miss tolerance rather than inheriting a stale count.
+                                consecutiveHealthCheckFailures = 0
+                                consecutiveReconnectingCycles++
+                                log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
+                                if (shouldForceClientRecreation()) {
+                                    log.i { "Forcing client recreation after $consecutiveReconnectingCycles failed cycles (platform=${platformInfo.type})" }
+                                    webSocketClientService.forceClientRecreation()
+                                    consecutiveReconnectingCycles = 0
+                                } else {
+                                    webSocketClientService.triggerReconnect()
+                                }
+                                ConnectivityStatus.RECONNECTING
                             }
-                            ConnectivityStatus.RECONNECTING
                         } else {
                             // isConnected() is true but connection is untrusted.
                             // Verify with a health check before restoring trust.

@@ -48,6 +48,7 @@ class ClientConnectivityServiceTest {
         coEvery { webSocketClientService.sendHealthCheck() } returns true
         every { webSocketClientService.isSubscriptionsPending } returns MutableStateFlow(false)
         every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(emptySet())
+        every { webSocketClientService.isAwaitingPairingCredentials } returns MutableStateFlow(false)
         clientConnectivityService = ClientConnectivityService(webSocketClientService, androidPlatformInfo)
         // Reset static averageTripTime via public API: the averaging formula
         // (current + new) / 2 converges quickly to 0, ensuring isSlow() returns false.
@@ -110,6 +111,21 @@ class ClientConnectivityServiceTest {
             delay(300)
 
             assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+        }
+
+    @Test
+    fun `checkConnectivity returns DISCONNECTED and skips reconnect when awaiting pairing credentials`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns false
+            every { webSocketClientService.isAwaitingPairingCredentials } returns MutableStateFlow(true)
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 100, startDelay = 0)
+            delay(300)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.DISCONNECTED, clientConnectivityService.status.value)
+            coVerify(exactly = 0) { webSocketClientService.triggerReconnect() }
         }
 
     @Test
@@ -597,6 +613,7 @@ class ClientConnectivityServiceTest {
             for (platform in listOf(androidPlatformInfo, iosPlatformInfo)) {
                 clearMocks(webSocketClientService)
                 every { webSocketClientService.isConnected() } returns false
+                every { webSocketClientService.isAwaitingPairingCredentials } returns MutableStateFlow(false)
                 every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(emptySet())
                 coEvery { webSocketClientService.triggerReconnect() } just Runs
                 coEvery { webSocketClientService.forceClientRecreation() } just Runs

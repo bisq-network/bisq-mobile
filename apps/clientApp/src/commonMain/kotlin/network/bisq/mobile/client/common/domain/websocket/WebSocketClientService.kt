@@ -112,6 +112,11 @@ class WebSocketClientService(
         _clientRevoked.value = false
     }
 
+    private val _isAwaitingPairingCredentials = MutableStateFlow(false)
+
+    /** True while client or session pairing credentials are blank and WebSocket creation is intentionally skipped. */
+    val isAwaitingPairingCredentials: StateFlow<Boolean> = _isAwaitingPairingCredentials.asStateFlow()
+
     val isTorProxy: Boolean get() = preservedIsTorProxy || currentClientSettings?.isTorProxy == true
 
     private val clientUpdateMutex = Mutex()
@@ -347,8 +352,11 @@ class WebSocketClientService(
                 stateCollectionJob = null
                 currentClientSettings = null
                 _connectionState.value = ConnectionState.Disconnected()
+                _isAwaitingPairingCredentials.value = true
                 return@withLock
             }
+
+            _isAwaitingPairingCredentials.value = false
 
             // Cold start with a short-lived persisted session: wait for bootstrap POST to
             // rotate sessionId before opening WS (avoids connect-then-dispose on renewal).

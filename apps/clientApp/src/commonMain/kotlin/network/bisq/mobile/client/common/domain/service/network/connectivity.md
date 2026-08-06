@@ -213,7 +213,7 @@ Bootstrap session POST also persists `sessionExpiresAt` (same as renewal).
 5. Identical `HttpClientSettings` — skip WS replacement (avoids churn during Tor startup duplicates).
 6. Healthy live WS + unchanged topology — bootstrap `sessionId` rotation may skip recreation when ≥15m session remains.
 7. Cold start — defer WS creation when persisted session is expired, expiring within 15m, or expiry unknown.
-8. Pairing — blank `sessionId`/`clientId` skips WS creation until credentials exist.
+8. Pairing — blank `sessionId`/`clientId` skips WS creation until credentials exist; health monitor publishes `DISCONNECTED` (not `RECONNECTING`) and does not trigger reconnect while awaiting pairing credentials. Intentional re-pair clears `isMainContentVisible` so reconnect overlays stay suppressed until Dashboard re-arms on Home.
 9. iOS `CancellationException` on disconnect — reconnect only when cause message contains `"Socket is not connected"`; other cancellations are not auto-retried.
 10. iOS SIGSEGV guard — extract `requestId` from raw JSON before deserializing sealed WS messages.
 11. `unSubscribe()` — not implemented (logs warning).
