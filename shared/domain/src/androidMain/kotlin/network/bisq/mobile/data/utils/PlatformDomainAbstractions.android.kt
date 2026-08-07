@@ -230,9 +230,11 @@ actual val decimalFormatter: DecimalFormatter =
     }
 
 actual fun setDefaultLocale(language: String) {
-    // Use Locale.forLanguageTag to support BCP‑47 (e.g., "en-US").
+    // Strict BCP‑47 parse — unlike forLanguageTag, rejects invalid/partial tags (e.g. "en-X").
     val locale =
-        Locale.forLanguageTag(language).takeUnless { it.language.isEmpty() }
+        runCatching { Locale.Builder().setLanguageTag(language).build() }
+            .getOrNull()
+            ?.takeUnless { it.language.isEmpty() }
             ?: Locale.ENGLISH
     try {
         Locale.setDefault(locale)

@@ -53,9 +53,11 @@ class I18nSupport {
             val bundleMapsByName = LANGUAGE_CODE_TO_BUNDLE_MAP[languageCode]
             val resolvedLanguageCode = if (bundleMapsByName == null) DEFAULT_LANGUAGE_CODE else languageCode
             val resolvedBundles = bundleMapsByName ?: GeneratedResourceBundles_en.bundles
-            bundles = resolvedBundles.values.map { ResourceBundle(it) }
-            // Locale before emit so observers never see a language ahead of bundles or formatting locale.
+            val stagedBundles = resolvedBundles.values.map { ResourceBundle(it) }
+            // Apply locale before committing bundles/language. If setDefaultLocale fails
+            // (non-preview SecurityException), leave the previously active state intact.
             setDefaultLocale(resolvedLanguageCode)
+            bundles = stagedBundles
             _currentLanguage.value = resolvedLanguageCode
         }
 

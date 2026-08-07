@@ -45,6 +45,23 @@ class LocaleUtilsTest {
     }
 
     @Test
+    fun `setDefaultLocale falls back to English for partially parsed tags`() {
+        // forLanguageTag("en-X") would silently become "en"; Builder rejects it.
+        setDefaultLocale("en-X")
+
+        assertEquals(Locale.ENGLISH.language, Locale.getDefault().language)
+        assertEquals(Locale.ENGLISH.country, Locale.getDefault().country)
+    }
+
+    @Test
+    fun `setDefaultLocale applies hyphenated BCP47 tags`() {
+        setDefaultLocale("pt-BR")
+
+        assertEquals("pt", Locale.getDefault().language)
+        assertEquals("BR", Locale.getDefault().country)
+    }
+
+    @Test
     fun `isComposePreviewLocaleSandbox is true for RenderSecurityException name`() {
         assertTrue(isComposePreviewLocaleSandbox(RenderSecurityExceptionStub("user.language")))
     }
