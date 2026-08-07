@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.utils
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
@@ -146,6 +147,30 @@ class BisqEasyTradeAmountLimitsTest {
                 )
 
             assertFalse(isInvalid)
+        }
+
+    /**
+     * List callers fetch the (shared) score once and pass it in — the facade must not be hit again
+     * per offer: on the client a getReputation call can be a full websocket round trip.
+     */
+    @Test
+    fun `isBuyOfferInvalid uses the pre-fetched reputation and skips the facade lookup`() =
+        runTest {
+            val reputationServiceFacade = mockk<ReputationServiceFacade>()
+
+            val isInvalid =
+                BisqEasyTradeAmountLimits.isBuyOfferInvalid(
+                    item = buildBuyOfferModel("valid-prefetched"),
+                    useCache = false,
+                    marketPriceServiceFacade = marketServiceWithPrices(),
+                    reputationServiceFacade = reputationServiceFacade,
+                    userProfileId = "seller",
+                    limits = TradeAmountLimitsVO.DEFAULT,
+                    preFetchedReputation = Result.success(ReputationScoreVO(Long.MAX_VALUE, 0.0, 0)),
+                )
+
+            assertFalse(isInvalid)
+            coVerify(exactly = 0) { reputationServiceFacade.getReputation(any()) }
         }
 
     @Test

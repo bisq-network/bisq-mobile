@@ -21,6 +21,7 @@ import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import kotlin.math.roundToLong
@@ -78,6 +79,11 @@ object BisqEasyTradeAmountLimits {
         reputationServiceFacade: ReputationServiceFacade,
         userProfileId: String,
         limits: TradeAmountLimitsVO,
+        // The score is MINE (as prospective seller) for every BUY offer in a list, so callers
+        // iterating many offers should fetch it once and pass it here — on the client a
+        // getReputation call can be a full websocket round trip (debug builds bypass the local
+        // cache), and fetching per offer serializes N network calls before a list can render.
+        preFetchedReputation: Result<ReputationScoreVO>? = null,
     ): Boolean {
         val bisqEasyOffer = item.bisqEasyOffer
         require(bisqEasyOffer.direction == DirectionEnum.BUY)
@@ -107,8 +113,9 @@ object BisqEasyTradeAmountLimits {
         // stem from our own cancellation (e.g. a request timeout) still falls through to the plain
         // failure handling.
         val reputationResult =
-            runCatching { reputationServiceFacade.getReputation(userProfileId) }
-                .getOrElse { Result.failure(it) }
+            preFetchedReputation
+                ?: runCatching { reputationServiceFacade.getReputation(userProfileId) }
+                    .getOrElse { Result.failure(it) }
         if (reputationResult.exceptionOrNull() is CancellationException) {
             currentCoroutineContext().ensureActive()
         }

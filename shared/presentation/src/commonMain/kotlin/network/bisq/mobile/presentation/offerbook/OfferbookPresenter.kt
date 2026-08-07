@@ -303,7 +303,18 @@ open class OfferbookPresenter(
                 _availableSettlementMethodIds.value = availableSettlements
 
                 log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, OnlyMy: $onlyMyFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
-                val processed = filtered.map { offer -> processOffer(offer, selectedProfile) }
+                // Every BUY-direction offer's validity check needs the SAME score (mine, as
+                // prospective seller), so fetch it once per pipeline run instead of once per offer:
+                // on the client, getReputation can be a full websocket round trip (debug builds
+                // bypass the local cache), and per-offer fetching serialized N network calls here —
+                // the list stayed blank for seconds although the offers were already cached.
+                val myReputation =
+                    if (filtered.any { it.bisqEasyOffer.direction == DirectionEnum.BUY }) {
+                        getMyReputation(selectedProfile.id)
+                    } else {
+                        null
+                    }
+                val processed = filtered.map { offer -> processOffer(offer, selectedProfile, myReputation) }
                 val sorted =
                     processed.sortedWith(compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
                 sorted
@@ -423,9 +434,22 @@ open class OfferbookPresenter(
         }
     }
 
+    // Successful scores are memoized per profile for the presenter's lifetime: the score feeds a
+    // coarse eligibility flag only, and re-fetching on every filter/direction change made each tab
+    // toggle pay a network round trip on client debug builds. Failures (e.g. "not cached yet" on a
+    // cold backend) are deliberately not memoized so the next pipeline run can recover.
+    private val myReputationByProfileId = mutableMapOf<String, Result<ReputationScoreVO>>()
+
+    private suspend fun getMyReputation(profileId: String): Result<ReputationScoreVO> =
+        myReputationByProfileId[profileId]
+            ?: reputationServiceFacade
+                .getReputation(profileId)
+                .also { result -> if (result.isSuccess) myReputationByProfileId[profileId] = result }
+
     private suspend fun processOffer(
         item: OfferItemPresentationModel,
         userProfile: UserProfileVO,
+        myReputation: Result<ReputationScoreVO>?,
     ): OfferItemPresentationModel {
         val offer = item.bisqEasyOffer
 
@@ -463,6 +487,7 @@ open class OfferbookPresenter(
                     reputationServiceFacade = reputationServiceFacade,
                     userProfileId = userProfile.id,
                     limits = configServiceFacade.tradeAmountLimits.value,
+                    preFetchedReputation = myReputation,
                 )
             } else {
                 false

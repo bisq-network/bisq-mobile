@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.offerbook
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,6 +73,7 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
         quoteMethods: List<String>,
         baseMethods: List<String>,
         makerId: String = id,
+        direction: DirectionEnum = DirectionEnum.SELL,
     ): OfferItemPresentationModel {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
         val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
@@ -86,7 +88,7 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
                 id = id,
                 date = 0L,
                 makerNetworkId = makerNetworkId,
-                direction = DirectionEnum.SELL, // mirror -> BUY
+                direction = direction, // filter matches the MIRRORED (taker's) direction
                 market = market,
                 amountSpec = amountSpec,
                 priceSpec = priceSpec,
@@ -115,7 +117,10 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
         return OfferItemPresentationModel(dto)
     }
 
-    private fun buildPresenterWithOffers(allOffers: List<OfferItemPresentationModel>): OfferbookPresenter {
+    private fun buildPresenterWithOffers(
+        allOffers: List<OfferItemPresentationModel>,
+        reputationService: ReputationServiceFacade = mockk(relaxed = true),
+    ): OfferbookPresenter {
         // --- Mocks and fakes for MainPresenter ---
         val mainPresenter =
             MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
@@ -155,7 +160,6 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
 
                 override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
             }
-        val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
         val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
         val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
         val tradeRestrictingAlertServiceFacade = mockk<TradeRestrictingAlertServiceFacade>(relaxed = true)
@@ -641,5 +645,61 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
                 },
                 "All visible offers should have WISE or REVOLUT as payment method",
             )
+        }
+
+    /**
+     * Regression for the "offers appear seconds late" field report: every BUY-direction offer needs
+     * MY reputation score (I would be the seller), and the pipeline used to fetch it once PER OFFER —
+     * sequential network round trips on the client (debug builds bypass the local reputation cache),
+     * blocking the list emission for seconds although the offers were already cached. The score must
+     * be fetched at most once per pipeline run and memoized across runs.
+     */
+    @Test
+    fun test_my_reputation_fetched_once_for_buy_offers_and_memoized_across_pipeline_runs() =
+        runTest {
+            val reputationService =
+                mockk<ReputationServiceFacade> {
+                    coEvery { getReputation(any()) } returns Result.success(ReputationScoreVO(Long.MAX_VALUE, 5.0, 1))
+                }
+            // direction = BUY -> maker buys -> I would sell -> shown on the SELL tab, needs MY score
+            val allOffers =
+                listOf(
+                    makeOffer("b1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN"), direction = DirectionEnum.BUY),
+                    makeOffer("b2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING"), direction = DirectionEnum.BUY),
+                    makeOffer("b3", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN"), direction = DirectionEnum.BUY),
+                )
+            val presenter = buildPresenterWithOffers(allOffers, reputationService)
+            runCurrent()
+
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            awaitSortedCount(presenter, allOffers.size)
+
+            coVerify(exactly = 1) { reputationService.getReputation(any()) }
+
+            // A further pipeline run (direction toggled away and back) must reuse the memoized score
+            presenter.onSelectDirection(DirectionEnum.BUY)
+            awaitSortedCount(presenter, 0)
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            awaitSortedCount(presenter, allOffers.size)
+
+            coVerify(exactly = 1) { reputationService.getReputation(any()) }
+        }
+
+    /** Control: SELL-direction offers (the maker is the seller) never need my score at all. */
+    @Test
+    fun test_no_reputation_fetch_for_sell_direction_offers() =
+        runTest {
+            val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
+            val allOffers =
+                listOf(
+                    makeOffer("s1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+                    makeOffer("s2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
+                )
+            val presenter = buildPresenterWithOffers(allOffers, reputationService)
+            runCurrent()
+
+            awaitSortedCount(presenter, allOffers.size)
+
+            coVerify(exactly = 0) { reputationService.getReputation(any()) }
         }
 }
