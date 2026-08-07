@@ -40,24 +40,19 @@
 -dontwarn kr.motd.maven.**
 -dontwarn org.eclipse.**
 
-# Keep core Android/Gradle plugin APIs
--keep class com.android.** { *; }
--keep class org.gradle.** { *; }
-
 # Keep any native methods
 -keepclasseswithmembernames class * {
     native <methods>;
 }
 
-# Keep all classes that might be used via reflection
--keep class * implements java.io.Serializable { *; }
+# NOTE: a blanket keep for every java.io.Serializable implementor was removed - bisq2
+# serializes via protobuf (fully kept below), our code via kotlinx-serialization (rules above).
 
 # Keep classes used by androidx.datastore persistence
 -keep class network.bisq.mobile.domain.data.model.** { *; }
 -keep class network.bisq.mobile.domain.data.datastore.** { *; }
 
-# Keep androidx.datastore classes and serializers
--keep class androidx.datastore.** { *; }
+# Keep androidx.datastore serializer impls (the library itself ships consumer rules)
 -keep class * implements androidx.datastore.core.okio.OkioSerializer { *; }
 -keepclassmembers class * implements androidx.datastore.core.okio.OkioSerializer {
     public <methods>;
@@ -93,13 +88,13 @@
 # Core Bisq Protobuf preservation rules
 ###########################################
 
-# Keep all Bisq core classes
--keep class org.bisq.** { *; }
+# Keep all Bisq core classes.
+# TODO narrow to the core's actual reflection surfaces (protobuf + FSM EventHandler constructors)
+# NOTE: former sibling rules org.bisq.**/chat.**/network.**/bonded_roles.**/user.** were removed:
+# no such top-level Java packages exist in the bisq2 jars (all core code lives under bisq.*), and
+# network.** additionally swallowed ALL of our own app code (network.bisq.mobile.**), exempting it
+# from shrinking - our reflective surfaces are covered by the targeted rules above.
 -keep class bisq.** { *; }
--keep class chat.** { *; }
--keep class network.** { *; }
--keep class bonded_roles.** { *; }
--keep class user.** { *; }
 
 # Keep all Protobuf-related classes
 -keep class com.google.protobuf.** { *; }
@@ -136,6 +131,19 @@
 -keepattributes RuntimeInvisibleAnnotations
 -keepattributes *Annotation*
 
+# Network-wide determinism contract: bisq2's Proto#serializeForHash scans fields for @ExcludeForHash
+# VIA REFLECTION to build the deterministic hash the P2P proof-of-work authorization commits to.
+# Losing these annotations would silently diverge our hash from every peer's and the node would
+# reject all network data (no prices, no offers, endless sync) - undebuggable in the field.
+# Kept explicitly as insurance: -keepattributes plus the wildcard class keeps DO preserve them under
+# the current AGP/R8 (verified on-device: release and debug serializeForHash byte-identical), but R8
+# full mode makes no general promise for annotations only read via reflection, so this pins the
+# contract against future toolchain changes (e.g. the AGP 9 upgrade).
+-keep @interface bisq.common.annotation.ExcludeForHash
+-keepclassmembers class * {
+    @bisq.common.annotation.ExcludeForHash <fields>;
+}
+
 # Keep fields and methods used for reflection
 -keepclassmembers class * {
     @com.google.protobuf.* *;
@@ -167,10 +175,6 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
--keepclassmembers class * {
-    static <fields>;
-    static <methods>;
-}
 
 # Keep anything under .proto. packages if they exist
 -keep class **.proto.** { *; }
@@ -185,6 +189,29 @@
 
 # Keep all Tor-related classes
 -keep class org.torproject.** { *; }
+# kmp-tor (runtime + resource loaders + controller):
+# shrinking it breaks Tor bootstrap in release. Kept wholesale deliberately - security-critical
+# infra, same policy as bouncycastle/netty. TODO evaluate narrowing.
+-keep class io.matthewnelson.** { *; }
+
+# I2P (bisq2 transitive dep): its SDSCache resolves data-type constructors VIA REFLECTION
+# (Class.getConstructor(byte[]) on SigningPublicKey etc.), so shrinking strips those "unused"
+# constructors and key generation dies with NoSuchMethodException at first app start. Crypto infra,
+# kept wholesale like bouncycastle. TODO evaluate narrowing.
+-keep class net.i2p.** { *; }
+
+# Jackson (bisq2 transitive dep, used at runtime by bisq.common.json.JsonMapperProvider and the
+# network HTTP services, e.g. market-price JSON parsing): databind maps DTOs via reflection. The DTO
+# targets live under bisq.** (kept above), but databind's own reflective internals are kept too -
+# a stripped internal fails SILENTLY (caught exception -> empty market prices), the worst failure
+# mode to debug. TODO evaluate narrowing.
+-keep class com.fasterxml.jackson.** { *; }
+
+# Apache HttpClient5 (bisq2 transitive dep, TorHttpClient/BaseHttpClient use it for all provider
+# HTTP requests - market price, reference time). Shrunk internals produced MALFORMED requests
+# (providers answered 400 Bad Request on-device). Was kept accidentally before issue #1680 by the
+# removed keep-everything-external rule. TODO evaluate narrowing.
+-keep class org.apache.hc.** { *; }
 
 # Ignore missing Java desktop/server classes
 -dontwarn com.sun.net.httpserver.**
@@ -215,43 +242,10 @@
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod
 
-# Keep KMP Framework Class Names
--keep class kotlinx.** { *; }
-
-# Keep Compose Compiler Intrinsics - More specific rules to avoid lock verification issues
--keep class androidx.compose.runtime.** { *; }
--keep class androidx.compose.runtime.snapshots.** { *; }
--keep class androidx.compose.ui.** { *; }
-
-# Keep all classes annotated with @Composable
--keep class * {
-    @androidx.compose.runtime.Composable *;
-}
-
-# Prevent lock verification issues with Compose state management
--keep class androidx.compose.runtime.snapshots.SnapshotStateList {
-    public <methods>;
-}
-
-# Keep Compose compiler generated classes
--keep class **.*ComposableSingletons* { *; }
--keep class **.*LiveLiterals* { *; }
-
-# Keep Composer Intrinsics
--keep class androidx.compose.runtime.internal.ComposableLambdaImpl { *; }
-
-# Keep Compose Preview Annotations
--keep @androidx.compose.ui.tooling.preview.Preview class * { *; }
-
-# Keep Kotlin metadata
--keep class kotlin.Metadata { *; }
-
-# Keep Koin classes and avoid stripping DI components
--keep class org.koin.** { *; }
--keepclassmembers class * {
-    @org.koin.core.annotation.* <fields>;
-    @org.koin.core.annotation.* <methods>;
-}
+# NOTE: blanket keeps for kotlinx.**, androidx.compose.**, @Composable classes,
+# ComposableSingletons/LiveLiterals, org.koin.** and kotlin.Metadata were removed - all of these
+# libraries ship their own consumer proguard rules, and Koin resolves via constructor references
+# in module DSLs (no reflection). KotlinMetadata is preserved via -keepattributes above.
 
 # Comprehensive -dontwarn section (consolidated)
 -dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
@@ -290,9 +284,28 @@
 # Keep specific classes that need explicit preservation
 -keep class org.apache.commons.logging.impl.Log4JLogger { *; }
 
-# Disable all optimizations that could break protobuf
--dontoptimize
+# Obfuscation is OFF deliberately and stays off: Bisq is AGPL open source, so renaming
+# buys no secrecy, and readable production stack traces matter more than the Play advisory item -
+# we run no mapping-upload pipeline.
 -dontobfuscate
+# Optimization is OFF: R8's optimization passes horizontally merge the per-store resolver
+# lambdas into shared synthetic classes, and bisq2 core derives registry keys from the LAMBDA'S
+# class name in two places:
+#  - bisq.common.proto.ProtoResolver#getProtoType -> PersistableStoreResolver: breaks the entire
+#    persistence READ path on app restart (writes don't consult the map, so the damage only shows
+#    on next launch: every store falls back to defaults = key bundle/identity rotated, local data
+#    discarded). No app-side workaround exists - the resolver map is private and the name<->resolver
+#    pairs are destroyed before registration.
+#  - bisq.common.proto.NetworkStorageWhiteList#add(protoTypeName, resolver): silently rejects all
+#    P2P network data (see the pre-registration workaround in NodeMainApplication).
+# Keep rules cannot target compiler-synthesized lambda classes, so shrink-only is the safe config.
+# Side effect: the -assumenosideeffects log-stripping rules below are inert without optimization -
+# acceptable, since #767 already silences bisq2 core logging at runtime in release builds.
+# TODO re-enable optimization once bisq2 stops deriving names from lambda classes: derive from
+#  persistableStore.getClass() in PersistenceService/PersistableStoreResolver and from
+#  protoTypeName tokens in NetworkStorageWhiteList (keeping the support.MediationRequest
+#  backward-compat special case), then regenerate the jars. Both fixes are a few lines.
+-dontoptimize
 
 # Keep all protobuf and resolver classes completely intact
 -keep class bisq.common.proto.** { *; }
@@ -311,17 +324,13 @@
 # Keep resolver registration
 -keep class bisq.application.ResolverConfig { *; }
 
-# Keep all lambda expressions and synthetic methods
--keep class * {
-    synthetic <methods>;
-    static synthetic <methods>;
-}
 
 # Preserve line numbers for debugging
 -keepattributes SourceFile,LineNumberTable
 
-# More aggressive external library shrinking
--keep class !bisq.**,!network.bisq.**,!com.google.protobuf.**,!io.grpc.**,!io.netty.**,!org.bouncycastle.**,!ch.qos.logback.**,!org.slf4j.** { *; }
+# NOTE: a previous rule here kept every class OUTSIDE the bisq/protobuf/netty/... list
+# ("-keep class !bisq.**,...") - despite its comment it PREVENTED all external-library shrinking.
+# Removed; third-party libraries rely on their bundled consumer rules plus the explicit keeps above.
 
 # Allow removal of unused external library methods and debug logs in release builds
 -assumenosideeffects class android.util.Log {
@@ -344,28 +353,11 @@
     *** log.i(...);
 }
 
-# Remove System.out and System.err calls from Bisq2 JARs in release builds
--assumenosideeffects class java.lang.System {
-    public static java.io.PrintStream out;
-    public static java.io.PrintStream err;
-}
--assumenosideeffects class java.io.PrintStream {
-    public *** println(...);
-    public *** print(...);
-    public *** printf(...);
-    public *** format(...);
-}
-
-# Remove specific verbose logging calls from Bisq2 protobuf classes
--assumenosideeffects class bisq.network.protobuf.** {
-    *** getSerializedSize(...);
-}
--assumenosideeffects class bisq.chat.protobuf.** {
-    *** getSerializedSize(...);
-}
--assumenosideeffects class bisq.offer.protobuf.** {
-    *** getSerializedSize(...);
-}
+# NOTE: earlier revisions stripped System.out/println and protobuf getSerializedSize() calls here via
+# -assumenosideeffects, as a workaround for bisq2 core log noise. Removed: those rules were
+# dormant while -dontoptimize was set and would have activated for the first time with optimization on -
+# risky around SystemOutFilter's stream capture - and they are redundant since #767 silences the core's
+# logback (root OFF) and hard-blocks stdout in release builds at runtime.
 
 ## Tink (com.google.crypto.tink) — used transitively for EncryptedSharedPreferences /
 ## push-notification-key encryption. Tink ships an unused KeysDownloader utility that
