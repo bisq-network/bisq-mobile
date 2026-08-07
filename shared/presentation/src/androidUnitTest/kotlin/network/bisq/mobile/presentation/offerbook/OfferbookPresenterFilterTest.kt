@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -787,6 +788,40 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
             coVerify(exactly = 1) { reputationService.getReputation(any()) }
             // Keep the presenter referenced so the pipeline stays alive for the duration
             awaitSortedCount(presenter, 0)
+        }
+
+    /**
+     * Race regression: the attach-time warmup and the first pipeline run over BUY-direction offers
+     * can look up the score concurrently on a cold cache. The lookups must coalesce — the second
+     * caller waits for the in-flight fetch and reuses it — never issue a duplicate network request.
+     */
+    @Test
+    fun test_concurrent_warmup_and_pipeline_lookups_coalesce_into_one_fetch() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val reputationService =
+                mockk<ReputationServiceFacade> {
+                    coEvery { getReputation(any()) } coAnswers {
+                        gate.await()
+                        Result.success(ReputationScoreVO(Long.MAX_VALUE, 5.0, 1))
+                    }
+                }
+            val allOffers =
+                listOf(
+                    makeOffer("b1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN"), direction = DirectionEnum.BUY),
+                )
+            val presenter = buildPresenterWithOffers(allOffers, reputationService)
+            runCurrent() // warmup starts and parks on the gated fetch
+
+            // Pipeline run needs the same score while the warmup fetch is still in flight
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            runCurrent()
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { reputationService.getReputation(any()) }
+            assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
         }
 
     /**

@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
@@ -490,26 +492,34 @@ open class OfferbookPresenter(
         }
     }
 
-    private suspend fun getMyReputation(profileId: String): Result<ReputationScoreVO> {
-        myReputationByProfileId[profileId]?.let { return it }
-        // A throwing lookup must NEVER kill the filtering pipeline (it runs inside the mapLatest
-        // collector — an escaped exception stops offer display for the rest of the session). A
-        // failure degrades to "score unknown" downstream, while a genuine cancellation of this
-        // pipeline run (mapLatest supersession) must still propagate: ensureActive() gates the
-        // rethrow, mirroring BisqEasyTradeAmountLimits#isBuyOfferInvalid.
-        val result =
-            runCatching { reputationServiceFacade.getReputation(profileId) }
-                .getOrElse { Result.failure(it) }
-        if (result.exceptionOrNull() is CancellationException) {
-            currentCoroutineContext().ensureActive()
+    // Serializes cache access AND coalesces concurrent lookups: the warmup (presenter scope) and
+    // the filtering pipeline (computationDispatcher) can race on a cold cache — without the lock
+    // they issue duplicate network fetches and share a plain map across dispatchers. Holding the
+    // lock across the fetch is deliberate: a concurrent caller waits for the in-flight result and
+    // then hits the cache, paying no more latency than its own fetch would have cost.
+    private val myReputationMutex = Mutex()
+
+    private suspend fun getMyReputation(profileId: String): Result<ReputationScoreVO> =
+        myReputationMutex.withLock {
+            myReputationByProfileId[profileId]?.let { return@withLock it }
+            // A throwing lookup must NEVER kill the filtering pipeline (it runs inside the mapLatest
+            // collector — an escaped exception stops offer display for the rest of the session). A
+            // failure degrades to "score unknown" downstream, while a genuine cancellation of this
+            // pipeline run (mapLatest supersession) must still propagate: ensureActive() gates the
+            // rethrow, mirroring BisqEasyTradeAmountLimits#isBuyOfferInvalid.
+            val result =
+                runCatching { reputationServiceFacade.getReputation(profileId) }
+                    .getOrElse { Result.failure(it) }
+            if (result.exceptionOrNull() is CancellationException) {
+                currentCoroutineContext().ensureActive()
+            }
+            if (result.isSuccess) {
+                myReputationByProfileId[profileId] = result
+            } else {
+                log.w("Fetching my reputation failed; offers stay takeable per the not-cached policy", result.exceptionOrNull())
+            }
+            result
         }
-        if (result.isSuccess) {
-            myReputationByProfileId[profileId] = result
-        } else {
-            log.w("Fetching my reputation failed; offers stay takeable per the not-cached policy", result.exceptionOrNull())
-        }
-        return result
-    }
 
     private suspend fun processOffer(
         item: OfferItemPresentationModel,
