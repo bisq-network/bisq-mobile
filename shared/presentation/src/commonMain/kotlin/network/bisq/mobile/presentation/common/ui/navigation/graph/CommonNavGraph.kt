@@ -38,6 +38,7 @@ import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOffe
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.offer.take_offer.settlement.TakeOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.offerbook.OfferbookScreen
+import network.bisq.mobile.presentation.peer_profile.PeerProfileScreen
 import network.bisq.mobile.presentation.settings.faqs.FaqScreen
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersScreen
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsScreen
@@ -88,6 +89,13 @@ fun NavGraphBuilder.addCommonAppRoutes(animationsEnabled: () -> Boolean) {
     ) { backStackEntry ->
         val openTrade: NavRoute.OpenTrade = backStackEntry.toRoute()
         OpenTradeScreen(openTrade.tradeId)
+    }
+
+    addScreen<NavRoute.PeerProfile>(
+        animationsEnabled = animationsEnabled,
+    ) { backStackEntry ->
+        val peerProfile: NavRoute.PeerProfile = backStackEntry.toRoute()
+        PeerProfileScreen(peerProfile.profileId)
     }
 
     addScreen<NavRoute.TradeChat>(

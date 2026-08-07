@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -26,13 +26,18 @@ class ReportUserPresenter(
     private val _effect = MutableSharedFlow<ReportUserEffect>()
     val effect = _effect.asSharedFlow()
 
-    private lateinit var chatMessage: BisqEasyOpenTradeMessageModel
+    private var accusedUserProfile: UserProfileVO? = null
 
+    /**
+     * Takes the accused profile directly rather than a chat message: reporting is profile-keyed
+     * backend-side (`ModerationRequestService.reportUserProfile`), and the peer profile screen
+     * (#545) can reach this dialog with no chat message in hand.
+     */
     fun initialize(
-        chatMessage: BisqEasyOpenTradeMessageModel,
-        reportMessage: String?,
+        accusedUserProfile: UserProfileVO,
+        reportMessage: String? = null,
     ) {
-        this.chatMessage = chatMessage
+        this.accusedUserProfile = accusedUserProfile
         reportMessage?.let { onMessageChange(it) }
     }
 
@@ -51,7 +56,8 @@ class ReportUserPresenter(
             _uiState.update { it.copy(isLoading = true) }
             val message = _uiState.value.message
             try {
-                if (!::chatMessage.isInitialized) {
+                val accused = accusedUserProfile
+                if (accused == null) {
                     log.w { "ReportUserPresenter.onReportClick called before initialize" }
                     _effect.emit(
                         ReportUserEffect.ReportError(
@@ -62,7 +68,7 @@ class ReportUserPresenter(
                 } else {
                     userProfileServiceFacade
                         .reportUserProfile(
-                            chatMessage.senderUserProfile,
+                            accused,
                             message,
                         ).onSuccess {
                             _effect.emit(ReportUserEffect.ReportSuccess)

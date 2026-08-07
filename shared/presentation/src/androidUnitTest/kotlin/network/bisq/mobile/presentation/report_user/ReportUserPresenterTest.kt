@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.report_user
 
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -13,9 +12,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
@@ -44,23 +40,6 @@ class ReportUserPresenterTest {
     private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
 
     private val reportedUser = createMockUserProfile("reportedUser")
-    private val chatMessage =
-        BisqEasyOpenTradeMessageModel(
-            mockk<BisqEasyOpenTradeMessageDto> {
-                every { chatMessageType } returns ChatMessageTypeEnum.TEXT
-                every { senderUserProfile } returns reportedUser
-                every { messageId } returns "msg1"
-                every { text } returns "bad message"
-                every { citation } returns null
-                every { date } returns 1000L
-                every { tradeId } returns "trade1"
-                every { mediator } returns null
-                every { bisqEasyOffer } returns null
-                every { citationAuthorUserProfile } returns null
-            },
-            createMockUserProfile("myUser"),
-            emptyList(),
-        )
 
     @BeforeTest
     fun setUp() {
@@ -90,7 +69,7 @@ class ReportUserPresenterTest {
                 userProfileServiceFacade = userProfileServiceFacade,
             )
         presenter.onViewAttached()
-        presenter.initialize(chatMessage, null)
+        presenter.initialize(reportedUser, null)
         presenter.onMessageChange("This user violated chat rules")
     }
 

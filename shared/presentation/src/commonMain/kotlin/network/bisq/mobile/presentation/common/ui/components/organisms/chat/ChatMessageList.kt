@@ -56,6 +56,7 @@ fun ChatMessageList(
     userProfileIconProvider: () -> suspend (UserProfileVO) -> PlatformImage,
     onResendMessage: (String) -> Unit,
     userNameProvider: suspend (String) -> String,
+    onPeerProfileClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     onAddReaction: (BisqEasyOpenTradeMessageModel, ReactionEnum) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum -> },
     onRemoveReaction: (BisqEasyOpenTradeMessageModel, BisqEasyOpenTradeMessageReactionVO) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO -> },
@@ -231,6 +232,7 @@ fun ChatMessageList(
                                 onIgnoreUser = { onIgnoreUser(message.senderUserProfileId) },
                                 onUndoIgnoreUser = { onUndoIgnoreUser(message.senderUserProfileId) },
                                 onReportUser = { onReportUser(message) },
+                                onPeerProfileClick = { onPeerProfileClick(message.senderUserProfileId) },
                                 isIgnored = ignoredUserIds.contains(message.senderUserProfileId),
                                 modifier =
                                     Modifier.animateItem(

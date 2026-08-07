@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -21,6 +22,7 @@ import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClickable
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
@@ -43,6 +45,8 @@ interface IIgnoredUsersPresenter : ViewPresenter {
     fun unblockUserConfirm(userId: String)
 
     fun dismissConfirm()
+
+    fun openPeerProfile(userId: String)
 }
 
 @Composable
@@ -73,6 +77,7 @@ fun IgnoredUsersScreen() {
                         userProfile = userProfile,
                         userProfileIconProvider = presenter.userProfileIconProvider,
                         onUnblock = { presenter.unblockUser(userProfile.id) },
+                        onOpenProfile = { presenter.openPeerProfile(userProfile.id) },
                     )
                 }
             }
@@ -102,6 +107,7 @@ private fun IgnoredUserItem(
     userProfile: UserProfileVO,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onUnblock: () -> Unit,
+    onOpenProfile: () -> Unit,
 ) {
     Row(
         modifier =
@@ -111,13 +117,19 @@ private fun IgnoredUserItem(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        UserProfileIcon(userProfile, userProfileIconProvider, 40.dp)
-        BisqGap.HHalf()
+        // Avatar + name open the peer's profile; the Unblock button stays outside the tap target.
+        Row(
+            modifier = Modifier.weight(1f).debouncedClickable(role = Role.Button, onClick = onOpenProfile),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            UserProfileIcon(userProfile, userProfileIconProvider, 40.dp)
+            BisqGap.HHalf()
 
-        BisqText.BaseRegular(
-            text = userProfile.userName,
-            modifier = Modifier.weight(1f),
-        )
+            BisqText.BaseRegular(
+                text = userProfile.userName,
+                modifier = Modifier.weight(1f),
+            )
+        }
 
         BisqGap.H1()
 

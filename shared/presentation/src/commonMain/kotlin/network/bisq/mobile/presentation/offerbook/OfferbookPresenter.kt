@@ -834,6 +834,10 @@ open class OfferbookPresenter(
         _showNotEnoughReputationDialog.value = false
     }
 
+    fun onPeerProfileClick(profileId: String) {
+        navigateTo(NavRoute.PeerProfile(profileId))
+    }
+
     fun onNavigateToReputation() {
         navigateTo(NavRoute.Reputation)
         _showNotEnoughReputationDialog.value = false

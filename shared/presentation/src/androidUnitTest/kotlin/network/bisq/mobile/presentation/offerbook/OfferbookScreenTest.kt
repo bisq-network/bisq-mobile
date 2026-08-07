@@ -409,6 +409,7 @@ class OfferbookScreenTest {
         onOpenReputationWiki: () -> Unit = {},
         onDismissNotEnoughReputationDialog: () -> Unit = {},
         onTradeRestrictingAlertAction: (AlertNotificationUiAction) -> Unit = {},
+        onPeerProfileClick: (String) -> Unit = {},
     ) {
         CompositionLocalProvider(LocalIsTest provides true) {
             BisqTheme {
@@ -444,6 +445,7 @@ class OfferbookScreenTest {
                     onOpenReputationWiki = onOpenReputationWiki,
                     onDismissNotEnoughReputationDialog = onDismissNotEnoughReputationDialog,
                     onTradeRestrictingAlertAction = onTradeRestrictingAlertAction,
+                    onPeerProfileClick = onPeerProfileClick,
                 )
             }
         }
