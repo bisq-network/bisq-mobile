@@ -289,19 +289,14 @@ class WebSocketClientService(
                 if (liveClient.clientId == httpClientSettings.clientId) {
                     val liveSessionExpiresAt = previousSettings.sessionExpiresAt
                     if (SessionValidity.hasMinRemainingValidity(liveSessionExpiresAt)) {
-                        log.d {
-                            "Session id changed in settings " +
-                                "(${liveClient.sessionId} → ${httpClientSettings.sessionId}); " +
-                                "live WS healthy with ≥15m session remaining — skipping recreation"
-                        }
+                        log.d(
+                            "Session id changed in settings; " +
+                                "live WS healthy with ≥15m session remaining — skipping recreation",
+                        )
                         return@withLock
                     }
                 } else {
-                    log.d {
-                        "Client id changed on live client " +
-                            "(${liveClient.clientId} → ${httpClientSettings.clientId}); " +
-                            "recreating WebSocket client"
-                    }
+                    log.d("Client id changed on live client; recreating WebSocket client")
                 }
             }
 

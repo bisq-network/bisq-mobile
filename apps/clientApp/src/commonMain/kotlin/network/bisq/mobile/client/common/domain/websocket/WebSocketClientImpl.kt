@@ -41,6 +41,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import network.bisq.mobile.client.common.domain.access.utils.HeaderRedaction
 import network.bisq.mobile.client.common.domain.access.utils.Headers
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
@@ -416,11 +417,11 @@ class WebSocketClientImpl(
             healthCheckRequestIds.add(message.requestId)
         }
         if (!isHealthCheck) {
-            log.d { "Send message $message" }
+            log.d { "Send message ${HeaderRedaction.redactForLogging(message)}" }
         }
         val jsonString: String = json.encodeToString(message)
         if (!isHealthCheck) {
-            log.d { "Send raw text $jsonString" }
+            log.d { "Send raw text ${HeaderRedaction.redactRawJsonForLogging(jsonString)}" }
         }
         session?.send(Frame.Text(jsonString))
     }
@@ -448,7 +449,7 @@ class WebSocketClientImpl(
                         val isHealthCheckResponse =
                             rawRequestId != null && healthCheckRequestIds.remove(rawRequestId)
                         if (!isHealthCheckResponse) {
-                            log.d { "Received raw text $message" }
+                            log.d { "Received raw text ${HeaderRedaction.redactRawJsonForLogging(message)}" }
                         }
 
                         val webSocketMessage: WebSocketMessage =
@@ -457,7 +458,7 @@ class WebSocketClientImpl(
                                 message,
                             )
                         if (!isHealthCheckResponse) {
-                            log.d { "Received webSocketMessage $webSocketMessage" }
+                            log.d { "Received webSocketMessage ${HeaderRedaction.redactForLogging(webSocketMessage)}" }
                         }
                         if (webSocketMessage is WebSocketResponse) {
                             onWebSocketResponse(webSocketMessage, rawRequestId)
