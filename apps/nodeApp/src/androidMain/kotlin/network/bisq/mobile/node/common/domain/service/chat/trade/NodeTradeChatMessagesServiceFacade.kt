@@ -138,7 +138,7 @@ class NodeTradeChatMessagesServiceFacade(
                 object : CollectionObserver<BisqEasyOpenTradeMessage> {
                     // INVARIANT: persist=false/onAllAdded vs persist=true/onAdded assumes Bisq2 replays
                     // existing messages only in onAllAdded; live messages always arrive via onAdded.
-                    override fun onAllAdded(values: Collection<out BisqEasyOpenTradeMessage>) {
+                    override fun onAllAdded(values: Collection<BisqEasyOpenTradeMessage>) {
                         // Override the default (which calls onAdded per element) solely to pass
                         // persist=false, preventing a delayed persist job from being scheduled
                         // for every historical PROTOCOL_LOG_MESSAGE replayed at startup.

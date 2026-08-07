@@ -10,5 +10,4 @@ fun AlertTypeBisq2.toAlertTypeOrNull(): AlertType? =
         AlertTypeBisq2.EMERGENCY -> AlertType.EMERGENCY
         AlertTypeBisq2.BAN -> AlertType.BAN
         AlertTypeBisq2.BANNED_ACCOUNT_DATA -> AlertType.BANNED_ACCOUNT_DATA
-        else -> null
     }

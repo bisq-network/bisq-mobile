@@ -117,8 +117,6 @@ open class WiseFormPresenter(
                     )
                 }
             }
-
-            else -> Unit
         }
     }
 

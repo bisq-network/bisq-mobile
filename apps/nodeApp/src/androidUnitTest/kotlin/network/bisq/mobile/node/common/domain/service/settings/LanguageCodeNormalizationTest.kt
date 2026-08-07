@@ -1,5 +1,6 @@
 package network.bisq.mobile.node.common.domain.service.settings
 
+import network.bisq.mobile.data.utils.locale
 import network.bisq.mobile.i18n.I18nSupport
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -61,20 +62,20 @@ class LanguageCodeNormalizationTest {
     fun `languageCodeToLocale should handle all supported languages`() {
         val testCases =
             mapOf(
-                "en" to Locale("en", "US"),
-                "de" to Locale("de", "DE"),
-                "fr" to Locale("fr", "FR"),
-                "es" to Locale("es", "ES"),
-                "it" to Locale("it", "IT"),
-                "ru" to Locale("ru", "RU"),
-                "cs" to Locale("cs", "CZ"),
-                "hi" to Locale("hi", "IN"),
-                "id" to Locale("id", "ID"),
-                "tr" to Locale("tr", "TR"),
-                "vi" to Locale("vi", "VN"),
-                "pt-BR" to Locale("pt", "BR"),
-                "af-ZA" to Locale("af", "ZA"),
-                "pcm-NG" to Locale("pcm", "NG"),
+                "en" to locale("en", "US"),
+                "de" to locale("de", "DE"),
+                "fr" to locale("fr", "FR"),
+                "es" to locale("es", "ES"),
+                "it" to locale("it", "IT"),
+                "ru" to locale("ru", "RU"),
+                "cs" to locale("cs", "CZ"),
+                "hi" to locale("hi", "IN"),
+                "id" to locale("id", "ID"),
+                "tr" to locale("tr", "TR"),
+                "vi" to locale("vi", "VN"),
+                "pt-BR" to locale("pt", "BR"),
+                "af-ZA" to locale("af", "ZA"),
+                "pcm-NG" to locale("pcm", "NG"),
             )
 
         testCases.forEach { (code, expectedLocale) ->
@@ -86,20 +87,20 @@ class LanguageCodeNormalizationTest {
     @Test
     fun `languageCodeToLocale should normalize and convert legacy codes`() {
         // Legacy pcm -> pcm-NG -> Locale("pcm", "NG")
-        assertEquals(Locale("pcm", "NG"), invokeLanguageCodeToLocale("pcm"))
+        assertEquals(locale("pcm", "NG"), invokeLanguageCodeToLocale("pcm"))
 
         // Underscore variant pt_BR -> pt-BR -> Locale("pt", "BR")
-        assertEquals(Locale("pt", "BR"), invokeLanguageCodeToLocale("pt_BR"))
+        assertEquals(locale("pt", "BR"), invokeLanguageCodeToLocale("pt_BR"))
 
         // Underscore variant af_ZA -> af-ZA -> Locale("af", "ZA")
-        assertEquals(Locale("af", "ZA"), invokeLanguageCodeToLocale("af_ZA"))
+        assertEquals(locale("af", "ZA"), invokeLanguageCodeToLocale("af_ZA"))
     }
 
     @Test
     fun `languageCodeToLocale should fall back to en-US for unsupported codes`() {
-        assertEquals(Locale("en", "US"), invokeLanguageCodeToLocale("xyz"))
-        assertEquals(Locale("en", "US"), invokeLanguageCodeToLocale("invalid"))
-        assertEquals(Locale("en", "US"), invokeLanguageCodeToLocale(""))
+        assertEquals(locale("en", "US"), invokeLanguageCodeToLocale("xyz"))
+        assertEquals(locale("en", "US"), invokeLanguageCodeToLocale("invalid"))
+        assertEquals(locale("en", "US"), invokeLanguageCodeToLocale(""))
     }
 
     @Test
