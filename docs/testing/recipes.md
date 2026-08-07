@@ -8,15 +8,12 @@ Copy-paste skeletons. Grep production code for constructor params marked `VERIFY
 
 Base: `PresentationKoinTestBase` (default) or `PlatformPresentationKoinTestBase` (`getScreenWidthDp`). Proof: `FaqPresenterTest`, `OfferbookPresenterFilterTest`.
 
+Base already provides `navigationManager` + `globalUiManager`. Setup goes in `onKoinReady()`. If you override `beforeStartKoin` / `onTearDown`, **always call `super`** (`try/finally` for tear-down). Do not remock the managers after `super.beforeStartKoin()` unless replacing with a real/`spyk` instance.
+
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyPresenterTest : PresentationKoinTestBase() {
-    private lateinit var mainPresenter: MainPresenter // VERIFY: grep constructor deps
-
-    override fun onKoinReady() {
-        I18nSupport.initialize("en") // VERIFY: needed for i18n keys?
-        mainPresenter = mockk(relaxed = true)
-    }
+    private val mainPresenter: MainPresenter = mockk(relaxed = true) // VERIFY: grep constructor deps
 
     @Test
     fun `when action fired then updates ui state`() = runTest {
@@ -37,7 +34,7 @@ class MyPresenterTest : PresentationKoinTestBase() {
 }
 ```
 
-Pitfalls: no `startKoin` in test class; no `ClientKoinIntegrationTestBase` for `:shared:presentation`; call `advanceUntilIdle()` before `StateFlow` asserts; abstract presenters need a test subclass in-file.
+Pitfalls: no `startKoin` in test class; no `ClientKoinIntegrationTestBase` for `:shared:presentation`; call `advanceUntilIdle()` before `StateFlow` asserts; abstract presenters need a test subclass in-file. If the test asserts localized copy (`.i18n()`, snackbar/error text), call `I18nSupport.initialize("en")` in `onKoinReady()` — VERIFY: needed for i18n keys? Skip it for guard-only tests.
 
 ---
 

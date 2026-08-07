@@ -75,3 +75,4 @@ Two private same-named fakes still exist for the offerbook market list, keyed on
 | `OfferbookMarketPresenterTestFactory` | Consolidated into `OfferbookMarketPresenterTest` (#1573) |
 | `FakeSettingsRepository`, `TestSettingsRepository`, `FakeSettingsRepo` | Per-test copies; consolidated into `SettingsRepositoryMock` (#1488) |
 | `FakeMarketPriceServiceFacade` copies in the create-offer / take-offer tests | Consolidated into `test_utils/FakeMarketPriceServiceFacade.kt` (#1488) |
+| `TradeStatePresenterTestSupport` | Inline Koin/dispatcher helper; consumers extend `PresentationKoinTestBase` |
