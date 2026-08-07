@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -24,7 +24,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun ReportUserDialog(
-    chatMessage: BisqEasyOpenTradeMessageModel,
+    accusedUserProfile: UserProfileVO,
     reportMessage: String? = null,
     onReportFailure: (String, String) -> Unit = { _, _ -> },
     onDismiss: () -> Unit = {},
@@ -35,7 +35,7 @@ fun ReportUserDialog(
     RememberPresenterLifecycle(presenter)
 
     LaunchedEffect(Unit, onDismiss, onReportFailure) {
-        presenter.initialize(chatMessage, reportMessage)
+        presenter.initialize(accusedUserProfile, reportMessage)
         presenter.effect.collect { event ->
             when (event) {
                 ReportUserEffect.ReportSuccess -> onDismiss()

@@ -14,6 +14,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -23,6 +24,7 @@ import network.bisq.mobile.domain.formatters.TradeDurationFormatter
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -171,7 +173,13 @@ class TradeDetailsHeaderPresenter(
             TradeDetailsHeaderUiAction.ToggleHeader -> onToggleHeader()
             TradeDetailsHeaderUiAction.OpenInterruptionConfirmationDialog -> onOpenInterruptionConfirmationDialog()
             TradeDetailsHeaderUiAction.OpenMediationConfirmationDialog -> onOpenMediationConfirmationDialog()
+            TradeDetailsHeaderUiAction.OpenPeerProfile -> onOpenPeerProfile()
         }
+    }
+
+    private fun onOpenPeerProfile() {
+        val peersProfileId = selectedTrade.value?.peersUserProfile?.id ?: return
+        navigateTo(NavRoute.PeerProfile(peersProfileId))
     }
 
     override fun onViewUnattaching() {

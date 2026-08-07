@@ -87,6 +87,7 @@ fun TradeChatScreen(tradeId: String) {
                 onIgnoreUser = presenter::showIgnoreUserPopup,
                 onUndoIgnoreUser = presenter::showUndoIgnoreUserPopup,
                 onReportUser = presenter::onReportUser,
+                onPeerProfileClick = presenter::onPeerProfileClick,
                 onOpenChatRules = presenter::onOpenChatRules,
                 onDontShowAgainChatRulesWarningBox = presenter::onDontShowAgainChatRulesWarningBox,
                 onUpdateReadCount = presenter::onUpdateReadCount,
@@ -106,7 +107,7 @@ fun TradeChatScreen(tradeId: String) {
         reportUserTradeMessage?.let { message ->
             if (showReportUserDialog) {
                 ReportUserDialog(
-                    chatMessage = message,
+                    accusedUserProfile = message.senderUserProfile,
                     reportMessage = reportUserMessage,
                     onReportFailure = presenter::onReportUserError,
                     onDismiss = presenter::onDismissReportUserDialog,

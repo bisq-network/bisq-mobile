@@ -283,6 +283,10 @@ class TradeChatPresenter(
         this.hideUndoIgnoreUserPopup()
     }
 
+    fun onPeerProfileClick(profileId: String) {
+        navigateTo(NavRoute.PeerProfile(profileId))
+    }
+
     fun onReportUser(tradeMessage: BisqEasyOpenTradeMessageModel) {
         _reportUserTradeMessage.value = tradeMessage
         _showReportUserDialog.value = true

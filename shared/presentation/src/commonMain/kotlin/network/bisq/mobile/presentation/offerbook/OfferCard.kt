@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,7 @@ import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPrese
 import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
@@ -65,6 +67,7 @@ fun OfferCard(
     item: OfferItemPresentationModel,
     onSelectOffer: () -> Unit,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
+    onPeerProfileClick: (String) -> Unit,
     enabled: Boolean = true,
 ) {
     val userName by item.userName.collectAsState()
@@ -119,13 +122,22 @@ fun OfferCard(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start,
     ) {
+        // The maker's identity column is its own tap target into their profile. The surrounding
+        // card stays clickable for take-offer — an inner clickable consumes the tap, so the two
+        // don't both fire. Own offers stay inert: the peer profile is never for yourself.
+        val peerProfileModifier =
+            if (!isMyOffer) {
+                Modifier.debouncedClickable(role = Role.Button) { onPeerProfileClick(item.makersUserProfile.id) }
+            } else {
+                Modifier
+            }
         UserProfile(
             userProfile = item.makersUserProfile,
             userProfileIconProvider = userProfileIconProvider,
             reputation = item.makersReputationScore,
             supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
             showUserName = false,
-            modifier = Modifier.weight(1.0F),
+            modifier = Modifier.weight(1.0F).then(peerProfileModifier),
         )
 
         BisqGap.H1()
@@ -289,6 +301,7 @@ private fun OfferCard_BuyPreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }
@@ -308,6 +321,7 @@ private fun OfferCard_SellPreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }
@@ -328,6 +342,7 @@ private fun OfferCard_MyOfferBuyPreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }
@@ -348,6 +363,7 @@ private fun OfferCard_MyOfferSellPreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }
@@ -368,6 +384,7 @@ private fun OfferCard_InvalidReputationPreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }
@@ -387,6 +404,7 @@ private fun OfferCard_LongUserNamePreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }
@@ -407,6 +425,7 @@ private fun OfferCard_ManySupportedLanguageCodesPreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }
@@ -428,6 +447,7 @@ private fun OfferCard_MyOfferManySupportedLanguageCodesPreview() {
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
         )
     }
 }

@@ -42,6 +42,7 @@ fun ChatTextMessageBox(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onResendMessage: (String) -> Unit,
     userNameProvider: suspend (String) -> String,
+    onPeerProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
     onScrollToMessage: (String) -> Unit = {},
     onReply: () -> Unit = {},
@@ -74,6 +75,7 @@ fun ChatTextMessageBox(
             onResendMessage = onResendMessage,
             userNameProvider = userNameProvider,
             messageDeliveryInfoByPeersProfileId = message.messageDeliveryStatus,
+            onPeerProfileClick = onPeerProfileClick,
         )
         val quoteAndProfileIconAndText = @Composable {
             Column(
@@ -90,7 +92,12 @@ fun ChatTextMessageBox(
                     },
                 ) {
                 }
-                ProfileIconAndText(message, userProfileIconProvider)
+                ProfileIconAndText(
+                    message = message,
+                    userProfileIconProvider = userProfileIconProvider,
+                    onPeerProfileClick = onPeerProfileClick,
+                    onLongClick = { showMenu = true },
+                )
             }
         }
         val messageBox = @Composable {
@@ -109,7 +116,12 @@ fun ChatTextMessageBox(
                     if (message.citation != null) {
                         quoteAndProfileIconAndText()
                     } else {
-                        ProfileIconAndText(message, userProfileIconProvider)
+                        ProfileIconAndText(
+                            message = message,
+                            userProfileIconProvider = userProfileIconProvider,
+                            onPeerProfileClick = onPeerProfileClick,
+                            onLongClick = { showMenu = true },
+                        )
                     }
                 }
             }
@@ -204,6 +216,7 @@ private fun ChatTextMessageBox_MyMessagePreview() {
             isIgnored = false,
             onResendMessage = {},
             userNameProvider = { it },
+            onPeerProfileClick = {},
         )
     }
 }
@@ -248,6 +261,7 @@ private fun ChatTextMessageBox_PeerMessagePreview() {
             isIgnored = false,
             onResendMessage = {},
             userNameProvider = { it },
+            onPeerProfileClick = {},
         )
     }
 }
@@ -292,6 +306,7 @@ private fun ChatTextMessageBox_LongMessagePreview() {
             isIgnored = false,
             onResendMessage = {},
             userNameProvider = { it },
+            onPeerProfileClick = {},
         )
     }
 }

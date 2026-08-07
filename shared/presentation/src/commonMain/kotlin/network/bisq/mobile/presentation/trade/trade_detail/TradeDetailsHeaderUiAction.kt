@@ -9,4 +9,6 @@ sealed interface TradeDetailsHeaderUiAction {
     data object OpenInterruptionConfirmationDialog : TradeDetailsHeaderUiAction
 
     data object OpenMediationConfirmationDialog : TradeDetailsHeaderUiAction
+
+    data object OpenPeerProfile : TradeDetailsHeaderUiAction
 }

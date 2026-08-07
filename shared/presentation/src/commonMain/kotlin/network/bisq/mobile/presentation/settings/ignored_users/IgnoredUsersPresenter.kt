@@ -8,6 +8,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
 class IgnoredUsersPresenter(
@@ -62,5 +63,9 @@ class IgnoredUsersPresenter(
 
     override fun dismissConfirm() {
         _ignoreUserId.value = ""
+    }
+
+    override fun openPeerProfile(userId: String) {
+        navigateTo(NavRoute.PeerProfile(userId))
     }
 }

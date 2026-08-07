@@ -117,6 +117,12 @@ interface NavRoute {
         override fun toUriString(): String = getDeepLinkBasePath(this) + "/$tradeId"
     }
 
+    @Serializable
+    @Immutable
+    data class PeerProfile(
+        val profileId: String,
+    ) : NavRoute
+
     // --- Settings Sub-screens ---
     @Serializable
     data object ChatRules : NavRoute

@@ -100,6 +100,7 @@ fun OfferbookScreen() {
         onOpenReputationWiki = presenter::onOpenReputationWiki,
         onDismissNotEnoughReputationDialog = presenter::onDismissNotEnoughReputationDialog,
         onTradeRestrictingAlertAction = presenter::onTradeRestrictingAlertAction,
+        onPeerProfileClick = presenter::onPeerProfileClick,
     )
 }
 
@@ -136,6 +137,7 @@ internal fun OfferbookContent(
     onOpenReputationWiki: () -> Unit,
     onDismissNotEnoughReputationDialog: () -> Unit,
     onTradeRestrictingAlertAction: (AlertNotificationUiAction) -> Unit,
+    onPeerProfileClick: (String) -> Unit,
 ) {
     val isOfferSelectionEnabled = isDeleteOfferEnabled && isTakeOfferEnabled
 
@@ -221,6 +223,7 @@ internal fun OfferbookContent(
                         },
                         userProfileIconProvider = userProfileIconProvider,
                         enabled = isOfferSelectionEnabled,
+                        onPeerProfileClick = onPeerProfileClick,
                     )
                 }
             }
