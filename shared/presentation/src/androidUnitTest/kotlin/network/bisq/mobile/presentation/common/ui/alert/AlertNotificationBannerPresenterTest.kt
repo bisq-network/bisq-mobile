@@ -4,80 +4,38 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
 import network.bisq.mobile.presentation.common.test_utils.probeStateFlow
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import network.bisq.mobile.test.presentation.di.NoopNavigationManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AlertNotificationBannerPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                    single { NoopNavigationManager() as network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager }
-                    single { GlobalUiManager() }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
+class AlertNotificationBannerPresenterTest : PlatformPresentationKoinTestBase() {
+    override fun onKoinReady() {
+        I18nSupport.initialize("en")
     }
 
     @Test
     fun `selects most severe then most recent alert`() =
-        runTest(testDispatcher) {
+        runTest {
             val alertsFlow =
                 MutableStateFlow(
                     listOf(
@@ -106,7 +64,7 @@ class AlertNotificationBannerPresenterTest {
 
     @Test
     fun `dismiss delegates to facade`() =
-        runTest(testDispatcher) {
+        runTest {
             val alertsFlow = MutableStateFlow(listOf(alert(id = "warn", type = AlertType.WARN, date = 5L)))
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
@@ -119,7 +77,7 @@ class AlertNotificationBannerPresenterTest {
 
     @Test
     fun `expand alert opens dialog for matching alert`() =
-        runTest(testDispatcher) {
+        runTest {
             val alertsFlow = MutableStateFlow(listOf(alert(id = "warn", type = AlertType.WARN, date = 5L)))
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
@@ -145,7 +103,7 @@ class AlertNotificationBannerPresenterTest {
 
     @Test
     fun `close dialog clears expanded alert`() =
-        runTest(testDispatcher) {
+        runTest {
             val alertsFlow = MutableStateFlow(listOf(alert(id = "warn", type = AlertType.WARN, date = 5L)))
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
@@ -178,7 +136,7 @@ class AlertNotificationBannerPresenterTest {
 
     @Test
     fun `update now opens app update url`() =
-        runTest(testDispatcher) {
+        runTest {
             val appUpdateLinker = mockk<AppUpdateLinker>()
             every { appUpdateLinker.getUpdateUrl() } returns TEST_APP_UPDATE_URL
             val urlLauncher = mockk<UrlLauncher>(relaxed = true)
@@ -203,7 +161,7 @@ class AlertNotificationBannerPresenterTest {
 
     @Test
     fun `banner visibility follows main content visibility`() =
-        runTest(testDispatcher) {
+        runTest {
             val alertsFlow = MutableStateFlow(listOf(alert(id = "info", type = AlertType.INFO, date = 1L)))
             val alertServiceFacade = FakeAlertNotificationsServiceFacade(alertsFlow)
             val mainPresenter = MainPresenterTestFactory.create()
@@ -227,7 +185,7 @@ class AlertNotificationBannerPresenterTest {
 
     @Test
     fun `default headlines are applied for visible alert types and highest severity ranks first`() =
-        runTest(testDispatcher) {
+        runTest {
             val alertsFlow =
                 MutableStateFlow(
                     listOf(
@@ -278,7 +236,7 @@ class AlertNotificationBannerPresenterTest {
 
     @Test
     fun `non message alert types are never exposed in banner or dialog ui state`() =
-        runTest(testDispatcher) {
+        runTest {
             val alertsFlow =
                 MutableStateFlow(
                     listOf(

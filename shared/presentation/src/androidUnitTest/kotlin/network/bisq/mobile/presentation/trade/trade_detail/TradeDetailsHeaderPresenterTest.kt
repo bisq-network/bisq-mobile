@@ -4,14 +4,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -19,21 +14,13 @@ import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import java.util.Locale
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -42,56 +29,34 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TradeDetailsHeaderPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
     private var originalLocale: Locale? = null
 
-    private lateinit var tradesServiceFacade: TradesServiceFacade
-    private lateinit var mediationServiceFacade: MediationServiceFacade
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
-    private lateinit var mainPresenter: MainPresenter
-    private val navigationManager: NavigationManager = mockk(relaxed = true)
-    private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
+    private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val mediationServiceFacade: MediationServiceFacade = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
 
-    private val testKoinModule =
-        module {
-            single { CoroutineExceptionHandlerSetup() }
-            factory<CoroutineJobsManager> {
-                DefaultCoroutineJobsManager().apply {
-                    get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                }
-            }
-            single<NavigationManager> { navigationManager }
-            single<GlobalUiManager> { globalUiManager }
-        }
-
-    @BeforeTest
-    fun setUp() {
+    override fun beforeStartKoin() {
         originalLocale = Locale.getDefault()
         Locale.setDefault(Locale.US)
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
 
-        Dispatchers.setMain(testDispatcher)
-
-        tradesServiceFacade = mockk(relaxed = true)
-        mediationServiceFacade = mockk(relaxed = true)
-        userProfileServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin { modules(testKoinModule) }
+    override fun onKoinReady() {
         GenericErrorHandler.clearGenericError()
         I18nSupport.initialize("en")
 
         every { mainPresenter.isSmallScreen } returns MutableStateFlow(false)
     }
 
-    @AfterTest
-    fun tearDown() {
+    override fun onTearDown() {
         try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
             originalLocale?.let { Locale.setDefault(it) }
             GenericErrorHandler.clearGenericError()
+        } finally {
+            super.onTearDown()
         }
     }
 
@@ -105,7 +70,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when view attached for seller then direction is sell`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
 
@@ -118,7 +83,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when view attached for buyer then direction is buy`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = false)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
 
@@ -131,7 +96,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when mediation and payment data change then session state reflects them`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
 
@@ -155,7 +120,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when toggle header action then updates show details in session state`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
 
@@ -172,7 +137,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when open interruption and mediation confirmation actions then shows dialogs`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
 
@@ -191,7 +156,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when interrupt trade in reject state then calls reject trade`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
             coEvery { tradesServiceFacade.rejectTrade() } returns Result.success(Unit)
@@ -208,7 +173,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when interrupt trade in cancel state then calls cancel trade`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
             coEvery { tradesServiceFacade.cancelTrade() } returns Result.success(Unit)
@@ -228,7 +193,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when open mediation and mediator not available then sets no mediator error`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
             coEvery { mediationServiceFacade.reportToMediator(any()) } returns
@@ -249,7 +214,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when open mediation fails then sets mediation failed error`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
             coEvery { mediationServiceFacade.reportToMediator(any()) } returns
@@ -270,7 +235,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when open mediation with null selected trade then sets mediation failed error`() =
-        runTest(testDispatcher) {
+        runTest {
             val selected = MutableStateFlow<TradeItemPresentationModel?>(null)
             every { tradesServiceFacade.selectedTrade } returns selected
 
@@ -286,7 +251,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when trade completed date is set then session state shows formatted trade duration`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
 
@@ -306,7 +271,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when selected trade becomes null then clears trade ui state`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
 
@@ -324,7 +289,7 @@ class TradeDetailsHeaderPresenterTest {
 
     @Test
     fun `when view unattaching then resets presenter state`() =
-        runTest(testDispatcher) {
+        runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
             coEvery { mediationServiceFacade.reportToMediator(any()) } returns

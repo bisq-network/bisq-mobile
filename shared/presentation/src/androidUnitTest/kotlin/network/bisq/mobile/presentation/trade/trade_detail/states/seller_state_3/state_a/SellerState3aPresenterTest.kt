@@ -5,33 +5,22 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.TradeStatePresenterTestSupport
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SellerState3aPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class SellerState3aPresenterTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
 
-    @BeforeTest
-    fun setUp() = TradeStatePresenterTestSupport.setUp(testDispatcher)
-
-    @AfterTest
-    fun tearDown() = TradeStatePresenterTestSupport.tearDown()
-
     @Test
     fun `rapid double-tap on confirmSend triggers sellerConfirmBtcSent only once`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
             presenter.onPaymentProofInput("tx-id-123", isValid = true)
             coEvery { tradesServiceFacade.sellerConfirmBtcSent(any()) } coAnswers {
@@ -49,7 +38,7 @@ class SellerState3aPresenterTest {
 
     @Test
     fun `confirm send failure re-enables confirm guard`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
             presenter.onPaymentProofInput("tx-id-123", isValid = true)
             coEvery { tradesServiceFacade.sellerConfirmBtcSent(any()) } returns

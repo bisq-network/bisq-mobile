@@ -41,7 +41,6 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `OfferTestFactory` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/OfferTestFactory.kt` |
 | `SettingsRepositoryMock(initial, fetchException)` | `shared/test-utils/src/commonMain/kotlin/.../mocks/SettingsRepositoryMock.kt` |
 | `UserRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../mocks/UserRepositoryMock.kt` |
-| `TradeStatePresenterTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../trade/trade_detail/states/TradeStatePresenterTestSupport.kt` |
 | `WebLinkDialogTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../dialog/WebLinkDialogTestSupport.kt` |
 
 `SettingsRepositoryMock` is the **only** `SettingsRepository` double — do not hand-roll another. Its
@@ -76,3 +75,4 @@ Two private same-named fakes still exist for the offerbook market list, keyed on
 | `OfferbookMarketPresenterTestFactory` | Consolidated into `OfferbookMarketPresenterTest` (#1573) |
 | `FakeSettingsRepository`, `TestSettingsRepository`, `FakeSettingsRepo` | Per-test copies; consolidated into `SettingsRepositoryMock` (#1488) |
 | `FakeMarketPriceServiceFacade` copies in the create-offer / take-offer tests | Consolidated into `test_utils/FakeMarketPriceServiceFacade.kt` (#1488) |
+| `TradeStatePresenterTestSupport` | Inline Koin/dispatcher helper; consumers extend `PresentationKoinTestBase` |

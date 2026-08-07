@@ -2,72 +2,37 @@ package network.bisq.mobile.presentation.startup.create_profile
 
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.analytics.AnalyticsService
-import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CreateProfilePresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var userProfileService: UserProfileServiceFacade
-    private lateinit var mainPresenter: MainPresenter
+class CreateProfilePresenterTest : PresentationKoinTestBase() {
+    private val userProfileService: UserProfileServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: CreateProfilePresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single { GlobalUiManager(testDispatcher) }
-                    single<AnalyticsService> { NoOpAnalyticsService }
-                },
-            )
-        }
-        userProfileService = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
     }
 
     private fun createPresenter(): CreateProfilePresenter = CreateProfilePresenter(mainPresenter, userProfileService)
 
     @Test
     fun `rapid double-tap on create profile triggers createAndPublish only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
                 val callback = secondArg<(String, String, Any?) -> Unit>()
                 callback("id", "nym", null)
@@ -91,7 +56,7 @@ class CreateProfilePresenterTest {
 
     @Test
     fun `create profile failure re-enables submit button`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
                 val callback = secondArg<(String, String, Any?) -> Unit>()
                 callback("id", "nym", null)
@@ -111,7 +76,7 @@ class CreateProfilePresenterTest {
 
     @Test
     fun `rapid double-tap on regenerate key pair triggers generateKeyPair only once`() =
-        runTest(testDispatcher) {
+        runTest {
             val keyGenerationStarted = CompletableDeferred<Unit>()
             coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
                 keyGenerationStarted.complete(Unit)
@@ -129,7 +94,7 @@ class CreateProfilePresenterTest {
 
     @Test
     fun `create profile success during onboarding navigates to home and clears nickname`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
                 val callback = secondArg<(String, String, Any?) -> Unit>()
                 callback("id", "nym", null)
@@ -151,7 +116,7 @@ class CreateProfilePresenterTest {
 
     @Test
     fun `create profile success outside onboarding navigates back`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileService.generateKeyPair(any(), any()) } coAnswers {
                 val callback = secondArg<(String, String, Any?) -> Unit>()
                 callback("id", "nym", null)

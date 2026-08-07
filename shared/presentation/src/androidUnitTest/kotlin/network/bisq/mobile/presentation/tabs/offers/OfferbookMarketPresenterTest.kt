@@ -3,13 +3,9 @@ package network.bisq.mobile.presentation.tabs.offers
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.market.MarketFilter
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.model.market.MarketSortBy
@@ -19,21 +15,15 @@ import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
+import org.koin.core.component.inject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -45,11 +35,8 @@ import kotlin.test.assertTrue
  * hide/reveal survival, and market-selection navigation.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class OfferbookMarketPresenterTest {
-    private val dispatcherProvider = StandardTestDispatcherProvider()
-    private val testDispatcher = dispatcherProvider.default
-    private lateinit var navigationManager: NavigationManager
-    private lateinit var globalUiManager: GlobalUiManager
+class OfferbookMarketPresenterTest : PresentationKoinTestBase() {
+    private val dispatcherProvider = StandardTestDispatcherProvider(testDispatcher)
 
     private val offersServiceFacade: OffersServiceFacade =
         mockk<OffersServiceFacade>(relaxed = true).also {
@@ -61,32 +48,9 @@ class OfferbookMarketPresenterTest {
             every { it.ignoredProfileIds } returns MutableStateFlow(emptySet())
         }
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        navigationManager = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { navigationManager }
-                    single { globalUiManager }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        Dispatchers.resetMain()
-        stopKoin()
-    }
-
     @Test
     fun `when filter changed then it is persisted and reflected in uiState`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val settingsRepository = SettingsRepositoryMock()
             val presenter = createPresenter(settingsRepository)
@@ -103,7 +67,7 @@ class OfferbookMarketPresenterTest {
 
     @Test
     fun `when sort by changed then it is persisted and reflected in uiState`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val settingsRepository = SettingsRepositoryMock()
             val presenter = createPresenter(settingsRepository)
@@ -120,7 +84,7 @@ class OfferbookMarketPresenterTest {
 
     @Test
     fun `when search text changed then searchText updates and market list is filtered`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val presenter = presenterWithMarkets()
             advanceUntilIdle()
@@ -137,7 +101,7 @@ class OfferbookMarketPresenterTest {
 
     @Test
     fun `when hidden and revealed then market filtering still works`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val presenter = presenterWithMarkets()
             advanceUntilIdle()
@@ -157,7 +121,7 @@ class OfferbookMarketPresenterTest {
 
     @Test
     fun `when there are ignored users then uiState hasIgnoredUsers is true`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val userProfileServiceFacade =
                 mockk<UserProfileServiceFacade>(relaxed = true).also {
@@ -178,7 +142,7 @@ class OfferbookMarketPresenterTest {
 
     @Test
     fun `when market selected successfully then navigates to offerbook`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val item = marketItem("USD", "US Dollar", numOffers = 1)
             val offersServiceFacade =
@@ -202,7 +166,7 @@ class OfferbookMarketPresenterTest {
 
     @Test
     fun `when market selection fails then does not navigate and shows error snackbar`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val item = marketItem("USD", "US Dollar", numOffers = 1)
             val offersServiceFacade =
@@ -227,7 +191,7 @@ class OfferbookMarketPresenterTest {
 
     @Test
     fun `initial uiState exposes default filter and sort with an empty list`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given / When
             val presenter = createPresenter(SettingsRepositoryMock())
             advanceUntilIdle()

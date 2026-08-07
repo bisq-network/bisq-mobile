@@ -2,17 +2,13 @@ package network.bisq.mobile.presentation.main
 
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
@@ -27,17 +23,9 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -47,39 +35,12 @@ import kotlin.test.assertEquals
  * the presenter can interact with
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class MainPresenterUnreadBadgeTest {
-    private val testDispatcher = UnconfinedTestDispatcher()
-
-    @BeforeTest
-    fun setUpMainDispatcher() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDownMainDispatcher() {
-        stopKoin()
-        Dispatchers.resetMain()
-    }
+class MainPresenterUnreadBadgeTest : PlatformPresentationKoinTestBase() {
+    override val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
 
     @Test
     fun `unread badge count reflects the total unread chat messages exactly`() =
         runTest {
-            // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
-
             // Mock dependencies
             val tradesServiceFacade = mockk<TradesServiceFacade>()
             val tradeReadStateRepository = mockk<TradeReadStateRepository>()

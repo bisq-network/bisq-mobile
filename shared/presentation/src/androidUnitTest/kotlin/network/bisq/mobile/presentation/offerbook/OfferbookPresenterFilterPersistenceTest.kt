@@ -3,9 +3,6 @@ package network.bisq.mobile.presentation.offerbook
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,11 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfigs
@@ -43,53 +36,32 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import network.bisq.mobile.test.presentation.di.NoopNavigationManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class OfferbookPresenterFilterPersistenceTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { NoopNavigationManager() }
-                    single { GlobalUiManager(testDispatcher) }
-                },
-            )
-        }
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
+class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase() {
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
     }
 
-    @AfterTest
-    fun tearDown() {
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
-        stopKoin()
+    override fun onTearDown() {
+        try {
+            globalUiManager.dispose()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     private class FakeOfferbookFilterConfigRepository(
@@ -195,7 +167,7 @@ class OfferbookPresenterFilterPersistenceTest {
 
     @Test
     fun `when initial filter config restore fails then defaults are used and presenter continues`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = createFixture(getConfigFailure = IllegalStateException("Cannot read filters"))
             try {
                 awaitBaseline(fixture.presenter)
@@ -213,7 +185,7 @@ class OfferbookPresenterFilterPersistenceTest {
 
     @Test
     fun `when initial restore is slow then restored manual selections are not auto-overwritten`() =
-        runTest(testDispatcher) {
+        runTest {
             val usdConfig =
                 OfferbookFilterConfig(
                     selectedPaymentMethodIds = setOf("SEPA"),
@@ -240,7 +212,7 @@ class OfferbookPresenterFilterPersistenceTest {
 
     @Test
     fun `when selected market changes then current config is persisted and next market config is restored`() =
-        runTest(testDispatcher) {
+        runTest {
             val eurConfig =
                 OfferbookFilterConfig(
                     selectedPaymentMethodIds = setOf("SEPA"),
@@ -279,7 +251,7 @@ class OfferbookPresenterFilterPersistenceTest {
 
     @Test
     fun `when available payment methods are auto-selected then config is persisted for current market`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = createFixture()
             try {
                 awaitBaseline(fixture.presenter)
@@ -299,7 +271,7 @@ class OfferbookPresenterFilterPersistenceTest {
 
     @Test
     fun `when payment and settlement selections are set then config is persisted for current market`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = createFixture()
             try {
                 awaitBaseline(fixture.presenter)
@@ -322,7 +294,7 @@ class OfferbookPresenterFilterPersistenceTest {
 
     @Test
     fun `when methods are toggled then config is persisted for current market`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = createFixture()
             try {
                 awaitBaseline(fixture.presenter)
@@ -346,7 +318,7 @@ class OfferbookPresenterFilterPersistenceTest {
 
     @Test
     fun `when filters are cleared then default selections and onlyMyOffers are persisted`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = createFixture()
             try {
                 awaitBaseline(fixture.presenter)

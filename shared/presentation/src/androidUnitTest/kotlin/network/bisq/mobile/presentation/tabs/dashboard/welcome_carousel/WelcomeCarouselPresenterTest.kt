@@ -5,14 +5,9 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.BatteryOptimizationState
 import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
@@ -21,41 +16,28 @@ import network.bisq.mobile.data.service.push_notification.PushNotificationServic
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WelcomeCarouselPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var settingsRepository: SettingsRepository
-    private lateinit var pushNotificationServiceFacade: PushNotificationServiceFacade
+class WelcomeCarouselPresenterTest : PresentationKoinTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val pushNotificationServiceFacade: PushNotificationServiceFacade = mockk(relaxed = true)
     private lateinit var settingsFlow: MutableStateFlow<Settings>
     private lateinit var pushEnabledFlow: MutableStateFlow<Boolean>
+    private var previousDemoState = false
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun onKoinReady() {
+        previousDemoState = ApplicationBootstrapFacade.isDemo
         ApplicationBootstrapFacade.isDemo = false
 
-        mainPresenter = mockk(relaxed = true)
-
         settingsFlow = MutableStateFlow(Settings())
-        settingsRepository = mockk(relaxed = true)
         every { settingsRepository.data } returns settingsFlow
         coEvery { settingsRepository.setNotificationPermissionState(any()) } answers {
             val next = firstArg<PermissionState>()
@@ -78,27 +60,14 @@ class WelcomeCarouselPresenterTest {
         }
 
         pushEnabledFlow = MutableStateFlow(false)
-        pushNotificationServiceFacade = mockk(relaxed = true)
         every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns pushEnabledFlow
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
     }
 
-    @AfterTest
-    fun tearDown() {
+    override fun onTearDown() {
         try {
-            stopKoin()
+            ApplicationBootstrapFacade.isDemo = previousDemoState
         } finally {
-            ApplicationBootstrapFacade.isDemo = false
-            Dispatchers.resetMain()
+            super.onTearDown()
         }
     }
 
@@ -116,7 +85,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `pending pages include NOTIFICATIONS when state is NOT_GRANTED`() =
-        runTest(testDispatcher) {
+        runTest {
             // Other cards suppressed to isolate NOTIFICATIONS logic.
             settingsFlow.value =
                 Settings(
@@ -136,7 +105,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `pending pages include NOTIFICATIONS when state is DENIED`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.DENIED,
@@ -155,7 +124,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `NOTIFICATIONS resolved by DONT_ASK_AGAIN`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.DONT_ASK_AGAIN,
@@ -174,7 +143,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `BATTERY pending on Android when notifications GRANTED and battery NOT_IGNORED and relayed push off`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
@@ -193,7 +162,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `BATTERY never pending on iOS`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
@@ -212,7 +181,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `BATTERY suppressed when relayed push notifications enabled`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
@@ -232,7 +201,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `NOTIFICATIONS and BATTERY are pending independently when analytics already seen`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.NOT_GRANTED,
@@ -253,7 +222,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `BATTERY remains pending after NOTIFICATIONS is dismissed via Don't ask again`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.NOT_GRANTED,
@@ -278,7 +247,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `demo mode forces empty pages regardless of underlying state`() =
-        runTest(testDispatcher) {
+        runTest {
             ApplicationBootstrapFacade.isDemo = true
             settingsFlow.value =
                 Settings(
@@ -299,7 +268,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `pages transition live as cards resolve in any order`() =
-        runTest(testDispatcher) {
+        runTest {
             // First-launch: both OS-coupled cards pending; analytics deferred for
             // isolation in this scenario.
             settingsFlow.value =
@@ -336,7 +305,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `onDontAskAgain NOTIFICATIONS persists DONT_ASK_AGAIN`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = newPresenter()
             advanceUntilIdle()
 
@@ -352,7 +321,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `onDontAskAgain BATTERY persists DONT_ASK_AGAIN`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = newPresenter()
             advanceUntilIdle()
 
@@ -374,7 +343,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `ANALYTICS pending when analyticsPromptSeen is false`() =
-        runTest(testDispatcher) {
+        runTest {
             // Other cards suppressed to isolate ANALYTICS logic.
             settingsFlow.value =
                 Settings(
@@ -394,7 +363,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `ANALYTICS not pending when analyticsPromptSeen is true`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
@@ -413,7 +382,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `ANALYTICS not pending for users who already opted in via Settings`() =
-        runTest(testDispatcher) {
+        runTest {
             // Settings → Analytics toggle handler always sets promptSeen=true alongside
             // analyticsEnabled, so users who engaged via Settings should not see the
             // carousel card. Mirrors that observed state.
@@ -436,7 +405,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `fresh install shows all three cards in order NOTIFICATIONS BATTERY ANALYTICS`() =
-        runTest(testDispatcher) {
+        runTest {
             // Default Settings() values: no permission granted, battery unset,
             // analytics never prompted. This is what an existing user looks like
             // after upgrading to the version that adds the analytics card.
@@ -457,7 +426,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `OnEnableAnalytics persists analyticsEnabled and analyticsPromptSeen atomically`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
@@ -482,7 +451,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `OnDontAskAgain ANALYTICS sets analyticsPromptSeen only and leaves analyticsEnabled off`() =
-        runTest(testDispatcher) {
+        runTest {
             settingsFlow.value =
                 Settings(
                     notificationPermissionState = PermissionState.GRANTED,
@@ -509,7 +478,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `OnAnalyticsLearnMore opens the analytics wiki URL`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = newPresenter()
             advanceUntilIdle()
 
@@ -523,7 +492,7 @@ class WelcomeCarouselPresenterTest {
 
     @Test
     fun `OnAnalyticsLearnMore does not change analyticsPromptSeen`() =
-        runTest(testDispatcher) {
+        runTest {
             // Tapping "Learn more" navigates to the wiki; it must NOT count as
             // engagement that dismisses the carousel — the user still has to
             // either Enable or Don't ask again.

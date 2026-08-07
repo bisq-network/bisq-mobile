@@ -6,76 +6,51 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.share.ShareFileService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class State4PresenterTest {
-    private val testDispatcher = UnconfinedTestDispatcher()
+class State4PresenterTest : PresentationKoinTestBase() {
+    override val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
 
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
     private val tradeReadStateRepository: TradeReadStateRepository = mockk(relaxed = true)
     private val shareFileService: ShareFileService = mockk(relaxed = true)
-    private val navigationManager: NavigationManager = mockk(relaxed = true)
 
-    private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
 
-    private val testKoinModule =
-        module {
-            single { CoroutineExceptionHandlerSetup() }
-            factory<CoroutineJobsManager> {
-                DefaultCoroutineJobsManager().apply {
-                    get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                }
-            }
-            single<NavigationManager> { navigationManager }
-            single<GlobalUiManager> { globalUiManager }
-        }
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin { modules(testKoinModule) }
-        I18nSupport.initialize("en")
+    override fun onKoinReady() {
         GenericErrorHandler.clearGenericError()
     }
 
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-        GenericErrorHandler.clearGenericError()
+    override fun onTearDown() {
+        try {
+            GenericErrorHandler.clearGenericError()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     private fun createPresenter(selectedTrade: MutableStateFlow<TradeItemPresentationModel?>): State4Presenter {

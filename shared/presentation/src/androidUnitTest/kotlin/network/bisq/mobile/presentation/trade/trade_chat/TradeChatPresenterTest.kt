@@ -4,91 +4,61 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TradeChatPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var tradesServiceFacade: TradesServiceFacade
-    private lateinit var tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
-    private lateinit var mainPresenter: MainPresenter
+class TradeChatPresenterTest : PresentationKoinTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade = mockk(relaxed = true)
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val tradeReadStateRepository: TradeReadStateRepository = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val notificationController: NotificationController = mockk(relaxed = true)
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade = mockk(relaxed = true)
     private lateinit var presenter: TradeChatPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single { GlobalUiManager(testDispatcher) }
-                },
-            )
-        }
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
 
-        tradesServiceFacade = mockk(relaxed = true)
-        tradeChatMessagesServiceFacade = mockk(relaxed = true)
-        userProfileServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-
+    override fun onKoinReady() {
         every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(null)
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
-        every { mockk<SettingsRepository>(relaxed = true).data } returns MutableStateFlow(mockk(relaxed = true))
+        every { settingsRepository.data } returns MutableStateFlow(mockk(relaxed = true))
 
         presenter =
             TradeChatPresenter(
                 mainPresenter,
                 tradesServiceFacade,
                 tradeChatMessagesServiceFacade,
-                mockk<SettingsRepository>(relaxed = true) {
-                    every { data } returns MutableStateFlow(mockk(relaxed = true))
-                },
-                mockk<TradeReadStateRepository>(relaxed = true),
+                settingsRepository,
+                tradeReadStateRepository,
                 userProfileServiceFacade,
-                mockk<NotificationController>(relaxed = true),
-                mockk<MessageDeliveryServiceFacade>(relaxed = true),
+                notificationController,
+                messageDeliveryServiceFacade,
             )
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
     }
 
     @Test
     fun `rapid double-tap on sendChatMessage triggers send only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { tradeChatMessagesServiceFacade.sendChatMessage(any(), any()) } coAnswers {
                 kotlinx.coroutines.delay(Long.MAX_VALUE)
                 Result.success(Unit)
@@ -104,7 +74,7 @@ class TradeChatPresenterTest {
 
     @Test
     fun `sendChatMessage success clears quoted message`() =
-        runTest(testDispatcher) {
+        runTest {
             val quoted = mockk<network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel>(relaxed = true)
             every { quoted.text } returns "quoted"
             every { quoted.id } returns "q1"
@@ -121,7 +91,7 @@ class TradeChatPresenterTest {
 
     @Test
     fun `confirmed ignore user calls ignoreUserProfile`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileServiceFacade.ignoreUserProfile("peer-1") } returns Unit
 
             presenter.showIgnoreUserPopup("peer-1")
@@ -133,7 +103,7 @@ class TradeChatPresenterTest {
 
     @Test
     fun `confirmed undo ignore user calls undoIgnoreUserProfile`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileServiceFacade.undoIgnoreUserProfile("peer-2") } returns Unit
 
             presenter.showUndoIgnoreUserPopup("peer-2")

@@ -2,40 +2,24 @@ package network.bisq.mobile.presentation.common.ui.base
 
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.spyk
-import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.utils.UrlLauncher
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -44,42 +28,20 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class BasePresenterLifecycleTest {
-    private val testDispatcher = StandardTestDispatcher()
-
+class BasePresenterLifecycleTest : PlatformPresentationKoinTestBase() {
     private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = spyk(GlobalUiManager(testDispatcher))
+    }
 
-        globalUiManager = spyk(GlobalUiManager())
-
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single { globalUiManager }
-                },
-            )
-        }
-
+    override fun onKoinReady() {
+        I18nSupport.initialize("en")
         mainPresenter =
             MainPresenterTestFactory.create(
                 applicationLifecycleService = TestApplicationLifecycleService(),
             )
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
     }
 
     @Test
@@ -225,7 +187,7 @@ class BasePresenterLifecycleTest {
 
     @Test
     fun `guardedSuspendAction re-enables guard and hides loading when block completes`() =
-        runTest(testDispatcher) {
+        runTest {
             val guard = MutableStateFlow(true)
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
@@ -239,7 +201,7 @@ class BasePresenterLifecycleTest {
 
     @Test
     fun `guardedSuspendAction ignores second call while first is in progress`() =
-        runTest(testDispatcher) {
+        runTest {
             val guard = MutableStateFlow(true)
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
@@ -261,7 +223,7 @@ class BasePresenterLifecycleTest {
 
     @Test
     fun `guardedSuspendAction with reEnableGuardOnComplete false leaves guard disabled after success`() =
-        runTest(testDispatcher) {
+        runTest {
             val guard = MutableStateFlow(true)
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
@@ -274,7 +236,7 @@ class BasePresenterLifecycleTest {
 
     @Test
     fun `guardedSuspendAction with reEnableGuardOnComplete false allows manual re-enable on failure`() =
-        runTest(testDispatcher) {
+        runTest {
             val guard = MutableStateFlow(true)
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
@@ -291,7 +253,7 @@ class BasePresenterLifecycleTest {
 
     @Test
     fun `guardedSuspendAction returns cancellable Job that restores guard on cancel`() =
-        runTest(testDispatcher) {
+        runTest {
             val guard = MutableStateFlow(true)
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()
@@ -309,7 +271,7 @@ class BasePresenterLifecycleTest {
 
     @Test
     fun `guardedSuspendAction restores guard and hides loading when cancelled before coroutine starts`() =
-        runTest(testDispatcher) {
+        runTest {
             val guard = MutableStateFlow(true)
             val presenter = GuardTestPresenter(mainPresenter)
             presenter.onViewAttached()

@@ -4,15 +4,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
@@ -20,80 +15,59 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TradeChatPresenterSendTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade
-    private lateinit var presenter: TradeChatPresenter
+class TradeChatPresenterSendTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
-    private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
+    private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade = mockk(relaxed = true)
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val tradeReadStateRepository: TradeReadStateRepository = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val notificationController: NotificationController = mockk(relaxed = true)
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade = mockk(relaxed = true)
+    private lateinit var presenter: TradeChatPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        tradeChatMessagesServiceFacade = mockk(relaxed = true)
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
 
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single { globalUiManager }
-                },
-            )
-        }
-
-        val settingsRepository = mockk<SettingsRepository>(relaxed = true)
+    override fun onKoinReady() {
         every { settingsRepository.data } returns MutableStateFlow(Settings())
 
         presenter =
             TradeChatPresenter(
                 mainPresenter = mainPresenter,
-                tradesServiceFacade = mockk(relaxed = true),
+                tradesServiceFacade = tradesServiceFacade,
                 tradeChatMessagesServiceFacade = tradeChatMessagesServiceFacade,
                 settingsRepository = settingsRepository,
-                tradeReadStateRepository = mockk(relaxed = true),
-                userProfileServiceFacade = mockk(relaxed = true),
-                notificationController = mockk<NotificationController>(relaxed = true),
-                messageDeliveryServiceFacade = mockk<MessageDeliveryServiceFacade>(relaxed = true),
+                tradeReadStateRepository = tradeReadStateRepository,
+                userProfileServiceFacade = userProfileServiceFacade,
+                notificationController = notificationController,
+                messageDeliveryServiceFacade = messageDeliveryServiceFacade,
             )
         presenter.onViewAttached()
     }
 
-    @AfterTest
-    fun tearDown() {
+    override fun onTearDown() {
         try {
-            stopKoin()
+            presenter.onViewUnattaching()
         } finally {
-            Dispatchers.resetMain()
+            super.onTearDown()
         }
     }
 
     @Test
     fun `rapid double-tap on sendChatMessage triggers send only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { tradeChatMessagesServiceFacade.sendChatMessage(any(), any()) } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
@@ -109,7 +83,7 @@ class TradeChatPresenterSendTest {
 
     @Test
     fun `sendChatMessage failure re-enables send button for retry`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { tradeChatMessagesServiceFacade.sendChatMessage(any(), any()) } returns
                 Result.failure(RuntimeException("network error"))
 

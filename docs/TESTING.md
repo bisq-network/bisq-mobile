@@ -106,7 +106,7 @@ Repository-wide (full suite / coverage — not for day-to-day iteration):
 ## PR checklist
 
 - [ ] Test mirrors production package path
-- [ ] Correct leaf base — not legacy inline Koin/dispatcher setup
+- [ ] Correct leaf base — not legacy inline Koin/dispatcher setup; `beforeStartKoin`/`onTearDown` overrides call `super`
 - [ ] No double `startKoin` with `TestApplication`
 - [ ] Reused catalog helpers; updated [catalog.md](testing/catalog.md) if adding shared utilities
 - [ ] Proof-test patterns, not legacy siblings

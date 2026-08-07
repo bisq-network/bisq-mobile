@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
@@ -20,7 +19,6 @@ class NetworkStatusBannerPresenterTest : PresentationKoinTestBase() {
     private lateinit var networkServiceFacade: NetworkServiceFacade
 
     override fun onKoinReady() {
-        I18nSupport.initialize("en")
         mainPresenter = mockk(relaxed = true)
         networkServiceFacade = mockk(relaxed = true)
     }

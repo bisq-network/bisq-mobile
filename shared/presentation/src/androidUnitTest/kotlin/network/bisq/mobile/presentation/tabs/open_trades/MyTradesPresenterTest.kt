@@ -2,44 +2,29 @@ package network.bisq.mobile.presentation.tabs.open_trades
 
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.analytics.AnalyticsService
-import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.MyTradesPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.MyTradesUiAction
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MyTradesPresenterTest {
-    private val testDispatcher = UnconfinedTestDispatcher()
+class MyTradesPresenterTest : PresentationKoinTestBase() {
+    override val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
+
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
-    private val navigationManager: NavigationManager = mockk(relaxed = true)
-    private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
 
     private val capabilitiesFlow = MutableStateFlow(BackendCapabilities.UNAVAILABLE)
     private val backendCapabilitiesService: BackendCapabilitiesService =
@@ -47,37 +32,26 @@ class MyTradesPresenterTest {
             every { it.capabilities } returns capabilitiesFlow
         }
 
-    private val testModule =
-        module {
-            single { CoroutineExceptionHandlerSetup() }
-            factory<CoroutineJobsManager> {
-                DefaultCoroutineJobsManager().apply {
-                    get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                }
-            }
-            single<NavigationManager> { navigationManager }
-            single<GlobalUiManager> { globalUiManager }
-            single<AnalyticsService> { NoOpAnalyticsService }
-        }
-
     private lateinit var presenter: MyTradesPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin { modules(testModule) }
-        I18nSupport.initialize("en")
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
+
+    override fun onKoinReady() {
         GenericErrorHandler.clearGenericError()
         presenter = MyTradesPresenter(mainPresenter, backendCapabilitiesService)
         presenter.onViewAttached()
     }
 
-    @AfterTest
-    fun tearDown() {
-        presenter.onViewUnattaching()
-        stopKoin()
-        Dispatchers.resetMain()
-        GenericErrorHandler.clearGenericError()
+    override fun onTearDown() {
+        try {
+            presenter.onViewUnattaching()
+            GenericErrorHandler.clearGenericError()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test

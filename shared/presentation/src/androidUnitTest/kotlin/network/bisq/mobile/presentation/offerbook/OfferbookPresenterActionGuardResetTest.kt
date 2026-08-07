@@ -3,17 +3,10 @@ package network.bisq.mobile.presentation.offerbook
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
@@ -40,23 +33,14 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import network.bisq.mobile.test.presentation.di.NoopNavigationManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -69,35 +53,23 @@ import kotlin.test.assertTrue
  * which deliberately leave their guard disabled) cannot leave the FAB/cards permanently disabled.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class OfferbookPresenterActionGuardResetTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { NoopNavigationManager() }
-                    single { GlobalUiManager(testDispatcher) }
-                },
-            )
-        }
+class OfferbookPresenterActionGuardResetTest : PlatformPresentationKoinTestBase() {
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
     }
 
-    @AfterTest
-    fun tearDown() {
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
-        stopKoin()
+    override fun onTearDown() {
+        try {
+            globalUiManager.dispose()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `onViewRevealed resets isCreateOfferEnabled after create offer navigation`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -113,7 +85,7 @@ class OfferbookPresenterActionGuardResetTest {
 
     @Test
     fun `onViewRevealed resets isTakeOfferEnabled when guard was left disabled`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -127,7 +99,7 @@ class OfferbookPresenterActionGuardResetTest {
 
     @Test
     fun `onViewRevealed resets all action guards`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -145,7 +117,7 @@ class OfferbookPresenterActionGuardResetTest {
 
     @Test
     fun `onViewRevealed resets isDeleteOfferEnabled while delete is in progress`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val offersService = mockk<OffersServiceFacade>(relaxed = true)
             coEvery { offersService.deleteOffer(any()) } coAnswers {
@@ -173,7 +145,7 @@ class OfferbookPresenterActionGuardResetTest {
 
     @Test
     fun `onViewRevealed hides delete confirmation so it cannot reopen against a null selection`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val presenter = buildPresenter(offers = listOf(myOffer))
             presenter.onViewAttached()
@@ -191,7 +163,7 @@ class OfferbookPresenterActionGuardResetTest {
 
     @Test
     fun `onViewAttached resets action guards on first attach`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
 
             setActionGuardEnabled(presenter, "_isCreateOfferEnabled", enabled = false)

@@ -1,17 +1,11 @@
 package network.bisq.mobile.presentation.offer.create_offer
 
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
@@ -42,58 +36,22 @@ import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.price.CreateOfferPricePresenter
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CreateOfferPricePresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
-
+class CreateOfferPricePresenterTest : PlatformPresentationKoinTestBase() {
     // --- Fakes ---
     private class FakeSettingsServiceFacade : SettingsServiceFacade {
         override suspend fun getSettings() = Result.success(settingsVODemoObj)
@@ -358,9 +316,6 @@ class CreateOfferPricePresenterTest {
         val settingsRepo = SettingsRepositoryMock()
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-
         val mainPresenter = makeMainPresenter()
         val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
         createOfferCoordinator.createOfferModel =
@@ -397,9 +352,6 @@ class CreateOfferPricePresenterTest {
         val settingsRepo = SettingsRepositoryMock()
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-
         val mainPresenter = makeMainPresenter()
         val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
         createOfferCoordinator.createOfferModel =
@@ -432,9 +384,6 @@ class CreateOfferPricePresenterTest {
         val settingsRepo = SettingsRepositoryMock()
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-
         val mainPresenter = makeMainPresenter()
         val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)
         createOfferCoordinator.createOfferModel =
@@ -466,9 +415,6 @@ class CreateOfferPricePresenterTest {
         val prices = mapOf(marketUSD to marketUSDItem)
         val settingsRepo = SettingsRepositoryMock()
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
-
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
 
         val mainPresenter = makeMainPresenter()
         val createOfferCoordinator = makeCreateOfferCoordinator(marketPriceServiceFacade)

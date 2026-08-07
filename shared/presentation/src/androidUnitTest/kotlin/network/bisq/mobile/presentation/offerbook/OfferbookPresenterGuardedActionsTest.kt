@@ -4,17 +4,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
@@ -42,63 +35,43 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import network.bisq.mobile.test.presentation.di.NoopNavigationManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class OfferbookPresenterGuardedActionsTest {
-    private val testDispatcher = StandardTestDispatcher()
+@OptIn(ExperimentalCoroutinesApi::class)
+class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() {
     private var previousDemoState = false
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
         previousDemoState = ApplicationBootstrapFacade.isDemo
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { NoopNavigationManager() }
-                    single { GlobalUiManager(testDispatcher) }
-                },
-            )
-        }
+        globalUiManager = GlobalUiManager(testDispatcher)
     }
 
-    @AfterTest
-    fun tearDown() {
-        ApplicationBootstrapFacade.isDemo = previousDemoState
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
-        stopKoin()
+    override fun onTearDown() {
+        try {
+            ApplicationBootstrapFacade.isDemo = previousDemoState
+            globalUiManager.dispose()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `onConfirmedDeleteOffer with no selected offer shows error snackbar`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onConfirmedDeleteOffer()
             advanceUntilIdle()
@@ -107,7 +80,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `onConfirmedDeleteOffer in demo mode does not call delete service`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val offersService = mockk<OffersServiceFacade>(relaxed = true)
             every { offersService.offerbookListItems } returns MutableStateFlow(listOf(myOffer))
@@ -134,7 +107,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `onConfirmedDeleteOffer failure re-enables delete guard and deselects offer`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val offersService = mockk<OffersServiceFacade>(relaxed = true)
             coEvery { offersService.deleteOffer(any()) } returns Result.failure(RuntimeException("network"))
@@ -149,7 +122,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `onConfirmedDeleteOffer when delete returns false shows error snackbar`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val offersService = mockk<OffersServiceFacade>(relaxed = true)
             coEvery { offersService.deleteOffer(any()) } returns Result.success(false)
@@ -164,7 +137,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `onDismissDeleteOffer clears confirmation and deselects offer`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val presenter = buildPresenter(offers = listOf(myOffer))
 
@@ -177,7 +150,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `onConfirmedDeleteOffer service exception triggers failure handler`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val offersService = mockk<OffersServiceFacade>(relaxed = true)
             every { offersService.offerbookListItems } returns MutableStateFlow(listOf(myOffer))
@@ -196,7 +169,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `takeOffer with null selected offer is ignored`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             invokeTakeOffer(presenter)
             advanceUntilIdle()
@@ -206,24 +179,12 @@ class OfferbookPresenterGuardedActionsTest {
     @Ignore("Flaky on CI/Linux; temporarily disabled")
     @Test
     fun `onOfferSelected failure when selected profile is null does not navigate`() =
-        runTest(testDispatcher) {
+        runTest {
             val otherOffer = makeOffer(id = "other-offer", isMy = false)
             val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
             val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
             coEvery { userProfileServiceFacade.isUserIgnored(any()) } returns false
-
-            val navManager = mockk<NavigationManager>(relaxed = true)
-            stopKoin()
-            startKoin {
-                modules(
-                    module {
-                        factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                        single<NavigationManager> { navManager }
-                        single { GlobalUiManager(testDispatcher) }
-                    },
-                )
-            }
 
             val presenter =
                 buildPresenter(
@@ -235,12 +196,12 @@ class OfferbookPresenterGuardedActionsTest {
             advanceUntilIdle()
 
             coVerify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any()) }
-            verify(exactly = 0) { navManager.navigate(any(), any(), any()) }
+            verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
         }
 
     @Test
     fun `takeOffer on own offer triggers failure handler and re-enables guard`() =
-        runTest(testDispatcher) {
+        runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
             val presenter = buildPresenter(offers = listOf(myOffer))
 
@@ -256,7 +217,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `createOffer with empty market skips currency selection`() =
-        runTest(testDispatcher) {
+        runTest {
             val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
             val emptyMarket = OfferbookMarket(MarketVO("", "", "", ""))
             val offersService = mockk<OffersServiceFacade>(relaxed = true)
@@ -281,7 +242,7 @@ class OfferbookPresenterGuardedActionsTest {
 
     @Test
     fun `createOffer failure re-enables create guard`() =
-        runTest(testDispatcher) {
+        runTest {
             val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
             every { createOfferCoordinator.onStartCreateOffer() } throws RuntimeException("fail")
 
@@ -321,7 +282,6 @@ class OfferbookPresenterGuardedActionsTest {
             MainPresenterTestFactory.create(
                 applicationLifecycleService = TestApplicationLifecycleService(),
             ),
-        navigationManager: NavigationManager? = null,
         marketPriceServiceFacade: MarketPriceServiceFacade? = null,
         selectedMarket: OfferbookMarket =
             OfferbookMarket(
@@ -363,19 +323,6 @@ class OfferbookPresenterGuardedActionsTest {
 
                     override fun selectMarket(marketListItem: MarketListItem): Result<Unit> = Result.success(Unit)
                 }
-
-        if (navigationManager != null) {
-            stopKoin()
-            startKoin {
-                modules(
-                    module {
-                        factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                        single<NavigationManager> { navigationManager }
-                        single { GlobalUiManager(testDispatcher) }
-                    },
-                )
-            }
-        }
 
         coEvery { reputationService.getReputation(any()) } returns
             Result.success(

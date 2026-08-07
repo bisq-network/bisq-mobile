@@ -3,15 +3,9 @@ package network.bisq.mobile.presentation.tabs.open_trades
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
@@ -19,55 +13,32 @@ import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.usecase.trade.GetPaginatedClosedTradesUseCase
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.closed.ClosedTradeListPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.closed.ClosedTradeListUiAction
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClosedTradeListPresenterTest {
-    private val testDispatcher = UnconfinedTestDispatcher()
+class ClosedTradeListPresenterTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
     private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
-    private val navigationManager: NavigationManager = mockk(relaxed = true)
-    private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
     private val closedTradesTickFlow = MutableStateFlow(0)
-
-    private val testModule =
-        module {
-            single { CoroutineExceptionHandlerSetup() }
-            factory<CoroutineJobsManager> {
-                DefaultCoroutineJobsManager().apply {
-                    get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                }
-            }
-            single<NavigationManager> { navigationManager }
-            single<GlobalUiManager> { globalUiManager }
-        }
 
     private lateinit var presenter: ClosedTradeListPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin { modules(testModule) }
-        I18nSupport.initialize("en")
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
+
+    override fun onKoinReady() {
         GenericErrorHandler.clearGenericError()
         every { tradesServiceFacade.closedTradesChangeTick } returns closedTradesTickFlow
         coEvery {
@@ -87,12 +58,13 @@ class ClosedTradeListPresenterTest {
         presenter.onViewAttached()
     }
 
-    @AfterTest
-    fun tearDown() {
-        presenter.onViewUnattaching()
-        stopKoin()
-        Dispatchers.resetMain()
-        GenericErrorHandler.clearGenericError()
+    override fun onTearDown() {
+        try {
+            presenter.onViewUnattaching()
+            GenericErrorHandler.clearGenericError()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
@@ -187,7 +159,7 @@ class ClosedTradeListPresenterTest {
 
     @Test
     fun `closedTradesChangeTick emission increments refreshTick after 300ms debounce`() =
-        runTest(StandardTestDispatcher()) {
+        runTest {
             val tickFlow = MutableStateFlow(0)
             every { tradesServiceFacade.closedTradesChangeTick } returns tickFlow
 
@@ -195,21 +167,22 @@ class ClosedTradeListPresenterTest {
             val localPresenter =
                 ClosedTradeListPresenter(mainPresenter, tradesServiceFacade, useCase, userProfileServiceFacade)
             localPresenter.onViewAttached()
-
-            // Capture the initial totalCount state to track pager invalidation indirectly;
-            // The refreshTick field is internal, so we verify by checking that totalCount
-            // resets to null after a tick + debounce.
-            tickFlow.value = 1
-            // Before debounce fires: no invalidation yet
-            advanceTimeBy(200)
-            // After 300ms debounce
-            advanceTimeBy(200)
-            // refreshTick has now incremented — totalCount resets to null on each new QueryKey
-            // (onEach { _totalCount.value = null } runs before flatMapLatest)
-            // We can't directly inspect refreshTick, but we can verify the presenter is still alive
-            assertEquals("", localPresenter.uiState.value.searchQuery)
-
-            localPresenter.onViewUnattaching()
+            try {
+                // Capture the initial totalCount state to track pager invalidation indirectly;
+                // The refreshTick field is internal, so we verify by checking that totalCount
+                // resets to null after a tick + debounce.
+                tickFlow.value = 1
+                // Before debounce fires: no invalidation yet
+                advanceTimeBy(200)
+                // After 300ms debounce
+                advanceTimeBy(200)
+                // refreshTick has now incremented — totalCount resets to null on each new QueryKey
+                // (onEach { _totalCount.value = null } runs before flatMapLatest)
+                // We can't directly inspect refreshTick, but we can verify the presenter is still alive
+                assertEquals("", localPresenter.uiState.value.searchQuery)
+            } finally {
+                localPresenter.onViewUnattaching()
+            }
         }
 
     // -----------------------------------------------------------------------
