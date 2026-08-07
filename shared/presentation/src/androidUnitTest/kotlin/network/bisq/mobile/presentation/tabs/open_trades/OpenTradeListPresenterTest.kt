@@ -3,14 +3,11 @@ package network.bisq.mobile.presentation.tabs.open_trades
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -19,38 +16,26 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.usecase.trade.FilterOpenTradesUseCase
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.open.OpenTradeListPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.open.OpenTradeListUiAction
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class OpenTradeListPresenterTest {
-    // All tests share this dispatcher. presenterScope runs on Dispatchers.Main.immediate which
-    // resolves to this test dispatcher, so advanceTimeBy() controls virtual time for the presenter.
-    private val testDispatcher = UnconfinedTestDispatcher()
+class OpenTradeListPresenterTest : PresentationKoinTestBase() {
+    override val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
+
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
     private val settingsServiceFacade: SettingsServiceFacade = mockk(relaxed = true)
     private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
-    private val navigationManager: NavigationManager = mockk(relaxed = true)
-    private val globalUiManager by lazy { GlobalUiManager(testDispatcher) }
 
     private val openTradeItemsFlow = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
     private val tradeRulesConfirmedFlow = MutableStateFlow(false)
@@ -58,23 +43,12 @@ class OpenTradeListPresenterTest {
 
     private val filterOpenTradesUseCase = FilterOpenTradesUseCase()
 
-    private val testModule =
-        module {
-            single { CoroutineExceptionHandlerSetup() }
-            factory<CoroutineJobsManager> {
-                DefaultCoroutineJobsManager().apply {
-                    get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                }
-            }
-            single<NavigationManager> { navigationManager }
-            single<GlobalUiManager> { globalUiManager }
-        }
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin { modules(testModule) }
-        I18nSupport.initialize("en")
+    override fun onKoinReady() {
         GenericErrorHandler.clearGenericError()
 
         // Reset the shared MutableStateFlow fields to their initial values so a value set by
@@ -88,11 +62,12 @@ class OpenTradeListPresenterTest {
         every { mainPresenter.tradesWithUnreadMessages } returns tradesWithUnreadFlow
     }
 
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-        GenericErrorHandler.clearGenericError()
+    override fun onTearDown() {
+        try {
+            GenericErrorHandler.clearGenericError()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     private fun buildPresenter(): OpenTradeListPresenter {
@@ -115,7 +90,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `initial state isLoading is true before filter debounce fires`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             // The combine hasn't collected yet because the 400ms filter debounce hasn't fired.
             // flowOn(Dispatchers.Default) means the collect runs on a real thread pool, so we
@@ -126,7 +101,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `initial state sortBy is NEWEST_FIRST`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             assertEquals(TradeSort.NEWEST_FIRST, presenter.uiState.value.sortBy)
             presenter.onViewUnattaching()
@@ -134,7 +109,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `initial state roleFilter is ALL`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             assertEquals(TradeRoleFilter.ALL, presenter.uiState.value.roleFilter)
             presenter.onViewUnattaching()
@@ -142,7 +117,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `initial state filteredOpenTrades is empty`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             assertEquals(emptyList(), presenter.uiState.value.filteredOpenTrades)
             presenter.onViewUnattaching()
@@ -154,7 +129,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnSearchQueryChange updates searchQuery`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnSearchQueryChange("alice"))
             assertEquals("alice", presenter.uiState.value.searchQuery)
@@ -163,7 +138,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnClearSearch clears searchQuery`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnSearchQueryChange("something"))
             presenter.onAction(OpenTradeListUiAction.OnClearSearch)
@@ -177,7 +152,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnSortChange updates sortBy immediately`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
             assertEquals(TradeSort.OLDEST_FIRST, presenter.uiState.value.sortBy)
@@ -186,7 +161,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnRoleFilterChange updates roleFilter immediately`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.BUYER))
             assertEquals(TradeRoleFilter.BUYER, presenter.uiState.value.roleFilter)
@@ -202,7 +177,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `filter debounce - sort state updates immediately on each action`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
 
             presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
@@ -222,7 +197,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnResetFilters resets all filter fields to defaults`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
             presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.SELLER))
@@ -235,7 +210,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnResetFilters also closes the filter sheet`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
             presenter.onAction(OpenTradeListUiAction.OnResetFilters)
@@ -249,7 +224,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnShowFilterSheet sets showFilterSheet true`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
             assertTrue(presenter.uiState.value.showFilterSheet)
@@ -258,7 +233,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnDismissFilterSheet sets showFilterSheet false`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
             presenter.onAction(OpenTradeListUiAction.OnDismissFilterSheet)
@@ -268,7 +243,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `per-filter actions do not auto-dismiss the filter sheet`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
             presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
@@ -283,7 +258,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnSelectTrade when tradeRulesConfirmed false sets tradeGuideVisible true`() =
-        runTest(testDispatcher) {
+        runTest {
             tradeRulesConfirmedFlow.value = false
             val presenter = buildPresenter()
             val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
@@ -296,7 +271,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnSelectTrade when tradeRulesConfirmed false does NOT navigate`() =
-        runTest(testDispatcher) {
+        runTest {
             tradeRulesConfirmedFlow.value = false
             val presenter = buildPresenter()
             val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
@@ -313,7 +288,7 @@ class OpenTradeListPresenterTest {
 
     @Test
     fun `OnSelectTrade when tradeRulesConfirmed true navigates to OpenTrade and does not show trade guide`() =
-        runTest(testDispatcher) {
+        runTest {
             tradeRulesConfirmedFlow.value = true
             val presenter = buildPresenter()
             val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)

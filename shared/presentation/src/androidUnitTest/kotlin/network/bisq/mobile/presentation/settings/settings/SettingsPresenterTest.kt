@@ -9,15 +9,10 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.DEFAULT_MAX_TRADE_PRICE_DEVIATION
 import network.bisq.mobile.data.replicated.settings.DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
@@ -33,21 +28,15 @@ import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.util.Locale
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -62,17 +51,15 @@ import kotlin.test.assertTrue
  * save/cancel operations, and error handling.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class SettingsPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class SettingsPresenterTest : PresentationKoinTestBase() {
     private var originalLocale: Locale? = null
 
-    private lateinit var settingsServiceFacade: SettingsServiceFacade
-    private lateinit var languageServiceFacade: LanguageServiceFacade
-    private lateinit var pushNotificationServiceFacade: PushNotificationServiceFacade
-    private lateinit var settingsRepository: SettingsRepository
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
-    private lateinit var analyticsService: AnalyticsService
+    private val settingsServiceFacade: SettingsServiceFacade = mockk(relaxed = true)
+    private val languageServiceFacade: LanguageServiceFacade = mockk(relaxed = true)
+    private val pushNotificationServiceFacade: PushNotificationServiceFacade = mockk(relaxed = true)
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val analyticsService: AnalyticsService = mockk(relaxed = true)
     private lateinit var presenter: SettingsPresenter
 
     // Test data
@@ -92,35 +79,22 @@ class SettingsPresenterTest {
     private val sampleI18nPairs = mapOf("key1" to "value1", "key2" to "value2")
     private val sampleAllPairs = mapOf("en" to "English", "es" to "Spanish", "de" to "German")
 
-    @BeforeTest
-    fun setUp() {
+    override fun beforeStartKoin() {
         // Force US locale for consistent decimal separator (period) in tests.
         // Tests use hardcoded values like "0.5" which would fail on comma-decimal locales.
         originalLocale = Locale.getDefault()
         Locale.setDefault(Locale.US)
+        super.beforeStartKoin()
+    }
 
-        Dispatchers.setMain(testDispatcher)
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<AnalyticsService> { analyticsService }
+            },
+        )
 
-        // Setup mocks
-        settingsServiceFacade = mockk(relaxed = true)
-        languageServiceFacade = mockk(relaxed = true)
-        pushNotificationServiceFacade = mockk(relaxed = true)
-        settingsRepository = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-        analyticsService = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    single<GlobalUiManager> { globalUiManager }
-                    single<AnalyticsService> { analyticsService }
-                },
-            )
-        }
-
+    override fun onKoinReady() {
         // Default mock behaviors for StateFlows
         every { languageServiceFacade.i18nPairs } returns MutableStateFlow(sampleI18nPairs)
         every { languageServiceFacade.allPairs } returns MutableStateFlow(sampleAllPairs)
@@ -132,13 +106,11 @@ class SettingsPresenterTest {
         every { settingsRepository.data } returns MutableStateFlow(Settings())
     }
 
-    @AfterTest
-    fun tearDown() {
+    override fun onTearDown() {
         try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
             originalLocale?.let { Locale.setDefault(it) }
+        } finally {
+            super.onTearDown()
         }
     }
 
@@ -169,7 +141,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when device is low-spec then animations are forced off and toggle is disabled`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given a low-spec (node) device and a stored setting of useAnimations = true
             coEvery { settingsServiceFacade.getSettings() } returns
                 Result.success(sampleSettings.copy(useAnimations = true))
@@ -186,7 +158,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when device is capable then animations toggle follows stored setting`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns
                 Result.success(sampleSettings.copy(useAnimations = true))
 
@@ -200,7 +172,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when locked animations toggle is tapped then shows explanation snackbar`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given a low-spec device where the toggle is greyed out
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             presenter = createPresenter(lockedAnimationSettings())
@@ -225,7 +197,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when initial state then has correct default values`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -244,7 +216,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when loading settings succeeds then updates state correctly`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -269,7 +241,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when loading settings fails then sets error state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.failure(Exception("Network error"))
 
@@ -286,7 +258,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when loading local settings fails then clears loading and sets error state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsRepository.fetch() } throws Exception("Local settings error")
@@ -304,7 +276,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when retry load settings clicked then reloads settings`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.failure(Exception("Error"))
             presenter = createPresenter()
@@ -329,7 +301,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when language code changes then updates state and calls service`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setLanguageCode("de") } returns Result.success(Unit)
@@ -350,7 +322,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when setting language code fails then reverts state and shows error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setLanguageCode("de") } returns Result.failure(Exception("Error"))
@@ -371,7 +343,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when supported language toggled on then adds to set`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setSupportedLanguageCodes(setOf("en", "es", "de")) } returns Result.success(Unit)
@@ -392,7 +364,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when supported language toggled off then removes from set`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setSupportedLanguageCodes(setOf("en")) } returns Result.success(Unit)
@@ -415,7 +387,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when close offer when trade taken toggled then updates state and calls service`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setCloseMyOfferWhenTaken(false) } returns Result.success(Unit)
@@ -436,7 +408,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when setting close offer when trade taken fails then reverts state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setCloseMyOfferWhenTaken(false) } returns Result.failure(Exception("Error"))
@@ -458,7 +430,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when trade price tolerance changes to valid value then updates state and tracks changes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -478,7 +450,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when trade price tolerance changes to same value then no changes tracked`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -498,7 +470,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when trade price tolerance is below minimum then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -518,7 +490,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when trade price tolerance is above maximum then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -538,7 +510,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when trade price tolerance is empty then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -558,7 +530,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when trade price tolerance save succeeds then updates original value and clears changes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setMaxTradePriceDeviation(0.07) } returns Result.success(Unit)
@@ -582,7 +554,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when trade price tolerance cancel then restores original value`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -609,7 +581,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when num days after redacting changes to valid value then updates state and tracks changes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -629,7 +601,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when num days after redacting is below minimum then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -649,7 +621,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when num days after redacting is above maximum then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -669,7 +641,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when num days after redacting save succeeds then updates original value and clears changes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setNumDaysAfterRedactingTradeData(120) } returns Result.success(Unit)
@@ -693,7 +665,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when num days after redacting cancel then restores original value`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -719,7 +691,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when pow factor changes to valid value then updates state and tracks changes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -739,7 +711,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when pow factor is below minimum then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -759,7 +731,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when pow factor is above maximum then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -779,7 +751,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when pow factor save succeeds then updates original value and clears changes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setDifficultyAdjustmentFactor(5.0) } returns Result.success(Unit)
@@ -803,7 +775,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when pow factor cancel then restores original value`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -829,7 +801,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when use animations toggled then updates state and calls service`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setUseAnimations(false) } returns Result.success(Unit)
@@ -850,7 +822,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when setting use animations fails then reverts state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setUseAnimations(false) } returns Result.failure(Exception("Error"))
@@ -870,7 +842,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when remember offerbook filter preferences changes then updates state and repository`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -890,7 +862,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when remember offerbook filter preferences persistence fails then reverts state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsRepository.setRememberOfferbookFilterPreferences(false) } throws Exception("Error")
@@ -913,7 +885,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when reset all dont show again clicked and succeeds then calls service and shows success snackbar`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.resetAllDontShowAgainFlags() } returns Result.success(Unit)
@@ -939,7 +911,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when reset all dont show again clicked and fails then shows error snackbar`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.resetAllDontShowAgainFlags() } returns
@@ -962,7 +934,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when ignore pow toggled then updates state and calls service`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(true) } returns Result.success(Unit)
@@ -983,7 +955,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when setting ignore pow fails then reverts state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(true) } returns Result.failure(Exception("Error"))
@@ -1005,7 +977,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when multiple fields have changes then tracks each independently`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -1028,7 +1000,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when cancel one field then others still have changes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -1054,7 +1026,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when toggle pushNotifications on then registers via facade`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns Result.success(Unit)
 
@@ -1070,7 +1042,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `when toggle pushNotifications off then unregisters via facade`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } returns Result.success(Unit)
 
@@ -1086,7 +1058,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `presenter mirrors facade isPushNotificationsEnabled into UI state`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             val flow = MutableStateFlow(false)
             every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns flow
@@ -1105,7 +1077,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `shouldShowPushNotificationsToggle is true on Android Connect`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
             presenter = createPresenter()
@@ -1119,7 +1091,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `shouldShowPushNotificationsToggle is false on iOS Connect`() =
-        runTest(testDispatcher) {
+        runTest {
             // iOS APNs delivery isn't yet wired through the trusted node — exposing the
             // toggle would let users opt in to a path that doesn't deliver. Hide it.
             mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
@@ -1161,7 +1133,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnKeepConnectedInBackgroundToggle persists true via settings repository`() =
-        runTest(testDispatcher) {
+        runTest {
             val flow = wireSettingsRepositoryUpdate()
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -1178,7 +1150,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnKeepConnectedInBackgroundToggle persists false via settings repository`() =
-        runTest(testDispatcher) {
+        runTest {
             val flow = wireSettingsRepositoryUpdate(Settings(keepConnectedInBackground = true))
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -1194,7 +1166,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `repo emissions of keepConnectedInBackground reflect into UI state`() =
-        runTest(testDispatcher) {
+        runTest {
             val flow = wireSettingsRepositoryUpdate()
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
 
@@ -1218,7 +1190,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `turning relayed off resets keepConnectedInBackground to false (hide-implies-reset)`() =
-        runTest(testDispatcher) {
+        runTest {
             // Power-user combo persisted: relayed on + keep-connected on.
             val flow = wireSettingsRepositoryUpdate(Settings(keepConnectedInBackground = true))
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
@@ -1241,7 +1213,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle on persists analyticsEnabled=true AND analyticsPromptSeen=true`() =
-        runTest(testDispatcher) {
+        runTest {
             // The promptSeen flip matters: the welcome carousel keys off it to
             // decide whether to auto-prompt. Once the user has engaged from
             // Settings (either direction), the carousel should not auto-prompt
@@ -1262,7 +1234,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle off persists analyticsEnabled=false AND analyticsPromptSeen=true`() =
-        runTest(testDispatcher) {
+        runTest {
             // User who turns analytics OFF from Settings has also "seen" the
             // prompt — auto-carousel must not pester them.
             val flow = wireSettingsRepositoryUpdate(Settings(analyticsEnabled = true, analyticsPromptSeen = false))
@@ -1281,7 +1253,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle off resets analyticsBaselineSent so the next opt-in re-emits baseline`() =
-        runTest(testDispatcher) {
+        runTest {
             // Pins the once-per-opt-in baseline contract: opting out must
             // clear the "baseline already sent" flag so that re-opting in
             // later triggers a fresh AnalyticsSettingsBaseline.emit() (their
@@ -1312,7 +1284,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle on preserves analyticsBaselineSent unchanged`() =
-        runTest(testDispatcher) {
+        runTest {
             // Opting in does NOT itself reset the flag — the flag only flips
             // when the baseline emitter actually runs (in lifecycle service)
             // and writes true via setAnalyticsBaselineSent. Toggling here is
@@ -1344,7 +1316,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `analyticsEnabled state reflects repository value via observeAnalyticsEnabled`() =
-        runTest(testDispatcher) {
+        runTest {
             // Pins the read-side observer. A flip from anywhere (carousel,
             // welcome flow, factory reset) must propagate into the Settings
             // screen state so the toggle visually matches reality.
@@ -1376,7 +1348,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle on tracks AnalyticsEnabled`() =
-        runTest(testDispatcher) {
+        runTest {
             val flow = wireSettingsRepositoryUpdate(Settings(analyticsEnabled = false, analyticsPromptSeen = false))
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             presenter = createPresenter()
@@ -1393,7 +1365,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle off tracks AnalyticsDisabled`() =
-        runTest(testDispatcher) {
+        runTest {
             // Track-before-persist matters: a true→false transition still
             // ships its event before the runtime opt-in provider closes the
             // SDK gate. Track-after-persist would lose this event.
@@ -1412,7 +1384,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle off tracks AnalyticsDisabled BEFORE the repository persist`() =
-        runTest(testDispatcher) {
+        runTest {
             // Pins the disable-direction ordering contract from SettingsPresenter
             // kdoc: the SDK gate must still be OPEN when the track call hits the
             // BufferedAnalyticsService, otherwise runtimeOptInProvider drops the
@@ -1434,7 +1406,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnAnalyticsToggle on tracks AnalyticsEnabled AFTER the repository persist`() =
-        runTest(testDispatcher) {
+        runTest {
             // Pins the enable-direction ordering contract. In the re-opt-in-
             // after-opt-out case the SDK is already initialised so track()
             // forwards direct; the runtime gate must read the NEW analyticsEnabled
@@ -1457,7 +1429,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnKeepConnectedInBackgroundToggle on tracks KeepConnectedEnabled`() =
-        runTest(testDispatcher) {
+        runTest {
             wireSettingsRepositoryUpdate()
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             presenter = createPresenter()
@@ -1473,7 +1445,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnKeepConnectedInBackgroundToggle off tracks KeepConnectedDisabled`() =
-        runTest(testDispatcher) {
+        runTest {
             wireSettingsRepositoryUpdate(Settings(keepConnectedInBackground = true))
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             presenter = createPresenter()
@@ -1489,7 +1461,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnPushNotificationsToggle on tracks PushNotificationsEnabled only on register success`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns Result.success(Unit)
             presenter = createPresenter()
@@ -1505,7 +1477,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnPushNotificationsToggle off tracks PushNotificationsDisabled only on unregister success`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } returns Result.success(Unit)
             presenter = createPresenter()
@@ -1521,7 +1493,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `OnPushNotificationsToggle does NOT track when facade register fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Failed register/unregister means the toggle didn't actually take
             // effect — emitting an event would misrepresent state, so the
             // success-only gate must hold.
@@ -1543,7 +1515,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `rapid double-tap on supported language toggle triggers setSupportedLanguageCodes only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             val blocker = CompletableDeferred<Unit>()
             coEvery { settingsServiceFacade.setSupportedLanguageCodes(setOf("en", "es", "de")) } coAnswers {
@@ -1568,7 +1540,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `rapid double-tap on trade price tolerance save triggers setMaxTradePriceDeviation only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             val blocker = CompletableDeferred<Unit>()
             coEvery { settingsServiceFacade.setMaxTradePriceDeviation(any()) } coAnswers {
@@ -1594,7 +1566,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `trade price tolerance save failure re-enables save button for retry`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setMaxTradePriceDeviation(any()) } returns Result.failure(Exception("Error"))
 
@@ -1611,7 +1583,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `rapid double-tap on num days save triggers setNumDaysAfterRedactingTradeData only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             val blocker = CompletableDeferred<Unit>()
             coEvery { settingsServiceFacade.setNumDaysAfterRedactingTradeData(any()) } coAnswers {
@@ -1637,7 +1609,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `rapid double-tap on pow factor save triggers setDifficultyAdjustmentFactor only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             val blocker = CompletableDeferred<Unit>()
             coEvery { settingsServiceFacade.setDifficultyAdjustmentFactor(any()) } coAnswers {
@@ -1663,7 +1635,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `num days save failure keeps save guard enabled for retry`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setNumDaysAfterRedactingTradeData(any()) } returns
                 Result.failure(Exception("save failed"))
@@ -1681,7 +1653,7 @@ class SettingsPresenterTest {
 
     @Test
     fun `pow factor save failure keeps save guard enabled for retry`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
             coEvery { settingsServiceFacade.setDifficultyAdjustmentFactor(any()) } returns
                 Result.failure(Exception("save failed"))

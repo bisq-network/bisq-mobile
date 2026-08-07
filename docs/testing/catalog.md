@@ -41,7 +41,6 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `OfferTestFactory` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/OfferTestFactory.kt` |
 | `SettingsRepositoryMock(initial, fetchException)` | `shared/test-utils/src/commonMain/kotlin/.../mocks/SettingsRepositoryMock.kt` |
 | `UserRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../mocks/UserRepositoryMock.kt` |
-| `TradeStatePresenterTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../trade/trade_detail/states/TradeStatePresenterTestSupport.kt` |
 | `WebLinkDialogTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../dialog/WebLinkDialogTestSupport.kt` |
 
 `SettingsRepositoryMock` is the **only** `SettingsRepository` double — do not hand-roll another. Its

@@ -4,24 +4,16 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
@@ -29,16 +21,8 @@ import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecyc
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import network.bisq.mobile.test.presentation.di.NoopNavigationManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -50,30 +34,10 @@ import kotlin.test.assertNull
  * [TabContainerPresenter.createOffer] and [TabContainerPresenter.onTradeRestrictingAlertAction].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TabContainerPresenterTradeRestrictionTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { NoopNavigationManager() }
-                    single { GlobalUiManager(testDispatcher) }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
-        stopKoin()
+class TabContainerPresenterTradeRestrictionTest : PlatformPresentationKoinTestBase() {
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
     }
 
     // -------------------------------------------------------------------------
@@ -129,14 +93,14 @@ class TabContainerPresenterTradeRestrictionTest {
 
     @Test
     fun `showTradeRestrictedDialog is null on construction`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter()
             assertNull(presenter.showTradeRestrictedDialog.value)
         }
 
     @Test
     fun `createOffer with active alert sets showTradeRestrictedDialog`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter(activeAlert = makeAlert())
             assertNull(presenter.showTradeRestrictedDialog.value)
 
@@ -149,7 +113,7 @@ class TabContainerPresenterTradeRestrictionTest {
 
     @Test
     fun `createOffer without active alert leaves showTradeRestrictedDialog null`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter(activeAlert = null)
             // createOfferCoordinator is relaxed so navigation doesn't crash; dialog must stay null.
             presenter.createOffer()
@@ -164,7 +128,7 @@ class TabContainerPresenterTradeRestrictionTest {
 
     @Test
     fun `OnUpdateNow clears showTradeRestrictedDialog and opens update URL`() =
-        runTest(testDispatcher) {
+        runTest {
             val appUpdateLinker = mockk<AppUpdateLinker>()
             every { appUpdateLinker.getUpdateUrl() } returns TEST_APP_UPDATE_URL
             val urlLauncher = mockk<UrlLauncher>()
@@ -193,7 +157,7 @@ class TabContainerPresenterTradeRestrictionTest {
 
     @Test
     fun `OnCloseDialog dismisses dialog without triggering update`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter(activeAlert = makeAlert())
             presenter.createOffer()
             advanceUntilIdle()
@@ -211,7 +175,7 @@ class TabContainerPresenterTradeRestrictionTest {
 
     @Test
     fun `dialog can be reopened after being closed`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = buildPresenter(activeAlert = makeAlert())
 
             presenter.createOffer()

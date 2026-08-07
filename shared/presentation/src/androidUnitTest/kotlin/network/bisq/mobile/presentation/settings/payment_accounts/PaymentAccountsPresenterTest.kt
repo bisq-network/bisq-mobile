@@ -4,32 +4,19 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.accounts.AccountsState
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -44,12 +31,9 @@ import kotlin.test.assertTrue
  * including account loading, state management, and user actions.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class PaymentAccountsPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
+class PaymentAccountsPresenterTest : PresentationKoinTestBase() {
+    private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: PaymentAccountsPresenter
 
     // Test data
@@ -73,36 +57,9 @@ class PaymentAccountsPresenterTest {
                 ),
         )
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        // Setup mocks
-        userDefinedAccountsServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    single<GlobalUiManager> { globalUiManager }
-                },
-            )
-        }
-
+    override fun onKoinReady() {
         // Default mock behaviors
         every { userDefinedAccountsServiceFacade.accountState } returns MutableStateFlow(AccountsState())
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     private fun createPresenter(): PaymentAccountsPresenter =
@@ -113,7 +70,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when initial state then has correct default values`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
 
@@ -137,7 +94,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when add account clicked then shows add account state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -158,7 +115,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when loading accounts succeeds then updates state correctly`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accounts = listOf(sampleAccount1, sampleAccount2)
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(accounts)
@@ -179,7 +136,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when loading accounts with empty list then does not fetch selected account`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
 
@@ -198,7 +155,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when loading accounts fails then sets error state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.failure(Exception("Network error"))
 
@@ -215,7 +172,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when loading selected account fails then sets error state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accounts = listOf(sampleAccount1)
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(accounts)
@@ -234,7 +191,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when retry load accounts clicked then reloads accounts`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.failure(Exception("Error"))
             presenter = createPresenter()
@@ -258,7 +215,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account state changes then updates ui state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow = MutableStateFlow(AccountsState())
             every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
@@ -288,7 +245,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when selected account changes then updates fields`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -329,7 +286,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account name is too short then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -353,7 +310,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account name is too long then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -377,7 +334,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account description is too short then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -400,7 +357,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account description is too long then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -424,7 +381,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when adding duplicate account name then validation fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -459,7 +416,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when adding account with valid data then succeeds`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow = MutableStateFlow(AccountsState())
             every { userDefinedAccountsServiceFacade.accountState } returns accountStateFlow
@@ -508,7 +465,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when adding account fails then shows error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } returns Result.failure(Exception("Error"))
@@ -540,7 +497,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when saving account with valid data then succeeds`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -577,7 +534,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when saving account with same name then succeeds`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -609,7 +566,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when saving account with duplicate name then fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -646,7 +603,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when saving account with invalid fields then fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -679,7 +636,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when saving account fails then shows error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -717,7 +674,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when confirm delete clicked then closes dialog immediately`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -752,7 +709,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when deleting account fails then shows error snackbar`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -786,7 +743,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when edit account clicked then shows edit state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -815,7 +772,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account name changed then updates state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -833,7 +790,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account description changed then updates state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -851,7 +808,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account selected with different index then calls service`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -885,7 +842,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when account selected with same index then does nothing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -913,7 +870,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when cancel add edit clicked then restores previous values`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val accountStateFlow =
                 MutableStateFlow(
@@ -954,7 +911,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when delete account clicked then shows confirmation dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -972,7 +929,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when cancel delete clicked then hides confirmation dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -993,7 +950,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `when cancel add account clicked with no selected account then clears fields`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             presenter = createPresenter()
@@ -1022,7 +979,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `rapid double-tap on confirm add account triggers addAccount only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } coAnswers {
                 delay(Long.MAX_VALUE)
@@ -1046,7 +1003,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `add account failure re-enables mutation buttons for retry`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } returns Result.failure(Exception("Error"))
 
@@ -1065,7 +1022,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `rapid double-tap on save account triggers saveAccount only once`() =
-        runTest(testDispatcher) {
+        runTest {
             val accountStateFlow =
                 MutableStateFlow(
                     AccountsState(
@@ -1098,7 +1055,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `save account failure re-enables mutation buttons for retry`() =
-        runTest(testDispatcher) {
+        runTest {
             val accountStateFlow =
                 MutableStateFlow(
                     AccountsState(
@@ -1125,7 +1082,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `rapid double-tap on confirm delete triggers deleteAccount only once`() =
-        runTest(testDispatcher) {
+        runTest {
             val accountStateFlow =
                 MutableStateFlow(
                     AccountsState(
@@ -1156,7 +1113,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `delete account failure re-enables mutation buttons for retry`() =
-        runTest(testDispatcher) {
+        runTest {
             val accountStateFlow =
                 MutableStateFlow(
                     AccountsState(
@@ -1182,7 +1139,7 @@ class PaymentAccountsPresenterTest {
 
     @Test
     fun `add account success re-enables mutation buttons`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
             coEvery { userDefinedAccountsServiceFacade.addAccount(any()) } returns Result.success(Unit)
 

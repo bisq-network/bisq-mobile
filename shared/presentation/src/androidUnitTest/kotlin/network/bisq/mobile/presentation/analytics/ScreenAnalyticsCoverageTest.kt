@@ -19,7 +19,6 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
@@ -122,7 +121,6 @@ class ScreenAnalyticsCoverageTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        I18nSupport.initialize("en")
         // MainPresenter and the offer wizard presenters read the screen width during init.
         mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480

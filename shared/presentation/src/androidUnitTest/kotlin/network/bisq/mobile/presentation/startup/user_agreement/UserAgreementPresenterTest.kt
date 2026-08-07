@@ -7,7 +7,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
@@ -21,7 +20,6 @@ class UserAgreementPresenterTest : PresentationKoinTestBase() {
     private lateinit var presenter: UserAgreementPresenter
 
     override fun onKoinReady() {
-        I18nSupport.initialize("en")
         settingsServiceFacade = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         presenter = UserAgreementPresenter(mainPresenter, settingsServiceFacade)

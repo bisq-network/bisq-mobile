@@ -5,33 +5,22 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.presentation.trade.trade_detail.states.TradeStatePresenterTestSupport
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SellerState2bPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class SellerState2bPresenterTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
 
-    @BeforeTest
-    fun setUp() = TradeStatePresenterTestSupport.setUp(testDispatcher)
-
-    @AfterTest
-    fun tearDown() = TradeStatePresenterTestSupport.tearDown()
-
     @Test
     fun `rapid double-tap on onConfirmFiatReceipt triggers sellerConfirmFiatReceipt only once`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = SellerState2bPresenter(mainPresenter, tradesServiceFacade)
             coEvery { tradesServiceFacade.sellerConfirmFiatReceipt() } coAnswers {
                 delay(Long.MAX_VALUE)
@@ -48,7 +37,7 @@ class SellerState2bPresenterTest {
 
     @Test
     fun `confirm fiat receipt failure re-enables guard`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = SellerState2bPresenter(mainPresenter, tradesServiceFacade)
             coEvery { tradesServiceFacade.sellerConfirmFiatReceipt() } returns
                 Result.failure(RuntimeException("failed"))

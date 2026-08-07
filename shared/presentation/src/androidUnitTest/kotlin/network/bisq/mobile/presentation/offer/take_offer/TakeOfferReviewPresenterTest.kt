@@ -4,15 +4,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
@@ -31,60 +25,15 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TakeOfferReviewPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single { GlobalUiManager() }
-                },
-            )
-        }
-        I18nSupport.initialize("en")
-        // MainPresenter.init touches a platform-specific helper transitively; stub it.
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
-
+class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     /**
      * Rapid double-tap on the "Take offer" button must trigger the underlying
      * [TakeOfferCoordinator.takeOffer] only once. The atomic compareAndSet guard
@@ -93,7 +42,7 @@ class TakeOfferReviewPresenterTest {
      */
     @Test
     fun `rapid double-tap on onTakeOffer triggers underlying takeOffer only once`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = makeFixture()
             fixture.presenter.onTakeOffer()
             fixture.presenter.onTakeOffer()
@@ -108,7 +57,7 @@ class TakeOfferReviewPresenterTest {
      */
     @Test
     fun `error path releases guard and hides progress dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = makeFixture()
             fixture.presenter.onTakeOffer()
             advanceUntilIdle()
@@ -132,7 +81,7 @@ class TakeOfferReviewPresenterTest {
      */
     @Test
     fun `success path keeps guard engaged so a subsequent tap is ignored`() =
-        runTest(testDispatcher) {
+        runTest {
             val fixture = makeFixture()
             fixture.presenter.onTakeOffer()
             advanceUntilIdle()

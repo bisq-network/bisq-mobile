@@ -1,28 +1,17 @@
 package network.bisq.mobile.presentation.main
 
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import network.bisq.mobile.test.presentation.di.presentationTestModule
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
+import org.koin.core.module.Module
 import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 /**
@@ -38,41 +27,19 @@ import kotlin.test.Test
  * "observer started exactly once" guard.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class MainPresenterLanguageAnalyticsTest {
-    private val testDispatcher = StandardTestDispatcher()
+class MainPresenterLanguageAnalyticsTest : PlatformPresentationKoinTestBase() {
     private val analyticsService: AnalyticsService = mockk(relaxed = true)
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every0Px()
-        startKoin {
-            modules(
-                presentationTestModule(),
-                module {
-                    single<AnalyticsService> { analyticsService }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        Dispatchers.resetMain()
-    }
-
-    private fun every0Px() {
-        // MainPresenter.init reads getScreenWidthDp(); stub to something sane
-        // so the test doesn't hit Android-side resolution that's unrelated.
-        io.mockk.every { getScreenWidthDp() } returns 480
-    }
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<AnalyticsService> { analyticsService }
+            },
+        )
 
     @Test
     fun `auto-detected baseline emits LanguageChanged on first non-blank value`() =
-        runTest(testDispatcher) {
+        runTest {
             val languageCode = MutableStateFlow("")
             val presenter =
                 MainPresenterTestFactory.create(
@@ -94,7 +61,7 @@ class MainPresenterLanguageAnalyticsTest {
 
     @Test
     fun `user change to a tracked code emits LanguageChanged for that code`() =
-        runTest(testDispatcher) {
+        runTest {
             val languageCode = MutableStateFlow("en")
             val presenter =
                 MainPresenterTestFactory.create(
@@ -116,7 +83,7 @@ class MainPresenterLanguageAnalyticsTest {
 
     @Test
     fun `repeated same code does not emit`() =
-        runTest(testDispatcher) {
+        runTest {
             // distinctUntilChanged keeps us from inflating session count if the
             // backend re-emits the same value (e.g. after getSettings() refresh).
             val languageCode = MutableStateFlow("en")
@@ -137,7 +104,7 @@ class MainPresenterLanguageAnalyticsTest {
 
     @Test
     fun `untracked language code is silently dropped`() =
-        runTest(testDispatcher) {
+        runTest {
             // Defence against the backend handing us a code that isn't in our
             // wire-format allowlist (e.g. a future translation we haven't
             // whitelisted yet, or a typo). No emission, no crash.
@@ -158,7 +125,7 @@ class MainPresenterLanguageAnalyticsTest {
 
     @Test
     fun `pcm-NG and pt-BR are tracked with sanitised wire names`() =
-        runTest(testDispatcher) {
+        runTest {
             // Pins the kdoc claim: the data-class .code stays raw, but the wire
             // name is sanitised via Settings.sanitizeCode. Two regressions are
             // covered: (1) the observer continues to recognise hyphenated
@@ -195,7 +162,7 @@ class MainPresenterLanguageAnalyticsTest {
 
     @Test
     fun `observer survives view re-attach without double-emitting`() =
-        runTest(testDispatcher) {
+        runTest {
             // MainPresenter is a Koin `single` — backgrounding the app and
             // foregrounding it may fire onViewAttached() a second time. The
             // once-only guard must prevent a second collector from starting,
@@ -221,7 +188,7 @@ class MainPresenterLanguageAnalyticsTest {
 
     @Test
     fun `observer restarts after onViewUnattaching disposes the scope`() =
-        runTest(testDispatcher) {
+        runTest {
             // Pins the contract that the once-only guard is RESET on
             // disposal so the next attach can start a fresh collector. Without
             // the reset, an Android config-change cycle (activity recreation

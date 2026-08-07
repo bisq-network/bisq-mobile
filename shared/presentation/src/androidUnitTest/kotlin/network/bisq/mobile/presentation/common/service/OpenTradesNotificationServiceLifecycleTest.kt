@@ -8,7 +8,6 @@ import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import kotlin.test.BeforeTest
@@ -38,8 +37,6 @@ class OpenTradesNotificationServiceLifecycleTest {
 
     @BeforeTest
     fun setup() {
-        I18nSupport.initialize("en")
-
         notificationController = mockk(relaxed = true)
         foregroundServiceController = mockk(relaxed = true)
 

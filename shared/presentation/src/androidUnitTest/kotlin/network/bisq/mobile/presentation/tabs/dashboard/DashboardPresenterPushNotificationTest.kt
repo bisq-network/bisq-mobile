@@ -6,14 +6,12 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.PermissionState
+import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
@@ -23,39 +21,31 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
-import network.bisq.mobile.test.presentation.di.NoopNavigationManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DashboardPresenterPushNotificationTest {
-    private val testDispatcher = UnconfinedTestDispatcher()
+class DashboardPresenterPushNotificationTest : PlatformPresentationKoinTestBase() {
+    override val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
 
     private val settingsRepository = SettingsRepositoryMock()
     private val pushNotificationServiceFacade = mockk<PushNotificationServiceFacade>(relaxed = true)
     private val notificationController = mockk<NotificationController>(relaxed = true)
+    private val offersServiceFacade = mockk<OffersServiceFacade>(relaxed = true)
+    private val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
+    private val networkServiceFacade = mockk<NetworkServiceFacade>(relaxed = true)
+    private val marketPriceServiceFacade = mockk<MarketPriceServiceFacade>(relaxed = true)
+    private val settingsServiceFacade = mockk<SettingsServiceFacade>(relaxed = true)
+    private val foregroundDetector = mockk<ForegroundDetector>(relaxed = true)
+    private val platformSettingsManager = mockk<PlatformSettingsManager>(relaxed = true)
 
     private lateinit var presenter: DashboardPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-
+    override fun onKoinReady() {
         // Mock platform as iOS since push notification logic is iOS-only
         mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
         every { getPlatformInfo() } returns
@@ -64,33 +54,15 @@ class DashboardPresenterPushNotificationTest {
                 override val type = PlatformType.IOS
             }
 
-        val koinModule =
-            module {
-                single { CoroutineExceptionHandlerSetup() }
-                factory<CoroutineJobsManager> {
-                    DefaultCoroutineJobsManager().apply {
-                        get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                    }
-                }
-                single { NoopNavigationManager() as network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager }
-                single { GlobalUiManager() }
-            }
-        startKoin { modules(koinModule) }
-
         every { pushNotificationServiceFacade.isDeviceRegistered } returns MutableStateFlow(false)
         every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns MutableStateFlow(false)
+        every { offersServiceFacade.offerbookMarketItems } returns MutableStateFlow(emptyList())
+        every { userProfileServiceFacade.numUserProfiles } returns MutableStateFlow(0)
+        every { networkServiceFacade.numConnections } returns MutableStateFlow(0)
+        every { marketPriceServiceFacade.selectedFormattedMarketPrice } returns MutableStateFlow("")
+        every { settingsServiceFacade.tradeRulesConfirmed } returns MutableStateFlow(false)
 
         val mainPresenter = MainPresenterTestFactory.create()
-        val offersServiceFacade = mockk<OffersServiceFacade>(relaxed = true)
-        every { offersServiceFacade.offerbookMarketItems } returns MutableStateFlow(emptyList())
-        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
-        every { userProfileServiceFacade.numUserProfiles } returns MutableStateFlow(0)
-        val networkServiceFacade = mockk<NetworkServiceFacade>(relaxed = true)
-        every { networkServiceFacade.numConnections } returns MutableStateFlow(0)
-        val marketPriceServiceFacade = mockk<MarketPriceServiceFacade>(relaxed = true)
-        every { marketPriceServiceFacade.selectedFormattedMarketPrice } returns MutableStateFlow("")
-        val settingsServiceFacade = mockk<SettingsServiceFacade>(relaxed = true)
-        every { settingsServiceFacade.tradeRulesConfirmed } returns MutableStateFlow(false)
 
         presenter =
             DashboardPresenter(
@@ -102,23 +74,23 @@ class DashboardPresenterPushNotificationTest {
                 networkServiceFacade = networkServiceFacade,
                 settingsRepository = settingsRepository,
                 notificationController = notificationController,
-                foregroundDetector = mockk(relaxed = true),
-                platformSettingsManager = mockk<PlatformSettingsManager>(relaxed = true),
+                foregroundDetector = foregroundDetector,
+                platformSettingsManager = platformSettingsManager,
                 pushNotificationServiceFacade = pushNotificationServiceFacade,
             )
     }
 
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-        unmockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+    override fun onTearDown() {
+        try {
+            unmockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `GRANTED triggers registerForPushNotifications`() =
-        runBlocking {
+        runTest {
             coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns Result.success(Unit)
 
             presenter.saveNotificationPermissionState(PermissionState.GRANTED)
@@ -128,7 +100,7 @@ class DashboardPresenterPushNotificationTest {
 
     @Test
     fun `GRANTED skips registration when device already registered`() =
-        runBlocking {
+        runTest {
             every { pushNotificationServiceFacade.isDeviceRegistered } returns MutableStateFlow(true)
             coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns Result.success(Unit)
 
@@ -139,7 +111,7 @@ class DashboardPresenterPushNotificationTest {
 
     @Test
     fun `NOT_GRANTED triggers unregister`() =
-        runBlocking {
+        runTest {
             coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } returns Result.success(Unit)
 
             presenter.saveNotificationPermissionState(PermissionState.NOT_GRANTED)
@@ -149,7 +121,7 @@ class DashboardPresenterPushNotificationTest {
 
     @Test
     fun `DENIED triggers unregister`() =
-        runBlocking {
+        runTest {
             coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } returns Result.success(Unit)
 
             presenter.saveNotificationPermissionState(PermissionState.DENIED)
@@ -159,7 +131,7 @@ class DashboardPresenterPushNotificationTest {
 
     @Test
     fun `re-enable after disable triggers re-registration`() =
-        runBlocking {
+        runTest {
             val isRegistered = MutableStateFlow(true)
             every { pushNotificationServiceFacade.isDeviceRegistered } returns isRegistered
             coEvery { pushNotificationServiceFacade.unregisterFromPushNotifications() } answers {
@@ -179,7 +151,7 @@ class DashboardPresenterPushNotificationTest {
 
     @Test
     fun `DONT_ASK_AGAIN does not trigger unregister`() =
-        runBlocking {
+        runTest {
             presenter.saveNotificationPermissionState(PermissionState.DONT_ASK_AGAIN)
 
             coVerify(exactly = 0) { pushNotificationServiceFacade.unregisterFromPushNotifications() }
@@ -188,7 +160,7 @@ class DashboardPresenterPushNotificationTest {
 
     @Test
     fun `Android platform skips push notification registration entirely`() =
-        runBlocking {
+        runTest {
             // Override platform mock to Android
             every { getPlatformInfo() } returns
                 object : PlatformInfo {

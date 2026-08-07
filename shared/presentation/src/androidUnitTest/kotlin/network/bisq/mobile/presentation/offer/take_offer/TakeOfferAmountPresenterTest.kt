@@ -1,18 +1,11 @@
 package network.bisq.mobile.presentation.offer.take_offer
 
-import io.mockk.every
-import io.mockk.mockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
@@ -47,9 +40,6 @@ import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
@@ -58,15 +48,10 @@ import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacad
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeTradeReadStateRepository
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -74,34 +59,8 @@ import kotlin.test.assertTrue
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TakeOfferAmountPresenterTest {
+class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
     // --- Fakes (Android/JVM-friendly) ---
-    private val testDispatcher = StandardTestDispatcher()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @BeforeTest
-    fun setUpMainDispatcher() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                },
-            )
-        }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @AfterTest
-    fun tearDownMainDispatcher() {
-        stopKoin()
-        Dispatchers.resetMain()
-    }
 
     private class FakeTradesServiceFacade : TradesServiceFacade {
         override val selectedTrade: StateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
@@ -380,8 +339,6 @@ class TakeOfferAmountPresenterTest {
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
@@ -449,8 +406,6 @@ class TakeOfferAmountPresenterTest {
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
@@ -494,8 +449,6 @@ class TakeOfferAmountPresenterTest {
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
@@ -536,8 +489,6 @@ class TakeOfferAmountPresenterTest {
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
@@ -573,8 +524,6 @@ class TakeOfferAmountPresenterTest {
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, emptyMap())
 
             // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
@@ -649,8 +598,6 @@ class TakeOfferAmountPresenterTest {
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             // Mock top-level android-specific function called from MainPresenter.init
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()

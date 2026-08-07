@@ -4,35 +4,22 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.analytics.AnalyticsService
-import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -41,16 +28,15 @@ import kotlin.test.assertNotNull
  * Tests the navigation and fallback logic in [SplashPresenter.navigateToNextScreen].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class SplashPresenterNavigationTest {
-    private val testDispatcher = UnconfinedTestDispatcher()
+class SplashPresenterNavigationTest : PresentationKoinTestBase() {
+    override val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
 
-    private lateinit var navigationManager: NavigationManager
-    private lateinit var settingsServiceFacade: SettingsServiceFacade
-    private lateinit var userProfileService: UserProfileServiceFacade
-    private lateinit var settingsRepository: SettingsRepository
-    private lateinit var applicationBootstrapFacade: ApplicationBootstrapFacade
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var versionProvider: VersionProvider
+    private val settingsServiceFacade: SettingsServiceFacade = mockk(relaxed = true)
+    private val userProfileService: UserProfileServiceFacade = mockk(relaxed = true)
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val versionProvider: VersionProvider = mockk(relaxed = true)
 
     private lateinit var stateFlow: MutableStateFlow<String>
     private lateinit var progressFlow: MutableStateFlow<Float>
@@ -60,18 +46,12 @@ class SplashPresenterNavigationTest {
     private lateinit var bootstrapStageFlow: MutableStateFlow<String>
     private lateinit var progressToastFlow: MutableStateFlow<Boolean>
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
 
-        settingsServiceFacade = mockk(relaxed = true)
-        userProfileService = mockk(relaxed = true)
-        settingsRepository = mockk(relaxed = true)
-        applicationBootstrapFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        versionProvider = mockk(relaxed = true)
-        navigationManager = mockk(relaxed = true)
-
+    override fun onKoinReady() {
         stateFlow = MutableStateFlow("")
         progressFlow = MutableStateFlow(0f)
         timeoutDialogVisibleFlow = MutableStateFlow(false)
@@ -88,28 +68,6 @@ class SplashPresenterNavigationTest {
         every { applicationBootstrapFacade.currentBootstrapStage } returns bootstrapStageFlow
         every { applicationBootstrapFacade.shouldShowProgressToast } returns progressToastFlow
         every { versionProvider.getAppNameAndVersion(any(), any()) } returns "Test 1.0"
-
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                    single<NavigationManager> { navigationManager }
-                    single { GlobalUiManager(testDispatcher) }
-                    single<AnalyticsService> { NoOpAnalyticsService }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
     }
 
     private fun createPresenter(isIos: Boolean = false): TestSplashPresenter =

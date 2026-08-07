@@ -15,7 +15,6 @@ import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.usecase.trade.GetPaginatedClosedTradesUseCase
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.tabs.my_trades.closed.paging.ClosedTradesPagingSource
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -31,7 +30,6 @@ class ClosedTradesPagingSourceTest {
 
     @BeforeTest
     fun setUp() {
-        I18nSupport.initialize("en")
         // Fresh sink per test so a value set by one test (e.g., the failure-reset case priming
         // it to 99) cannot leak into another test's assertions.
         totalCountSink = MutableStateFlow(null)

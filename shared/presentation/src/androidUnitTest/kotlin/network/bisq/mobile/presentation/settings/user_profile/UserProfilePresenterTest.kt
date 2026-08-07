@@ -4,29 +4,17 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -55,12 +43,10 @@ import kotlin.test.assertTrue
  * feature's core functionality without the presenter's infinite loop issues.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class UserProfilePresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
-    private lateinit var reputationServiceFacade: ReputationServiceFacade
-    private lateinit var mainPresenter: MainPresenter
+class UserProfilePresenterTest : PresentationKoinTestBase() {
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val reputationServiceFacade: ReputationServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: UserProfilePresenter
 
     // Test data
@@ -68,24 +54,7 @@ class UserProfilePresenterTest {
     private val profile2 = createMockUserProfile("Bob")
     private val profile3 = createMockUserProfile("Charlie")
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                },
-            )
-        }
-
-        // Setup mocks
-        userProfileServiceFacade = mockk(relaxed = true)
-        reputationServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-
+    override fun onKoinReady() {
         // Default mock behaviors
         every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
         every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
@@ -100,15 +69,6 @@ class UserProfilePresenterTest {
         coEvery { reputationServiceFacade.getProfileAge(any()) } returns Result.success(30L)
     }
 
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
-
     private fun createPresenter(): UserProfilePresenter =
         UserProfilePresenter(
             userProfileServiceFacade,
@@ -121,7 +81,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `initial state is empty when no profiles exist`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
@@ -142,7 +102,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `initial state shows profiles when they exist`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val profiles = listOf(profile1, profile2, profile3)
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(profiles)
@@ -164,7 +124,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `selecting a profile calls service and updates state on success`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val profiles = listOf(profile1, profile2)
             val selectedFlow = MutableStateFlow<UserProfileVO?>(profile1)
@@ -191,7 +151,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `selecting a profile handles failure gracefully`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val profiles = listOf(profile1, profile2)
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(profiles)
@@ -216,7 +176,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `updating profile statement and terms calls service with correct profileId`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -261,7 +221,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `updating profile sets isBusy during operation`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -292,7 +252,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `delete action shows confirmation dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -315,7 +275,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `delete confirmation dismissal clears dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -338,7 +298,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `delete confirmed calls service and updates state on success`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val profilesFlow = MutableStateFlow(listOf(profile1, profile2, profile3))
             every { userProfileServiceFacade.userProfiles } returns profilesFlow
@@ -368,7 +328,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `delete confirmed shows error dialog on failure`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile2)
@@ -394,7 +354,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `delete error dialog can be dismissed`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -419,19 +379,8 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `create profile action navigates to CreateProfile screen`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
-            val navManager = mockk<NavigationManager>(relaxed = true)
-            stopKoin()
-            startKoin {
-                modules(
-                    module {
-                        single<NavigationManager> { navManager }
-                        single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    },
-                )
-            }
-
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
 
@@ -445,7 +394,7 @@ class UserProfilePresenterTest {
 
             // Then
             // TODO: Add verification when test becomes runnable:
-            // verify { navManager.navigate(CreateProfile) }
+            // verify { navigationManager.navigate(NavRoute.CreateProfile(false), any(), any()) }
         }
 
     // ========== Lifecycle Tests ==========
@@ -453,7 +402,7 @@ class UserProfilePresenterTest {
     @Ignore("Presenter has infinite coroutine loops that cause tests to hang - see class documentation")
     @Test
     fun `jobs are cancelled on view detach`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)

@@ -4,62 +4,37 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class UserProfilePresenterActionGuardTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
-    private lateinit var reputationServiceFacade: ReputationServiceFacade
-    private lateinit var mainPresenter: MainPresenter
+class UserProfilePresenterActionGuardTest : PresentationKoinTestBase() {
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val reputationServiceFacade: ReputationServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: UserProfilePresenter
 
     private val profile1 = createMockUserProfile("Alice")
     private val profile2 = createMockUserProfile("Bob")
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single { GlobalUiManager(testDispatcher) }
-                },
-            )
-        }
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        globalUiManager = GlobalUiManager(testDispatcher)
+    }
 
-        userProfileServiceFacade = mockk(relaxed = true)
-        reputationServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-
+    override fun onKoinReady() {
         every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
         every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
@@ -83,15 +58,9 @@ class UserProfilePresenterActionGuardTest {
         )
     }
 
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-    }
-
     @Test
     fun `rapid double-tap on save triggers updateAndPublish only once`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery {
                 userProfileServiceFacade.updateAndPublishUserProfile(any(), any(), any())
             } coAnswers {
@@ -111,7 +80,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `save failure re-enables action guard`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery {
                 userProfileServiceFacade.updateAndPublishUserProfile(any(), any(), any())
             } returns Result.failure(RuntimeException("save failed"))
@@ -124,7 +93,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `delete confirm calls service and re-enables guard on failure`() =
-        runTest(testDispatcher) {
+        runTest {
             setUiState(
                 UserProfileUiState(
                     selectedUserProfile = profile2,
@@ -143,7 +112,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `profile select failure re-enables action guard`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileServiceFacade.selectUserProfile(profile2.id) } returns
                 Result.failure(RuntimeException("select failed"))
 
@@ -155,7 +124,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `profile select success completes guarded action`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileServiceFacade.selectUserProfile(profile2.id) } returns
                 Result.success(profile2)
 
@@ -168,7 +137,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `delete confirm success shows success snackbar path`() =
-        runTest(testDispatcher) {
+        runTest {
             setUiState(
                 UserProfileUiState(
                     selectedUserProfile = profile2,
@@ -187,7 +156,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `delete confirm exception shows error dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             setUiState(
                 UserProfileUiState(
                     selectedUserProfile = profile2,
@@ -206,7 +175,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `profile select exception is logged and does not crash`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { userProfileServiceFacade.selectUserProfile(profile2.id) } throws
                 RuntimeException("select exploded")
 
@@ -218,7 +187,7 @@ class UserProfilePresenterActionGuardTest {
 
     @Test
     fun `save with N A values strips localized placeholders before publish`() =
-        runTest(testDispatcher) {
+        runTest {
             setUiState(
                 UserProfileUiState(
                     selectedUserProfile = profile1,

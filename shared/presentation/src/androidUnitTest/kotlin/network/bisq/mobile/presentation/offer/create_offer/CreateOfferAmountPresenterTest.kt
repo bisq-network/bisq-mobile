@@ -3,16 +3,10 @@ package network.bisq.mobile.presentation.offer.create_offer
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
@@ -29,19 +23,11 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.offer.create_offer.amount.CreateOfferAmountPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -49,34 +35,10 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CreateOfferAmountPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
-
+class CreateOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
     @Test
     fun fixed_slider_updates_progressively_and_limit_info_updates_on_release() =
-        runTest(testDispatcher) {
+        runTest {
             // Arrange market prices map (100 USD per BTC)
             val marketUSD = MarketVOFactory.USD
             val marketUSDItem =
@@ -100,8 +62,6 @@ class CreateOfferAmountPresenterTest {
                 }
 
             // Mock the Android top-level function accessed by MainPresenter
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter =
                 MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
@@ -157,7 +117,7 @@ class CreateOfferAmountPresenterTest {
 
     @Test
     fun range_slider_updates_progressively_and_limit_info_updates_on_release() =
-        runTest(testDispatcher) {
+        runTest {
             // Arrange market prices map (100 USD per BTC)
             val marketUSD = MarketVOFactory.USD
             val marketUSDItem =
@@ -181,8 +141,6 @@ class CreateOfferAmountPresenterTest {
                 }
 
             // Mock the Android top-level function accessed by MainPresenter
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter =
                 MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
@@ -238,7 +196,7 @@ class CreateOfferAmountPresenterTest {
 
     @Test
     fun seller_with_saved_range_amount_does_not_reset_min_amount_on_recreate() =
-        runTest(testDispatcher) {
+        runTest {
             val marketUSD = MarketVOFactory.USD
             val marketUSDItem =
                 MarketPriceItem(
@@ -258,9 +216,6 @@ class CreateOfferAmountPresenterTest {
                     every { refreshSelectedFormattedMarketPrice() } returns Unit
                     every { selectMarket(any()) } returns Result.success(Unit)
                 }
-
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter =
                 MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
@@ -323,7 +278,7 @@ class CreateOfferAmountPresenterTest {
 
     @Test
     fun seller_with_reputation_below_market_min_clamps_slider_max_and_does_not_crash() =
-        runTest(testDispatcher) {
+        runTest {
             val marketUSD = MarketVOFactory.USD
             val marketUSDItem =
                 MarketPriceItem(
@@ -343,9 +298,6 @@ class CreateOfferAmountPresenterTest {
                     every { refreshSelectedFormattedMarketPrice() } returns Unit
                     every { selectMarket(any()) } returns Result.success(Unit)
                 }
-
-            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-            every { getScreenWidthDp() } returns 480
 
             val mainPresenter =
                 MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
