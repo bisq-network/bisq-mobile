@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -13,6 +14,7 @@ import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Ignore
@@ -393,8 +395,7 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             // Then
-            // TODO: Add verification when test becomes runnable:
-            // verify { navigationManager.navigate(NavRoute.CreateProfile(false), any(), any()) }
+            verify { navigationManager.navigate(NavRoute.CreateProfile(false), any(), any()) }
         }
 
     // ========== Lifecycle Tests ==========

@@ -56,6 +56,14 @@ class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase
         globalUiManager = GlobalUiManager(testDispatcher)
     }
 
+    override fun onTearDown() {
+        try {
+            globalUiManager.dispose()
+        } finally {
+            super.onTearDown()
+        }
+    }
+
     private class FakeOfferbookFilterConfigRepository(
         initialConfigs: OfferbookFilterConfigs = OfferbookFilterConfigs(),
         private val getConfigFailure: Throwable? = null,

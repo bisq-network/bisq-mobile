@@ -84,6 +84,15 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
         return p
     }
 
+    private inline fun withPresenter(block: (OpenTradeListPresenter) -> Unit) {
+        val presenter = buildPresenter()
+        try {
+            block(presenter)
+        } finally {
+            presenter.onViewUnattaching()
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Initial state
     // -----------------------------------------------------------------------
@@ -91,36 +100,36 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     @Test
     fun `initial state isLoading is true before filter debounce fires`() =
         runTest {
-            val presenter = buildPresenter()
-            // The combine hasn't collected yet because the 400ms filter debounce hasn't fired.
-            // flowOn(Dispatchers.Default) means the collect runs on a real thread pool, so we
-            // can only observe the immediate synchronous state here.
-            assertTrue(presenter.uiState.value.isLoading)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                // The combine hasn't collected yet because the 400ms filter debounce hasn't fired.
+                // flowOn(Dispatchers.Default) means the collect runs on a real thread pool, so we
+                // can only observe the immediate synchronous state here.
+                assertTrue(presenter.uiState.value.isLoading)
+            }
         }
 
     @Test
     fun `initial state sortBy is NEWEST_FIRST`() =
         runTest {
-            val presenter = buildPresenter()
-            assertEquals(TradeSort.NEWEST_FIRST, presenter.uiState.value.sortBy)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                assertEquals(TradeSort.NEWEST_FIRST, presenter.uiState.value.sortBy)
+            }
         }
 
     @Test
     fun `initial state roleFilter is ALL`() =
         runTest {
-            val presenter = buildPresenter()
-            assertEquals(TradeRoleFilter.ALL, presenter.uiState.value.roleFilter)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                assertEquals(TradeRoleFilter.ALL, presenter.uiState.value.roleFilter)
+            }
         }
 
     @Test
     fun `initial state filteredOpenTrades is empty`() =
         runTest {
-            val presenter = buildPresenter()
-            assertEquals(emptyList(), presenter.uiState.value.filteredOpenTrades)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                assertEquals(emptyList(), presenter.uiState.value.filteredOpenTrades)
+            }
         }
 
     // -----------------------------------------------------------------------
@@ -130,20 +139,20 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     @Test
     fun `OnSearchQueryChange updates searchQuery`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnSearchQueryChange("alice"))
-            assertEquals("alice", presenter.uiState.value.searchQuery)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnSearchQueryChange("alice"))
+                assertEquals("alice", presenter.uiState.value.searchQuery)
+            }
         }
 
     @Test
     fun `OnClearSearch clears searchQuery`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnSearchQueryChange("something"))
-            presenter.onAction(OpenTradeListUiAction.OnClearSearch)
-            assertEquals("", presenter.uiState.value.searchQuery)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnSearchQueryChange("something"))
+                presenter.onAction(OpenTradeListUiAction.OnClearSearch)
+                assertEquals("", presenter.uiState.value.searchQuery)
+            }
         }
 
     // -----------------------------------------------------------------------
@@ -153,19 +162,19 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     @Test
     fun `OnSortChange updates sortBy immediately`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
-            assertEquals(TradeSort.OLDEST_FIRST, presenter.uiState.value.sortBy)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
+                assertEquals(TradeSort.OLDEST_FIRST, presenter.uiState.value.sortBy)
+            }
         }
 
     @Test
     fun `OnRoleFilterChange updates roleFilter immediately`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.BUYER))
-            assertEquals(TradeRoleFilter.BUYER, presenter.uiState.value.roleFilter)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.BUYER))
+                assertEquals(TradeRoleFilter.BUYER, presenter.uiState.value.roleFilter)
+            }
         }
 
     // -----------------------------------------------------------------------
@@ -178,17 +187,16 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     @Test
     fun `filter debounce - sort state updates immediately on each action`() =
         runTest {
-            val presenter = buildPresenter()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
+                assertEquals(TradeSort.OLDEST_FIRST, presenter.uiState.value.sortBy)
 
-            presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
-            assertEquals(TradeSort.OLDEST_FIRST, presenter.uiState.value.sortBy)
+                advanceTimeBy(200) // within debounce window
 
-            advanceTimeBy(200) // within debounce window
-
-            presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.NEWEST_FIRST))
-            // State reflects the latest action immediately
-            assertEquals(TradeSort.NEWEST_FIRST, presenter.uiState.value.sortBy)
-            presenter.onViewUnattaching()
+                presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.NEWEST_FIRST))
+                // State reflects the latest action immediately
+                assertEquals(TradeSort.NEWEST_FIRST, presenter.uiState.value.sortBy)
+            }
         }
 
     // -----------------------------------------------------------------------
@@ -198,24 +206,24 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     @Test
     fun `OnResetFilters resets all filter fields to defaults`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
-            presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.SELLER))
-            presenter.onAction(OpenTradeListUiAction.OnResetFilters)
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
+                presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.SELLER))
+                presenter.onAction(OpenTradeListUiAction.OnResetFilters)
 
-            assertEquals(TradeSort.NEWEST_FIRST, presenter.uiState.value.sortBy)
-            assertEquals(TradeRoleFilter.ALL, presenter.uiState.value.roleFilter)
-            presenter.onViewUnattaching()
+                assertEquals(TradeSort.NEWEST_FIRST, presenter.uiState.value.sortBy)
+                assertEquals(TradeRoleFilter.ALL, presenter.uiState.value.roleFilter)
+            }
         }
 
     @Test
     fun `OnResetFilters also closes the filter sheet`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
-            presenter.onAction(OpenTradeListUiAction.OnResetFilters)
-            assertFalse(presenter.uiState.value.showFilterSheet)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
+                presenter.onAction(OpenTradeListUiAction.OnResetFilters)
+                assertFalse(presenter.uiState.value.showFilterSheet)
+            }
         }
 
     // -----------------------------------------------------------------------
@@ -225,31 +233,31 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     @Test
     fun `OnShowFilterSheet sets showFilterSheet true`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
-            assertTrue(presenter.uiState.value.showFilterSheet)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
+                assertTrue(presenter.uiState.value.showFilterSheet)
+            }
         }
 
     @Test
     fun `OnDismissFilterSheet sets showFilterSheet false`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
-            presenter.onAction(OpenTradeListUiAction.OnDismissFilterSheet)
-            assertFalse(presenter.uiState.value.showFilterSheet)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
+                presenter.onAction(OpenTradeListUiAction.OnDismissFilterSheet)
+                assertFalse(presenter.uiState.value.showFilterSheet)
+            }
         }
 
     @Test
     fun `per-filter actions do not auto-dismiss the filter sheet`() =
         runTest {
-            val presenter = buildPresenter()
-            presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
-            presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
-            presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.SELLER))
-            assertTrue(presenter.uiState.value.showFilterSheet)
-            presenter.onViewUnattaching()
+            withPresenter { presenter ->
+                presenter.onAction(OpenTradeListUiAction.OnShowFilterSheet)
+                presenter.onAction(OpenTradeListUiAction.OnSortChange(TradeSort.OLDEST_FIRST))
+                presenter.onAction(OpenTradeListUiAction.OnRoleFilterChange(TradeRoleFilter.SELLER))
+                assertTrue(presenter.uiState.value.showFilterSheet)
+            }
         }
 
     // -----------------------------------------------------------------------
@@ -260,26 +268,26 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     fun `OnSelectTrade when tradeRulesConfirmed false sets tradeGuideVisible true`() =
         runTest {
             tradeRulesConfirmedFlow.value = false
-            val presenter = buildPresenter()
-            val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
+            withPresenter { presenter ->
+                val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
 
-            presenter.onAction(OpenTradeListUiAction.OnSelectTrade(trade))
+                presenter.onAction(OpenTradeListUiAction.OnSelectTrade(trade))
 
-            assertTrue(presenter.uiState.value.tradeGuideVisible)
-            presenter.onViewUnattaching()
+                assertTrue(presenter.uiState.value.tradeGuideVisible)
+            }
         }
 
     @Test
     fun `OnSelectTrade when tradeRulesConfirmed false does NOT navigate`() =
         runTest {
             tradeRulesConfirmedFlow.value = false
-            val presenter = buildPresenter()
-            val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
+            withPresenter { presenter ->
+                val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
 
-            presenter.onAction(OpenTradeListUiAction.OnSelectTrade(trade))
+                presenter.onAction(OpenTradeListUiAction.OnSelectTrade(trade))
 
-            verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
-            presenter.onViewUnattaching()
+                verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
+            }
         }
 
     // -----------------------------------------------------------------------
@@ -290,14 +298,14 @@ class OpenTradeListPresenterTest : PresentationKoinTestBase() {
     fun `OnSelectTrade when tradeRulesConfirmed true navigates to OpenTrade and does not show trade guide`() =
         runTest {
             tradeRulesConfirmedFlow.value = true
-            val presenter = buildPresenter()
-            val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
+            withPresenter { presenter ->
+                val trade = mockTradeItem("t-abc", isSeller = false, takeOfferDate = 1L)
 
-            presenter.onAction(OpenTradeListUiAction.OnSelectTrade(trade))
+                presenter.onAction(OpenTradeListUiAction.OnSelectTrade(trade))
 
-            verify { navigationManager.navigate(NavRoute.OpenTrade("t-abc"), any(), any()) }
-            assertFalse(presenter.uiState.value.tradeGuideVisible)
-            presenter.onViewUnattaching()
+                verify { navigationManager.navigate(NavRoute.OpenTrade("t-abc"), any(), any()) }
+                assertFalse(presenter.uiState.value.tradeGuideVisible)
+            }
         }
 
     // -----------------------------------------------------------------------

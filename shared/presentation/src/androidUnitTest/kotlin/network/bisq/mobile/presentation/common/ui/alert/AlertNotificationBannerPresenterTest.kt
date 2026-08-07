@@ -15,6 +15,7 @@ import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
@@ -28,6 +29,10 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AlertNotificationBannerPresenterTest : PlatformPresentationKoinTestBase() {
+    override fun onKoinReady() {
+        I18nSupport.initialize("en")
+    }
+
     @Test
     fun `selects most severe then most recent alert`() =
         runTest {

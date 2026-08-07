@@ -59,6 +59,14 @@ class OfferbookPresenterActionGuardResetTest : PlatformPresentationKoinTestBase(
         globalUiManager = GlobalUiManager(testDispatcher)
     }
 
+    override fun onTearDown() {
+        try {
+            globalUiManager.dispose()
+        } finally {
+            super.onTearDown()
+        }
+    }
+
     @Test
     fun `onViewRevealed resets isCreateOfferEnabled after create offer navigation`() =
         runTest {

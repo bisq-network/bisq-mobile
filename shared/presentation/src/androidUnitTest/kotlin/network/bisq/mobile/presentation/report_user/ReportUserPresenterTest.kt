@@ -64,6 +64,7 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
     override fun onTearDown() {
         try {
             presenter.onViewUnattaching()
+            globalUiManager.dispose()
         } finally {
             super.onTearDown()
         }

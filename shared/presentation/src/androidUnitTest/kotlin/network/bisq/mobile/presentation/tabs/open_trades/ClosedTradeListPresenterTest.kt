@@ -167,21 +167,22 @@ class ClosedTradeListPresenterTest : PresentationKoinTestBase() {
             val localPresenter =
                 ClosedTradeListPresenter(mainPresenter, tradesServiceFacade, useCase, userProfileServiceFacade)
             localPresenter.onViewAttached()
-
-            // Capture the initial totalCount state to track pager invalidation indirectly;
-            // The refreshTick field is internal, so we verify by checking that totalCount
-            // resets to null after a tick + debounce.
-            tickFlow.value = 1
-            // Before debounce fires: no invalidation yet
-            advanceTimeBy(200)
-            // After 300ms debounce
-            advanceTimeBy(200)
-            // refreshTick has now incremented — totalCount resets to null on each new QueryKey
-            // (onEach { _totalCount.value = null } runs before flatMapLatest)
-            // We can't directly inspect refreshTick, but we can verify the presenter is still alive
-            assertEquals("", localPresenter.uiState.value.searchQuery)
-
-            localPresenter.onViewUnattaching()
+            try {
+                // Capture the initial totalCount state to track pager invalidation indirectly;
+                // The refreshTick field is internal, so we verify by checking that totalCount
+                // resets to null after a tick + debounce.
+                tickFlow.value = 1
+                // Before debounce fires: no invalidation yet
+                advanceTimeBy(200)
+                // After 300ms debounce
+                advanceTimeBy(200)
+                // refreshTick has now incremented — totalCount resets to null on each new QueryKey
+                // (onEach { _totalCount.value = null } runs before flatMapLatest)
+                // We can't directly inspect refreshTick, but we can verify the presenter is still alive
+                assertEquals("", localPresenter.uiState.value.searchQuery)
+            } finally {
+                localPresenter.onViewUnattaching()
+            }
         }
 
     // -----------------------------------------------------------------------

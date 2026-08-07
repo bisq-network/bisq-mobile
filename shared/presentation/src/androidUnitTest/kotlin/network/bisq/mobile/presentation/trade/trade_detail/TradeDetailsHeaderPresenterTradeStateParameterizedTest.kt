@@ -9,6 +9,7 @@ import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTrad
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
@@ -53,6 +54,7 @@ class TradeDetailsHeaderPresenterTradeStateParameterizedTest(
     }
 
     override fun onKoinReady() {
+        I18nSupport.initialize("en")
         GenericErrorHandler.clearGenericError()
 
         every { mainPresenter.isSmallScreen } returns MutableStateFlow(false)

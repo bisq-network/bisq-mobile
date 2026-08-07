@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.utils.UrlLauncher
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
@@ -36,6 +37,7 @@ class BasePresenterLifecycleTest : PlatformPresentationKoinTestBase() {
     }
 
     override fun onKoinReady() {
+        I18nSupport.initialize("en")
         mainPresenter =
             MainPresenterTestFactory.create(
                 applicationLifecycleService = TestApplicationLifecycleService(),

@@ -63,6 +63,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
     override fun onTearDown() {
         try {
             ApplicationBootstrapFacade.isDemo = previousDemoState
+            globalUiManager.dispose()
         } finally {
             super.onTearDown()
         }

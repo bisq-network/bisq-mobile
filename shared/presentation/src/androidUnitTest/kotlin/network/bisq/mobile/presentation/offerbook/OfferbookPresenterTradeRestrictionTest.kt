@@ -56,6 +56,14 @@ class OfferbookPresenterTradeRestrictionTest : PlatformPresentationKoinTestBase(
         globalUiManager = GlobalUiManager(testDispatcher)
     }
 
+    override fun onTearDown() {
+        try {
+            globalUiManager.dispose()
+        } finally {
+            super.onTearDown()
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
