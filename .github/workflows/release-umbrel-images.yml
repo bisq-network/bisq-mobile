@@ -202,12 +202,24 @@ jobs:
           provenance: false
 
       - name: Summary — pushed images
+        # Values come in via env (not ${{ }} interpolation into the script): version derives from
+        # libs.versions.toml / a dispatch input, and this workflow fires on pushes touching that
+        # file — raw interpolation into a run script is a script-injection surface on a runner
+        # that holds the GHCR PAT in its docker login state. Matches the env style of every other
+        # step in this file.
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          BISQ2_REF: ${{ needs.resolve.outputs.bisq2_ref }}
+          PLATFORMS: ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}
+          NS: ${{ vars.GHCR_NAMESPACE }}
+          NODE_DIGEST: ${{ steps.node.outputs.digest }}
+          WEB_DIGEST: ${{ steps.web.outputs.digest }}
         run: |
           {
-            echo "## Bisq 2 Umbrel images — \`${{ needs.resolve.outputs.version }}\`"
-            echo "Built bisq2 @ \`${{ needs.resolve.outputs.bisq2_ref }}\` for \`${{ inputs.platforms || 'linux/amd64,linux/arm64' }}\`."
-            echo "- ${{ vars.GHCR_NAMESPACE }}/bisq2-api@${{ steps.node.outputs.digest }}"
-            echo "- ${{ vars.GHCR_NAMESPACE }}/bisq2-api-web-ui@${{ steps.web.outputs.digest }}"
+            echo "## Bisq 2 Umbrel images — \`${VERSION}\`"
+            echo "Built bisq2 @ \`${BISQ2_REF}\` for \`${PLATFORMS}\`."
+            echo "- ${NS}/bisq2-api:${VERSION}@${NODE_DIGEST}"
+            echo "- ${NS}/bisq2-api-web-ui:${VERSION}@${WEB_DIGEST}"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # Digest-pin the freshly-built images into each configured store + bump the manifest version & notes.
@@ -291,12 +303,24 @@ jobs:
           git checkout -B "$branch" "upstream/${BASE}"
           cd bisq2-node
 
-          # Release notes: workflow_dispatch override if given, else a generated default.
+          # Release notes: workflow_dispatch override if given, else generated from the ACTUAL source
+          # delta. The previous release's bisq2 commit is recovered from the store's CURRENT manifest
+          # (we embed "bisq2 @ <hash>" in every generated note precisely so the next run can diff
+          # against it) — must be read BEFORE the python block below rewrites the file. Fallbacks:
+          # no prior hash recorded -> compare against the released api tag; same source -> say so
+          # instead of linking an empty compare.
           API_PART="$(echo "$VERSION" | cut -d. -f1-3)"
           SHORT="$(echo "$BISQ2_REF" | cut -c1-7)"
           NOTES="${RELEASE_NOTES:-}"
           if [ -z "$NOTES" ]; then
-            NOTES="Bisq 2 Node ${VERSION} — tracks Bisq 2 API ${API_PART} (bisq2 @ ${SHORT}). Changelog: https://github.com/bisq-network/bisq2/releases"
+            PREV_REF="$(grep -oE 'bisq2 @ [0-9a-f]{7,40}' umbrel-app.yml | head -1 | awk '{print $3}' || true)"
+            if [ -n "$PREV_REF" ] && [ "${BISQ2_REF#"$PREV_REF"}" = "$BISQ2_REF" ]; then
+              NOTES="Maintenance update with the latest Bisq 2 upstream fixes and improvements (Bisq 2 API ${API_PART}, bisq2 @ ${SHORT}). Full changes: https://github.com/bisq-network/bisq2/compare/${PREV_REF}...${SHORT}"
+            elif [ -n "$PREV_REF" ]; then
+              NOTES="Packaging update — no Bisq 2 source changes (Bisq 2 API ${API_PART}, bisq2 @ ${SHORT})."
+            else
+              NOTES="Update to Bisq 2 API ${API_PART} (bisq2 @ ${SHORT}). Full changes: https://github.com/bisq-network/bisq2/compare/v${API_PART}...${SHORT}"
+            fi
           fi
 
           # Set version + releaseNotes in umbrel-app.yml via Python (not sed) so it handles BOTH the
@@ -328,18 +352,20 @@ jobs:
           print("umbrel-app.yml: version=%s notes=%r" % (version, notes))
           PY
 
-          # Namespace-AGNOSTIC digest pin: matches any current namespace and rewrites to ${NS}@<digest>,
-          # so the first bisq-network release also migrates the refs (e.g. rodvar -> bisq-network).
+          # Namespace-AGNOSTIC pin rewritten to ${NS}:<version>@<digest> — Umbrel's lint-apps.mjs
+          # REQUIRES both a tag and a digest on every image ref (a digest-only pin fails their CI),
+          # and the tag also keeps the ref human-readable. The first bisq-network release also
+          # migrates the namespace (e.g. rodvar -> bisq-network).
           # web-ui first (more specific); the node regex requires /bisq2-api immediately followed by :/@,
           # so it never matches the longer -web-ui line.
-          sed -i -E "s#(image: )[^[:space:]]+/bisq2-api-web-ui[:@][^[:space:]]*#\1${NS}/bisq2-api-web-ui@${WEB_DIGEST}#" docker-compose.yml
-          sed -i -E "s#(image: )[^[:space:]]+/bisq2-api[:@][^[:space:]]*#\1${NS}/bisq2-api@${NODE_DIGEST}#" docker-compose.yml
+          sed -i -E "s#(image: )[^[:space:]]+/bisq2-api-web-ui[:@][^[:space:]]*#\1${NS}/bisq2-api-web-ui:${VERSION}@${WEB_DIGEST}#" docker-compose.yml
+          sed -i -E "s#(image: )[^[:space:]]+/bisq2-api[:@][^[:space:]]*#\1${NS}/bisq2-api:${VERSION}@${NODE_DIGEST}#" docker-compose.yml
           # Fail loudly if a pin didn't take (compose format drift / renamed image): sed -i exits 0 even
           # on no match, which would silently ship a store PR that doesn't actually pin the new images.
-          grep -qF "/bisq2-api-web-ui@${WEB_DIGEST}" docker-compose.yml \
-            || { echo "::error::web-ui image not pinned to ${WEB_DIGEST} — no matching image line?"; exit 1; }
-          grep -qF "/bisq2-api@${NODE_DIGEST}" docker-compose.yml \
-            || { echo "::error::node image not pinned to ${NODE_DIGEST} — no matching image line?"; exit 1; }
+          grep -qF "/bisq2-api-web-ui:${VERSION}@${WEB_DIGEST}" docker-compose.yml \
+            || { echo "::error::web-ui image not pinned to ${VERSION}@${WEB_DIGEST} — no matching image line?"; exit 1; }
+          grep -qF "/bisq2-api:${VERSION}@${NODE_DIGEST}" docker-compose.yml \
+            || { echo "::error::node image not pinned to ${VERSION}@${NODE_DIGEST} — no matching image line?"; exit 1; }
           echo "resulting refs:"; grep -E '^\s*image:' docker-compose.yml
           cd ..
           # Idempotent: a re-run of an already-published version yields no diff — skip the commit (and,
