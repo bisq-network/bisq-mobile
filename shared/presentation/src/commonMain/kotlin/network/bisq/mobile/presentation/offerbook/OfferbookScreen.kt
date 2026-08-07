@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.utils.PlatformImage
@@ -66,6 +67,9 @@ fun OfferbookScreen() {
     val isTakeOfferEnabled by presenter.isTakeOfferEnabled.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
     val showLoading by presenter.isLoading.collectAsState()
+    val showSyncing by presenter.isSyncingMarketOffers.collectAsState()
+    val showRefiltering by presenter.isRefilteringOffers.collectAsState()
+    val oppositeDirectionOffersCount by presenter.oppositeDirectionOffersCount.collectAsState()
     val filterUiState by presenter.filterUiState.collectAsState()
 
     OfferbookContent(
@@ -74,6 +78,9 @@ fun OfferbookScreen() {
         selectedMarket = selectedMarket,
         filterUiState = filterUiState,
         showLoading = showLoading,
+        showSyncing = showSyncing,
+        showRefiltering = showRefiltering,
+        oppositeDirectionOffersCount = oppositeDirectionOffersCount,
         showDeleteConfirmation = showDeleteConfirmation,
         showNotEnoughReputationDialog = showNotEnoughReputationDialog,
         showTradeRestrictedDialog = showTradeRestrictedDialog,
@@ -110,6 +117,9 @@ internal fun OfferbookContent(
     selectedMarket: MarketPriceItem?,
     filterUiState: OfferbookFilterUiState,
     showLoading: Boolean,
+    showSyncing: Boolean,
+    showRefiltering: Boolean,
+    oppositeDirectionOffersCount: Int,
     showDeleteConfirmation: Boolean,
     showNotEnoughReputationDialog: Boolean,
     showTradeRestrictedDialog: AlertNotificationUiState?,
@@ -184,7 +194,25 @@ internal fun OfferbookContent(
         }
 
         if (sortedFilteredOffers.isEmpty() && !showLoading) {
-            NoOffersSection(onCreateOffer = onCreateOffer)
+            if (showSyncing || showRefiltering) {
+                // Two transient states must never render as a definitive "no offers":
+                //  - syncing: the market advertises more offers than are cached (data inbound)
+                //  - refiltering: the pipeline is recomputing for changed inputs — what's on
+                //    screen is the PREVIOUS run's state (incl. a stale direction-switch hint)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(color = BisqTheme.colors.primary)
+                }
+            } else {
+                NoOffersSection(
+                    selectedDirection = selectedDirection,
+                    oppositeDirectionOffersCount = oppositeDirectionOffersCount,
+                    onSwitchDirection = onSelectDirection,
+                    onCreateOffer = onCreateOffer,
+                )
+            }
             return@BisqStaticScaffold
         }
 
@@ -312,17 +340,43 @@ internal fun OfferbookContent(
 }
 
 @Composable
-fun NoOffersSection(onCreateOffer: () -> Unit) {
+fun NoOffersSection(
+    selectedDirection: DirectionEnum,
+    oppositeDirectionOffersCount: Int,
+    onSwitchDirection: (DirectionEnum) -> Unit,
+    onCreateOffer: () -> Unit,
+) {
+    // A market can advertise offers while this tab is legitimately empty (all offers sit on the
+    // other side). Saying only "there are no offers" reads as broken against the market list's
+    // count, so when the other tab has matches we name the situation and offer the switch.
+    val hasOffersOnOtherTab = oppositeDirectionOffersCount > 0
     Column(
         modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding4X).fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         BisqText.H4LightGrey(
-            text = "mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n(), // There are no offers
+            text =
+                when {
+                    !hasOffersOnOtherTab -> "mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n() // There are no offers
+                    selectedDirection == DirectionEnum.BUY -> "mobile.offerbook.noOffersToBuy".i18n()
+                    else -> "mobile.offerbook.noOffersToSell".i18n()
+                },
             textAlign = TextAlign.Center,
         )
         BisqGap.V4()
+        if (hasOffersOnOtherTab) {
+            BisqButton(
+                text =
+                    if (selectedDirection == DirectionEnum.BUY) {
+                        "mobile.offerbook.showSellOffers".i18n(oppositeDirectionOffersCount)
+                    } else {
+                        "mobile.offerbook.showBuyOffers".i18n(oppositeDirectionOffersCount)
+                    },
+                onClick = { onSwitchDirection(selectedDirection.mirror) },
+            )
+            BisqGap.V2()
+        }
         BisqButton(
             text = "offer.create".i18n(),
             onClick = onCreateOffer,

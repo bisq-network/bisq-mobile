@@ -1,16 +1,22 @@
 package network.bisq.mobile.presentation.offerbook
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
@@ -85,6 +91,19 @@ open class OfferbookPresenter(
     private val _sortedFilteredOffers = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
     val sortedFilteredOffers: StateFlow<List<OfferItemPresentationModel>> = _sortedFilteredOffers.asStateFlow()
 
+    // Offers that would show on the OTHER direction tab under the current filters. Drives the
+    // direction-aware empty state: a market can advertise offers while the selected tab is
+    // legitimately empty (e.g. all offers are sell-side and the user lands on Buy) — without this
+    // hint the screen reads as broken until the user happens to flip the toggle.
+    private val _oppositeDirectionOffersCount = MutableStateFlow(0)
+    val oppositeDirectionOffersCount: StateFlow<Int> = _oppositeDirectionOffersCount.asStateFlow()
+
+    // True while the filtering pipeline is recomputing for changed inputs (market/direction/filter
+    // change). Guards the empty state: without it, the screen keeps rendering the PREVIOUS run's
+    // state until the new run emits — including a stale, mislabeled direction-switch hint.
+    private val _isRefilteringOffers = MutableStateFlow(false)
+    val isRefilteringOffers: StateFlow<Boolean> = _isRefilteringOffers.asStateFlow()
+
     // Baseline available method sets (direction+ignored-user filtered, independent of method selections)
     private val _availablePaymentMethodIds = MutableStateFlow<Set<String>>(emptySet())
     val availablePaymentMethodIds: StateFlow<Set<String>> = _availablePaymentMethodIds.asStateFlow()
@@ -134,6 +153,7 @@ open class OfferbookPresenter(
 
     val selectedUserProfile get() = userProfileServiceFacade.selectedUserProfile
     val isLoading get() = offersServiceFacade.isOfferbookLoading
+    val isSyncingMarketOffers get() = offersServiceFacade.isSyncingSelectedMarketOffers
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -143,6 +163,7 @@ open class OfferbookPresenter(
         launchOfferFiltering()
         launchFilterUiStateDerivation()
         launchSlowLoadingHint()
+        launchMyReputationWarmup()
     }
 
     /**
@@ -232,6 +253,10 @@ open class OfferbookPresenter(
                     settlements = values[6] as Set<String>,
                     onlyMine = values[7] as Boolean,
                 )
+            }.onEach {
+                // Mark the recompute in flight BEFORE mapLatest starts (and possibly suspends on the
+                // one-off reputation fetch), so the UI can guard against rendering stale state.
+                _isRefilteringOffers.value = true
             }.mapLatest { inp ->
                 val offers = inp.offers
                 val direction = inp.direction
@@ -254,18 +279,13 @@ open class OfferbookPresenter(
                 val availablePayments = mutableSetOf<String>()
                 val availableSettlements = mutableSetOf<String>()
 
+                var oppositeDirectionCount = 0
                 for (item in offers) {
                     val offerCurrency = item.bisqEasyOffer.market.quoteCurrencyCode
                     val offerDirection = item.bisqEasyOffer.direction.mirror
                     val isIgnoredUser = isOfferFromIgnoredUserCached(item.bisqEasyOffer)
 
                     log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser, isMy=${item.isMyOffer}" }
-
-                    if (offerDirection != direction) {
-                        log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
-                        continue
-                    }
-                    directionFilteredCount++
 
                     if (isIgnoredUser) {
                         ignoredUserFilteredCount++
@@ -278,6 +298,21 @@ open class OfferbookPresenter(
                         log.v { "Offer ${item.offerId} filtered out (only my offers enabled)" }
                         continue
                     }
+
+                    if (offerDirection != direction) {
+                        // Count what the OTHER tab would show under the same filters, so the empty
+                        // state can honestly offer the switch (see oppositeDirectionOffersCount).
+                        val oppositePaymentOk =
+                            if (payments.isEmpty() && !hasManualPaymentFilter) true else item.quoteSidePaymentMethods.any { it in payments }
+                        val oppositeSettlementOk =
+                            if (settlements.isEmpty() && !hasManualSettlementFilter) true else item.baseSidePaymentMethods.any { it in settlements }
+                        if (oppositePaymentOk && oppositeSettlementOk) {
+                            oppositeDirectionCount++
+                        }
+                        log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
+                        continue
+                    }
+                    directionFilteredCount++
 
                     // Contribute to baseline availability regardless of current method selections
                     availablePayments.addAll(item.quoteSidePaymentMethods)
@@ -317,13 +352,18 @@ open class OfferbookPresenter(
                 val processed = filtered.map { offer -> processOffer(offer, selectedProfile, myReputation) }
                 val sorted =
                     processed.sortedWith(compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
-                sorted
+                sorted to oppositeDirectionCount
             }.flowOn(computationDispatcher)
-                .collectLatest { sorted ->
-                    if (sorted != null) {
+                .collectLatest { result ->
+                    if (result != null) {
+                        val (sorted, oppositeCount) = result
                         _sortedFilteredOffers.value = sorted
-                        log.d { "OfferbookPresenter final result - ${sorted.size} offers displayed for market" }
+                        _oppositeDirectionOffersCount.value = oppositeCount
+                        log.d { "OfferbookPresenter final result - ${sorted.size} offers displayed for market (other direction: $oppositeCount)" }
                     }
+                    // The run for the latest inputs has landed (or was skipped for lack of a
+                    // profile) — the published state is current again.
+                    _isRefilteringOffers.value = false
                 }
         }
     }
@@ -440,11 +480,36 @@ open class OfferbookPresenter(
     // cold backend) are deliberately not memoized so the next pipeline run can recover.
     private val myReputationByProfileId = mutableMapOf<String, Result<ReputationScoreVO>>()
 
-    private suspend fun getMyReputation(profileId: String): Result<ReputationScoreVO> =
-        myReputationByProfileId[profileId]
-            ?: reputationServiceFacade
-                .getReputation(profileId)
-                .also { result -> if (result.isSuccess) myReputationByProfileId[profileId] = result }
+    // Warm the memoized score before the user reaches a tab that needs it: the first pipeline run
+    // over BUY-direction offers otherwise pays the fetch (a websocket round trip on the client)
+    // while the UI sits on the previous run's state. Idempotent — getMyReputation memoizes.
+    private fun launchMyReputationWarmup() {
+        presenterScope.launch {
+            val profile = userProfileServiceFacade.selectedUserProfile.filterNotNull().first()
+            getMyReputation(profile.id)
+        }
+    }
+
+    private suspend fun getMyReputation(profileId: String): Result<ReputationScoreVO> {
+        myReputationByProfileId[profileId]?.let { return it }
+        // A throwing lookup must NEVER kill the filtering pipeline (it runs inside the mapLatest
+        // collector — an escaped exception stops offer display for the rest of the session). A
+        // failure degrades to "score unknown" downstream, while a genuine cancellation of this
+        // pipeline run (mapLatest supersession) must still propagate: ensureActive() gates the
+        // rethrow, mirroring BisqEasyTradeAmountLimits#isBuyOfferInvalid.
+        val result =
+            runCatching { reputationServiceFacade.getReputation(profileId) }
+                .getOrElse { Result.failure(it) }
+        if (result.exceptionOrNull() is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
+        if (result.isSuccess) {
+            myReputationByProfileId[profileId] = result
+        } else {
+            log.w("Fetching my reputation failed; offers stay takeable per the not-cached policy", result.exceptionOrNull())
+        }
+        return result
+    }
 
     private suspend fun processOffer(
         item: OfferItemPresentationModel,

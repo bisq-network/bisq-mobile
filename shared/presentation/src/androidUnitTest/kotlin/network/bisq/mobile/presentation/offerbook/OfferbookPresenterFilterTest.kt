@@ -5,6 +5,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -685,9 +686,74 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
             coVerify(exactly = 1) { reputationService.getReputation(any()) }
         }
 
-    /** Control: SELL-direction offers (the maker is the seller) never need my score at all. */
+    /**
+     * Direction-aware empty state: landing on a tab with 0 offers while the other tab has matches
+     * must expose the other tab's count so the UI can offer the switch instead of a bare
+     * "no offers" that reads as broken against the market list's advertised count.
+     */
     @Test
-    fun test_no_reputation_fetch_for_sell_direction_offers() =
+    fun test_opposite_direction_count_exposed_when_selected_tab_is_empty() =
+        runTest {
+            // direction = BUY -> mirror SELL -> these show on the SELL tab; default tab is BUY
+            val allOffers =
+                listOf(
+                    makeOffer("b1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN"), direction = DirectionEnum.BUY),
+                    makeOffer("b2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING"), direction = DirectionEnum.BUY),
+                )
+            val presenter = buildPresenterWithOffers(allOffers)
+            runCurrent()
+
+            awaitSortedCount(presenter, 0)
+            presenter.oppositeDirectionOffersCount
+                .filter { it == allOffers.size }
+                .first()
+
+            // Switching to the tab that has the offers empties the opposite count again
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            awaitSortedCount(presenter, allOffers.size)
+            presenter.oppositeDirectionOffersCount
+                .filter { it == 0 }
+                .first()
+        }
+
+    /**
+     * Regression for "all markets empty": the reputation lookup runs inside the mapLatest collector,
+     * so a facade that THROWS (not just returns a failure Result — e.g. a network-layer exception on
+     * device) must not kill the filtering pipeline. Offers must still display, and the throw must
+     * not be memoized so a later run can recover.
+     */
+    @Test
+    fun test_throwing_reputation_lookup_does_not_kill_the_pipeline() =
+        runTest {
+            val reputationService =
+                mockk<ReputationServiceFacade> {
+                    coEvery { getReputation(any()) } throws RuntimeException("network layer blew up")
+                }
+            val allOffers =
+                listOf(
+                    makeOffer("b1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN"), direction = DirectionEnum.BUY),
+                    makeOffer("b2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING"), direction = DirectionEnum.BUY),
+                )
+            val presenter = buildPresenterWithOffers(allOffers, reputationService)
+            runCurrent()
+
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            // The pipeline must survive the throw and still emit the offers
+            awaitSortedCount(presenter, allOffers.size)
+
+            // And a later pipeline run must also survive (the throw is not memoized)
+            presenter.onSelectDirection(DirectionEnum.BUY)
+            awaitSortedCount(presenter, 0)
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            awaitSortedCount(presenter, allOffers.size)
+        }
+
+    /**
+     * Control: SELL-direction offers (the maker is the seller) never need my score — the only fetch
+     * is the single attach-time warmup, no matter how many pipeline runs happen.
+     */
+    @Test
+    fun test_pipeline_never_fetches_reputation_for_sell_direction_offers() =
         runTest {
             val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
             val allOffers =
@@ -699,7 +765,60 @@ class OfferbookPresenterFilterTest : PlatformPresentationKoinTestBase() {
             runCurrent()
 
             awaitSortedCount(presenter, allOffers.size)
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            awaitSortedCount(presenter, 0)
+            presenter.onSelectDirection(DirectionEnum.BUY)
+            awaitSortedCount(presenter, allOffers.size)
 
-            coVerify(exactly = 0) { reputationService.getReputation(any()) }
+            coVerify(exactly = 1) { reputationService.getReputation(any()) }
+        }
+
+    /**
+     * The attach-time warmup pre-fetches my score so the first pipeline run over BUY-direction
+     * offers never pays a network round trip while the UI sits on stale state.
+     */
+    @Test
+    fun test_my_reputation_warmed_up_at_attach() =
+        runTest {
+            val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
+            val presenter = buildPresenterWithOffers(emptyList(), reputationService)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { reputationService.getReputation(any()) }
+            // Keep the presenter referenced so the pipeline stays alive for the duration
+            awaitSortedCount(presenter, 0)
+        }
+
+    /**
+     * While the pipeline recomputes for changed inputs, [OfferbookPresenter.isRefilteringOffers]
+     * must be true so the UI can show progress instead of the PREVIOUS run's stale (empty) state —
+     * the "empty state flashes with a mislabeled switch hint for 1-2s" field report.
+     */
+    @Test
+    fun test_refiltering_state_exposed_while_pipeline_run_is_in_flight() =
+        runTest {
+            val reputationService =
+                mockk<ReputationServiceFacade> {
+                    coEvery { getReputation(any()) } coAnswers {
+                        delay(500)
+                        Result.success(ReputationScoreVO(Long.MAX_VALUE, 5.0, 1))
+                    }
+                }
+            val allOffers =
+                listOf(
+                    makeOffer("b1", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN"), direction = DirectionEnum.BUY),
+                )
+            val presenter = buildPresenterWithOffers(allOffers, reputationService)
+            runCurrent()
+
+            // Switch to the tab whose run pays the (slow) fetch: the recompute is in flight
+            presenter.onSelectDirection(DirectionEnum.SELL)
+            runCurrent()
+            assertTrue(presenter.isRefilteringOffers.value, "recompute must be flagged while in flight")
+
+            // Once the run lands the flag clears and the offers are published
+            advanceUntilIdle()
+            assertEquals(false, presenter.isRefilteringOffers.value)
+            assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
         }
 }

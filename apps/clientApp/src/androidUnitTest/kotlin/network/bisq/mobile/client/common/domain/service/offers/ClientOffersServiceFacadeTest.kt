@@ -6,6 +6,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -615,6 +617,42 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
                     .map { it.offerId }
                     .toSet(),
             )
+        }
+
+    /**
+     * The market list advertises NUM_OFFERS; entering a market whose OFFERS snapshot hasn't landed
+     * yet must expose a syncing state (drives an honest loading UI instead of a false "no offers"
+     * against the advertised count), clearing once the cached offers catch up.
+     */
+    @Test
+    fun `syncing state is exposed while advertised count exceeds cached offers and clears when they arrive`() =
+        runTest {
+            val numOffersObserver = WebSocketEventObserver()
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns numOffersObserver
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(brlMarket))
+
+            facade.activate()
+            advanceUntilIdle()
+            connectionState.value = ConnectionState.Connected
+            waitUntil { facade.offerbookMarketItems.value.isNotEmpty() }
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 1}"""))
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 1))
+            runCurrent()
+            // Advertised 1, cached 0 -> the snapshot is pending and the syncing state must expose it
+            facade.isSyncingSelectedMarketOffers
+                .filter { it }
+                .first()
+
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "o1"), sequenceNumber = 1))
+            advanceUntilIdle()
+            // Cached offers caught up with the advertised count -> syncing clears
+            facade.isSyncingSelectedMarketOffers
+                .filter { !it }
+                .first()
         }
 
     private fun offersEvent(

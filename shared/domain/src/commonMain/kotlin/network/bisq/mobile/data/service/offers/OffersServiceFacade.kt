@@ -3,6 +3,7 @@ package network.bisq.mobile.data.service.offers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.data.model.offerbook.MarketListItem
@@ -31,6 +32,25 @@ abstract class OffersServiceFacade :
     // Loading indicator for offerbook data fetch/select cycles
     protected val _isOfferbookLoading = MutableStateFlow(false)
     val isOfferbookLoading: StateFlow<Boolean> get() = _isOfferbookLoading
+
+    // True while the selected market advertises more offers (NUM_OFFERS) than are cached locally
+    // for it — the OFFERS snapshot/reconcile is still inbound (relevant on the client over Tor; on
+    // the node data is local so this settles immediately). Lets the UI show an honest loading state
+    // on an otherwise-empty tab instead of a false "no offers": the market list advertised a count,
+    // and what the user sees must stay accountable to it.
+    val isSyncingSelectedMarketOffers: StateFlow<Boolean> =
+        combine(
+            offerbookListItems,
+            selectedOfferbookMarket,
+            offerbookMarketItems,
+        ) { offers, selectedMarket, marketItems ->
+            val advertised = marketItems.firstOrNull { it.market == selectedMarket.market }?.numOffers ?: 0
+            advertised > offers.size
+        }.stateIn(
+            serviceScope,
+            SharingStarted.WhileSubscribed(5_000, 10_000),
+            false,
+        )
 
     val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> =
         offerbookMarketItems

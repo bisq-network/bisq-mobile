@@ -277,6 +277,92 @@ class OfferbookScreenTest {
     }
 
     // -------------------------------------------------------------------------
+    // Direction-aware empty state
+    // -------------------------------------------------------------------------
+
+    /**
+     * A market can advertise offers while the selected tab is legitimately empty (all offers on the
+     * other side). The empty state must name the situation and offer the switch instead of a bare
+     * "there are no offers" that reads as broken against the market list's count.
+     */
+    @Test
+    fun `when tab is empty but other direction has offers then switch hint is shown and dispatches direction change`() {
+        var switched: DirectionEnum? = null
+        composeTestRule.setContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.BUY,
+                oppositeDirectionOffersCount = 6,
+                onSelectDirection = { switched = it },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToBuy".i18n()).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("mobile.offerbook.showSellOffers".i18n(6))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(DirectionEnum.SELL, switched)
+    }
+
+    @Test
+    fun `when tab is empty and other direction is empty too then plain no-offers state is shown`() {
+        composeTestRule.setContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.BUY,
+                oppositeDirectionOffersCount = 0,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.offerbook.showSellOffers".i18n(0)).assertDoesNotExist()
+    }
+
+    /**
+     * When the market advertises more offers than are cached (snapshot still inbound over Tor),
+     * data IS coming — the empty tab must show progress, never a "no offers" state that contradicts
+     * the count the market list just promised.
+     */
+    @Test
+    fun `when market offers are still syncing then empty tab shows progress instead of no-offers state`() {
+        composeTestRule.setContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.BUY,
+                showSyncing = true,
+                oppositeDirectionOffersCount = 0,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n()).assertDoesNotExist()
+        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToBuy".i18n()).assertDoesNotExist()
+        composeTestRule.onNodeWithText("offer.create".i18n()).assertDoesNotExist()
+    }
+
+    /**
+     * While the pipeline recomputes (direction/market/filter change), the on-screen state belongs
+     * to the PREVIOUS run — rendering it as an empty state would flash stale, mislabeled content
+     * (e.g. the opposite direction's switch hint). Progress must show instead.
+     */
+    @Test
+    fun `when refiltering then empty tab shows progress instead of stale empty state`() {
+        composeTestRule.setContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.SELL,
+                showRefiltering = true,
+                oppositeDirectionOffersCount = 1,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToSell".i18n()).assertDoesNotExist()
+        composeTestRule.onNodeWithText("mobile.offerbook.showBuyOffers".i18n(1)).assertDoesNotExist()
+        composeTestRule.onNodeWithText("offer.create".i18n()).assertDoesNotExist()
+    }
+
+    // -------------------------------------------------------------------------
     // Fixtures
     // -------------------------------------------------------------------------
 
@@ -383,6 +469,9 @@ class OfferbookScreenTest {
         selectedMarket: MarketPriceItem? = null,
         filterUiState: OfferbookFilterUiState = emptyOfferbookFilterUiState(),
         showLoading: Boolean = false,
+        showSyncing: Boolean = false,
+        showRefiltering: Boolean = false,
+        oppositeDirectionOffersCount: Int = 0,
         showDeleteConfirmation: Boolean = false,
         showNotEnoughReputationDialog: Boolean = false,
         showTradeRestrictedDialog: AlertNotificationUiState? = null,
@@ -418,6 +507,9 @@ class OfferbookScreenTest {
                     selectedMarket = selectedMarket,
                     filterUiState = filterUiState,
                     showLoading = showLoading,
+                    showSyncing = showSyncing,
+                    showRefiltering = showRefiltering,
+                    oppositeDirectionOffersCount = oppositeDirectionOffersCount,
                     showDeleteConfirmation = showDeleteConfirmation,
                     showNotEnoughReputationDialog = showNotEnoughReputationDialog,
                     showTradeRestrictedDialog = showTradeRestrictedDialog,
