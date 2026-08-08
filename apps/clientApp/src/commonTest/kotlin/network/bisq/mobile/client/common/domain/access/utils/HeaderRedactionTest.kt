@@ -29,6 +29,22 @@ class HeaderRedactionTest {
     }
 
     @Test
+    fun `redactSensitiveHeaders redacts lowercase and mixed-case session and client ids`() {
+        val headers =
+            mapOf(
+                "bisq-session-id" to sessionSecret,
+                "Bisq-Client-ID" to clientSecret,
+                "Content-Type" to "application/json",
+            )
+
+        val redacted = HeaderRedaction.redactSensitiveHeaders(headers)
+
+        assertEquals(HeaderRedaction.REDACTED, redacted["bisq-session-id"])
+        assertEquals(HeaderRedaction.REDACTED, redacted["Bisq-Client-ID"])
+        assertEquals("application/json", redacted["Content-Type"])
+    }
+
+    @Test
     fun `redactForLogging redacts WebSocketRestApiRequest headers`() {
         val request =
             WebSocketRestApiRequest(
@@ -98,5 +114,66 @@ class HeaderRedactionTest {
         val raw = """{"requestId":"1","headers":{"X-Custom":"value"}}"""
 
         assertEquals(raw, HeaderRedaction.redactRawJsonForLogging(raw))
+    }
+
+    @Test
+    fun `redactForLogging redacts lowercase and mixed-case session and client ids`() {
+        val request =
+            WebSocketRestApiRequest(
+                requestId = "req-123",
+                method = "GET",
+                path = "/api/v1/settings",
+                body = "",
+                headers =
+                    mapOf(
+                        "bisq-session-id" to sessionSecret,
+                        "Bisq-Client-ID" to clientSecret,
+                    ),
+            )
+
+        val logged = HeaderRedaction.redactForLogging(request)
+
+        assertFalse(logged.contains(sessionSecret))
+        assertFalse(logged.contains(clientSecret))
+        assertTrue(logged.contains(HeaderRedaction.REDACTED))
+    }
+
+    @Test
+    fun `redactRawJsonForLogging redacts lowercase and mixed-case session and client ids`() {
+        val raw =
+            """
+            {
+              "type": "WebSocketRestApiRequest",
+              "requestId": "req-123",
+              "method": "GET",
+              "path": "/api/v1/settings",
+              "body": "",
+              "headers": {
+                "bisq-session-id": "$sessionSecret",
+                "Bisq-Client-ID": "$clientSecret",
+                "X-Custom": "keep-me"
+              }
+            }
+            """.trimIndent()
+
+        val logged = HeaderRedaction.redactRawJsonForLogging(raw)
+
+        assertFalse(logged.contains(sessionSecret))
+        assertFalse(logged.contains(clientSecret))
+        assertTrue(logged.contains(HeaderRedaction.REDACTED))
+        assertTrue(logged.contains("keep-me"))
+    }
+
+    @Test
+    fun `redactRawJsonForLogging fails closed on malformed JSON containing secrets`() {
+        // Truncated JSON — parse fails, so the original payload must not be logged.
+        val raw =
+            """{"headers":{"Bisq-Session-Id":"$sessionSecret","Bisq-Client-Id":"$clientSecret""""
+
+        val logged = HeaderRedaction.redactRawJsonForLogging(raw)
+
+        assertEquals(HeaderRedaction.UNPARSEABLE_PAYLOAD, logged)
+        assertFalse(logged.contains(sessionSecret))
+        assertFalse(logged.contains(clientSecret))
     }
 }
