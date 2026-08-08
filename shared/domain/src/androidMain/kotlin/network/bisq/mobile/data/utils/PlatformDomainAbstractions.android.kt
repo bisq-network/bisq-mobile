@@ -229,11 +229,29 @@ actual val decimalFormatter: DecimalFormatter =
             }
     }
 
-@Suppress("DEPRECATION") // suppresses Locale(language) constructor
 actual fun setDefaultLocale(language: String) {
-    // Use Locale.forLanguageTag to support BCP‑47 (e.g., "en-US").
-    val locale = runCatching { Locale.forLanguageTag(language) }.getOrElse { Locale(language) }
-    Locale.setDefault(locale)
+    // Strict BCP‑47 parse — unlike forLanguageTag, rejects invalid/partial tags (e.g. "en-X").
+    val locale =
+        runCatching { Locale.Builder().setLanguageTag(language).build() }
+            .getOrNull()
+            ?.takeUnless { it.language.isEmpty() }
+            ?: Locale.ENGLISH
+    try {
+        Locale.setDefault(locale)
+    } catch (e: SecurityException) {
+        // Preview/layoutlib forbids writing user.language; everywhere else must fail so
+        // I18nSupport/NodeSettings do not publish a language that was not applied.
+        if (!isComposePreviewLocaleSandbox(e)) throw e
+    }
+}
+
+internal fun isComposePreviewLocaleSandbox(error: SecurityException): Boolean {
+    if (error.javaClass.name.contains("RenderSecurity")) return true
+    return error.stackTrace.any { frame ->
+        val className = frame.className
+        className.startsWith("com.android.tools.rendering") ||
+            className.startsWith("com.android.layoutlib")
+    }
 }
 
 actual fun getDecimalSeparator(): Char = DecimalFormatSymbols(Locale.getDefault()).decimalSeparator

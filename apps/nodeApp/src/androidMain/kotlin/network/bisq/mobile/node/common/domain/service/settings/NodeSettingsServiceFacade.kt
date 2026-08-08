@@ -14,6 +14,7 @@ import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
+import network.bisq.mobile.data.utils.locale
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.node.common.domain.mapping.Mappings
@@ -55,21 +56,21 @@ class NodeSettingsServiceFacade(
             val normalizedCode = normalizeLanguageCode(languageCode)
 
             return when (normalizedCode) {
-                "af-ZA" -> Locale("af", "ZA")
-                "cs" -> Locale("cs", "CZ")
-                "de" -> Locale("de", "DE")
-                "en" -> Locale("en", "US")
-                "es" -> Locale("es", "ES")
-                "fr" -> Locale("fr", "FR")
-                "hi" -> Locale("hi", "IN")
-                "id" -> Locale("id", "ID")
-                "it" -> Locale("it", "IT")
-                "pcm-NG" -> Locale("pcm", "NG")
-                "pt-BR" -> Locale("pt", "BR")
-                "ru" -> Locale("ru", "RU")
-                "tr" -> Locale("tr", "TR")
-                "vi" -> Locale("vi", "VN")
-                else -> Locale("en", "US")
+                "af-ZA" -> locale("af", "ZA")
+                "cs" -> locale("cs", "CZ")
+                "de" -> locale("de", "DE")
+                "en" -> locale("en", "US")
+                "es" -> locale("es", "ES")
+                "fr" -> locale("fr", "FR")
+                "hi" -> locale("hi", "IN")
+                "id" -> locale("id", "ID")
+                "it" -> locale("it", "IT")
+                "pcm-NG" -> locale("pcm", "NG")
+                "pt-BR" -> locale("pt", "BR")
+                "ru" -> locale("ru", "RU")
+                "tr" -> locale("tr", "TR")
+                "vi" -> locale("vi", "VN")
+                else -> locale("en", "US")
             }
         }
     }

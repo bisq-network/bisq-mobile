@@ -995,7 +995,6 @@ class Mappings {
                 is MarketPriceSpecVO -> MarketPriceSpecMapping.toBisq2Model(value)
                 is FixPriceSpecVO -> FixPriceSpecMapping.toBisq2Model(value)
                 is FloatPriceSpecVO -> FloatPriceSpecMapping.toBisq2Model(value)
-                else -> throw IllegalArgumentException("Unsupported PriceSpecVO $value")
             }
 
         fun fromBisq2Model(value: PriceSpec): PriceSpecVO =

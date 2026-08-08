@@ -52,6 +52,7 @@ fun BisqCheckbox(
                     disabledCheckedBoxColor = BisqTheme.colors.secondary,
                     disabledUncheckedBoxColor = BisqTheme.colors.secondary,
                     disabledIndeterminateBoxColor = BisqTheme.colors.secondary,
+                    disabledCheckmarkColor = BisqTheme.colors.primaryDisabled,
                 ),
         )
         BisqText.BaseRegular(

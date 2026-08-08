@@ -401,7 +401,7 @@ class NodeOffersServiceFacade(
             chatMessages.addObserver(
                 object : CollectionObserver<BisqEasyOfferbookMessage> {
                     // We get all already existing offers applied at channel selection
-                    override fun onAllAdded(values: Collection<out BisqEasyOfferbookMessage>) {
+                    override fun onAllAdded(values: Collection<BisqEasyOfferbookMessage>) {
                         val currentChannel = channel
                         // Process offers asynchronously to avoid blocking the main thread
                         // This prevents ANRs when selecting markets with many offers

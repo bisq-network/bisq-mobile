@@ -61,45 +61,45 @@ class LanguageCodeNormalizationTest {
     fun `languageCodeToLocale should handle all supported languages`() {
         val testCases =
             mapOf(
-                "en" to Locale("en", "US"),
-                "de" to Locale("de", "DE"),
-                "fr" to Locale("fr", "FR"),
-                "es" to Locale("es", "ES"),
-                "it" to Locale("it", "IT"),
-                "ru" to Locale("ru", "RU"),
-                "cs" to Locale("cs", "CZ"),
-                "hi" to Locale("hi", "IN"),
-                "id" to Locale("id", "ID"),
-                "tr" to Locale("tr", "TR"),
-                "vi" to Locale("vi", "VN"),
-                "pt-BR" to Locale("pt", "BR"),
-                "af-ZA" to Locale("af", "ZA"),
-                "pcm-NG" to Locale("pcm", "NG"),
+                "en" to ("en" to "US"),
+                "de" to ("de" to "DE"),
+                "fr" to ("fr" to "FR"),
+                "es" to ("es" to "ES"),
+                "it" to ("it" to "IT"),
+                "ru" to ("ru" to "RU"),
+                "cs" to ("cs" to "CZ"),
+                "hi" to ("hi" to "IN"),
+                "id" to ("id" to "ID"),
+                "tr" to ("tr" to "TR"),
+                "vi" to ("vi" to "VN"),
+                "pt-BR" to ("pt" to "BR"),
+                "af-ZA" to ("af" to "ZA"),
+                "pcm-NG" to ("pcm" to "NG"),
             )
 
-        testCases.forEach { (code, expectedLocale) ->
-            val result = invokeLanguageCodeToLocale(code)
-            assertEquals("Language code '$code' should map to correct locale", expectedLocale, result)
+        testCases.forEach { (code, expected) ->
+            val (expectedLanguage, expectedCountry) = expected
+            assertLocaleFields(code, expectedLanguage, expectedCountry)
         }
     }
 
     @Test
     fun `languageCodeToLocale should normalize and convert legacy codes`() {
-        // Legacy pcm -> pcm-NG -> Locale("pcm", "NG")
-        assertEquals(Locale("pcm", "NG"), invokeLanguageCodeToLocale("pcm"))
+        // Legacy pcm -> pcm-NG
+        assertLocaleFields("pcm", "pcm", "NG")
 
-        // Underscore variant pt_BR -> pt-BR -> Locale("pt", "BR")
-        assertEquals(Locale("pt", "BR"), invokeLanguageCodeToLocale("pt_BR"))
+        // Underscore variant pt_BR -> pt-BR
+        assertLocaleFields("pt_BR", "pt", "BR")
 
-        // Underscore variant af_ZA -> af-ZA -> Locale("af", "ZA")
-        assertEquals(Locale("af", "ZA"), invokeLanguageCodeToLocale("af_ZA"))
+        // Underscore variant af_ZA -> af-ZA
+        assertLocaleFields("af_ZA", "af", "ZA")
     }
 
     @Test
     fun `languageCodeToLocale should fall back to en-US for unsupported codes`() {
-        assertEquals(Locale("en", "US"), invokeLanguageCodeToLocale("xyz"))
-        assertEquals(Locale("en", "US"), invokeLanguageCodeToLocale("invalid"))
-        assertEquals(Locale("en", "US"), invokeLanguageCodeToLocale(""))
+        assertLocaleFields("xyz", "en", "US")
+        assertLocaleFields("invalid", "en", "US")
+        assertLocaleFields("", "en", "US")
     }
 
     @Test
@@ -107,6 +107,24 @@ class LanguageCodeNormalizationTest {
         val locale1 = invokeLanguageCodeToLocale("de")
         val locale2 = invokeLanguageCodeToLocale("de")
         assertEquals(locale1, locale2)
+    }
+
+    private fun assertLocaleFields(
+        languageCode: String,
+        expectedLanguage: String,
+        expectedCountry: String,
+    ) {
+        val result = invokeLanguageCodeToLocale(languageCode)
+        assertEquals(
+            "Language code '$languageCode' should map to language '$expectedLanguage'",
+            expectedLanguage,
+            result.language,
+        )
+        assertEquals(
+            "Language code '$languageCode' should map to country '$expectedCountry'",
+            expectedCountry,
+            result.country,
+        )
     }
 
     // Helper methods to invoke private companion object methods via reflection

@@ -20,8 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -45,6 +43,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ExpandAllIcon
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethodIcon
@@ -289,24 +288,9 @@ fun OfferbookFilterController(
                                         indication = null,
                                     ),
                         )
-                        Checkbox(
+                        BisqCheckbox(
                             checked = state.onlyMyOffers,
                             onCheckedChange = onOnlyMyOffersChange,
-                            colors =
-                                CheckboxColors(
-                                    uncheckedBoxColor = BisqTheme.colors.secondary,
-                                    uncheckedBorderColor = BisqTheme.colors.mid_grey20,
-                                    uncheckedCheckmarkColor = BisqTheme.colors.secondary,
-                                    checkedBoxColor = BisqTheme.colors.secondary,
-                                    checkedBorderColor = BisqTheme.colors.primaryDim,
-                                    checkedCheckmarkColor = BisqTheme.colors.primary,
-                                    disabledBorderColor = BisqTheme.colors.backgroundColor,
-                                    disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
-                                    disabledIndeterminateBorderColor = BisqTheme.colors.backgroundColor,
-                                    disabledCheckedBoxColor = BisqTheme.colors.secondary,
-                                    disabledUncheckedBoxColor = BisqTheme.colors.secondary,
-                                    disabledIndeterminateBoxColor = BisqTheme.colors.secondary,
-                                ),
                         )
                     }
 
