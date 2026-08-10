@@ -8,6 +8,12 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalEncodingApi::class)
 object PairingCodeDecoder {
+    // Sanity cap against corrupt input only — deliberately NOT bound to Permission.entries.size:
+    // a newer node may grant permissions this app version does not know yet, and the code must
+    // still decode (unknown ids are skipped below). Bounding by the local enum size would make
+    // pairing fail entirely against upgraded nodes.
+    internal const val MAX_ENCODED_PERMISSIONS = 64
+
     fun decode(base64: String): PairingCode {
         val bytes =
             Base64.UrlSafe
@@ -29,7 +35,7 @@ object PairingCodeDecoder {
             Instant.fromEpochMilliseconds(reader.readLong())
 
         val numPermissions = reader.readInt()
-        require(numPermissions in 0..Permission.entries.size) {
+        require(numPermissions in 0..MAX_ENCODED_PERMISSIONS) {
             "Invalid number of permissions: $numPermissions"
         }
 
