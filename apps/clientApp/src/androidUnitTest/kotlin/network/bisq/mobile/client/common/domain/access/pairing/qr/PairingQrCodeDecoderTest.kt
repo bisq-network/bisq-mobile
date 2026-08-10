@@ -4,6 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
+import network.bisq.mobile.client.common.domain.access.pairing.UnsupportedPairingVersionException
 import network.bisq.mobile.client.common.domain.utils.BinaryEncodingUtils
 import network.bisq.mobile.client.common.domain.utils.BinaryWriter
 import network.bisq.mobile.data.utils.EnvironmentController
@@ -229,5 +230,47 @@ class PairingQrCodeDecoderTest {
         val result = decoder.decode(bytes)
 
         assertEquals("unique-pairing-id-123", result.pairingCode.id)
+    }
+
+    private fun toBase64(bytes: ByteArray): String = Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(bytes)
+
+    @Test
+    fun `decode string accepts payload with embedded newlines from terminal soft-wrap`() {
+        val base64 = toBase64(encodeQrCode())
+        val wrapped = base64.chunked(60).joinToString("\n")
+
+        val result = decoder.decode(wrapped)
+
+        assertEquals(PairingQrCodeFormat.VERSION, result.version)
+    }
+
+    @Test
+    fun `decode string accepts payload followed by ASCII art QR block`() {
+        // Mirrors a select-all copy of the node's pairing_qr_code.txt: base64 line, blank
+        // lines, then the text-rendered QR.
+        val base64 = toBase64(encodeQrCode())
+        val fileLikeContent = base64 + "\n\n\n" + "█▀▀▀▀▀█ ▀▄█ █▀▀▀▀▀█\n█ ███ █ ▄▀▄ █ ███ █\n"
+
+        val result = decoder.decode(fileLikeContent)
+
+        assertEquals(PairingQrCodeFormat.VERSION, result.version)
+    }
+
+    @Test
+    fun `decode string accepts payload with standard base64 padding appended`() {
+        val base64 = toBase64(encodeQrCode())
+
+        val result = decoder.decode("$base64==")
+
+        assertEquals(PairingQrCodeFormat.VERSION, result.version)
+    }
+
+    @Test
+    fun `decode throws UnsupportedPairingVersionException for unknown QR version`() {
+        val bytes = encodeQrCode(version = 99)
+
+        assertFailsWith<UnsupportedPairingVersionException> {
+            decoder.decode(bytes)
+        }
     }
 }

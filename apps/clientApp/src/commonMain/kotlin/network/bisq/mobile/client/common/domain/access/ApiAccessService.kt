@@ -4,6 +4,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
+import network.bisq.mobile.client.common.domain.access.pairing.UnsupportedPairingVersionException
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.getProxyOptionFromRestUrl
@@ -66,6 +67,9 @@ class ApiAccessService(
         return try {
             val code = pairingQrCodeDecoder.decode(trimmedValue)
             Result.success(code)
+        } catch (e: UnsupportedPairingVersionException) {
+            log.e(e) { "Pairing code version not supported by this app version." }
+            Result.failure(Throwable("mobile.trustedNodeSetup.pairingCode.unsupportedVersion".i18n()))
         } catch (e: Exception) {
             log.e(e) { "Decoding pairing code failed." }
             Result.failure(Throwable("mobile.trustedNodeSetup.pairingCode.invalid".i18n()))

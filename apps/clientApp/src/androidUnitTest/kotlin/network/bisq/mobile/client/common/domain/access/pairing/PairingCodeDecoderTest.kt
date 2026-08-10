@@ -91,10 +91,10 @@ class PairingCodeDecoderTest {
     }
 
     @Test
-    fun `decode throws for unsupported version`() {
+    fun `decode throws UnsupportedPairingVersionException for unsupported version`() {
         val bytes = encodePairingCode(version = 99)
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<UnsupportedPairingVersionException> {
             PairingCodeDecoder.decode(bytes)
         }
     }

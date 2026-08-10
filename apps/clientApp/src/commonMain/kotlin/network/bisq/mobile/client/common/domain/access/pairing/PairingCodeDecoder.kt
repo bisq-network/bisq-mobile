@@ -26,8 +26,8 @@ object PairingCodeDecoder {
         val reader = BinaryDecodingUtils(bytes)
 
         val version = reader.readByte()
-        require(version == PairingCode.Companion.VERSION) {
-            "Unsupported version"
+        if (version != PairingCode.Companion.VERSION) {
+            throw UnsupportedPairingVersionException("Unsupported pairing code version: $version")
         }
 
         val id = reader.readString()

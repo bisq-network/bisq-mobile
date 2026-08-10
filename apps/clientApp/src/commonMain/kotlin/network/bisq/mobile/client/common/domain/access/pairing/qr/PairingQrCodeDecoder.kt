@@ -2,6 +2,7 @@ package network.bisq.mobile.client.common.domain.access.pairing.qr
 
 import network.bisq.mobile.client.common.domain.access.LOCALHOST
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCodeDecoder
+import network.bisq.mobile.client.common.domain.access.pairing.UnsupportedPairingVersionException
 import network.bisq.mobile.client.common.domain.utils.BinaryDecodingUtils
 import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.data.utils.getPlatformInfo
@@ -12,6 +13,9 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 const val LOOPBACK = "127.0.0.1"
 const val ANDROID_LOCALHOST = "10.0.2.2"
 
+private const val URL_SAFE_BASE64_ALPHABET =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
 @OptIn(ExperimentalEncodingApi::class)
 class PairingQrCodeDecoder(
     private val environmentController: EnvironmentController,
@@ -20,16 +24,31 @@ class PairingQrCodeDecoder(
         decode(
             Base64.UrlSafe
                 .withPadding(Base64.PaddingOption.ABSENT)
-                .decode(qrCodeAsBase64),
+                .decode(
+                    sanitize(qrCodeAsBase64),
+                ),
         )
+
+    /**
+     * The node writes the payload as one long line followed by an ASCII-art QR block, and
+     * terminals soft-wrap it, so real-world copies arrive with embedded newlines, trailing
+     * art, or padding. Whitespace is never part of the url-safe base64 alphabet, so joining
+     * the fragments and cutting at the first foreign character recovers exactly the payload.
+     */
+    private fun sanitize(raw: String): String =
+        raw
+            .asSequence()
+            .filterNot { it.isWhitespace() }
+            .takeWhile { it in URL_SAFE_BASE64_ALPHABET }
+            .joinToString("")
 
     fun decode(qrCodeBytes: ByteArray): PairingQrCode {
         val reader = BinaryDecodingUtils(qrCodeBytes)
 
         // ---- Version ----
         val version = reader.readByte()
-        require(version == PairingQrCodeFormat.VERSION) {
-            "Unsupported QR code version: $version"
+        if (version != PairingQrCodeFormat.VERSION) {
+            throw UnsupportedPairingVersionException("Unsupported QR code version: $version")
         }
 
         // ---- PairingCode ----
