@@ -145,6 +145,22 @@ class PairingCodeDecoderTest {
     }
 
     @Test
+    fun `decode throws for payload truncated inside permission list`() {
+        // Declares 3 permissions but carries only 1 — must fail as invalid format,
+        // not silently return a partial permission set.
+        val writer = BinaryWriter()
+        BinaryEncodingUtils.writeByte(writer, PairingCode.VERSION)
+        BinaryEncodingUtils.writeString(writer, "test")
+        BinaryEncodingUtils.writeLong(writer, 1700000000000L)
+        BinaryEncodingUtils.writeInt(writer, 3)
+        BinaryEncodingUtils.writeInt(writer, Permission.OFFERBOOK.id)
+
+        assertFailsWith<IllegalStateException> {
+            PairingCodeDecoder.decode(writer.toByteArray())
+        }
+    }
+
+    @Test
     fun `decode handles unknown permission id gracefully`() {
         val writer = BinaryWriter()
         BinaryEncodingUtils.writeByte(writer, PairingCode.VERSION)

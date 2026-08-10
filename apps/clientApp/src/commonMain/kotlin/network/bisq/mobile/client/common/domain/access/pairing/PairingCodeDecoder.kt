@@ -41,8 +41,11 @@ object PairingCodeDecoder {
 
         val permissions = mutableSetOf<Permission>()
         repeat(numPermissions) {
+            // Read outside the try: a truncated payload must fail as invalid format, while an
+            // unknown id (newer node) is skipped as an unknown permission.
+            val permissionId = reader.readInt()
             try {
-                permissions += Permission.Companion.fromId(reader.readInt())
+                permissions += Permission.Companion.fromId(permissionId)
             } catch (e: Exception) {
                 getLogger("").w { "Permission could not be resolved. {${e.message}}" }
             }
