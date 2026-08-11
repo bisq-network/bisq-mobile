@@ -11,12 +11,12 @@ import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 class GlobalPriceUpdateTest {
     private lateinit var settingsRepository: SettingsRepository
@@ -129,10 +129,9 @@ class GlobalPriceUpdateTest {
             assertTrue(updates[2] > updates[1], "Second update should be later")
         }
 
-    @Ignore // "Flaky test needs more work"
     @Test
     fun `multiple services should have independent global update flows`() =
-        runTest {
+        runBlocking {
             val service1 = TestMarketPriceServiceFacade()
             val service2 = TestMarketPriceServiceFacade()
 
@@ -145,6 +144,9 @@ class GlobalPriceUpdateTest {
             service1.testTriggerGlobalPriceUpdate()
             val timestamp1 = service1.globalPriceUpdate.value
             val timestamp2Before = service2.globalPriceUpdate.value
+
+            // Real wall-clock delay (runBlocking) so Clock.System ms timestamps differ
+            delay(2.milliseconds)
 
             service2.testTriggerGlobalPriceUpdate()
             val timestamp2After = service2.globalPriceUpdate.value

@@ -44,7 +44,6 @@ import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -176,21 +175,17 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             assertTrue(presenter.isTakeOfferEnabled.value)
         }
 
-    @Ignore("Flaky on CI/Linux; temporarily disabled")
     @Test
     fun `onOfferSelected failure when selected profile is null does not navigate`() =
         runTest {
             val otherOffer = makeOffer(id = "other-offer", isMy = false)
             val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
-            val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
-            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
-            coEvery { userProfileServiceFacade.isUserIgnored(any()) } returns false
 
             val presenter =
                 buildPresenter(
                     offers = listOf(otherOffer),
                     takeOfferCoordinator = takeOfferCoordinator,
-                    userProfileServiceFacade = userProfileServiceFacade,
+                    selectedProfile = null,
                 )
             presenter.onOfferSelected(otherOffer)
             advanceUntilIdle()
@@ -287,14 +282,14 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             OfferbookMarket(
                 MarketVO("BTC", "USD", "Bitcoin", "US Dollar"),
             ),
+        selectedProfile: UserProfileVO? = createMockUserProfile("me"),
     ): OfferbookPresenter {
         val offersFlow = MutableStateFlow(offers)
         every { offersService.offerbookListItems } returns offersFlow
         every { offersService.selectedOfferbookMarket } returns MutableStateFlow(selectedMarket)
         every { offersService.isOfferbookLoading } returns MutableStateFlow(false)
 
-        val me = createMockUserProfile("me")
-        every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(me)
+        every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(selectedProfile)
         coEvery { userProfileServiceFacade.isUserIgnored(any()) } returns false
 
         val marketUSD = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
