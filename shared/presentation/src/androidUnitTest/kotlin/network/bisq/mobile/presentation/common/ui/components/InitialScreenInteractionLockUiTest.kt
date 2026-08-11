@@ -5,41 +5,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.After
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 
-@RunWith(AndroidJUnit4::class)
-class InitialScreenInteractionLockTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class InitialScreenInteractionLockUiTest : BisqComposeUiTestBase() {
     @After
     fun tearDown() {
         composeTestRule.mainClock.autoAdvance = true
-    }
-
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    content()
-                }
-            }
-        }
     }
 
     @Test

@@ -1,40 +1,14 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.inputfield
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-class SearchWithFilterFieldUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme { content() }
-            }
-        }
-    }
-
+class SearchWithFilterFieldUiTest : BisqComposeUiTestBase() {
     @Test
     fun `inactive filter renders the search field with its placeholder`() {
-        setContent {
+        setTestContent {
             SearchWithFilterField(
                 value = "",
                 onValueChange = {},
@@ -48,7 +22,7 @@ class SearchWithFilterFieldUiTest {
 
     @Test
     fun `active filter renders the field with its current value (green icon branch)`() {
-        setContent {
+        setTestContent {
             SearchWithFilterField(
                 value = "bitcoin",
                 onValueChange = {},

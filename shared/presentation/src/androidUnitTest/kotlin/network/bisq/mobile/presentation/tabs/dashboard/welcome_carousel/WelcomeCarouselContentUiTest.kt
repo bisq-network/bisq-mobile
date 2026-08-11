@@ -1,49 +1,28 @@
 package network.bisq.mobile.presentation.tabs.dashboard.welcome_carousel
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-@RunWith(AndroidJUnit4::class)
-class WelcomeCarouselContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
+class WelcomeCarouselContentUiTest : BisqComposeUiTestBase() {
     private fun setTestContent(
         uiState: WelcomeCarouselUiState,
         onPrimaryAction: (CarouselPageType) -> Unit = {},
         onAction: (WelcomeCarouselUiAction) -> Unit = {},
     ) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    WelcomeCarouselContent(
-                        uiState = uiState,
-                        onPrimaryAction = onPrimaryAction,
-                        onAction = onAction,
-                    )
-                }
-            }
+        setTestContent {
+            WelcomeCarouselContent(
+                uiState = uiState,
+                onPrimaryAction = onPrimaryAction,
+                onAction = onAction,
+            )
         }
     }
 

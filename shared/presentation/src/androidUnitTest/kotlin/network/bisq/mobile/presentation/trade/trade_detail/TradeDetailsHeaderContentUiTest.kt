@@ -3,17 +3,14 @@ package network.bisq.mobile.presentation.trade.trade_detail
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -22,16 +19,12 @@ import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.StringUtils.truncateBitcoinIdentifier
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * UI tests for [TradeDetailsHeaderContent] using Robolectric.
@@ -39,11 +32,7 @@ import org.junit.runner.RunWith
  * Verifies rendering for trade/session state combinations and that interactions dispatch
  * the correct [TradeDetailsHeaderUiAction].
  */
-@RunWith(AndroidJUnit4::class)
-class TradeDetailsHeaderContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class TradeDetailsHeaderContentUiTest : BisqComposeUiTestBase() {
     private lateinit var mockOnAction: (TradeDetailsHeaderUiAction) -> Unit
 
     private val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage = { createEmptyImage() }
@@ -64,23 +53,7 @@ class TradeDetailsHeaderContentUiTest {
 
     @Before
     fun setup() {
-        I18nSupport.setLanguage()
         mockOnAction = mockk(relaxed = true)
-    }
-
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalIsTest provides true,
-                LocalExternalUrlOpener provides ExternalUrlOpener { true },
-            ) {
-                BisqTheme {
-                    Column(Modifier.verticalScroll(rememberScrollState())) {
-                        content()
-                    }
-                }
-            }
-        }
     }
 
     private fun baseTradeUiState(
@@ -146,12 +119,16 @@ class TradeDetailsHeaderContentUiTest {
         session: TradeDetailsHeaderSessionUiState,
     ) {
         setTestContent {
-            TradeDetailsHeaderContent(
-                tradeUiState = trade,
-                sessionUiState = session,
-                userProfileIconProvider = userProfileIconProvider,
-                onAction = mockOnAction,
-            )
+            CompositionLocalProvider(LocalExternalUrlOpener provides ExternalUrlOpener { true }) {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    TradeDetailsHeaderContent(
+                        tradeUiState = trade,
+                        sessionUiState = session,
+                        userProfileIconProvider = userProfileIconProvider,
+                        onAction = mockOnAction,
+                    )
+                }
+            }
         }
         composeTestRule.waitForIdle()
     }

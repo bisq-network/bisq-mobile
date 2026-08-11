@@ -1,49 +1,26 @@
 package network.bisq.mobile.presentation.trade.trade_detail.states.common
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * UI tests for [State4Content] (Robolectric). Verifies rendering per [State4UiState] and action dispatch.
  */
-@RunWith(AndroidJUnit4::class)
-class State4ContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class State4ContentUiTest : BisqComposeUiTestBase() {
     private lateinit var mockOnAction: (State4UiAction) -> Unit
 
     @Before
     fun setup() {
-        I18nSupport.setLanguage()
         mockOnAction = mockk(relaxed = true)
-    }
-
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    content()
-                }
-            }
-        }
     }
 
     @Test

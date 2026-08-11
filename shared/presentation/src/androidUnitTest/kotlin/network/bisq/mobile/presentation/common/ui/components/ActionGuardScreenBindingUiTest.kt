@@ -1,53 +1,25 @@
 package network.bisq.mobile.presentation.common.ui.components
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.ChatInputField
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1a
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aPresenter
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2a
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2aPresenter
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertFalse
 
-@RunWith(AndroidJUnit4::class)
-class ActionGuardScreenBindingUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    content()
-                }
-            }
-        }
-    }
-
+class ActionGuardScreenBindingUiTest : BisqComposeUiTestBase() {
     @Test
     fun `ChatInputField respects sendEnabled false`() {
         var sent = false

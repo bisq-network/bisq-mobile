@@ -1,16 +1,10 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms.slider
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * Regression tests for issue #1571: [BisqRangeSlider] must not crash when handed an inverted or
@@ -18,28 +12,20 @@ import org.junit.runner.RunWith
  * and throws IllegalArgumentException on inverted/NaN bounds; the wrapper sanitizes inputs so these
  * compose without throwing (before the fix, measuring these would crash the whole screen).
  */
-@RunWith(AndroidJUnit4::class)
-class BisqRangeSliderUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class BisqRangeSliderUiTest : BisqComposeUiTestBase() {
     private val tag = "range_slider"
 
     private fun render(
         value: ClosedFloatingPointRange<Float>,
         valueRange: ClosedFloatingPointRange<Float>,
     ) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    BisqRangeSlider(
-                        value = value,
-                        onValueChange = {},
-                        modifier = Modifier.testTag(tag),
-                        valueRange = valueRange,
-                    )
-                }
-            }
+        setTestContent {
+            BisqRangeSlider(
+                value = value,
+                onValueChange = {},
+                modifier = Modifier.testTag(tag),
+                valueRange = valueRange,
+            )
         }
     }
 

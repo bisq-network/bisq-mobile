@@ -7,26 +7,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-class BisqThemePreviewExternalUrlOpenerUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
+class BisqThemePreviewExternalUrlOpenerUiTest : BisqComposeUiTestBase() {
     @Test
     fun `BisqTheme Preview provides noop LocalExternalUrlOpener`() {
         composeTestRule.setContent {

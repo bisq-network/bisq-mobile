@@ -1,50 +1,29 @@
 package network.bisq.mobile.presentation.tabs.more
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.nav_ignored_users
 import bisqapps.shared.presentation.generated.resources.nav_settings
 import bisqapps.shared.presentation.generated.resources.nav_user
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-@RunWith(AndroidJUnit4::class)
-class MiscItemsContentTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
+class MiscItemsContentUiTest : BisqComposeUiTestBase() {
     private fun setTestContent(
         uiState: MiscItemsUiState,
         onAction: (MiscItemsUiAction) -> Unit = {},
     ) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    MiscItemsContent(uiState = uiState, onAction = onAction)
-                }
-            }
+        setTestContent {
+            MiscItemsContent(uiState = uiState, onAction = onAction)
         }
     }
 
