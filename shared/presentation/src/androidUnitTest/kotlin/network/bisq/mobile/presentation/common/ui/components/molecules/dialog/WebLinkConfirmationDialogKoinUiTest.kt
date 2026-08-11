@@ -34,7 +34,7 @@ import kotlin.test.assertEquals
  * effects, auto-handling when confirmation is suppressed, and user interactions on the dialog.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class WebLinkDialogUiKoinTest : PresentationKoinComposeTestBase() {
+class WebLinkConfirmationDialogKoinUiTest : PresentationKoinComposeTestBase() {
     private lateinit var presenter: MainPresenter
     private lateinit var settingsFacade: WebLinkDialogSettingsServiceFake
 

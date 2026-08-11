@@ -14,7 +14,7 @@ import org.junit.Test
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-class ClientNetworkOverviewContentTest : BisqComposeUiTestBase() {
+class ClientNetworkOverviewContentUiTest : BisqComposeUiTestBase() {
     @Test
     fun `when reachable then topology, routing, peer count and health render`() {
         setTestContent {

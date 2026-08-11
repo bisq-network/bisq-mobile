@@ -14,7 +14,7 @@ import org.junit.Test
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-class ClientNetworkConnectionsContentTest : BisqComposeUiTestBase() {
+class ClientNetworkConnectionsContentUiTest : BisqComposeUiTestBase() {
     @Test
     fun `when there are no peers then the empty state and banner are displayed`() {
         setTestContent {

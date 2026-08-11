@@ -25,7 +25,7 @@ import org.koin.core.module.Module
  * are provided via [additionalModules] / [onKoinReady], matching [PresentationKoinComposeTestBase].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class WebLinkDialogUiIsolatedTest : PresentationKoinComposeTestBase() {
+class WebLinkConfirmationDialogIsolatedUiTest : PresentationKoinComposeTestBase() {
     private lateinit var mainPresenter: MainPresenter
     private lateinit var settingsFacade: WebLinkDialogSettingsServiceFake
 

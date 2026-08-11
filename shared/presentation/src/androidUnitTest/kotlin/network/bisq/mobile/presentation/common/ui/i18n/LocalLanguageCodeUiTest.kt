@@ -17,7 +17,7 @@ import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.After
 import org.junit.Test
 
-class LocalLanguageCodeComposeTest : BisqComposeUiTestBase() {
+class LocalLanguageCodeUiTest : BisqComposeUiTestBase() {
     private class LanguageHolder {
         var code by mutableStateOf("en")
     }
