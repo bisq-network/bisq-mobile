@@ -39,6 +39,8 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `FakeConfigServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/FakeConfigServiceFacade.kt` |
 | `FakeMarketPriceServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/FakeMarketPriceServiceFacade.kt` |
 | `OfferTestFactory` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/OfferTestFactory.kt` |
+| `authorizedAlert(...)` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/MutableAlertNotificationsServiceFacade.kt` |
+| `MutableAlertNotificationsServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `SettingsRepositoryMock(initial, fetchException)` | `shared/test-utils/src/commonMain/kotlin/.../mocks/SettingsRepositoryMock.kt` |
 | `UserRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../mocks/UserRepositoryMock.kt` |
 | `WebLinkDialogTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../dialog/WebLinkDialogTestSupport.kt` |
