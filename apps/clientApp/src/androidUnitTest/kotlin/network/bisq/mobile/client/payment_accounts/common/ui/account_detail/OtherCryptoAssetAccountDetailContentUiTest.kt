@@ -15,7 +15,6 @@ import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
 class OtherCryptoAssetAccountDetailContentUiTest : BisqComposeUiTestBase() {
-
     private fun setAccountContent(account: OtherCryptoAssetAccount) {
         setTestContent {
             OtherCryptoAssetAccountDetailContent(

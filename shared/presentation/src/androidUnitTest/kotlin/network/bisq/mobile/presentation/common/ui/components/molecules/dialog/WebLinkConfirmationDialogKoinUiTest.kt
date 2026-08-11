@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.dialog
 
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -17,8 +15,6 @@ import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.SnackbarPosition
-import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
-import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
@@ -44,17 +40,6 @@ class WebLinkConfirmationDialogKoinUiTest : PresentationKoinComposeTestBase() {
         settingsFacade = spyk(WebLinkDialogSettingsServiceFake(initialShowWebLinkConfirmation = true))
         presenter = mockk(relaxed = true)
         mockNavigateToUrlBehavior(presenter, openUrlResult = true)
-    }
-
-    private fun setTestContent(
-        externalUrlOpener: ExternalUrlOpener = WebLinkDialogTestFixtures.noopExternalUrlOpener,
-        content: @Composable () -> Unit,
-    ) {
-        setTestContent {
-            CompositionLocalProvider(LocalExternalUrlOpener provides externalUrlOpener) {
-                content()
-            }
-        }
     }
 
     /**

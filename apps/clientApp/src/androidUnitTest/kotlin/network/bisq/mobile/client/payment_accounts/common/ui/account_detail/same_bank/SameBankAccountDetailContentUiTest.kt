@@ -76,6 +76,7 @@ class SameBankAccountDetailContentUiTest : BisqComposeUiTestBase() {
         runCatching { viewModelStore.clear() }
         runCatching { stopKoin() }
     }
+
     private fun setAccountContent(account: SameBankAccount = sampleAccount()) {
         setTestContent {
             KoinIsolatedContext(koinApplication) {

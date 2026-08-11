@@ -15,7 +15,6 @@ import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
 class MoneroAccountDetailContentUiTest : BisqComposeUiTestBase() {
-
     private fun setAccountContent(account: MoneroAccount) {
         setTestContent {
             MoneroAccountDetailContent(

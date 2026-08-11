@@ -14,7 +14,6 @@ import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
 class FiatPaymentAccountCardUiTest : BisqComposeUiTestBase() {
-
     @Test
     fun `when card renders then shows account name and payment method name`() {
         // Given

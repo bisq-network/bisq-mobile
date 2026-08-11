@@ -32,8 +32,7 @@ class WebLinkConfirmationDialogLifecycleUiTest : PresentationKoinComposeTestBase
     private lateinit var mainPresenter: MainPresenter
     private lateinit var settingsFacade: WebLinkDialogSettingsServiceFake
 
-    override fun additionalModules(): List<Module> =
-        listOf(webLinkConfirmationTestModule({ mainPresenter }, { settingsFacade }))
+    override fun additionalModules(): List<Module> = listOf(webLinkConfirmationTestModule({ mainPresenter }, { settingsFacade }))
 
     override fun onKoinReady() {
         settingsFacade = WebLinkDialogSettingsServiceFake()

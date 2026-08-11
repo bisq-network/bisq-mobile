@@ -27,7 +27,6 @@ class PaymentAccountsMusigContentUiTest : BisqComposeUiTestBase() {
         onAction = mockk(relaxed = true)
     }
 
-
     @Test
     fun `when loading accounts then shows loading indicator`() {
         // Given

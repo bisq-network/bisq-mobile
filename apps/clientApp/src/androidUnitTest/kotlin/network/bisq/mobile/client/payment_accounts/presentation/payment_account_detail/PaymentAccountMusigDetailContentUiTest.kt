@@ -37,7 +37,6 @@ class PaymentAccountMusigDetailContentUiTest : BisqComposeUiTestBase() {
         onAction = mockk(relaxed = true)
     }
 
-
     @Test
     fun `when account missing then shows generic error and no delete button`() {
         // Given

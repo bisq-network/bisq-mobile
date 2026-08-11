@@ -15,7 +15,6 @@ import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
 class AccountDetailFieldRowUiTest : BisqComposeUiTestBase() {
-
     private fun setExpandableFieldRowContent(
         label: String,
         value: String,

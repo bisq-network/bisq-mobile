@@ -57,6 +57,7 @@ class ClientSplashScreenUiTest : BisqComposeUiTestBase() {
         }
         runCatching { stopKoin() }
     }
+
     private fun setContent(route: NavRoute.Splash = NavRoute.Splash()) {
         setTestContent {
             KoinIsolatedContext(koinApplication) {

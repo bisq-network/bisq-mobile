@@ -25,7 +25,6 @@ class SelectFiatPaymentMethodContentUiTest : BisqComposeUiTestBase() {
         onAction = mockk(relaxed = true)
     }
 
-
     @Test
     fun `when loading then shows loading indicator`() {
         // Given

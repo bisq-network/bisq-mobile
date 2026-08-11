@@ -15,7 +15,6 @@ import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
 class WiseAccountDetailContentUiTest : BisqComposeUiTestBase() {
-
     private fun setAccountContent(account: WiseAccount) {
         setTestContent {
             WiseAccountDetailContent(account = account)

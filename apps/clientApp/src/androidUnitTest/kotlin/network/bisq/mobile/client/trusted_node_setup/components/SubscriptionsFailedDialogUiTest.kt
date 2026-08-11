@@ -16,7 +16,6 @@ import kotlin.test.assertEquals
 
 @Config(application = TestApplication::class)
 class SubscriptionsFailedDialogUiTest : BisqComposeUiTestBase() {
-
     private fun setDialogContent(onAction: (SubscriptionsFailedDialogUiAction) -> Unit = {}) {
         setTestContent {
             SubscriptionsFailedDialog(

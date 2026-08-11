@@ -90,6 +90,7 @@ class PaymentAccountFormScreenUiTest : BisqComposeUiTestBase() {
         runCatching { viewModelStore.clear() }
         runCatching { stopKoin() }
     }
+
     private fun setScreenContent() {
         setTestContent {
             KoinIsolatedContext(koinApplication) {

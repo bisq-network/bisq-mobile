@@ -16,7 +16,6 @@ import kotlin.test.assertEquals
 
 @Config(application = TestApplication::class)
 class CommonCryptoFormSectionUiTest : BisqComposeUiTestBase() {
-
     private fun setFormContent(
         cryptoUiState: CryptoAccountFormUiState,
         showAddress: Boolean,

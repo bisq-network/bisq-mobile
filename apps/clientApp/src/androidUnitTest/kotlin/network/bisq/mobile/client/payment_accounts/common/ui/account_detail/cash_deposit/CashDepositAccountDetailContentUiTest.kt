@@ -76,6 +76,7 @@ class CashDepositAccountDetailContentUiTest : BisqComposeUiTestBase() {
         runCatching { viewModelStore.clear() }
         runCatching { stopKoin() }
     }
+
     private fun setAccountContent(account: CashDepositAccount = sampleAccount()) {
         setTestContent {
             KoinIsolatedContext(koinApplication) {
@@ -85,7 +86,6 @@ class CashDepositAccountDetailContentUiTest : BisqComposeUiTestBase() {
             }
         }
     }
-
 
     @Test
     fun `when country details load then renders metadata driven labels`() {

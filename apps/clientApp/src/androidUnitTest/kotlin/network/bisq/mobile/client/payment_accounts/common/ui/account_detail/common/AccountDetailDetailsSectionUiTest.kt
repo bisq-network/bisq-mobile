@@ -14,7 +14,6 @@ import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
 class AccountDetailDetailsSectionUiTest : BisqComposeUiTestBase() {
-
     private fun setSectionContent(
         creationDate: String?,
         tradeLimitInfo: String?,
