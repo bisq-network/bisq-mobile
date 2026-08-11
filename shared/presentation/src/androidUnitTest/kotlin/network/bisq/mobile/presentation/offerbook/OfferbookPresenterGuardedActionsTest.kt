@@ -176,7 +176,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             assertTrue(presenter.isTakeOfferEnabled.value)
         }
 
-    @Ignore("Flaky on CI/Linux; temporarily disabled")
+    // @Ignore("Flaky on CI/Linux; temporarily disabled")
     @Test
     fun `onOfferSelected failure when selected profile is null does not navigate`() =
         runTest {

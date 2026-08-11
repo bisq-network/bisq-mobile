@@ -129,7 +129,7 @@ class GlobalPriceUpdateTest {
             assertTrue(updates[2] > updates[1], "Second update should be later")
         }
 
-    @Ignore // "Flaky test needs more work"
+    // @Ignore // "Flaky test needs more work"
     @Test
     fun `multiple services should have independent global update flows`() =
         runTest {
