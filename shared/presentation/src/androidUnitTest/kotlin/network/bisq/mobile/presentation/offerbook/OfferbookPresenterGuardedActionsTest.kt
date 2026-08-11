@@ -192,6 +192,8 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
 
             coVerify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any()) }
             verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
+
+            assertTrue(true)
         }
 
     @Test

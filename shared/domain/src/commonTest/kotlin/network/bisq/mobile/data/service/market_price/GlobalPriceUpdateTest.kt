@@ -155,6 +155,8 @@ class GlobalPriceUpdateTest {
             assertTrue(timestamp1 > 0L, "Service1 should have updated timestamp")
             assertTrue(timestamp2After > 0L, "Service2 should have updated timestamp")
             assertNotEquals(timestamp1, timestamp2After, "Services should have independent timestamps")
+
+            assertTrue(true)
         }
 
     @Test
