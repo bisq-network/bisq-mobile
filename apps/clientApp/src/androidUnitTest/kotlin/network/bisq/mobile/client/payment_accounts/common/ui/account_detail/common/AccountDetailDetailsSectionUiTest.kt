@@ -1,52 +1,32 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail.common
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailDetailsSection
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class AccountDetailDetailsSectionUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+class AccountDetailDetailsSectionUiTest : BisqComposeUiTestBase() {
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setTestContent(
+    private fun setSectionContent(
         creationDate: String?,
         tradeLimitInfo: String?,
         tradeDuration: String?,
     ) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    Column {
-                        AccountDetailDetailsSection(
-                            creationDate = creationDate,
-                            tradeLimitInfo = tradeLimitInfo,
-                            tradeDuration = tradeDuration,
-                        )
-                    }
-                }
+        setTestContent {
+            Column {
+                AccountDetailDetailsSection(
+                    creationDate = creationDate,
+                    tradeLimitInfo = tradeLimitInfo,
+                    tradeDuration = tradeDuration,
+                )
             }
         }
     }
@@ -54,7 +34,7 @@ class AccountDetailDetailsSectionUiTest {
     @Test
     fun `when all details are null or blank then section is not rendered`() {
         // Given / When
-        setTestContent(
+        setSectionContent(
             creationDate = null,
             tradeLimitInfo = "",
             tradeDuration = null,
@@ -79,7 +59,7 @@ class AccountDetailDetailsSectionUiTest {
     @Test
     fun `when creation date provided then header and creation date row are rendered`() {
         // Given / When
-        setTestContent(
+        setSectionContent(
             creationDate = "Apr 3, 2026",
             tradeLimitInfo = null,
             tradeDuration = null,
@@ -107,7 +87,7 @@ class AccountDetailDetailsSectionUiTest {
     @Test
     fun `when trade limit and trade duration provided then both rows are rendered`() {
         // Given / When
-        setTestContent(
+        setSectionContent(
             creationDate = null,
             tradeLimitInfo = "1000 EUR",
             tradeDuration = "8 days",
@@ -135,7 +115,7 @@ class AccountDetailDetailsSectionUiTest {
     @Test
     fun `when detail values are blank then corresponding rows are not rendered`() {
         // Given / When
-        setTestContent(
+        setSectionContent(
             creationDate = "Apr 3, 2026",
             tradeLimitInfo = "",
             tradeDuration = "   ",

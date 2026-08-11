@@ -22,6 +22,23 @@ class InitialScreenInteractionLockUiTest : BisqComposeUiTestBase() {
         composeTestRule.mainClock.autoAdvance = true
     }
 
+    @Composable
+    private fun TestLockContent(
+        lockDurationMillis: Long,
+        onClick: () -> Unit,
+    ) {
+        InitialScreenInteractionLock(lockDurationMillis = lockDurationMillis) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Button(onClick = onClick) {
+                    Text(BUTTON_TEXT)
+                }
+            }
+        }
+    }
+
     @Test
     fun `when rendered then content is displayed`() {
         setTestContent {
@@ -92,23 +109,6 @@ class InitialScreenInteractionLockUiTest : BisqComposeUiTestBase() {
         composeTestRule.waitForIdle()
 
         assertEquals(1, clickCount)
-    }
-
-    @Composable
-    private fun TestLockContent(
-        lockDurationMillis: Long,
-        onClick: () -> Unit,
-    ) {
-        InitialScreenInteractionLock(lockDurationMillis = lockDurationMillis) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Button(onClick = onClick) {
-                    Text(BUTTON_TEXT)
-                }
-            }
-        }
     }
 
     private companion object {

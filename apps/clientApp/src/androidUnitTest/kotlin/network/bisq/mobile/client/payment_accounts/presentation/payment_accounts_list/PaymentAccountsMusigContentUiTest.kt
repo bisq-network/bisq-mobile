@@ -1,15 +1,11 @@
 package network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
@@ -17,39 +13,20 @@ import network.bisq.mobile.client.common.presentation.model.account.PaymentTypeV
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.CryptoAccountVO
 import network.bisq.mobile.client.payment_accounts.presentation.payment_accounts_list.model.FiatAccountVO
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class PaymentAccountsMusigContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class PaymentAccountsMusigContentUiTest : BisqComposeUiTestBase() {
     private lateinit var onAction: (PaymentAccountsMusigUiAction) -> Unit
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         onAction = mockk(relaxed = true)
     }
 
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    content()
-                }
-            }
-        }
-    }
 
     @Test
     fun `when loading accounts then shows loading indicator`() {

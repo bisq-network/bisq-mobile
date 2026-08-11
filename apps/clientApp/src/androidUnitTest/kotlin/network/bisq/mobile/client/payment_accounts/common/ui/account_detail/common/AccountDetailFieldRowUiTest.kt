@@ -1,36 +1,20 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail.common
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.AccountDetailFieldRow
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.common.ExpandableAccountDetailFieldRow
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class AccountDetailFieldRowUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
+class AccountDetailFieldRowUiTest : BisqComposeUiTestBase() {
 
     private fun setExpandableFieldRowContent(
         label: String,
@@ -38,32 +22,24 @@ class AccountDetailFieldRowUiTest {
         dialogTitle: String = label,
         maxLines: Int = 4,
     ) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    ExpandableAccountDetailFieldRow(
-                        label = label,
-                        value = value,
-                        dialogTitle = dialogTitle,
-                        maxLines = maxLines,
-                    )
-                }
-            }
+        setTestContent {
+            ExpandableAccountDetailFieldRow(
+                label = label,
+                value = value,
+                dialogTitle = dialogTitle,
+                maxLines = maxLines,
+            )
         }
     }
 
     @Test
     fun `when field row renders then label and value are displayed`() {
         // Given / When
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    AccountDetailFieldRow(
-                        label = "paymentAccounts.holderName".i18n(),
-                        value = "Alice Doe",
-                    )
-                }
-            }
+        setTestContent {
+            AccountDetailFieldRow(
+                label = "paymentAccounts.holderName".i18n(),
+                value = "Alice Doe",
+            )
         }
 
         // Then

@@ -1,62 +1,43 @@
 package network.bisq.mobile.client.trusted_node_setup.components
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso.pressBack
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class SubscriptionsFailedDialogFactoryTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+class SubscriptionsFailedDialogUiTest : BisqComposeUiTestBase() {
 
-    private fun setTestContent(onAction: (SubscriptionsFailedDialogUiAction) -> Unit = {}) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    SubscriptionsFailedDialog(
-                        state =
-                            SubscriptionsFailedDialogUiState(
-                                listOf(
-                                    Topic.MARKET_PRICE,
-                                    Topic.TRADE_PROPERTIES,
-                                    Topic.NUM_OFFERS,
-                                ),
-                            ),
-                        onAction = onAction,
-                    )
-                }
-            }
+    private fun setDialogContent(onAction: (SubscriptionsFailedDialogUiAction) -> Unit = {}) {
+        setTestContent {
+            SubscriptionsFailedDialog(
+                state =
+                    SubscriptionsFailedDialogUiState(
+                        listOf(
+                            Topic.MARKET_PRICE,
+                            Topic.TRADE_PROPERTIES,
+                            Topic.NUM_OFFERS,
+                        ),
+                    ),
+                onAction = onAction,
+            )
         }
-    }
-
-    private fun assertTextPresent(text: String) {
-        composeTestRule
-            .onNodeWithText(text, useUnmergedTree = true)
-            .fetchSemanticsNode()
     }
 
     @Test
     fun `dialog renders grouped severities and stays visible on back press`() {
         val receivedActions = mutableListOf<SubscriptionsFailedDialogUiAction>()
 
-        setTestContent(onAction = receivedActions::add)
+        setDialogContent(onAction = receivedActions::add)
         composeTestRule.waitForIdle()
 
         assertTextPresent("mobile.client.dialog.failed_subs.title".i18n())
@@ -78,7 +59,7 @@ class SubscriptionsFailedDialogFactoryTest {
     fun `dialog retry button invokes retry callback`() {
         val receivedActions = mutableListOf<SubscriptionsFailedDialogUiAction>()
 
-        setTestContent(onAction = receivedActions::add)
+        setDialogContent(onAction = receivedActions::add)
         composeTestRule.waitForIdle()
 
         composeTestRule
@@ -96,7 +77,7 @@ class SubscriptionsFailedDialogFactoryTest {
     fun `dialog continue button invokes continue callback`() {
         val receivedActions = mutableListOf<SubscriptionsFailedDialogUiAction>()
 
-        setTestContent(onAction = receivedActions::add)
+        setDialogContent(onAction = receivedActions::add)
         composeTestRule.waitForIdle()
 
         composeTestRule
@@ -111,5 +92,11 @@ class SubscriptionsFailedDialogFactoryTest {
             listOf<SubscriptionsFailedDialogUiAction>(SubscriptionsFailedDialogUiAction.OnContinuePress),
             receivedActions,
         )
+    }
+
+    private fun assertTextPresent(text: String) {
+        composeTestRule
+            .onNodeWithText(text, useUnmergedTree = true)
+            .fetchSemanticsNode()
     }
 }

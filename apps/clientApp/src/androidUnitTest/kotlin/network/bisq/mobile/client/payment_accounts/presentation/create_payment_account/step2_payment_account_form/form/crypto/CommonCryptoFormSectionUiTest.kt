@@ -1,62 +1,41 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class CommonCryptoFormSectionUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+class CommonCryptoFormSectionUiTest : BisqComposeUiTestBase() {
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setTestContent(
+    private fun setFormContent(
         cryptoUiState: CryptoAccountFormUiState,
         showAddress: Boolean,
         showAutoConf: Boolean,
         onAction: (CryptoAccountFormUiAction) -> Unit = {},
     ) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    CommonCryptoFormSection(
-                        cryptoUiState = cryptoUiState,
-                        onAction = onAction,
-                        showAddress = showAddress,
-                        showAutoConf = showAutoConf,
-                    )
-                }
-            }
+        setTestContent {
+            CommonCryptoFormSection(
+                cryptoUiState = cryptoUiState,
+                onAction = onAction,
+                showAddress = showAddress,
+                showAutoConf = showAutoConf,
+            )
         }
     }
 
     @Test
     fun `when address enabled then address field is shown`() {
-        setTestContent(
+        setFormContent(
             cryptoUiState = sampleCryptoUiState(),
             showAddress = true,
             showAutoConf = false,
@@ -70,7 +49,7 @@ class CommonCryptoFormSectionUiTest {
 
     @Test
     fun `when address hidden then address field is not rendered`() {
-        setTestContent(
+        setFormContent(
             cryptoUiState = sampleCryptoUiState(),
             showAddress = false,
             showAutoConf = false,
@@ -84,7 +63,7 @@ class CommonCryptoFormSectionUiTest {
 
     @Test
     fun `when auto conf enabled and state true then auto conf fields are shown`() {
-        setTestContent(
+        setFormContent(
             cryptoUiState = sampleCryptoUiState(isAutoConf = true),
             showAddress = true,
             showAutoConf = true,
@@ -104,7 +83,7 @@ class CommonCryptoFormSectionUiTest {
 
     @Test
     fun `when auto conf hidden then auto conf controls are not rendered`() {
-        setTestContent(
+        setFormContent(
             cryptoUiState = sampleCryptoUiState(isAutoConf = true),
             showAddress = true,
             showAutoConf = false,
@@ -127,7 +106,7 @@ class CommonCryptoFormSectionUiTest {
         val typedAddress = "0xABCDEF"
         var capturedAction: CryptoAccountFormUiAction? = null
 
-        setTestContent(
+        setFormContent(
             cryptoUiState = sampleCryptoUiState(),
             showAddress = true,
             showAutoConf = false,
@@ -147,7 +126,7 @@ class CommonCryptoFormSectionUiTest {
     fun `when instant clicked then emits instant toggle action`() {
         var capturedAction: CryptoAccountFormUiAction? = null
 
-        setTestContent(
+        setFormContent(
             cryptoUiState = sampleCryptoUiState(isInstant = false),
             showAddress = true,
             showAutoConf = false,
@@ -167,7 +146,7 @@ class CommonCryptoFormSectionUiTest {
     fun `when auto conf clicked then emits auto conf toggle action`() {
         var capturedAction: CryptoAccountFormUiAction? = null
 
-        setTestContent(
+        setFormContent(
             cryptoUiState = sampleCryptoUiState(isAutoConf = false),
             showAddress = true,
             showAutoConf = true,

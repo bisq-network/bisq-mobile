@@ -1,55 +1,35 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.UserDefinedAccountDetailContent
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class UserDefinedAccountDetailContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+class UserDefinedAccountDetailContentUiTest : BisqComposeUiTestBase() {
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setTestContent(account: UserDefinedFiatAccount) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    UserDefinedAccountDetailContent(
-                        account = account,
-                    )
-                }
-            }
+    private fun setAccountContent(account: UserDefinedFiatAccount) {
+        setTestContent {
+            UserDefinedAccountDetailContent(
+                account = account,
+            )
         }
     }
 
     @Test
     fun `when user defined detail renders then shows method and account data rows`() {
         // Given / When
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(),
         )
 
@@ -67,7 +47,7 @@ class UserDefinedAccountDetailContentUiTest {
     @Test
     fun `when account has details fields then details section rows are rendered`() {
         // Given / When
-        setTestContent(
+        setAccountContent(
             account =
                 sampleAccount(
                     creationDate = "Apr 3, 2026",
@@ -95,7 +75,7 @@ class UserDefinedAccountDetailContentUiTest {
     @Test
     fun `when account has no details fields then details section is not rendered`() {
         // Given / When
-        setTestContent(
+        setAccountContent(
             account =
                 sampleAccount(
                     creationDate = null,
@@ -117,7 +97,7 @@ class UserDefinedAccountDetailContentUiTest {
     @Test
     fun `when chargeback risk present then chargeback badge is shown`() {
         // Given / When
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(chargebackRisk = FiatPaymentMethodChargebackRisk.LOW),
         )
 
@@ -133,7 +113,7 @@ class UserDefinedAccountDetailContentUiTest {
     @Test
     fun `when chargeback risk absent then chargeback badge is hidden`() {
         // Given / When
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(chargebackRisk = null),
         )
 
@@ -153,7 +133,7 @@ class UserDefinedAccountDetailContentUiTest {
         val longAccountData = "1234567890".repeat(100)
 
         // When
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(accountData = longAccountData),
         )
 

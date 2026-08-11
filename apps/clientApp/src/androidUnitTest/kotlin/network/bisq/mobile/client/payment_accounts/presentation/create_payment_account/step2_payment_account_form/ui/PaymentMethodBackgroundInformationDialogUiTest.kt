@@ -2,49 +2,36 @@ package network.bisq.mobile.client.payment_accounts.presentation.create_payment_
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class PaymentMethodBackgroundInformationDialogUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class PaymentMethodBackgroundInformationDialogUiTest : BisqComposeUiTestBase() {
     private lateinit var externalUrlOpener: CapturingExternalUrlOpener
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         externalUrlOpener = CapturingExternalUrlOpener()
     }
 
-    private fun setTestContent(
+    private fun setDialogContent(
         bodyText: String,
         onDismissRequest: () -> Unit = {},
     ) {
-        composeTestRule.setContent {
+        setTestContent {
             CompositionLocalProvider(LocalExternalUrlOpener provides externalUrlOpener) {
-                BisqTheme {
-                    PaymentMethodBackgroundInformationDialog(
-                        bodyText = bodyText,
-                        onDismissRequest = onDismissRequest,
-                    )
-                }
+                PaymentMethodBackgroundInformationDialog(
+                    bodyText = bodyText,
+                    onDismissRequest = onDismissRequest,
+                )
             }
         }
     }
@@ -52,7 +39,7 @@ class PaymentMethodBackgroundInformationDialogUiTest {
     @Test
     fun `renders dialog and clicking i understand dismisses`() {
         var dismissCount = 0
-        setTestContent(
+        setDialogContent(
             bodyText = "Zelle info body",
             onDismissRequest = { dismissCount++ },
         )
@@ -68,7 +55,7 @@ class PaymentMethodBackgroundInformationDialogUiTest {
 
     @Test
     fun `when body contains hyperlink token then url is rendered`() {
-        setTestContent(
+        setDialogContent(
             bodyText = "Read more at [HYPERLINK:https://example.com] now.",
         )
 
@@ -78,7 +65,7 @@ class PaymentMethodBackgroundInformationDialogUiTest {
     @Test
     fun `blank hyperlink token keeps raw token and does not open uri`() {
         val text = "Read more at [HYPERLINK:   ] now."
-        setTestContent(bodyText = text)
+        setDialogContent(bodyText = text)
 
         composeTestRule.onNodeWithText(text, substring = true).assertIsDisplayed()
         assertEquals(emptyList(), externalUrlOpener.openedUrls)
@@ -86,7 +73,7 @@ class PaymentMethodBackgroundInformationDialogUiTest {
 
     @Test
     fun `when hyperlink clicked then opens url via external url opener`() {
-        setTestContent(bodyText = "Read more at [HYPERLINK:https://example.com/path] now.")
+        setDialogContent(bodyText = "Read more at [HYPERLINK:https://example.com/path] now.")
 
         composeTestRule.onNodeWithText("https://example.com/path", substring = true).performClick()
         composeTestRule.waitForIdle()

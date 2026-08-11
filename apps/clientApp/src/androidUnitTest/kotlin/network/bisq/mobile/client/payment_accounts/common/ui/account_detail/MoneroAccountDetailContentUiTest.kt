@@ -1,52 +1,32 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.MoneroAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.MoneroAccountDetailContent
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class MoneroAccountDetailContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+class MoneroAccountDetailContentUiTest : BisqComposeUiTestBase() {
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setTestContent(account: MoneroAccount) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    MoneroAccountDetailContent(
-                        account = account,
-                    )
-                }
-            }
+    private fun setAccountContent(account: MoneroAccount) {
+        setTestContent {
+            MoneroAccountDetailContent(
+                account = account,
+            )
         }
     }
 
     @Test
     fun `when direct address mode then header and direct address rows are shown`() {
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(useSubAddresses = false),
         )
 
@@ -64,7 +44,7 @@ class MoneroAccountDetailContentUiTest {
 
     @Test
     fun `when sub addresses enabled then direct address hidden and sub address rows shown`() {
-        setTestContent(
+        setAccountContent(
             account =
                 sampleAccount(
                     useSubAddresses = true,
@@ -99,7 +79,7 @@ class MoneroAccountDetailContentUiTest {
 
     @Test
     fun `when auto conf supported but disabled then only toggle row shown`() {
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(isAutoConf = false, supportAutoConf = true),
         )
 
@@ -120,7 +100,7 @@ class MoneroAccountDetailContentUiTest {
 
     @Test
     fun `when auto conf enabled then detail rows are shown`() {
-        setTestContent(
+        setAccountContent(
             account =
                 sampleAccount(
                     isAutoConf = true,
@@ -144,7 +124,7 @@ class MoneroAccountDetailContentUiTest {
 
     @Test
     fun `when auto conf not supported then auto conf rows are hidden`() {
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(isAutoConf = true, supportAutoConf = false),
         )
 

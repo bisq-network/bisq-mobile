@@ -9,12 +9,10 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.client.common.test_utils.TestApplication
@@ -25,13 +23,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 /**
@@ -41,11 +35,7 @@ import org.robolectric.annotation.Config
  * for different UI states and that user interactions trigger the appropriate actions.
  */
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class TrustedNodeSetupContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class TrustedNodeSetupContentUiTest : BisqComposeUiTestBase() {
     private lateinit var mockOnAction: (TrustedNodeSetupUiAction) -> Unit
     private lateinit var snackbarHostState: SnackbarHostState
 
@@ -54,25 +44,19 @@ class TrustedNodeSetupContentUiTest {
         "AQBbAQAkNDY4NTI0NTAtNzViMy00OTU1LWJiMTAtZGY0MWQ3ZjViZTk5AAABnBYUkQQAAAAKAAAAAAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAcAAAAIAAAACQAVaHR0cDovL2xvY2FsaG9zdDo4MDkwAA"
     private val sampleApiUrl = "http://127.0.0.1:8090"
 
-    @Before
-    fun setup() {
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         mockOnAction = mockk(relaxed = true)
         snackbarHostState = SnackbarHostState()
     }
 
     /**
-     * Helper function to set up test content with LocalIsTest enabled.
-     * Wraps content with CompositionLocalProvider and BisqTheme to avoid repetition.
+     * Provides LocalExternalUrlOpener on top of shared Bisq theme/test locals.
      */
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalIsTest provides true,
-                LocalExternalUrlOpener provides ExternalUrlOpener { true },
-            ) {
-                BisqTheme {
-                    content()
-                }
+    private fun setTrustedNodeTestContent(content: @Composable () -> Unit) {
+        setTestContent {
+            CompositionLocalProvider(LocalExternalUrlOpener provides ExternalUrlOpener { true }) {
+                content()
             }
         }
     }
@@ -88,7 +72,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -135,7 +119,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -160,7 +144,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -184,7 +168,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -209,7 +193,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -234,7 +218,7 @@ class TrustedNodeSetupContentUiTest {
                 status = TrustedNodeConnectionStatus.Idle,
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -260,7 +244,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -284,7 +268,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -326,7 +310,7 @@ class TrustedNodeSetupContentUiTest {
                 pairingCodeEntry = DataEntry("some_text"),
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -355,7 +339,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -387,7 +371,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -412,7 +396,7 @@ class TrustedNodeSetupContentUiTest {
                 pairingCodeEntry = DataEntry(validPairingCode),
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -441,7 +425,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -465,7 +449,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -492,7 +476,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -517,7 +501,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -543,7 +527,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -575,7 +559,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -601,7 +585,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -634,7 +618,7 @@ class TrustedNodeSetupContentUiTest {
                 pairingCodeEntry = DataEntry(validPairingCode),
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -661,7 +645,7 @@ class TrustedNodeSetupContentUiTest {
                 status = TrustedNodeConnectionStatus.Idle,
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -689,7 +673,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -715,7 +699,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -741,7 +725,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -767,7 +751,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -793,7 +777,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -823,7 +807,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -849,7 +833,7 @@ class TrustedNodeSetupContentUiTest {
                 showQrCodeError = true,
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -880,7 +864,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -910,7 +894,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -934,7 +918,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -960,7 +944,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -988,7 +972,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -1014,7 +998,7 @@ class TrustedNodeSetupContentUiTest {
                 apiUrl = sampleApiUrl,
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -1043,7 +1027,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -1072,7 +1056,7 @@ class TrustedNodeSetupContentUiTest {
             )
 
         // When
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -1101,7 +1085,7 @@ class TrustedNodeSetupContentUiTest {
                 showChangeNodeWarning = true,
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -1131,7 +1115,7 @@ class TrustedNodeSetupContentUiTest {
                 showChangeNodeWarning = true,
             )
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -1157,7 +1141,7 @@ class TrustedNodeSetupContentUiTest {
         // Given
         val uiState = TrustedNodeSetupUiState()
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,
@@ -1192,7 +1176,7 @@ class TrustedNodeSetupContentUiTest {
         // Given
         val uiState = TrustedNodeSetupUiState()
 
-        setTestContent {
+        setTrustedNodeTestContent {
             TrustedNodeSetupContent(
                 uiState = uiState,
                 onAction = mockOnAction,

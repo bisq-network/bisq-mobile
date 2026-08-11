@@ -21,7 +21,7 @@ import org.robolectric.annotation.Config
  */
 @Config(application = TestApplication::class)
 @RunWith(AndroidJUnit4::class)
-class SecureScreenEffectTest {
+class SecureScreenEffectUiTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 

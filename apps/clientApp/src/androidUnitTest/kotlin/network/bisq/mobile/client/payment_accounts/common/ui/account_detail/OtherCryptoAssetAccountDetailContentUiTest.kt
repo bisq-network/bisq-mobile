@@ -1,52 +1,32 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.other_crypto.OtherCryptoAssetAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.OtherCryptoAssetAccountDetailContent
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class OtherCryptoAssetAccountDetailContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+class OtherCryptoAssetAccountDetailContentUiTest : BisqComposeUiTestBase() {
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setTestContent(account: OtherCryptoAssetAccount) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    OtherCryptoAssetAccountDetailContent(
-                        account = account,
-                    )
-                }
-            }
+    private fun setAccountContent(account: OtherCryptoAssetAccount) {
+        setTestContent {
+            OtherCryptoAssetAccountDetailContent(
+                account = account,
+            )
         }
     }
 
     @Test
     fun `when auto conf supported and enabled then crypto rows and details section are shown`() {
-        setTestContent(
+        setAccountContent(
             account =
                 sampleAccount(
                     supportAutoConf = true,
@@ -71,7 +51,7 @@ class OtherCryptoAssetAccountDetailContentUiTest {
 
     @Test
     fun `when auto conf not supported then auto conf rows are hidden`() {
-        setTestContent(
+        setAccountContent(
             account = sampleAccount(supportAutoConf = false, isAutoConf = true),
         )
 
@@ -89,7 +69,7 @@ class OtherCryptoAssetAccountDetailContentUiTest {
 
     @Test
     fun `when details metadata missing then details section fields are hidden`() {
-        setTestContent(
+        setAccountContent(
             account =
                 sampleAccount(
                     supportAutoConf = true,

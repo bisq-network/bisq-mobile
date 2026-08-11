@@ -1,50 +1,30 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.revolut.RevolutAccountPayload
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.revolut.RevolutAccountDetailContent
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class RevolutAccountDetailContentTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+class RevolutAccountDetailContentUiTest : BisqComposeUiTestBase() {
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
-    }
-
-    private fun setTestContent(account: RevolutAccount) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    RevolutAccountDetailContent(account = account)
-                }
-            }
+    private fun setAccountContent(account: RevolutAccount) {
+        setTestContent {
+            RevolutAccountDetailContent(account = account)
         }
     }
 
     @Test
     fun `when revolut review renders then shows base account details`() {
-        setTestContent(sampleAccount())
+        setAccountContent(sampleAccount())
 
         composeTestRule.waitForIdle()
         composeTestRule.onAllNodesWithText("Revolut").assertCountEquals(1)
@@ -58,7 +38,7 @@ class RevolutAccountDetailContentTest {
 
     @Test
     fun `when chargeback risk is present then badge is displayed`() {
-        setTestContent(sampleAccount(chargebackRisk = FiatPaymentMethodChargebackRisk.LOW))
+        setAccountContent(sampleAccount(chargebackRisk = FiatPaymentMethodChargebackRisk.LOW))
 
         composeTestRule.waitForIdle()
         composeTestRule
@@ -70,7 +50,7 @@ class RevolutAccountDetailContentTest {
 
     @Test
     fun `when chargeback risk is absent then badge is hidden`() {
-        setTestContent(sampleAccount(chargebackRisk = null))
+        setAccountContent(sampleAccount(chargebackRisk = null))
 
         composeTestRule.waitForIdle()
         composeTestRule

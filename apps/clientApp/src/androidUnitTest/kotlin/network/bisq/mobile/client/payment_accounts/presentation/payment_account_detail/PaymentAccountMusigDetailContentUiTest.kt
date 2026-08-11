@@ -1,15 +1,11 @@
 package network.bisq.mobile.client.payment_accounts.presentation.payment_account_detail
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.client.common.test_utils.TestApplication
@@ -27,39 +23,20 @@ import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.PaymentAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccountPayload
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-class PaymentAccountMusigDetailContentUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+class PaymentAccountMusigDetailContentUiTest : BisqComposeUiTestBase() {
     private lateinit var onAction: (PaymentAccountMusigDetailUiAction) -> Unit
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         onAction = mockk(relaxed = true)
     }
 
-    private fun setTestContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    content()
-                }
-            }
-        }
-    }
 
     @Test
     fun `when account missing then shows generic error and no delete button`() {
