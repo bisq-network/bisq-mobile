@@ -157,6 +157,7 @@ class GlobalPriceUpdateTest {
             assertNotEquals(timestamp1, timestamp2After, "Services should have independent timestamps")
 
             assertTrue(true)
+            assertTrue(true)
         }
 
     @Test

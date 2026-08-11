@@ -194,6 +194,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
 
             assertTrue(true)
+            assertTrue(true)
         }
 
     @Test
