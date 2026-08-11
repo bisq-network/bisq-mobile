@@ -16,7 +16,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 
 class GlobalPriceUpdateTest {
     private lateinit var settingsRepository: SettingsRepository
@@ -131,7 +130,7 @@ class GlobalPriceUpdateTest {
 
     @Test
     fun `multiple services should have independent global update flows`() =
-        runBlocking {
+        runTest {
             val service1 = TestMarketPriceServiceFacade()
             val service2 = TestMarketPriceServiceFacade()
 
@@ -145,16 +144,17 @@ class GlobalPriceUpdateTest {
             val timestamp1 = service1.globalPriceUpdate.value
             val timestamp2Before = service2.globalPriceUpdate.value
 
-            // Real wall-clock delay (runBlocking) so Clock.System ms timestamps differ
-            delay(2.milliseconds)
-
             service2.testTriggerGlobalPriceUpdate()
             val timestamp2After = service2.globalPriceUpdate.value
 
             assertEquals(0L, timestamp2Before, "Service2 should still have initial value before its own update")
             assertTrue(timestamp1 > 0L, "Service1 should have updated timestamp")
             assertTrue(timestamp2After > 0L, "Service2 should have updated timestamp")
-            assertNotEquals(timestamp1, timestamp2After, "Services should have independent timestamps")
+            assertEquals(
+                timestamp1,
+                service1.globalPriceUpdate.value,
+                "Service1 should be unchanged after Service2 updates",
+            )
         }
 
     @Test
